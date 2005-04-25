@@ -1,17 +1,16 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.lang.ASTNode;
 
 import java.util.Map;
 
@@ -48,8 +47,11 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
 
     final PsiType ret = method.getReturnType();
     if (ret == null) return null;
-    PsiType substitutedReturnType = result.getSubstitutor().substituteAndCapture(ret);
-    return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedReturnType, this);
+    if (getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
+      PsiType substitutedReturnType = result.getSubstitutor().substituteAndCapture(ret);
+      return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedReturnType, this);
+    }
+    return TypeConversionUtil.erasure(ret);
   }
 
   public PsiMethod resolveMethod() {

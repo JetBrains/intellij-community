@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ConstructorFilter;
 import com.intellij.psi.filters.NotFilter;
@@ -30,6 +31,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.lang.ASTNode;
+import com.intellij.pom.java.LanguageLevel;
 
 public class PsiReferenceExpressionImpl extends CompositePsiElement implements PsiReferenceExpression, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
@@ -280,9 +282,13 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     else {
       return null;
     }
+    if (ret == null) return null;
 
-    PsiType substitutedType = result.getSubstitutor().substitute(ret);
-    return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedType, this);
+    if (getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
+      PsiType substitutedType = result.getSubstitutor().substitute(ret);
+      return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedType, this);
+    }
+    return TypeConversionUtil.erasure(ret);
   }
 
   public boolean isReferenceTo(PsiElement element) {

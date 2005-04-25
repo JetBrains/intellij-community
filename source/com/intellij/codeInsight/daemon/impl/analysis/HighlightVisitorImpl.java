@@ -36,6 +36,7 @@ import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.containers.HashMap;
+import com.intellij.pom.java.LanguageLevel;
 import gnu.trove.THashMap;
 
 import java.text.MessageFormat;
@@ -398,8 +399,23 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightControlFlowUtil.checkFinalFieldInitialized(field));
   }
 
+  public void visitImportStaticStatement(PsiImportStaticStatement statement) {
+    if (statement.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+      myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                       statement.getFirstChild(),
+                                                       "Static imports are not supported at this language level"));
+    }
+  }
+
   public void visitForeachStatement(PsiForeachStatement statement) {
-    myHolder.add(GenericsHighlightUtil.checkForeachLoopParameterType(statement));
+    if (statement.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+      myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                       statement.getFirstChild(),
+                                                       "Foreach loops are not supported at this language level"));
+    }
+    else {
+      myHolder.add(GenericsHighlightUtil.checkForeachLoopParameterType(statement));
+    }
   }
 
   public void visitIdentifier(PsiIdentifier identifier) {

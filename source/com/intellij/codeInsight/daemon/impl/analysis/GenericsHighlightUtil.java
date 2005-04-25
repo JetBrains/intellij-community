@@ -29,6 +29,7 @@ import java.util.Map;
 
 public abstract class GenericsHighlightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil");
+  private static final String GENERICS_ARE_NOT_SUPPORTED = "Generics are not supported at this language level";
 
   public static HighlightInfo checkInferredTypeArguments(PsiMethod genericMethod,
                                                          PsiMethodCallExpression call,
@@ -72,11 +73,19 @@ public abstract class GenericsHighlightUtil {
   public static HighlightInfo checkReferenceTypeParametersList(final PsiTypeParameterListOwner typeParameterListOwner,
                                                                final PsiJavaCodeReferenceElement referenceElement,
                                                                final PsiSubstitutor substitutor, boolean registerIntentions) {
+    if (referenceElement.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+      final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+      if (parameterList != null && parameterList.getTypeParameterElements().length > 0) {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                       parameterList,
+                                                       GENERICS_ARE_NOT_SUPPORTED);
+      }
+    }
+
     final PsiTypeParameterList typeParameterList = typeParameterListOwner.getTypeParameterList();
     final int targetParametersNum = typeParameterList == null ? 0 : typeParameterList.getTypeParameters().length;
     final PsiReferenceParameterList referenceParameterList = referenceElement.getParameterList();
     final int refParametersNum = referenceParameterList == null ? 0 : referenceParameterList.getTypeParameterElements().length;
-
     if (targetParametersNum != refParametersNum && refParametersNum != 0) {
       final String message = targetParametersNum == 0 ?
                              "{0} ''{1}'' does not have type parameters" :
@@ -675,6 +684,11 @@ public abstract class GenericsHighlightUtil {
   public static HighlightInfo checkTypeParametersList(PsiTypeParameterList parameterList) {
     PsiTypeParameter[] typeParameters = parameterList.getTypeParameters();
     if (typeParameters.length == 0) return null;
+    if (parameterList.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                     parameterList,
+                                                     GENERICS_ARE_NOT_SUPPORTED);
+    }
     final PsiElement parent = parameterList.getParent();
     if (parent instanceof PsiClass && ((PsiClass)parent).isEnum()) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
