@@ -323,7 +323,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     boolean isHighlightingAvailable = file.canContainJavaCode() || file instanceof XmlFile;
 
     if (!isHighlightingAvailable) {
-      final FileTypeSupportCapabilities supportCapabilities = file.getFileType().getSupportCapabilities();
+      FileTypeSupportCapabilities supportCapabilities = file.getFileType().getSupportCapabilities();
       if (supportCapabilities!=null) isHighlightingAvailable = supportCapabilities.hasValidation();
     }
 
@@ -392,9 +392,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     HighlightInfo[] highlights = getHighlights(document, project);
     if (highlights == null) return null;
     ArrayList<HighlightInfo> array = new ArrayList<HighlightInfo>();
-    for (int i = 0; i < highlights.length; i++) {
-      HighlightInfo info = highlights[i];
-      if (info.getSeverity().compareTo(minSeverity) >=0) {
+    for (HighlightInfo info : highlights) {
+      if (info.getSeverity().compareTo(minSeverity) >= 0) {
         array.add(info);
       }
     }
@@ -406,8 +405,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     if (highlights == null) return null;
 
     List<HighlightInfo> foundInfoList = new SmartList<HighlightInfo>();
-    for (int i = 0; i < highlights.length; i++) {
-      HighlightInfo info = highlights[i];
+    for (HighlightInfo info : highlights) {
       if (info.highlighter == null || !info.highlighter.isValid()) continue;
       int startOffset = info.highlighter.getStartOffset();
       int endOffset = info.highlighter.getEndOffset();
@@ -428,7 +426,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       }
 
       if (foundInfoList.size() != 0) {
-        final HighlightInfo foundInfo = foundInfoList.get(0);
+        HighlightInfo foundInfo = foundInfoList.get(0);
         if (foundInfo.getSeverity().compareTo(info.getSeverity()) < 0) {
           foundInfoList.clear();
         }
@@ -458,24 +456,22 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     }
   }
 
-  private static HighlightInfo[] stripWarningsCoveredByErrors(final HighlightInfo[] highlights, MarkupModel markup) {
+  private static HighlightInfo[] stripWarningsCoveredByErrors(HighlightInfo[] highlights, MarkupModel markup) {
     List<HighlightInfo> all = new ArrayList<HighlightInfo>(Arrays.asList(highlights));
     List<HighlightInfo> errors = new ArrayList<HighlightInfo>();
-    for (int i = 0; i < highlights.length; i++) {
-      HighlightInfo highlight = highlights[i];
+    for (HighlightInfo highlight : highlights) {
       if (highlight.getSeverity() == HighlightSeverity.ERROR) {
         errors.add(highlight);
       }
     }
 
-    for (int i = 0; i < highlights.length; i++) {
-      HighlightInfo highlight = highlights[i];
+    for (HighlightInfo highlight : highlights) {
       if (highlight.getSeverity() == HighlightSeverity.WARNING) {
         for (int j = 0; j < errors.size(); j++) {
           HighlightInfo errorInfo = errors.get(j);
           if (isCoveredBy(highlight, errorInfo)) {
             all.remove(highlight);
-            final RangeHighlighter highlighter = highlight.highlighter;
+            RangeHighlighter highlighter = highlight.highlighter;
             if (highlighter != null && highlighter.isValid()) {
               markup.removeHighlighter(highlighter);
             }
@@ -555,7 +551,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       }
     };
 
-    final UpdateThread updateThread;
+    UpdateThread updateThread;
     synchronized (myUpdateProgress) {
       if (myUpdateProgress.isRunning()) return; //Last check to be sure we don't launch 2 threads
       updateThread = new UpdateThread(daemonPass, myProject, postRunnable1); //After the call myUpdateProgress.isRunning()
@@ -569,9 +565,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     Element disableHintsElement = new Element("disable_hints");
     parentNode.addContent(disableHintsElement);
 
-    final ArrayList<String> array = new ArrayList<String>();
-    for (Iterator<VirtualFile> iterator = myDisabledHintsFiles.iterator(); iterator.hasNext();) {
-      VirtualFile file = iterator.next();
+    ArrayList<String> array = new ArrayList<String>();
+    for (VirtualFile file : myDisabledHintsFiles) {
       if (file.isValid()) {
         array.add(file.getUrl());
       }
@@ -591,8 +586,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     Element element = parentNode.getChild("disable_hints");
     if (element != null) {
-      for (Iterator iterator = element.getChildren("file").iterator(); iterator.hasNext();) {
-        Element e = (Element)iterator.next();
+      for (Object o : element.getChildren("file")) {
+        Element e = (Element)o;
 
         String url = e.getAttributeValue("url");
         if (url != null) {

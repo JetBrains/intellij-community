@@ -50,10 +50,10 @@ public abstract class CreateConstructorFromThisOrSuperAction extends CreateFromU
   }
 
   protected void invokeImpl(PsiClass targetClass) {
-    final PsiManager psiManager = myMethodCall.getManager();
+    PsiManager psiManager = myMethodCall.getManager();
     final PsiFile callSite = myMethodCall.getContainingFile();
     final Project project = psiManager.getProject();
-    final PsiElementFactory elementFactory = psiManager.getElementFactory();
+    PsiElementFactory elementFactory = psiManager.getElementFactory();
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
@@ -65,9 +65,9 @@ public abstract class CreateConstructorFromThisOrSuperAction extends CreateFromU
       CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, myMethodCall.getArgumentList(), getTargetSubstitutor(myMethodCall));
       templateBuilder.setEndVariableAfter(constructor.getBody().getLBrace());
 
-      final Template template = templateBuilder.buildTemplate();
+      Template template = templateBuilder.buildTemplate();
       final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);
-      final TextRange textRange = constructor.getTextRange();
+      TextRange textRange = constructor.getTextRange();
       final PsiFile file = targetClass.getContainingFile();
       editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
       editor.getCaretModel().moveToOffset(textRange.getStartOffset());

@@ -23,11 +23,11 @@ public class NegationBroadScopeFix implements IntentionAction {
     String text = "Change to '!(";
     text += myPrefixExpression.getOperand().getText();
     text += " ";
-    final PsiElement parent = myPrefixExpression.getParent();
-    final String operation = parent instanceof PsiInstanceOfExpression ? "instanceof" : ((PsiBinaryExpression)parent).getOperationSign().getText();
+    PsiElement parent = myPrefixExpression.getParent();
+    String operation = parent instanceof PsiInstanceOfExpression ? "instanceof" : ((PsiBinaryExpression)parent).getOperationSign().getText();
     text += operation + " ";
 
-    final String rop = parent instanceof PsiInstanceOfExpression ? ((PsiInstanceOfExpression)parent).getCheckType().getText()
+    String rop = parent instanceof PsiInstanceOfExpression ? ((PsiInstanceOfExpression)parent).getCheckType().getText()
       : ((PsiBinaryExpression)parent).getROperand().getText();
 
     text += rop;
@@ -42,23 +42,23 @@ public class NegationBroadScopeFix implements IntentionAction {
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     if (myPrefixExpression == null || !myPrefixExpression.isValid()) return false;
 
-    final PsiElement parent = myPrefixExpression.getParent();
+    PsiElement parent = myPrefixExpression.getParent();
     if (parent instanceof PsiInstanceOfExpression && ((PsiInstanceOfExpression)parent).getOperand() == myPrefixExpression) {
       return true;
     }
     if (!(parent instanceof PsiBinaryExpression)) return false;
-    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
+    PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
     return binaryExpression.getLOperand() == myPrefixExpression && TypeConversionUtil.isBooleanType(binaryExpression.getType());
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiExpression operand = myPrefixExpression.getOperand();
-    final PsiElement unnegated = myPrefixExpression.replace(operand);
-    final PsiElement parent = unnegated.getParent();
-    final PsiElementFactory factory = file.getManager().getElementFactory();
+    PsiExpression operand = myPrefixExpression.getOperand();
+    PsiElement unnegated = myPrefixExpression.replace(operand);
+    PsiElement parent = unnegated.getParent();
+    PsiElementFactory factory = file.getManager().getElementFactory();
 
-    final PsiPrefixExpression negated = (PsiPrefixExpression)factory.createExpressionFromText("!(xxx)", parent);
-    final PsiParenthesizedExpression parentheses = (PsiParenthesizedExpression)negated.getOperand();
+    PsiPrefixExpression negated = (PsiPrefixExpression)factory.createExpressionFromText("!(xxx)", parent);
+    PsiParenthesizedExpression parentheses = (PsiParenthesizedExpression)negated.getOperand();
     parentheses.getExpression().replace(parent.copy());
     parent.replace(negated);
   }

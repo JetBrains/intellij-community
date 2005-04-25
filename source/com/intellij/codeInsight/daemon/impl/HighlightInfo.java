@@ -53,7 +53,7 @@ public class HighlightInfo {
     if (severity == HighlightSeverity.WARNING) {
       return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.WARNINGS_ATTRIBUTES).getErrorStripeColor();
     }
-    final TextAttributes attributes = getAttributesByType(type);
+    TextAttributes attributes = getAttributesByType(type);
     return attributes == null ? null : attributes.getErrorStripeColor();
   }
 
@@ -74,8 +74,8 @@ public class HighlightInfo {
 
   public static HighlightInfo createHighlightInfo(HighlightInfoType type, int start, int end, String description, String toolTip) {
     Object[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
-    for (int i = 0; i < filters.length; i++) {
-      HighlightInfoFilter filter = (HighlightInfoFilter)filters[i];
+    for (Object filter1 : filters) {
+      HighlightInfoFilter filter = (HighlightInfoFilter)filter1;
       if (!filter.accept(type, null)) {
         return null;
       }
@@ -154,15 +154,15 @@ public class HighlightInfo {
     LOG.assertTrue(startOffset <= endOffset);
   }
 
-  public HighlightInfo(final TextAttributesKey textAttributesKey,
-                       final HighlightInfoType type,
-                       final int startOffset,
-                       final int endOffset,
-                       final String description,
-                       final String toolTip,
-                       final HighlightSeverity severity,
-                       final boolean afterEndOfLine,
-                       final boolean needsUpdateOnTyping) {
+  public HighlightInfo(TextAttributesKey textAttributesKey,
+                       HighlightInfoType type,
+                       int startOffset,
+                       int endOffset,
+                       String description,
+                       String toolTip,
+                       HighlightSeverity severity,
+                       boolean afterEndOfLine,
+                       boolean needsUpdateOnTyping) {
     this.forcedTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(textAttributesKey);
     this.type = type;
     this.startOffset = startOffset;

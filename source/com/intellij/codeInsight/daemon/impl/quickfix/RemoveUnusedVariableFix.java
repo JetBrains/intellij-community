@@ -30,7 +30,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Remove {0} ''{1}''",
+    String text = MessageFormat.format("Remove {0} ''{1}''",
                                              new Object[]{
                                                myVariable instanceof PsiField ? "field" : "variable",
                                                myVariable.getName(),
@@ -64,7 +64,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     }
   }
 
-  private static void collectReferences(final PsiElement context, final PsiVariable variable, final List<PsiElement> references) {
+  private static void collectReferences(PsiElement context, final PsiVariable variable, final List<PsiElement> references) {
     context.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         if (expression.resolve() == variable) references.add(expression);
@@ -80,7 +80,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          final PsiElement context = variable instanceof PsiField
+          PsiElement context = variable instanceof PsiField
                                      ? ((PsiField)variable).getContainingClass()
                                      : PsiUtil.getVariableCodeBlock(variable, null);
           collectReferences(context, variable, references);
@@ -126,14 +126,14 @@ public class RemoveUnusedVariableFix implements IntentionAction {
              ? SideEffectWarningDialog.MAKE_STATEMENT
              : SideEffectWarningDialog.DELETE_ALL;
     }
-    final Project project = variable.getProject();
+    Project project = variable.getProject();
     HighlightManager highlightManager = HighlightManager.getInstance(project);
-    final PsiElement[] elements = sideEffects.toArray(new PsiElement[sideEffects.size()]);
+    PsiElement[] elements = sideEffects.toArray(new PsiElement[sideEffects.size()]);
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     highlightManager.addOccurrenceHighlights(editor, elements, attributes, true, null);
 
-    final SideEffectWarningDialog dialog = new SideEffectWarningDialog(project, false, variable, beforeText, afterText, canCopeWithSideEffects);
+    SideEffectWarningDialog dialog = new SideEffectWarningDialog(project, false, variable, beforeText, afterText, canCopeWithSideEffects);
     dialog.show();
     return dialog.getExitCode();
   }
@@ -142,7 +142,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
                                             PsiVariable variable,
                                             Editor editor,
                                             boolean canCopeWithSideEffects) {
-    final String text = sideEffects.size() > 0 ? sideEffects.get(0).getText() : "";
+    String text = sideEffects.size() > 0 ? sideEffects.get(0).getText() : "";
     return showSideEffectsWarning(sideEffects, variable, editor, canCopeWithSideEffects, text, text);
   }
 
@@ -157,11 +157,11 @@ public class RemoveUnusedVariableFix implements IntentionAction {
   private static boolean processUsage(PsiElement element, PsiVariable variable, List<PsiElement> sideEffects, int deleteMode)
     throws IncorrectOperationException {
     if (!element.isValid()) return true;
-    final PsiElementFactory factory = variable.getManager().getElementFactory();
+    PsiElementFactory factory = variable.getManager().getElementFactory();
     while (element != null) {
       if (element instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression expression = (PsiAssignmentExpression)element;
-        final PsiExpression lExpression = expression.getLExpression();
+        PsiAssignmentExpression expression = (PsiAssignmentExpression)element;
+        PsiExpression lExpression = expression.getLExpression();
         // there should not be read access to the variable, otherwise it is not unused
         LOG.assertTrue(
           lExpression instanceof PsiReferenceExpression &&
@@ -170,7 +170,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
         rExpression = PsiUtil.deparenthesizeExpression(rExpression);
         if (rExpression == null) return true;
         // replace assignment with expression and resimplify
-        final boolean sideEffectFound = checkSideEffects(rExpression, variable, sideEffects);
+        boolean sideEffectFound = checkSideEffects(rExpression, variable, sideEffects);
         if (!(element.getParent() instanceof PsiExpressionStatement) || PsiUtil.isStatement(rExpression)) {
           if (deleteMode == SideEffectWarningDialog.MAKE_STATEMENT ||
               (deleteMode == SideEffectWarningDialog.DELETE_ALL &&
@@ -204,7 +204,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
         if (expression != null) {
           expression = PsiUtil.deparenthesizeExpression(expression);
         }
-        final boolean sideEffectsFound = checkSideEffects(expression, variable, sideEffects);
+        boolean sideEffectsFound = checkSideEffects(expression, variable, sideEffects);
         if (expression != null && PsiUtil.isStatement(expression) && variable instanceof PsiLocalVariable
             &&
             !(variable.getParent() instanceof PsiDeclarationStatement &&
@@ -232,11 +232,11 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     return true;
   }
 
-  private static void deleteWholeStatement(PsiElement element, final PsiElementFactory factory)
+  private static void deleteWholeStatement(PsiElement element, PsiElementFactory factory)
     throws IncorrectOperationException {
     // just delete it altogether
     if (element.getParent() instanceof PsiExpressionStatement) {
-      final PsiExpressionStatement parent = (PsiExpressionStatement)element.getParent();
+      PsiExpressionStatement parent = (PsiExpressionStatement)element.getParent();
       if (parent.getParent() instanceof PsiCodeBlock) {
         parent.delete();
       }
@@ -285,7 +285,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
       return true;
     }
     if (element instanceof PsiNewExpression) {
-      final PsiNewExpression newExpression = (PsiNewExpression)element;
+      PsiNewExpression newExpression = (PsiNewExpression)element;
       if (newExpression.getArrayDimensions().length == 0
           && newExpression.getArrayInitializer() == null
           && !isSideEffectFreeConstructor(newExpression)) {
@@ -299,12 +299,11 @@ public class RemoveUnusedVariableFix implements IntentionAction {
       sideEffects.add(element);
       return true;
     }
-    final PsiElement[] children = element.getChildren();
+    PsiElement[] children = element.getChildren();
 
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
-      checkSideEffects(child, variable, sideEffects);
-    }
+      for (PsiElement child : children) {
+        checkSideEffects(child, variable, sideEffects);
+      }
     return sideEffects.size() > 0;
   }
 
@@ -340,15 +339,15 @@ public class RemoveUnusedVariableFix implements IntentionAction {
   };
 
   private static boolean isSideEffectFreeConstructor(PsiNewExpression newExpression) {
-    final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-    final PsiClass aClass = classReference == null ? null : (PsiClass)classReference.resolve();
-    final String qualifiedName = aClass == null ? null : aClass.getQualifiedName();
+    PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+    PsiClass aClass = classReference == null ? null : (PsiClass)classReference.resolve();
+    String qualifiedName = aClass == null ? null : aClass.getQualifiedName();
     if (qualifiedName == null) return false;
     if (ourSideEffectFreeClasses.contains(qualifiedName)) return true;
 
-    final PsiFile file = aClass.getContainingFile();
-    final PsiDirectory directory = file.getContainingDirectory();
-    final PsiPackage classPackage = directory.getPackage();
+    PsiFile file = aClass.getContainingFile();
+    PsiDirectory directory = file.getContainingDirectory();
+    PsiPackage classPackage = directory.getPackage();
     String packageName = classPackage.getQualifiedName();
 
     // all Throwable descendants from java.lang are side effects free

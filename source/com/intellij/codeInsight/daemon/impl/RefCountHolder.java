@@ -146,12 +146,10 @@ public class RefCountHolder {
   }
 
   public PsiNamedElement[] getUnusedDcls() {
-    final List<PsiNamedElement> result = new LinkedList<PsiNamedElement>();
-    final Set<Map.Entry<PsiNamedElement, Boolean>> entries = myDclsUsedMap.entrySet();
+    List<PsiNamedElement> result = new LinkedList<PsiNamedElement>();
+    Set<Map.Entry<PsiNamedElement, Boolean>> entries = myDclsUsedMap.entrySet();
 
-    for (Iterator<Map.Entry<PsiNamedElement, Boolean>> iterator = entries.iterator(); iterator.hasNext();) {
-      final Map.Entry<PsiNamedElement, Boolean> entry = iterator.next();
-
+    for (final Map.Entry<PsiNamedElement, Boolean> entry : entries) {
       if (entry.getValue() == Boolean.FALSE) result.add(entry.getKey());
     }
 

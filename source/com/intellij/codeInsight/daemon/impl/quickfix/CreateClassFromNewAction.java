@@ -26,7 +26,7 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
   }
 
   protected void invokeImpl(PsiClass targetClass) {
-    final PsiManager psiManager = myNewExpression.getManager();
+    PsiManager psiManager = myNewExpression.getManager();
     final Project project = psiManager.getProject();
     final PsiElementFactory elementFactory = psiManager.getElementFactory();
 
@@ -40,7 +40,7 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
             setupInheritance(myNewExpression, psiClass);
             setupGenericParameters(myNewExpression, psiClass);
 
-            final Editor editor = positionCursor(project, psiClass.getContainingFile(), psiClass);
+            Editor editor = positionCursor(project, psiClass.getContainingFile(), psiClass);
             PsiExpressionList argList = myNewExpression.getArgumentList();
             if (argList != null && argList.getExpressions().length > 0) {
               PsiMethod constructor = elementFactory.createConstructor();
@@ -53,9 +53,9 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
 
               getReferenceElement(myNewExpression).bindToElement(psiClass);
 
-              final Template template = templateBuilder.buildTemplate();
+              Template template = templateBuilder.buildTemplate();
 
-              final TextRange textRange = psiClass.getTextRange();
+              TextRange textRange = psiClass.getTextRange();
               editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
 
               startTemplate(editor, template, project);
@@ -80,11 +80,10 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
     PsiClass superClass = targetClass.getSuperClass();
     if (superClass != null && !"java.lang.Object".equals(superClass.getQualifiedName()) &&
           !"java.lang.Enum".equals(superClass.getQualifiedName())) {
-      final PsiMethod[] constructors = superClass.getConstructors();
+      PsiMethod[] constructors = superClass.getConstructors();
       boolean hasDefaultConstructor = false;
 
-      for (int i = 0; i < constructors.length; i++) {
-        PsiMethod superConstructor = constructors[i];
+      for (PsiMethod superConstructor : constructors) {
         if (superConstructor.getParameterList().getParameters().length == 0) {
           hasDefaultConstructor = true;
           break;
@@ -97,7 +96,7 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
         statement = (PsiExpressionStatement)constructor.getBody().add(statement);
 
         PsiMethodCallExpression call = (PsiMethodCallExpression)statement.getExpression();
-        final PsiExpressionList argumentList = call.getArgumentList();
+        PsiExpressionList argumentList = call.getArgumentList();
         templateBuilder.setEndVariableAfter(argumentList.getFirstChild());
       }
     }
@@ -119,22 +118,21 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
   private void setupInheritance(PsiNewExpression element, PsiClass targetClass) throws IncorrectOperationException {
     if ((element.getParent() instanceof PsiReferenceExpression)) return;
 
-    final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getInstance(myNewExpression.getProject()).getExpectedTypes(element, false);
+    ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getInstance(myNewExpression.getProject()).getExpectedTypes(element, false);
 
-    for (int i = 0; i < expectedTypes.length; i++) {
-      ExpectedTypeInfo expectedType = expectedTypes[i];
-      final PsiType type = expectedType.getType();
+    for (ExpectedTypeInfo expectedType : expectedTypes) {
+      PsiType type = expectedType.getType();
       PsiClass aClass = PsiUtil.resolveClassInType(type);
       if (aClass == null) continue;
       if (aClass.equals(targetClass) || aClass.hasModifierProperty(PsiModifier.FINAL)) continue;
       PsiElementFactory factory = aClass.getManager().getElementFactory();
 
       if (aClass.isInterface()) {
-        final PsiReferenceList implementsList = targetClass.getImplementsList();
+        PsiReferenceList implementsList = targetClass.getImplementsList();
         implementsList.add(factory.createClassReferenceElement(aClass));
       }
       else {
-        final PsiReferenceList extendsList = targetClass.getExtendsList();
+        PsiReferenceList extendsList = targetClass.getExtendsList();
         if (extendsList.getReferencedTypes().length > 0) continue;
         extendsList.add(factory.createClassReferenceElement(aClass));
       }
@@ -143,11 +141,11 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
 
 
   private PsiFile getTargetFile(PsiElement element) {
-    final PsiJavaCodeReferenceElement referenceElement = getReferenceElement((PsiNewExpression)element);
+    PsiJavaCodeReferenceElement referenceElement = getReferenceElement((PsiNewExpression)element);
 
     if (referenceElement.getQualifier() instanceof PsiJavaCodeReferenceElement) {
       PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)referenceElement.getQualifier();
-      final PsiElement psiElement = qualifier.resolve();
+      PsiElement psiElement = qualifier.resolve();
       if (psiElement instanceof PsiClass) {
         PsiClass psiClass = (PsiClass)psiElement;
         return psiClass.getContainingFile();
@@ -159,7 +157,7 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
 
   protected PsiElement getElement() {
     if (!myNewExpression.isValid() || !myNewExpression.getManager().isInProject(myNewExpression)) return null;
-    final PsiJavaCodeReferenceElement referenceElement = getReferenceElement(myNewExpression);
+    PsiJavaCodeReferenceElement referenceElement = getReferenceElement(myNewExpression);
     if (referenceElement == null) return null;
     if (referenceElement.getReferenceNameElement() instanceof PsiIdentifier) return myNewExpression;
 
@@ -167,16 +165,16 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
   }
 
   protected boolean isValidElement(PsiElement element) {
-    final PsiJavaCodeReferenceElement ref = PsiTreeUtil.getChildOfType(element, PsiJavaCodeReferenceElement.class);
+    PsiJavaCodeReferenceElement ref = PsiTreeUtil.getChildOfType(element, PsiJavaCodeReferenceElement.class);
     if (ref == null) return false;
 
     return ref.resolve() != null;
   }
 
   protected boolean isAvailableImpl(int offset) {
-    final PsiElement nameElement = getNameElement(myNewExpression);
+    PsiElement nameElement = getNameElement(myNewExpression);
 
-    final PsiFile targetFile = getTargetFile(myNewExpression);
+    PsiFile targetFile = getTargetFile(myNewExpression);
     if (targetFile != null && !targetFile.getManager().isInProject(targetFile)) {
       return false;
     }
@@ -194,7 +192,7 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
   }
 
   private PsiElement getNameElement(PsiNewExpression targetElement) {
-    final PsiJavaCodeReferenceElement referenceElement = getReferenceElement(targetElement);
+    PsiJavaCodeReferenceElement referenceElement = getReferenceElement(targetElement);
     if (referenceElement == null) return null;
     return referenceElement.getReferenceNameElement();
   }

@@ -21,7 +21,7 @@ public class MoveBoundClassToFrontFix extends ExtendsListFix {
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Move bound ''{0}'' to the beginning of the bounds list of type parameter ''{1}''",
+    String text = MessageFormat.format("Move bound ''{0}'' to the beginning of the bounds list of type parameter ''{1}''",
         new Object[]{
           HighlightUtil.formatClass(myClassToExtendFrom),
           HighlightUtil.formatClass(myClass),

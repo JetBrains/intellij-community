@@ -36,7 +36,7 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
 
-    final PsiVariable previousVariable = findPreviousVariable();
+    PsiVariable previousVariable = findPreviousVariable();
     return
         variable != null
         && variable.isValid()
@@ -60,8 +60,8 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
       return;
     }
     PsiDeclarationStatement declaration = (PsiDeclarationStatement) variable.getParent();
-    final PsiElementFactory factory = variable.getManager().getElementFactory();
-    final PsiStatement statement = factory.createStatementFromText(variable.getName() + " = " + variable.getInitializer().getText()+";", variable);
+    PsiElementFactory factory = variable.getManager().getElementFactory();
+    PsiStatement statement = factory.createStatementFromText(variable.getName() + " = " + variable.getInitializer().getText()+";", variable);
     declaration.replace(statement);
   }
 
@@ -72,7 +72,7 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
       scope = scope.getParent();
     }
     if (scope == null) return null;
-    final VariablesNotProcessor proc = new VariablesNotProcessor(variable, false);
+    VariablesNotProcessor proc = new VariablesNotProcessor(variable, false);
     PsiScopesUtil.treeWalkUp(proc, identifier, scope);
 
     if(proc.size() > 0)

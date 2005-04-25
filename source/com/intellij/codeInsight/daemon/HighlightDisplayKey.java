@@ -36,7 +36,7 @@ public class HighlightDisplayKey {
 
   public static HighlightDisplayKey register(String name, String displayName){
     if (find(name) != null) throw new IllegalArgumentException("Key already registered");
-    final HighlightDisplayKey highlightDisplayKey = new HighlightDisplayKey(name);
+    HighlightDisplayKey highlightDisplayKey = new HighlightDisplayKey(name);
     ourKeyToDisplayNameMap.put(highlightDisplayKey, displayName);
     return highlightDisplayKey;
   }

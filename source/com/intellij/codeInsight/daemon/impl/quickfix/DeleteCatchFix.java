@@ -22,7 +22,7 @@ public class DeleteCatchFix implements IntentionAction {
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Delete catch for ''{0}''",
+    String text = MessageFormat.format("Delete catch for ''{0}''",
         new Object[]{
           HighlightUtil.formatType(myCatchParameter.getType()),
         });
@@ -44,7 +44,7 @@ public class DeleteCatchFix implements IntentionAction {
     if (!CodeInsightUtil.prepareFileForWrite(myCatchParameter.getContainingFile())) return;
     try {
       PsiTryStatement tryStatement = ((PsiCatchSection)myCatchParameter.getDeclarationScope()).getTryStatement();
-      final PsiElement tryParent = tryStatement.getParent();
+      PsiElement tryParent = tryStatement.getParent();
       if (tryStatement.getCatchBlocks().length == 1 && tryStatement.getFinallyBlock() == null) {
         PsiCodeBlock tryBlock = tryStatement.getTryBlock();
         PsiElement reformatRangeStart = tryStatement.getPrevSibling();

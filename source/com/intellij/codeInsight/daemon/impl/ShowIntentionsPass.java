@@ -142,8 +142,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     ArrayList<IntentionAction> intentionsToShow = new ArrayList<IntentionAction>();
     ArrayList<IntentionAction> fixesToShow = new ArrayList<IntentionAction>();
-    for (int i = 0; i < myIntentionActions.length; i++) {
-      IntentionAction action = myIntentionActions[i];
+    for (IntentionAction action : myIntentionActions) {
       if (action instanceof IntentionActionComposite) {
         if (action instanceof QuickFixAction ||
             action instanceof PostIntentionsQuickFixAction && codeAnalyzer.showPostIntentions()) {
@@ -166,16 +165,14 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     if (!intentionsToShow.isEmpty() || !fixesToShow.isEmpty()) {
       boolean showBulb = false;
-      for (Iterator<IntentionAction> iterator = fixesToShow.iterator(); iterator.hasNext();) {
-        IntentionAction action = iterator.next();
+      for (IntentionAction action : fixesToShow) {
         if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
           showBulb = true;
           break;
         }
       }
       if (!showBulb) {
-        for (Iterator<IntentionAction> iterator = intentionsToShow.iterator(); iterator.hasNext();) {
-          IntentionAction action = iterator.next();
+        for (IntentionAction action : intentionsToShow) {
           if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
             showBulb = true;
             break;
@@ -207,8 +204,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (highlights == null) return null;
 
     ArrayList<HighlightInfo> array = new ArrayList<HighlightInfo>();
-    for (int i = 0; i < highlights.length; i++) {
-      HighlightInfo info = highlights[i];
+    for (HighlightInfo info : highlights) {
       if (!canBeHint(info.type)) continue;
       if (startOffset <= info.startOffset && info.endOffset <= endOffset) {
         if (myEditor.getFoldingModel().isOffsetCollapsed(info.startOffset)) continue;
@@ -242,7 +238,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   /*
    * @fabrique
    */
-  public static boolean showAddImportHint(Editor editor, final PsiJavaCodeReferenceElement ref) {
+  public static boolean showAddImportHint(Editor editor, PsiJavaCodeReferenceElement ref) {
     if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) return false;
 
     PsiManager manager = ref.getManager();
@@ -275,8 +271,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     List<PsiClass> availableClasses = new ArrayList<PsiClass>();
     boolean isAnnotationReference = ref.getParent() instanceof PsiAnnotation;
-    for (int j = 0; j < classes.length; j++) {
-      PsiClass aClass = classes[j];
+    for (PsiClass aClass : classes) {
       if (aClass.getParent() instanceof PsiDeclarationStatement) continue;
       PsiFile file = aClass.getContainingFile();
       if (!(file instanceof PsiJavaFile) || ((PsiJavaFile)file).getPackageName().length() == 0) continue;
@@ -291,7 +286,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       List<PsiClass> typeArgMatched = new ArrayList<PsiClass>(availableClasses);
       // try to reduce suggestions based on type argument list
       for (int i = typeArgMatched.size() - 1; i >= 0; i--) {
-        final PsiClass aClass = typeArgMatched.get(i);
+        PsiClass aClass = typeArgMatched.get(i);
         PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
         if (refTypeArgsLength != typeParameters.length) {
           typeArgMatched.remove(i);
@@ -323,9 +318,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     return true;
   }
 
-  private static boolean isCaretNearRef(final Editor editor, final PsiJavaCodeReferenceElement ref) {
-    final TextRange range = ref.getTextRange();
-    final int offset = editor.getCaretModel().getOffset();
+  private static boolean isCaretNearRef(Editor editor, PsiJavaCodeReferenceElement ref) {
+    TextRange range = ref.getTextRange();
+    int offset = editor.getCaretModel().getOffset();
 
     return range.grown(1).contains(offset);
   }

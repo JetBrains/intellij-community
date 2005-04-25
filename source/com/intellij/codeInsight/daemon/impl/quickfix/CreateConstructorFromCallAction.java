@@ -22,9 +22,9 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
   private final PsiConstructorCall myConstructorCall;
 
   protected void invokeImpl(PsiClass targetClass) {
-    final PsiManager psiManager = myConstructorCall.getManager();
-    final Project project = psiManager.getProject();
-    final PsiElementFactory elementFactory = psiManager.getElementFactory();
+    PsiManager psiManager = myConstructorCall.getManager();
+    Project project = psiManager.getProject();
+    PsiElementFactory elementFactory = psiManager.getElementFactory();
 
     try {
       PsiMethod constructor = elementFactory.createConstructor();
@@ -37,10 +37,10 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
 
       getReferenceElement(myConstructorCall).bindToElement(targetClass);
 
-      final Template template = templateBuilder.buildTemplate();
+      Template template = templateBuilder.buildTemplate();
 
-      final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);
-      final TextRange textRange = constructor.getTextRange();
+      Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);
+      TextRange textRange = constructor.getTextRange();
       editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
       editor.getCaretModel().moveToOffset(textRange.getStartOffset());
 
@@ -53,10 +53,10 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
 
 
   private PsiFile getTargetFile(PsiElement element) {
-    final PsiJavaCodeReferenceElement referenceElement = getReferenceElement((PsiConstructorCall)element);
+    PsiJavaCodeReferenceElement referenceElement = getReferenceElement((PsiConstructorCall)element);
     if (referenceElement.getQualifier() instanceof PsiJavaCodeReferenceElement) {
       PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)referenceElement.getQualifier();
-      final PsiElement psiElement = qualifier.resolve();
+      PsiElement psiElement = qualifier.resolve();
       if (psiElement instanceof PsiClass) {
         PsiClass psiClass = (PsiClass)psiElement;
         return psiClass.getContainingFile();
@@ -71,7 +71,7 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
 
     PsiExpressionList argumentList = myConstructorCall.getArgumentList();
     if (argumentList == null) return null;
-    final PsiJavaCodeReferenceElement referenceElement = getReferenceElement(myConstructorCall);
+    PsiJavaCodeReferenceElement referenceElement = getReferenceElement(myConstructorCall);
     if (referenceElement == null) return null;
     if (referenceElement.getReferenceNameElement() instanceof PsiIdentifier) return myConstructorCall;
 
@@ -88,9 +88,9 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
   }
 
   protected boolean isAvailableImpl(int offset) {
-    final PsiElement nameElement = getElement(myConstructorCall);
+    PsiElement nameElement = getElement(myConstructorCall);
 
-    final PsiFile targetFile = getTargetFile(myConstructorCall);
+    PsiFile targetFile = getTargetFile(myConstructorCall);
     if (targetFile != null && !targetFile.getManager().isInProject(targetFile)) {
       return false;
     }
@@ -120,7 +120,7 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
 
   private PsiElement getElement(PsiElement targetElement) {
     if (targetElement instanceof PsiNewExpression) {
-      final PsiJavaCodeReferenceElement referenceElement = getReferenceElement((PsiNewExpression)targetElement);
+      PsiJavaCodeReferenceElement referenceElement = getReferenceElement((PsiNewExpression)targetElement);
       if (referenceElement == null) return null;
       return referenceElement.getReferenceNameElement();
     } else if (targetElement instanceof PsiEnumConstant) {

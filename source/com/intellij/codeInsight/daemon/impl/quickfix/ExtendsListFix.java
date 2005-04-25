@@ -26,7 +26,7 @@ public class ExtendsListFix implements IntentionAction {
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Make ''{0}'' {1}{2} ''{3}''",
+    String text = MessageFormat.format("Make ''{0}'' {1}{2} ''{3}''",
         new Object[]{
           myClass.getName(),
           (myToAdd ? "" : "not "),
@@ -59,9 +59,9 @@ public class ExtendsListFix implements IntentionAction {
 
   protected void invokeImpl () {
     if (!CodeInsightUtil.prepareFileForWrite(myClass.getContainingFile())) return;
-    final PsiReferenceList extendsList = myClass.isInterface() != myClassToExtendFrom.isInterface() ?
+    PsiReferenceList extendsList = myClass.isInterface() != myClassToExtendFrom.isInterface() ?
         myClass.getImplementsList() : myClass.getExtendsList();
-    final PsiReferenceList otherList = myClass.isInterface() != myClassToExtendFrom.isInterface() ?
+    PsiReferenceList otherList = myClass.isInterface() != myClassToExtendFrom.isInterface() ?
         myClass.getExtendsList() : myClass.getImplementsList();
     try {
       modifyList(extendsList, myToAdd, -1);
@@ -80,11 +80,10 @@ public class ExtendsListFix implements IntentionAction {
   /**
    * @param position to add new class to or -1 if add to the end
    */
-  PsiReferenceList modifyList(final PsiReferenceList extendsList, boolean add, int position) throws IncorrectOperationException {
-    final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
+  PsiReferenceList modifyList(PsiReferenceList extendsList, boolean add, int position) throws IncorrectOperationException {
+    PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
     boolean alreadyExtends = false;
-    for (int i = 0; i < referenceElements.length; i++) {
-      PsiJavaCodeReferenceElement referenceElement = referenceElements[i];
+    for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
       if (referenceElement.resolve() == myClassToExtendFrom) {
         alreadyExtends = true;
         if (!add) {
@@ -94,7 +93,7 @@ public class ExtendsListFix implements IntentionAction {
     }
     PsiReferenceList list = extendsList;
     if (add && !alreadyExtends) {
-      final PsiElement anchor;
+      PsiElement anchor;
       if (position == -1) {
         anchor = referenceElements.length ==0 ? null : referenceElements[referenceElements.length-1];
       }
@@ -104,7 +103,7 @@ public class ExtendsListFix implements IntentionAction {
       else {
         anchor = referenceElements[position - 1];
       }
-      final PsiJavaCodeReferenceElement classReferenceElement = myClass.getManager().getElementFactory().createReferenceElementByType(myTypeToExtendFrom);
+      PsiJavaCodeReferenceElement classReferenceElement = myClass.getManager().getElementFactory().createReferenceElementByType(myTypeToExtendFrom);
       PsiElement element;
       if (anchor == null) {
         if (referenceElements.length == 0) {

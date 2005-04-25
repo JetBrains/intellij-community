@@ -24,7 +24,7 @@ public class MoveCatchUpFix implements IntentionAction {
     }
 
   public String getText() {
-    final String text = MessageFormat.format("Move catch for ''{0}'' before ''{1}''",
+    String text = MessageFormat.format("Move catch for ''{0}'' before ''{1}''",
         new Object[]{
           HighlightUtil.formatType(myCatchSection.getCatchType()),
           HighlightUtil.formatType(myMoveBeforeSection.getCatchType()),

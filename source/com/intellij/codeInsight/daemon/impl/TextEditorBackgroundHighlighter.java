@@ -101,8 +101,8 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     renewFile();
     if (myFile != null && DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(myFile)) {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      for (int i = 0; i < passesToPerform.length; i++) {
-        appendPass(passes, passesToPerform[i]);
+      for (int aPassesToPerform : passesToPerform) {
+        appendPass(passes, aPassesToPerform);
       }
     }
 
@@ -111,17 +111,17 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
 
   private void appendPass(ArrayList<TextEditorHighlightingPass> passes, int currentPass) {
     TextRange range = calculateRangeToProcess(myEditor, currentPass);
-    final int startOffset = range.getStartOffset();
-    final int endOffset = range.getEndOffset();
+    int startOffset = range.getStartOffset();
+    int endOffset = range.getEndOffset();
     TextEditorHighlightingPass pass = createDaemonPass(startOffset, endOffset, currentPass);
     if (pass != null) {
       passes.add(pass);
     }
   }
 
-  private TextEditorHighlightingPass createDaemonPass(final int startOffset,
-                                                      final int endOffset,
-                                                      final int pass) {
+  private TextEditorHighlightingPass createDaemonPass(int startOffset,
+                                                      int endOffset,
+                                                      int pass) {
     LOG.assertTrue(endOffset <= myDocument.getTextLength());
     if (startOffset >= endOffset) return null;
 
@@ -169,7 +169,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     return getPasses(ALL_PASSES);
   }
 
-  private TextRange calculateRangeToProcess(final Editor editor, final int pass) {
+  private TextRange calculateRangeToProcess(Editor editor, int pass) {
     if (pass == Pass.POPUP_HINTS || pass == Pass.POPUP_HINTS2) {
       Rectangle rect = editor.getScrollingModel().getVisibleArea();
       LogicalPosition startPosition = editor.xyToLogicalPosition(new Point(rect.x, rect.y));

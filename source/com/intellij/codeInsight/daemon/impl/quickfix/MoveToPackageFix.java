@@ -27,7 +27,7 @@ public class MoveToPackageFix implements IntentionAction {
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Move to package ''{0}''",
+    String text = MessageFormat.format("Move to package ''{0}''",
         new Object[]{
           myTargetPackage.getQualifiedName(),
         });
@@ -54,12 +54,12 @@ public class MoveToPackageFix implements IntentionAction {
 
     try {
       String packageName = myTargetPackage.getQualifiedName();
-      final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(project, packageName, null, true);
+      PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(project, packageName, null, true);
 
       if (directory == null) {
         return;
       }
-      final String error = RefactoringMessageUtil.checkCanCreateFile(directory, myFile.getName());
+      String error = RefactoringMessageUtil.checkCanCreateFile(directory, myFile.getName());
       if (error != null) {
         Messages.showMessageDialog(project, error, "Error", Messages.getErrorIcon());
         return;

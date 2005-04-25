@@ -42,13 +42,12 @@ public class CreateFromUsageUtils {
     return refExpr.getQualifierExpression() == null;
   }
 
-  public static boolean isValidReference(PsiReference reference, final boolean unresolvedOnly) {
+  public static boolean isValidReference(PsiReference reference, boolean unresolvedOnly) {
     if (!(reference instanceof PsiJavaReference)) return false;
-    final ResolveResult[] results = ((PsiJavaReference)reference).multiResolve(true);
+    ResolveResult[] results = ((PsiJavaReference)reference).multiResolve(true);
     if(results.length == 0) return false;
     if (!unresolvedOnly) {
-      for (int i = 0; i < results.length; i++) {
-        ResolveResult result = results[i];
+      for (ResolveResult result : results) {
         if (!result.isValidResult()) return false;
       }
     }
@@ -58,8 +57,8 @@ public class CreateFromUsageUtils {
   public static boolean isValidMethodReference(PsiReference reference, PsiMethodCallExpression call) {
     if (!(reference instanceof PsiJavaReference)) return false;
     try {
-      final ResolveResult candidate = ((PsiJavaReference) reference).advancedResolve(true);
-      final PsiElement result = candidate.getElement();
+      ResolveResult candidate = ((PsiJavaReference) reference).advancedResolve(true);
+      PsiElement result = candidate.getElement();
       if (!(result instanceof PsiMethod)) return false;
       return PsiUtil.isApplicable((PsiMethod) result, candidate.getSubstitutor(),
                                   call.getArgumentList());
@@ -83,9 +82,9 @@ public class CreateFromUsageUtils {
   }
 
   public static void setupMethodBody(PsiClass targetClass, PsiMethod method) throws IncorrectOperationException {
-    final PsiType returnType = method.getReturnType() != null ? method.getReturnType() : PsiType.VOID;
+    PsiType returnType = method.getReturnType() != null ? method.getReturnType() : PsiType.VOID;
 
-    final PsiElementFactory factory = method.getManager().getElementFactory();
+    PsiElementFactory factory = method.getManager().getElementFactory();
 
     LOG.assertTrue(!targetClass.isInterface(), "Interface bodies should be already set up");
 
@@ -129,7 +128,7 @@ public class CreateFromUsageUtils {
     }
   }
 
-  public static void setupEditor(PsiMethod method, final Editor newEditor) {
+  public static void setupEditor(PsiMethod method, Editor newEditor) {
     PsiCodeBlock body = method.getBody();
     if (body != null) {
       PsiElement l = PsiTreeUtil.skipSiblingsForward(body.getLBrace(), new Class[] {PsiWhiteSpace.class});
@@ -151,9 +150,9 @@ public class CreateFromUsageUtils {
     PsiSubstitutor substitutor) throws IncorrectOperationException {
     if (argumentList == null) return;
     PsiManager psiManager = method.getManager();
-    final PsiElementFactory factory = psiManager.getElementFactory();
+    PsiElementFactory factory = psiManager.getElementFactory();
 
-    final PsiParameterList parameterList = method.getParameterList();
+    PsiParameterList parameterList = method.getParameterList();
 
     PsiExpression[] args = argumentList.getExpressions();
     GlobalSearchScope resolveScope = method.getResolveScope();
@@ -233,7 +232,7 @@ public class CreateFromUsageUtils {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       Project project = manager.getProject();
       String title = createInterface ? "Create Interface" : "Create Class";
-      final PsiPackage aPackage = sourceDir.getPackage();
+      PsiPackage aPackage = sourceDir.getPackage();
       CreateClassDialog dialog = new CreateClassDialog(project, title, name,
                                                        aPackage != null ? aPackage.getQualifiedName() : "",
                                                        createInterface, false);
@@ -272,7 +271,7 @@ public class CreateFromUsageUtils {
               }
             }
             else {
-              final PsiClass aClass;
+              PsiClass aClass;
               if (createInterface) {
                 aClass = factory.createInterface(name);
               }
@@ -335,8 +334,8 @@ public class CreateFromUsageUtils {
 
   public static PsiVariable[] guessMatchingVariables (final PsiExpression expression) {
     List<ExpectedTypeInfo[]> typesList = new ArrayList<ExpectedTypeInfo[]>();
-    final List<String> expectedMethodNames = new ArrayList<String>();
-    final List<String> expectedFieldNames  = new ArrayList<String>();
+    List<String> expectedMethodNames = new ArrayList<String>();
+    List<String> expectedFieldNames  = new ArrayList<String>();
 
     getExpectedInformation(expression, typesList, expectedMethodNames, expectedFieldNames);
 
@@ -355,14 +354,13 @@ public class CreateFromUsageUtils {
 
     ExpectedTypeInfo[] infos = ExpectedTypeUtil.intersect(typesList);
 
-    final List<PsiVariable> result = new ArrayList<PsiVariable>();
+    List<PsiVariable> result = new ArrayList<PsiVariable>();
     nextVar:
-    for (int i = 0; i < allVars.length; i++) {
-      PsiVariable variable = allVars[i];
+    for (PsiVariable variable : allVars) {
       PsiType varType = variable.getType();
       boolean matched = infos.length == 0;
-      for (int j = 0; j < infos.length; j++) {
-        if (ExpectedTypeUtil.matches(varType, infos[j])) {
+      for (ExpectedTypeInfo info : infos) {
+        if (ExpectedTypeUtil.matches(varType, info)) {
           matched = true;
           break;
         }
@@ -373,13 +371,11 @@ public class CreateFromUsageUtils {
           if (!(varType instanceof PsiClassType)) continue nextVar;
           PsiClass aClass = ((PsiClassType)varType).resolve();
           if (aClass == null) continue nextVar;
-          for (Iterator<String> iterator = expectedFieldNames.iterator(); iterator.hasNext();) {
-            String name = iterator.next();
+          for (String name : expectedFieldNames) {
             if (aClass.findFieldByName(name, true) == null) continue nextVar;
           }
 
-          for (Iterator<String> iterator = expectedMethodNames.iterator(); iterator.hasNext();) {
-            String name = iterator.next();
+          for (String name : expectedMethodNames) {
             PsiMethod[] methods = aClass.findMethodsByName(name, true);
             if (methods == null || methods.length == 0) continue nextVar;
           }
@@ -399,20 +395,19 @@ public class CreateFromUsageUtils {
                                  PsiFile.class};
     PsiExpression[] expressions = collectExpressions(expression, scopes, false);
 
-    for (int i = 0; i < expressions.length; i++) {
-      PsiExpression expr = expressions[i];
+    for (PsiExpression expr : expressions) {
       PsiElement parent = expr.getParent();
       if (parent instanceof PsiReferenceExpression) {
         PsiElement pparent = parent.getParent();
         if (pparent instanceof PsiMethodCallExpression) {
-          String refName = ((PsiReferenceExpression) parent).getReferenceName();
+          String refName = ((PsiReferenceExpression)parent).getReferenceName();
           if (refName != null) {
             expectedMethodNames.add(refName);
           }
         }
         else if (pparent instanceof PsiReferenceExpression || pparent instanceof PsiVariable ||
                  pparent instanceof PsiExpression) {
-          String refName = ((PsiReferenceExpression) parent).getReferenceName();
+          String refName = ((PsiReferenceExpression)parent).getReferenceName();
           if (refName != null) {
             expectedFieldNames.add(refName);
           }
@@ -428,13 +423,13 @@ public class CreateFromUsageUtils {
   }
 
   public static ExpectedTypeInfo[] guessExpectedTypes (PsiExpression expression, boolean allowVoidType) {
-        final PsiManager manager = expression.getManager();
-    final GlobalSearchScope resolveScope = expression.getResolveScope();
+        PsiManager manager = expression.getManager();
+    GlobalSearchScope resolveScope = expression.getResolveScope();
 
     ExpectedTypesProvider provider = ExpectedTypesProvider.getInstance(manager.getProject());
     List<ExpectedTypeInfo[]> typesList = new ArrayList<ExpectedTypeInfo[]>();
-    final List<String> expectedMethodNames = new ArrayList<String>();
-    final List<String> expectedFieldNames  = new ArrayList<String>();
+    List<String> expectedMethodNames = new ArrayList<String>();
+    List<String> expectedFieldNames  = new ArrayList<String>();
 
     getExpectedInformation(expression, typesList, expectedMethodNames, expectedFieldNames);
 
@@ -448,14 +443,12 @@ public class CreateFromUsageUtils {
 
     if (typesList.size() == 0) {
       PsiElementFactory factory = manager.getElementFactory();
-      for (Iterator<String> iterator = expectedFieldNames.iterator(); iterator.hasNext();) {
-        String fieldName = iterator.next();
+      for (String fieldName : expectedFieldNames) {
         PsiField[] fields = manager.getShortNamesCache().getFieldsByName(fieldName, resolveScope);
         addMemberInfo(fields, expression, typesList, factory);
       }
 
-      for (Iterator<String> iterator = expectedMethodNames.iterator(); iterator.hasNext();) {
-        String methodName = iterator.next();
+      for (String methodName : expectedMethodNames) {
         PsiMethod[] methods = manager.getShortNamesCache().getMethodsByName(methodName, resolveScope);
         addMemberInfo(methods, expression, typesList, factory);
       }
@@ -464,8 +457,8 @@ public class CreateFromUsageUtils {
     ExpectedTypeInfo[] expectedTypes = ExpectedTypeUtil.intersect(typesList);
     if (expectedTypes.length == 0 && !typesList.isEmpty()) {
       List<ExpectedTypeInfo> union = new ArrayList<ExpectedTypeInfo>();
-      for (Iterator<ExpectedTypeInfo[]> i = typesList.iterator(); i.hasNext();) {
-        union.addAll(Arrays.asList((ExpectedTypeInfo[]) i.next()));
+      for (ExpectedTypeInfo[] aTypesList : typesList) {
+        union.addAll(Arrays.asList((ExpectedTypeInfo[])aTypesList));
       }
       expectedTypes = union.toArray(new ExpectedTypeInfo[union.size()]);
     }
@@ -499,14 +492,12 @@ public class CreateFromUsageUtils {
 
     if (typesList.size() == 0) {
       PsiElementFactory factory = manager.getElementFactory();
-      for (Iterator<String> iterator = expectedFieldNames.iterator(); iterator.hasNext();) {
-        String fieldName = iterator.next();
+      for (String fieldName : expectedFieldNames) {
         PsiField[] fields = manager.getShortNamesCache().getFieldsByName(fieldName, resolveScope);
         addMemberInfo(fields, expression, typesList, factory);
       }
 
-      for (Iterator<String> iterator = expectedMethodNames.iterator(); iterator.hasNext();) {
-        String methodName = iterator.next();
+      for (String methodName : expectedMethodNames) {
         PsiMethod[] methods = manager.getShortNamesCache().getMethodsByName(methodName, resolveScope);
         addMemberInfo(methods, expression, typesList, factory);
       }
@@ -515,8 +506,8 @@ public class CreateFromUsageUtils {
     ExpectedTypeInfo[] expectedTypes = ExpectedTypeUtil.intersect(typesList);
     if (expectedTypes.length == 0 && !typesList.isEmpty()) {
       List<ExpectedTypeInfo> union = new ArrayList<ExpectedTypeInfo>();
-      for (Iterator<ExpectedTypeInfo[]> i = typesList.iterator(); i.hasNext();) {
-        union.addAll(Arrays.asList((ExpectedTypeInfo[]) i.next()));
+      for (ExpectedTypeInfo[] aTypesList : typesList) {
+        union.addAll(Arrays.asList((ExpectedTypeInfo[])aTypesList));
       }
       expectedTypes = union.toArray(new ExpectedTypeInfo[union.size()]);
     }
@@ -528,7 +519,7 @@ public class CreateFromUsageUtils {
       //Double check to avoid expensive operations on PsiClassTypes
       final Set<PsiType> typesSet = new HashSet<PsiType>();
 
-      final PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<PsiType>() {
+      PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<PsiType>() {
         public PsiType visitType(PsiType type) {
           if (PsiType.NULL.equals(type)) {
             type = PsiType.getJavaLangObject(manager, resolveScope);
@@ -587,8 +578,7 @@ public class CreateFromUsageUtils {
     List<ExpectedTypeInfo> l = new ArrayList<ExpectedTypeInfo>();
     PsiManager manager = place.getManager();
     ExpectedTypesProvider provider = ExpectedTypesProvider.getInstance(manager.getProject());
-    for (int i = 0; i < members.length; i++) {
-      PsiMember member = members[i];
+    for (PsiMember member : members) {
       PsiClass aClass = member.getContainingClass();
       if (manager.getResolveHelper().isAccessible(aClass, place, null)) {
         if (!(aClass instanceof PsiAnonymousClass)) {
@@ -622,20 +612,19 @@ public class CreateFromUsageUtils {
     }
 
     public LookupItem[] calculateLookupItems(ExpressionContext context) {
-      final Project project = context.getProject();
-      final int offset = context.getStartOffset();
+      Project project = context.getProject();
+      int offset = context.getStartOffset();
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
-      final PsiElement elementAt = file.findElementAt(offset);
+      PsiElement elementAt = file.findElementAt(offset);
       PsiParameterList parameterList = PsiTreeUtil.getParentOfType(elementAt, PsiParameterList.class);
       if (parameterList == null) return new LookupItem[0];
 
       PsiParameter parameter = PsiTreeUtil.getParentOfType(elementAt, PsiParameter.class);
 
       Set<String> parameterNames = new HashSet<String>();
-      final PsiParameter[] parameters = parameterList.getParameters();
-      for (int i = 0; i < parameters.length; i++) {
-        PsiParameter psiParameter = parameters[i];
+      PsiParameter[] parameters = parameterList.getParameters();
+      for (PsiParameter psiParameter : parameters) {
         if (psiParameter == parameter) continue;
         parameterNames.add(psiParameter.getName());
       }
@@ -643,9 +632,7 @@ public class CreateFromUsageUtils {
       HashSet<String> names = new HashSet<String>();
       LinkedHashSet<LookupItem[]> set = new LinkedHashSet<LookupItem[]>();
 
-      for (int i = 0; i < myNames.length; i++) {
-        String name = myNames[i];
-
+      for (String name : myNames) {
         if (parameterNames.contains(name)) {
           int j = 1;
           while (parameterNames.contains(name + j)) j++;
@@ -656,11 +643,9 @@ public class CreateFromUsageUtils {
         LookupItemUtil.addLookupItem(set, name, "");
       }
 
-      final String[] suggestedNames = ExpressionUtil.getNames(context);
+      String[] suggestedNames = ExpressionUtil.getNames(context);
       if (suggestedNames != null) {
-        for (int i = 0; i < suggestedNames.length; i++) {
-          String name = suggestedNames[i];
-
+        for (String name : suggestedNames) {
           if (parameterNames.contains(name)) {
             int j = 1;
             while (parameterNames.contains(name + j)) j++;

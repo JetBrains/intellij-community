@@ -24,7 +24,7 @@ public class HighlightNamesUtil {
     return null;
   }
 
-  public static HighlightInfo highlightVariable(final PsiVariable variable, PsiElement elementToHighlight) {
+  public static HighlightInfo highlightVariable(PsiVariable variable, PsiElement elementToHighlight) {
     HighlightInfoType varType = getVariableNameHighlightType(variable);
     if (varType != null) {
       return HighlightInfo.createHighlightInfo(varType, elementToHighlight, null);
@@ -38,7 +38,7 @@ public class HighlightNamesUtil {
       qualifierExpression = ((PsiReferenceExpression)element).getQualifierExpression();
     }
     if (qualifierExpression instanceof PsiJavaCodeReferenceElement) {
-      final PsiElement resolved = ((PsiJavaCodeReferenceElement)qualifierExpression).resolve();
+      PsiElement resolved = ((PsiJavaCodeReferenceElement)qualifierExpression).resolve();
       if (resolved instanceof PsiClass) {
         return highlightClassName((PsiClass)resolved, qualifierExpression);
       }
@@ -81,14 +81,14 @@ public class HighlightNamesUtil {
   }
 
   public static HighlightInfo highlightAnnotationName(PsiAnnotation annotation) {
-    final PsiJavaCodeReferenceElement nameRefElement = annotation.getNameReferenceElement();
+    PsiJavaCodeReferenceElement nameRefElement = annotation.getNameReferenceElement();
     if (nameRefElement != null) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ANNOTATION_NAME, nameRefElement, null);
     }
     return null;
   }
 
-  public static HighlightInfo highlightReassignedVariable(PsiVariable variable, final PsiElement elementToHighlight) {
+  public static HighlightInfo highlightReassignedVariable(PsiVariable variable, PsiElement elementToHighlight) {
     if (variable instanceof PsiLocalVariable) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.REASSIGNED_LOCAL_VARIABLE, elementToHighlight, null);
     }

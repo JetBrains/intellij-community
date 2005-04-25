@@ -72,7 +72,7 @@ public class EditorTracker {
     myEditorFactoryListener = new EditorFactoryListener() {
       public void editorCreated(EditorFactoryEvent event) {
         final Editor editor = event.getEditor();
-        final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
         if (psiFile == null) return;
 
         editor.getComponent().addHierarchyListener(new HierarchyListener() {
@@ -130,8 +130,7 @@ public class EditorTracker {
   private boolean isEditorInTabbedPane(Editor editor){
     FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
     FileEditor[] allEditors = editorManager.getAllEditors();
-    for (int i = 0; i < allEditors.length; i++) {
-      FileEditor fileEditor = allEditors[i];
+    for (FileEditor fileEditor : allEditors) {
       if (fileEditor instanceof TextEditor) {
         if (editor == ((TextEditor)fileEditor).getEditor()) return true;
       }
@@ -142,8 +141,7 @@ public class EditorTracker {
   private boolean isActiveEditorInTabbedPane(Editor editor){
     FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
     VirtualFile[] files = editorManager.getSelectedFiles();
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile file = files[i];
+    for (VirtualFile file : files) {
       FileEditor selectedEditor = editorManager.getSelectedEditor(file);
       if (selectedEditor instanceof TextEditor) {
         if (editor == ((TextEditor)selectedEditor).getEditor()) return true;
@@ -270,8 +268,7 @@ public class EditorTracker {
     if (LOG.isDebugEnabled()) {
       LOG.debug("active editors changed:");
       if (editors.length > 0) {
-        for (int i = 0; i < editors.length; i++) {
-          Editor editor = editors[i];
+        for (Editor editor : editors) {
           PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
           LOG.debug("    " + psiFile);
         }

@@ -28,7 +28,7 @@ public class AccessStaticViaInstanceFix implements IntentionAction {
 
   public String getText() {
     PsiClass aClass = myMember.getContainingClass();
-    final String text = MessageFormat.format("Access static ''{1}.{0}'' via class ''{2}'' reference",
+    String text = MessageFormat.format("Access static ''{1}.{0}'' via class ''{2}'' reference",
                                              new Object[]{
                                                HighlightMessageUtil.getSymbolName(myMember, myResult.getSubstitutor()),
                                                HighlightUtil.formatClass(aClass),
@@ -54,8 +54,8 @@ public class AccessStaticViaInstanceFix implements IntentionAction {
   public void invoke(Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(myExpression.getContainingFile())) return;
     try {
-      final PsiExpression qualifierExpression = myExpression.getQualifierExpression();
-      final PsiElementFactory factory = file.getManager().getElementFactory();
+      PsiExpression qualifierExpression = myExpression.getQualifierExpression();
+      PsiElementFactory factory = file.getManager().getElementFactory();
       if (qualifierExpression instanceof PsiThisExpression &&
           ((PsiThisExpression) qualifierExpression).getQualifier() == null) {
         // this.field -> field

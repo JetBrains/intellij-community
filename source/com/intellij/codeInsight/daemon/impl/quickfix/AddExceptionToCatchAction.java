@@ -32,8 +32,8 @@ public class AddExceptionToCatchAction extends BaseIntentionAction {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiElement element = findElement(file, offset);
-    final PsiTryStatement tryStatement = (PsiTryStatement) element.getParent();
-    final PsiClassType[] unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(element, null);
+    PsiTryStatement tryStatement = (PsiTryStatement) element.getParent();
+    PsiClassType[] unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(element, null);
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
@@ -46,12 +46,11 @@ public class AddExceptionToCatchAction extends BaseIntentionAction {
         PsiElementFactory factory = tryBlock.getManager().getElementFactory();
         PsiTryStatement newTryStatement = (PsiTryStatement) factory.createStatementFromText("try {} catch (Exception e){}", null);
         newTryStatement.getTryBlock().replace(tryBlock);
-        for (int i = 0; i < unhandledExceptions.length; i++) {
-          PsiClassType unhandledException = unhandledExceptions[i];
+        for (PsiClassType unhandledException : unhandledExceptions) {
           addCatchStatement(newTryStatement, unhandledException, file);
         }
         newTryStatement.getCatchSections()[0].delete();
-        final CodeStyleManager codeStyleManager = tryStatement.getManager().getCodeStyleManager();
+        CodeStyleManager codeStyleManager = tryStatement.getManager().getCodeStyleManager();
 
         newTryStatement = (PsiTryStatement) tryStatement.replace(codeStyleManager.reformat(newTryStatement));
         catchBlockToSelect = newTryStatement.getCatchBlocks()[0];
@@ -59,7 +58,7 @@ public class AddExceptionToCatchAction extends BaseIntentionAction {
       else {
         for (int i = 0; i < unhandledExceptions.length; i++) {
           PsiClassType unhandledException = unhandledExceptions[i];
-          final PsiCodeBlock codeBlock = addCatchStatement(tryStatement, unhandledException, file);
+          PsiCodeBlock codeBlock = addCatchStatement(tryStatement, unhandledException, file);
           if (i == 0) catchBlockToSelect = codeBlock;
         }
       }
@@ -77,15 +76,15 @@ public class AddExceptionToCatchAction extends BaseIntentionAction {
   }
 
   private PsiCodeBlock addCatchStatement(PsiTryStatement tryStatement, PsiClassType exceptionType, PsiFile file) throws IncorrectOperationException {
-    final PsiElementFactory factory = tryStatement.getManager().getElementFactory();
+    PsiElementFactory factory = tryStatement.getManager().getElementFactory();
 
-    final CodeStyleManager styleManager = tryStatement.getManager().getCodeStyleManager();
+    CodeStyleManager styleManager = tryStatement.getManager().getCodeStyleManager();
     String name = styleManager.suggestVariableName(VariableKind.PARAMETER, null, null, exceptionType).names[0];
     name = styleManager.suggestUniqueVariableName(name, tryStatement, false);
 
     PsiCatchSection catchSection = factory.createCatchSection(exceptionType, name, file);
 
-    final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+    PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock == null) {
       tryStatement.add(catchSection);
     }
@@ -95,9 +94,9 @@ public class AddExceptionToCatchAction extends BaseIntentionAction {
       tryStatement.addBefore(catchSection, finallyElement);
     }
 
-    final PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
+    PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
     parameters[parameters.length - 1].getTypeElement().replace(factory.createTypeElement(exceptionType));
-    final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
+    PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
     PsiCodeBlock catchBlock = catchBlocks[catchBlocks.length - 1];
 
     return catchBlock;

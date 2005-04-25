@@ -27,7 +27,7 @@ public class MethodReturnFix implements IntentionAction {
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Make ''{0}'' return ''{1}''",
+    String text = MessageFormat.format("Make ''{0}'' return ''{1}''",
         new Object[]{
           myMethod.getName(),
           myReturnType.getCanonicalText(),

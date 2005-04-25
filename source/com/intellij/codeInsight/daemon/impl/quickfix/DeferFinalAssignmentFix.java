@@ -53,27 +53,25 @@ public class DeferFinalAssignmentFix implements IntentionAction {
   }
 
   private void deferField(PsiField field) throws IncorrectOperationException {
-    final PsiCodeBlock codeBlock = getEnclosingCodeBlock(field, expression);
+    PsiCodeBlock codeBlock = getEnclosingCodeBlock(field, expression);
     if (codeBlock == null) return;
     deferVariable(codeBlock, field, null);
   }
 
   private PsiCodeBlock getEnclosingCodeBlock(PsiField field, PsiElement element) {
-    final PsiClass aClass = field.getContainingClass();
+    PsiClass aClass = field.getContainingClass();
     if (aClass == null) return null;
-    final PsiMethod[] constructors = aClass.getConstructors();
-    for (int i = 0; i < constructors.length; i++) {
-      PsiMethod constructor = constructors[i];
-      final PsiCodeBlock body = constructor.getBody();
+    PsiMethod[] constructors = aClass.getConstructors();
+    for (PsiMethod constructor : constructors) {
+      PsiCodeBlock body = constructor.getBody();
       if (body == null) continue;
       if (PsiTreeUtil.isAncestor(body, element, true)) return body;
     }
 
     //maybe inside class initalizer ?
-    final PsiClassInitializer[] initializers = aClass.getInitializers();
-    for (int i = 0; i < initializers.length; i++) {
-      PsiClassInitializer initializer = initializers[i];
-      final PsiCodeBlock body = initializer.getBody();
+    PsiClassInitializer[] initializers = aClass.getInitializers();
+    for (PsiClassInitializer initializer : initializers) {
+      PsiCodeBlock body = initializer.getBody();
       if (body == null) continue;
       if (PsiTreeUtil.isAncestor(body, element, true)) return body;
     }
@@ -90,12 +88,12 @@ public class DeferFinalAssignmentFix implements IntentionAction {
     List<PsiReferenceExpression> outerReferences = new ArrayList<PsiReferenceExpression>();
     collectReferences(outerCodeBlock, variable, outerReferences);
 
-    final PsiElementFactory factory = variable.getManager().getElementFactory();
-    final Project project = variable.getProject();
-    final String tempName = suggestNewName(project, variable);
-    final PsiDeclarationStatement tempVariableDeclaration = factory.createVariableDeclarationStatement(tempName, variable.getType(), null);
+    PsiElementFactory factory = variable.getManager().getElementFactory();
+    Project project = variable.getProject();
+    String tempName = suggestNewName(project, variable);
+    PsiDeclarationStatement tempVariableDeclaration = factory.createVariableDeclarationStatement(tempName, variable.getType(), null);
 
-    final ControlFlow controlFlow;
+    ControlFlow controlFlow;
     try {
       controlFlow = ControlFlowFactory.getControlFlow(outerCodeBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
     }
@@ -115,11 +113,11 @@ public class DeferFinalAssignmentFix implements IntentionAction {
       writeReferenceOccurred = true;
       writeReference = reference;
       PsiElement element = PsiUtil.getEnclosingStatement(reference);
-      final int endOffset = element == null ? -1 : controlFlow.getEndOffset(element);
+      int endOffset = element == null ? -1 : controlFlow.getEndOffset(element);
       minOffset = Math.max(minOffset, endOffset);
     }
     LOG.assertTrue(writeReference != null);
-    final PsiStatement finalAssignment = factory.createStatementFromText(writeReference.getText()+" = "+tempName+";", outerCodeBlock);
+    PsiStatement finalAssignment = factory.createStatementFromText(writeReference.getText()+" = "+tempName+";", outerCodeBlock);
     if (!insertToDefinitelyReachedPlace(outerCodeBlock, finalAssignment, controlFlow, minOffset, outerReferences)) return;
 
     outerCodeBlock.addAfter(tempVariableDeclaration, tempDeclarationAnchor);
@@ -138,7 +136,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
     while (offset < controlFlow.getSize()) {
       element = controlFlow.getElement(offset);
       if (element != null) element = PsiUtil.getEnclosingStatement(element);
-      final int startOffset = controlFlow.getStartOffset(element);
+      int startOffset = controlFlow.getStartOffset(element);
       if (startOffset != -1 && startOffset >= minOffset && element instanceof PsiStatement) break;
       offset++;
     }

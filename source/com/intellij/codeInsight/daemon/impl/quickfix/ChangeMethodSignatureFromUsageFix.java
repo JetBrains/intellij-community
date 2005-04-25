@@ -64,9 +64,8 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
   private static String formatTypesList(ParameterInfo[] infos, PsiElement context) {
     String result = "";
     try {
-      for (int i = 0; i < infos.length; i++) {
-        ParameterInfo info = infos[i];
-        final PsiType type = info.getTypeWrapper().getType(context, context.getManager());
+      for (ParameterInfo info : infos) {
+        PsiType type = info.getTypeWrapper().getType(context, context.getManager());
         if (!result.equals("")) {
           result += ", ";
         }
@@ -85,8 +84,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     if (!myTargetMethod.isValid()) return false;
-    for (int i = 0; i < myExpressions.length; i++) {
-      PsiExpression expression = myExpressions[i];
+    for (PsiExpression expression : myExpressions) {
       if (!expression.isValid()) return false;
     }
 
@@ -94,7 +92,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     return myNewParametersInfo != null && formatTypesList(myNewParametersInfo, myContext) != null;
   }
 
-  public void invoke(final Project project, Editor editor, final PsiFile file) {
+  public void invoke(Project project, Editor editor, final PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
     final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod(myTargetMethod, "refactor");
@@ -108,7 +106,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     options.isUsages = true;
     options.isSearchInNonJavaFiles = false;
     final UsageInfo[][] usages = new UsageInfo[1][1];
-    final Runnable runnable = new Runnable() {
+    Runnable runnable = new Runnable() {
           public void run() {
             usages[0] = FindUsagesUtil.findUsages(method, options);
           }
@@ -117,7 +115,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     if (!ApplicationManager.getApplication().runProcessWithProgressSynchronously(runnable, progressTitle, true, project)) return;
 
     if (usages[0].length <= 1) {
-      final ChangeSignatureProcessor processor = new ChangeSignatureProcessor(
+      ChangeSignatureProcessor processor = new ChangeSignatureProcessor(
                             project,
                             method,
                             false, null,
@@ -138,7 +136,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
       });
     }
     else {
-      final List<ParameterInfo> parameterInfos = Arrays.asList(myNewParametersInfo);
+      List<ParameterInfo> parameterInfos = Arrays.asList(myNewParametersInfo);
       ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, false);
       dialog.setParameterInfos(parameterInfos);
       dialog.show();
@@ -148,7 +146,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
   private static ParameterInfo[] getNewParametersInfo(PsiExpression[] expressions,
                                                       PsiMethod targetMethod,
                                                       PsiSubstitutor substitutor) {
-    final PsiParameter[] parameters = targetMethod.getParameterList().getParameters();
+    PsiParameter[] parameters = targetMethod.getParameterList().getParameters();
     List<ParameterInfo> result = new ArrayList<ParameterInfo>();
     if (expressions.length < parameters.length) {
       // find which parameters to remove
@@ -157,8 +155,8 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
 
       while (ei < expressions.length && pi < parameters.length) {
         PsiExpression expression = expressions[ei];
-        final PsiParameter parameter = parameters[pi];
-        final PsiType paramType = substitutor.substitute(parameter.getType());
+        PsiParameter parameter = parameters[pi];
+        PsiType paramType = substitutor.substitute(parameter.getType());
         if (TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression)) {
           result.add(new ParameterInfo(pi, parameter.getName(), PsiUtil.convertAnonymousToBaseType(paramType)));
           pi++;
@@ -175,15 +173,14 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
       int ei = 0;
       int pi = 0;
       Set<String> existingNames = new HashSet<String>();
-      for (int j = 0; j < parameters.length; j++) {
-        PsiParameter parameter = parameters[j];
+      for (PsiParameter parameter : parameters) {
         existingNames.add(parameter.getName());
       }
       while (ei < expressions.length || pi < parameters.length) {
         PsiExpression expression = ei < expressions.length ? expressions[ei] : null;
-        final PsiParameter parameter = pi < parameters.length ? parameters[pi] : null;
+        PsiParameter parameter = pi < parameters.length ? parameters[pi] : null;
         PsiType paramType = parameter == null ? null : substitutor.substitute(parameter.getType());
-        final boolean parameterAssignable = paramType != null && (expression == null || TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression));
+        boolean parameterAssignable = paramType != null && (expression == null || TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression));
         if (parameterAssignable) {
           result.add(new ParameterInfo(pi, parameter.getName(), paramType));
           pi++;
@@ -192,7 +189,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
         else if (expression != null) {
           PsiType exprType = RefactoringUtil.getTypeByExpression(expression);
           if (exprType == null) return null;
-          final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(expression.getProject());
+          CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(expression.getProject());
           String name = suggestUniqueParameterName(codeStyleManager, expression, exprType, existingNames);
           result.add(new ParameterInfo(-1, name, exprType, expression.getText()));
           ei++;
@@ -205,7 +202,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
       for (int i = 0; i < parameters.length; i++) {
         PsiParameter parameter = parameters[i];
         PsiExpression expression = expressions[i];
-        final PsiType paramType = substitutor.substitute(parameter.getType());
+        PsiType paramType = substitutor.substitute(parameter.getType());
         if (TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression)) {
           result.add(new ParameterInfo(i, parameter.getName(), paramType));
         }
@@ -219,7 +216,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
       boolean isSilly = true;
       for (int i = 0; i < result.size(); i++) {
         PsiParameter parameter = parameters[i];
-        final PsiType paramType = substitutor.substitute(parameter.getType());
+        PsiType paramType = substitutor.substitute(parameter.getType());
         ParameterInfo parameterInfo = result.get(i);
         String typeText = parameterInfo.getTypeText();
         if (!paramType.equalsToText(typeText)) {
@@ -232,17 +229,16 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     return result.toArray(new ParameterInfo[result.size()]);
   }
 
-  private static String suggestUniqueParameterName(final CodeStyleManager codeStyleManager,
+  private static String suggestUniqueParameterName(CodeStyleManager codeStyleManager,
                                                               PsiExpression expression,
-                                                              final PsiType exprType,
+                                                              PsiType exprType,
                                                               Set<String> existingNames) {
     int suffix =0;
-    final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, expression, exprType);
-    final String[] names = nameInfo.names;
+    SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, expression, exprType);
+    String[] names = nameInfo.names;
     while (true) {
-      for (int i = 0; i < names.length; i++) {
-        String name = names[i];
-        name += suffix == 0 ? "" : ""+suffix;
+      for (String name : names) {
+        name += suffix == 0 ? "" : "" + suffix;
         if (existingNames.add(name)) {
           return name;
         }
@@ -251,13 +247,12 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     }
   }
 
-  public static void registerIntentions(final ResolveResult[] candidates,
+  public static void registerIntentions(ResolveResult[] candidates,
                                         PsiExpressionList list,
                                         HighlightInfo highlightInfo, TextRange fixRange) {
     if (candidates == null || candidates.length == 0) return;
-    final PsiExpression[] expressions = list.getExpressions();
-    for (int i = 0; i < candidates.length; i++) {
-      ResolveResult candidate = candidates[i];
+    PsiExpression[] expressions = list.getExpressions();
+    for (ResolveResult candidate : candidates) {
       registerIntention(expressions, highlightInfo, fixRange, candidate, list);
     }
   }

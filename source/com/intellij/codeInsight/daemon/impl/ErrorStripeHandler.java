@@ -24,8 +24,7 @@ public class ErrorStripeHandler extends ErrorStripeAdapter {
   private HighlightInfo findInfo(RangeHighlighter highlighter) {
     HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(highlighter.getDocument(), myProject);
     if (highlights == null) return null;
-    for (int i = 0; i < highlights.length; i++) {
-      HighlightInfo info = highlights[i];
+    for (HighlightInfo info : highlights) {
       if (info.highlighter == highlighter) {
         return info;
       }

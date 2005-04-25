@@ -67,8 +67,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     HighlightInfo[] highlights2 = action2.getHighlights();
 
     ArrayList<HighlightInfo> list = new ArrayList<HighlightInfo>();
-    for (int i = 0; i < highlights1.length; i++) {
-      list.add(highlights1[i]);
+    for (HighlightInfo highlightInfo : highlights1) {
+      list.add(highlightInfo);
     }
     for (int i = 0; i < highlights2.length; i++) {
       list.add(highlights2[i]);

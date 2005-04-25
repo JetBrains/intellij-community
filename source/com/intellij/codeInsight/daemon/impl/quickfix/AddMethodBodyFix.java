@@ -42,10 +42,10 @@ public class AddMethodBodyFix implements IntentionAction {
       PsiMethod result = (PsiMethod) myMethod.copy();
       result.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, true);
       PsiClass dummyClass = file.getManager().getElementFactory().createClass("_Dummy_");
-      final PsiClass aClass = myMethod.getContainingClass();
-      final PsiMethod[] methods = OverrideImplementUtil.overrideOrImplementMethod(dummyClass, result, true);
+      PsiClass aClass = myMethod.getContainingClass();
+      PsiMethod[] methods = OverrideImplementUtil.overrideOrImplementMethod(dummyClass, result, true);
       if (methods.length == 0) return;
-      final PsiElement newMethod = aClass.addBefore(methods[0], myMethod);
+      PsiElement newMethod = aClass.addBefore(methods[0], myMethod);
       myMethod.delete();
 
       GenerateMembersUtil.positionCaret(editor, newMethod, true);

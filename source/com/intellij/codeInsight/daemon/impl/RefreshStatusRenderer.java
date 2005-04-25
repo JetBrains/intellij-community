@@ -60,7 +60,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
 
     if (status == null) return null;
     if (status.errorAnalyzingFinished) {
-      final boolean inspecting = !status.inspectionFinished;
+      boolean inspecting = !status.inspectionFinished;
       String text = "<html><body>";
       text += inspecting ? "Performing code inspection." : "Analysis completed.";
       if (status.warningErrorCount == 0) {
@@ -116,7 +116,7 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
         icon = WARNINGS_FOUND_ICON;
       }
 
-      final boolean inspecting = !status.inspectionFinished;
+      boolean inspecting = !status.inspectionFinished;
       if (inspecting) {
         icon = IconUtilEx.createLayeredIcon(icon, INSPECTION_ICON);
       }

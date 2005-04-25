@@ -32,7 +32,7 @@ public class MethodThrowsFix implements IntentionAction {
   public String getText() {
     String methodName = PsiFormatUtil.formatMethod(
         myMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | (myShowContainingClass ? PsiFormatUtil.SHOW_CONTAINING_CLASS: 0),0);
-    final String text = MessageFormat.format("{0} ''{1}'' {2} ''{3}'' throws list",
+    String text = MessageFormat.format("{0} ''{1}'' {2} ''{3}'' throws list",
         new Object[]{
           (myShouldThrow ? "Add" : "Remove"),
           myThrowsClassType.getCanonicalText(),
@@ -56,11 +56,10 @@ public class MethodThrowsFix implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(myMethod.getContainingFile())) return;
-    final PsiJavaCodeReferenceElement[] referenceElements = myMethod.getThrowsList().getReferenceElements();
+    PsiJavaCodeReferenceElement[] referenceElements = myMethod.getThrowsList().getReferenceElements();
     boolean alreadyThrows = false;
     try {
-      for (int i = 0; i < referenceElements.length; i++) {
-        PsiJavaCodeReferenceElement referenceElement = referenceElements[i];
+      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
         if (referenceElement.getCanonicalText().equals(myThrowsClassType.getCanonicalText())) {
           alreadyThrows = true;
           if (!myShouldThrow) {

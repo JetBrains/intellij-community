@@ -109,7 +109,7 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
     if (myRefElement instanceof PsiReferenceExpression) {
       PsiReferenceExpression referenceExpression = (PsiReferenceExpression)myRefElement;
 
-      final PsiElement parent = referenceExpression.getParent();
+      PsiElement parent = referenceExpression.getParent();
 
       if (parent instanceof PsiMethodCallExpression) {
         return null;
@@ -127,7 +127,7 @@ public class CreateClassFromUsageAction extends CreateFromUsageBaseAction {
   }
 
   protected boolean isAvailableImpl(int offset) {
-    final PsiElement nameElement = myRefElement.getReferenceNameElement();
+    PsiElement nameElement = myRefElement.getReferenceNameElement();
     PsiElement parent = myRefElement.getParent();
     if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression)) return false;
     if (shouldShowTag(offset, nameElement, myRefElement)) {

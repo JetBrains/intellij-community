@@ -59,7 +59,7 @@ public class StatusBarUpdater {
     int offset = editor.getCaretModel().getOffset();
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
     HighlightInfo info = codeAnalyzer.findHighlightByOffset(editor.getDocument(), offset, false);
-    final String text;
+    String text;
     if (info != null && info.description != null) {
       text = info.description;
     }

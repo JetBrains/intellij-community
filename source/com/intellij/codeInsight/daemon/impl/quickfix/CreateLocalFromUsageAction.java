@@ -41,14 +41,14 @@ public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
       return;
     }
 
-    final PsiManager psiManager = myReferenceExpression.getManager();
-    final Project project = psiManager.getProject();
-    final PsiElementFactory factory = psiManager.getElementFactory();
+    PsiManager psiManager = myReferenceExpression.getManager();
+    Project project = psiManager.getProject();
+    PsiElementFactory factory = psiManager.getElementFactory();
 
     PsiFile targetFile = targetClass.getContainingFile();
 
     try {
-      final PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
+      PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
       PsiType type = expectedTypes[0];
 
       String varName = myReferenceExpression.getReferenceName();
@@ -66,7 +66,7 @@ public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
 
       decl = factory.createVariableDeclarationStatement(varName, type, initializer);
 
-      final TypeExpression expression = new TypeExpression(project, expectedTypes);
+      TypeExpression expression = new TypeExpression(project, expectedTypes);
 
       if (isInline) {
         decl = (PsiDeclarationStatement) anchor.replace(decl);
@@ -78,14 +78,14 @@ public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
       var.getModifierList().setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS &&
                                                                    !PsiUtil.isAccessedForWriting(myReferenceExpression));
 
-      final Editor newEditor = positionCursor(project, targetFile, var);
+      Editor newEditor = positionCursor(project, targetFile, var);
 
       TemplateBuilder builder = new TemplateBuilder(var);
       builder.replaceElement(var.getTypeElement(), expression);
 
       builder.setEndVariableAfter(var.getNameIdentifier());
 
-      final Template template = builder.buildTemplate();
+      Template template = builder.buildTemplate();
 
       TextRange range = var.getTextRange();
       newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());

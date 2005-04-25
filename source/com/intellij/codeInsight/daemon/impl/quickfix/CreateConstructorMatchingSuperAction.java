@@ -49,8 +49,7 @@ public class CreateConstructorMatchingSuperAction extends BaseIntentionAction {
     LOG.assertTrue(baseClass != null && substitutor != null);
     List<CandidateInfo> baseConstructors = new ArrayList<CandidateInfo>();
     PsiMethod[] baseConstrs = baseClass.getConstructors();
-    for (int i = 0; i < baseConstrs.length; i++) {
-      PsiMethod baseConstr = baseConstrs[i];
+    for (PsiMethod baseConstr : baseConstrs) {
       if (PsiUtil.isAccessible(baseConstr, myClass, myClass)) baseConstructors.add(new CandidateInfo(baseConstr, substitutor));
     }
 

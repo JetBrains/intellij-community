@@ -42,7 +42,7 @@ public class SetupJDKFix implements IntentionAction {
     return PsiManager.getInstance(project).findClass("java.lang.Object",file.getResolveScope()) == null;
   }
 
-  public void invoke(Project project, final Editor editor, final PsiFile file) {
+  public void invoke(Project project, Editor editor, final PsiFile file) {
     ProjectJdk projectJdk = LibrariesEditor.chooseAndSetJDK(project);
     if (projectJdk == null) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

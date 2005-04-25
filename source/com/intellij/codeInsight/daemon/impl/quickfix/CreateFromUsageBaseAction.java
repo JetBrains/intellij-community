@@ -68,7 +68,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     return isInNamedElement || offset >= element.getTextRange().getEndOffset();
   }
 
-  public void invoke(Project project, final Editor editor, PsiFile file) {
+  public void invoke(Project project, Editor editor, PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiElement element = getElement();
@@ -112,7 +112,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     list.setCellRenderer(renderer);
     renderer.installSpeedSearch(list);
 
-    final Runnable runnable = new Runnable() {
+    Runnable runnable = new Runnable() {
       public void run() {
         int index = list.getSelectedIndex();
         if (index < 0) return;
@@ -135,7 +135,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     listPopup.show(x, y);
   }
 
-  protected Editor positionCursor(final Project project, PsiFile targetFile, PsiElement element) {
+  protected Editor positionCursor(Project project, PsiFile targetFile, PsiElement element) {
     TextRange range = element.getTextRange();
     int textOffset = range.getStartOffset();
 
@@ -169,7 +169,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     if (qualifierExpression instanceof PsiReferenceExpression) {
       PsiReferenceExpression referenceExpression = (PsiReferenceExpression) qualifierExpression;
 
-      final PsiElement resolvedElement = referenceExpression.resolve();
+      PsiElement resolvedElement = referenceExpression.resolve();
 
       if (resolvedElement instanceof PsiClass) {
         return true;
@@ -280,8 +280,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     if (psiClass instanceof PsiTypeParameter) {
       PsiClass[] supers = psiClass.getSupers();
       List<PsiClass> filtered = new ArrayList<PsiClass>();
-      for (int i = 0; i < supers.length; i++) {
-        PsiClass aSuper = supers[i];
+      for (PsiClass aSuper : supers) {
         if (!aSuper.getManager().isInProject(aSuper)) continue;
         if (!(aSuper instanceof PsiTypeParameter)) filtered.add(aSuper);
       }

@@ -59,12 +59,13 @@ public class AnnotationsHighlightUtil {
   private static HighlightInfo checkDuplicateAttribute(PsiNameValuePair pair) {
     PsiAnnotationParameterList annotation = (PsiAnnotationParameterList) pair.getParent();
     PsiNameValuePair[] attributes = annotation.getAttributes();
-    for (int i = 0; i < attributes.length; i++) {
-      PsiNameValuePair attribute = attributes[i];
+    for (PsiNameValuePair attribute : attributes) {
       if (attribute == pair) break;
       if (Comparing.equal(attribute.getName(), pair.getName())) {
-        String description = MessageFormat.format(DUPLICATE_ATTRIBUTE, new Object[]{pair.getName() == null ?
-            PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : pair.getName()});
+        String description = MessageFormat.format(DUPLICATE_ATTRIBUTE, new Object[]{pair.getName() == null
+                                                                                    ?
+                                                                                    PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
+                                                                                    : pair.getName()});
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, pair, description);
       }
     }
@@ -119,14 +120,14 @@ public class AnnotationsHighlightUtil {
     List<HighlightInfo> result = new ArrayList<HighlightInfo>();
     Set<PsiClass> refInterfaces = new HashSet<PsiClass>();
     PsiAnnotation[] annotations = list.getAnnotations();
-    for (int i = 0; i < annotations.length; i++) {
-      PsiAnnotation annotation = annotations[i];
-      final PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
+    for (PsiAnnotation annotation : annotations) {
+      PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
       if (nameRef == null) return HighlightInfo.EMPTY_ARRAY;
       PsiClass aClass = (PsiClass)nameRef.resolve();
       if (aClass != null) {
         if (refInterfaces.contains(aClass)) {
-          result.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, annotation.getNameReferenceElement(), DUPLICATE_ANNOTATION));
+          result.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, annotation.getNameReferenceElement(),
+                                                       DUPLICATE_ANNOTATION));
         }
 
         refInterfaces.add(aClass);
@@ -137,14 +138,13 @@ public class AnnotationsHighlightUtil {
   }
 
   public static HighlightInfo checkMissingAttributes(PsiAnnotation annotation) {
-    final PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
+    PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
     if (nameRef == null) return null;
     PsiClass aClass = (PsiClass)nameRef.resolve();
     if (aClass !=  null && aClass.isAnnotationType()) {
       Set<String> names = new HashSet<String>();
       PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-      for (int i = 0; i < attributes.length; i++) {
-        PsiNameValuePair attribute = attributes[i];
+      for (PsiNameValuePair attribute : attributes) {
         if (attribute.getName() != null) {
           names.add(attribute.getName());
         }
@@ -155,8 +155,7 @@ public class AnnotationsHighlightUtil {
 
       PsiMethod[] annotationMethods = aClass.getMethods();
       List<String> missed = new ArrayList<String>();
-      for (int i = 0; i < annotationMethods.length; i++) {
-        PsiMethod method = annotationMethods[i];
+      for (PsiMethod method : annotationMethods) {
         if (method instanceof PsiAnnotationMethod) {
           PsiAnnotationMethod annotationMethod = (PsiAnnotationMethod)method;
           if (annotationMethod.getDefaultValue() == null) {
@@ -247,8 +246,7 @@ public class AnnotationsHighlightUtil {
               PsiAnnotationMemberValue value = attributes[0].getValue();
               if (value instanceof PsiArrayInitializerMemberValue) {
                 PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
-                for (int j = 0; j < initializers.length; j++) {
-                  PsiAnnotationMemberValue initializer = initializers[j];
+                for (PsiAnnotationMemberValue initializer : initializers) {
                   if (initializer instanceof PsiReferenceExpression) {
                     PsiReferenceExpression refExpr = (PsiReferenceExpression)initializer;
                     if (refExpr.isReferenceTo(elementType)) return null;

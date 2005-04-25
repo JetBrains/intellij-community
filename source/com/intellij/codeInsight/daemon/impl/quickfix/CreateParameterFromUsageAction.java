@@ -41,12 +41,12 @@ public class CreateParameterFromUsageAction extends CreateVarFromUsageAction {
       return;
     }
 
-    final PsiManager psiManager = myReferenceExpression.getManager();
-    final Project project = psiManager.getProject();
-    final PsiElementFactory factory = psiManager.getElementFactory();
+    PsiManager psiManager = myReferenceExpression.getManager();
+    Project project = psiManager.getProject();
+    PsiElementFactory factory = psiManager.getElementFactory();
 
 
-    final PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
+    PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
     PsiType type = expectedTypes[0];
 
     String varName = myReferenceExpression.getReferenceName();

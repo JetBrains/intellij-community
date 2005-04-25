@@ -15,7 +15,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 
 /**
  * User: anna
@@ -44,14 +43,13 @@ public class InspectionProfileConvertor {
 
   private boolean retrieveOldSettings(Element element) {
     boolean hasOldSettings = false;
-    for (Iterator<Element> iterator = element.getChildren("option").iterator(); iterator.hasNext();) {
-      final Element option = iterator.next();
-      final String name = option.getAttributeValue("name");
+    for (final Element option : (Iterable<? extends Element>)element.getChildren("option")) {
+      String name = option.getAttributeValue("name");
       if (name != null) {
         if (name.equals("DISPLAY_LEVEL_MAP")) {
-          final Element levelMap = option.getChild("value");
-          for (Iterator i = levelMap.getChildren().iterator(); i.hasNext();) {
-            Element e = (Element)i.next();
+          Element levelMap = option.getChild("value");
+          for (Object o : levelMap.getChildren()) {
+            Element e = (Element)o;
             String key = e.getName();
             String levelName = e.getAttributeValue("level");
             HighlightDisplayLevel level = HighlightDisplayLevel.find(levelName);
@@ -73,11 +71,11 @@ public class InspectionProfileConvertor {
 
   public void storeEditorHighlightingProfile(Element element) {
     if (retrieveOldSettings(element)) {
-      final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
-      final InspectionProfileImpl editorProfile = new InspectionProfileImpl(OLD_HIGHTLIGHTING_SETTINGS_PROFILE,
+      InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
+      InspectionProfileImpl editorProfile = new InspectionProfileImpl(OLD_HIGHTLIGHTING_SETTINGS_PROFILE,
                                                                             inspectionProfileManager);
 
-      final InspectionProfile.ModifiableModel editorProfileModel = editorProfile.getModifiableModel();
+      InspectionProfile.ModifiableModel editorProfileModel = editorProfile.getModifiableModel();
       editorProfileModel.setAdditionalJavadocTags(myAdditionalJavadocTags);
       fillErrorLevels(editorProfileModel);
       editorProfileModel.commit();
@@ -85,12 +83,12 @@ public class InspectionProfileConvertor {
   }
 
   public static void convertToNewFormat(File profileFile, InspectionProfile profile) throws IOException, JDOMException {
-    final InspectionTool[] tools = profile.getInspectionTools();
-    final Document document = JDOMUtil.loadDocument(profileFile);
-    for (Iterator i = document.getRootElement().getChildren("inspection_tool").iterator(); i.hasNext();) {
-      Element toolElement = (Element)i.next();
+    InspectionTool[] tools = profile.getInspectionTools();
+    Document document = JDOMUtil.loadDocument(profileFile);
+    for (Object o : document.getRootElement().getChildren("inspection_tool")) {
+      Element toolElement = (Element)o;
       String toolClassName = toolElement.getAttributeValue("class");
-      final String shortName = convertToShortName(toolClassName, tools);
+      String shortName = convertToShortName(toolClassName, tools);
       if (shortName == null) {
         continue;
       }
@@ -100,8 +98,8 @@ public class InspectionProfileConvertor {
   }
 
   private static void renameOldDefaultsProfile() {
-    final File profileDirectory = InspectionProfileManager.getProfileDirectory();
-    final File[] files = profileDirectory.listFiles(new FileFilter() {
+    File profileDirectory = InspectionProfileManager.getProfileDirectory();
+    File[] files = profileDirectory.listFiles(new FileFilter() {
       public boolean accept(File pathname) {
         if (pathname.getPath().endsWith(File.separator + "Default.xml")) {
           return true;
@@ -112,7 +110,7 @@ public class InspectionProfileConvertor {
     if (files == null || files.length != 1) {
       return;
     }
-    final File dest = new File(profileDirectory, OLD_DEFAUL_PROFILE + ".xml");
+    File dest = new File(profileDirectory, OLD_DEFAUL_PROFILE + ".xml");
     try {
       Document doc = JDOMUtil.loadDocument(files[0]);
       Element root = doc.getRootElement();
@@ -128,13 +126,12 @@ public class InspectionProfileConvertor {
     }
   }
 
-  private void fillErrorLevels(final InspectionProfile.ModifiableModel profile) {
+  private void fillErrorLevels(InspectionProfile.ModifiableModel profile) {
     InspectionTool[] tools = profile.getInspectionTools();
     LOG.assertTrue(tools != null, "Profile was not correctly init");
     //fill error levels
-    for (Iterator<String> iterator = myDisplayLevelMap.keySet().iterator(); iterator.hasNext();) {
+    for (final String shortName : myDisplayLevelMap.keySet()) {
       //key <-> short name
-      final String shortName = iterator.next();
       HighlightDisplayLevel level = myDisplayLevelMap.get(shortName);
 
       HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
@@ -156,9 +153,9 @@ public class InspectionProfileConvertor {
 
 
   private static String convertToShortName(String displayName, InspectionTool[] tools) {
-    for (int i = 0; i < tools.length; i++) {
-      if (displayName.equals(tools[i].getDisplayName())) {
-        return tools[i].getShortName();
+    for (InspectionTool tool : tools) {
+      if (displayName.equals(tool.getDisplayName())) {
+        return tool.getShortName();
       }
     }
     return null;

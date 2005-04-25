@@ -17,7 +17,7 @@ public class ChangeExtendsToImplementsFix extends ExtendsListFix {
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Change ''{0} {2}'' to ''{1} {2}''",
+    String text = MessageFormat.format("Change ''{0} {2}'' to ''{1} {2}''",
         new Object[]{
           (myClass.isInterface() == myClassToExtendFrom.isInterface() ? "implements" : "extends"),
           (myClass.isInterface() == myClassToExtendFrom.isInterface() ? "extends" : "implements"),

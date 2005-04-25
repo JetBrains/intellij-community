@@ -33,8 +33,7 @@ public class WrapExpressionFix implements IntentionAction {
     PsiClass aClass = expectedType.resolve();
     if (aClass != null) {
       PsiMethod[] methods = aClass.getMethods();
-      for (int i = 0; i < methods.length; i++) {
-        PsiMethod method = methods[i];
+      for (PsiMethod method : methods) {
         if (method.hasModifierProperty(PsiModifier.STATIC) &&
             method.getParameterList() != null &&
             method.getParameterList().getParameters().length == 1 &&

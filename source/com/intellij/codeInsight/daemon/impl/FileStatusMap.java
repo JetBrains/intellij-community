@@ -51,8 +51,8 @@ public class FileStatusMap {
     }
 
     synchronized(myRefCountHolderLock){
-      for(Iterator iterator = myDocumentsWithRefCountHolders.keySet().iterator(); iterator.hasNext();){
-        Document document = (Document)iterator.next();
+      for (Object o : myDocumentsWithRefCountHolders.keySet()) {
+        Document document = (Document)o;
         document.putUserData(REF_COUND_HOLDER_IN_EDITOR_DOCUMENT_KEY, null);
       }
       myDocumentsWithRefCountHolders.clear();

@@ -35,8 +35,8 @@ public class InsertNewFix implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(myMethodCall.getContainingFile())) return;
-    final PsiElementFactory factory = myMethodCall.getManager().getElementFactory();
-    final PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText("new X()",null);
+    PsiElementFactory factory = myMethodCall.getManager().getElementFactory();
+    PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText("new X()",null);
 
     newExpression.getClassReference().replace(factory.createClassReferenceElement(myClass));
     newExpression.getArgumentList().replace(myMethodCall.getArgumentList().copy());

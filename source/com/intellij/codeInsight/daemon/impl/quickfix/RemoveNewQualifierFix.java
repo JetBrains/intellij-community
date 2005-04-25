@@ -46,7 +46,7 @@ public class RemoveNewQualifierFix implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(expression.getContainingFile())) return;
-    final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
+    PsiJavaCodeReferenceElement classReference = expression.getClassReference();
     expression.getQualifier().delete();
     classReference.bindToElement(aClass);
   }

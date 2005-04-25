@@ -21,7 +21,7 @@ public class IgnoreExtResourceAction extends BaseIntentionAction {
 
     if (uri == null) return false;
 
-    final XmlFile xmlFile = XmlUtil.findXmlFile(file, uri);
+    XmlFile xmlFile = XmlUtil.findXmlFile(file, uri);
     if (xmlFile != null) return false;
 
     if (!uri.startsWith("http://") && !uri.startsWith("ftp://")) return false;
@@ -34,12 +34,12 @@ public class IgnoreExtResourceAction extends BaseIntentionAction {
     return "Ignore External Resource";
   }
 
-  public void invoke(final Project project, final Editor editor, PsiFile file) {
+  public void invoke(Project project, Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    final String uri = FetchExtResourceAction.findUri(file, offset);
+    String uri = FetchExtResourceAction.findUri(file, offset);
     if (uri == null) return;
 
     ExternalResourceManagerEx.getInstanceEx().addIgnoredResource(uri);

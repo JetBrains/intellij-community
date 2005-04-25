@@ -108,8 +108,8 @@ public class RenameWrongRefAction implements IntentionAction {
 
     if (!qualified && !(myRefExpr.getParent() instanceof PsiMethodCallExpression)) {
       PsiVariable[] vars = CreateFromUsageUtils.guessMatchingVariables(myRefExpr);
-      for (int i = 0; i < vars.length; i++) {
-        LookupItemUtil.addLookupItem(items, vars[i].getName(), "");
+      for (PsiVariable var : vars) {
+        LookupItemUtil.addLookupItem(items, var.getName(), "");
       }
     } else {
       class MyScopeProcessor extends BaseScopeProcessor {
@@ -147,16 +147,16 @@ public class RenameWrongRefAction implements IntentionAction {
 
       MyScopeProcessor processor = new MyScopeProcessor(myRefExpr);
       myRefExpr.processVariants(processor);
-      final PsiElement[] variants = processor.getVariants();
-      for (int i = 0; i < variants.length; i++) {
-        LookupItemUtil.addLookupItem(items, ((PsiNamedElement) variants[i]).getName(), "");
+      PsiElement[] variants = processor.getVariants();
+      for (PsiElement variant : variants) {
+        LookupItemUtil.addLookupItem(items, ((PsiNamedElement)variant).getName(), "");
       }
     }
 
     return items.toArray(new LookupItem[items.size()]);
   }
 
-  public void invoke(Project project, final Editor editor, final PsiFile file) {
+  public void invoke(Project project, final Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     Class[] scopes = new Class[]{PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiField.class, PsiFile.class};
     PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, scopes, true);
@@ -167,11 +167,11 @@ public class RenameWrongRefAction implements IntentionAction {
 
       Document document = editor.getDocument();
       TemplateBuilder builder = new TemplateBuilder(element);
-      for (int i = 0; i < refs.length; i++) {
-        PsiReferenceExpression expr = refs[i];
+      for (PsiReferenceExpression expr : refs) {
         if (!expr.equals(myRefExpr)) {
           builder.replaceElement(expr.getReferenceNameElement(), OTHER_VARIABLE_NAME, INPUT_VARIABLE_NAME, false);
-        } else {
+        }
+        else {
           builder.replaceElement(expr.getReferenceNameElement(), INPUT_VARIABLE_NAME, refExpr, true);
         }
       }

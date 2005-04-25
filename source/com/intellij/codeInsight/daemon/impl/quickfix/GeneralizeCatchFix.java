@@ -24,7 +24,7 @@ public class GeneralizeCatchFix implements IntentionAction {
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Generalize catch for ''{0}'' to ''{1}''",
+    String text = MessageFormat.format("Generalize catch for ''{0}'' to ''{1}''",
         new Object[]{
           HighlightUtil.formatType(myCatchParameter.getType()),
           HighlightUtil.formatType(myUnhandledException),
@@ -57,10 +57,9 @@ public class GeneralizeCatchFix implements IntentionAction {
     }
     if (myTryStatement == null) return false;
     // check we can generalize at least one catch
-    final PsiParameter[] catchBlockParameters = myTryStatement.getCatchBlockParameters();
-    for (int i = 0; i < catchBlockParameters.length; i++) {
-      PsiParameter catchBlockParameter = catchBlockParameters[i];
-      final PsiType type = catchBlockParameter.getType();
+    PsiParameter[] catchBlockParameters = myTryStatement.getCatchBlockParameters();
+    for (PsiParameter catchBlockParameter : catchBlockParameters) {
+      PsiType type = catchBlockParameter.getType();
       if (type == null) continue;
       if (myUnhandledException.isAssignableFrom(type)) {
         myCatchParameter = catchBlockParameter;
@@ -72,8 +71,8 @@ public class GeneralizeCatchFix implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(myElement.getContainingFile())) return;
-    final PsiElementFactory factory = myElement.getManager().getElementFactory();
-    final PsiTypeElement type = factory.createTypeElement(myUnhandledException);
+    PsiElementFactory factory = myElement.getManager().getElementFactory();
+    PsiTypeElement type = factory.createTypeElement(myUnhandledException);
     myCatchParameter.getTypeElement().replace(type);
   }
 

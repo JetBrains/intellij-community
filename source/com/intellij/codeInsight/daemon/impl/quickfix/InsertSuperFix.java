@@ -19,7 +19,7 @@ public class InsertSuperFix implements IntentionAction {
   }
 
   public String getText() {
-    final String text = "Insert 'super();'";
+    String text = "Insert 'super();'";
     return text;
   }
 
@@ -38,7 +38,7 @@ public class InsertSuperFix implements IntentionAction {
   public void invoke(Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(myConstructor.getContainingFile())) return;
     try {
-      final PsiStatement superCall = myConstructor.getManager().getElementFactory().createStatementFromText("super();",null);
+      PsiStatement superCall = myConstructor.getManager().getElementFactory().createStatementFromText("super();",null);
 
       PsiCodeBlock body = myConstructor.getBody();
       PsiJavaToken lBrace = body.getLBrace();

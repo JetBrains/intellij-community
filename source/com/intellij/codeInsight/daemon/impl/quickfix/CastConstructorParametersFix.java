@@ -18,7 +18,7 @@ public class CastConstructorParametersFix {
     ResolveResult resolved = ((PsiJavaReference) ctrRef.getReference()).advancedResolve(false);
     PsiClass aClass = (PsiClass) resolved.getElement();
     if (aClass == null) return;
-    final PsiMethod[] methods = aClass.getConstructors();
+    PsiMethod[] methods = aClass.getConstructors();
     CandidateInfo[] candidates = new CandidateInfo[methods.length];
     for (int i = 0; i < candidates.length; i++) {
       candidates[i] = new CandidateInfo(methods[i], resolved.getSubstitutor());

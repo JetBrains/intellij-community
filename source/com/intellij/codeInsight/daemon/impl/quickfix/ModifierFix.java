@@ -45,7 +45,7 @@ public class ModifierFix implements IntentionAction {
 
   public String getText() {
     String name = null;
-    final PsiElement parent = myModifierList.getParent();
+    PsiElement parent = myModifierList.getParent();
     if (parent instanceof PsiClass) {
       name = ((PsiClass)parent).getName();
     }
@@ -65,14 +65,14 @@ public class ModifierFix implements IntentionAction {
                                    PsiSubstitutor.EMPTY);
     }
     else if (parent instanceof PsiClassInitializer) {
-      final PsiClass containingClass = ((PsiClassInitializer)parent).getContainingClass();
-      final String className = containingClass instanceof PsiAnonymousClass ?
+      PsiClass containingClass = ((PsiClassInitializer)parent).getContainingClass();
+      String className = containingClass instanceof PsiAnonymousClass ?
                                "Anonymous class derived from " +
                                ((PsiAnonymousClass)containingClass).getBaseClassType().getPresentableText()
                                : containingClass.getName();
       name = className + " class initializer";
     }
-    final String text = MessageFormat.format("Make ''{0}'' {1}{2}",
+    String text = MessageFormat.format("Make ''{0}'' {1}{2}",
                                              new Object[]{
                                                name,
                                                (myShouldHave ? "" : "not "),
@@ -103,7 +103,7 @@ public class ModifierFix implements IntentionAction {
     }
   }
 
-  public void invoke(final Project project, Editor editor, final PsiFile file) {
+  public void invoke(Project project, Editor editor, final PsiFile file) {
 
     final List<PsiModifierList> modifiersList = new ArrayList<PsiModifierList>();
     PsiElement owner = myModifierList.getParent();

@@ -45,19 +45,18 @@ public class ImportClassAction implements IntentionAction {
     //[ven] show intention action always
     //if (DaemonCodeAnalyzer.getInstance(project).isImportHintsEnabled(file)) return false;
 
-    final List<PsiClass> classesToImport = getClassesToImport(manager);
+    List<PsiClass> classesToImport = getClassesToImport(manager);
     return classesToImport.size() != 0;
   }
 
   private List<PsiClass> getClassesToImport(PsiManager manager) {
     PsiShortNamesCache cache = manager.getShortNamesCache();
-    final String name = myRef.getReferenceName();
+    String name = myRef.getReferenceName();
     GlobalSearchScope scope = myRef.getResolveScope();
     PsiClass[] classes = cache.getClassesByName(name, scope);
     ArrayList<PsiClass> classList = new ArrayList<PsiClass>();
     boolean isAnnotationReference = myRef.getParent() instanceof PsiAnnotation;
-    for (int i = 0; i < classes.length; i++) {
-      PsiClass aClass = classes[i];
+    for (PsiClass aClass : classes) {
       if (isAnnotationReference && !(aClass.isAnnotationType())) continue;
       PsiFile file = aClass.getContainingFile();
       if (file instanceof PsiJavaFile) {
@@ -76,17 +75,17 @@ public class ImportClassAction implements IntentionAction {
     return classList;
   }
 
-  public void invoke(final Project project, final Editor editor, final PsiFile file) {
+  public void invoke(final Project project, final Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        final PsiManager manager = PsiManager.getInstance(project);
-        final List<PsiClass> classesToImport = getClassesToImport(manager);
+        PsiManager manager = PsiManager.getInstance(project);
+        List<PsiClass> classesToImport = getClassesToImport(manager);
         PsiClass[] classes = classesToImport.toArray(new PsiClass[classesToImport.size()]);
         if (classes.length == 0) return;
         CodeInsightUtil.sortIdenticalShortNameClasses(classes);
 
-        final AddImportAction action = new AddImportAction(project, myRef, classes, editor);
+        AddImportAction action = new AddImportAction(project, myRef, classes, editor);
         action.execute();
       }
     });

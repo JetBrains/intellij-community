@@ -34,9 +34,9 @@ public class CreateFieldFromUsageAction extends CreateVarFromUsageAction {
       return;
     }
 
-    final PsiManager psiManager = myReferenceExpression.getManager();
-    final Project project = psiManager.getProject();
-    final PsiElementFactory factory = psiManager.getElementFactory();
+    PsiManager psiManager = myReferenceExpression.getManager();
+    Project project = psiManager.getProject();
+    PsiElementFactory factory = psiManager.getElementFactory();
 
 
     PsiMember enclosingContext = null;
@@ -52,7 +52,7 @@ public class CreateFieldFromUsageAction extends CreateVarFromUsageAction {
     PsiFile targetFile = targetClass.getContainingFile();
 
     try {
-      final ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(myReferenceExpression, false);
+      ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(myReferenceExpression, false);
 
       String fieldName = myReferenceExpression.getReferenceName();
       PsiField field;
@@ -71,7 +71,7 @@ public class CreateFieldFromUsageAction extends CreateVarFromUsageAction {
         field = (PsiField)targetClass.add(field);
       }
 
-      final Editor newEditor = positionCursor(project, targetFile, field);
+      Editor newEditor = positionCursor(project, targetFile, field);
 
       setupVisibility(parentClass, targetClass, field.getModifierList());
 
@@ -94,7 +94,7 @@ public class CreateFieldFromUsageAction extends CreateVarFromUsageAction {
 
       builder.setEndVariableAfter(field.getNameIdentifier());
 
-      final Template template = builder.buildTemplate();
+      Template template = builder.buildTemplate();
 
       TextRange range = field.getTextRange();
       newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());

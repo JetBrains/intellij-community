@@ -87,8 +87,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
 
   private HighlightVisitor[] createHighlightVisitors() {
     HighlightVisitor[] highlightVisitors = myProject.getComponents(HighlightVisitor.class);
-    for (int i = 0; i < highlightVisitors.length; i++) {
-      final HighlightVisitor highlightVisitor = highlightVisitors[i];
+    for (final HighlightVisitor highlightVisitor : highlightVisitors) {
       highlightVisitor.init();
     }
     return highlightVisitors;
@@ -107,11 +106,11 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       AlternativeWay.processFile(myFile);
     }
     */
-    final PsiElement[] psiRoots = myFile.getPsiRoots();
+    PsiElement[] psiRoots = myFile.getPsiRoots();
 
     if (myUpdateAll) {
       DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
-      final RefCountHolder refCountHolder = daemonCodeAnalyzer.getFileStatusMap().getRefCountHolder(myDocument, myFile);
+      RefCountHolder refCountHolder = daemonCodeAnalyzer.getFileStatusMap().getRefCountHolder(myDocument, myFile);
       setRefCountHolders(refCountHolder);
 
       PsiElement dirtyScope = daemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(myDocument, FileStatusMap.NORMAL_HIGHLIGHTERS);
@@ -129,8 +128,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     }
     Collection<HighlightInfo> result = new THashSet<HighlightInfo>(100);
     try {
-      for (int j = 0; j < psiRoots.length; j++) {
-        final PsiElement psiRoot = psiRoots[j];
+      for (final PsiElement psiRoot : psiRoots) {
         long time = System.currentTimeMillis();
         PsiElement[] elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
         LOG.debug("Elements collected for: " + (System.currentTimeMillis() - time) / 1000.0 + "s");
@@ -155,8 +153,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
 
   private void addHighlights(Collection<HighlightInfo> result, Collection<HighlightInfo> highlights) {
     if (myCompiled) {
-      for (Iterator<HighlightInfo> iterator = highlights.iterator(); iterator.hasNext();) {
-        final HighlightInfo info = iterator.next();
+      for (final HighlightInfo info : highlights) {
         if (info.getSeverity() == HighlightSeverity.INFORMATION) {
           result.add(info);
         }
@@ -167,9 +164,8 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     }
   }
 
-  private void setRefCountHolders(final RefCountHolder refCountHolder) {
-    for (int i = 0; i < myHighlightVisitors.length; i++) {
-      HighlightVisitor visitor = myHighlightVisitors[i];
+  private void setRefCountHolders(RefCountHolder refCountHolder) {
+    for (HighlightVisitor visitor : myHighlightVisitors) {
       visitor.setRefCountHolder(refCountHolder);
     }
   }
@@ -212,17 +208,16 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     }
 
     List<HighlightVisitor> visitors = new ArrayList<HighlightVisitor>();
-    for (int i = 0; i < myHighlightVisitors.length; i++) {
-      HighlightVisitor visitor = myHighlightVisitors[i];
+    for (HighlightVisitor visitor : myHighlightVisitors) {
       if (visitor.suitableForFile(myFile)) visitors.add(visitor);
     }
 
     HighlightInfoFilter[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
 
-    for (int i = 0; i < elements.length; i++) {
+    for (PsiElement element1 : elements) {
       ProgressManager.getInstance().checkCanceled();
 
-      PsiElement element = elements[i];
+      PsiElement element = element1;
       if (skipParentsSet.contains(element)) {
         skipParentsSet.add(element.getParent());
         continue;
@@ -236,8 +231,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
 
       HighlightInfo[] highlights = holder.toArray(new HighlightInfo[holder.size()]);
 
-      for (int j = 0; j < highlights.length; j++) {
-        HighlightInfo info = highlights[j];
+      for (HighlightInfo info : highlights) {
         // have to filter out already obtained highlights
         if (gotHighlights.contains(info)) continue;
 
@@ -264,8 +258,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     PsiSearchHelper helper = psiManager.getSearchHelper();
     TodoItem[] todoItems = helper.findTodoItems(myFile, myStartOffset, myEndOffset);
     List<HighlightInfo> list = new ArrayList<HighlightInfo>();
-    for (int i = 0; i < todoItems.length; i++) {
-      TodoItem todoItem = todoItems[i];
+    for (TodoItem todoItem : todoItems) {
       TextRange range = todoItem.getTextRange();
       String description = myDocument.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset()).toString();
       HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.TODO, range, description,
@@ -284,10 +277,10 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       builder.analyzeFileDependencies(myFile, new DependenciesBuilder.DependencyProcessor() {
         public void process(PsiElement place, PsiElement dependency) {
           PsiFile dependencyFile = dependency.getContainingFile();
-          final InspectionManagerEx iManager = ((InspectionManagerEx)InspectionManager.getInstance(place.getProject()));
+          InspectionManagerEx iManager = ((InspectionManagerEx)InspectionManager.getInstance(place.getProject()));
           if (iManager.inspectionResultSuppressed(place, HighlightDisplayKey.ILLEGAL_DEPENDENCY.toString())) return;              
           if (dependencyFile != null && dependencyFile.isPhysical() && dependencyFile.getVirtualFile() != null) {
-            final DependencyRule[] rules = validationManager.getViolatorDependencyRules(myFile, dependencyFile);
+            DependencyRule[] rules = validationManager.getViolatorDependencyRules(myFile, dependencyFile);
             if (rules.length > 0) {
               HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ILLEGAL_DEPENDENCY, place,
                                                                      "Illegal dependency. Violated rules: \"" + rules[0].getDisplayText() +
@@ -312,10 +305,10 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>();
-    for (int i = 0; i < elements.length; i++) {
+    for (PsiElement element1 : elements) {
       ProgressManager.getInstance().checkCanceled();
 
-      PsiElement element = elements[i];
+      PsiElement element = element1;
       LineMarkerInfo info = getLineMarkerInfo(element);
       if (info != null) {
         array.add(info);
@@ -404,7 +397,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
 
   private static class EditDependencyRulesAction implements IntentionAction {
     private DependencyRule myRule;
-    public EditDependencyRulesAction(final DependencyRule rule) {
+    public EditDependencyRulesAction(DependencyRule rule) {
       myRule = rule;
     }
 

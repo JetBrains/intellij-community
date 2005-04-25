@@ -37,10 +37,10 @@ public class UpdateHighlightersUtil {
   private UpdateHighlightersUtil() {}
 
   public static void setHighlightersToEditor(Project project,
-                                             final Document document,
+                                             Document document,
                                              int startOffset,
                                              int endOffset,
-                                             final HighlightInfo[] highlights,
+                                             HighlightInfo[] highlights,
                                              int group) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     List<HighlightInfo> array = new ArrayList<HighlightInfo>();
@@ -48,8 +48,7 @@ public class UpdateHighlightersUtil {
     HighlightInfo[] oldHighlights = DaemonCodeAnalyzerImpl.getHighlights(document, project);
 
     if (oldHighlights != null) {
-      for (int i = 0; i < oldHighlights.length; i++) {
-        HighlightInfo info = oldHighlights[i];
+      for (HighlightInfo info : oldHighlights) {
         RangeHighlighter highlighter = info.highlighter;
         boolean toRemove;
         if (!highlighter.isValid()) {
@@ -73,8 +72,7 @@ public class UpdateHighlightersUtil {
       }
     }
 
-    for (int i = 0; i < highlights.length; i++) {
-      HighlightInfo info = highlights[i];
+    for (HighlightInfo info : highlights) {
       int layer;
       if (info.startOffset < startOffset || info.endOffset > endOffset) continue;
       HighlightSeverity severity = info.getSeverity();
@@ -116,11 +114,9 @@ public class UpdateHighlightersUtil {
       ranges2markers.put(new TextRange(info.startOffset, info.endOffset), info.highlighter);
       if (info.quickFixActionRanges != null) {
         info.quickFixActionMarkers = new ArrayList<Pair<IntentionAction, RangeMarker>>();
-        for (Iterator<Pair<IntentionAction, TextRange>> iterator = info.quickFixActionRanges.iterator();
-             iterator.hasNext();) {
-          Pair<IntentionAction, TextRange> pair = iterator.next();
+        for (Pair<IntentionAction, TextRange> pair : info.quickFixActionRanges) {
           TextRange range = pair.second;
-          RangeMarker marker= ranges2markers.get(range);
+          RangeMarker marker = ranges2markers.get(range);
           if (marker == null) {
             marker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset());
             ranges2markers.put(range, marker);
@@ -147,10 +143,10 @@ public class UpdateHighlightersUtil {
   public static final int OVERRIDEN_MARKERS_GROUP = 2;
 
   public static void setLineMarkersToEditor(Project project,
-                                            final Document document,
+                                            Document document,
                                             int startOffset,
                                             int endOffset,
-                                            final LineMarkerInfo[] markers,
+                                            LineMarkerInfo[] markers,
                                             int group) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
@@ -158,8 +154,7 @@ public class UpdateHighlightersUtil {
 
     LineMarkerInfo[] oldMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project);
     if (oldMarkers != null) {
-      for (int i = 0; i < oldMarkers.length; i++) {
-        LineMarkerInfo info = oldMarkers[i];
+      for (LineMarkerInfo info : oldMarkers) {
         RangeHighlighter highlighter = info.highlighter;
         boolean toRemove;
         if (!highlighter.isValid()) {
@@ -182,8 +177,7 @@ public class UpdateHighlightersUtil {
       }
     }
 
-    for (int i = 0; i < markers.length; i++) {
-      LineMarkerInfo info = markers[i];
+    for (LineMarkerInfo info : markers) {
       RangeHighlighter marker = document.getMarkupModel(project).addRangeHighlighter(info.startOffset,
                                                                                      info.startOffset,
                                                                                      HighlighterLayer.ADDITIONAL_SYNTAX,
@@ -244,8 +238,7 @@ public class UpdateHighlightersUtil {
 
         ArrayList<HighlightInfo> array = new ArrayList<HighlightInfo>();
         boolean changes = false;
-        for (int j = 0; j < highlights.length; j++) {
-          HighlightInfo info = highlights[j];
+        for (HighlightInfo info : highlights) {
           RangeHighlighter highlighter = info.highlighter;
           boolean toRemove = false;
 

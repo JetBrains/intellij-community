@@ -21,7 +21,7 @@ public class SafeDeleteFix implements IntentionAction {
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Safe delete ''{0}''",
+    String text = MessageFormat.format("Safe delete ''{0}''",
         new Object[]{
           HighlightMessageUtil.getSymbolName(myElement, PsiSubstitutor.EMPTY),
         });

@@ -44,10 +44,10 @@ public class AddReturnFix implements IntentionAction {
     if (!CodeInsightUtil.prepareFileForWrite(myMethod.getContainingFile())) return;
 
     try {
-      final String value = suggestReturnValue();
-      final PsiElementFactory factory = myMethod.getManager().getElementFactory();
+      String value = suggestReturnValue();
+      PsiElementFactory factory = myMethod.getManager().getElementFactory();
       PsiReturnStatement returnStatement = (PsiReturnStatement) factory.createStatementFromText("return " + value+";", myMethod);
-      final PsiCodeBlock body = myMethod.getBody();
+      PsiCodeBlock body = myMethod.getBody();
       returnStatement = (PsiReturnStatement) body.addBefore(returnStatement, body.getRBrace());
 
       TextRange range = returnStatement.getReturnValue().getTextRange();
@@ -62,31 +62,30 @@ public class AddReturnFix implements IntentionAction {
   }
 
   private String suggestReturnValue() {
-    final PsiType type = myMethod.getReturnType();
+    PsiType type = myMethod.getReturnType();
     // first try to find suitable local variable
     PsiVariable[] variables = getDeclaredVariables(myMethod);
-    for (int i = 0; i < variables.length; i++) {
-      PsiVariable variable = variables[i];
+    for (PsiVariable variable : variables) {
       if (variable.getType() != null
-          && type.equals(variable.getType())) return variable.getName();
+          && type.equals(variable.getType())) {
+        return variable.getName();
+      }
     }
     return CodeInsightUtil.getDefaultValueOfType(type);
   }
 
   private PsiVariable[] getDeclaredVariables(PsiMethod method) {
     List variables = new ArrayList();
-    final PsiStatement[] statements = method.getBody().getStatements();
-    for (int i = 0; i < statements.length; i++) {
-      PsiStatement statement = statements[i];
+    PsiStatement[] statements = method.getBody().getStatements();
+    for (PsiStatement statement : statements) {
       if (statement instanceof PsiDeclarationStatement) {
-        final PsiElement[] declaredElements = ((PsiDeclarationStatement) statement).getDeclaredElements();
-        for (int j = 0; j < declaredElements.length; j++) {
-          PsiElement declaredElement = declaredElements[j];
+        PsiElement[] declaredElements = ((PsiDeclarationStatement)statement).getDeclaredElements();
+        for (PsiElement declaredElement : declaredElements) {
           if (declaredElement instanceof PsiLocalVariable) variables.add(declaredElement);
         }
       }
     }
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    PsiParameter[] parameters = method.getParameterList().getParameters();
     variables.addAll(Arrays.asList(parameters));
     return (PsiVariable[]) variables.toArray(new PsiVariable[variables.size()]);
   }

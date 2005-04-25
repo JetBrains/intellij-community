@@ -38,7 +38,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
 
   public String getText() {
-    final String message;
+    String message;
     switch (myFixType) {
       case MAKE_FINAL:
         message = "Make ''{0}'' final";
@@ -101,12 +101,12 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   private void makeArray() throws IncorrectOperationException {
     PsiType type = myVariable.getType();
 
-    final PsiElementFactory factory = myClass.getManager().getElementFactory();
-    final PsiType newType = type.createArrayType();
+    PsiElementFactory factory = myClass.getManager().getElementFactory();
+    PsiType newType = type.createArrayType();
 
-    final PsiDeclarationStatement variableDeclarationStatement;
+    PsiDeclarationStatement variableDeclarationStatement;
     if (myVariable.hasInitializer()) {
-      final PsiExpression init = factory.createExpressionFromText("new " + newType.getCanonicalText() + " { " + myVariable.getInitializer().getText() + " }", myVariable);
+      PsiExpression init = factory.createExpressionFromText("new " + newType.getCanonicalText() + " { " + myVariable.getInitializer().getText() + " }", myVariable);
       variableDeclarationStatement = factory.createVariableDeclarationStatement(myVariable.getName(), newType, init);
     }
     else {
@@ -115,7 +115,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
         expression += "[1]";
         type = ((PsiArrayType) type).getComponentType();
       }
-      final PsiExpression init = factory.createExpressionFromText("new " + type.getCanonicalText() + expression, myVariable);
+      PsiExpression init = factory.createExpressionFromText("new " + type.getCanonicalText() + expression, myVariable);
       variableDeclarationStatement = factory.createVariableDeclarationStatement(myVariable.getName(), newType, init);
     }
     PsiVariable newVariable;
@@ -133,11 +133,11 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   private void copyToFinal() throws IncorrectOperationException {
     PsiManager psiManager = myClass.getManager();
-    final PsiElementFactory factory = psiManager.getElementFactory();
-    final PsiExpression initializer = factory.createExpressionFromText(myVariable.getName(), myClass);
-    final String newName = suggestNewName(psiManager.getProject(), myVariable);
-    final PsiType type = myVariable.getType();
-    final PsiDeclarationStatement copyDecl = factory.createVariableDeclarationStatement(newName, type, initializer);
+    PsiElementFactory factory = psiManager.getElementFactory();
+    PsiExpression initializer = factory.createExpressionFromText(myVariable.getName(), myClass);
+    String newName = suggestNewName(psiManager.getProject(), myVariable);
+    PsiType type = myVariable.getType();
+    PsiDeclarationStatement copyDecl = factory.createVariableDeclarationStatement(newName, type, initializer);
     PsiVariable newVariable = (PsiVariable)copyDecl.getDeclaredElements()[0];
     newVariable.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
     PsiElement statement = PsiUtil.getEnclosingStatement(myClass);
@@ -201,7 +201,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
       PsiReferenceExpression expression = outerReferences.get(i);
 
       // if it happens that variable referenced from another inner class, make sure it can be make final from there
-      final PsiClass innerClass = HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, expression);
+      PsiClass innerClass = HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, expression);
 
       if (innerClass != null) {
         int thisType = MAKE_FINAL;
@@ -222,8 +222,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   private static boolean canBeFinal(PsiVariable variable, List<PsiReferenceExpression> references) {
     // if there is at least one assignment to this variable, it cannot be final
-    final Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
-    final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
+    Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
+    Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
     for (int i = 0; i < references.size(); i++) {
       PsiReferenceExpression expression = references.get(i);
 
@@ -238,8 +238,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   private static boolean writtenInside(PsiVariable variable, PsiElement element) {
     if (element instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
-      final PsiExpression lExpression = assignmentExpression.getLExpression();
+      PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
+      PsiExpression lExpression = assignmentExpression.getLExpression();
       if (lExpression instanceof PsiReferenceExpression
           && ((PsiReferenceExpression) lExpression).resolve() == variable)
         return true;
@@ -252,9 +252,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
           && ((PsiReferenceExpression) operand).resolve() == variable)
         return true;
     }
-    final PsiElement[] children = element.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
+    PsiElement[] children = element.getChildren();
+    for (PsiElement child : children) {
       if (writtenInside(variable, child)) return true;
     }
     return false;

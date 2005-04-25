@@ -27,7 +27,7 @@ public class VariableTypeFix implements IntentionAction {
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Change ''{0}'' type to ''{1}''",
+    String text = MessageFormat.format("Change ''{0}'' type to ''{1}''",
         new Object[]{
           myVariable.getName(),
           myReturnType.getCanonicalText(),

@@ -65,16 +65,14 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   public void doCollectInformation(ProgressIndicator progress) {
     InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
 
-    final PsiElement[] psiRoots = myFile.getPsiRoots();
-    for (int j = 0; j < psiRoots.length; j++) {
-      final PsiElement psiRoot = psiRoots[j];
-
+    PsiElement[] psiRoots = myFile.getPsiRoots();
+    for (final PsiElement psiRoot : psiRoots) {
       PsiElement[] elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       Set<PsiElement> workSet = new THashSet<PsiElement>();
-      for (int i = 0; i < elements.length; i++) {
+      for (PsiElement element1 : elements) {
         ProgressManager.getInstance().checkCanceled();
 
-        PsiElement element = elements[i];
+        PsiElement element = element1;
         element = PsiTreeUtil.getParentOfType(element, CHECKABLE, false);
         while (element != null) {
           if (!workSet.add(element)) break;
@@ -87,15 +85,15 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       myTools = new ArrayList<LocalInspectionTool>();
 
       LocalInspectionTool[] tools = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getHighlightingLocalInspectionTools();
-      for (Iterator<PsiElement> iterator = workSet.iterator(); iterator.hasNext();) {
+      for (PsiElement psiElement : workSet) {
         ProgressManager.getInstance().checkCanceled();
         LocalInspectionTool currentTool = null;
         try {
-          PsiElement element = iterator.next();
+          PsiElement element = psiElement;
           if (element instanceof PsiMethod) {
             PsiMethod psiMethod = (PsiMethod)element;
-            for (int k = 0; k < tools.length; k++) {
-              currentTool = tools[k];
+            for (LocalInspectionTool tool : tools) {
+              currentTool = tool;
               if (iManager.isToCheckMember(psiMethod, currentTool.getID())) {
                 appendDescriptors(currentTool.checkMethod(psiMethod, iManager, true), currentTool);
               }
@@ -103,8 +101,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
           }
           else if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
             PsiClass psiClass = (PsiClass)element;
-            for (int k = 0; k < tools.length; k++) {
-              currentTool = tools[k];
+            for (LocalInspectionTool tool : tools) {
+              currentTool = tool;
               if (iManager.isToCheckMember(psiClass, currentTool.getID())) {
                 appendDescriptors(currentTool.checkClass(psiClass, iManager, true), currentTool);
               }
@@ -112,8 +110,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
           }
           else if (element instanceof PsiField) {
             PsiField psiField = (PsiField)element;
-            for (int k = 0; k < tools.length; k++) {
-              currentTool = tools[k];
+            for (LocalInspectionTool tool : tools) {
+              currentTool = tool;
               if (iManager.isToCheckMember(psiField, currentTool.getID())) {
                 appendDescriptors(currentTool.checkField(psiField, iManager, true), currentTool);
               }
@@ -137,18 +135,18 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
   //for tests only
   public HighlightInfo[] getHighlights() {
-    final ArrayList<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
+    ArrayList<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
     for (int i = 0; i < myDescriptors.size(); i++) {
       ProblemDescriptor problemDescriptor = myDescriptors.get(i);
-      final String message = renderDescriptionMessage(problemDescriptor);
-      final PsiElement psiElement = problemDescriptor.getPsiElement();
-      final HighlightInfo highlightInfo =
+      String message = renderDescriptionMessage(problemDescriptor);
+      PsiElement psiElement = problemDescriptor.getPsiElement();
+      HighlightInfo highlightInfo =
         HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, psiElement, message, message);
       highlights.add(highlightInfo);
       if (problemDescriptor.getFix() != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor));
       }
-      final LocalInspectionTool tool = myTools.get(i);
+      LocalInspectionTool tool = myTools.get(i);
       QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(tool, psiElement));
       QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(tool, psiElement));
       QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(tool));
@@ -164,8 +162,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       boolean isError = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getErrorLevel(
         HighlightDisplayKey.find(tool.getShortName())) ==
                         HighlightDisplayLevel.ERROR;
-      for (int i = 0; i < problemDescriptors.length; i++) {
-        ProblemDescriptor problemDescriptor = problemDescriptors[i];
+      for (ProblemDescriptor problemDescriptor : problemDescriptors) {
         if (!manager.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool.getID())) {
           myDescriptors.add(problemDescriptor);
           ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
@@ -195,19 +192,19 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     List<HighlightInfo> infos = new ArrayList<HighlightInfo>(myDescriptors.size());
     for (int i = 0; i < myDescriptors.size(); i++) {
       ProblemDescriptor descriptor = myDescriptors.get(i);
-      final LocalInspectionTool tool = myTools.get(i);
+      LocalInspectionTool tool = myTools.get(i);
       //TODO
       PsiElement psiElement = descriptor.getPsiElement();
       String message = renderDescriptionMessage(descriptor);
       final HighlightInfoType level = myLevels.get(i);
 
-      final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
-      final InspectionProfileImpl inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile();
+      HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+      InspectionProfileImpl inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile();
       if (!inspectionProfile.isToolEnabled(key)) continue;
       final boolean isError = inspectionProfile.getErrorLevel(key) == HighlightDisplayLevel.ERROR;
 
 
-      final HighlightInfoType type = new HighlightInfoType() {
+      HighlightInfoType type = new HighlightInfoType() {
         public HighlightSeverity getSeverity() {
           return isError ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
         }
@@ -217,7 +214,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
         }
       };
       String plainMessage = XmlUtil.unescape(message.replaceAll("<[^>]*>", ""));
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, psiElement, plainMessage, message);
+      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, psiElement, plainMessage, message);
       infos.add(highlightInfo);
       if (descriptor.getFix() != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor));
@@ -227,7 +224,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(tool));
     }
 
-    final HighlightInfo[] array = infos.toArray(new HighlightInfo[infos.size()]);
+    HighlightInfo[] array = infos.toArray(new HighlightInfo[infos.size()]);
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, array,
                                                    UpdateHighlightersUtil.INSPECTION_HIGHLIGHTERS_GROUP);
     myDescriptors = Collections.EMPTY_LIST;
@@ -239,8 +236,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
     ErrorStripeRenderer renderer = new RefreshStatusRenderer(myProject, daemonCodeAnalyzer, myDocument, myFile);
     Editor[] editors = EditorFactory.getInstance().getEditors(myDocument, myProject);
-    for (int i = 0; i < editors.length; i++) {
-      Editor editor = editors[i];
+    for (Editor editor : editors) {
       ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeRenderer(renderer);
     }
   }

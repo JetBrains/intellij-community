@@ -120,8 +120,8 @@ public class GuessTypeParameters {
       PsiTypeParameterList typeParameterList = currContext.getTypeParameterList();
       if (typeParameterList == null) break;
       PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
-      for (int i = 0; i < typeParameters.length; i++) {
-        substitutor = substitutor.put(typeParameters[i], null);
+      for (PsiTypeParameter typeParameter : typeParameters) {
+        substitutor = substitutor.put(typeParameter, null);
       }
 
       currContext = currContext.getContainingClass();

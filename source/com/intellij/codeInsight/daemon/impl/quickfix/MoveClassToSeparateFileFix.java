@@ -24,7 +24,7 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Move class ''{0}'' to ''{0}.java''",
+    String text = MessageFormat.format("Move class ''{0}'' to ''{0}.java''",
         new Object[]{
           myClass.getName(),
         });

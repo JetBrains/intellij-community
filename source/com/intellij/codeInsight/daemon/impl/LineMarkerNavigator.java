@@ -24,8 +24,8 @@ import java.util.Arrays;
 class LineMarkerNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LineMarkerNavigator");
 
-  public static void browse(final MouseEvent e, final LineMarkerInfo info) {
-    final PsiElement element = info.elementRef.get();
+  public static void browse(MouseEvent e, LineMarkerInfo info) {
+    PsiElement element = info.elementRef.get();
     if (element == null || !element.isValid()) return;
 
     if (element instanceof PsiMethod) {
@@ -88,8 +88,7 @@ class LineMarkerNavigator {
       Project project = manager.getProject();
       FileEditor[] editors = FileEditorManager.getInstance(project).openFile(virtualFile, true);
       if (field != null) {
-        for (int i = 0; i < editors.length; i++) {
-          FileEditor editor = editors[i];
+        for (FileEditor editor : editors) {
           if (editor instanceof UIFormEditor) {
             ((UIFormEditor)editor).selectComponent(field);
           }
@@ -98,9 +97,9 @@ class LineMarkerNavigator {
     }
   }
 
-  private static void openTargets(MouseEvent e, final PsiMember[] targets, String title, ListCellRenderer listRenderer) {
+  private static void openTargets(MouseEvent e, PsiMember[] targets, String title, ListCellRenderer listRenderer) {
     if (targets.length == 0) return;
-    final Project project = targets[0].getProject();
+    Project project = targets[0].getProject();
     if (targets.length == 1){
       targets[0].navigate(true);
     }
@@ -121,7 +120,7 @@ class LineMarkerNavigator {
         project
       );
 
-      final MouseEvent mouseEvent = e;
+      MouseEvent mouseEvent = e;
       Point p = new Point(mouseEvent.getPoint());
       SwingUtilities.convertPointToScreen(p, mouseEvent.getComponent());
 

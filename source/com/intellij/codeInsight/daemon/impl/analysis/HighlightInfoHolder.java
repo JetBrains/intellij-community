@@ -11,7 +11,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 /** @fabrique **/
 public class HighlightInfoHolder extends SmartList<HighlightInfo>{
@@ -31,7 +30,7 @@ public class HighlightInfoHolder extends SmartList<HighlightInfo>{
   public boolean add(HighlightInfo info) {
     if (info == null || !accepted(info)) return false;
 
-    final HighlightSeverity severity = info.getSeverity();
+    HighlightSeverity severity = info.getSeverity();
     if (severity == HighlightSeverity.ERROR) {
       myErrorCount++;
     }
@@ -46,8 +45,7 @@ public class HighlightInfoHolder extends SmartList<HighlightInfo>{
   }
 
   private boolean accepted(HighlightInfo info) {
-    for (int i = 0; i < myFilters.length; i++) {
-      HighlightInfoFilter filter = myFilters[i];
+    for (HighlightInfoFilter filter : myFilters) {
       if (!filter.accept(info.type, myContextFile)) return false;
     }
     return true;
@@ -80,8 +78,7 @@ public class HighlightInfoHolder extends SmartList<HighlightInfo>{
     if (highlightInfos == null) return false;
     LOG.assertTrue(highlightInfos != this);
     boolean added = false;
-    for (Iterator<? extends HighlightInfo> iterator = highlightInfos.iterator(); iterator.hasNext();) {
-      final HighlightInfo highlightInfo = iterator.next();
+    for (final HighlightInfo highlightInfo : highlightInfos) {
       added |= add(highlightInfo);
     }
     return added;

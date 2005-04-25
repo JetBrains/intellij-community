@@ -20,7 +20,7 @@ public class MakeClassInterfaceFix implements IntentionAction {
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Make ''{0}'' an interface",
+    String text = MessageFormat.format("Make ''{0}'' an interface",
         new Object[]{myClass.getName(),
         });
     return text;
@@ -38,9 +38,9 @@ public class MakeClassInterfaceFix implements IntentionAction {
     if (!CodeInsightUtil.prepareClassForWrite(myClass)) return;
 
     try {
-      final PsiJavaCodeReferenceElement[] referenceElements = myClass.getExtendsList().getReferenceElements();
-      for (int i = 0; i < referenceElements.length; i++) {
-        referenceElements[i].delete();
+      PsiJavaCodeReferenceElement[] referenceElements = myClass.getExtendsList().getReferenceElements();
+      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+        referenceElement.delete();
       }
       convertToInterface(myClass);
       QuickFixAction.markDocumentForUndo(file);

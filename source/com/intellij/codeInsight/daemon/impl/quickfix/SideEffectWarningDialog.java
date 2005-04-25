@@ -94,7 +94,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
+    JPanel panel = new JPanel(new BorderLayout());
 
     String text =
             "<html>There are possible side effects found in expressions assigned to the variable '" + myVariable.getName()+"'"
@@ -112,7 +112,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
              +"</li>";
     }
 
-    final JLabel label = new JLabel(text);
+    JLabel label = new JLabel(text);
     label.setIcon(Messages.getWarningIcon());
     panel.add(label, BorderLayout.NORTH);
     return panel;

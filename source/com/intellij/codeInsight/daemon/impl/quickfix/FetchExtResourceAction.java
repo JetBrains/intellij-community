@@ -46,7 +46,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
 
     if (uri == null) return false;
 
-    final XmlFile xmlFile = XmlUtil.findXmlFile(file, uri);
+    XmlFile xmlFile = XmlUtil.findXmlFile(file, uri);
     if (xmlFile != null) return false;
 
     if (!uri.startsWith("http://") && !uri.startsWith("ftp://")) return false;
@@ -60,24 +60,24 @@ public class FetchExtResourceAction extends BaseIntentionAction {
   }
 
   static String findUri(PsiFile file, int offset) {
-    final PsiElement currentElement = file.findElementAt(offset);
+    PsiElement currentElement = file.findElementAt(offset);
     PsiElement element = PsiTreeUtil.getParentOfType(currentElement, XmlDoctype.class);
     if (element != null) {
       return ((XmlDoctype)element).getDtdUri();
     }
 
-    final XmlAttribute attribute = PsiTreeUtil.getParentOfType(currentElement, XmlAttribute.class);
+    XmlAttribute attribute = PsiTreeUtil.getParentOfType(currentElement, XmlAttribute.class);
     if(attribute == null) return null;
 
     if (attribute.isNamespaceDeclaration()) {
-      final String uri = attribute.getValue();
-      final PsiElement parent = attribute.getParent();
+      String uri = attribute.getValue();
+      PsiElement parent = attribute.getParent();
 
       if (uri != null && parent instanceof XmlTag && ((XmlTag)parent).getNSDescriptor(uri, true) == null) {
         return uri;
       }
     } else if (attribute.getNamespace().equals(XmlUtil.XML_SCHEMA_INSTANCE_URI)) {
-      final String location = attribute.getValue();
+      String location = attribute.getValue();
 
       if (attribute.getLocalName().equals("noNamespaceSchemaLocation")) {
         if (XmlUtil.findXmlFile(file,location) == null) return location;
@@ -110,7 +110,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     }
   }
 
-  public void invoke(final Project project, final Editor editor, PsiFile file) {
+  public void invoke(final Project project, Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -160,7 +160,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
   private void fetchDtd(final Project project, final String dtdUrl) throws IOException {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
-    final String sep = File.separator;
+    String sep = File.separator;
     final String extResourcesPath = PathManager.getSystemPath() + sep + "extResources";
     final File extResources = new File(extResourcesPath);
     extResources.mkdirs();
@@ -169,12 +169,12 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     final PsiManager psiManager = PsiManager.getInstance(project);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
-        final Runnable action = new Runnable() {
+        Runnable action = new Runnable() {
           public void run() {
-            final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(
+            VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(
               extResources.getAbsolutePath().replace(File.separatorChar, '/'));
             LOG.assertTrue(vFile != null);
-            final PsiDirectory directory = psiManager.findDirectory(vFile);
+            PsiDirectory directory = psiManager.findDirectory(vFile);
             directory.getFiles();
           }
         };
@@ -300,7 +300,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     return resPath;
   }
 
-  public static List<String> extractEmbeddedFileReferences(final VirtualFile vFile, final PsiManager psiManager) {
+  public static List<String> extractEmbeddedFileReferences(VirtualFile vFile, PsiManager psiManager) {
     PsiFile file = psiManager.findFile(vFile);
     final List<String> result = new LinkedList<String>();
 
@@ -324,7 +324,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
               }
             }
           } else if (element instanceof XmlTag) {
-            final XmlTag tag = (XmlTag)element;
+            XmlTag tag = (XmlTag)element;
 
             if(tag.getLocalName().equals("include")) {
               //String namespace = tag.getNamespace();
@@ -353,13 +353,13 @@ public class FetchExtResourceAction extends BaseIntentionAction {
 
     try {
       URL url = new URL(dtdUrl);
-      final URLConnection urlConnection = url.openConnection();
+      URLConnection urlConnection = url.openConnection();
 
-      final int contentLength = urlConnection.getContentLength();
+      int contentLength = urlConnection.getContentLength();
       int bytesRead = 0;
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
-      final InputStream in = urlConnection.getInputStream();
+      InputStream in = urlConnection.getInputStream();
 
       byte[] buffer = new byte[256];
 

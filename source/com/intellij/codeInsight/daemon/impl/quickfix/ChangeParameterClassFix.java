@@ -40,7 +40,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
     ;
   }
 
-  public void invoke(final Project project, final Editor editor, final PsiFile file) {
+  public void invoke(final Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
@@ -73,19 +73,19 @@ public class ChangeParameterClassFix extends ExtendsListFix {
   }
 
   public static void registerQuickFixActions(PsiMethodCallExpression methodCall, PsiExpressionList list, HighlightInfo highlightInfo) {
-    final PsiMethod method = (PsiMethod)methodCall.getMethodExpression().resolve();
-    final PsiExpression[] expressions = list.getExpressions();
+    PsiMethod method = (PsiMethod)methodCall.getMethodExpression().resolve();
+    PsiExpression[] expressions = list.getExpressions();
     if (method == null || method.getParameterList() == null || method.getParameterList().getParameters().length != expressions.length) return;
     for (int i = 0; i < expressions.length; i++) {
       PsiExpression expression = expressions[i];
-      final PsiParameter parameter = method.getParameterList().getParameters()[i];
-      final PsiType expressionType = expression.getType();
-      final PsiType parameterType = parameter.getType();
+      PsiParameter parameter = method.getParameterList().getParameters()[i];
+      PsiType expressionType = expression.getType();
+      PsiType parameterType = parameter.getType();
       if (expressionType == null || expressionType instanceof PsiPrimitiveType || TypeConversionUtil.isNullType(expressionType) || expressionType instanceof PsiArrayType ) continue;
       if (parameterType == null || parameterType instanceof PsiPrimitiveType || TypeConversionUtil.isNullType(parameterType) || parameterType instanceof PsiArrayType ) continue;
       if (parameterType.isAssignableFrom(expressionType)) continue;
-      final PsiClass parameterClass = PsiUtil.resolveClassInType(parameterType);
-      final PsiClass expressionClass = PsiUtil.resolveClassInType(expressionType);
+      PsiClass parameterClass = PsiUtil.resolveClassInType(parameterType);
+      PsiClass expressionClass = PsiUtil.resolveClassInType(expressionType);
       if (parameterClass == null || expressionClass == null) continue;
       if (parameterClass.isInheritor(expressionClass, true)) continue;
       QuickFixAction.registerQuickFixAction(highlightInfo, new ChangeParameterClassFix(expressionClass, (PsiClassType)parameterType) );

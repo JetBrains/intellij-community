@@ -86,7 +86,7 @@ public class LineMarkerInfo {
       return getClassTooltip(aClass);
     }
     else if (element instanceof PsiField) {
-      final PsiField psiField = (PsiField)element;
+      PsiField psiField = (PsiField)element;
       return getFieldTooltip(psiField);
     }
     return null;
@@ -196,8 +196,7 @@ public class LineMarkerInfo {
     result.append("<html>");
     result.append(start);
     Set<String> names = new LinkedHashSet<String>();
-    for(int i = 0; i < elements.length; i++){
-      PsiElement element = elements[i];
+    for (PsiElement element : elements) {
       String descr = "";
       if (element instanceof PsiClass) {
         String className = ClassPresentationUtil.getNameForClass((PsiClass)element, true);
@@ -215,8 +214,7 @@ public class LineMarkerInfo {
     }
 
     String sep = "";
-    for (Iterator<String> iterator = names.iterator(); iterator.hasNext();) {
-      String name = iterator.next();
+    for (String name : names) {
       result.append(sep);
       sep = "<br>";
       result.append(name);

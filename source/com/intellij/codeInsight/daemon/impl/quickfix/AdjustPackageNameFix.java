@@ -23,7 +23,7 @@ public class AdjustPackageNameFix implements IntentionAction {
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Set package name to ''{0}''",
+    String text = MessageFormat.format("Set package name to ''{0}''",
         new Object[]{
           myTargetPackage.getQualifiedName(),
         });
@@ -48,7 +48,7 @@ public class AdjustPackageNameFix implements IntentionAction {
     if (!CodeInsightUtil.prepareFileForWrite(myFile)) return;
 
     try {
-      final PsiElementFactory factory = myFile.getManager().getElementFactory();
+      PsiElementFactory factory = myFile.getManager().getElementFactory();
       if (myTargetPackage.getQualifiedName().equals("")) {
         if (myStatement != null) {
           myStatement.delete();
@@ -56,11 +56,11 @@ public class AdjustPackageNameFix implements IntentionAction {
       }
       else {
         if (myStatement != null) {
-          final PsiJavaCodeReferenceElement packageReferenceElement = factory.createPackageReferenceElement(myTargetPackage);
+          PsiJavaCodeReferenceElement packageReferenceElement = factory.createPackageReferenceElement(myTargetPackage);
           myStatement.getPackageReference().replace(packageReferenceElement);
         }
         else {
-          final PsiPackageStatement packageStatement = factory.createPackageStatement(myTargetPackage.getQualifiedName());
+          PsiPackageStatement packageStatement = factory.createPackageStatement(myTargetPackage.getQualifiedName());
           myFile.addAfter(packageStatement, null);
         }
       }

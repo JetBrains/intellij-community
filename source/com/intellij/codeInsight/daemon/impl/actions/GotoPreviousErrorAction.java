@@ -14,7 +14,7 @@ public class GotoPreviousErrorAction extends BaseCodeInsightAction{
     return new GotoNextErrorHandler(false);
   }
 
-  protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
+  protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
     return DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file);
   }
 }

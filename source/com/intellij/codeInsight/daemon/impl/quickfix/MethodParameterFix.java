@@ -37,7 +37,7 @@ public class MethodParameterFix implements IntentionAction {
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Make ''{0}'' take parameter of type ''{1}'' here",
+    String text = MessageFormat.format("Make ''{0}'' take parameter of type ''{1}'' here",
         new Object[]{
           myMethod.getName(),
           myParameterType.getCanonicalText(),
@@ -92,11 +92,11 @@ public class MethodParameterFix implements IntentionAction {
 
   private ParameterInfo[] getNewParametersInfo() throws IncorrectOperationException {
     List<ParameterInfo> result = new ArrayList<ParameterInfo>();
-    final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
-    final PsiElementFactory factory = myMethod.getManager().getElementFactory();
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myMethod.getProject());
-    final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, myParameterType);
-    final PsiParameter newParameter = factory.createParameter(nameInfo.names[0], myParameterType);
+    PsiParameter[] parameters = myMethod.getParameterList().getParameters();
+    PsiElementFactory factory = myMethod.getManager().getElementFactory();
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myMethod.getProject());
+    SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, myParameterType);
+    PsiParameter newParameter = factory.createParameter(nameInfo.names[0], myParameterType);
 
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];

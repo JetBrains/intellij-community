@@ -64,13 +64,15 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
     PsiClass[] classes = getTargetClasses(myMethodCall);
     if (classes == null) return false;
 
-    for (int i = 0; i < classes.length; i++) {
-      PsiClass aClass = classes[i];
+    for (PsiClass aClass : classes) {
       if (!aClass.isInterface()) {
         if (shouldShowTag(offset, ref.getReferenceNameElement(), myMethodCall)) {
           setText("Create " + getterOrSetter);
           return true;
-        } else return false;
+        }
+        else {
+          return false;
+        }
       }
     }
 
@@ -86,12 +88,10 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
       LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
       LookupItemUtil.addLookupItem(set, field, "");
       PsiField[] fields = aClass.getFields();
-      for (int i = 0; i < fields.length; i++) {
-        PsiField otherField = fields[i];
+      for (PsiField otherField : fields) {
         if (!fieldName.equals(otherField.getName())) {
           PsiType otherType = otherField.getType();
-          for (int j = 0; j < expectedTypes.length; j++) {
-            PsiType type = expectedTypes[j];
+          for (PsiType type : expectedTypes) {
             if (type.equals(otherType)) {
               LookupItemUtil.addLookupItem(set, otherField, "");
             }
@@ -120,8 +120,7 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
     PsiClass[] all = super.getTargetClasses(element);
     if (all == null) return null;
 
-    for (int i = 0; i < all.length; i++) {
-      PsiClass aClass = all[i];
+    for (PsiClass aClass : all) {
       if (!aClass.isInterface()) return new PsiClass[]{aClass};
     }
     return null;
@@ -148,7 +147,7 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
     String fieldName = getVariableName(myMethodCall, isStatic);
     LOG.assertTrue(fieldName != null);
     String callText = myMethodCall.getMethodExpression().getReferenceName();
-    final PsiType[] expectedTypes;
+    PsiType[] expectedTypes;
     PsiType type;
     if (callText.startsWith("get")) {
       expectedTypes = CreateFromUsageUtils.guessType(myMethodCall, false);

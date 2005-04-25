@@ -47,8 +47,8 @@ public class AddImportAction implements QuestionAction {
     if (!myReference.isValid()){
       return false;
     }
-    for(int i = 0; i < myTargetClasses.length; i++){
-      if (!myTargetClasses[i].isValid()){
+    for (PsiClass myTargetClass : myTargetClasses) {
+      if (!myTargetClass.isValid()) {
         return  false;
       }
     }

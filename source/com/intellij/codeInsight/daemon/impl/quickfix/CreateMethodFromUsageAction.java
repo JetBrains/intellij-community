@@ -27,7 +27,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
 
   protected boolean isAvailableImpl(int offset) {
     PsiReferenceExpression ref = myMethodCall.getMethodExpression();
-    final String name = ref.getReferenceName();
+    String name = ref.getReferenceName();
 
     if (name == null || !ref.getManager().getNameHelper().isIdentifier(name)) return false;
 
@@ -41,7 +41,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
   }
 
   protected void invokeImpl(PsiClass targetClass) {
-    final PsiManager psiManager = myMethodCall.getManager();
+    PsiManager psiManager = myMethodCall.getManager();
     final Project project = psiManager.getProject();
     PsiReferenceExpression ref = myMethodCall.getMethodExpression();
 
@@ -64,9 +64,9 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
     String methodName = ref.getReferenceName();
 
     try {
-      final PsiElementFactory factory = psiManager.getElementFactory();
+      PsiElementFactory factory = psiManager.getElementFactory();
 
-      final ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(myMethodCall, true);
+      ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(myMethodCall, true);
 
       PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
 
@@ -111,7 +111,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
         builder.setEndVariableAfter(method);
       }
 
-      final Template template = builder.buildTemplate();
+      Template template = builder.buildTemplate();
 
       TextRange range = method.getTextRange();
       newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());

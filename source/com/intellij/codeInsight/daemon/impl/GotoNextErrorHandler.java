@@ -29,7 +29,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  private void gotoNextError(final Project project, final Editor editor, final PsiFile file, int caretOffset) {
+  private void gotoNextError(Project project, Editor editor, PsiFile file, int caretOffset) {
     HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), HighlightSeverity.WARNING, project);
     if (highlights.length == 0){
       showMessageWhenNoHighlights(project, file, editor);
@@ -45,11 +45,10 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
 
     int offsetToGo = myGoForward ? Integer.MAX_VALUE : Integer.MIN_VALUE;
     HighlightInfo infoToGo = null;
-    for(int i = 0; i < highlights.length; i++){
-      HighlightInfo info = highlights[i];
+    for (HighlightInfo info : highlights) {
       int startOffset = info.highlighter.getStartOffset();
       int endOffset = info.highlighter.getStartOffset();
-      final boolean isItBetter = myGoForward ? startOffset > caretOffset && startOffset < offsetToGo
+      boolean isItBetter = myGoForward ? startOffset > caretOffset && startOffset < offsetToGo
                                  : endOffset < caretOffset && startOffset > offsetToGo;
       if (isItBetter) {
         offsetToGo = startOffset;
@@ -77,7 +76,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     HintManager.getInstance().showInformationHint(editor, message);
   }
 
-  static boolean navigateToError(final Project project, final Editor editor, HighlightInfo info) {
+  static boolean navigateToError(Project project, final Editor editor, HighlightInfo info) {
     int oldOffset = editor.getCaretModel().getOffset();
 
     final int offset = getNavigationPositionFor(info);

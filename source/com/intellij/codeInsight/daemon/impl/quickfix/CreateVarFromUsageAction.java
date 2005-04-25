@@ -27,7 +27,7 @@ public abstract class CreateVarFromUsageAction extends CreateFromUsageBaseAction
   protected PsiElement getElement() {
     if (!myReferenceExpression.isValid() || !myReferenceExpression.getManager().isInProject(myReferenceExpression)) return null;
 
-    final PsiElement parent = myReferenceExpression.getParent();
+    PsiElement parent = myReferenceExpression.getParent();
 
     if (parent instanceof PsiMethodCallExpression) return null;
 

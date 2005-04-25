@@ -59,9 +59,8 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
-    final PsiElement[] psiRoots = myFile.getPsiRoots();
-    for (int i = 0; i < psiRoots.length; i++) {
-      final PsiElement psiRoot = psiRoots[i];
+    PsiElement[] psiRoots = myFile.getPsiRoots();
+    for (final PsiElement psiRoot : psiRoots) {
       PsiElement[] elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       myMarkers = collectLineMarkers(elements);
     }
@@ -84,16 +83,16 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>();
-    for(int i = 0; i < elements.length; i++){
+    for (PsiElement element : elements) {
       ProgressManager.getInstance().checkCanceled();
-      addLineMarkerInfo(elements[i], array);
+      addLineMarkerInfo(element, array);
     }
     return array.toArray(new LineMarkerInfo[array.size()]);
   }
 
   private void addLineMarkerInfo(PsiElement element, List<LineMarkerInfo> result) {
     if (element instanceof PsiIdentifier) {
-      final PsiManager manager = PsiManager.getInstance(myProject);
+      PsiManager manager = PsiManager.getInstance(myProject);
       PsiSearchHelper helper = manager.getSearchHelper();
       if (element.getParent() instanceof PsiMethod) {
         collectOverridingMethods(element, helper, manager, result);
@@ -113,12 +112,10 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
     if (aClass != null && aClass.getQualifiedName() != null) {
       PsiFile[] formFiles = helper.findFormsBoundToClass(aClass.getQualifiedName());
       filesLoop:
-      for (int i = 0; i < formFiles.length; i++) {
-        PsiFile file = formFiles[i];
-        final PsiReference[] references = file.getReferences();
-        for (int j = 0; j < references.length; j++) {
-          final PsiReference reference = references[j];
-          if(reference.isReferenceTo(field)){
+      for (PsiFile file : formFiles) {
+        PsiReference[] references = file.getReferences();
+        for (final PsiReference reference : references) {
+          if (reference.isReferenceTo(field)) {
             int offset = element.getTextRange().getStartOffset();
             result.add(new LineMarkerInfo(LineMarkerInfo.BOUND_CLASS_OR_FIELD, field, offset, Icons.UI_FORM_ICON));
             break filesLoop;
@@ -156,7 +153,7 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
     }
   }
 
-  private void collectOverridingMethods(PsiElement element, PsiSearchHelper helper, final PsiManager manager, List<LineMarkerInfo> result) {
+  private void collectOverridingMethods(PsiElement element, PsiSearchHelper helper, PsiManager manager, List<LineMarkerInfo> result) {
     PsiMethod method = (PsiMethod)element.getParent();
     if (method.getNameIdentifier().equals(element)){
       if (!PsiUtil.canBeOverriden(method)) return;

@@ -94,7 +94,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
 
   public Object clone() {
     DaemonCodeAnalyzerSettings settings = new DaemonCodeAnalyzerSettings();
-    final InspectionProfileImpl inspectionProfile = new InspectionProfileImpl("copy", InspectionProfileManager.getInstance());
+    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl("copy", InspectionProfileManager.getInstance());
     inspectionProfile.copyFrom(getInspectionProfile());
     settings.myInspectionProfile = inspectionProfile;
     settings.AUTOREPARSE_DELAY = AUTOREPARSE_DELAY;
@@ -107,7 +107,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     InspectionProfileConvertor.getInstance().storeEditorHighlightingProfile(element);
-    final String profileName = element.getAttributeValue("profile");
+    String profileName = element.getAttributeValue("profile");
     if (profileName != null) {
       myInspectionProfile = InspectionProfileManager.getInstance().getProfile(profileName);
       if (profileName.equals("Default")) {

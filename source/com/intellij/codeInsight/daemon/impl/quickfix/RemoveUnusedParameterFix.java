@@ -24,7 +24,7 @@ public class RemoveUnusedParameterFix implements IntentionAction {
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Remove Parameter ''{0}''", new Object[]{myParameter.getName(), });
+    String text = MessageFormat.format("Remove Parameter ''{0}''", new Object[]{myParameter.getName(), });
     return text;
   }
 
@@ -46,7 +46,7 @@ public class RemoveUnusedParameterFix implements IntentionAction {
   }
 
   private static void removeReferences(PsiParameter parameter) {
-    final PsiMethod method = (PsiMethod) parameter.getDeclarationScope();
+    PsiMethod method = (PsiMethod) parameter.getDeclarationScope();
     ChangeSignatureProcessor processor = new ChangeSignatureProcessor(parameter.getProject(),
                                                                       method,
         false, null,
@@ -64,7 +64,7 @@ public class RemoveUnusedParameterFix implements IntentionAction {
 
   public static ParameterInfo[] getNewParametersInfo(PsiMethod method, PsiParameter parameterToRemove) {
     List<ParameterInfo> result = new ArrayList<ParameterInfo>();
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       if (!Comparing.equal(parameter, parameterToRemove)) {

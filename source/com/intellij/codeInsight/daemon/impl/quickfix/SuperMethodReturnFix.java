@@ -32,7 +32,7 @@ public class SuperMethodReturnFix implements IntentionAction {
             PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS,
             0
     );
-    final String text = MessageFormat.format("Make ''{0}'' return ''{1}''",
+    String text = MessageFormat.format("Make ''{0}'' return ''{1}''",
             new Object[]{
               name,
               HighlightUtil.formatType(mySuperMethodType),

@@ -31,7 +31,7 @@ public class AddTypeCastFix implements IntentionAction {
   }
 
   public String getText() {
-    final String text = MessageFormat.format("Cast to ''{0}''",
+    String text = MessageFormat.format("Cast to ''{0}''",
         new Object[]{
           myType.getCanonicalText()
         });
