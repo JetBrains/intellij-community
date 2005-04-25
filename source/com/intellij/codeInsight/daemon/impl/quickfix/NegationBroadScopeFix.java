@@ -27,8 +27,15 @@ public class NegationBroadScopeFix implements IntentionAction {
     String operation = parent instanceof PsiInstanceOfExpression ? "instanceof" : ((PsiBinaryExpression)parent).getOperationSign().getText();
     text += operation + " ";
 
-    String rop = parent instanceof PsiInstanceOfExpression ? ((PsiInstanceOfExpression)parent).getCheckType().getText()
-      : ((PsiBinaryExpression)parent).getROperand().getText();
+    String rop;
+    if (parent instanceof PsiInstanceOfExpression) {
+      final PsiTypeElement type = ((PsiInstanceOfExpression)parent).getCheckType();
+      rop = type == null ? "" : type.getText();
+    }
+    else {
+      final PsiExpression rOperand = ((PsiBinaryExpression)parent).getROperand();
+      rop = rOperand == null ? "" : rOperand.getText();
+    }
 
     text += rop;
     text += ")'";
