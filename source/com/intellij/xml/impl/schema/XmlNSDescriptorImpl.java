@@ -71,7 +71,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
           if(checkElementNameEquivalence(localName, namespace, name, tag)) {
             final CachedValue<XmlElementDescriptor> cachedValue = tag.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<XmlElementDescriptor>() {
               public Result<XmlElementDescriptor> compute() {
-                final XmlElementDescriptorImpl xmlElementDescriptor = createElementDescriptor(tag);
+                final XmlElementDescriptor xmlElementDescriptor = createElementDescriptor(tag);
                 return new Result<XmlElementDescriptor>(xmlElementDescriptor, xmlElementDescriptor.getDependences());
               }
             },false);
@@ -108,7 +108,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return null;
   }
 
-  protected XmlElementDescriptorImpl createElementDescriptor(final XmlTag tag) {
+  protected XmlElementDescriptor createElementDescriptor(final XmlTag tag) {
     return new XmlElementDescriptorImpl(tag);
   }
 
