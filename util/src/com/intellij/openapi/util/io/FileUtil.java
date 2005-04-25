@@ -141,6 +141,10 @@ public class FileUtil {
   }
 
   private static File doCreateTempFile(String prefix, String suffix) throws IOException {
+    if (prefix.length() < 3) {
+      prefix = (prefix + "___").substring(0, 3);
+    }
+
     int exceptionsCount = 0;
     while(true){
       try{
