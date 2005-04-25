@@ -23,7 +23,7 @@ public class RelaxedNsXmlNSDescriptor extends XmlNSDescriptorImpl {
     return elementDescriptor;
   }
 
-  protected XmlElementDescriptorImpl createElementDescriptor(final XmlTag tag) {
+  protected XmlElementDescriptor createElementDescriptor(final XmlTag tag) {
     return new RelaxedNsXmlElementDescriptor(tag);
   }
 
