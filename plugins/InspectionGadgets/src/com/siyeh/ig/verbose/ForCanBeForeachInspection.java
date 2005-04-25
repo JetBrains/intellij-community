@@ -535,7 +535,11 @@ public class ForCanBeForeachInspection extends StatementInspection{
             return false;
         }
         final PsiExpression qualifier = initialMethodExpression.getQualifierExpression();
-        final PsiType qualifierType = qualifier == null ? null : qualifier.getType();
+        if(qualifier == null)
+        {
+            return false;
+        }
+        final PsiType qualifierType = qualifier.getType();
         if(!(qualifierType instanceof PsiClassType)){
             return false;
         }
