@@ -141,7 +141,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     private PsiPrefixExpression createNegatedExpression(PsiExpression otherOperand)  {
       try {
         return (PsiPrefixExpression)otherOperand.getManager().getElementFactory()
-            .createExpressionFromText("!" + otherOperand.getText(), otherOperand);
+            .createExpressionFromText("!(" + otherOperand.getText()+")", otherOperand);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
