@@ -413,17 +413,17 @@ public class MemberChooser extends DialogWrapper {
   }
 
   private void sortNode(DefaultMutableTreeNode node, boolean sorted) {
-    ArrayList arrayList = new ArrayList();
+    ArrayList<ElementNode> arrayList = new ArrayList<ElementNode>();
     Enumeration children = node.children();
     while (children.hasMoreElements()) {
-      arrayList.add(children.nextElement());
+      arrayList.add((ElementNode)children.nextElement());
     }
 
-    Collections.sort(arrayList, sorted ? (Comparator)new AlphaComparator() : new OrderComparator());
+    Collections.sort(arrayList, sorted ? new AlphaComparator() : new OrderComparator());
 
     node.removeAllChildren();
     for (int i = 0; i < arrayList.size(); i++) {
-      node.add((MutableTreeNode)arrayList.get(i));
+      node.add(arrayList.get(i));
     }
   }
 
@@ -919,15 +919,15 @@ public class MemberChooser extends DialogWrapper {
     }
   }
 
-  private static class AlphaComparator implements Comparator {
-    public int compare(Object o, Object o1) {
-      return ((ElementNode)o).getText().compareToIgnoreCase(((ElementNode)o1).getText());
+  private static class AlphaComparator implements Comparator<ElementNode> {
+    public int compare(ElementNode n1, ElementNode n2) {
+      return n1.getText().compareToIgnoreCase(n2.getText());
     }
   }
 
-  private static class OrderComparator implements Comparator {
-    public int compare(Object o1, Object o2) {
-      return ((ElementNode)o1).getOrder() - ((ElementNode)o2).getOrder();
+  private static class OrderComparator implements Comparator<ElementNode> {
+    public int compare(ElementNode n1, ElementNode n2) {
+      return n1.getOrder() - n2.getOrder();
     }
   }
 }
