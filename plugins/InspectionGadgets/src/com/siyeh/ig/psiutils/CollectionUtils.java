@@ -9,25 +9,25 @@ import java.util.Set;
 
 public class CollectionUtils{
     /**
-         * @noinspection StaticCollection
-         */
+     * @noinspection StaticCollection
+     */
     private static final Set s_collectionClassesRequiringCapacity =
-            new HashSet(10);
+             new HashSet(10);
     /**
-         * @noinspection StaticCollection
-         */
+     * @noinspection StaticCollection
+     */
     private static final Set s_allCollectionClasses = new HashSet(10);
     /**
-         * @noinspection StaticCollection
-         */
+     * @noinspection StaticCollection
+     */
     private static final Set s_allCollectionClassesAndInterfaces =
             new HashSet(10);
     /**
-         * @noinspection StaticCollection
-         */
+     * @noinspection StaticCollection
+     */
     private static final Map s_interfaceForCollection = new HashMap(10);
 
-    static{
+    static {
         s_collectionClassesRequiringCapacity.add("java.util.BitSet");
         s_collectionClassesRequiringCapacity.add("java.util.Vector");
         s_collectionClassesRequiringCapacity.add("java.util.ArrayList");
@@ -153,12 +153,12 @@ public class CollectionUtils{
     }
 
     public static boolean isCollectionWithInitialCapacity(PsiType type){
-        if(!(type instanceof PsiClassType)){
+        if(!(type instanceof PsiClassType)) {
             return false;
         }
         final PsiClassType classType = (PsiClassType) type;
         final PsiClass resolved = classType.resolve();
-        if(resolved == null){
+        if(resolved == null) {
             return false;
         }
         final String className = resolved.getQualifiedName();
@@ -166,12 +166,12 @@ public class CollectionUtils{
     }
 
     public static boolean isCollectionClass(PsiType type){
-        if(!(type instanceof PsiClassType)){
+        if(!(type instanceof PsiClassType)) {
             return false;
         }
         final PsiClassType classType = (PsiClassType) type;
         final PsiClass resolved = classType.resolve();
-        if(resolved == null){
+        if(resolved == null) {
             return false;
         }
         final String className = resolved.getQualifiedName();
@@ -179,12 +179,12 @@ public class CollectionUtils{
     }
 
     public static boolean isCollectionClassOrInterface(PsiType type){
-        if(!(type instanceof PsiClassType)){
+        if(!(type instanceof PsiClassType)) {
             return false;
         }
         final PsiClassType classType = (PsiClassType) type;
         final PsiClass resolved = classType.resolve();
-        if(resolved == null){
+        if(resolved == null) {
             return false;
         }
         final String className = resolved.getQualifiedName();
@@ -193,22 +193,22 @@ public class CollectionUtils{
 
     public static boolean isConstantArrayOfZeroSize(PsiField field){
         if(!field.hasModifierProperty(PsiModifier.STATIC) ||
-                   !field.hasModifierProperty(PsiModifier.FINAL)){
+                !field.hasModifierProperty(PsiModifier.FINAL)) {
             return false;
         }
         final PsiExpression initializer = field.getInitializer();
-        if(!(initializer instanceof PsiNewExpression)){
+        if(!(initializer instanceof PsiNewExpression)) {
             return false;
         }
         final PsiNewExpression expression = (PsiNewExpression) initializer;
         final PsiExpression[] dimensions = expression.getArrayDimensions();
-        if(dimensions != null){
-            if(dimensions.length != 1){
+        if(dimensions != null) {
+            if(dimensions.length != 1) {
                 return false;
             }
             final PsiExpression dimension = dimensions[0];
             final String dimensionText = dimension.getText();
-            if("0".equals(dimensionText)){
+            if("0".equals(dimensionText)) {
                 return true;
             }
         }
@@ -216,21 +216,21 @@ public class CollectionUtils{
     }
 
     public static boolean isArrayOrCollectionField(PsiExpression value){
-        if(!(value instanceof PsiReferenceExpression)){
+        if(!(value instanceof PsiReferenceExpression)) {
             return false;
         }
         final PsiReferenceExpression fieldReference =
                 (PsiReferenceExpression) value;
 
         final PsiElement element = fieldReference.resolve();
-        if(!(element instanceof PsiField)){
+        if(!(element instanceof PsiField)) {
             return false;
         }
         final PsiType type = fieldReference.getType();
-        if(type == null){
+        if(type == null) {
             return false;
         }
-        if(type.getArrayDimensions() > 0){
+        if(type.getArrayDimensions() > 0) {
             return !isConstantArrayOfZeroSize((PsiField) element);
         }
         return isCollectionClassOrInterface(type);
@@ -240,7 +240,7 @@ public class CollectionUtils{
         String baseName;
         final String arg;
         final int paramStart = name.indexOf((int) '<');
-        if(paramStart >= 0){
+        if(paramStart >= 0) {
             baseName = name.substring(0, paramStart);
             baseName = baseName.trim();
             arg = name.substring(paramStart);
