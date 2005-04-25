@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchResult;
@@ -52,7 +53,9 @@ public class SearchCommand {
             }
 
             public void processFile(PsiFile element) {
-              progress.setText( "Looking in "+element.getVirtualFile().getPresentableName() );
+              final VirtualFile virtualFile = element.getVirtualFile();
+              if (virtualFile!=null)
+                progress.setText( "Looking in "+virtualFile.getPresentableName() );
             }
 
             public void matchingFinished() {
