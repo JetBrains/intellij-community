@@ -785,6 +785,16 @@ public class DeclarationParsing extends Parsing {
       Loop:
         while(true){
           tokenType = lexer.getTokenType();
+
+          // Heuristic. Going to next line obviously means method signature is over, starting new method.
+          // Necessary for correct CompleteStatementTest operation.
+          char[] buf = lexer.getBuffer();
+          int start = lexer.getTokenStart();
+          for (int i = start - 1; i >= 0; i--) {
+            if (buf[i] == '\n') break Loop;
+            if (buf[i] != ' ' && buf[i] != '\t') break;
+          }
+
           if (tokenType == IDENTIFIER || tokenType == COMMA || tokenType == THROWS_KEYWORD) {
             TreeUtil.addChildren(invalidElementsGroup, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
           }
