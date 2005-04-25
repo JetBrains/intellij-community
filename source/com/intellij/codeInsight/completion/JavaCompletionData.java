@@ -602,21 +602,33 @@ public class JavaCompletionData extends CompletionData{
     variant.addCompletion(PsiKeyword.ASSERT, TailType.SPACE);
   }
 
-  static final ElementFilter END_OF_BLOCK = new AndFilter(
-    new LeftNeighbour(new OrFilter(new ElementFilter[]{
-      new TextFilter(ourBlockFinalizers),
-      new TextFilter("*/"),
-      new AndFilter(
-        new TextFilter(")"),
-        new NotFilter(
-          new OrFilter(
-            new ParentElementFilter(new ClassFilter(PsiExpressionList.class)),
-            new ParentElementFilter(new ClassFilter(PsiParameterList.class))
+  static final AndFilter START_OF_CODE_FRAGMENT = new AndFilter(
+    new ScopeFilter(new AndFilter(
+      new ClassFilter(PsiCodeFragment.class),
+      new ClassFilter(PsiExpressionCodeFragment.class, false)
+    )),
+    new StartElementFilter()
+  );
+
+  static final ElementFilter END_OF_BLOCK = new OrFilter(
+    new AndFilter(
+      new LeftNeighbour(new OrFilter(new ElementFilter[]{
+        new TextFilter(ourBlockFinalizers),
+        new TextFilter("*/"),
+        new AndFilter(
+          new TextFilter(")"),
+          new NotFilter(
+            new OrFilter(
+              new ParentElementFilter(new ClassFilter(PsiExpressionList.class)),
+              new ParentElementFilter(new ClassFilter(PsiParameterList.class))
+            )
           )
-        )
-      )
-    })),
-    new NotFilter(new TextFilter(".")));
+        ),
+      })),
+      new NotFilter(new TextFilter("."))
+    ),
+    START_OF_CODE_FRAGMENT
+  );
 
   private static final String[] PRIMITIVE_TYPES = new String[]{
     PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
