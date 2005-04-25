@@ -214,6 +214,9 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
       if (DataConstantsEx.EDITOR_WINDOW.equals(dataId)) {
         return myWindow;
       }
+      if (DataConstants.HELP_ID.equals(dataId)) {
+        return "ideaInterface.editor";
+      }
       return null;
     }
   }
