@@ -6,11 +6,12 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.VariableInspection;
+import com.siyeh.ig.psiutils.ClassUtils;
 
-public class UseOfSunClassesInspection extends VariableInspection {
+public class UseOfAWTPeerClassInspection extends VariableInspection {
 
     public String getDisplayName() {
-        return "Use of sun.* classes";
+        return "Use of AWT peer class";
     }
 
     public String getGroupDisplayName() {
@@ -18,15 +19,15 @@ public class UseOfSunClassesInspection extends VariableInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Use of Sun-supplied class #ref is non-portable #loc";
+        return "Use of AWT peer class #ref is non-portable #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ObsoleteCollectionVisitor(this, inspectionManager, onTheFly);
+        return new UseOfAWTPeerClassVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class ObsoleteCollectionVisitor extends BaseInspectionVisitor {
-        private ObsoleteCollectionVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class UseOfAWTPeerClassVisitor extends BaseInspectionVisitor {
+        private UseOfAWTPeerClassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
@@ -36,6 +37,10 @@ public class UseOfSunClassesInspection extends VariableInspection {
             if (type == null) {
                 return;
             }
+
+            if (!(type instanceof PsiClassType)) {
+                return;
+            }
             final PsiType deepComponentType = type.getDeepComponentType();
             if (deepComponentType == null) {
                 return;
@@ -43,11 +48,20 @@ public class UseOfSunClassesInspection extends VariableInspection {
             if(!(deepComponentType instanceof PsiClassType)) {
                 return;
             }
-            final PsiClassType classType = (PsiClassType) deepComponentType;
-            final String className = classType.getClassName();
-            if(className == null || !className.startsWith("sun.")) {
+            final PsiClass resolveClass = ((PsiClassType) deepComponentType).resolve();
+            if(resolveClass == null)
+            {
                 return;
             }
+            if(resolveClass.isEnum()||resolveClass.isInterface() || resolveClass.isAnnotationType())
+            {
+                return;
+            }
+            if(!ClassUtils.isSubclass(resolveClass, "java.awt.peer.ComponentPeer"))
+            {
+                return;
+            }
+
             final PsiTypeElement typeElement = variable.getTypeElement();
             registerError(typeElement);
         }
@@ -62,9 +76,15 @@ public class UseOfSunClassesInspection extends VariableInspection {
             {
                 return;
             }
-            final PsiClassType classType = (PsiClassType) type;
-            final String className = classType.getClassName();
-            if (className==null || !className.startsWith("sun.")) {
+            final PsiClass resolveClass = ((PsiClassType) type).resolve();
+            if(resolveClass == null) {
+                return;
+            }
+            if(resolveClass.isEnum() || resolveClass.isInterface() ||
+                    resolveClass.isAnnotationType()) {
+                return;
+            }
+            if(!ClassUtils.isSubclass(resolveClass, "java.awt.peer.ComponentPeer")) {
                 return;
             }
             final PsiJavaCodeReferenceElement classNameElement = newExpression.getClassReference();

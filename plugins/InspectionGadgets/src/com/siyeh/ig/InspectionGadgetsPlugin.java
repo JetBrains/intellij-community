@@ -286,6 +286,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private void registerNamingInspections(){
         final List inspectionClasses = m_inspectionClasses;
         //inspectionClasses.add(PackageNamingConventionInspection.class);
+        inspectionClasses.add(JUnitTestClassNamingConventionInspection.class);
+        inspectionClasses.add(JUnitAbstractTestClassNamingConventionInspection.class);
         inspectionClasses.add(ClassNamingConventionInspection.class);
         inspectionClasses.add(InterfaceNamingConventionInspection.class);
         inspectionClasses.add(InstanceVariableNamingConventionInspection.class);
@@ -695,6 +697,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(AnnotationClassInspection.class);
         inspectionClasses.add(AnnotationInspection.class);
         inspectionClasses.add(UseOfSunClassesInspection.class);
+        inspectionClasses.add(UseOfAWTPeerClassInspection.class);
+        inspectionClasses.add(UseOfJDBCDriverClassInspection.class);
     }
 
     private void registerInternationalInspections(){
