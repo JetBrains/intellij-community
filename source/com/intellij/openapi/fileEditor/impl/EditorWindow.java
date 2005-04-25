@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 
@@ -33,6 +34,7 @@ public class EditorWindow {
   protected final EditorsSplitters myOwner;
   private static final Icon MODIFIED_ICON = IconLoader.getIcon("/general/modified.png");
   private static final Icon GAP_ICON = EmptyIcon.create(MODIFIED_ICON.getIconWidth(), MODIFIED_ICON.getIconHeight());
+  private FocusWatcher myFrameTitleUpdater;
 
   protected EditorWindow(final EditorsSplitters owner) {
     myOwner = owner;
@@ -55,6 +57,12 @@ public class EditorWindow {
     if (myOwner.myCurrentWindow == null) {
       myOwner.setCurrentWindow(this, false);
     }
+    myFrameTitleUpdater = new FocusWatcher() {
+      protected void focusedComponentChanged(Component component) {
+        getManager().updateFileName(getSelectedFile());
+      }
+    };
+    myFrameTitleUpdater.install(myTabbedPane.getComponent());
   }
 
   private void createTabs(int tabPlacement) {
@@ -70,6 +78,7 @@ public class EditorWindow {
 
 
   private void dispose() {
+    myFrameTitleUpdater.deinstall(myTabbedPane.getComponent());
     disposeTabs();
     getWindows ().remove(this);
   }

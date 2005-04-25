@@ -1,28 +1,29 @@
 package com.intellij.debugger.ui.impl;
 
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
-import com.intellij.debugger.engine.jdi.StackFrameProxy;
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.SuspendManagerUtil;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.engine.jdi.StackFrameProxy;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerContextUtil;
+import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerStateManager;
-import com.intellij.debugger.impl.DebuggerContextUtil;
-import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.debugger.ui.impl.watch.DebuggerTree;
+import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.ui.ListenerUtil;
-import com.intellij.ide.DataManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,17 +61,6 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     DebuggerAction.installEditAction(getFrameTree(), DebuggerActions.EDIT_NODE_SOURCE);
 
     final AnAction setValueAction  = ActionManager.getInstance().getAction(DebuggerActions.SET_VALUE);
-    ListenerUtil.addMouseListener(getFrameTree(), new MouseAdapter(){
-      public void mouseClicked(MouseEvent e) {
-        if(e.getButton() == MouseEvent.BUTTON1 &&  e.getClickCount() == 2) {
-          Presentation presentation = (Presentation)setValueAction.getTemplatePresentation().clone();
-          final DataContext context = DataManager.getInstance().getDataContext(getFrameTree());
-          final AnActionEvent actionEvent = new AnActionEvent(null, context, "FRAME_TREE", presentation, ActionManager.getInstance(), 0);
-          setValueAction.update(actionEvent);
-          setValueAction.actionPerformed(actionEvent);
-        }
-      }
-    });
     setValueAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), getFrameTree());
   }
 
@@ -95,8 +85,7 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
 
   protected ActionPopupMenu createPopupMenu() {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(DebuggerActions.FRAME_PANEL_POPUP);
-    ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(DebuggerActions.FRAME_PANEL_POPUP, group);
-    return popupMenu;
+    return ActionManager.getInstance().createActionPopupMenu(DebuggerActions.FRAME_PANEL_POPUP, group);
   }
 
   public Object getData(String dataId) {
@@ -260,7 +249,9 @@ public class FramePanel extends DebuggerPanel implements DataProvider{
     }
 
     private java.util.List<StackFrameDescriptorImpl> getFrameList(ThreadReferenceProxyImpl thread) {
-      if(!getSuspendContext().getDebugProcess().getSuspendManager().isSuspended(thread)) return (java.util.List<StackFrameDescriptorImpl>)Collections.EMPTY_LIST;
+      if(!getSuspendContext().getDebugProcess().getSuspendManager().isSuspended(thread)) {
+        return (java.util.List<StackFrameDescriptorImpl>)Collections.EMPTY_LIST;
+      }
 
       java.util.List<StackFrameProxyImpl> frames;
       try {
