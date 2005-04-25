@@ -32,12 +32,22 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
       //JLS3 15.8.2
       if ("getClass".equals(method.getName()) && "java.lang.Object".equals(method.getContainingClass().getQualifiedName())) {
         PsiExpression qualifier = methodExpression.getQualifierExpression();
+        PsiType qualifierType = null;
         if (qualifier != null) {
+          qualifierType = TypeConversionUtil.erasure(qualifier.getType());
+        } else {
+          ASTNode parent = getTreeParent();
+          while(parent != null && parent.getElementType() != CLASS) parent = parent.getTreeParent();
+          if (parent != null) {
+            qualifierType = getManager().getElementFactory().createType((PsiClass)parent.getPsi());
+          }
+        }
+        if (qualifierType != null) {
           PsiClass javaLangClass = manager.findClass("java.lang.Class", getResolveScope());
           if (javaLangClass != null && javaLangClass.getTypeParameters().length == 1) {
             Map<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();
             map.put(javaLangClass.getTypeParameters()[0],
-                    PsiWildcardType.createExtends(manager, TypeConversionUtil.erasure(qualifier.getType())));
+                    PsiWildcardType.createExtends(manager, qualifierType));
             PsiSubstitutor substitutor = manager.getElementFactory().createSubstitutor(map);
             return manager.getElementFactory().createType(javaLangClass, substitutor);
           }
