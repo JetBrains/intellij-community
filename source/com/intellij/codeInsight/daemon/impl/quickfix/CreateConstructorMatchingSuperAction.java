@@ -62,15 +62,18 @@ public class CreateConstructorMatchingSuperAction extends BaseIntentionAction {
     }
 
     LOG.assertTrue(constructors.length >=1); // Otherwise we won't have been messing with all this stuff
+    boolean isCopyJavadoc = true;
     if (constructors.length > 1) {
       MemberChooser chooser = new MemberChooser(constructors, false, true, project);
       chooser.setTitle("Choose Super Class Constructors");
       chooser.show();
       if (chooser.getExitCode() != MemberChooser.OK_EXIT_CODE) return;
       constructors = (CandidateInfo[]) chooser.getSelectedElements(new CandidateInfo[0]);
+      isCopyJavadoc = chooser.isCopyJavadoc();
     }
 
     final CandidateInfo[] constructors1 = constructors;
+    final boolean isCopyJavadoc1 = isCopyJavadoc;
     ApplicationManager.getApplication().runWriteAction (
       new Runnable() {
         public void run() {
@@ -82,6 +85,7 @@ public class CreateConstructorMatchingSuperAction extends BaseIntentionAction {
               CandidateInfo candidate = constructors1[i];
               PsiMethod base = (PsiMethod) candidate.getElement();
               derived = GenerateMembersUtil.substituteGenericMethod(base, candidate.getSubstitutor());
+              if (!isCopyJavadoc1) derived.getDocComment().delete();
               derived.getNameIdentifier().replace(myClass.getNameIdentifier());
               StringBuffer buffer = new StringBuffer();
               buffer.append("void foo () {\nsuper(");
