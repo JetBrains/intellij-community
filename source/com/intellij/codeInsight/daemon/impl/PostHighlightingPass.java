@@ -280,7 +280,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
       int count = myRefCountHolder.getRefCount(field);
       if (count == 0) {
-        if (isSerialVersionUIDField(field)) return null;
+        if (isSerializationImplicitlyUsedField(field)) return null;
         String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_USED, new Object[]{identifier.getText()});
         HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field));
@@ -502,12 +502,12 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return aClass.isInheritor(serializableClass, true);
   }
 
-  private static boolean isSerialVersionUIDField(PsiField field) {
-    if (!field.getName().equals("serialVersionUID")) return false;
+  private static boolean isSerializationImplicitlyUsedField(PsiField field) {
+    final String name = field.getName();
+    if (!name.equals("serialVersionUID") && !name.equals("serialPersistentFields")) return false;
     if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = field.getContainingClass();
-    if (aClass != null && !isSerializable(aClass)) return false;
-    return true;
+    return aClass == null || isSerializable(aClass);
   }
 
   private static boolean isWriteObjectMethod(PsiMethod method) {

@@ -189,12 +189,12 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     return SHORT_NAME;
   }
 
-  private static boolean isSerialVersionUIDField(PsiField field) {
-    if (!"serialVersionUID".equals(field.getName())) return false;
+  private static boolean isSerializationImplicitlyUsedField(PsiField field) {
+    final String name = field.getName();
+    if (!"serialVersionUID".equals(name) && !"serialPersistentFields".equals(name)) return false;
     if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = field.getContainingClass();
-    if (aClass != null && !isSerializable(aClass)) return false;
-    return true;
+    return aClass == null || isSerializable(aClass);
   }
 
   private static boolean isWriteObjectMethod(PsiMethod method) {
@@ -361,7 +361,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
             public void visitField(final RefField refField) {
               myProcessedSuspicious.add(refField);
               PsiField psiField = (PsiField)refField.getElement();
-              if (isSerialVersionUIDField(psiField)) {
+              if (isSerializationImplicitlyUsedField(psiField)) {
                 getEntryPointsManager().addEntryPoint(refField, false);
                 return;
               }
