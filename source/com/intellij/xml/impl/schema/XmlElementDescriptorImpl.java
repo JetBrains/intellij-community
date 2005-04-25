@@ -40,8 +40,9 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
       final XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class, false);
       if(tag != null){
         final String namespacePrefix = tag.getPrefixByNamespace(namespace);
-        if(namespacePrefix != null && namespacePrefix.length() > 0)
+        if (namespacePrefix != null && namespacePrefix.length() > 0) {
           value = namespacePrefix + ":" + XmlUtil.findLocalNameByQualifiedName(value);
+        }
       }
     }
     return value;
@@ -183,7 +184,11 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     TypeDescriptor type = getType();
 
     if (type instanceof ComplexTypeDescriptor) {
-      return CONTENT_TYPE_CHILDREN;
+      final XmlElementDescriptorImpl[] elements = ((ComplexTypeDescriptor)type).getElements();
+
+      if (elements.length > 0) return CONTENT_TYPE_CHILDREN;
+
+      return CONTENT_TYPE_EMPTY;
     }
 
     return CONTENT_TYPE_MIXED;
