@@ -5,9 +5,11 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.text.CharArrayUtil;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -24,9 +26,8 @@ public class DescriptorComposer extends HTMLComposer {
   }
 
   public void compose(StringBuffer buf, RefEntity refEntity) {
-    Project project = myTool.getManager().getProject();
     if (refEntity instanceof RefElement) {
-      RefElement refElement = (RefElement) refEntity;
+      RefElement refElement = (RefElement)refEntity;
 
       genPageHeader(buf, refElement);
 
@@ -40,21 +41,21 @@ public class DescriptorComposer extends HTMLComposer {
           final ProblemDescriptor description = descriptions[i];
 
           startListItem(buf);
-          composeDescription(description, project, i, buf);
+          composeDescription(description, i, buf);
           doneListItem(buf);
         }
 
         doneList(buf);
 
         appendResolution(buf, myTool, refElement);
-      } else {
+      }
+      else {
         appendNoProblems(buf);
       }
     }
   }
 
   public void compose(StringBuffer buf, RefElement refElement, ProblemDescriptor descriptor) {
-    Project project = myTool.getManager().getProject();
     ProblemDescriptor[] descriptions = myTool.getDescriptions(refElement);
 
     int problemIdx = -1;
@@ -72,7 +73,7 @@ public class DescriptorComposer extends HTMLComposer {
     buf.append("<br>");
     appendAfterHeaderIndention(buf);
 
-    composeDescription(descriptor, project, problemIdx, buf);
+    composeDescription(descriptor, problemIdx, buf);
     final LocalQuickFix fix = descriptor.getFix();
     if (fix != null) {
       buf.append("<br><br>");
@@ -88,10 +89,7 @@ public class DescriptorComposer extends HTMLComposer {
     }
   }
 
-  private void composeDescription(final ProblemDescriptor description,
-                                  Project project,
-                                  int i,
-                                  StringBuffer buf) {
+  private void composeDescription(final ProblemDescriptor description, int i, StringBuffer buf) {
     PsiElement expression = description.getPsiElement();
     StringBuffer anchor = new StringBuffer();
     if (expression != null) {
@@ -100,7 +98,8 @@ public class DescriptorComposer extends HTMLComposer {
       anchor.append("<a HREF=\"");
       try {
         anchor.append(new URL(vFile.getUrl() + "#descr:" + i));
-      } catch (MalformedURLException e) {
+      }
+      catch (MalformedURLException e) {
         LOG.error(e);
       }
 
@@ -115,7 +114,26 @@ public class DescriptorComposer extends HTMLComposer {
     String descriptionTemplate = description.getDescriptionTemplate();
     if (descriptionTemplate != null) {
       String res = descriptionTemplate.replaceAll("#ref", anchor.toString());
-      res = res.replaceAll("#loc", "at line " + description.getLineNumber());
+      final int lineNumber = description.getLineNumber();
+      StringBuffer lineAnchor = new StringBuffer();
+      if (expression != null && lineNumber > 0) {
+        VirtualFile vFile = expression.getContainingFile().getVirtualFile();
+        Document doc = FileDocumentManager.getInstance().getDocument(vFile);
+        lineAnchor.append("at line ");
+        lineAnchor.append("<a HREF=\"");
+        try {
+          int offset = doc.getLineStartOffset(lineNumber - 1);
+          offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
+          lineAnchor.append(new URL(vFile.getUrl() + "#" + offset));
+        }
+        catch (MalformedURLException e) {
+          LOG.error(e);
+        }
+        lineAnchor.append("\">");
+        lineAnchor.append(Integer.toString(lineNumber));
+        lineAnchor.append("</a>");
+        res = res.replaceAll("#loc", lineAnchor.toString());
+      }
       buf.append(res);
     }
     else {
