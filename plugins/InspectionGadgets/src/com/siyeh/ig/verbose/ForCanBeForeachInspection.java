@@ -378,7 +378,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             final String baseName;
             final CodeStyleManager codeStyleManager =
                     CodeStyleManager.getInstance(project);
-            if(containerName == null){
+            if(containerName != null){
                 baseName = StringUtils.createSingularFromName(containerName);
             } else{
 
@@ -534,9 +534,8 @@ public class ForCanBeForeachInspection extends StatementInspection{
         if(!"iterator".equals(initialCallName)){
             return false;
         }
-        final PsiExpression qualifier =
-                initialMethodExpression.getQualifierExpression();
-        final PsiType qualifierType = qualifier.getType();
+        final PsiExpression qualifier = initialMethodExpression.getQualifierExpression();
+        final PsiType qualifierType = qualifier == null ? null : qualifier.getType();
         if(!(qualifierType instanceof PsiClassType)){
             return false;
         }
