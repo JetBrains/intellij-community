@@ -126,7 +126,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     List<PsiType> types = new ArrayList<PsiType>();
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child.getNode().getElementType() == JavaDocElementType.DOC_TYPE_HOLDER) {
-        if(child.getFirstChild() != null){
+        if(child.getFirstChild() instanceof PsiTypeElement){
           PsiTypeElement type = (PsiTypeElement)child.getFirstChild();
           types.add(type.getType());
         }
