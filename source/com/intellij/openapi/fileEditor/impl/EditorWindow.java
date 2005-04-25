@@ -124,13 +124,14 @@ public class EditorWindow {
   }
 
   private int calcIndexToSelect(VirtualFile fileBeingClosed, final int fileIndex) {
-    if (myTabbedPane.getSelectedIndex() != fileIndex) {
+    final int currentlySelectedIndex = myTabbedPane.getSelectedIndex();
+    if (currentlySelectedIndex != fileIndex) {
       // if the file being closed is not currently selected, keep the currently selected file open
-      return -1;
+      return (fileIndex < currentlySelectedIndex)? currentlySelectedIndex - 1 : -1;
     }
     // try to open last visited file
     final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().myProject).getFiles();
-    for (int idx = 0; idx < histFiles.length; idx++) {
+    for (int idx = histFiles.length - 1; idx >= 0; idx--) {
       final VirtualFile histFile = histFiles[idx];
       if (histFile.equals(fileBeingClosed)) {
         continue;

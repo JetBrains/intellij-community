@@ -190,8 +190,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
   }
 
   /**
-   * @return array of valid files that are in the history. Files with top
-   * indices are most recent.
+   * @return array of valid files that are in the history. The greater is index the more recent the file is.
    */
   public VirtualFile[] getFiles(){
     validateEntries();
