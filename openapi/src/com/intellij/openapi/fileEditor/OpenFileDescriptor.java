@@ -78,9 +78,7 @@ public class OpenFileDescriptor implements Navigatable {
   }
 
   public void navigate(boolean requestFocus) {
-    openFileAskingType(myProject, requestFocus);
-    Editor editor = FileEditorManager.getInstance(myProject).openTextEditor(this, requestFocus);
-
+    Editor editor = openFileAskingType(myProject, requestFocus);
     if (editor == null) return;
 
     Document document = editor.getDocument();
