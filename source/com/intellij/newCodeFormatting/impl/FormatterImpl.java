@@ -94,6 +94,9 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
     final FormatProcessor processor = new FormatProcessor(model, block, settings, indentOptions, affectedRange);
     WhiteSpace whiteSpace = processor.getWhiteSpaceBefore(offset);
     processor.setAllWhiteSpacesAreReadOnly();
+    if (whiteSpace == null) {
+      return offset;
+    }
     whiteSpace.setReadOnly(false);
     whiteSpace.setLineFeedsAreReadOnly(true);
     final IndentInfo indent;
