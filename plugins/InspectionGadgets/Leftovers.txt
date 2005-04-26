@@ -1,4 +1,3 @@
-    Query string should be constant
     Logging not wrapped in if block
     Public method without logging
     Logger constructed without the current class name as argument.
@@ -7,6 +6,7 @@
     Class name with forbidden name component
     Paired open/close for Sockets
     Paired open/close for Channels
+    Paired open/close for JNDI resources (Context, NamingEnumeration)
     Paired acquire/release for Locks
     Empty zip file entry
     Empty jar file entry

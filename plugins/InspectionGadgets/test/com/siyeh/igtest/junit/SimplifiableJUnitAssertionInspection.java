@@ -7,5 +7,7 @@ public class SimplifiableJUnitAssertionInspection extends TestCase{
     {
         assertTrue(3 == 4);
         assertEquals(false, new Object() != null);
+        assertTrue(false);
+        assertFalse("foo", true);
     }
 }

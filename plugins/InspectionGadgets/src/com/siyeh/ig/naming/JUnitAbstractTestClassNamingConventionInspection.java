@@ -22,7 +22,7 @@ public class JUnitAbstractTestClassNamingConventionInspection extends Convention
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
+        return GroupNames.JUNIT_GROUP_NAME;
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {

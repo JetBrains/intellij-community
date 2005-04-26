@@ -35,10 +35,7 @@ import com.siyeh.ig.performance.*;
 import com.siyeh.ig.portability.*;
 import com.siyeh.ig.resources.IOResourceInspection;
 import com.siyeh.ig.resources.JDBCResourceInspection;
-import com.siyeh.ig.security.CloneableClassInSecureContextInspection;
-import com.siyeh.ig.security.DeserializableClassInSecureContextInspection;
-import com.siyeh.ig.security.NonStaticInnerClassInSecureContextInspection;
-import com.siyeh.ig.security.SerializableClassInSecureContextInspection;
+import com.siyeh.ig.security.*;
 import com.siyeh.ig.serialization.*;
 import com.siyeh.ig.style.*;
 import com.siyeh.ig.threading.*;
@@ -270,6 +267,12 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(SerializableClassInSecureContextInspection.class);
         inspectionClasses.add(CloneableClassInSecureContextInspection.class);
         inspectionClasses.add(NonStaticInnerClassInSecureContextInspection.class);
+        inspectionClasses.add(RuntimeExecWithNonConstantStringInspection.class);
+        inspectionClasses.add(LoadLibraryWithNonConstantStringInspection.class);
+        inspectionClasses.add(JDBCExecuteWithNonConstantStringInspection.class);
+        inspectionClasses.add(JDBCPrepareStatementWithNonConstantStringInspection.class);
+        inspectionClasses.add(CustomClassloaderInspection.class);
+        inspectionClasses.add(CustomSecurityManagerInspection.class);
     }
 
     private void registerImportInspections(){
@@ -491,6 +494,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(AssignmentToCatchBlockParameterInspection.class);
         inspectionClasses.add(AssignmentToForLoopParameterInspection.class);
         inspectionClasses.add(NestedAssignmentInspection.class);
+        inspectionClasses.add(LabeledStatementInspection.class);
         inspectionClasses.add(BreakStatementInspection.class);
         inspectionClasses.add(BreakStatementWithLabelInspection.class);
         inspectionClasses.add(ContinueStatementInspection.class);
@@ -761,6 +765,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         final List inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(SystemOutErrInspection.class);
         inspectionClasses.add(ThrowablePrintStackTraceInspection.class);
+        inspectionClasses.add(TodoCommentInspection.class);
         inspectionClasses.add(ThreadDumpStackInspection.class);
         inspectionClasses.add(ClassWithoutToStringInspection.class);
         inspectionClasses.add(ObsoleteCollectionInspection.class);
