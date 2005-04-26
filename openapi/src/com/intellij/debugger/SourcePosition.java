@@ -8,21 +8,31 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.pom.Navigatable;
 
 /**
  * User: lex
  * Date: Oct 24, 2003
  * Time: 8:23:06 PM
  */
-public abstract class SourcePosition {
+public abstract class SourcePosition implements Navigatable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.SourcePosition");
 
-  public abstract PsiFile getFile  ();
-  public abstract int     getLine  (); //0 - based
-  public abstract int     getOffset();
+  public abstract PsiFile getFile();
+
+  /**
+   * @return a zero-based line number
+   */
+  public abstract int getLine();
+
+  public abstract int getOffset();
 
   private abstract static class SourcePositionCache extends SourcePosition {
     private final PsiFile myFile;
@@ -39,6 +49,30 @@ public abstract class SourcePosition {
 
     public PsiFile getFile() {
       return myFile;
+    }
+
+    public boolean canNavigate() {
+      return getFile().isValid();
+    }
+
+    public boolean canNavigateToSource() {
+      return canNavigate();
+    }
+
+    public void navigate(final boolean requestFocus) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          if (!canNavigate()) {
+            return;
+          }
+          final PsiFile psiFile = getFile();
+          final Project project = psiFile.getProject();
+          if (project.isDisposed()) {
+            return;
+          }
+          FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, psiFile.getVirtualFile(), getOffset()), requestFocus);
+        }
+      });
     }
 
     private boolean checkRecalculate() {

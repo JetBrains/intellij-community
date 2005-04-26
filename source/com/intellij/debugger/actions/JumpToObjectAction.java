@@ -27,30 +27,28 @@ import java.util.List;
 public class JumpToObjectAction extends DebuggerAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.JumpToObjectAction");
   public void actionPerformed(AnActionEvent e) {
-    final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-
     DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
-    if(selectedNode == null) return;
+    if(selectedNode == null) {
+      return;
+    }
 
     final NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
-    if(!(descriptor instanceof ValueDescriptor)) return;
+    if(!(descriptor instanceof ValueDescriptor)) {
+      return;
+    }
 
     DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-    if(debugProcess == null) return;
+    if(debugProcess == null) {
+      return;
+    }
 
     debugProcess.getManagerThread().invokeLater(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
       public void contextAction() throws Exception {
         final SourcePosition sourcePosition = calcPosition((ValueDescriptor)descriptor, debugProcess);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, sourcePosition.getFile().getVirtualFile(), sourcePosition.getOffset()), true);
-          }
-        });
+        sourcePosition.navigate(true);
       }
     });
-
-
   }
 
   public void update(final AnActionEvent e) {

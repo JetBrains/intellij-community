@@ -32,11 +32,7 @@ public class EditSourceAction extends DebuggerAction{
         public void threadAction() {
           final SourcePosition sourcePosition = getSourcePosition(selectedNode, debuggerContext);
           if (sourcePosition != null) {
-            DebuggerInvocationUtil.invokeLater(project, new Runnable() {
-              public void run() {
-                FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, sourcePosition.getFile().getVirtualFile(), sourcePosition.getOffset()), true);
-              }
-            });
+            sourcePosition.navigate(true);
           }
         }
       });
