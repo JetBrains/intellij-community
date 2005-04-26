@@ -59,7 +59,7 @@ public class RedundantCastInspection extends BaseLocalInspectionTool {
   }
 
   private ProblemDescriptor[] getDescriptions(PsiElement where, InspectionManager manager) {
-    List<PsiTypeCastExpression> redundantCasts = RedundantCastUtil.getRedundantCasts(where);
+    List<PsiTypeCastExpression> redundantCasts = RedundantCastUtil.getRedundantCastsInside(where);
     if (redundantCasts.isEmpty()) return null;
     ProblemDescriptor[] descriptions = new ProblemDescriptor[redundantCasts.size()];
     for (int i = 0; i < redundantCasts.size(); i++) {
@@ -75,7 +75,7 @@ public class RedundantCastInspection extends BaseLocalInspectionTool {
   }
 
 
-  private class AcceptSuggested implements LocalQuickFix {
+  private static class AcceptSuggested implements LocalQuickFix {
     public String getName() {
       return "Remove Redundant Cast(s)";
     }
@@ -99,7 +99,7 @@ public class RedundantCastInspection extends BaseLocalInspectionTool {
     return SHORT_NAME;
   }
 
-  private void removeCast(PsiTypeCastExpression castExpression) {
+  private static void removeCast(PsiTypeCastExpression castExpression) {
     if (castExpression == null) return;
     PsiExpression operand = castExpression.getOperand();
     if (operand == null) return;

@@ -22,7 +22,7 @@ import java.util.Set;
 
 public class RedundantCastUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastUtil");
-  public static List<PsiTypeCastExpression> getRedundantCasts(PsiElement where) {
+  public static List<PsiTypeCastExpression> getRedundantCastsInside(PsiElement where) {
     final ArrayList<PsiTypeCastExpression> result = new ArrayList<PsiTypeCastExpression>();
     PsiElementProcessor<PsiTypeCastExpression> processor = new PsiElementProcessor<PsiTypeCastExpression>() {
       public boolean execute(PsiTypeCastExpression element) {
@@ -30,7 +30,7 @@ public class RedundantCastUtil {
         return true;
       }
     };
-    where.accept(new MyCollectingVisitor(processor));
+    where.acceptChildren(new MyCollectingVisitor(processor));
     return result;
   }
 
@@ -51,6 +51,18 @@ public class RedundantCastUtil {
 
     public void visitElement(PsiElement element) {
       element.acceptChildren(this);
+    }
+
+    public void visitClass(PsiClass aClass) {
+      // avoid multiple visit
+    }
+
+    public void visitMethod(PsiMethod method) {
+      // avoid multiple visit
+    }
+
+    public void visitField(PsiField field) {
+      // avoid multiple visit
     }
 
     protected void addToResults(PsiTypeCastExpression typeCast){

@@ -135,6 +135,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
     addIntroduceConstantFix(foundExpr, originalExpression, manager, msg, allProblems);
 
+    //TODO enhance problem descriptor with multiple quick fixes
     //addReplaceWithConstantFixes(foundExpr, originalExpression, manager, allProblems);
   }
 
@@ -159,11 +160,17 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
             };
             return new BaseOccurenceManager(filter) {
               protected PsiExpression[] defaultOccurences() {
-                return expressions;
+                return findOccurences();
               }
 
               protected PsiExpression[] findOccurences() {
-                return expressions;
+                List<PsiExpression> validExpressions = new ArrayList<PsiExpression>(foundExpr);
+                for (PsiExpression expression : validExpressions) {
+                  if (expression.isValid()) {
+                    validExpressions.add(expression);
+                  }
+                }
+                return validExpressions.toArray(new PsiExpression[validExpressions.size()]);
               }
             };
           }
@@ -177,6 +184,16 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     };
     ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(originalExpression, msg, introduceQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     allProblems.add(problemDescriptor);
+  }
+
+  private static PsiExpression[] filterValidExpressions(final List<PsiExpression> foundExpr) {
+    List<PsiExpression> validExpressions = new ArrayList<PsiExpression>(foundExpr);
+    for (PsiExpression expression : validExpressions) {
+      if (expression.isValid()) {
+        validExpressions.add(expression);
+      }
+    }
+    return validExpressions.toArray(new PsiExpression[validExpressions.size()]);
   }
 
   private static void addReplaceWithConstantFixes(final List<PsiExpression> foundExpr,
