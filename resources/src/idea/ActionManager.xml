@@ -227,7 +227,6 @@
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" text="S_ynchronize" icon="/actions/sync.png" description="Detect all externally changed files and reload them from disk"/>
         <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction" text="Reload from Dis_k" description="Reload current file from disk and lose all changes"/>
         <separator/>
-        <action id="OpenInBrowser" class="com.intellij.ide.actions.OpenFileInBrowserAction" text="Open in Bro_wser"/>
         <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction" text="Export to _HTML..." description="Save file content in HTML format with syntax coloring"/>
         <action id="Print" class="com.intellij.codeEditor.printing.PrintAction" text="_Print..." description="Print file"/>
         <separator/>
@@ -309,6 +308,7 @@
         <separator/>
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction" text="_Jump to Source" description="Open editor for the selected item and give focus to it"/>
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction" text="Sho_w Source" description="Open editor for the selected item"/>
+        <action id="OpenInBrowser" class="com.intellij.ide.actions.OpenFileInBrowserAction" text="Open in _Browser"/>
         <separator/>
         <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction" text="External Java_Doc" description="Open browser with JavaDoc for the selected item"/>
         <action id="RecentFiles" class="com.intellij.ide.actions.ShowRecentFilesAction" text="Rece_nt Files..." description="Show list of recently edited files"/>
