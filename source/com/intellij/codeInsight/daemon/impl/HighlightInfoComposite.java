@@ -53,23 +53,24 @@ public class HighlightInfoComposite extends HighlightInfo {
 
   private static String createCompositeTooltip(List<HighlightInfo> infos) {
     StringBuffer result = new StringBuffer();
-    boolean isNull = true;
     for (int i = 0; i < infos.size(); i++) {
       HighlightInfo info = infos.get(i);
-      if (result.length() != 0) result.append(LINE_BREAK);
       String toolTip = info.toolTip;
-      isNull &= info.toolTip == null;
-      if (toolTip != null && toolTip.startsWith(HTML_HEADER)) {
-        toolTip = toolTip.substring(HTML_HEADER.length());
+      if (toolTip != null) {
+        if (result.length() != 0) {
+          result.append(LINE_BREAK);
+        }
+        toolTip = StringUtil.trimStart(toolTip, HTML_HEADER);
+        toolTip = StringUtil.trimEnd(toolTip, HTML_FOOTER);
+        result.append(toolTip);
       }
-      if (toolTip != null && toolTip.endsWith(HTML_FOOTER)) {
-        toolTip = toolTip.substring(0,toolTip.length()-HTML_FOOTER.length());
-      }
-      result.append(toolTip);
+    }
+    if (result.length() == 0) {
+      return null;
     }
     result.insert(0,HTML_HEADER);
     result.append(HTML_FOOTER);
-    return isNull ? null : result.toString();
+    return result.toString();
   }
 
   public void addToolTipLine(String line) {

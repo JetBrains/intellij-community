@@ -58,11 +58,11 @@ public class HighlightInfo {
   }
 
   public static HighlightInfo createHighlightInfo(HighlightInfoType type, PsiElement element, String description) {
-    return createHighlightInfo(type, element, description, xmlEscapeToolTip(description));
+    return createHighlightInfo(type, element, description, htmlEscapeToolTip(description));
   }
 
-  private static String xmlEscapeToolTip(String description) {
-    return "<html><body>"+XmlUtil.escapeString(description)+"</body></html>";
+  private static String htmlEscapeToolTip(String description) {
+    return description == null ? null : "<html><body>"+XmlUtil.escapeString(description)+"</body></html>";
   }
 
   public static HighlightInfo createHighlightInfo(HighlightInfoType type, PsiElement element, String description, String toolTip) {
@@ -85,7 +85,7 @@ public class HighlightInfo {
   }
 
   public static HighlightInfo createHighlightInfo(HighlightInfoType type, int start, int end, String description) {
-    return createHighlightInfo(type, start, end, description, xmlEscapeToolTip(description));
+    return createHighlightInfo(type, start, end, description, htmlEscapeToolTip(description));
   }
 
   public static HighlightInfo createHighlightInfo(HighlightInfoType type, TextRange textRange, String description) {
@@ -96,7 +96,7 @@ public class HighlightInfo {
   }
   public static HighlightInfo createHighlightInfo(HighlightInfoType type, TextRange textRange, String description, TextAttributes textAttributes) {
     // do not use HighlightInfoFilter
-    HighlightInfo highlightInfo = new HighlightInfo(type, textRange.getStartOffset(), textRange.getEndOffset(), description, xmlEscapeToolTip(description));
+    HighlightInfo highlightInfo = new HighlightInfo(type, textRange.getStartOffset(), textRange.getEndOffset(), description, htmlEscapeToolTip(description));
     highlightInfo.forcedTextAttributes = textAttributes;
     return highlightInfo;
   }
