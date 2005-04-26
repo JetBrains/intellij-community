@@ -283,11 +283,11 @@ public class BreakpointsConfigurationDialogFactory {
 
     private void reset() {
       BreakpointManager breakpointManager = getBreakpointManager();
-      myLineBreakpointsPanel.setBreakpoints(breakpointManager.getBreakpoints(LineBreakpoint.LINE_BREAKPOINTS));
-      myExceptionBreakpointsPanel.setBreakpoints(breakpointManager.getBreakpoints(ExceptionBreakpoint.EXCEPTION_BREAKPOINTS));
+      myLineBreakpointsPanel.setBreakpoints(breakpointManager.getBreakpoints(LineBreakpoint.CATEGORY));
+      myExceptionBreakpointsPanel.setBreakpoints(breakpointManager.getBreakpoints(ExceptionBreakpoint.CATEGORY));
       myExceptionBreakpointsPanel.insertBreakpointAt(breakpointManager.getAnyExceptionBreakpoint(), 0);
-      myFieldBreakpointsPanel.setBreakpoints(breakpointManager.getBreakpoints(FieldBreakpoint.FIELD_BREAKPOINTS));
-      myMethodBreakpointsPanel.setBreakpoints(breakpointManager.getBreakpoints(MethodBreakpoint.METHOD_BREAKPOINTS));
+      myFieldBreakpointsPanel.setBreakpoints(breakpointManager.getBreakpoints(FieldBreakpoint.CATEGORY));
+      myMethodBreakpointsPanel.setBreakpoints(breakpointManager.getBreakpoints(MethodBreakpoint.CATEGORY));
       updateAllTabTitles();
       if (myLastSelectedTabIndex >= myTabbedPane.getTabCount() && myLastSelectedTabIndex < 0) {
         myLastSelectedTabIndex = 0;

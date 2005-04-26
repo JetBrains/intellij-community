@@ -24,6 +24,22 @@
       <interface-class>com.intellij.debugger.engine.evaluation.EvaluationManager</interface-class>
       <implementation-class>com.intellij.debugger.engine.evaluation.EvaluationManagerImpl</implementation-class>
     </component>
+    <!--standard breakpoint factories -->
+    <component>
+      <implementation-class>com.intellij.debugger.ui.breakpoints.LineBreakpointFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.debugger.ui.breakpoints.FieldBreakpointFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.debugger.ui.breakpoints.MethodBreakpointFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.debugger.ui.breakpoints.ExceptionBreakpointFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.debugger.ui.breakpoints.AnyExceptionBreakpointFactory</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

@@ -44,7 +44,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   public static Icon DISABLED_ICON = IconLoader.getIcon("/gutter/db_disabled_method_breakpoint.png");
   private static Icon ourInvalidIcon = IconLoader.getIcon("/gutter/db_invalid_method_breakpoint.png");
   private static Icon ourVerifiedIcon = IconLoader.getIcon("/gutter/db_verified_method_breakpoint.png");
-  public static final String METHOD_BREAKPOINTS = "method_breakpoints";
+  public static final String CATEGORY = "method_breakpoints";
 
   protected MethodBreakpoint(Project project) {
     super(project);
@@ -59,7 +59,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   }
 
   public String getCategory() {
-    return METHOD_BREAKPOINTS;
+    return CATEGORY;
   }
 
   public PsiMethod getPsiMethod() {

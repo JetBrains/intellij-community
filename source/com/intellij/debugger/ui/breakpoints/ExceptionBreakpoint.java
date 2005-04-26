@@ -8,7 +8,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.*;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -40,14 +39,14 @@ public class ExceptionBreakpoint extends Breakpoint {
   public static Icon ICON = IconLoader.getIcon("/debugger/db_exception_breakpoint.png");
   public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_exception_breakpoint.png");
   protected final static String READ_NO_CLASS_NAME = "No class_name for exception breakpoint";
-  public static final String EXCEPTION_BREAKPOINTS = "exception_breakpoints";
+  public static final String CATEGORY = "exception_breakpoints";
 
-  private ExceptionBreakpoint(Project project) {
+  public ExceptionBreakpoint(Project project) {
     super(project);
   }
 
   public String getCategory() {
-    return EXCEPTION_BREAKPOINTS;
+    return CATEGORY;
   }
 
   protected ExceptionBreakpoint(Project project, String qualifiedName) {

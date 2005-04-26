@@ -6,14 +6,10 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.PositionUtil;
-import com.intellij.debugger.ClassFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -41,7 +37,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   private static Icon ourVerifiedIcon = IconLoader.getIcon("/gutter/db_verified_breakpoint.png");
 
   private String myMethodName;
-  public static final String LINE_BREAKPOINTS = "line_breakpoints";
+  public static final String CATEGORY = "line_breakpoints";
 
   protected LineBreakpoint(Project project) {
     super(project);
@@ -68,7 +64,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   public String getCategory() {
-    return LINE_BREAKPOINTS;
+    return CATEGORY;
   }
 
   protected void reload(PsiFile file) {
