@@ -23,7 +23,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.roots.ui.configuration.actions.ModulesConfigurationAction;
+import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.Icons;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -483,11 +484,11 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  private class AddModuleAction extends ModulesConfigurationAction {
+  private class AddModuleAction extends IconWithTextAction {
     private final Component myDialogParent;
 
     public AddModuleAction(Component dialogParent) {
-      super("Add", "Add module to the project", IconLoader.getIcon("/actions/include.png"));
+      super("Add", "Add module to the project", Icons.ADD_ICON);
       myDialogParent = dialogParent;
     }
 
@@ -501,9 +502,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  private class RemoveModuleAction extends ModulesConfigurationAction {
+  private class RemoveModuleAction extends IconWithTextAction {
     public RemoveModuleAction() {
-      super("Remove", "Remove module from the project", IconLoader.getIcon("/actions/exclude.png"));
+      super("Remove", "Remove module from the project", Icons.DELETE_ICON);
     }
 
     public void actionPerformed(AnActionEvent e) {

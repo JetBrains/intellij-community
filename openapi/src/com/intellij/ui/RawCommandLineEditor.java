@@ -7,8 +7,8 @@ package com.intellij.ui;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Icons;
 
 import javax.swing.*;
 import javax.swing.text.Document;
@@ -19,7 +19,6 @@ import java.awt.event.ActionListener;
 public class RawCommandLineEditor extends JPanel {
   private final TextFieldWithBrowseButton myTextField;
   private String myDialodCaption = "";
-  private static final Icon OPEN_EDIT_DIALOG_ICOON = IconLoader.getIcon("/actions/showViewer.png");
 
   public RawCommandLineEditor() {
     super(new BorderLayout());
@@ -42,7 +41,7 @@ public class RawCommandLineEditor extends JPanel {
         builder.show();
       }
     });
-    myTextField.setButtonIcon(OPEN_EDIT_DIALOG_ICOON);
+    myTextField.setButtonIcon(Icons.OPEN_EDIT_DIALOG_ICON);
     add(myTextField, BorderLayout.CENTER);
     setDescriptor(null);
   }

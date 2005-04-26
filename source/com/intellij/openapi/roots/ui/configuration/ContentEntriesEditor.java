@@ -20,7 +20,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout;
-import com.intellij.openapi.roots.ui.configuration.actions.ModulesConfigurationAction;
+import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -540,7 +540,7 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     }
   }
 
-  private class AddContentEntryAction extends ModulesConfigurationAction {
+  private class AddContentEntryAction extends IconWithTextAction {
     private final FileChooserDescriptor myDescriptor;
 
     public AddContentEntryAction() {

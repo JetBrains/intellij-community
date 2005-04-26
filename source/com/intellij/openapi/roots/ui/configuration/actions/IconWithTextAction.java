@@ -5,25 +5,20 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.wm.ex.ActionToolbarEx;
 
 import javax.swing.*;
 
-/**
- * @author Eugene Zhuravlev
- *         Date: Nov 25
- * @author 2003
- */
-public abstract class ModulesConfigurationAction extends AnAction implements CustomComponentAction {
-  protected ModulesConfigurationAction() {
+
+public abstract class IconWithTextAction extends AnAction implements CustomComponentAction {
+  protected IconWithTextAction() {
   }
 
-  protected ModulesConfigurationAction(String text) {
+  protected IconWithTextAction(String text) {
     super(text);
   }
 
-  protected ModulesConfigurationAction(String text, String description, Icon icon) {
+  protected IconWithTextAction(String text, String description, Icon icon) {
     super(text, description, icon);
   }
 

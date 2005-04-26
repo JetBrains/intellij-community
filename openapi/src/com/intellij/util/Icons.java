@@ -104,4 +104,7 @@ public interface Icons {
   Icon SMALL_VCS_CONFIGURABLE = IconLoader.getIcon("/general/smallConfigurableVcs.png");
   Icon VCS_SMALL_TAB = IconLoader.getIcon("/general/vcsSmallTab.png");
   Icon GROUP_BY_PACKAGES = IconLoader.getIcon("/toolbar/folders.png");
+  Icon ADD_ICON = IconLoader.getIcon("/actions/include.png");
+  Icon DELETE_ICON = IconLoader.getIcon("/actions/exclude.png");
+  Icon OPEN_EDIT_DIALOG_ICON = IconLoader.getIcon("/actions/showViewer.png");
 }

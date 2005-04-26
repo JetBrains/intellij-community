@@ -129,7 +129,9 @@ public class EditorFactoryImpl extends EditorFactory {
     }
     catch (RuntimeException e) {
       final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-      e.printStackTrace(new PrintWriter(buffer));
+      final PrintWriter printWriter = new PrintWriter(buffer);
+      e.printStackTrace(printWriter);
+      printWriter.flush();
       editor.putUserData(EDITOR_CREATOR, buffer.toString());
     }
 

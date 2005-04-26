@@ -34,11 +34,17 @@ package com.intellij.application.options;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.util.Icons;
+import com.intellij.util.ValueHolder;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
 
@@ -54,11 +60,11 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private JCheckBox mySpacesAroundTagName;
   private JCheckBox myAlignText;
   private JComboBox myTextWrapping;
-  private JTextField myInsertNewLineTagNames;
-  private JTextField myRemoveNewLineTagNames;
-  private JTextField myDoNotAlignChildrenTagNames;
-  private JTextField myKeepWhiteSpacesTagNames;
-  private JTextField myTextElementsTagNames;
+  private TextFieldWithBrowseButton myInsertNewLineTagNames;
+  private TextFieldWithBrowseButton myRemoveNewLineTagNames;
+  private TextFieldWithBrowseButton myDoNotAlignChildrenTagNames;
+  private TextFieldWithBrowseButton myKeepWhiteSpacesTagNames;
+  private TextFieldWithBrowseButton myTextElementsTagNames;
   private JTextField myDoNotAlignChildrenMinSize;
   private JCheckBox myShouldKeepBlankLines;
 
@@ -69,12 +75,86 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     fillWrappingCombo(myWrapAttributes);
     fillWrappingCombo(myTextWrapping);
 
-    addPanelToWatch(myPanel);
 
-    myShouldKeepBlankLines.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myKeepBlankLines.setEnabled(myShouldKeepBlankLines.isSelected());
+    customizeField("Insert New Line Before Tags", myInsertNewLineTagNames, new ValueHolder<String>() {
+      public String getValue() {
+        return mySettings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE;
       }
+
+      public void setValue(final String value) {
+        mySettings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = value;
+      }
+    });
+
+    customizeField("Remove Line Breaks Before Tags", myRemoveNewLineTagNames, new ValueHolder<String>() {
+      public String getValue() {
+        return mySettings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE;
+      }
+
+      public void setValue(final String value) {
+        mySettings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = value;
+      }
+    });
+
+    customizeField("Do not Indent Children Of", myDoNotAlignChildrenTagNames, new ValueHolder<String>() {
+      public String getValue() {
+        return mySettings.HTML_DO_NOT_INDENT_CHILDREN_OF;
+      }
+
+      public void setValue(final String value) {
+        mySettings.HTML_DO_NOT_INDENT_CHILDREN_OF = value;
+      }
+    });
+
+    customizeField("Text Elements", myTextElementsTagNames, new ValueHolder<String>() {
+      public String getValue() {
+        return mySettings.HTML_TEXT_ELEMENTS;
+      }
+
+      public void setValue(final String value) {
+        mySettings.HTML_TEXT_ELEMENTS = value;
+      }
+    });
+
+    customizeField("Keep Whitespaces Inside", myKeepWhiteSpacesTagNames, new ValueHolder<String>() {
+      public String getValue() {
+        return mySettings.HTML_KEEP_WHITESPACES_INSIDE;
+      }
+
+      public void setValue(final String value) {
+        mySettings.HTML_KEEP_WHITESPACES_INSIDE = value;
+      }
+    });
+
+
+    addPanelToWatch(myPanel);
+  }
+
+  private void customizeField(final String title, final TextFieldWithBrowseButton uiField, final ValueHolder<String> valueHolder) {
+    uiField.getTextField().setEditable(false);
+    uiField.setButtonIcon(Icons.OPEN_EDIT_DIALOG_ICON);
+    uiField.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        final TagListDialog tagListDialog = new TagListDialog(title);
+        tagListDialog.setData(createCollectionOn(valueHolder.getValue()));
+        tagListDialog.show();
+        if (tagListDialog.isOK()) {
+          valueHolder.setValue(createStringOn(tagListDialog.getData()));
+          uiField.setText(valueHolder.getValue());
+        }
+      }
+
+      private String createStringOn(final ArrayList<String> data) {
+        return StringUtil.join(data.toArray(new String[data.size()]), ",");
+      }
+
+      private ArrayList<String> createCollectionOn(final String data) {
+        if (data == null) {
+          return new ArrayList<String>();
+        }
+        return new ArrayList<String>(Arrays.asList(data.split(",")));
+      }
+
     });
   }
 
@@ -94,7 +174,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
 
     settings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = myInsertNewLineTagNames.getText();
     settings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = myRemoveNewLineTagNames.getText();
-    settings.HTML_DO_NOT_ALIGN_CHILDREN_OF = myDoNotAlignChildrenTagNames.getText();
+    settings.HTML_DO_NOT_INDENT_CHILDREN_OF = myDoNotAlignChildrenTagNames.getText();
     settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES = getIntValue(myDoNotAlignChildrenMinSize);
     settings.HTML_TEXT_ELEMENTS = myTextElementsTagNames.getText();
     settings.HTML_KEEP_WHITESPACES_INSIDE = myKeepWhiteSpacesTagNames.getText();
@@ -123,7 +203,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
 
     myInsertNewLineTagNames.setText(mySettings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE);
     myRemoveNewLineTagNames.setText(mySettings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE);
-    myDoNotAlignChildrenTagNames.setText(mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF);
+    myDoNotAlignChildrenTagNames.setText(mySettings.HTML_DO_NOT_INDENT_CHILDREN_OF);
     myDoNotAlignChildrenMinSize.setText(String.valueOf(mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES));
     myTextElementsTagNames.setText(mySettings.HTML_TEXT_ELEMENTS);
     myKeepWhiteSpacesTagNames.setText(mySettings.HTML_KEEP_WHITESPACES_INSIDE);
@@ -171,7 +251,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    if (!Comparing.equal(settings.HTML_DO_NOT_ALIGN_CHILDREN_OF, myDoNotAlignChildrenTagNames.getText().trim())){
+    if (!Comparing.equal(settings.HTML_DO_NOT_INDENT_CHILDREN_OF, myDoNotAlignChildrenTagNames.getText().trim())){
       return true;
     }
 

@@ -34,7 +34,7 @@ public class HtmlPolicy implements XmlFormattingPolicy{
       return false;
     }
     else {
-      return !checkName(parentTag, mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF);
+      return !checkName(parentTag, mySettings.HTML_DO_NOT_INDENT_CHILDREN_OF);
     }
   }
 

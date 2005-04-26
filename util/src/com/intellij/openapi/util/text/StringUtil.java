@@ -564,4 +564,13 @@ public class StringUtil {
     }
     return result;
   }
+
+  public static String join(final String[] strings, final String separator) {
+    final StringBuffer result = new StringBuffer();
+    for (int i = 0; i < strings.length; i++) {
+      if (i > 0) result.append(separator);
+      result.append(strings[i]);
+    }
+    return result.toString();
+  }
 }

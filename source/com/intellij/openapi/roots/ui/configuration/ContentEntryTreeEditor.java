@@ -13,7 +13,7 @@ import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.fileChooser.impl.FileTreeBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.roots.ui.configuration.actions.ModulesConfigurationAction;
+import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleExcludedStateAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleSourcesStateAction;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -206,7 +206,7 @@ public class ContentEntryTreeEditor {
     }
 
     public JComponent createCustomComponent(Presentation presentation) {
-      return ModulesConfigurationAction.createCustomComponentImpl(this, presentation);
+      return IconWithTextAction.createCustomComponentImpl(this, presentation);
     }
   }
 

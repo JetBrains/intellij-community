@@ -48,6 +48,8 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
 
   private JCheckBox mySpacesAroundEquality;
   private JCheckBox mySpacesAroundTagName;
+  private JCheckBox myKeepLineBreaks;
+  private JCheckBox myCheckBox1;
 
   public CodeStyleXmlPanel(CodeStyleSettings settings) {
     super(settings);
@@ -64,6 +66,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
 
   public void apply(CodeStyleSettings settings) {
     settings.XML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
+    settings.XML_KEEP_LINE_BREAKS = myKeepLineBreaks.isSelected();
     settings.XML_ATTRIBUTE_WRAP = ourWrappings[myWrapAttributes.getSelectedIndex()];
     settings.XML_ALIGN_ATTRIBUTES = myAlignAttributes.isSelected();
     settings.XML_KEEP_WHITESPACES = myKeepWhiteSpaces.isSelected();
@@ -88,6 +91,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     myKeepWhiteSpaces.setSelected(mySettings.XML_KEEP_WHITESPACES);
     mySpacesAroundTagName.setSelected(mySettings.XML_SPACE_AROUND_TAG_NAME);
     mySpacesAroundEquality.setSelected(mySettings.XML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE);
+    myKeepLineBreaks.setSelected(mySettings.XML_KEEP_LINE_BREAKS);
   }
 
   public boolean isModified(CodeStyleSettings settings) {
@@ -109,6 +113,10 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     }
 
     if (settings.XML_SPACE_AROUND_TAG_NAME != mySpacesAroundTagName.isSelected()){
+      return true;
+    }
+
+    if (settings.XML_KEEP_LINE_BREAKS != myKeepLineBreaks.isSelected()) {
       return true;
     }
 
