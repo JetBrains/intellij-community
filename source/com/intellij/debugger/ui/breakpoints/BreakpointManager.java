@@ -247,7 +247,7 @@ public class BreakpointManager implements JDOMExternalizable {
                 return;
               }
               final int line = editor.xyToLogicalPosition(e.getMouseEvent().getPoint()).line;
-              if (line < 0) {
+              if (line < 0 || line >= editor.getDocument().getLineCount()) {
                 return;
               }
               MouseEvent event = e.getMouseEvent();
