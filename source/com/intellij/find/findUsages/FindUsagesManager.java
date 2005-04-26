@@ -1,5 +1,6 @@
 package com.intellij.find.findUsages;
 
+import static com.intellij.find.findUsages.FindUsagesManager.FileSearchScope.*;
 import com.intellij.aspects.psi.PsiPointcut;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.codeInsight.hint.HintManager;
@@ -54,10 +55,12 @@ import java.util.List;
 public class FindUsagesManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findParameterUsages.FindUsagesManager");
 
-  public static final int FROM_START = 0;
-  public static final int FROM_END = 3;
-  public static final int AFTER_CARET = 1;
-  public static final int BEFORE_CARET = 2;
+  enum FileSearchScope {
+    FROM_START,
+    FROM_END,
+    AFTER_CARET,
+    BEFORE_CARET
+  }
 
   private static Key<String> KEY_START_USAGE_AGAIN = Key.create("KEY_START_USAGE_AGAIN");
   private Project myProject;
@@ -126,7 +129,7 @@ public class FindUsagesManager {
     return findUsageInFile(editor, BEFORE_CARET);
   }
 
-  private boolean findUsageInFile(FileEditor editor, int direction) {
+  private boolean findUsageInFile(FileEditor editor, FileSearchScope direction) {
     if (editor == null) {
       throw new IllegalArgumentException("editor cannot be null");
     }
@@ -478,7 +481,7 @@ public class FindUsagesManager {
   }
 
   private void findUsagesInEditor(final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor, final PsiFile scopeFile,
-                                  final int direction,
+                                  final FileSearchScope direction,
                                   final FindUsagesOptions findUsagesOptions,
                                   FileEditor fileEditor) {
     LOG.assertTrue(fileEditor != null);
@@ -519,9 +522,9 @@ public class FindUsagesManager {
     statusBar.setInfo("");
   }
 
-  private String getSearchAgainMessage(PsiElement element, final int direction) {
+  private String getSearchAgainMessage(PsiElement element, final FileSearchScope direction) {
     String message = getNoUsagesFoundMessage(element);
-    if (direction == FindUsagesManager.AFTER_CARET) {
+    if (direction == AFTER_CARET) {
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT);
       String shortcutsText = KeymapUtil.getFirstKeyboardShortcutText(action);
       if (shortcutsText.length() > 0) {
@@ -558,7 +561,7 @@ public class FindUsagesManager {
   }
 
   private Usage findSiblingUsage(final UsageSearcher usageSearcher,
-                               int dir,
+                               FileSearchScope dir,
                                final FileEditorLocation currentLocation,
                                final boolean[] usagesWereFound,
                                FileEditor fileEditor) {
@@ -569,7 +572,7 @@ public class FindUsagesManager {
       else dir = FROM_END;
     }
 
-    final int direction = dir;
+    final FileSearchScope direction = dir;
 
 
     usageSearcher.generate(
