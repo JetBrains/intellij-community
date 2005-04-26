@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.parsing;
 
+import static com.intellij.psi.impl.source.parsing.DeclarationParsing.Context.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,10 +18,12 @@ import com.intellij.util.text.CharArrayUtil;
 public class DeclarationParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.DeclarationParsing");
 
-  public static final int FILE_CONTEXT = 1;
-  public static final int CLASS_CONTEXT = 2;
-  public static final int CODE_BLOCK_CONTEXT = 3;
-  public static final int ANNOTATION_INTERFACE_CONTEXT = 4;
+  public static enum Context {
+    FILE_CONTEXT,
+    CLASS_CONTEXT,
+    CODE_BLOCK_CONTEXT,
+    ANNOTATION_INTERFACE_CONTEXT
+  }
 
   public DeclarationParsing(JavaParsingContext context) {
     super(context);
@@ -29,7 +32,7 @@ public class DeclarationParsing extends Parsing {
   public TreeElement parseDeclarationText(PsiManager manager,
                                           LanguageLevel languageLevel,
                                           char[] buffer,
-                                          int context) {
+                                          Context context) {
     Lexer originalLexer = new JavaLexer(languageLevel);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, 0, buffer.length);
@@ -60,7 +63,7 @@ public class DeclarationParsing extends Parsing {
     return first;
   }
 
-  protected TreeElement parseDeclaration(Lexer lexer, int context) {
+  protected TreeElement parseDeclaration(Lexer lexer, Context context) {
     IElementType tokenType = lexer.getTokenType();
     if (tokenType == null) return null;
 
@@ -234,7 +237,7 @@ public class DeclarationParsing extends Parsing {
 
   private TreeElement parseFieldOrLocalVariable(TreeElement classParameterList,
                                                        final TreeElement first,
-                                                       int context,
+                                                       Context context,
                                                        Lexer lexer, LexerPosition startPos) {//field or local variable
     if (classParameterList != null){
       final CompositeElement errorElement = Factory.createErrorElement("Unexpected token");

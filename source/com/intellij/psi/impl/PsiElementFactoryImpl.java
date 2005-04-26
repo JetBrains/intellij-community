@@ -637,7 +637,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   public PsiField createFieldFromText(String text, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     TreeElement decl = getJavaParsingContext(holderElement).getDeclarationParsing().parseDeclarationText(myManager, myManager.getEffectiveLanguageLevel(), text.toCharArray(),
-                                                               DeclarationParsing.CLASS_CONTEXT);
+                                                               DeclarationParsing.Context.CLASS_CONTEXT);
     if (decl == null || decl.getElementType() != ElementType.FIELD) {
       throw new IncorrectOperationException("Incorrect field \"" + text + "\".");
     }
@@ -664,7 +664,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
   private PsiMethod createMethodFromTextInner(String text, PsiElement context, LanguageLevel level) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
     TreeElement decl = getJavaParsingContext(holderElement, level).getDeclarationParsing().parseDeclarationText(myManager, level, text.toCharArray(),
-                                                               DeclarationParsing.CLASS_CONTEXT);
+                                                               DeclarationParsing.Context.CLASS_CONTEXT);
     if (decl == null || decl.getElementType() != ElementType.METHOD) {
       throw new IncorrectOperationException("Incorrect method \"" + text + "\".");
     }

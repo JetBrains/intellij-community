@@ -274,7 +274,7 @@ public class StatementParsing extends Parsing {
           LOG.assertTrue(lexer.getTokenType() == IDENTIFIER);
           if (suspectedLT == LT) {
             final TreeElement decl = myContext.getDeclarationParsing().parseDeclaration(lexer,
-                                                                                        DeclarationParsing.CODE_BLOCK_CONTEXT);
+                                                                                        DeclarationParsing.Context.CODE_BLOCK_CONTEXT);
             CompositeElement declStatement = Factory.createCompositeElement(DECLARATION_STATEMENT);
             if (decl != null) {
               TreeUtil.addChildren(declStatement, decl);
@@ -326,7 +326,7 @@ public class StatementParsing extends Parsing {
         }
 
         TreeElement decl = myContext.getDeclarationParsing().parseDeclaration(lexer,
-                                                                              DeclarationParsing.CODE_BLOCK_CONTEXT);
+                                                                              DeclarationParsing.Context.CODE_BLOCK_CONTEXT);
         if (decl != null) {
           CompositeElement declStatement = Factory.createCompositeElement(DECLARATION_STATEMENT);
           TreeUtil.addChildren(declStatement, decl);

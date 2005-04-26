@@ -56,7 +56,7 @@ public class FileTextParsing extends Parsing {
         continue;
       }
 
-      TreeElement first = context.getDeclarationParsing().parseDeclaration(filterLexer, DeclarationParsing.FILE_CONTEXT);
+      TreeElement first = context.getDeclarationParsing().parseDeclaration(filterLexer, DeclarationParsing.Context.FILE_CONTEXT);
       if (first != null) {
         TreeUtil.addChildren(dummyRoot, first);
         invalidElementsGroup = null;

@@ -5,10 +5,12 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.DummyHolder;
+import static com.intellij.psi.impl.source.parsing.DeclarationParsing.Context.ANNOTATION_INTERFACE_CONTEXT;
+import static com.intellij.psi.impl.source.parsing.DeclarationParsing.Context.CLASS_CONTEXT;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.tree.*;
 
 /**
  *
@@ -71,7 +73,7 @@ public class ClassBodyParsing extends Parsing {
 
   private void parseClassBodyDeclarations(int context, Lexer filterLexer, CompositeElement dummyRoot) {
     CompositeElement invalidElementsGroup = null;
-    final int declarationParsingContext = calcDeclarationContext(context);
+    final DeclarationParsing.Context declarationParsingContext = calcDeclarationContext(context);
 
     while(true){
       IElementType tokenType = filterLexer.getTokenType();
@@ -109,18 +111,18 @@ public class ClassBodyParsing extends Parsing {
     }
   }
 
-  private static int calcDeclarationContext(int context) {
-    int declarationParsingContext = DeclarationParsing.CLASS_CONTEXT;
+  private static DeclarationParsing.Context calcDeclarationContext(int context) {
+    DeclarationParsing.Context declarationParsingContext = CLASS_CONTEXT;
     switch(context) {
       default:
         LOG.assertTrue(false);
         break;
       case CLASS:
       case ENUM:
-        declarationParsingContext = DeclarationParsing.CLASS_CONTEXT;
+        declarationParsingContext = CLASS_CONTEXT;
         break;
       case ANNOTATION:
-        declarationParsingContext = DeclarationParsing.ANNOTATION_INTERFACE_CONTEXT;
+        declarationParsingContext = ANNOTATION_INTERFACE_CONTEXT;
         break;
     }
     return declarationParsingContext;
