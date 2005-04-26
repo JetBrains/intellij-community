@@ -12,6 +12,8 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -75,9 +77,20 @@ public class BreakpointPanel {
     int width = new JCheckBox().getPreferredSize().width;
     TableColumnModel columnModel = myTable.getColumnModel();
 
-    TableColumn column = columnModel.getColumn(BreakpointTableModel.ENABLED_STATE);
-    column.setPreferredWidth(width);
-    column.setMaxWidth(width);
+    TableColumn enabledStateColumn = columnModel.getColumn(BreakpointTableModel.ENABLED_STATE);
+    enabledStateColumn.setPreferredWidth(width);
+    enabledStateColumn.setMaxWidth(width);
+    final Class enabledStateColumnClass = myTableModel.getColumnClass(BreakpointTableModel.ENABLED_STATE);
+    final TableCellRenderer delegateRenderer = myTable.getDefaultRenderer(enabledStateColumnClass);
+    myTable.setDefaultRenderer(enabledStateColumnClass, new DefaultTableCellRenderer() {
+      public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        final Component component = delegateRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        if (component instanceof JComponent) {
+          ((JComponent)component).setBorder(null);
+        }
+        return component;
+      }
+    });
     columnModel.getColumn(BreakpointTableModel.NAME).setCellRenderer(new BreakpointNameCellRenderer());
 
     myTablePlace.setLayout(new BorderLayout());

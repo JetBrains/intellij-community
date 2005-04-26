@@ -13,6 +13,7 @@ public class BreakpointNameCellRenderer extends DefaultTableCellRenderer {
   public Component getTableCellRendererComponent(JTable table, Object value,
     boolean isSelected, boolean hasFocus, int row, int column) {
     super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+    setBorder(null);
     BreakpointTableModel tableModel = (BreakpointTableModel)table.getModel();
     Breakpoint breakpoint = tableModel.getBreakpoint(row);
     if (breakpoint == null){

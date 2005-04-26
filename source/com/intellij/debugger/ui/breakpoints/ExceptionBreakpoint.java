@@ -40,9 +40,14 @@ public class ExceptionBreakpoint extends Breakpoint {
   public static Icon ICON = IconLoader.getIcon("/debugger/db_exception_breakpoint.png");
   public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_exception_breakpoint.png");
   protected final static String READ_NO_CLASS_NAME = "No class_name for exception breakpoint";
+  public static final String EXCEPTION_BREAKPOINTS = "exception_breakpoints";
 
   private ExceptionBreakpoint(Project project) {
     super(project);
+  }
+
+  public String getCategory() {
+    return EXCEPTION_BREAKPOINTS;
   }
 
   protected ExceptionBreakpoint(Project project, String qualifiedName) {

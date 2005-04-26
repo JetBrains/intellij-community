@@ -41,6 +41,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   private static Icon ourVerifiedIcon = IconLoader.getIcon("/gutter/db_verified_breakpoint.png");
 
   private String myMethodName;
+  public static final String LINE_BREAKPOINTS = "line_breakpoints";
 
   protected LineBreakpoint(Project project) {
     super(project);
@@ -50,10 +51,25 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     super(project, highlighter);
   }
 
-  protected Icon getDisabledIcon() { return DISABLED_ICON; }
-  protected Icon getSetIcon     () { return ICON; }
-  protected Icon getInvalidIcon () { return ourInvalidIcon; }
-  protected Icon getVerifiedIcon() { return ourVerifiedIcon; }
+  protected Icon getDisabledIcon() {
+    return DISABLED_ICON;
+  }
+
+  protected Icon getSetIcon() {
+    return ICON;
+  }
+
+  protected Icon getInvalidIcon() {
+    return ourInvalidIcon;
+  }
+
+  protected Icon getVerifiedIcon() {
+    return ourVerifiedIcon;
+  }
+
+  public String getCategory() {
+    return LINE_BREAKPOINTS;
+  }
 
   protected void reload(PsiFile file) {
     super.reload(file);

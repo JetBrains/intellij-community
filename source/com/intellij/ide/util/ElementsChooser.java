@@ -465,6 +465,9 @@ public class ElementsChooser<T> extends JPanel {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component component = myDelegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       component.setEnabled(ElementsChooser.this.isEnabled());
+      if (component instanceof JComponent) {
+        ((JComponent)component).setBorder(null);
+      }
       return component;
     }
   }

@@ -36,6 +36,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -62,7 +63,6 @@ public class CompileDriver {
   private final Map myCompilerToCacheMap = new com.intellij.util.containers.HashMap();
   private Map<Pair<Compiler, Module>, VirtualFile> myGenerationCompilerModuleToOutputDirMap;
   private String myCachesDirectoryPath;
-  private final ProjectCompileScope myProjectCompileScope;
   private Set<String> myOutputFilesOnDisk = null;
   private boolean myShouldClearOutputDirectory;
 
@@ -108,7 +108,6 @@ public class CompileDriver {
       }
     });
 
-    myProjectCompileScope = new ProjectCompileScope(myProject);
     myProjectRootManager = ProjectRootManager.getInstance(myProject);
     myProcessingCompilerAdapterFactory = new FileProcessingCompilerAdapterFactory() {
       public FileProcessingCompilerAdapter create(CompileContext context, FileProcessingCompiler compiler) {
@@ -123,11 +122,57 @@ public class CompileDriver {
   }
 
   public void rebuild(CompileStatusNotification callback) {
-    doRebuild(callback, null, true, addAdditionalRoots(myProjectCompileScope));
+    doRebuild(callback, null, true, addAdditionalRoots(new ProjectCompileScope(myProject)));
   }
 
   public void make(CompileStatusNotification callback) {
-    make(myProjectCompileScope, callback);
+    make(new ProjectCompileScope(myProject), callback);
+    /*
+    class CallbackWrapper implements CompileStatusNotification {
+      private int myErrorCount = 0;
+      private boolean myLastCompilationAborted = false;
+      private final CompileStatusNotification myDelegate;
+
+      public CallbackWrapper(CompileStatusNotification delegate) {
+        myDelegate = delegate;
+      }
+
+      public void finished(boolean aborted, int errors, int warnings) {
+        myErrorCount += errors;
+        myLastCompilationAborted = aborted;
+        myDelegate.finished(aborted, errors, warnings);
+      }
+
+      public int getErrorCount() {
+        return myErrorCount;
+      }
+
+      public boolean isLastCompilationAborted() {
+        return myLastCompilationAborted;
+      }
+    };
+    final CallbackWrapper callbackWrapper = new CallbackWrapper(callback);
+    final List<Chunk<Module>> chunks = ModuleCompilerUtil.getSortedModuleChunks(myProject, ModuleManager.getInstance(myProject).getModules());
+    for (Iterator<Chunk<Module>> it = chunks.iterator(); it.hasNext();) {
+      final Chunk<Module> chunk = it.next();
+      final Set<Module> modules = chunk.getNodes();
+      if (modules.size() == 1) {
+        make(new ModuleCompileScope(modules.iterator().next(), false), callbackWrapper);
+      }
+      else {
+        final CompileScope[] scopes = new CompileScope[modules.size()];
+        int scopeIndex = 0;
+        for (Iterator<Module> moduleIterator = modules.iterator(); moduleIterator.hasNext();) {
+          final Module module = moduleIterator.next();
+          scopes[scopeIndex++] = new ModuleCompileScope(module, false);
+        }
+        make(new CompositeScope(scopes), callbackWrapper);
+      }
+      if (callbackWrapper.isLastCompilationAborted() || callbackWrapper.getErrorCount() > 0) {
+        break;
+      }
+    }
+    */
   }
 
   public void make(Project project, Module[] modules, CompileStatusNotification callback) {
@@ -139,9 +184,9 @@ public class CompileDriver {
   }
 
   public void make(CompileScope scope, CompileStatusNotification callback) {
-    final CompileScope scope1 = addAdditionalRoots(scope);
-    if (validateCompilerConfiguration(scope1, false)) {
-      startup(scope1, false, false, callback, null, true);
+    scope = addAdditionalRoots(scope);
+    if (validateCompilerConfiguration(scope, false)) {
+      startup(scope, false, false, callback, null, true);
     }
   }
 
@@ -907,10 +952,11 @@ public class CompileDriver {
             final String currentOutputDir = getModuleOutputDirForFile(context, sourceFile);
             if (currentOutputDir != null) {
               final String className = cache.getClassName(outputPath);
-              final String cachedOutputDir = (className == null) ?
-                                             currentOutputDir :
-                                             outputPath.substring(0, outputPath.length() - className.length() - ".class".length() - 1);
-              if (CompilerUtil.pathsEqual(cachedOutputDir, currentOutputDir)) {
+              final boolean pathsEqual = (className == null)? true :
+                currentOutputDir.regionMatches(
+                  !SystemInfo.isFileSystemCaseSensitive, 0, outputPath, 0, outputPath.length() - className.length() - ".class".length() - 1
+                );
+              if (pathsEqual) {
                 shouldDelete = false;
               }
               else {

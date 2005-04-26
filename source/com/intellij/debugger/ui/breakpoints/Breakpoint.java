@@ -75,7 +75,16 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
 
   public abstract Icon getIcon        ();
 
-  public abstract void reload();  
+  public abstract void reload();
+
+  /**
+   * returns UI representation
+   */
+  public abstract String getEventMessage(LocatableEvent event);
+
+  public abstract boolean isValid();
+
+  public abstract String getCategory();
 
   /**
    * Associates breakpoint with class.
@@ -109,13 +118,6 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
       }
     });
   }
-
-  /**
-   * returns UI representation
-   */
-  public abstract String getEventMessage(LocatableEvent event);
-
-  public abstract boolean isValid();
 
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
     ThreadReferenceProxyImpl thread = context.getThread();

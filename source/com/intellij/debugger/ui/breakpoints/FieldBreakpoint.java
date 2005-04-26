@@ -47,6 +47,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_field_breakpoint.png");
   private static Icon ourInvalidIcon = IconLoader.getIcon("/gutter/db_invalid_field_breakpoint.png");
   private static Icon ourVerifiedIcon = IconLoader.getIcon("/gutter/db_verified_field_breakpoint.png");
+  public static final String FIELD_BREAKPOINTS = "field_breakpoints";
 
   protected FieldBreakpoint(Project project) {
     super(project);
@@ -67,10 +68,25 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   }
 
 
-  protected Icon getDisabledIcon() { return DISABLED_ICON; }
-  protected Icon getSetIcon     () { return ICON; }
-  protected Icon getInvalidIcon () { return ourInvalidIcon; }
-  protected Icon getVerifiedIcon() { return ourVerifiedIcon; }
+  protected Icon getDisabledIcon() {
+    return DISABLED_ICON;
+  }
+
+  protected Icon getSetIcon() {
+    return ICON;
+  }
+
+  protected Icon getInvalidIcon () {
+    return ourInvalidIcon;
+  }
+
+  protected Icon getVerifiedIcon() {
+    return ourVerifiedIcon;
+  }
+
+  public String getCategory() {
+    return FIELD_BREAKPOINTS;
+  }
 
   public PsiField getPsiField() {
     final PsiClass psiClass = getPsiClass();

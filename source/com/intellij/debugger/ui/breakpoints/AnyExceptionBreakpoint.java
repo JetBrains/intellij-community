@@ -13,9 +13,15 @@ import com.sun.jdi.ReferenceType;
 import org.jdom.Element;
 
 public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
+  public static final String ANY_EXCEPTION_BREAKPOINT = "breakpoint_any";
+
   protected AnyExceptionBreakpoint(Project project) {
     super(project, null);
     ENABLED = false;
+  }
+
+  public String getCategory() {
+    return ANY_EXCEPTION_BREAKPOINT;
   }
 
   public String getDisplayName() {
