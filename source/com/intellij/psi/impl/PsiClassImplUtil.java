@@ -384,6 +384,9 @@ public class PsiClassImplUtil{
       }
       if (classHint == null || classHint.shouldProcess(PsiClass.class)) {
         if (last != null && last.getParent() == aClass) {
+          if (last instanceof PsiClass) {
+            if (!processor.execute(last, substitutor)) return false;
+          }
           // Parameters
           final PsiTypeParameterList list = aClass.getTypeParameterList();
           if (list != null && !PsiScopesUtil.processScope(list, processor, substitutor, last, place)) return false;
