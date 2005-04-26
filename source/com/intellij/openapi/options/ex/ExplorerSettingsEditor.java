@@ -92,16 +92,16 @@ public class ExplorerSettingsEditor extends DialogWrapper {
   }
 
   private void selectGroup(int groupIdx) {
-    int lastIndex = ourGroup2LastConfigurableIndex.get(myGroups[groupIdx].getShortName());
+    final String shortName = myGroups[groupIdx].getShortName();
+    int lastIndex = ourGroup2LastConfigurableIndex.get(shortName);
+    if (lastIndex == -1) lastIndex = 0;
     selectGroup(groupIdx,lastIndex);
   }
   private void selectGroup(int groupIdx, int indexToSelect) {
     rememberLastUsedPage();
 
-    ConfigurableGroup group = myGroups[groupIdx];
-    mySelectedGroup = group;
-    String shortName = mySelectedGroup.getShortName();
-    ourLastGroup = shortName;
+    mySelectedGroup = myGroups[groupIdx];
+    ourLastGroup = mySelectedGroup.getShortName();
     Configurable[] configurables = mySelectedGroup.getConfigurables();
     Configurable toSelect = configurables[indexToSelect];
     myGroupTabs.setSelectedIndex(groupIdx);
