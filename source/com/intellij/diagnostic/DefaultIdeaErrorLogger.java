@@ -21,12 +21,13 @@ import java.lang.reflect.InvocationTargetException;
 public class DefaultIdeaErrorLogger implements ErrorLogger {
   private static boolean ourOomOccured = false;
 
+  /** @noinspection ConstantConditions, PointlessBooleanExpression */
   public boolean canHandle(IdeaLoggingEvent event) {
     return !DialogAppender.RELEASE_BUILD || ApplicationManagerEx.getApplicationEx().isInternal() ||
           event.getThrowable() instanceof OutOfMemoryError;
   }
 
-  /** @noinspection ThrowablePrintStackTrace*/
+  /** @noinspection CallToPrintStackTrace*/
   public void handle(IdeaLoggingEvent event) {
     try {
       if (event.getThrowable() instanceof OutOfMemoryError) {
@@ -41,6 +42,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     }
   }
 
+  /** @noinspection CallToPrintStackTrace*/
   private void processOOMError(IdeaLoggingEvent event) throws InterruptedException, InvocationTargetException {
     final String logFilePath = getLogFilePath();
 
@@ -82,7 +84,9 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     if (SystemInfo.isMac) {
       return PathManager.getHomePath() + "/Contents/Info.plist";
     }
-    return PathManager.getBinPath() + "/idea.lax".replace('/', File.separatorChar);
+    else if (SystemInfo.isWindows) {
+      return PathManager.getBinPath() + "\\idea.exe.vmoptions";
+    }
+    return PathManager.getBinPath() + "/idea.vmoptions".replace('/', File.separatorChar);
   }
-
 }

@@ -31,20 +31,12 @@ if [ -n "$IDEA_PROPERTIES" ]; then
   IDEA_PROPERTIES_PROPERTY=-Didea.properties.file=$IDEA_PROPERTIES
 fi
 
-# ---------------------------------------------------------------------
-# There are two possible values of IDEA_POPUP_WEIGHT property: "heavy" and "medium".
-# If you have WM configured as "Focus follows mouse with Auto Raise" then you have to
-# set this property to "medium". It prevents problems with popup menus on some
-# configurations.
-# ---------------------------------------------------------------------
-IDEA_POPUP_WEIGHT=heavy
-export IDEA_POPUP_WEIGHT
-
 if [ -z "$IDEA_MAIN_CLASS_NAME" ]; then
   IDEA_MAIN_CLASS_NAME="com.intellij.idea.Main"
 fi
 
-JVM_ARGS="-ea -Xms32m -Xmx200m -Xrunyjpagent:port=10100 -Xbootclasspath/p:../lib/boot.jar: $IDEA_PROPERTIES_PROPERTY -Dsun.java2d.noddraw=true -Didea.popup.weight=$IDEA_POPUP_WEIGHT -Djavasvn.delta.disabled=true"
+REQUIRED_JVM_ARGS="-Xbootclasspath/p:../lib/boot.jar: $IDEA_PROPERTIES_PROPERTY"
+JVM_ARGS="`cat $IDEA_HOME\bin\idea.vmoptions | tr '\n' ' '` $REQUIRED_JVM_ARGS"
 
 while [ $# -gt 0 ]; do
   args="$args $1"

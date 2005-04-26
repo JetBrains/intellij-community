@@ -18,31 +18,21 @@ IF "%IDEA_JDK%" == "" goto error
 :: ---------------------------------------------------------------------
 SET IDEA_HOME=..
 
-:: ---------------------------------------------------------------------
-:: In most cases you do not need to change the settings below.
-:: ---------------------------------------------------------------------
 SET JAVA_EXE=%IDEA_JDK%\jre\bin\java.exe
-
 IF NOT EXIST "%JAVA_EXE%" goto error
 
 IF "%IDEA_MAIN_CLASS_NAME%" == "" SET IDEA_MAIN_CLASS_NAME=com.intellij.idea.Main
 
-:: ---------------------------------------------------------------------
-:: There are two possible values of IDEA_POPUP_WEIGHT property: "heavy" and "medium".
-:: If you have WM configured as "Focus follows mouse with Auto Raise" then you have to
-:: set this property to "medium". It prevents problems with popup menus on some
-:: configurations.
-:: ---------------------------------------------------------------------
-SET IDEA_POPUP_WEIGHT=heavy
-
 IF NOT "%IDEA_PROPERTIES%" == "" set IDEA_PROPERTIES_PROPERTY=-Didea.properties.file=%IDEA_PROPERTIES%
 
 :: ---------------------------------------------------------------------
-:: You may specify your own JVM arguments in IDEA_JVM_ARGS variable.
+:: You may specify your own JVM arguments in idea.exe.vmoptions file. Put one option per line there.
 :: ---------------------------------------------------------------------
-IF "%IDEA_JVM_ARGS%" == "" set IDEA_JVM_ARGS=-Xms32m -Xmx192m -Xbootclasspath/p:%IDEA_HOME%/lib/boot.jar %IDEA_PROPERTIES_PROPERTY% -Dsun.java2d.noddraw=true -Didea.popup.weight=%IDEA_POPUP_WEIGHT% -Djavasvn.delta.disabled=true
+SET ACC=
+FOR /F "delims=" %%i in (%IDEA_HOME%\bin\idea.exe.vmoptions) DO %IDEA_HOME%\bin\append.bat %%i
 
-SET JVM_ARGS= %IDEA_JVM_ARGS% -ea -Xrunyjpagent:port=10100
+set REQUIRED_IDEA_JVM_ARGS=-Xbootclasspath/p:%IDEA_HOME%/lib/boot.jar %IDEA_PROPERTIES_PROPERTY%
+SET JVM_ARGS=%ACC% %REQUIRED_IDEA_JVM_ARGS%
 
 SET OLD_PATH=%PATH%
 SET PATH=%IDEA_HOME%\bin;%PATH%
