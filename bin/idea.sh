@@ -36,7 +36,8 @@ if [ -z "$IDEA_MAIN_CLASS_NAME" ]; then
 fi
 
 REQUIRED_JVM_ARGS="-Xbootclasspath/p:../lib/boot.jar: $IDEA_PROPERTIES_PROPERTY"
-JVM_ARGS="`cat $IDEA_HOME\bin\idea.vmoptions | tr '\n' ' '` $REQUIRED_JVM_ARGS"
+JVM_ARGS=`cat $IDEA_HOME/bin/idea.vmoptions | tr '\n' ' '`
+JVM_ARGS="$JVM_ARGS $REQUIRED_JVM_ARGS"
 
 while [ $# -gt 0 ]; do
   args="$args $1"
