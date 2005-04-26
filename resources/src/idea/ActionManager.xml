@@ -227,6 +227,7 @@
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" text="S_ynchronize" icon="/actions/sync.png" description="Detect all externally changed files and reload them from disk"/>
         <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction" text="Reload from Dis_k" description="Reload current file from disk and lose all changes"/>
         <separator/>
+        <action id="OpenInBrowser" class="com.intellij.ide.actions.OpenFileInBrowserAction" text="Open in Bro_wser"/>
         <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction" text="Export to _HTML..." description="Save file content in HTML format with syntax coloring"/>
         <action id="Print" class="com.intellij.codeEditor.printing.PrintAction" text="_Print..." description="Print file"/>
         <separator/>
@@ -704,6 +705,7 @@
     <group id="EditorPopupMenu" configurable="true" text="Editor Popup Menu" description="Editor Popup Menu">
       <action id="Add to migration roots" class="com.intellij.refactoring.actions.TypeMigrationAddRootAction" text="_Add to migration roots" description="Add selected element to migration roots"/>
       <reference ref="CutCopyPasteGroup"/>
+      <reference ref="OpenInBrowser"/>
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="FindJoinpointsByPointcutAction"/>
