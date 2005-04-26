@@ -31,7 +31,6 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,6 +41,7 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -64,7 +64,7 @@ import java.io.LineNumberReader;
 
 public abstract class CodeStyleAbstractPanel {
   private static Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
-  protected final Editor myEditor;
+  private final Editor myEditor;
   protected final CodeStyleSettings mySettings;
   private boolean myShouldUpdatePreview;
   protected final static int[] ourWrappings = new int[] {CodeStyleSettings.DO_NOT_WRAP,
@@ -89,7 +89,7 @@ public abstract class CodeStyleAbstractPanel {
     myUserActivityWatcher.register(component);
   }
 
-  protected final Editor createEditor() {
+  private final Editor createEditor() {
     EditorFactory editorFactory = EditorFactory.getInstance();
     myTextToReformat = getPreviewText();
     Document editorDocument = editorFactory.createDocument(myTextToReformat);
@@ -98,6 +98,19 @@ public abstract class CodeStyleAbstractPanel {
     myLastDocumentModificationStamp = editor.getDocument().getModificationStamp();
 
     EditorSettings editorSettings = editor.getSettings();
+    fillEditorSettings(editorSettings);
+
+    EditorColorsScheme scheme = editor.getColorsScheme();
+    scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
+
+    editor.setHighlighter(createHighlighter(scheme));
+
+    return editor;
+  }
+
+  protected abstract LexerEditorHighlighter createHighlighter(final EditorColorsScheme scheme);
+
+  protected void fillEditorSettings(final EditorSettings editorSettings) {
     editorSettings.setWhitespacesShown(true);
     editorSettings.setLineMarkerAreaShown(false);
     editorSettings.setLineNumbersShown(false);
@@ -105,13 +118,6 @@ public abstract class CodeStyleAbstractPanel {
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(1);
     editorSettings.setRightMargin(getRightMargin());
-
-    EditorColorsScheme scheme = editor.getColorsScheme();
-    scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
-
-    editor.setHighlighter(HighlighterFactory.createXMLHighlighter(scheme));
-
-    return editor;
   }
 
   protected abstract int getRightMargin();
@@ -131,7 +137,7 @@ public abstract class CodeStyleAbstractPanel {
           replaceText();
         }
       }, null, null);
-
+    myEditor.getSettings().setRightMargin(getRightMargin());
     myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
   }
 

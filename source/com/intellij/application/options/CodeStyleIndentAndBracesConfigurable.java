@@ -1,6 +1,7 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.options.BaseConfigurable;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 import javax.swing.*;
@@ -23,11 +24,11 @@ public class CodeStyleIndentAndBracesConfigurable extends BaseConfigurable {
   }
 
   public String getDisplayName() {
-    return "Indent and Braces";
+    return "Alignment and Braces";
   }
 
   public Icon getIcon() {
-    return null;
+    return StdFileTypes.JAVA.getIcon();
   }
 
   public void reset() {

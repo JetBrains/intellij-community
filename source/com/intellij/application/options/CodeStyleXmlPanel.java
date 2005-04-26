@@ -31,6 +31,9 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -49,7 +52,6 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JCheckBox mySpacesAroundEquality;
   private JCheckBox mySpacesAroundTagName;
   private JCheckBox myKeepLineBreaks;
-  private JCheckBox myCheckBox1;
 
   public CodeStyleXmlPanel(CodeStyleSettings settings) {
     super(settings);
@@ -58,6 +60,10 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     fillWrappingCombo(myWrapAttributes);
 
     addPanelToWatch(myPanel);
+  }
+
+  protected LexerEditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
+    return HighlighterFactory.createXMLHighlighter(scheme);
   }
 
   protected int getRightMargin() {

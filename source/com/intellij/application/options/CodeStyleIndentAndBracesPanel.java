@@ -20,15 +20,11 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OptionGroup;
-import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -72,17 +68,10 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
   private JCheckBox myCbWhileOnNewline;
   private JCheckBox myCbCatchOnNewline;
   private JCheckBox myCbFinallyOnNewline;
-  private JCheckBox myCbUseSameIndents;
-  private JCheckBox myCbDontIndentTopLevelMembers;
 
   private JCheckBox myCbSpecialElseIfTreatment;
   private JCheckBox myCbIndentCaseFromSwitch;
 
-  private IndentOptions myJavaIndentOptions = new IndentOptions(IndentOptions.LIST_LABEL_INDENT +
-                                                                IndentOptions.LIST_CONT_INDENT + IndentOptions.LIST_SMART_TABS);
-  private IndentOptions myJspIndentOptions = new IndentOptions(IndentOptions.LIST_CONT_INDENT + IndentOptions.LIST_SMART_TABS);
-  private IndentOptions myXMLIndentOptions = new IndentOptions(IndentOptions.LIST_CONT_INDENT + IndentOptions.LIST_SMART_TABS);
-  private IndentOptions myOtherIndentOptions = new IndentOptions(0);
 
   private JComboBox myIfForceCombo;
   private JComboBox myForForceCombo;
@@ -100,222 +89,22 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
   private JCheckBox myAlignAssignment;
   private JCheckBox myAlignArrayInitializerExpression;
 
-  private JCheckBox myAlignGroupFieldDeclarations;
-
   private Editor myEditor;
   private boolean toUpdatePreview = true;
-  private TabbedPaneWrapper myIndentOptionsTabs;
+
   private CodeStyleSettings mySettings;
 
-  private class IndentOptions extends OptionGroup {
-    public static final int LIST_CONT_INDENT = 1;
-    public static final int LIST_LABEL_INDENT = 2;
-    public static final int LIST_SMART_TABS = 4;
-    private final int myListFlags;
-
-    private boolean isListSmartTabs() { return (myListFlags & LIST_SMART_TABS) != 0; }
-
-    private boolean isListContIndent() { return (myListFlags & LIST_CONT_INDENT) != 0; }
-
-    private boolean isListLabelIndent() { return (myListFlags & LIST_LABEL_INDENT) != 0; }
-
-    private JTextField myIndentField;
-    private JTextField myContinuationIndentField;
-    private JCheckBox myCbUseTab;
-    private JCheckBox myCbSmartTabs;
-    private JTextField myTabSizeField;
-    private JLabel myTabSizeLabel;
-    private JLabel myIndentLabel;
-    private JLabel myContinuationIndentLabel;
-
-    private JTextField myLabelIndent;
-    private JLabel myLabelIndentLabel;
-
-    private JCheckBox myLabelIndentAbsolute;
-
-    public IndentOptions(int listFlags) {
-      myListFlags = listFlags;
-    }
-
-    public JPanel createPanel() {
-      myCbUseTab = createCheckBox("Use Tab Character");
-      add(myCbUseTab);
-
-      if (isListSmartTabs()) {
-        myCbSmartTabs = createCheckBox("Smart Tabs");
-        add(myCbSmartTabs, true);
-      }
-
-      myTabSizeField = new JTextField(4);
-      myTabSizeField.setMinimumSize(myTabSizeField.getPreferredSize());
-      myTabSizeField.getDocument().addDocumentListener(myDocumentListener);
-      myTabSizeLabel = new JLabel("Tab size");
-      add(myTabSizeLabel, myTabSizeField);
-
-      myIndentField = new JTextField(4);
-      myIndentField.setMinimumSize(myTabSizeField.getPreferredSize());
-      myIndentField.getDocument().addDocumentListener(myDocumentListener);
-      myIndentLabel = new JLabel("Indent");
-      add(myIndentLabel, myIndentField);
-
-      if (isListContIndent()) {
-        myContinuationIndentField = new JTextField(4);
-        myContinuationIndentField.setMinimumSize(myContinuationIndentField.getPreferredSize());
-        myContinuationIndentLabel = new JLabel("Continuation indent");
-        add(myContinuationIndentLabel, myContinuationIndentField);
-        myContinuationIndentField.getDocument().addDocumentListener(myDocumentListener);
-      }
-
-      if (isListLabelIndent()) {
-        myLabelIndent = new JTextField(4);
-        add(myLabelIndentLabel = new JLabel("Label indent"), myLabelIndent);
-        myLabelIndent.getDocument().addDocumentListener(myDocumentListener);
-
-        myLabelIndentAbsolute = createCheckBox("absolute label indent");
-        add(myLabelIndentAbsolute);
-
-        myCbDontIndentTopLevelMembers = createCheckBox("<html>Do not indent top<br>level class members</html>");
-        add(myCbDontIndentTopLevelMembers);
-      }
-
-      return super.createPanel();
-    }
-
-    private boolean isModified(JCheckBox checkBox, boolean value) {
-      return checkBox.isSelected() != value;
-    }
-
-    private boolean isModified(JTextField textField, int value) {
-      try {
-        int fieldValue = Integer.parseInt(textField.getText().trim());
-        return fieldValue != value;
-      }
-      catch (NumberFormatException e) {
-        return false;
-      }
-    }
-
-    public boolean isModified(CodeStyleSettings.IndentOptions options) {
-      boolean isModified;
-      isModified = isModified(myTabSizeField, options.TAB_SIZE);
-      isModified |= isModified(myCbUseTab, options.USE_TAB_CHARACTER);
-      isModified |= isModified(myIndentField, options.INDENT_SIZE);
-
-      if (isListSmartTabs()) {
-        isModified |= isModified(myCbSmartTabs, options.SMART_TABS);
-      }
-
-      if (isListContIndent()) {
-        isModified |= isModified(myContinuationIndentField, options.CONTINUATION_INDENT_SIZE);
-      }
-
-      if (isListLabelIndent()) {
-        isModified |= isModified(myLabelIndent, options.LABEL_INDENT_SIZE);
-        isModified |= isModified(myLabelIndentAbsolute, options.LABEL_INDENT_ABSOLUTE);
-      }
-      return isModified;
-    }
-
-    private int getUIIndent() {
-      try {
-        return Math.max(Integer.parseInt(myIndentField.getText()), 1);
-      }
-      catch (NumberFormatException e) {
-      }
-
-      return 4;
-    }
-
-    private int getUITabSize() {
-      try {
-        return Math.max(Integer.parseInt(myTabSizeField.getText()), 1);
-      }
-      catch (NumberFormatException e) {
-      }
-
-      return 4;
-    }
-
-    public void apply(CodeStyleSettings.IndentOptions options) {
-      options.INDENT_SIZE = getUIIndent();
-      options.TAB_SIZE = getUITabSize();
-      options.USE_TAB_CHARACTER = myCbUseTab.isSelected();
-
-      if (isListContIndent()) {
-        try {
-          options.CONTINUATION_INDENT_SIZE = Math.max(Integer.parseInt(myContinuationIndentField.getText()), 0);
-        }
-        catch (NumberFormatException e) {
-        }
-      }
-
-      if (isListSmartTabs()) {
-        options.SMART_TABS = isSmartTabValid(options.INDENT_SIZE, options.TAB_SIZE) && myCbSmartTabs.isSelected();
-      }
-
-      if (isListLabelIndent()) {
-        try {
-          options.LABEL_INDENT_SIZE = Integer.parseInt(myLabelIndent.getText());
-        }
-        catch (NumberFormatException e) {
-        }
-        options.LABEL_INDENT_ABSOLUTE = myLabelIndentAbsolute.isSelected();
-      }
-    }
-
-    public void reset(CodeStyleSettings.IndentOptions options) {
-      myTabSizeField.setText("" + options.TAB_SIZE);
-      myCbUseTab.setSelected(options.USE_TAB_CHARACTER);
-
-      myIndentField.setText("" + options.INDENT_SIZE);
-      if (isListContIndent()) myContinuationIndentField.setText("" + options.CONTINUATION_INDENT_SIZE);
-      if (isListLabelIndent()) {
-        myLabelIndent.setText(Integer.toString(options.LABEL_INDENT_SIZE));
-        myLabelIndentAbsolute.setSelected(options.LABEL_INDENT_ABSOLUTE);
-      }
-      if (isListSmartTabs()) myCbSmartTabs.setSelected(options.SMART_TABS);
-    }
-
-    public void setEnabled(boolean enabled) {
-      myIndentField.setEnabled(enabled);
-      myIndentLabel.setEnabled(enabled);
-      myTabSizeField.setEnabled(enabled);
-      myTabSizeLabel.setEnabled(enabled);
-      myCbUseTab.setEnabled(enabled);
-      if (isListSmartTabs()) {
-        boolean smartTabsChecked = enabled && myCbUseTab.isSelected();
-        boolean smartTabsValid = smartTabsChecked && isSmartTabValid(getUIIndent(), getUITabSize());
-        myCbSmartTabs.setEnabled(smartTabsValid);
-        myCbSmartTabs.setToolTipText(
-          smartTabsChecked && !smartTabsValid ? "Indent must be multiple of tab size for smart tabs to operate" : null);
-      }
-      if (isListLabelIndent()) {
-        myContinuationIndentField.setEnabled(enabled);
-        myContinuationIndentLabel.setEnabled(enabled);
-      }
-      if (isListLabelIndent()) {
-        myLabelIndent.setEnabled(enabled);
-        myLabelIndentLabel.setEnabled(enabled);
-        myLabelIndentAbsolute.setEnabled(enabled);
-      }
-    }
-
-    private boolean isSmartTabValid(int indent, int tabSize) {
-      return (indent / tabSize) * tabSize == indent;
-    }
-  }
-
-  private DocumentListener myDocumentListener = new DocumentAdapter() {
-    public void textChanged(DocumentEvent event) {
-      update();
-    }
-  };
+  private JCheckBox myKeepLineBreaks;
+  private JCheckBox myKeepCommentAtFirstColumn;
+  private JCheckBox myKeepMethodsInOneLine;
+  private JCheckBox myKeepSimpleBlocksInOneLine;
+  private JCheckBox myKeepControlStatementInOneLine;
 
   public CodeStyleIndentAndBracesPanel(CodeStyleSettings settings) {
     super(new GridBagLayout());
     mySettings = settings;
 
-    add(createTabOptionsPanel(),
+    add(createKeepWhenReformatingPanel(),
         new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
                                new Insets(0, 4, 0, 4), 0, 0));
 
@@ -324,13 +113,8 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
                                new Insets(0, 4, 0, 4), 0, 0));
 
     add(createAlignmentsPanel(),
-        new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
+        new GridBagConstraints(1, 0, 1, 2, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                                new Insets(0, 4, 0, 4), 0, 0));
-
-    add(createGroupAlignmentsPanel(),
-        new GridBagConstraints(1, 1, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                               new Insets(0, 4, 0, 4), 0, 0));
-
 
     add(createPlaceOnNewLinePanel(),
         new GridBagConstraints(1, 2, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
@@ -349,6 +133,29 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
     add(createPreviewPanel(),
         new GridBagConstraints(2, 0, 1, 4, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                                new Insets(0, 0, 0, 4), 0, 0));
+  }
+
+  private Component createKeepWhenReformatingPanel() {
+    OptionGroup optionGroup = new OptionGroup("Keep When Reformatting");
+
+    myKeepLineBreaks = createCheckBox("Line breaks");
+    optionGroup.add(myKeepLineBreaks);
+
+    myKeepCommentAtFirstColumn = createCheckBox("Comment at first column");
+    optionGroup.add(myKeepCommentAtFirstColumn);
+
+    myKeepMethodsInOneLine = createCheckBox("Simple methods in one line");
+    optionGroup.add(myKeepMethodsInOneLine);
+
+    myKeepSimpleBlocksInOneLine = createCheckBox("Simple blocks in one line");
+    optionGroup.add(myKeepSimpleBlocksInOneLine);
+
+    myKeepControlStatementInOneLine = createCheckBox("Control statement in one line");
+    optionGroup.add(myKeepControlStatementInOneLine);
+
+
+    return optionGroup.createPanel();
+
   }
 
   public void dispose() {
@@ -430,15 +237,6 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
     return optionGroup.createPanel();
   }
 
-  private JPanel createGroupAlignmentsPanel() {
-    OptionGroup optionGroup = new OptionGroup("Group alignment");
-
-    myAlignGroupFieldDeclarations = createCheckBox("Field declarations");
-    optionGroup.add(myAlignGroupFieldDeclarations);
-
-    return optionGroup.createPanel();
-  }
-
   private JPanel createPlaceOnNewLinePanel() {
     OptionGroup optionGroup = new OptionGroup("Place on New Line");
 
@@ -453,22 +251,6 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
 
     myCbFinallyOnNewline = createCheckBox("\"finally\" on new line");
     optionGroup.add(myCbFinallyOnNewline);
-
-    return optionGroup.createPanel();
-  }
-
-  private JPanel createTabOptionsPanel() {
-    OptionGroup optionGroup = new OptionGroup("Tabs and Indents");
-
-    myCbUseSameIndents = createCheckBox("Use same settings for all file types");
-    optionGroup.add(myCbUseSameIndents);
-
-    myIndentOptionsTabs = new TabbedPaneWrapper(JTabbedPane.RIGHT);
-    myIndentOptionsTabs.addTab("Java", myJavaIndentOptions.createPanel());
-    myIndentOptionsTabs.addTab("JSP", myJspIndentOptions.createPanel());
-    myIndentOptionsTabs.addTab("XML", myXMLIndentOptions.createPanel());
-    myIndentOptionsTabs.addTab("Other", myOtherIndentOptions.createPanel());
-    optionGroup.add(myIndentOptionsTabs.getComponent());
 
     return optionGroup.createPanel();
   }
@@ -574,18 +356,6 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
   }
 
   private void update() {
-    myJavaIndentOptions.setEnabled(true);
-    boolean enabled = !myCbUseSameIndents.isSelected();
-    if (!enabled && myIndentOptionsTabs.getSelectedIndex() != 0) {
-      myIndentOptionsTabs.setSelectedIndex(0);
-    }
-    myJspIndentOptions.setEnabled(enabled);
-    myIndentOptionsTabs.setEnabledAt(1, enabled);
-    myXMLIndentOptions.setEnabled(enabled);
-    myIndentOptionsTabs.setEnabledAt(2, enabled);
-    myOtherIndentOptions.setEnabled(enabled);
-    myIndentOptionsTabs.setEnabledAt(3, enabled);
-
     if (!toUpdatePreview) {
       return;
     }
@@ -690,15 +460,6 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
     setBraceStyleComboValue(myClassDeclarationCombo, mySettings.CLASS_BRACE_STYLE);
     setBraceStyleComboValue(myMethodDeclarationCombo, mySettings.METHOD_BRACE_STYLE);
 
-    myCbUseSameIndents.setSelected(mySettings.USE_SAME_INDENTS);
-
-    myJavaIndentOptions.reset(mySettings.JAVA_INDENT_OPTIONS);
-    myJspIndentOptions.reset(mySettings.JSP_INDENT_OPTIONS);
-    myXMLIndentOptions.reset(mySettings.XML_INDENT_OPTIONS);
-    myOtherIndentOptions.reset(mySettings.OTHER_INDENT_OPTIONS);
-
-    myCbDontIndentTopLevelMembers.setSelected(mySettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS);
-
     myAlignAssignment.setSelected(mySettings.ALIGN_MULTILINE_ASSIGNMENT);
     myAlignBinaryExpression.setSelected(mySettings.ALIGN_MULTILINE_BINARY_OPERATION);
     myAlignCallParameters.setSelected(mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
@@ -710,14 +471,19 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
     myAlignThrowsList.setSelected(mySettings.ALIGN_MULTILINE_THROWS_LIST);
     myAlignArrayInitializerExpression.setSelected(mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
 
-    myAlignGroupFieldDeclarations.setSelected(mySettings.ALIGN_GROUP_FIELD_DECLARATIONS);
-
     setForceBracesComboValue(myForForceCombo, mySettings.FOR_BRACE_FORCE);
     setForceBracesComboValue(myIfForceCombo, mySettings.IF_BRACE_FORCE);
     setForceBracesComboValue(myWhileForceCombo, mySettings.WHILE_BRACE_FORCE);
     setForceBracesComboValue(myDoWhileForceCombo, mySettings.DOWHILE_BRACE_FORCE);
 
     toUpdatePreview = true;
+
+    myKeepLineBreaks.setSelected(mySettings.KEEP_LINE_BREAKS);
+    myKeepCommentAtFirstColumn.setSelected(mySettings.KEEP_FIRST_COLUMN_COMMENT);
+    myKeepControlStatementInOneLine.setSelected(mySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE);
+    myKeepSimpleBlocksInOneLine.setSelected(mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
+    myKeepMethodsInOneLine.setSelected(mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE);
+
 
     update();
   }
@@ -727,7 +493,7 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
     mySettings.WHILE_ON_NEW_LINE = myCbWhileOnNewline.isSelected();
     mySettings.CATCH_ON_NEW_LINE = myCbCatchOnNewline.isSelected();
     mySettings.FINALLY_ON_NEW_LINE = myCbFinallyOnNewline.isSelected();
-    mySettings.USE_SAME_INDENTS = myCbUseSameIndents.isSelected();
+
 
     mySettings.SPECIAL_ELSE_IF_TREATMENT = myCbSpecialElseIfTreatment.isSelected();
     mySettings.INDENT_CASE_FROM_SWITCH = myCbIndentCaseFromSwitch.isSelected();
@@ -736,12 +502,6 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
     mySettings.CLASS_BRACE_STYLE = getBraceComboValue(myClassDeclarationCombo);
     mySettings.METHOD_BRACE_STYLE = getBraceComboValue(myMethodDeclarationCombo);
 
-    myJavaIndentOptions.apply(mySettings.JAVA_INDENT_OPTIONS);
-    myJspIndentOptions.apply(mySettings.JSP_INDENT_OPTIONS);
-    myXMLIndentOptions.apply(mySettings.XML_INDENT_OPTIONS);
-    myOtherIndentOptions.apply(mySettings.OTHER_INDENT_OPTIONS);
-
-    mySettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = myCbDontIndentTopLevelMembers.isSelected();
     mySettings.ALIGN_MULTILINE_ASSIGNMENT = myAlignAssignment.isSelected();
     mySettings.ALIGN_MULTILINE_BINARY_OPERATION = myAlignBinaryExpression.isSelected();
     mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = myAlignCallParameters.isSelected();
@@ -754,12 +514,17 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
     mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = myAlignArrayInitializerExpression.isSelected();
 //    mySettings.LABEL_INDENT =
 
-    mySettings.ALIGN_GROUP_FIELD_DECLARATIONS = myAlignGroupFieldDeclarations.isSelected();
-
     mySettings.FOR_BRACE_FORCE = getForceBracesValue(myForForceCombo);
     mySettings.IF_BRACE_FORCE = getForceBracesValue(myIfForceCombo);
     mySettings.WHILE_BRACE_FORCE = getForceBracesValue(myWhileForceCombo);
     mySettings.DOWHILE_BRACE_FORCE = getForceBracesValue(myDoWhileForceCombo);
+
+    mySettings.KEEP_LINE_BREAKS = myKeepLineBreaks.isSelected();
+    mySettings.KEEP_FIRST_COLUMN_COMMENT = myKeepCommentAtFirstColumn.isSelected();
+    mySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = myKeepControlStatementInOneLine.isSelected();
+    mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = myKeepSimpleBlocksInOneLine.isSelected();
+    mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = myKeepSimpleBlocksInOneLine.isSelected();
+
   }
 
   public boolean isModified() {
@@ -768,7 +533,7 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
     isModified |= isModified(myCbWhileOnNewline, mySettings.WHILE_ON_NEW_LINE);
     isModified |= isModified(myCbCatchOnNewline, mySettings.CATCH_ON_NEW_LINE);
     isModified |= isModified(myCbFinallyOnNewline, mySettings.FINALLY_ON_NEW_LINE);
-    isModified |= isModified(myCbUseSameIndents, mySettings.USE_SAME_INDENTS);
+
 
     isModified |= isModified(myCbSpecialElseIfTreatment, mySettings.SPECIAL_ELSE_IF_TREATMENT);
     isModified |= isModified(myCbIndentCaseFromSwitch, mySettings.INDENT_CASE_FROM_SWITCH);
@@ -778,12 +543,6 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
     isModified |= mySettings.CLASS_BRACE_STYLE != getBraceComboValue(myClassDeclarationCombo);
     isModified |= mySettings.METHOD_BRACE_STYLE != getBraceComboValue(myMethodDeclarationCombo);
 
-    isModified |= myJavaIndentOptions.isModified(mySettings.JAVA_INDENT_OPTIONS);
-    isModified |= myJspIndentOptions.isModified(mySettings.JSP_INDENT_OPTIONS);
-    isModified |= myXMLIndentOptions.isModified(mySettings.XML_INDENT_OPTIONS);
-    isModified |= myOtherIndentOptions.isModified(mySettings.OTHER_INDENT_OPTIONS);
-
-    isModified |= isModified(myCbDontIndentTopLevelMembers, mySettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS);
     isModified |= isModified(myAlignAssignment, mySettings.ALIGN_MULTILINE_ASSIGNMENT);
     isModified |= isModified(myAlignBinaryExpression, mySettings.ALIGN_MULTILINE_BINARY_OPERATION);
     isModified |= isModified(myAlignCallParameters, mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
@@ -795,12 +554,17 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
     isModified |= isModified(myAlignThrowsList, mySettings.ALIGN_MULTILINE_THROWS_LIST);
     isModified |= isModified(myAlignArrayInitializerExpression, mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
 
-    isModified |= isModified(myAlignGroupFieldDeclarations, mySettings.ALIGN_GROUP_FIELD_DECLARATIONS);
-
     isModified |= mySettings.FOR_BRACE_FORCE != getForceBracesValue(myForForceCombo);
     isModified |= mySettings.IF_BRACE_FORCE != getForceBracesValue(myIfForceCombo);
     isModified |= mySettings.WHILE_BRACE_FORCE != getForceBracesValue(myWhileForceCombo);
     isModified |= mySettings.DOWHILE_BRACE_FORCE != getForceBracesValue(myDoWhileForceCombo);
+
+    isModified |= isModified(myKeepLineBreaks, mySettings.KEEP_LINE_BREAKS);
+    isModified |= isModified(myKeepCommentAtFirstColumn, mySettings.KEEP_FIRST_COLUMN_COMMENT);
+    isModified |= isModified(myKeepControlStatementInOneLine, mySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE);
+    isModified |= isModified(myKeepSimpleBlocksInOneLine, mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
+    isModified |= isModified(myKeepMethodsInOneLine, mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE);
+
 
     return isModified;
   }

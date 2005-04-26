@@ -4,7 +4,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.ListUtil;
 
@@ -15,11 +15,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 public class CodeStyleGeneralConfigurable implements Configurable {
-  private static final String SYSTEM_DEPENDANT_STRING = "System Dependent";
-  private static final String UNIX_STRING = "Unix \\n";
-  private static final String WINDOWS_STRING = "Windows \\r\\n";
-  private static final String MACINTOSH_STRING = "Mac \\r";
-
   JPanel myPanel;
   private JTextField myFieldPrefixField;
   private JTextField myStaticFieldPrefixField;
@@ -32,25 +27,16 @@ public class CodeStyleGeneralConfigurable implements Configurable {
   private JTextField myLocalVariableSuffixField;
 
   private JCheckBox myCbPreferLongerNames;
-  private JCheckBox myCbKeepLineBreaks;
-  private JCheckBox myCbKeepFirstColumnComment;
-  private JCheckBox myCbKeepControlStatementInOneLine;
-
   private JCheckBox myCbLineCommentAtFirstColumn;
   private JCheckBox myCbBlockCommentAtFirstColumn;
 
-  private JTextField myRightMarginField;
 
   private MembersOrderList myMembersOrderList;
-//  private JPanel myMembersListPanel;
   private JScrollPane myMembersListScroll;
   private JButton myMoveUpButton;
   private JButton myMoveDownButton;
 
-  private JComboBox myLineSeparatorCombo;
   private CodeStyleSettings mySettings;
-  private JCheckBox myCbKeepSimpleMethodsInOneLine;
-  private JCheckBox myCbKeepSimpleBlocksInOneLine;
   private JCheckBox myCbGenerateFinalParameters;
   private JCheckBox myCbGenerateFinalLocals;
 
@@ -63,10 +49,6 @@ public class CodeStyleGeneralConfigurable implements Configurable {
     myMembersListScroll.getViewport().add(myMembersOrderList);
 
 
-    myLineSeparatorCombo.addItem(SYSTEM_DEPENDANT_STRING);
-    myLineSeparatorCombo.addItem(UNIX_STRING);
-    myLineSeparatorCombo.addItem(WINDOWS_STRING);
-    myLineSeparatorCombo.addItem(MACINTOSH_STRING);
 
     myMoveUpButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -86,7 +68,7 @@ public class CodeStyleGeneralConfigurable implements Configurable {
   }
 
   public String getDisplayName() {
-    return "General";
+    return "Code Generation";
   }
 
   public String getHelpTopic() {
@@ -94,7 +76,7 @@ public class CodeStyleGeneralConfigurable implements Configurable {
   }
 
   public Icon getIcon() {
-    return null;
+    return StdFileTypes.JAVA.getIcon();
   }
 
 
@@ -219,26 +201,7 @@ public class CodeStyleGeneralConfigurable implements Configurable {
   }*/
 
   public void reset() {
-    String lineSeparator = mySettings.LINE_SEPARATOR;
-    if ("\n".equals(lineSeparator)) {
-      myLineSeparatorCombo.setSelectedItem(UNIX_STRING);
-    }
-    else if ("\r\n".equals(lineSeparator)) {
-      myLineSeparatorCombo.setSelectedItem(WINDOWS_STRING);
-    }
-    else if ("\r".equals(lineSeparator)) {
-      myLineSeparatorCombo.setSelectedItem(MACINTOSH_STRING);
-    }
-    else {
-      myLineSeparatorCombo.setSelectedItem(SYSTEM_DEPENDANT_STRING);
-    }
-
     myCbPreferLongerNames.setSelected(mySettings.PREFER_LONGER_NAMES);
-    myCbKeepLineBreaks.setSelected(mySettings.KEEP_LINE_BREAKS);
-    myCbKeepFirstColumnComment.setSelected(mySettings.KEEP_FIRST_COLUMN_COMMENT);
-    myCbKeepControlStatementInOneLine.setSelected(mySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE);
-    myCbKeepSimpleBlocksInOneLine.setSelected(mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
-    myCbKeepSimpleMethodsInOneLine.setSelected(mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE);
 
     myFieldPrefixField.setText("" + mySettings.FIELD_NAME_PREFIX);
     myStaticFieldPrefixField.setText("" + mySettings.STATIC_FIELD_NAME_PREFIX);
@@ -255,21 +218,11 @@ public class CodeStyleGeneralConfigurable implements Configurable {
 
     myCbGenerateFinalLocals.setSelected(mySettings.GENERATE_FINAL_LOCALS);
     myCbGenerateFinalParameters.setSelected(mySettings.GENERATE_FINAL_PARAMETERS);
-
-    myRightMarginField.setText("" + mySettings.RIGHT_MARGIN);
-
     myMembersOrderList.reset(mySettings);
   }
 
   public void apply() {
-    mySettings.LINE_SEPARATOR = getSelectedLineSeparator();
-
     mySettings.PREFER_LONGER_NAMES = myCbPreferLongerNames.isSelected();
-    mySettings.KEEP_LINE_BREAKS = myCbKeepLineBreaks.isSelected();
-    mySettings.KEEP_FIRST_COLUMN_COMMENT = myCbKeepFirstColumnComment.isSelected();
-    mySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = myCbKeepControlStatementInOneLine.isSelected();
-    mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = myCbKeepSimpleBlocksInOneLine.isSelected();
-    mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = myCbKeepSimpleMethodsInOneLine.isSelected();
 
     mySettings.FIELD_NAME_PREFIX = myFieldPrefixField.getText().trim();
     mySettings.STATIC_FIELD_NAME_PREFIX = myStaticFieldPrefixField.getText().trim();
@@ -287,16 +240,6 @@ public class CodeStyleGeneralConfigurable implements Configurable {
     mySettings.GENERATE_FINAL_LOCALS = myCbGenerateFinalLocals.isSelected();
     mySettings.GENERATE_FINAL_PARAMETERS = myCbGenerateFinalParameters.isSelected();
 
-    try {
-      int rightMargin = Integer.parseInt(myRightMarginField.getText());
-      if (rightMargin < 1) {
-        rightMargin = 1;
-      }
-      mySettings.RIGHT_MARGIN = rightMargin;
-    }
-    catch (NumberFormatException e) {
-    }
-
     myMembersOrderList.apply(mySettings);
 
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
@@ -307,15 +250,7 @@ public class CodeStyleGeneralConfigurable implements Configurable {
 
   public boolean isModified() {
     boolean isModified = false;
-
-    isModified |= !Comparing.equal(getSelectedLineSeparator(), mySettings.LINE_SEPARATOR);
-
     isModified |= isModified(myCbPreferLongerNames, mySettings.PREFER_LONGER_NAMES);
-    isModified |= isModified(myCbKeepLineBreaks, mySettings.KEEP_LINE_BREAKS);
-    isModified |= isModified(myCbKeepFirstColumnComment, mySettings.KEEP_FIRST_COLUMN_COMMENT);
-    isModified |= isModified(myCbKeepControlStatementInOneLine, mySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE);
-    isModified |= isModified(myCbKeepSimpleBlocksInOneLine, mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
-    isModified |= isModified(myCbKeepSimpleMethodsInOneLine, mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE);
 
     isModified |= isModified(myFieldPrefixField, mySettings.FIELD_NAME_PREFIX);
     isModified |= isModified(myStaticFieldPrefixField, mySettings.STATIC_FIELD_NAME_PREFIX);
@@ -330,7 +265,6 @@ public class CodeStyleGeneralConfigurable implements Configurable {
     isModified |= isModified(myCbLineCommentAtFirstColumn, mySettings.LINE_COMMENT_AT_FIRST_COLUMN);
     isModified |= isModified(myCbBlockCommentAtFirstColumn, mySettings.BLOCK_COMMENT_AT_FIRST_COLUMN);
 
-    isModified |= isModified(myRightMarginField, String.valueOf(mySettings.RIGHT_MARGIN));
 
     isModified |= isModified(myCbGenerateFinalLocals, mySettings.GENERATE_FINAL_LOCALS);
     isModified |= isModified(myCbGenerateFinalParameters, mySettings.GENERATE_FINAL_PARAMETERS);
@@ -338,19 +272,6 @@ public class CodeStyleGeneralConfigurable implements Configurable {
     isModified |= myMembersOrderList.isModified(mySettings);
 
     return isModified;
-  }
-
-  private String getSelectedLineSeparator() {
-    if (UNIX_STRING.equals(myLineSeparatorCombo.getSelectedItem())) {
-      return "\n";
-    }
-    else if (MACINTOSH_STRING.equals(myLineSeparatorCombo.getSelectedItem())) {
-      return "\r";
-    }
-    else if (WINDOWS_STRING.equals(myLineSeparatorCombo.getSelectedItem())) {
-      return "\r\n";
-    }
-    return null;
   }
 
   private static boolean isModified(JCheckBox checkBox, boolean value) {

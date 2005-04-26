@@ -36,9 +36,12 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.Icons;
 import com.intellij.util.ValueHolder;
+import com.intellij.ide.highlighter.HighlighterFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
@@ -128,6 +131,10 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
 
 
     addPanelToWatch(myPanel);
+  }
+
+  protected LexerEditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
+    return HighlighterFactory.createXMLHighlighter(scheme);
   }
 
   private void customizeField(final String title, final TextFieldWithBrowseButton uiField, final ValueHolder<String> valueHolder) {
