@@ -112,11 +112,12 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
       }
 
       int result = whiteSpace.getTextRange().getStartOffset();
-      final int lineFeeds = whiteSpace.getLineFeedsToModified(model, offset);
+      final int lineFeeds = getLineFeedsToModified(model, offset, whiteSpace.getTextRange().getStartOffset());
       result += (lineFeeds - 1) + (1 + indent.getTotalSpaces());
       return result;
 
     } else {
+      final int lineFeeds = getLineFeedsToModified(model, offset, whiteSpace.getTextRange().getStartOffset());
       indent = processor.getIndentAt(offset);
       String newWS = whiteSpace.generateWhiteSpace(indentOptions, offset, indent, model);
       model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
@@ -126,25 +127,12 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
       if (delta >= 0) {
         return whiteSpace.getTextRange().getStartOffset() + newWS.length() + delta + 1;
       }
+      int result = whiteSpace.getTextRange().getStartOffset();
 
+      result += lineFeeds * (1 + indent.getTotalSpaces());
+      return result;
     }
 
-    int result = whiteSpace.getTextRange().getStartOffset();
-    final int lineFeeds = whiteSpace.getLineFeedsToModified(model, offset);
-    result += lineFeeds * (1 + indent.getTotalSpaces());
-    /*
-    else {
-      result += 1;
-    }
-    */
-    return result;
-
-    /*
-    final IndentInfo indent = processor.getIndentAt(offset);
-    String newWS = whiteSpace.generateWhiteSpace(indentOptions, offset, indent, model);
-    model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
-    return offset + indent.getTotalSpaces();
-    */
   }
 
   public Indent createSpaceIndent(final int spaces) {
@@ -197,5 +185,13 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
   public Indent createContinuationWithoutFirstIndent()//is default
   {
     return new IndentImpl(IndentImpl.Type.CONTINUATION_WITHOUT_FIRST, false);
+  }
+
+  public static int getLineFeedsToModified(final PsiBasedFormattingModel model, final int offset, final int startOffset) {
+    return model.getLineNumber(offset) - model.getLineNumber(startOffset);
+  }
+
+  private static char getCharAt(final PsiBasedFormattingModel model, final int startOffset) {
+    return model.getText(new TextRange(startOffset, startOffset + 1)).charAt(0);
   }
 }
