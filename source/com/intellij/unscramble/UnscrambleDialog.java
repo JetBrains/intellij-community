@@ -50,6 +50,8 @@ public class UnscrambleDialog extends DialogWrapper{
   private JPanel myPanel;
   private Editor myEditor;
   private TextFieldWithHistory myLogFile;
+  private JCheckBox myUseUnscrambler;
+  private JPanel myUnscramblePanel;
 
   public UnscrambleDialog(Project project) {
     super(false);
@@ -62,12 +64,22 @@ public class UnscrambleDialog extends DialogWrapper{
         GuiUtils.enableChildren(myLogFileChooserPanel, unscrambleSupport != null, null);
       }
     });
+    myUseUnscrambler.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        useUnscramblerChanged();
+      }
+    });
     createLogFileChooser();
     createEditor();
     reset();
 
-    setTitle("Unscramble");
+    setTitle("Analyze Stacktrace");
     init();
+  }
+
+  private void useUnscramblerChanged() {
+    boolean selected = myUseUnscrambler.isSelected();
+    GuiUtils.enableChildren(myUnscramblePanel, selected, new JComponent[]{myUseUnscrambler});
   }
 
   private void reset() {
@@ -96,7 +108,8 @@ public class UnscrambleDialog extends DialogWrapper{
       }
     }
     myUnscrambleChooser.setSelectedIndex(index);
-
+    useUnscramblerChanged();
+    myUseUnscrambler.setSelected(selectedUnscrambler != null);
     pasteTextFromClipboard();
   }
 
@@ -159,6 +172,7 @@ public class UnscrambleDialog extends DialogWrapper{
   }
 
   private UnscrambleSupport getSelectedUnscrambler() {
+    if (!myUseUnscrambler.isSelected()) return null;
     return (UnscrambleSupport)myUnscrambleChooser.getSelectedItem();
   }
 
@@ -201,7 +215,7 @@ public class UnscrambleDialog extends DialogWrapper{
   private void populateRegisteredUnscramblerList() {
     List<UnscrambleSupport> unscrambleComponents = getRegisteredUnscramblers();
 
-    myUnscrambleChooser.addItem(null);
+    //myUnscrambleChooser.addItem(null);
     for (int i = 0; i < unscrambleComponents.size(); i++) {
       final UnscrambleSupport unscrambleSupport = unscrambleComponents.get(i);
       myUnscrambleChooser.addItem(unscrambleSupport);
@@ -242,10 +256,12 @@ public class UnscrambleDialog extends DialogWrapper{
       String res = null;
       for (int i = 0; i < list.size(); i++) {
         final String s = (String)list.get(i);
-        if (res == null)
+        if (res == null) {
           res = s;
-        else
+        }
+        else {
           res = res + ":::" + s;
+        }
       }
       PropertiesComponent.getInstance().setValue(PROPERTY_LOG_FILE_HISTORY_URLS, res);
       UnscrambleSupport selectedUnscrambler = getSelectedUnscrambler();

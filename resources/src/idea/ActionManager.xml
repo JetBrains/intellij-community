@@ -416,6 +416,10 @@
         <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction" text="Analyze _Cyclic Dependencies..." description="Browse code choosen analysis item used in cycles" />
         <action id="ShowModulesDependencies" class="com.intellij.moduleDependencies.ShowModuleDependenciesAction" text="Analyze _Module Dependencies..." description="Show dependencies between modules in project" />
         <action id="DupLocate" class="com.intellij.dupLocator.DuplocateAction" text="_Locate Duplicates..." description="Locate duplicate code in project" />
+        <group text="Stacktrace" popup="true">
+          <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction" text="Analyze Stacktrace..."/>
+          <action id="UnscrambleFromClipboard" class="com.intellij.unscramble.UnscrambleFromClipboardAction" text="Analyze Stacktrace From Clipboard..."/>
+        </group>
       </group>
 
       <!-- Refactor -->
@@ -532,11 +536,6 @@
         <separator/>
         <action id="DataSources" class="com.intellij.j2ee.dataSource.DataSourcesManagementAction" text="Data Sources..." description="Manage JDBC Data Sources"/>
         <separator/>
-
-        <group text="Unscramble" popup="true">
-          <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction" text="_Unscramble Stacktrace..."/>
-          <action id="UnscrambleFromClipboard" class="com.intellij.unscramble.UnscrambleFromClipboardAction" text="Unscramble Stacktrace From Clipboard..."/>
-        </group>
 
         <group text="Internal Actions" internal="true" popup="true">
           <action id="PsiViewer" internal="true" class="com.intellij.internal.psiView.ViewerAction" text="View PSI Structure"/>
