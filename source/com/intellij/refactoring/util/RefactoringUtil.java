@@ -962,8 +962,9 @@ public class RefactoringUtil {
 
   public static String getStringToSearch(PsiElement element, boolean nonJava) {
     if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
-      element = ((PsiDirectory)element).getPackage();
-    }
+      final PsiPackage aPackage = ((PsiDirectory)element).getPackage();
+      if (aPackage != null) element = aPackage;
+  }
 
     if (element instanceof PsiPackage) {
       return nonJava ? ((PsiPackage)element).getQualifiedName() : ((PsiPackage)element).getName();
