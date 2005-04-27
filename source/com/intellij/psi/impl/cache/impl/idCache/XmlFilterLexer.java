@@ -18,6 +18,7 @@ public class XmlFilterLexer extends BaseFilterLexer {
     final int tokenStart = getTokenStart();
     final int tokenEnd = getTokenEnd();
     if (tokenType == ElementType.XML_COMMENT_CHARACTERS) {
+      IdTableBuilding.scanWords(myTable, buffer, tokenStart, tokenEnd, UsageSearchContext.IN_COMMENTS);
       advanceTodoItemCounts(buffer, tokenStart, tokenEnd);
     }
 

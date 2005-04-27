@@ -82,10 +82,25 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         findMethodUsages(((PsiMethod) element), usages);
       } else if (element instanceof PsiField) {
         findFieldUsages((PsiField) element, usages);
+      } else if (element instanceof PsiNamedElement) {
+        findGenericElementUsages (element, usages);
       }
     }
     final UsageInfo[] result = usages.toArray(new UsageInfo[usages.size()]);
     return UsageViewUtil.removeDuplicatedUsages(result);
+  }
+
+  private void findGenericElementUsages(final PsiElement element, final ArrayList<UsageInfo> usages) {
+    PsiManager manager = element.getManager();
+
+    final PsiReference[] references = manager.getSearchHelper().findReferences(element, GlobalSearchScope.projectScope(myProject), false);
+    for (int i = 0; i < references.length; i++) {
+      final PsiElement refElement = references[i].getElement();
+      if (!isInside(refElement, myElements)) {
+        usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(refElement, element, false));
+      }
+    }
+    addNonCodeUsages(element, usages, myInsideDeletedElements);
   }
 
   protected boolean preprocessUsages(UsageInfo[][] u) {
@@ -690,7 +705,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   public static boolean validElement(PsiElement element) {
     return element instanceof PsiClass
             || element instanceof PsiMethod
-            || element instanceof PsiField;
+            || element instanceof PsiField
+            || element instanceof PsiFileSystemItem;
   }
 
   public static SafeDeleteProcessor createInstance(Project project, Runnable prepareSuccessfulCallback,

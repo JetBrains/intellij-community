@@ -4,6 +4,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
@@ -46,6 +47,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
   public boolean mayHaveReferences(IElementType token, short searchContext) {
     if((searchContext & UsageSearchContext.IN_FOREIGN_LANGUAGES) != 0 &&
        (token == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN || token == XmlTokenType.XML_NAME)) return true;
+    if((searchContext & UsageSearchContext.IN_COMMENTS) != 0 && token == ElementType.XML_COMMENT_CHARACTERS) return true;
     if((searchContext & UsageSearchContext.IN_PLAIN_TEXT) != 0) return true;
     return false;
   }
