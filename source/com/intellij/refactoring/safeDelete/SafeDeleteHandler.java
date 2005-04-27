@@ -30,7 +30,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     if (!SafeDeleteProcessor.validElement(element)) {
       String message =
               "Cannot perform the refactoring.\n" +
-              "Caret should be positioned on the name of a class, a field, or a method to be deleted";
+              "Safe delete is not supported for this element.";
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, /*HelpID.SAFE_DELETE*/null, project);
       return;
     }
