@@ -6,8 +6,6 @@ package com.intellij.refactoring.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.lang.Language;
-import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.usageView.UsageViewUtil;
 
 public class ConflictsUtil {
