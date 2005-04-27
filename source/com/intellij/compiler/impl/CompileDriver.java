@@ -866,10 +866,14 @@ public class CompileDriver {
             }
           }
 
-          context.getProgressIndicator().setText("Searching for files to delete...");
-
           if (!isRebuild) {
+            final ProgressIndicator progressIndicator = context.getProgressIndicator();
+            progressIndicator.pushState();
+            progressIndicator.setText("Searching for files to delete...");
+
             findFilesToDelete(context.getCompileScope(), snapshot, urlsWithSourceRemoved, cache, toCompile, context, toDelete, compilerConfiguration);
+
+            progressIndicator.popState();
           }
 
         }
