@@ -22,10 +22,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.cache.RepositoryIndex;
@@ -35,6 +34,8 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.*;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -317,15 +318,23 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                       UsageSearchContext.IN_COMMENTS;
     }
 
+    List<String> words = StringUtil.getWordsIn(text);
+    String longestWord = null;
+    for (String word : words) {
+      if (longestWord == null || word.length() > longestWord.length()) {
+        longestWord = word;
+      }
+    }
     if (!processElementsWithWord(
-          processor1,
-          searchScope,
-          text,
-          searchContext,
-          false
-       )) {
+      processor1,
+      searchScope,
+      longestWord,
+      searchContext,
+      false
+    )) {
       return false;
     }
+
 
     if (refElement instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)refElement;
