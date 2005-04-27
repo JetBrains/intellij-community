@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -95,6 +96,10 @@ public abstract class Language {
   }
 
   public StructureViewBuilder getStructureViewBuilder(PsiElement psiElement) {
+    return null;
+  }
+
+  public RefactoringSupportProvider getRefactoringSupportProvider() {
     return null;
   }
 

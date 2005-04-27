@@ -4,11 +4,12 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.typeCook.TypeCookHandler;
+import com.intellij.lang.Language;
 
 public class TypeCookAction extends BaseRefactoringAction {
 
@@ -16,8 +17,8 @@ public class TypeCookAction extends BaseRefactoringAction {
     return false; 
   }
 
-  public boolean isAvaiableForFile(PsiFile file) {
-    return isEnabledOnElements(new PsiElement[]{file});
+  public boolean isAvailableForLanguage(Language language) {
+    return language.equals(StdFileTypes.JAVA.getLanguage());
   }
 
   public boolean isEnabledOnElements(PsiElement[] elements) {

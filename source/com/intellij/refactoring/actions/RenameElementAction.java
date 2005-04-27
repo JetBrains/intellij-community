@@ -1,11 +1,9 @@
 package com.intellij.refactoring.actions;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
@@ -41,14 +39,7 @@ public class RenameElementAction extends BaseRefactoringAction {
     return RenameHandlerRegistry.getInstance().getRenameHandler(dataContext) != null;
   }
 
-  protected boolean isAvaiableForFile(PsiFile file) {
-    final FileTypeSupportCapabilities supportCapabilities = file.getFileType().getSupportCapabilities();
-
-    if (supportCapabilities != null && supportCapabilities.hasRename()) {
-      return true;
-    }
-
-    if (file instanceof XmlFile) return true;
-    return super.isAvaiableForFile(file);
+  protected boolean isAvailableForLanguage(Language language) {
+    return true;
   }
 }

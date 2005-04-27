@@ -21,6 +21,8 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.lang.Language;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 
 import java.util.*;
 
@@ -703,10 +705,13 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   public static boolean validElement(PsiElement element) {
-    return element instanceof PsiClass
-            || element instanceof PsiMethod
-            || element instanceof PsiField
-            || element instanceof PsiFileSystemItem;
+    if (element instanceof PsiFileSystemItem) return true;
+    final Language language = element.getLanguage();
+    if (language != null) {
+      final RefactoringSupportProvider provider = language.getRefactoringSupportProvider();
+      if (provider != null && provider.isSafeDeleteAvailable(element)) return true;
+    }
+    return false;
   }
 
   public static SafeDeleteProcessor createInstance(Project project, Runnable prepareSuccessfulCallback,

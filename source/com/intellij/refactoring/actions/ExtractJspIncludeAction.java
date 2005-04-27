@@ -1,10 +1,10 @@
 
 package com.intellij.refactoring.actions;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.jsp.extractInclude.ExtractIncludeFileHandler;
 
@@ -20,8 +20,9 @@ public class ExtractJspIncludeAction extends BaseRefactoringAction {
     return false;
   }
 
-  protected boolean isAvaiableForFile(PsiFile file) {
-    return file instanceof JspFile;
+  protected boolean isAvailableForLanguage(Language language) {
+    return language.equals(StdFileTypes.NEW_JSP.getLanguage()) ||
+           language.equals(StdFileTypes.JSPX.getLanguage());
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {

@@ -81,9 +81,6 @@ public class DTDFileType extends LanguageFileType {
       return false;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    public boolean hasRename() {
-      return false;  //To change body of implemented methods use File | Settings | File Templates.
-    }
   };
 
   public FileTypeSupportCapabilities getSupportCapabilities() {

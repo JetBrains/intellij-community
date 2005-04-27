@@ -4,9 +4,9 @@ package com.intellij.refactoring.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.lang.Language;
 
 public class MoveAction extends BaseRefactoringAction {
 
@@ -20,8 +20,8 @@ public class MoveAction extends BaseRefactoringAction {
     return false;
   }
 
-  protected boolean isAvaiableForFile(PsiFile file){
-    // move is supported for any file
+  protected boolean isAvailableForLanguage(Language language){
+    // move is supported in any language
     return true;
   }
 

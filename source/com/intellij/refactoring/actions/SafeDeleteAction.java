@@ -9,10 +9,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
+import com.intellij.lang.Language;
 
 public class SafeDeleteAction extends BaseRefactoringAction {
   public boolean isAvailableInEditorOnly() {
     return false;
+  }
+
+  protected boolean isAvailableForLanguage(Language language) {
+    return true;
   }
 
   public boolean isEnabledOnElements(PsiElement[] elements) {

@@ -56,9 +56,6 @@ public class PropertiesFileType extends LanguageFileType {
         return true;
       }
 
-      public boolean hasRename() {
-        return true;
-      }
     };
   }
 

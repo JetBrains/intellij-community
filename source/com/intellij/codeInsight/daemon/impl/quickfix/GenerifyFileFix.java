@@ -24,8 +24,7 @@ public class GenerifyFileFix implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    return myFile.isValid() && PsiManager.getInstance(project).isInProject(myFile) &&
-           new TypeCookAction().isAvaiableForFile(myFile);
+    return myFile.isValid() && PsiManager.getInstance(project).isInProject(myFile);
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {

@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -49,5 +50,9 @@ public class JavaLanguage extends Language {
 
   public FindUsagesProvider getFindUsagesProvider() {
     return new JavaFindUsagesProvider();
+  }
+
+  public RefactoringSupportProvider getRefactoringSupportProvider() {
+    return new JavaRefactoringSupportProvier();
   }
 }

@@ -4,10 +4,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.lang.Language;
 
 public abstract class BaseRefactoringAction extends AnAction {
   protected abstract boolean isAvailableInEditorOnly();
@@ -49,8 +51,9 @@ public abstract class BaseRefactoringAction extends AnAction {
 
     Editor editor = (Editor) dataContext.getData(DataConstants.EDITOR);
     if (editor != null) {
-      final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file == null || !isAvaiableForFile(file)) {
+      PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+      if (element == null) element = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (element == null || element.getLanguage() == null || !isAvailableForLanguage(element.getLanguage())) {
         presentation.setEnabled(false);
       } else {
         presentation.setEnabled(true);
@@ -73,8 +76,8 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
   }
 
-  protected boolean isAvaiableForFile(PsiFile file) {
-    return file.canContainJavaCode();
+  protected boolean isAvailableForLanguage(Language language) {
+    return language.equals(StdFileTypes.JAVA.getLanguage());
   }
 
   public static PsiElement[] getPsiElementArray(DataContext dataContext) {

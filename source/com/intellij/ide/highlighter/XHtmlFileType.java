@@ -86,9 +86,6 @@ public class XHtmlFileType extends LanguageFileType {
       return true;
     }
 
-    public boolean hasRename() {
-      return true;
-    }
   };
 
   public FileTypeSupportCapabilities getSupportCapabilities() {

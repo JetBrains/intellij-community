@@ -27,10 +27,10 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = (PsiElement) dataContext.getData(DataConstants.PSI_ELEMENT);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    if (!SafeDeleteProcessor.validElement(element)) {
+    if (element == null || !SafeDeleteProcessor.validElement(element)) {
       String message =
               "Cannot perform the refactoring.\n" +
-              "Safe delete is not supported for this element.";
+              "Safe delete is not supported in this context.";
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, /*HelpID.SAFE_DELETE*/null, project);
       return;
     }
