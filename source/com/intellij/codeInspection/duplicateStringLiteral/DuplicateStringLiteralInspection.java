@@ -1,34 +1,47 @@
-package com.intellij.codeInspection;
+package com.intellij.codeInspection.duplicateStringLiteral;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.util.occurences.BaseOccurenceManager;
 import com.intellij.refactoring.util.occurences.OccurenceFilter;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.codeInsight.CodeInsightUtil;
 import gnu.trove.THashSet;
+import org.jdom.Element;
 
 import javax.swing.*;
 import java.util.*;
 
 public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.DuplicateStringLiteralInspection");
+  private JTextField myMinStringLengthField;
+  public int MIN_STRING_LENGTH = 5;
+  private JLabel myMinStringLengthLabel;
+  private JPanel myPanel;
 
   public DuplicateStringLiteralInspection() {
+    myMinStringLengthLabel.setLabelFor(myMinStringLengthField);
+    myMinStringLengthField.setText(Integer.toString(MIN_STRING_LENGTH));
   }
 
-  private static List<ProblemDescriptor> visitExpressionsUnder(PsiElement element, final InspectionManager manager) {
+  private List<ProblemDescriptor> visitExpressionsUnder(PsiElement element, final InspectionManager manager) {
     if (element == null) return Collections.EMPTY_LIST;
     final List<ProblemDescriptor> allProblems = new ArrayList<ProblemDescriptor>();
     element.acceptChildren(new PsiRecursiveElementVisitor() {
@@ -37,7 +50,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       }
 
       public void visitLiteralExpression(PsiLiteralExpression expression) {
-        checkExpression(expression, manager, allProblems);
+        checkStringLiteralExpression(expression, manager, allProblems);
       }
     });
     return allProblems;
@@ -60,12 +73,13 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     return "DuplicateStringLiteralInspection";
   }
 
-  private static void checkExpression(final PsiLiteralExpression originalExpression,
+  private void checkStringLiteralExpression(final PsiLiteralExpression originalExpression,
                                                    InspectionManager manager,
                                                    final List<ProblemDescriptor> allProblems) {
     if (!(originalExpression.getValue() instanceof String)) return;
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(originalExpression.getProject());
     final String stringToFind = (String)originalExpression.getValue();
+    if (stringToFind.length() < MIN_STRING_LENGTH) return;
     final PsiSearchHelper searchHelper = originalExpression.getManager().getSearchHelper();
     final List<String> words = StringUtil.getWordsIn(stringToFind);
     if (words.size() == 0) return;
@@ -135,7 +149,6 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
     addIntroduceConstantFix(foundExpr, originalExpression, manager, msg, allProblems);
 
-    //TODO enhance problem descriptor with multiple quick fixes
     //addReplaceWithConstantFixes(foundExpr, originalExpression, manager, allProblems);
   }
 
@@ -160,17 +173,11 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
             };
             return new BaseOccurenceManager(filter) {
               protected PsiExpression[] defaultOccurences() {
-                return findOccurences();
+                return expressions;
               }
 
               protected PsiExpression[] findOccurences() {
-                List<PsiExpression> validExpressions = new ArrayList<PsiExpression>(foundExpr);
-                for (PsiExpression expression : validExpressions) {
-                  if (expression.isValid()) {
-                    validExpressions.add(expression);
-                  }
-                }
-                return validExpressions.toArray(new PsiExpression[validExpressions.size()]);
+                return expressions;
               }
             };
           }
@@ -184,16 +191,6 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     };
     ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(originalExpression, msg, introduceQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     allProblems.add(problemDescriptor);
-  }
-
-  private static PsiExpression[] filterValidExpressions(final List<PsiExpression> foundExpr) {
-    List<PsiExpression> validExpressions = new ArrayList<PsiExpression>(foundExpr);
-    for (PsiExpression expression : validExpressions) {
-      if (expression.isValid()) {
-        validExpressions.add(expression);
-      }
-    }
-    return validExpressions.toArray(new PsiExpression[validExpressions.size()]);
   }
 
   private static void addReplaceWithConstantFixes(final List<PsiExpression> foundExpr,
@@ -254,5 +251,23 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
   public boolean isEnabledByDefault() {
     return false;
+  }
+
+  public JComponent createOptionsPanel() {
+    return myPanel;
+  }
+
+  public void readSettings(Element node) throws InvalidDataException {
+    super.readSettings(node);
+    myMinStringLengthField.setText(Integer.toString(MIN_STRING_LENGTH));
+  }
+
+  public void writeSettings(Element node) throws WriteExternalException {
+    try {
+      MIN_STRING_LENGTH = Integer.parseInt(myMinStringLengthField.getText());
+    }
+    catch (NumberFormatException e) {
+    }
+    super.writeSettings(node);
   }
 }

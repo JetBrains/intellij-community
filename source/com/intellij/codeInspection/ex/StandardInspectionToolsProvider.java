@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionToolProvider;
-import com.intellij.codeInspection.DuplicateStringLiteralInspection;
+import com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.codeInspection.dependencyViolation.DependencyViolationInspection;
 import com.intellij.openapi.components.ApplicationComponent;
