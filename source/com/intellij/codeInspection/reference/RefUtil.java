@@ -54,10 +54,14 @@ public class RefUtil {
             if (qualifier != null) {
               PsiClass psiClass = (PsiClass)qualifier.resolve();
               if (psiClass != null) {
-                updateCanBeStatic(refFrom, psiFrom,
-                                  MethodSignatureUtil.findMethodBySignature(psiClass,
-                                                                            MethodSignatureUtil.createMethodSignature("hashCode", (PsiType[])null, null, PsiSubstitutor.EMPTY),
-                                                                            true));
+                final PsiMethod hashCodeMethod = MethodSignatureUtil.findMethodBySignature(
+                  psiClass,
+                  MethodSignatureUtil.createMethodSignature("hashCode", (PsiType[])null, null, PsiSubstitutor.EMPTY),
+                  true
+                );
+                if (hashCodeMethod != null) {
+                  updateCanBeStatic(refFrom, psiFrom, hashCodeMethod);
+                }
               }
             }
             refFrom.setCanBeStatic(false);
