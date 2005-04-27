@@ -101,6 +101,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
     whiteSpace.setLineFeedsAreReadOnly(true);
     final IndentInfo indent;
     if (model.getLineNumber(offset) == model.getLineNumber(whiteSpace.getTextRange().getEndOffset())) {
+      final int lineFeeds = getLineFeedsToModified(model, offset, whiteSpace.getTextRange().getStartOffset());
       processor.formatWithoutRealModifications();
       final String newWS = whiteSpace.generateWhiteSpace(indentOptions);
       model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
@@ -112,7 +113,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent{
       }
 
       int result = whiteSpace.getTextRange().getStartOffset();
-      final int lineFeeds = getLineFeedsToModified(model, offset, whiteSpace.getTextRange().getStartOffset());
+
       result += (lineFeeds - 1) + (1 + indent.getTotalSpaces());
       return result;
 

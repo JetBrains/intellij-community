@@ -5,8 +5,8 @@ import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.jsp.JSPLanguage;
 import com.intellij.lang.jspx.JSPXLanguage;
+import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.newCodeFormatting.Block;
 import com.intellij.newCodeFormatting.Formatter;
@@ -307,7 +307,7 @@ public class CodeFormatterFacade implements Constants {
   public static boolean useBlockFormatter(final Language elementLanguage) {
     return (elementLanguage instanceof JavaLanguage
     || elementLanguage instanceof XMLLanguage)
-           && ! ((elementLanguage instanceof JSPXLanguage) || (elementLanguage instanceof JSPLanguage));
+           && ! ((elementLanguage instanceof JSPXLanguage));
   }
 }
 

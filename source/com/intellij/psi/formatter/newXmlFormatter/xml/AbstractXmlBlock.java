@@ -1,6 +1,7 @@
 package com.intellij.psi.formatter.newXmlFormatter.xml;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -109,7 +110,10 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   public static Block creareRoot(final PsiFile element, final CodeStyleSettings settings) {
     final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(element);
-    if (rootNode.getElementType() == ElementType.XML_FILE) {
+    if (element.getLanguage() instanceof XHTMLLanguage) {
+      return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.XML_TAG));
+    }
+    else if (rootNode.getElementType() == ElementType.XML_FILE) {
       return new XmlBlock(rootNode, null, null, new XmlPolicy(settings));
     } else {
       return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.HTML_TAG));

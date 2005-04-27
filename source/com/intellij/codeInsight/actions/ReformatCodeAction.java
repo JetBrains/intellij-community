@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.xml.XmlFile;
 
 public class ReformatCodeAction extends AnAction {
@@ -128,7 +129,7 @@ public class ReformatCodeAction extends AnAction {
       final Language lang = file.getLanguage();
       if (lang != null) {
         final PseudoTextBuilder formatter = lang.getFormatter();
-        if (formatter == null) {
+        if (formatter == null && !CodeFormatterFacade.useBlockFormatter(file)) {
           presentation.setEnabled(false);
           return;
         }
