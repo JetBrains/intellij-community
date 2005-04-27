@@ -34,6 +34,10 @@ public class DummyCompileContext implements CompileContext {
     return null;
   }
 
+  public CompileScope getProjectCompileScope() {
+    return null;
+  }
+
   public void requestRebuildNextTime(String message) {
   }
 

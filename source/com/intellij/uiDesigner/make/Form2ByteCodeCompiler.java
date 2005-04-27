@@ -84,8 +84,9 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final CompileScope scope = context.getCompileScope();
+        final CompileScope projectScope = context.getProjectCompileScope();
 
-        final VirtualFile[] formFiles = scope.getFiles(StdFileTypes.GUI_DESIGNER_FORM, true);
+        final VirtualFile[] formFiles = projectScope.getFiles(StdFileTypes.GUI_DESIGNER_FORM, true);
         final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
         final BindingsCache bindingsCache = new BindingsCache(myProject);
         final VirtualFile[] outputDirectories = CompilerPathsEx.getOutputDirectories(
@@ -127,23 +128,35 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
 
               final VirtualFile classFile = findFile(outputDirectories, classToBind, module);
               if (classFile == null) {
-                if (context.getCompileScope().belongs(formFile.getUrl())) {
+                if (scope.belongs(formFile.getUrl())) {
                   addError(context, "Class to bind does not exist: " + classToBind, formFile);
                 }
                 continue;
               }
 
+              final VirtualFile sourceFile = FormCompilerManager.findSourceFile(context, formFile, classToBind);
+
+              final boolean inScope = (sourceFile == null)?
+                                scope.belongs(formFile.getUrl()) :
+                                scope.belongs(sourceFile.getUrl()) || scope.belongs(formFile.getUrl()) ;
+
               final VirtualFile alreadyProcessedForm = class2form.get(classToBind);
               if (alreadyProcessedForm != null) {
-                addError(
-                  context,
-                  "The form is bound to the class " + classToBind + ".\n" +
-                  "Another form " + alreadyProcessedForm.getPresentableUrl() + " is also bound to this class.",
-                  formFile
-                );
+                if (inScope) {
+                  addError(
+                    context,
+                    "The form is bound to the class " + classToBind + ".\n" +
+                    "Another form " + alreadyProcessedForm.getPresentableUrl() + " is also bound to this class.",
+                    formFile
+                  );
+                }
                 continue;
               }
               class2form.put(classToBind, formFile);
+
+              if (!inScope) {
+                continue;
+              }
 
               final FileProcessingCompiler.ProcessingItem item = new MyInstrumentationItem(classFile, formFile);
               items.add(item);

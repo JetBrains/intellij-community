@@ -108,6 +108,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return myCompileScope;
   }
 
+  public CompileScope getProjectCompileScope() {
+    return myCompileDriver.myProjectCompileScope;
+  }
+
   public void requestRebuildNextTime(String message) {
     if (!myRebuildRequested) {
       myRebuildRequested = true;

@@ -75,6 +75,7 @@ public class CompileDriver {
   private static final String LOCK_FILE_NAME = "in_progress.dat";
   private final FileProcessingCompilerAdapterFactory myProcessingCompilerAdapterFactory;
   private final FileProcessingCompilerAdapterFactory myPackagingCompilerAdapterFactory;
+  final ProjectCompileScope myProjectCompileScope;
 
   public CompileDriver(Project project) {
     myProject = project;
@@ -119,14 +120,15 @@ public class CompileDriver {
         return new PackagingCompilerAdapter(context, (PackagingCompiler)compiler);
       }
     };
+    myProjectCompileScope = new ProjectCompileScope(myProject);
   }
 
   public void rebuild(CompileStatusNotification callback) {
-    doRebuild(callback, null, true, addAdditionalRoots(new ProjectCompileScope(myProject)));
+    doRebuild(callback, null, true, addAdditionalRoots(myProjectCompileScope));
   }
 
   public void make(CompileStatusNotification callback) {
-    make(new ProjectCompileScope(myProject), callback);
+    make(myProjectCompileScope, callback);
     /*
     class CallbackWrapper implements CompileStatusNotification {
       private int myErrorCount = 0;

@@ -49,6 +49,11 @@ public interface CompileContext extends UserDataHolder {
   CompileScope getCompileScope();
 
   /**
+   * @return project-wide compile scope. getCompileScope() may return the scope, that is more narrow than ProjectCompileScope
+   */
+  CompileScope getProjectCompileScope();
+
+  /**
    * A compiler may call this method in order to request complete project rebuild.
    * This may be neccesary, for example, when compiler caches are corrupted
    */

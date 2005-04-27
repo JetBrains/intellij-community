@@ -12,10 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 
@@ -52,8 +49,9 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final CompileScope scope = context.getCompileScope();
+        final CompileScope projectScope = context.getProjectCompileScope();
 
-        final VirtualFile[] formFiles = scope.getFiles(StdFileTypes.GUI_DESIGNER_FORM, true);
+        final VirtualFile[] formFiles = projectScope.getFiles(StdFileTypes.GUI_DESIGNER_FORM, true);
         final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
         final BindingsCache bindingsCache = new BindingsCache(myProject);
 
@@ -84,25 +82,33 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
               continue;
             }
 
-            final VirtualFile sourceFile = findSourceFile(formFile, classToBind);
+            final VirtualFile sourceFile = FormCompilerManager.findSourceFile(context, formFile, classToBind);
             if (sourceFile == null) {
-              if (context.getCompileScope().belongs(formFile.getUrl())) {
+              if (scope.belongs(formFile.getUrl())) {
                 addError(context, "Class to bind does not exist: " + classToBind, formFile);
               }
               continue;
             }
 
+            final boolean inScope = scope.belongs(sourceFile.getUrl()) || scope.belongs(formFile.getUrl());
+
             final VirtualFile alreadyProcessedForm = class2form.get(classToBind);
             if (alreadyProcessedForm != null) {
-              addError(
-                context,
-                "The form is bound to the class " + classToBind + ".\n" +
-                "Another form " + alreadyProcessedForm.getPresentableUrl() + " is also bound to this class.",
-                formFile
-              );
+              if (inScope) {
+                addError(
+                  context,
+                  "The form is bound to the class " + classToBind + ".\n" +
+                  "Another form " + alreadyProcessedForm.getPresentableUrl() + " is also bound to this class.",
+                  formFile
+                );
+              }
               continue;
             }
             class2form.put(classToBind, formFile);
+
+            if (!inScope) {
+              continue;
+            }
 
             final ProcessingItem item = new MyInstrumentationItem(sourceFile, formFile);
             items.add(item);
@@ -115,25 +121,6 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     });
 
     return items.toArray(new ProcessingItem[items.size()]);
-  }
-
-
-  private VirtualFile findSourceFile(final VirtualFile formFile, final String className) {
-    final Module module = ModuleUtil.getModuleForFile(myProject, formFile);
-    if (module == null) {
-      return null;
-    }
-    final PsiClass aClass = FormEditingUtil.findClassToBind(module, className);
-    if (aClass == null) {
-      return null;
-    }
-
-    final PsiFile containingFile = aClass.getContainingFile();
-    if (containingFile == null){
-      return null;
-    }
-    
-    return containingFile.getVirtualFile();
   }
 
   public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
