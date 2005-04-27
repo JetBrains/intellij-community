@@ -958,6 +958,9 @@
     <action id="ActivateHierarchyToolWindow">
       <keyboard-shortcut first-keystroke="meta 8"/>
     </action>
+    <action id="ActivateFavoritesToolWindow">
+      <keyboard-shortcut first-keystroke="meta 9"/>
+    </action>
     <action id="GotoBookmark8">
       <keyboard-shortcut first-keystroke="control 8"/>
     </action>
