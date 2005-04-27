@@ -21,12 +21,4 @@ public class PropertiesElementImpl extends ASTWrapperPsiElement  {
     return PropertiesSupportLoader.FILE_TYPE.getLanguage();
   }
 
-  //public void accept(PsiElementVisitor visitor) {
-  //  if (visitor instanceof JSElementVisitor) {
-  //    ((JSElementVisitor)visitor).visitJSElement(this);
-  //  }
-  //  else {
-  //    visitor.visitElement(this);
-  //  }
-  //}
 }

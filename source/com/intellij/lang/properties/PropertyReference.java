@@ -4,9 +4,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 
@@ -46,7 +44,9 @@ class PropertyReference implements PsiReference {
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    throw new IncorrectOperationException("not implemented");
+    PsiElementFactory factory = myLiteralExpression.getManager().getElementFactory();
+    PsiExpression newExpression = factory.createExpressionFromText("\"" + newElementName + "\"", myLiteralExpression);
+    return myLiteralExpression.replace(newExpression);
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
