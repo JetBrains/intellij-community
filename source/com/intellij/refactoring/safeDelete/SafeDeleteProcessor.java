@@ -22,6 +22,7 @@ import com.intellij.usageView.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.lang.Language;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 
 import java.util.*;
@@ -84,12 +85,26 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         findMethodUsages(((PsiMethod) element), usages);
       } else if (element instanceof PsiField) {
         findFieldUsages((PsiField) element, usages);
+      } else if (element instanceof PsiFile) {
+        findFileUsages((PsiFile) element, usages);
       } else if (element instanceof PsiNamedElement) {
         findGenericElementUsages (element, usages);
       }
     }
     final UsageInfo[] result = usages.toArray(new UsageInfo[usages.size()]);
     return UsageViewUtil.removeDuplicatedUsages(result);
+  }
+
+  private void findFileUsages(final PsiFile file, final ArrayList<UsageInfo> usages) {
+    findGenericElementUsages(file, usages);
+    PsiElement[] declarations = PsiElement.EMPTY_ARRAY;
+    if (file instanceof PropertiesFile) {
+      declarations = ((PropertiesFile)file).getProperties();
+    }
+
+    for (int i = 0; i < declarations.length; i++) {
+      findGenericElementUsages(declarations[i], usages);
+    }
   }
 
   private void findGenericElementUsages(final PsiElement element, final ArrayList<UsageInfo> usages) {
@@ -107,7 +122,6 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   protected boolean preprocessUsages(UsageInfo[][] u) {
     UsageInfo[] usages = u[0];
-    final HashMap<PsiElement,UsageHolder> elementsToUsageHolders = sortUsages(usages);
     ArrayList<String> conflicts = new ArrayList<String>();
 
     for (int i = 0; i < myElements.length; i++) {
@@ -130,18 +144,20 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
           }
         }
       }
+    }
 
-      UsageHolder usageHolder = elementsToUsageHolders.get(element);
-      if (usageHolder != null) {
-
-        if (usageHolder.getNonCodeUsagesNumber() != usageHolder.getNonSafeUsagesNumber()) {
-          final String description = usageHolder.getDescription();
-          if (description != null) {
-            conflicts.add(description);
-          }
+    final HashMap<PsiElement,UsageHolder> elementsToUsageHolders = sortUsages(usages);
+    final Collection<UsageHolder> usageHolders = elementsToUsageHolders.values();
+    for (Iterator<UsageHolder> iterator = usageHolders.iterator(); iterator.hasNext();) {
+      UsageHolder usageHolder = iterator.next();
+      if (usageHolder.getNonCodeUsagesNumber() != usageHolder.getUnsafeUsagesNumber()) {
+        final String description = usageHolder.getDescription();
+        if (description != null) {
+          conflicts.add(description);
         }
       }
     }
+
     if (conflicts.size() > 0) {
       UnsafeUsagesDialog dialog = new UnsafeUsagesDialog(conflicts.toArray(new String[conflicts.size()]), myProject);
       dialog.show();

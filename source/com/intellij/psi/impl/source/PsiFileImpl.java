@@ -224,7 +224,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public PsiElement[] getOnDemandImports(boolean includeImplicit, boolean checkIncludes) {
-    return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
+    return PsiElement.EMPTY_ARRAY;
   }
 
   public PsiClass[] getSingleClassImports(boolean checkIncludes) {

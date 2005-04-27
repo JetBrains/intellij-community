@@ -13,8 +13,8 @@ import java.util.ArrayList;
 class UsageHolder {
   private final PsiElement myElement;
   private final SafeDeleteReferenceUsageInfo[] myUsages;
-  private Integer myNonSafeUsages;
-  private Integer myNonCodeUsages;
+  private int myUnsafeUsages = -1;
+  private int myNonCodeUsages = -1;
 
   public UsageHolder(PsiElement element, UsageInfo[] usageInfos) {
     myElement = element;
@@ -34,32 +34,32 @@ class UsageHolder {
   }
 
   public int getNonCodeUsagesNumber() {
-    if(myNonCodeUsages == null) {
+    if(myNonCodeUsages < 0) {
       int nonCodeUsages = 0;
       for (int i = 0; i < myUsages.length; i++) {
         SafeDeleteReferenceUsageInfo usage = myUsages[i];
         if(usage.isNonCodeUsage) { nonCodeUsages++; }
       }
-      myNonCodeUsages = new Integer(nonCodeUsages);
+      myNonCodeUsages = nonCodeUsages;
     }
-    return myNonCodeUsages.intValue();
+    return myNonCodeUsages;
   }
 
-  public int getNonSafeUsagesNumber() {
-    if(myNonSafeUsages == null) {
+  public int getUnsafeUsagesNumber() {
+    if(myUnsafeUsages < 0) {
       int nonSafeUsages = 0;
       for (int i = 0; i < myUsages.length; i++) {
         SafeDeleteReferenceUsageInfo usage = myUsages[i];
         if(!usage.isSafeDelete()) { nonSafeUsages++; }
       }
-      myNonSafeUsages = new Integer(nonSafeUsages);
+      myUnsafeUsages = nonSafeUsages;
     }
-    return myNonSafeUsages.intValue();
+    return myUnsafeUsages;
   }
 
   public String getDescription() {
     final int nonCodeUsages = getNonCodeUsagesNumber();
-    final int nonSafeUsages = getNonSafeUsagesNumber();
+    final int nonSafeUsages = getUnsafeUsagesNumber();
 
     if(nonSafeUsages == 0) return null;
 

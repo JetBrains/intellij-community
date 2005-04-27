@@ -964,7 +964,7 @@ public class RefactoringUtil {
     if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
       final PsiPackage aPackage = ((PsiDirectory)element).getPackage();
       if (aPackage != null) element = aPackage;
-  }
+    }
 
     if (element instanceof PsiPackage) {
       return nonJava ? ((PsiPackage)element).getQualifiedName() : ((PsiPackage)element).getName();
