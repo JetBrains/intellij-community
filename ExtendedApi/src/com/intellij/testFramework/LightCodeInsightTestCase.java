@@ -7,6 +7,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 
 import java.io.File;
@@ -122,7 +124,9 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
   private void setupCaret(final RangeMarker caretMarker, String fileText) {
     if (caretMarker != null) {
       int caretLine = StringUtil.offsetToLineNumber(fileText, caretMarker.getStartOffset());
-      int caretCol = caretMarker.getStartOffset() - StringUtil.lineColToOffset(fileText, caretLine, 0);
+      int caretCol = EditorUtil.calcColumnNumber(null, myEditor.getDocument().getText(), 
+                                                 myEditor.getDocument().getLineStartOffset(caretLine), caretMarker.getStartOffset(), 
+                                                 CodeStyleSettingsManager.getSettings(getProject()).JAVA_INDENT_OPTIONS.TAB_SIZE);
       LogicalPosition pos = new LogicalPosition(caretLine, caretCol);
       myEditor.getCaretModel().moveToLogicalPosition(pos);
     }
@@ -319,7 +323,11 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
   private void checkCaretPosition(final RangeMarker caretMarker, String newFileText, String message) {
     if (caretMarker != null) {
       int caretLine = StringUtil.offsetToLineNumber(newFileText, caretMarker.getStartOffset());
-      int caretCol = caretMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, caretLine, 0);
+      //int caretCol = caretMarker.getStartOffset() - StringUtil.lineColToOffset(newFileText, caretLine, 0);
+      int caretCol = EditorUtil.calcColumnNumber(null, newFileText, 
+                                                 StringUtil.lineColToOffset(newFileText, caretLine, 0), 
+                                                 caretMarker.getStartOffset(), 
+                                                 CodeStyleSettingsManager.getSettings(getProject()).JAVA_INDENT_OPTIONS.TAB_SIZE);
 
       assertEquals(getMessage("caretLine", message), caretLine + 1, myEditor.getCaretModel().getLogicalPosition().line + 1);
       assertEquals(getMessage("caretColumn", message), caretCol + 1, myEditor.getCaretModel().getLogicalPosition().column + 1);

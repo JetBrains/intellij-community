@@ -48,12 +48,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myLineSeparatorCombo.addItem(WINDOWS_STRING);
     myLineSeparatorCombo.addItem(MACINTOSH_STRING);
     addPanelToWatch(myPanel);
+  }
 
-    myCbUseSameIndents.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        update();
-      }
-    });
+  protected void somethingChanged() {
+    update();
   }
 
   private void update() {

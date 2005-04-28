@@ -80,9 +80,14 @@ public abstract class CodeStyleAbstractPanel {
     myEditor = createEditor();
     myUserActivityWatcher.addUserActivityListener(new UserActivityListener() {
       public void stateChanged() {
+        somethingChanged();
         updatePreview();
       }
     });
+  }
+  
+  protected void somethingChanged(){
+    
   }
 
   protected void addPanelToWatch(Component component) {

@@ -100,7 +100,6 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     whiteSpace.setReadOnly(false);
     whiteSpace.setLineFeedsAreReadOnly(true);
     final IndentInfo indent;
-    final int lineFeeds = getLineFeedsToModified(model, offset, whiteSpace.getTextRange().getStartOffset());
     if (model.getLineNumber(offset) == model.getLineNumber(whiteSpace.getTextRange().getEndOffset())) {
       processor.formatWithoutRealModifications();
       indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
