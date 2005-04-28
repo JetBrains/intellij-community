@@ -87,15 +87,15 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       return;
     }
     final int duplicatesNo = duplicates.size();
-    final ArrayList highlighters = new ArrayList();
+    final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     for (Iterator<Match> iterator = duplicates.iterator(); iterator.hasNext();) {
       final Match match = iterator.next();
       DuplicatesImpl.highlightMatch(project, editor, match, highlighters);
     }
     final MethodDuplicatesDialog dialog = new MethodDuplicatesDialog(project, method, duplicatesNo);
     dialog.show();
-    for (Iterator iterator = highlighters.iterator(); iterator.hasNext();) {
-      final RangeHighlighter rangeHighlighter = (RangeHighlighter)iterator.next();
+    for (Iterator<RangeHighlighter> iterator = highlighters.iterator(); iterator.hasNext();) {
+      final RangeHighlighter rangeHighlighter = iterator.next();
       HighlightManager.getInstance(project).removeSegmentHighlighter(editor, rangeHighlighter);
     }
     if (!dialog.isOK()) return;
@@ -108,7 +108,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     return duplicatesNo + " code " + (duplicatesNo == 1 ? "fragment" : "framents") + " found";
   }
 
-  private void showErrorMessage(String message, Project project) {
+  private static void showErrorMessage(String message, Project project) {
     RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.METHOD_DUPLICATES, project);
   }
 

@@ -27,27 +27,27 @@ public abstract class HighlightManager {
                                 int endOffset,
                                 TextAttributes attributes,
                                 boolean hideByTextChange,
-                                ArrayList highlighters);
+                                ArrayList<RangeHighlighter> highlighters);
 
   public abstract boolean removeSegmentHighlighter(Editor editor, RangeHighlighter highlighter);
 
   public abstract void addOccurrenceHighlights(Editor editor, PsiReference[] occurrences,
                                       TextAttributes attributes, boolean hideByTextChange,
-                                      ArrayList highlightersVector);
+                                      ArrayList<RangeHighlighter> highlightersVector);
 
   protected abstract void addOccurrenceHighlight(Editor editor,
                                       int start,
                                       int end,
                                       TextAttributes attributes,
                                       int flags,
-                                      ArrayList highlightersVector,
+                                      ArrayList<RangeHighlighter> highlightersVector,
                                       Color scrollmarkColor);
 
   public abstract void addOccurrenceHighlights(Editor editor, PsiElement[] elements,
                                       TextAttributes attributes, boolean hideByTextChange,
-                                      ArrayList highlightersVector);
+                                      ArrayList<RangeHighlighter> highlightersVector);
 
   public abstract void addElementsOccurrenceHighlights(Editor editor, PsiElement[] elements,
                                       TextAttributes attributes, boolean hideByTextChange,
-                                      ArrayList highlightersVector);
+                                      ArrayList<RangeHighlighter> highlightersVector);
 }

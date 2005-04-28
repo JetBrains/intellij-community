@@ -188,7 +188,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
           TextAttributes selectionAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(
             EditorColors.SEARCH_RESULT_ATTRIBUTES);
           HighlightManager.getInstance(project).addRangeHighlight(editor, e.getStartOffset(), e.getEndOffset(),
-                                                                  selectionAttributes, true, new ArrayList());
+                                                                  selectionAttributes, true, null);
         }
       }
     });

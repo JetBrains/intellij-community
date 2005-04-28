@@ -77,7 +77,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     createHighlightAction(project, file, target, editor).run();
   }
 
-  protected PsiElement getTargetElement(Editor editor) {
+  protected static PsiElement getTargetElement(Editor editor) {
     PsiElement target = TargetElementUtil.findTargetElement(editor,
                                                             TargetElementUtil.ELEMENT_NAME_ACCEPTED |
                                                             TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
@@ -93,7 +93,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     return target;
   }
 
-  protected void doRangeHighlighting(Editor editor, Project project) {
+  private static void doRangeHighlighting(Editor editor, Project project) {
     if (!editor.getSelectionModel().hasSelection()) return;
 
     String text = editor.getSelectionModel().getSelectedText();
@@ -105,18 +105,20 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     model.setSearchHighlighters(true);
     int offset = 0;
     FindResult result;
-    HighlightManager highlighter = HighlightManager.getInstance(project);
+    HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
     int count = 0;
+    ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     while (true) {
-      result =
-      findManager.findString(editor.getDocument().getCharsSequence(), offset, model);
+      result = findManager.findString(editor.getDocument().getCharsSequence(), offset, model);
       if (result == null || !result.isStringFound()) break;
-      highlighter.addRangeHighlight(editor, result.getStartOffset(), result.getEndOffset(),
-                                    attributes, false, null);
+      highlightManager.addRangeHighlight(editor, result.getStartOffset(), result.getEndOffset(), attributes, false, highlighters);
       offset = result.getEndOffset();
       count++;
+    }
+    for (RangeHighlighter highlighter : highlighters) {
+      highlighter.setErrorStripeTooltip(text);
     }
     findManager.setFindWasPerformed();
     findManager.setFindNextModel(model);
@@ -127,7 +129,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
   private static final Runnable EMPTY_HIGHLIGHT_RUNNABLE = EmptyRunnable.getInstance();
 
-  private class DoHighlightExitPointsRunnable implements Runnable {
+  private static class DoHighlightExitPointsRunnable implements Runnable {
     private Project myProject;
     private Editor myEditor;
     private PsiElement[] myExitStatements;
@@ -152,7 +154,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   }
 
-  private class DoHighlightRunnable implements Runnable {
+  private static class DoHighlightRunnable implements Runnable {
     private PsiReference[] myRefs;
     private Project myProject;
     private PsiElement myTarget;
@@ -412,7 +414,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   };
 
-  private void findExceptionThrownPlaces(final List<PsiReference> refs, final PsiType type, final PsiElement block,
+  private static void findExceptionThrownPlaces(final List<PsiReference> refs, final PsiType type, final PsiElement block,
                                          final TypeFilter typeFilter) {
     if (type instanceof PsiClassType) {
       block.accept(new PsiRecursiveElementVisitor() {
@@ -463,7 +465,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   }
 
-  private void highlightReferences(Project project,
+  private static void highlightReferences(Project project,
                                    PsiElement element,
                                    PsiReference[] refs,
                                    Editor editor,
@@ -509,7 +511,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   }
 
-  private void doHighlightElements(HighlightManager highlightManager,
+  private static void doHighlightElements(HighlightManager highlightManager,
                                    Editor editor,
                                    PsiElement[] elements,
                                    TextAttributes attributes) {
@@ -525,7 +527,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   }
 
-  private void doHighlightRefs(HighlightManager highlightManager,
+  private static void doHighlightRefs(HighlightManager highlightManager,
                                Editor editor,
                                PsiReference[] refs,
                                TextAttributes attributes) {
@@ -540,7 +542,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
   }
 
-  private PsiElement getNameIdentifier(PsiElement element) {
+  private static PsiElement getNameIdentifier(PsiElement element) {
     if (element instanceof PsiClass) {
       return ((PsiClass)element).getNameIdentifier();
     }
@@ -565,7 +567,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     return null;
   }
 
-  private void setStatusText(PsiElement element, int refCount, Project project) {
+  private static void setStatusText(PsiElement element, int refCount, Project project) {
     String elementName = null;
     if (element instanceof PsiClass) {
       elementName = ((PsiClass)element).getQualifiedName();

@@ -35,14 +35,14 @@ public class DuplicatesImpl {
     final List<Match> duplicates = provider.getDuplicates();
     for (Iterator<Match> iterator = duplicates.iterator(); iterator.hasNext();) {
       final Match match = iterator.next();
-      final ArrayList highlighters = new ArrayList();
+      final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
       highlightMatch(project, editor, match, highlighters);
       final TextRange textRange = match.getTextRange();
       final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
       expandAllRegionsCoveringRange(project, editor, textRange);
       editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
       final int matchAnswer = Messages.showYesNoCancelDialog(project, "Replace this code fragment?", "Process Duplicates", Messages.getQuestionIcon());
-      HighlightManager.getInstance(project).removeSegmentHighlighter(editor, (RangeHighlighter)highlighters.get(0));
+      HighlightManager.getInstance(project).removeSegmentHighlighter(editor, highlighters.get(0));
       if (matchAnswer == 0) {
         CommandProcessor.getInstance().executeCommand(
             project, new Runnable() {
@@ -94,7 +94,7 @@ public class DuplicatesImpl {
     }
   }
 
-  public static void highlightMatch(final Project project, Editor editor, final Match match, final ArrayList highlighters) {
+  public static void highlightMatch(final Project project, Editor editor, final Match match, final ArrayList<RangeHighlighter> highlighters) {
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     HighlightManager.getInstance(project).addRangeHighlight(editor, match.getTextRange().getStartOffset(), match.getTextRange().getEndOffset(),

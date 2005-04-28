@@ -147,7 +147,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
 
   public void addOccurrenceHighlights(Editor editor, PsiReference[] occurrences,
                                       TextAttributes attributes, boolean hideByTextChange,
-                                      ArrayList highlightersVector) {
+                                      ArrayList<RangeHighlighter> highlightersVector) {
     if (occurrences.length == 0) return;
     int flags = HighlightManagerImpl.HIDE_BY_ESCAPE;
     if (hideByTextChange) {
@@ -168,7 +168,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
 
   public void addElementsOccurrenceHighlights(Editor editor, PsiElement[] elements,
                                       TextAttributes attributes, boolean hideByTextChange,
-                                      ArrayList highlightersVector) {
+                                      ArrayList<RangeHighlighter> highlightersVector) {
     if (elements.length == 0) return;
     int flags = HighlightManagerImpl.HIDE_BY_ESCAPE;
     if (hideByTextChange) {
@@ -188,7 +188,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
                                       int end,
                                       TextAttributes attributes,
                                       int flags,
-                                      ArrayList highlightersVector,
+                                      ArrayList<RangeHighlighter> highlightersVector,
                                       Color scrollmarkColor) {
     RangeHighlighter highlighter = addSegmentHighlighter(editor, start, end, attributes, flags);
     if (highlightersVector != null) {
@@ -202,7 +202,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
                                 int endOffset,
                                 TextAttributes attributes,
                                 boolean hideByTextChange,
-                                ArrayList highlighters) {
+                                ArrayList<RangeHighlighter> highlighters) {
     int flags = HighlightManagerImpl.HIDE_BY_ESCAPE;
     if (hideByTextChange) {
       flags |= HighlightManagerImpl.HIDE_BY_TEXT_CHANGE;
@@ -215,7 +215,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
 
   public void addOccurrenceHighlights(Editor editor, PsiElement[] elements,
                                       TextAttributes attributes, boolean hideByTextChange,
-                                      ArrayList highlightersVector) {
+                                      ArrayList<RangeHighlighter> highlightersVector) {
     if (elements.length == 0) return;
     int flags = HighlightManagerImpl.HIDE_BY_ESCAPE;
     if (hideByTextChange) {
@@ -233,7 +233,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     }
   }
 
-  private Color getScrollMarkColor(final TextAttributes attributes) {
+  private static Color getScrollMarkColor(final TextAttributes attributes) {
     if (attributes.getErrorStripeColor() != null) return attributes.getErrorStripeColor();
     if (attributes.getBackgroundColor() != null) return attributes.getBackgroundColor().darker();
     return null;
