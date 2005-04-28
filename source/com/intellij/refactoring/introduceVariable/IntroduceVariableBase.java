@@ -34,7 +34,6 @@ import com.intellij.refactoring.util.occurences.NotInSuperCallOccurenceFilter;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase implements RefactoringActionHandler {
@@ -162,8 +161,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
 
     boolean anyAssignmentLHS = false;
-    for (int i = 0; i < occurrences.length; i++) {
-      PsiExpression occurrence = occurrences[i];
+    for (PsiExpression occurrence : occurrences) {
       if (RefactoringUtil.isAssignmentLHS(occurrence)) {
         anyAssignmentLHS = true;
         break;
@@ -411,16 +409,14 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     if (loopForLoopCondition == null) return;
     final List<PsiVariable> referencedVariables = RefactoringUtil.collectReferencedVariables(occurence);
     final List<PsiVariable> modifiedInBody = new ArrayList<PsiVariable>();
-    for (Iterator<PsiVariable> iterator = referencedVariables.iterator(); iterator.hasNext();) {
-      PsiVariable psiVariable = iterator.next();
+    for (PsiVariable psiVariable : referencedVariables) {
       if (RefactoringUtil.isModifiedInScope(psiVariable, loopForLoopCondition)) {
         modifiedInBody.add(psiVariable);
       }
     }
 
     if (!modifiedInBody.isEmpty()) {
-      for (Iterator<PsiVariable> iterator = modifiedInBody.iterator(); iterator.hasNext();) {
-        PsiVariable variable = iterator.next();
+      for (PsiVariable variable : modifiedInBody) {
         final String message = ConflictsUtil.getDescription(variable, false) + " is modified in loop body.\n";
         conflicts.add(ConflictsUtil.capitalize(message));
       }
