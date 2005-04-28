@@ -90,7 +90,7 @@ public class CompilerManagerImpl extends CompilerManager implements ProjectCompo
     for(int i = 0; i < files.length; i++){
       scopes[i] = new OneProjectItemCompileScope(myProject, files[i]);
     }
-    compile(new CompositeScope(scopes), new ListenerNotificator(callback), trackDependencies);
+    compile(new CompositeScope(scopes), callback, trackDependencies);
   }
 
   public void compile(Module module, CompileStatusNotification callback, final boolean trackDependencies) {
