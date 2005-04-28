@@ -34,7 +34,19 @@ public interface PsiSubstitutor{
    */
   PsiType substitute(PsiType type);
 
+  /**
+   * Substitutes type parameters occuring in <code>type</code> with their values.
+   * If value for type parameter is <code>null<code>, appropriate erasure is returned.
+   * If value of a <b>class</b> type parameter is a wildcard type, captures it in {@link PsiCapturedWildcardType}
+   */
   PsiType substituteAndCapture(PsiType type);
+
+  /**
+   * Substitutes type parameters occuring in <code>type</code> with their values.
+   * If value for type parameter is <code>null<code>, appropriate erasure is returned.
+   * If value of a type parameter is a wildcard type, captures it in {@link PsiCapturedWildcardType}
+   */
+  PsiType substituteAndFullCapture(PsiType type);
 
   PsiSubstitutor put(PsiTypeParameter classParameter, PsiType mapping);
   PsiSubstitutor putAll(PsiClass parentClass, PsiType[] mappings);

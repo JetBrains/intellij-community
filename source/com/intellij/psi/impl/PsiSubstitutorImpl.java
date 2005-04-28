@@ -40,6 +40,12 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     return correctExternalSubstitution(substituted, type, myInternalCapturingSubstitutionVisitor);
   }
 
+  public PsiType substituteAndFullCapture(PsiType type) {
+    if (type == null) return null;
+    PsiType substituted = type.accept(myInternalFullCapturingSubstitutionVisitor);
+    return correctExternalSubstitution(substituted, type, myInternalFullCapturingSubstitutionVisitor);
+  }
+
   private PsiType rawTypeForTypeParameter(final PsiTypeParameter typeParameter) {
     final PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
     if (extendsTypes.length > 0) {
@@ -116,6 +122,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
 
   private final InternalSubstitutionVisitor myInternalSubstitutionVisitor = new InternalSubstitutionVisitor();
   private final InternalCapturingSubstitutionVisitor myInternalCapturingSubstitutionVisitor = new InternalCapturingSubstitutionVisitor();
+  private final InternalFullCapturingSubstitutionVisitor myInternalFullCapturingSubstitutionVisitor = new InternalFullCapturingSubstitutionVisitor();
 
   private class InternalSubstitutionVisitor extends SubstitutionVisitor {
     public PsiType visitClassType(PsiClassType classType) {
@@ -222,6 +229,16 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     protected PsiType substituteTypeParameter(PsiTypeParameter typeParameter) {
       PsiType type = super.substituteTypeParameter(typeParameter);
       if (type instanceof PsiWildcardType && typeParameter.getOwner() instanceof PsiClass) {
+        return PsiCapturedWildcardType.create((PsiWildcardType)type);
+      }
+      return type;
+    }
+  }
+
+  private class InternalFullCapturingSubstitutionVisitor extends InternalSubstitutionVisitor {
+    protected PsiType substituteTypeParameter(PsiTypeParameter typeParameter) {
+      PsiType type = super.substituteTypeParameter(typeParameter);
+      if (type instanceof PsiWildcardType) {
         return PsiCapturedWildcardType.create((PsiWildcardType)type);
       }
       return type;

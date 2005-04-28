@@ -41,7 +41,7 @@ public abstract class GenericsHighlightUtil {
       if (substituted == null) return null;
       PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
       for (int j = 0; j < extendsTypes.length; j++) {
-        PsiType extendsType = substitutor.substitute(extendsTypes[j]);
+        PsiType extendsType = substitutor.substituteAndFullCapture(extendsTypes[j]);
         if (!TypeConversionUtil.isAssignable(extendsType, substituted)) {
           PsiClass boundClass = extendsType instanceof PsiClassType ? ((PsiClassType)extendsType).resolve() : null;
           String description = MessageFormat.format(
