@@ -92,8 +92,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     List<UsageInfo> allUsages = new ArrayList<UsageInfo>();
     ArrayList<String> conflicts = new ArrayList<String>();
-    for (int idx = 0; idx < myElementsToMove.length; idx++) {
-      PsiElement element = myElementsToMove[idx];
+    for (PsiElement element : myElementsToMove) {
       String newName = getNewQName(element);
       final UsageInfo[] usages = MoveClassesOrPackagesUtil.findUsages(element, mySearchInComments,
                                                                       mySearchInNonJavaFiles, newName);
@@ -139,8 +138,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     final UsageInfo[] usages = u[0];
     final ArrayList<String> conflicts = new ArrayList<String>();
     ArrayList<UsageInfo> filteredUsages = new ArrayList<UsageInfo>();
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       if (usage instanceof ConflictsUsageInfo) {
         conflicts.addAll(((ConflictsUsageInfo)usage).getConflicts());
       }
@@ -154,8 +152,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   private boolean isInsideMoved(PsiElement place) {
-    for (int i = 0; i < myElementsToMove.length; i++) {
-      PsiElement element = myElementsToMove[i];
+    for (PsiElement element : myElementsToMove) {
       if (element instanceof PsiClass) {
         if (PsiTreeUtil.isAncestor(element, place, false)) return true;
       }
@@ -214,8 +211,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   private void detectPackageLocalsUsed(final ArrayList<String> conflicts) {
     PackageLocalsVisitor visitor = new PackageLocalsVisitor(conflicts);
 
-    for (int i = 0; i < myElementsToMove.length; i++) {
-      PsiElement element = myElementsToMove[i];
+    for (PsiElement element : myElementsToMove) {
       if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass)element;
         aClass.accept(visitor);
@@ -228,8 +224,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     final HashSet<PsiClass> movedClasses = new HashSet<PsiClass>();
     final HashMap<PsiClass,HashSet> reportedClassToContainers = new com.intellij.util.containers.HashMap<PsiClass, HashSet>();
     final PackageWrapper aPackage = myTargetPackage;
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       if (usage instanceof MoveRenameUsageInfo && ((MoveRenameUsageInfo)usage).referencedElement instanceof PsiClass) {
         PsiClass aClass = (PsiClass)((MoveRenameUsageInfo)usage).referencedElement;
         if (!movedClasses.contains(aClass)) {
@@ -255,7 +250,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
                   final String message = "A package-local class " + ConflictsUtil.htmlEmphasize(aClass.getName())
                                          + " will no longer be accessible from " + ConflictsUtil.getDescription(
-                                           container, true);
+                    container, true);
                   conflicts.add(message);
                 }
               }
@@ -266,9 +261,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
 
     final MyClassInstanceReferenceVisitor instanceReferenceVisitor = new MyClassInstanceReferenceVisitor(conflicts);
-    for (Iterator<PsiClass> it = movedClasses.iterator(); it.hasNext(); ) {
-      final PsiClass aClass = it.next();
-
+    for (final PsiClass aClass : movedClasses) {
       String visibility = VisibilityUtil.getVisibilityModifier(aClass.getModifierList());
       if (PsiModifier.PACKAGE_LOCAL.equals(visibility)) {
         findInstancesOfPackageLocal(aClass, usages, instanceReferenceVisitor);
@@ -326,25 +319,14 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     members.addElements(aClass.getFields());
     members.addElements(aClass.getMethods());
     members.addElements(aClass.getInnerClasses());
-    /*final ArrayList basesList = RefactoringHierarchyUtil.createBasesList(aClass, true, false);
-    basesList.add(aClass);
-    for (Iterator iterator = basesList.iterator(); iterator.hasNext();) {
-      PsiClass superClass = (PsiClass)iterator.next();
-      if (superClass.isInterface()) continue;
-      members.addElements(superClass.getFields());
-      members.addElements(superClass.getMethods());
-      members.addElements(superClass.getInnerClasses());
-    }*/
 
     final PsiSearchHelper searchHelper = aClass.getManager().getSearchHelper();
     RefactoringUtil.IsDescendantOf isDescendantOf = new RefactoringUtil.IsDescendantOf(aClass);
     final PsiPackage aPackage = aClass.getContainingFile().getContainingDirectory().getPackage();
     final GlobalSearchScope packageScope = GlobalSearchScope.packageScopeWithoutLibraries(aPackage, false);
-    for (Iterator iterator = members.iterator(); iterator.hasNext();) {
-      ClassMemberWrapper memberWrapper = (ClassMemberWrapper)iterator.next();
+    for (ClassMemberWrapper memberWrapper : members) {
       final PsiReference[] references = searchHelper.findReferences(memberWrapper.getMember(), packageScope, false);
-      for (int i = 0; i < references.length; i++) {
-        PsiReference reference = references[i];
+      for (PsiReference reference : references) {
         final PsiElement element = reference.getElement();
         if (element instanceof PsiReferenceExpression) {
           final PsiReferenceExpression expression = ((PsiReferenceExpression)element);
@@ -448,8 +430,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         myElementsToMove[idx] = element;
       }
 
-      for (int idx = 0; idx < myElementsToMove.length; idx++) {
-        PsiElement element = myElementsToMove[idx];
+      for (PsiElement element : myElementsToMove) {
         if (element instanceof PsiClass) {
           ChangeContextUtil.decodeContextInfo(element, null, null);
         }
@@ -472,8 +453,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   private static MoveRenameUsageInfo[] extractElementUsages(PsiElement element, UsageInfo[] allUsages) {
     ArrayList<MoveRenameUsageInfo> usages = new ArrayList<MoveRenameUsageInfo>();
-    for (int idx = 0; idx < allUsages.length; idx++) {
-      UsageInfo usage = allUsages[idx];
+    for (UsageInfo usage : allUsages) {
       if (usage instanceof MoveRenameUsageInfo && element.equals(((MoveRenameUsageInfo)usage).referencedElement)) {
         usages.add((MoveRenameUsageInfo)usage);
       }
@@ -578,19 +558,17 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private static class NonPublicClassMemberWrappersSet extends HashSet {
-    public void addElement(PsiElement element) {
-      final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
-      final PsiNamedElement namedElement = (PsiNamedElement)element;
-      if (modifierListOwner.hasModifierProperty(PsiModifier.PUBLIC)) return;
-      if (modifierListOwner.hasModifierProperty(PsiModifier.PRIVATE)) return;
+  private static class NonPublicClassMemberWrappersSet extends HashSet<ClassMemberWrapper> {
+    public void addElement(PsiMember member) {
+      final PsiNamedElement namedElement = (PsiNamedElement)member;
+      if (member.hasModifierProperty(PsiModifier.PUBLIC)) return;
+      if (member.hasModifierProperty(PsiModifier.PRIVATE)) return;
       add(new ClassMemberWrapper(namedElement));
     }
 
-    public void addElements(PsiElement[] elements) {
-      for (int i = 0; i < elements.length; i++) {
-        PsiElement element = elements[i];
-        addElement(element);
+    public void addElements(PsiMember[] members) {
+      for (PsiMember member : members) {
+        addElement(member);
       }
     }
   }
