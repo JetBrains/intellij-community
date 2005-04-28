@@ -147,7 +147,7 @@ public class FormatterUtil {
     ASTNode treePrev = element.getTreePrev();
     if (treePrev != null) {
       ASTNode candidate = getLastChildOf(treePrev);
-      if (candidate != null && !isSpaceTextElement(candidate)) {
+      if (candidate != null && !isSpaceTextElement(candidate) && candidate.getTextLength()  >0) {
         return candidate;
       }
       else {

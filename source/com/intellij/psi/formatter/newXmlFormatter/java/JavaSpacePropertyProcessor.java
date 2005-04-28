@@ -609,15 +609,20 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
   }
 
   private void createSpaceProperty(boolean space, int keepBlankLines) {
-    if (!space && !myHelper.canStickChildrenTogether(myChild1, myChild2)) {
-      space = true;
+    final ASTNode prev = getPrevElementType(myChild2);
+    if (prev != null && prev.getElementType() == ElementType.END_OF_LINE_COMMENT) {
+      myResult = Formatter.getInstance().createSpaceProperty(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    } else {
+      if (!space && !myHelper.canStickChildrenTogether(myChild1, myChild2)) {
+        space = true;
+      }
+      boolean keepLineBreaks = mySettings.KEEP_LINE_BREAKS;
+      if (!keepLineBreaks && myRole2 == ChildRole.NONE) {
+        keepLineBreaks = true;
+      }
+      myResult = Formatter.getInstance().createSpaceProperty(space ? 1 : 0, space ? 1 : 0, 0, keepLineBreaks, keepBlankLines);
     }
-    boolean keepLineBreaks = mySettings.KEEP_LINE_BREAKS;
-    if (!keepLineBreaks && myRole2 == ChildRole.NONE) {
-      keepLineBreaks = true;
     }
-    myResult = Formatter.getInstance().createSpaceProperty(space ? 1 : 0, space ? 1 : 0, 0, keepLineBreaks, keepBlankLines);
-  }
 
   public static int getMaxLineInDeclarations(final CodeStyleSettings settings) {
     return settings.KEEP_BLANK_LINES_IN_DECLARATIONS + 1;
