@@ -31,7 +31,6 @@
  */
 package com.intellij.openapi.vcs.readOnlyHandler;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.EditFileProvider;
@@ -39,9 +38,6 @@ import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ListWithSelection;
-import com.intellij.util.io.ReadOnlyAttributeUtil;
-
-import java.io.IOException;
 
 class FileInfo {
   private final VirtualFile myFile;
@@ -88,31 +84,6 @@ class FileInfo {
 
   public ListWithSelection getHandleType(){
     return myHandleType;
-  }
-
-  public void handle(){
-    final VirtualFile file = getFile();    
-    if (getUseVersionControl()){
-      myEditFileProvider.editFiles(new VirtualFile[]{file});
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          file.refresh(false, false);
-        }
-      });
-    }
-    else {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          try {
-            ReadOnlyAttributeUtil.setReadOnlyAttribute(file, false);
-            file.refresh(false, false);
-          }
-          catch (IOException e) {
-            //ignore
-          }
-        }
-      });
-    }
   }
 
   public EditFileProvider getEditFileProvider() {

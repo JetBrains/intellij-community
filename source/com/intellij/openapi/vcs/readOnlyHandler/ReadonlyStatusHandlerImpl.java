@@ -40,6 +40,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.EditFileProvider;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jdom.Element;
 
@@ -183,7 +185,13 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     for (Iterator<EditFileProvider> iterator = providerToFile.keySet().iterator(); iterator.hasNext();) {
       EditFileProvider editFileProvider = iterator.next();
       final Collection<VirtualFile> files = providerToFile.get(editFileProvider);
-      editFileProvider.editFiles(files.toArray(new VirtualFile[files.size()]));
+      try {
+        editFileProvider.editFiles(files.toArray(new VirtualFile[files.size()]));
+      }
+      catch (VcsException e) {
+        Messages.showErrorDialog("Cannot edit file(s): " + e.getLocalizedMessage(),
+                                 "Edit Files");
+      }
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           for (Iterator<VirtualFile> iterator1 = files.iterator(); iterator1.hasNext();) {

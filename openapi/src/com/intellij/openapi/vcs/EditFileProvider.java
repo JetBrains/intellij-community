@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  * author: lesya
  */
 public interface EditFileProvider {
-  void editFiles(VirtualFile[] files);
+  void editFiles(VirtualFile[] files) throws VcsException;
 
   String getRequestText();
 }
