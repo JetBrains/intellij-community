@@ -5,6 +5,7 @@ import com.intellij.find.FindUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 
@@ -22,6 +23,7 @@ public class SearchAgainAction extends AnAction {
         project, new Runnable() {
         public void run() {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
+          IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
           if(FindManager.getInstance(project).findNextUsageInEditor(editor)) {
             return;
           }
