@@ -35,17 +35,16 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.EditFileProvider;
+import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jdom.Element;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.io.IOException;
 
 public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements ProjectComponent, JDOMExternalizable{
   private final Project myProject;
@@ -85,9 +84,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
       new HandleReadOnlyStatusDialog(myProject, fileInfos).show();
     }
     else {
-      for (int i = 0; i < fileInfos.length; i++) {
-        fileInfos[i].handle();
-      }
+      processFiles(Arrays.asList(fileInfos));
     }
     IdeEventQueue.getInstance().setEventCount(savedEventCount);
     return createResultStatus(files, modificationStamps);
@@ -151,5 +148,58 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this,  element);
+  }
+
+  public static void processFiles(final List<FileInfo> fileInfos) {
+    FileInfo[] copy = fileInfos.toArray(new FileInfo[fileInfos.size()]);
+    MultiValuesMap<EditFileProvider, VirtualFile> providerToFile = new MultiValuesMap<EditFileProvider, VirtualFile>();
+    final List<VirtualFile> unknown = new ArrayList<VirtualFile>();
+    for (int i = 0; i < copy.length; i++) {
+      FileInfo fileInfo = copy[i];
+      if (fileInfo.getUseVersionControl()) {
+        providerToFile.put(fileInfo.getEditFileProvider(), fileInfo.getFile());
+      } else {
+        unknown.add(fileInfo.getFile());
+      }
+    }
+    
+    if (!unknown.isEmpty()) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          try {
+            for (Iterator<VirtualFile> iterator = unknown.iterator(); iterator.hasNext();) {
+              VirtualFile file = iterator.next();
+              ReadOnlyAttributeUtil.setReadOnlyAttribute(file, false);
+              file.refresh(false, false);              
+            }
+          }
+          catch (IOException e) {
+            //ignore
+          }
+        }
+      });      
+    }
+
+    for (Iterator<EditFileProvider> iterator = providerToFile.keySet().iterator(); iterator.hasNext();) {
+      EditFileProvider editFileProvider = iterator.next();
+      final Collection<VirtualFile> files = providerToFile.get(editFileProvider);
+      editFileProvider.editFiles(files.toArray(new VirtualFile[files.size()]));
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          for (Iterator<VirtualFile> iterator1 = files.iterator(); iterator1.hasNext();) {
+            iterator1.next().refresh(false, false);
+          }
+          
+        }
+      });
+      
+    }
+    
+    for (int i = 0; i < copy.length; i++) {
+      FileInfo fileInfo = copy[i];
+      if (fileInfo.getFile().isWritable()) {
+        fileInfos.remove(fileInfo);
+      }
+    }
   }
 }

@@ -114,4 +114,8 @@ class FileInfo {
       });
     }
   }
+
+  public EditFileProvider getEditFileProvider() {
+    return myEditFileProvider;
+  }
 }
