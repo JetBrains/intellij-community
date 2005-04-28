@@ -682,6 +682,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       fireWriteActionFinished(action);
       myActionsLock.writeLock().release();
     }
+    
   }
 
   public <T> T runWriteAction(final Computable<T> computation) {
