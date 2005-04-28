@@ -30,9 +30,9 @@ import java.util.Set;
 public class EditorsSplitters extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorsSplitters");
   protected EditorWindow myCurrentWindow;
+  protected VirtualFile myCurrentFile;
   private final FileEditorManagerImpl myManager;
   private Element mySplittersElement;  // temporarily used during initialization
-  private final MyFocusWatcher myFocusWatcher;
   protected int myInsideChange;
 
   public EditorsSplitters(final FileEditorManagerImpl manager) {
@@ -40,8 +40,8 @@ public class EditorsSplitters extends JPanel {
     setOpaque(true);
     setBackground(Color.GRAY);
     myInsideChange = 0;
-    myFocusWatcher = new MyFocusWatcher();
-    myFocusWatcher.install(this);
+    final MyFocusWatcher focusWatcher = new MyFocusWatcher();
+    focusWatcher.install(this);
     myManager = manager;
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
     clear();
@@ -56,6 +56,7 @@ public class EditorsSplitters extends JPanel {
     removeAll();
     myWindows.clear();
     myCurrentWindow = null;
+    myCurrentFile = null;
     repaint (); // revalidate doesn't repaint correctly after "Close All"
   }
 
@@ -512,9 +513,10 @@ public class EditorsSplitters extends JPanel {
       }
       final EditorWindow oldActiveWindow = getCurrentWindow();
       final EditorWindow newActiveWindow = findWindowWith(component);
-      if (oldActiveWindow != newActiveWindow) {
+      if (oldActiveWindow != newActiveWindow || getCurrentFile() != myCurrentFile) {
         setCurrentWindow(newActiveWindow, false);
         getManager().updateFileName(newActiveWindow.getSelectedFile());
+        myCurrentFile = getCurrentFile();
         getManager().fireSelectionChanged(oldActiveWindow == null ? null : oldActiveWindow.getSelectedEditor(), newActiveWindow.getSelectedEditor());
       }
     }
