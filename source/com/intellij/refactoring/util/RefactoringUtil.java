@@ -1306,13 +1306,11 @@ public class RefactoringUtil {
         ref.set(new Integer(ref.get().intValue() + 1));
       }
 
-  // !!! do not insert type parameters while JDK 1.4 still used as main DK for IDEA development
-      Set entries = map.entrySet();
+      final Set<Map.Entry<String, Ref<Integer>>> entries = map.entrySet();
       int index = 0;
-      for (Iterator iterator = entries.iterator(); iterator.hasNext(); index++) {
-        Map.Entry entry = (Map.Entry) iterator.next();
-        final String type = (String) entry.getKey();
-        final int count = ((Ref<Integer>) entry.getValue()).get().intValue();
+      for (Map.Entry<String, Ref<Integer>> entry : entries) {
+        final String type = entry.getKey();
+        final int count = entry.getValue().get().intValue();
         if (index > 0 && index + 1 < entries.size()) {
           buffer.append(" ,");
         }
