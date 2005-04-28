@@ -61,8 +61,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   protected boolean preprocessUsages(UsageInfo[][] u) {
     final UsageInfo[] usages = u[0];
     ArrayList<UsageInfo> filteredUsages = new ArrayList<UsageInfo>();
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       filteredUsages.add(usage);
     }
 
@@ -83,12 +82,6 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
-    ArrayList<UsageInfo> arrayList = new ArrayList<UsageInfo>();
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
-      arrayList.add(usage);
-    }
-
     // If files are being moved then I need to collect some information to delete these
     // filese from CVS. I need to know all common parents of the moved files and releative
     // paths.
