@@ -147,23 +147,20 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
     PsiMethod[] overridingMethods = helper.findOverridingMethods(method, projectScope, true);
 
-    for (int i = 0; i < overridingMethods.length; i++) {
-      PsiMethod overridingMethod = overridingMethods[i];
-        result.add(new OverriderUsageInfo(overridingMethod, method, isOriginal, isToModifyArgs, isToThrowExceptions));
+    for (PsiMethod overridingMethod : overridingMethods) {
+      result.add(new OverriderUsageInfo(overridingMethod, method, isOriginal, isToModifyArgs, isToThrowExceptions));
     }
 
     boolean needToChangeCalls = !myGenerateDelegate && (myChangeInfo.isNameChanged || myChangeInfo.isParameterSetOrOrderChanged || myChangeInfo.isExceptionSetOrOrderChanged || myChangeInfo.isVisibilityChanged/*for checking inaccessible*/);
     if (needToChangeCalls) {
       List<PsiElement> l = new ArrayList<PsiElement>();
       PsiReference[] refs = helper.findReferencesIncludingOverriding(method, projectScope, true);
-      for (int i = 0; i < refs.length; i++) {
-        PsiReference reference = refs[i];
+      for (PsiReference reference : refs) {
         l.add(reference.getElement());
       }
 
       int parameterCount = method.getParameterList().getParameters().length;
-      for (Iterator<PsiElement> iterator = l.iterator(); iterator.hasNext();) {
-        PsiElement ref = iterator.next();
+      for (PsiElement ref : l) {
         boolean isToCatchExceptions = isToThrowExceptions && needToCatchExceptions(RefactoringUtil.getEnclosingMethod(ref));
         if (!isToCatchExceptions) {
           if (RefactoringUtil.isMethodUsage(ref)) {
@@ -173,7 +170,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         }
         if (RefactoringUtil.isMethodUsage(ref)) {
           result.add(new MethodCallUsageInfo(ref, isToModifyArgs, isToCatchExceptions));
-        } else {
+        }
+        else {
           result.add(new UsageInfo(ref));
         }
       }
@@ -184,8 +182,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       }
     } else if (myChangeInfo.isParameterTypesChanged) {
       PsiReference[] refs = helper.findReferencesIncludingOverriding(method, projectScope, true);
-      for (int i = 0; i < refs.length; i++) {
-        PsiReference reference = refs[i];
+      for (PsiReference reference : refs) {
         if (reference.getElement() instanceof PsiDocTagValue) { //types are mentioned in e.g @link, see SCR 40895
           result.add(new UsageInfo(reference.getElement()));
         }
@@ -194,8 +191,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
     // Conflicts
     detectLocalsCollisionsInMethod(method, result, isOriginal);
-    for (int j = 0; j < overridingMethods.length; j++) {
-      final PsiMethod overridingMethod = overridingMethods[j];
+    for (final PsiMethod overridingMethod : overridingMethods) {
       detectLocalsCollisionsInMethod(overridingMethod, result, isOriginal);
     }
 
@@ -203,19 +199,16 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   private void findUsagesInCallers(final ArrayList<UsageInfo> usages) {
-    for (Iterator<PsiMethod> iterator = myPropagateParametersMethods.iterator(); iterator.hasNext();) {
-      PsiMethod caller = iterator.next();
+    for (PsiMethod caller : myPropagateParametersMethods) {
       usages.add(new CallerUsageInfo(caller, true, myPropagateExceptionsMethods.contains(caller)));
     }
-    for (Iterator<PsiMethod> iterator = myPropagateExceptionsMethods.iterator(); iterator.hasNext();) {
-      PsiMethod caller = iterator.next();
+    for (PsiMethod caller : myPropagateExceptionsMethods) {
       usages.add(new CallerUsageInfo(caller, myPropagateParametersMethods.contains(caller), true));
     }
     Set<PsiMethod> merged = new HashSet<PsiMethod>();
     merged.addAll(myPropagateParametersMethods);
     merged.addAll(myPropagateExceptionsMethods);
-    for (Iterator<PsiMethod> iterator = merged.iterator(); iterator.hasNext();) {
-      final PsiMethod method = iterator.next();
+    for (final PsiMethod method : merged) {
       findSimpleUsagesWithoutParameters(method, usages, myPropagateParametersMethods.contains(method),
                                         myPropagateExceptionsMethods.contains(method), false);
     }
@@ -236,16 +229,14 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     final Set<PsiParameter> deletedParameters = new HashSet<PsiParameter>();
     if (isOriginal) {
       deletedParameters.addAll(Arrays.asList(parameters));
-      for (int i = 0; i < myChangeInfo.newParms.length; i++) {
-        ParameterInfo parameterInfo = myChangeInfo.newParms[i];
+      for (ParameterInfo parameterInfo : myChangeInfo.newParms) {
         if (parameterInfo.oldParameterIndex >= 0) {
           deletedParameters.remove(parameters[parameterInfo.oldParameterIndex]);
         }
       }
     }
 
-    for (int i = 0; i < myChangeInfo.newParms.length; i++) {
-      ParameterInfo parameterInfo = myChangeInfo.newParms[i];
+    for (ParameterInfo parameterInfo : myChangeInfo.newParms) {
       final int oldParameterIndex = parameterInfo.oldParameterIndex;
       final String newName = parameterInfo.getName();
       if (oldParameterIndex >= 0) {
@@ -261,10 +252,11 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
             });
           }
         }
-      } else {
+      }
+      else {
         RenameUtil.visitLocalsCollisions(method, newName, method.getBody(), null, new RenameUtil.CollidingVariableVisitor() {
           public void visitCollidingElement(PsiVariable collidingVariable) {
-            if (!(collidingVariable instanceof PsiField) &&!deletedParameters.contains(collidingVariable)) {
+            if (!(collidingVariable instanceof PsiField) && !deletedParameters.contains(collidingVariable)) {
               result.add(new NewParameterCollidesWithLocalUsageInfo(collidingVariable, collidingVariable, method));
             }
           }
@@ -275,15 +267,14 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   private void findParametersUsage(final PsiMethod method, ArrayList<UsageInfo> result, PsiMethod[] overriders) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    for (int i = 0; i < myChangeInfo.newParms.length; i++) {
-      ParameterInfo info = myChangeInfo.newParms[i];
+    for (ParameterInfo info : myChangeInfo.newParms) {
       if (info.oldParameterIndex >= 0) {
         PsiParameter parameter = parameters[info.oldParameterIndex];
         if (!info.getName().equals(parameter.getName())) {
           addParameterUsages(parameter, result, info);
 
-          for (int j = 0; j < overriders.length; j++) {
-            PsiParameter parameter1 = overriders[j].getParameterList().getParameters()[info.oldParameterIndex];
+          for (PsiMethod overrider : overriders) {
+            PsiParameter parameter1 = overrider.getParameterList().getParameters()[info.oldParameterIndex];
             if (parameter.getName().equals(parameter1.getName())) {
               addParameterUsages(parameter1, result, info);
             }
@@ -298,8 +289,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     if (!(myChangeInfo.ejbRole instanceof EjbDeclMethodRole)) return;
 
     final PsiMethod[] implementations = EjbUtil.findEjbImplementations(myChangeInfo.getMethod());
-    for (int i = 0; i < implementations.length; i++) {
-      PsiMethod implementation = implementations[i];
+    for (PsiMethod implementation : implementations) {
       result.add(new EjbUsageInfo(implementation));
       findSimpleUsages(implementation, result);
     }
@@ -373,8 +363,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private void askToRemoveCovariantOverriders(Set<UsageInfo> usages) {
     if (myManager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
       List<UsageInfo> covariantOverriderInfos = new ArrayList<UsageInfo>();
-      for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
-        UsageInfo usageInfo = iterator.next();
+      for (UsageInfo usageInfo : usages) {
         if (usageInfo instanceof OverriderUsageInfo) {
           final OverriderUsageInfo info = (OverriderUsageInfo)usageInfo;
           PsiMethod overrider = info.getElement();
@@ -400,8 +389,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                             "with covariant return type?",
                                  "Change Method Signature", Messages.getQuestionIcon())
         != DialogWrapper.OK_EXIT_CODE) {
-          for (Iterator<UsageInfo> iterator = covariantOverriderInfos.iterator(); iterator.hasNext();) {
-            usages.remove(iterator.next());
+          for (UsageInfo usageInfo : covariantOverriderInfos) {
+            usages.remove(usageInfo);
           }
         }
       }
@@ -425,12 +414,13 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         generateDelegate();
       }
 
-      for (int i = 0; i < usages.length; i++) {
-        UsageInfo usage = usages[i];
+      for (UsageInfo usage : usages) {
         if (usage instanceof CallerUsageInfo) {
-            final CallerUsageInfo callerUsageInfo = (CallerUsageInfo)usage;
-            processCallerMethod(callerUsageInfo.getMethod(), null, callerUsageInfo.isToInsertParameter(), callerUsageInfo.isToInsertException());
-        } else if (usage instanceof OverriderUsageInfo) {
+          final CallerUsageInfo callerUsageInfo = (CallerUsageInfo)usage;
+          processCallerMethod(callerUsageInfo.getMethod(), null, callerUsageInfo.isToInsertParameter(),
+                              callerUsageInfo.isToInsertException());
+        }
+        else if (usage instanceof OverriderUsageInfo) {
           OverriderUsageInfo info = (OverriderUsageInfo)usage;
           final PsiMethod method = info.getElement();
           final PsiMethod baseMethod = info.getBaseMethod();
@@ -443,27 +433,32 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      for (int i = 0; i < usages.length; i++) {
-        UsageInfo usage = usages[i];
+      for (UsageInfo usage : usages) {
         if (usage.getElement() == null) continue;
 
         if (usage instanceof DefaultConstructorImplicitUsageInfo) {
           final DefaultConstructorImplicitUsageInfo defConstructorUsage = (DefaultConstructorImplicitUsageInfo)usage;
           addSuperCall(defConstructorUsage.getConstructor(), defConstructorUsage.getBaseConstructor());
-        } else if (usage instanceof NoConstructorClassUsageInfo) {
-          addDefaultConstructor(((NoConstructorClassUsageInfo) usage).getPsiClass());
-        } else if (usage.getElement() instanceof PsiJavaCodeReferenceElement) {
+        }
+        else if (usage instanceof NoConstructorClassUsageInfo) {
+          addDefaultConstructor(((NoConstructorClassUsageInfo)usage).getPsiClass());
+        }
+        else if (usage.getElement() instanceof PsiJavaCodeReferenceElement) {
           if (usage instanceof MethodCallUsageInfo) {
             final MethodCallUsageInfo methodCallInfo = ((MethodCallUsageInfo)usage);
-            processMethodUsage(methodCallInfo.getElement(), myChangeInfo, methodCallInfo.isToChangeArguments(), methodCallInfo.isToCatchExceptions(), methodCallInfo.getReferencedMethod());
-          } else {
-            String newName = ((MyParameterUsageInfo) usage).newParameterName;
-            String oldName = ((MyParameterUsageInfo) usage).oldParameterName;
-            processParameterUsage((PsiReferenceExpression) usage.getElement(), oldName, newName);
+            processMethodUsage(methodCallInfo.getElement(), myChangeInfo, methodCallInfo.isToChangeArguments(),
+                               methodCallInfo.isToCatchExceptions(), methodCallInfo.getReferencedMethod());
           }
-        } else if (usage.getElement() instanceof PsiEnumConstant) {
+          else {
+            String newName = ((MyParameterUsageInfo)usage).newParameterName;
+            String oldName = ((MyParameterUsageInfo)usage).oldParameterName;
+            processParameterUsage((PsiReferenceExpression)usage.getElement(), oldName, newName);
+          }
+        }
+        else if (usage.getElement() instanceof PsiEnumConstant) {
           fixActualArgumentsList(((PsiEnumConstant)usage.getElement()).getArgumentList(), myChangeInfo, true);
-        } else if (!(usage instanceof OverriderUsageInfo)) {
+        }
+        else if (!(usage instanceof OverriderUsageInfo)) {
           postponedUsages.add(usage);
         }
       }
@@ -472,22 +467,21 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
       processPrimaryMethod(myChangeInfo.getMethod(), null, true);
 
-      for (Iterator<UsageInfo> i = postponedUsages.iterator(); i.hasNext();) {
-        UsageInfo usageInfo = i.next();
+      for (UsageInfo usageInfo : postponedUsages) {
         PsiReference reference = usageInfo.getElement().getReference();
         if (reference != null) {
           PsiElement target = null;
           if (usageInfo instanceof MyParameterUsageInfo) {
-            String newParameterName = ((MyParameterUsageInfo) usageInfo).newParameterName;
+            String newParameterName = ((MyParameterUsageInfo)usageInfo).newParameterName;
             PsiParameter[] newParams = myChangeInfo.getMethod().getParameterList().getParameters();
-            for (int j = 0; j < newParams.length; j++) {
-              PsiParameter newParam = newParams[j];
+            for (PsiParameter newParam : newParams) {
               if (newParam.getName().equals(newParameterName)) {
                 target = newParam;
                 break;
               }
             }
-          } else {
+          }
+          else {
             target = myChangeInfo.getMethod();
           }
           if (target != null) {
@@ -664,8 +658,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       //Remove unused catches
       PsiClassType[] classes = ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock);
       PsiParameter[] catchParameters = tryStatement.getCatchBlockParameters();
-      for (int i = 0; i < catchParameters.length; i++) {
-        PsiParameter parameter = catchParameters[i];
+      for (PsiParameter parameter : catchParameters) {
         final PsiType caughtType = parameter.getType();
 
         if (!(caughtType instanceof PsiClassType)) continue;
@@ -700,8 +693,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   private PsiClassType[] filterCheckedExceptions(PsiClassType[] exceptions) {
     List<PsiClassType> result = new ArrayList<PsiClassType>();
-    for (int i = 0; i < exceptions.length; i++) {
-      PsiClassType exceptionType = exceptions[i];
+    for (PsiClassType exceptionType : exceptions) {
       if (!ExceptionUtil.isUncheckedException(exceptionType)) result.add(exceptionType);
     }
     return result.toArray(new PsiClassType[result.size()]);
@@ -722,8 +714,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   private void addExceptions(PsiClassType[] exceptionsToAdd, PsiTryStatement tryStatement) throws IncorrectOperationException {
-    for (int i = 0; i < exceptionsToAdd.length; i++) {
-      PsiClassType type = exceptionsToAdd[i];
+    for (PsiClassType type : exceptionsToAdd) {
       final CodeStyleManager styleManager = tryStatement.getManager().getCodeStyleManager();
       String name = styleManager.suggestVariableName(VariableKind.PARAMETER, null, null, type).names[0];
       name = styleManager.suggestUniqueVariableName(name, tryStatement, false);
@@ -753,16 +744,14 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   private PsiClassType[] filterUnhandledExceptions(PsiClassType[] exceptions, PsiElement place) {
     List<PsiClassType> result = new ArrayList<PsiClassType>();
-    for (int i = 0; i < exceptions.length; i++) {
-      PsiClassType exception = exceptions[i];
+    for (PsiClassType exception : exceptions) {
       if (!ExceptionUtil.isHandled(exception, place)) result.add(exception);
     }
     return result.toArray(new PsiClassType[result.size()]);
   }
 
   private boolean isCatchParameterRedundant (PsiClassType catchParamType, PsiType[] thrownTypes) {
-    for (int j = 0; j < thrownTypes.length; j++) {
-      PsiType exceptionType = thrownTypes[j];
+    for (PsiType exceptionType : thrownTypes) {
       if (exceptionType.isConvertibleFrom(catchParamType)) return false;
     }
     return true;
@@ -781,8 +770,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     if (changeInfo.isParameterSetOrOrderChanged) {
       if (changeInfo.isPropagationEnabled) {
         final ParameterInfo[] createdParmsInfo = changeInfo.getCreatedParmsInfoWithoutVarargs();
-        for (int i = 0; i < createdParmsInfo.length; i++) {
-          ParameterInfo info = createdParmsInfo[i];
+        for (ParameterInfo info : createdParmsInfo) {
           PsiExpression newArg;
           if (toInsertDefaultValue) {
             newArg = createDefaultValue(factory, info, list);
@@ -869,8 +857,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     PsiSearchHelper helper = manager.getSearchHelper();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
     PsiReference[] parmRefs = helper.findReferences(parameter, projectScope, false);
-    for (int k = 0; k < parmRefs.length; k++) {
-      PsiElement parmRef = parmRefs[k].getElement();
+    for (PsiReference psiReference : parmRefs) {
+      PsiElement parmRef = psiReference.getElement();
       UsageInfo usageInfo = new MyParameterUsageInfo(parmRef, parameter.getName(), info.getName());
       results.add(usageInfo);
     }
@@ -886,8 +874,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       newParameters.addAll(Arrays.asList(caller.getParameterList().getParameters()));
       final ParameterInfo[] primaryNewParms = myChangeInfo.newParms;
       PsiSubstitutor substitutor = baseMethod == null ? PsiSubstitutor.EMPTY : calculateSubstitutor(caller, baseMethod);
-      for (int i = 0; i < primaryNewParms.length; i++) {
-        if (primaryNewParms[i].oldParameterIndex < 0) newParameters.add(createNewParameter(primaryNewParms[i], substitutor));
+      for (ParameterInfo info : primaryNewParms) {
+        if (info.oldParameterIndex < 0) newParameters.add(createNewParameter(info, substitutor));
       }
       PsiParameter[] arrayed = newParameters.toArray(new PsiParameter[newParameters.size()]);
       boolean[] toRemoveParm = new boolean[arrayed.length];
@@ -900,9 +888,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       final PsiReferenceList throwsList = caller.getThrowsList();
       newThrowns.addAll(Arrays.asList(throwsList.getReferenceElements()));
       final ThrownExceptionInfo[] primaryNewExns = myChangeInfo.newExceptions;
-      for (int i = 0; i < primaryNewExns.length; i++) {
-        if (primaryNewExns[i].oldIndex < 0) {
-          final PsiClassType type = (PsiClassType)primaryNewExns[i].createType(caller, myManager);
+      for (ThrownExceptionInfo thrownExceptionInfo : primaryNewExns) {
+        if (thrownExceptionInfo.oldIndex < 0) {
+          final PsiClassType type = (PsiClassType)thrownExceptionInfo.createType(caller, myManager);
           final PsiJavaCodeReferenceElement ref = caller.getManager().getElementFactory().createReferenceElementByType(type);
           newThrowns.add(ref);
         }
@@ -1001,13 +989,11 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                                  final PsiParameterList list,
                                                  boolean[] toRemoveParm) throws IncorrectOperationException {
     List<FieldConflictsResolver> conflictResolvers = new ArrayList<FieldConflictsResolver>();
-    for (int i = 0; i < newParms.length; i++) {
-      PsiParameter parameter = newParms[i];
+    for (PsiParameter parameter : newParms) {
       conflictResolvers.add(new FieldConflictsResolver(parameter.getName(), method.getBody()));
     }
     ChangeSignatureUtil.synchronizeList(list, Arrays.asList(newParms), ParameterList.INSTANCE, toRemoveParm);
-    for (int i = 0; i < conflictResolvers.size(); i++) {
-      FieldConflictsResolver fieldConflictsResolver = conflictResolvers.get(i);
+    for (FieldConflictsResolver fieldConflictsResolver : conflictResolvers) {
       fieldConflictsResolver.fix();
     }
   }
