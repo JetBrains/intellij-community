@@ -559,6 +559,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private void updateImmediately() {
+    if (myProject.isDisposed()) return;
     checkNodeValidity((DefaultMutableTreeNode)myTree.getModel().getRoot());
   }
 
