@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtil;
@@ -85,7 +86,14 @@ public class CreateConstructorMatchingSuperAction extends BaseIntentionAction {
               CandidateInfo candidate = constructors1[i];
               PsiMethod base = (PsiMethod) candidate.getElement();
               derived = GenerateMembersUtil.substituteGenericMethod(base, candidate.getSubstitutor());
-              if (!isCopyJavadoc1) derived.getDocComment().delete();
+
+              if (!isCopyJavadoc1) {
+                final PsiDocComment docComment = derived.getDocComment();
+                if (docComment != null) {
+                  docComment.delete();
+                }
+              }
+
               derived.getNameIdentifier().replace(myClass.getNameIdentifier());
               StringBuffer buffer = new StringBuffer();
               buffer.append("void foo () {\nsuper(");
