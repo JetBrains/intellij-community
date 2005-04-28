@@ -411,88 +411,7 @@ public class HighlightMethodUtil {
       }
 
       if (!resolveResult.isAccessible() || !resolveResult.isStaticsScopeCorrect()) {
-        // check for ambiguous method call
-
-        ResolveResult[] resolveResults = referenceToMethod.multiResolve(true);
-        MethodCandidateInfo methodCandidate1 = null;
-        MethodCandidateInfo methodCandidate2 = null;
-        List<MethodCandidateInfo> candidateList = new ArrayList<MethodCandidateInfo>();
-        for (ResolveResult result : resolveResults) {
-          if (!(result instanceof MethodCandidateInfo)) continue;
-          MethodCandidateInfo candidate = (MethodCandidateInfo)result;
-          if (candidate.isApplicable()) {
-            if (methodCandidate1 == null) {
-              methodCandidate1 = candidate;
-            }
-            else {
-              methodCandidate2 = candidate;
-              break;
-            }
-          }
-        }
-
-        for (ResolveResult result : resolveResults) {
-          if (!(result instanceof MethodCandidateInfo)) continue;
-          MethodCandidateInfo candidate = (MethodCandidateInfo)result;
-          if (candidate.isAccessible()) candidateList.add(candidate);
-        }
-
-        String description;
-        String toolTip;
-        PsiElement elementToHighlight;
-        HighlightInfoType highlightInfoType = HighlightInfoType.ERROR;
-        if (methodCandidate2 != null) {
-          String m1 = PsiFormatUtil.formatMethod(methodCandidate1.getElement(),
-                                                       methodCandidate1.getSubstitutor(),
-                                                       PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME |
-                                                       PsiFormatUtil.SHOW_PARAMETERS,
-                                                       PsiFormatUtil.SHOW_TYPE);
-          String m2 = PsiFormatUtil.formatMethod(methodCandidate2.getElement(),
-                                                       methodCandidate2.getSubstitutor(),
-                                                       PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME |
-                                                       PsiFormatUtil.SHOW_PARAMETERS,
-                                                       PsiFormatUtil.SHOW_TYPE);
-          description = MessageFormat.format("Ambiguous method call: both ''{0}'' and ''{1}'' match", new Object[]{m1, m2});
-          toolTip = createAmbiguousMethodHtmlTooltip(new MethodCandidateInfo[]{methodCandidate1, methodCandidate2});
-          elementToHighlight = list;
-        }
-        else {
-          if (element != null && !resolveResult.isAccessible()) {
-            description = HighlightUtil.buildProblemWithAccessDescription(element, referenceToMethod, resolveResult);
-            elementToHighlight = referenceToMethod.getReferenceNameElement();
-          }
-          else if (element != null && !resolveResult.isStaticsScopeCorrect()) {
-            description = HighlightUtil.buildProblemWithStaticDescription(element);
-            elementToHighlight = referenceToMethod.getReferenceNameElement();
-          }
-          else {
-            String methodName = referenceToMethod.getReferenceName() + HighlightUtil.buildArgTypesList(list);
-            description = MessageFormat.format(CANNOT_RESOLVE_METHOD, new Object[]{methodName});
-            if (candidateList.size() == 0) {
-              elementToHighlight = referenceToMethod.getReferenceNameElement();
-              highlightInfoType = HighlightInfoType.WRONG_REF;
-            }
-            else {
-              elementToHighlight = list;
-            }
-          }
-          toolTip = description;
-        }
-        highlightInfo = HighlightInfo.createHighlightInfo(highlightInfoType, elementToHighlight, description, toolTip);
-        if (methodCandidate2 == null) {
-          registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
-        }
-        if (!resolveResult.isAccessible() && resolveResult.isStaticsScopeCorrect() && methodCandidate2 != null) {
-          HighlightUtil.registerAccessQuickFixAction((PsiMember)element, referenceToMethod, highlightInfo);
-        }
-        if (!resolveResult.isStaticsScopeCorrect()) {
-          HighlightUtil.registerStaticProblemQuickFixAction(element, highlightInfo, referenceToMethod);
-        }
-
-        MethodCandidateInfo[] candidates = candidateList.toArray(new MethodCandidateInfo[candidateList.size()]);
-        CastMethodParametersFix.registerCastActions(candidates, list, methodCall.getMethodExpression(), highlightInfo);
-        WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), highlightInfo);
-        ChangeParameterClassFix.registerQuickFixActions(methodCall, list, highlightInfo);
+        highlightInfo = checkAmbiguousMethodCall(referenceToMethod, list, element, resolveResult, methodCall, resolveHelper);
       }
       else if (info != null && !info.isApplicable()) {
         if (info.isTypeArgumentsApplicable()) {
@@ -539,6 +458,94 @@ public class HighlightMethodUtil {
       highlightInfo =
       GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(element, referenceToMethod, resolveResult.getSubstitutor());
     }
+    return highlightInfo;
+  }
+
+  private static HighlightInfo checkAmbiguousMethodCall(final PsiReferenceExpression referenceToMethod,
+                                                        final PsiExpressionList list,
+                                                        final PsiElement element,
+                                                        final ResolveResult resolveResult,
+                                                        final PsiMethodCallExpression methodCall, final PsiResolveHelper resolveHelper) {
+    ResolveResult[] resolveResults = referenceToMethod.multiResolve(true);
+    MethodCandidateInfo methodCandidate1 = null;
+    MethodCandidateInfo methodCandidate2 = null;
+    List<MethodCandidateInfo> candidateList = new ArrayList<MethodCandidateInfo>();
+    for (ResolveResult result : resolveResults) {
+      if (!(result instanceof MethodCandidateInfo)) continue;
+      MethodCandidateInfo candidate = (MethodCandidateInfo)result;
+      if (candidate.isApplicable() && !candidate.getElement().isConstructor()) {
+        if (methodCandidate1 == null) {
+          methodCandidate1 = candidate;
+        }
+        else {
+          methodCandidate2 = candidate;
+          break;
+        }
+      }
+    }
+
+    for (ResolveResult result : resolveResults) {
+      if (!(result instanceof MethodCandidateInfo)) continue;
+      MethodCandidateInfo candidate = (MethodCandidateInfo)result;
+      if (candidate.isAccessible()) candidateList.add(candidate);
+    }
+
+    String description;
+    String toolTip;
+    PsiElement elementToHighlight;
+    HighlightInfoType highlightInfoType = HighlightInfoType.ERROR;
+    if (methodCandidate2 != null) {
+      String m1 = PsiFormatUtil.formatMethod(methodCandidate1.getElement(),
+                                                   methodCandidate1.getSubstitutor(),
+                                                   PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME |
+                                                   PsiFormatUtil.SHOW_PARAMETERS,
+                                                   PsiFormatUtil.SHOW_TYPE);
+      String m2 = PsiFormatUtil.formatMethod(methodCandidate2.getElement(),
+                                                   methodCandidate2.getSubstitutor(),
+                                                   PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME |
+                                                   PsiFormatUtil.SHOW_PARAMETERS,
+                                                   PsiFormatUtil.SHOW_TYPE);
+      description = MessageFormat.format("Ambiguous method call: both ''{0}'' and ''{1}'' match", new Object[]{m1, m2});
+      toolTip = createAmbiguousMethodHtmlTooltip(new MethodCandidateInfo[]{methodCandidate1, methodCandidate2});
+      elementToHighlight = list;
+    }
+    else {
+      if (element != null && !resolveResult.isAccessible()) {
+        description = HighlightUtil.buildProblemWithAccessDescription(element, referenceToMethod, resolveResult);
+        elementToHighlight = referenceToMethod.getReferenceNameElement();
+      }
+      else if (element != null && !resolveResult.isStaticsScopeCorrect()) {
+        description = HighlightUtil.buildProblemWithStaticDescription(element);
+        elementToHighlight = referenceToMethod.getReferenceNameElement();
+      }
+      else {
+        String methodName = referenceToMethod.getReferenceName() + HighlightUtil.buildArgTypesList(list);
+        description = MessageFormat.format(CANNOT_RESOLVE_METHOD, new Object[]{methodName});
+        if (candidateList.size() == 0) {
+          elementToHighlight = referenceToMethod.getReferenceNameElement();
+          highlightInfoType = HighlightInfoType.WRONG_REF;
+        }
+        else {
+          elementToHighlight = list;
+        }
+      }
+      toolTip = description;
+    }
+    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(highlightInfoType, elementToHighlight, description, toolTip);
+    if (methodCandidate2 == null) {
+      registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
+    }
+    if (!resolveResult.isAccessible() && resolveResult.isStaticsScopeCorrect() && methodCandidate2 != null) {
+      HighlightUtil.registerAccessQuickFixAction((PsiMember)element, referenceToMethod, highlightInfo);
+    }
+    if (!resolveResult.isStaticsScopeCorrect()) {
+      HighlightUtil.registerStaticProblemQuickFixAction(element, highlightInfo, referenceToMethod);
+    }
+
+    MethodCandidateInfo[] candidates = candidateList.toArray(new MethodCandidateInfo[candidateList.size()]);
+    CastMethodParametersFix.registerCastActions(candidates, list, methodCall.getMethodExpression(), highlightInfo);
+    WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), highlightInfo);
+    ChangeParameterClassFix.registerQuickFixActions(methodCall, list, highlightInfo);
     return highlightInfo;
   }
 
