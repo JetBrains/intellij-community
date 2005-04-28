@@ -5,7 +5,6 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.ClassFilter;
-import com.intellij.debugger.apiAdapters.TransportService;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
@@ -25,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.execution.ExecutionException;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import org.jdom.Attribute;
@@ -33,7 +31,6 @@ import org.jdom.Element;
 
 import java.util.*;
 import java.util.regex.PatternSyntaxException;
-import java.lang.reflect.InvocationTargetException;
 
 public abstract class DebuggerUtilsEx extends DebuggerUtils {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerUtilsEx");

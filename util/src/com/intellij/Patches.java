@@ -54,7 +54,7 @@ public class Patches {
    * See sun bug parage.
    * Debugger hangs on any attempt to attach/listen Connector when attach hanged once. 
    */
-  public static final boolean SUN_BUG_338675 = true;
+  public static final boolean SUN_BUG_338675 = SystemInfo.JAVA_VERSION.indexOf("1.4.") != -1;
 
   /**
    * See sun bug parade.
@@ -64,7 +64,7 @@ public class Patches {
    *
    * This bug is fixed in JDK1.5
    */
-  public static final boolean SUN_BUG_ID_4218084 = true;
+  public static final boolean SUN_BUG_ID_4218084 = SystemInfo.JAVA_VERSION.indexOf("1.4.") != -1;
 
   /**
    * JDK 1.3.x and 1.4.x has the following error. When we close dialog and its content pane is being inserted

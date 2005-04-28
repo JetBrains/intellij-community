@@ -1,10 +1,10 @@
 package com.intellij.debugger.apiAdapters;
 
-import com.intellij.util.ArrayUtil;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.execution.ExecutionException;
-import com.sun.jdi.connect.Connector;
+import com.intellij.util.ArrayUtil;
+import com.sun.jdi.connect.Transport;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -14,7 +14,7 @@ import java.lang.reflect.Method;
 /**
  * @author max
  */
-public class TransportService {
+public class TransportServiceWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.apiAdapters.TransportService");
 
   private final Object myDelegateObject;
@@ -26,7 +26,7 @@ public class TransportService {
                                                       ? "com.sun.tools.jdi.SharedMemoryTransport"
                                                       : "com.sun.tools.jdi.SharedMemoryTransportService";
 
-  private TransportService(Class delegateClass) throws NoSuchMethodException,
+  private TransportServiceWrapper(Class delegateClass) throws NoSuchMethodException,
                                                       IllegalAccessException,
                                                       InvocationTargetException,
                                                       InstantiationException {
@@ -36,16 +36,22 @@ public class TransportService {
     myDelegateObject = constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
-  private TransportService(Object delegateObject) {
-    myDelegateClass = delegateObject.getClass();
-    myDelegateObject = delegateObject;
+  /**
+   * Applicable if IDEA is run on JDK 1.4.2.x only!
+   * @param transportObj
+   */
+  private TransportServiceWrapper(Transport transportObj) {
+    myDelegateClass = transportObj.getClass();
+    myDelegateObject = transportObj;
   }
 
-  public ConnectionService attach(final String s) throws IOException {
+  public ConnectionServiceWrapper attach(final String s) throws IOException {
     try {
+      // Applicable if IDEA is run on JDK 1.4.2.x only!
+      // in JDK 1.5 the signature of the "attach" method has been changed to "attach(String, long, long)"
       final Method method = myDelegateClass.getMethod("attach", new Class[]{String.class});
       method.setAccessible(true);
-      return new ConnectionService(method.invoke(myDelegateObject, new Object[]{s}));
+      return new ConnectionServiceWrapper(method.invoke(myDelegateObject, new Object[]{s}));
     }
     catch (NoSuchMethodException e) {
       LOG.error(e);
@@ -116,19 +122,19 @@ public class TransportService {
     return "<unknown>";
   }
 
-  public static TransportService getTransportService(boolean forceSocketTransport) throws ExecutionException {
-    TransportService transport;
+  public static TransportServiceWrapper getTransportService(boolean forceSocketTransport) throws ExecutionException {
+    TransportServiceWrapper transport;
     try {
       try {
         if (forceSocketTransport) {
-          transport = new TransportService(Class.forName(SOCKET_TRANSPORT_CLASS));
+          transport = new TransportServiceWrapper(Class.forName(SOCKET_TRANSPORT_CLASS));
         }
         else {
-          transport = new TransportService(Class.forName(SHMEM_TRANSPORT_CLASS));
+          transport = new TransportServiceWrapper(Class.forName(SHMEM_TRANSPORT_CLASS));
         }
       }
       catch (UnsatisfiedLinkError e) {
-        transport = new TransportService(Class.forName(SOCKET_TRANSPORT_CLASS));
+        transport = new TransportServiceWrapper(Class.forName(SOCKET_TRANSPORT_CLASS));
       }
     }
     catch (Exception e) {
@@ -137,12 +143,13 @@ public class TransportService {
     return transport;
   }
 
-  public static TransportService getTransportService(Connector connector) throws ExecutionException {
-    try {
-      return new TransportService(connector.transport());
-    }
-    catch (Exception e) {
-      throw new ExecutionException(e.getClass().getName() + " : " + e.getMessage());
-    }
+  /**
+   * Applicable if IDEA is run on JDK 1.4.2.x only!
+   * @param transportObject
+   * @return transport service wrapper
+   */
+  public static TransportServiceWrapper getTransportService(Transport transportObject){
+    return new TransportServiceWrapper(transportObject);
   }
+
 }

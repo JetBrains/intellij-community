@@ -9,7 +9,7 @@ import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.ui.*;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
-import com.intellij.debugger.apiAdapters.TransportService;
+import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -135,7 +135,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   public String findAvailableDebugAddress(final boolean useSockets) throws ExecutionException {
-    final TransportService transportService = TransportService.getTransportService(useSockets);
+    final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
 
     if(useSockets) {
       final int freePort = findAvailableSocketPort();

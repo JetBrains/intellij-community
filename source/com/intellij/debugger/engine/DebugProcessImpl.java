@@ -5,8 +5,8 @@ import com.intellij.debugger.ClassFilter;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.PositionManager;
-import com.intellij.debugger.apiAdapters.ConnectionService;
-import com.intellij.debugger.apiAdapters.TransportService;
+import com.intellij.debugger.apiAdapters.ConnectionServiceWrapper;
+import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -101,7 +101,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private ExecutionResult  myExecutionResult;
   private RemoteConnection myConnection;
 
-  private ConnectionService myConnectionService;
+  private ConnectionServiceWrapper myConnectionService;
   private Map myArguments;
 
   private LinkedList<String> myStatusStack = new LinkedList<String>();
@@ -469,8 +469,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
             }
             hostString = hostString + ":";
 
-            final TransportService transportService = TransportService.getTransportService(connector);
-            myConnectionService = transportService.attach(hostString + portString);
+            final TransportServiceWrapper transportServiceWrapper = TransportServiceWrapper.getTransportService(connector.transport());
+            myConnectionService = transportServiceWrapper.attach(hostString + portString);
             return myConnectionService.createVirtualMachine();
           }
           else {

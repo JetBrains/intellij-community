@@ -13,7 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 /**
  * @author max
  */
-public class ConnectionService {
+public class ConnectionServiceWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.apiAdapters.ConnectionService");
 
   private static Class myDelegateClass;
@@ -30,7 +30,7 @@ public class ConnectionService {
     }
   }
 
-  public ConnectionService(final Object connection) {
+  public ConnectionServiceWrapper(final Object connection) {
     myConnection = connection;
   }
 

@@ -1,7 +1,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.apiAdapters.TransportService;
+import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.GetJPDADialog;
@@ -332,7 +332,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
       }
     });
 
-    final TransportService transportService = TransportService.getTransportService(useSockets);
+    final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
     String xrun = "transport=" + transportService.transportId() + ",address=" + listenTo;
     if(serverMode) {
       xrun += ",suspend=y,server=n";
