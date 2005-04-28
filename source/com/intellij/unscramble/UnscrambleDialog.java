@@ -108,8 +108,8 @@ public class UnscrambleDialog extends DialogWrapper{
       }
     }
     myUnscrambleChooser.setSelectedIndex(index);
-    useUnscramblerChanged();
     myUseUnscrambler.setSelected(selectedUnscrambler != null);
+    useUnscramblerChanged();
     pasteTextFromClipboard();
   }
 
