@@ -468,10 +468,10 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       myAbstractTreeBuilder.dispose();
       myAbstractTreeBuilder = null;
     }
-
+    // this will also dispose wrapped TreeModel
+    myTreeModelWrapper.dispose();
     myFileEditor = null;
     myAutoScrollFromSourceHandler.dispose();
-
   }
 
   public void centerSelectedRow() {
@@ -571,7 +571,6 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
     public void dispose() {
       myTreeModel.removeEditorPositionListener(myFileEditorPositionListener);
-      myTreeModel.dispose();
     }
 
     private void addEditorCaretListener() {

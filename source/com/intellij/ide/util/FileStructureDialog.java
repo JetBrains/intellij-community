@@ -7,6 +7,7 @@ import com.intellij.ide.commander.CommanderPanel;
 import com.intellij.ide.commander.ProjectListBuilder;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
@@ -40,12 +41,12 @@ public class FileStructureDialog extends DialogWrapper {
   private Navigatable myNavigatable;
   private final Project myProject;
   private MyCommanderPanel myCommanderPanel;
-  private final TreeModel myTreeModel;
+  private final StructureViewModel myTreeModel;
 
   private static final String ourPropertyKey = "FileStructure.narrowDown";
   private boolean myShouldNarrowDown = false;
 
-  public FileStructureDialog(TreeModel structureViewModel, Editor editor, Project project, Navigatable navigatable) {
+  public FileStructureDialog(StructureViewModel structureViewModel, Editor editor, Project project, Navigatable navigatable) {
     super(project, true);
     myProject = project;
     myEditor = editor;
@@ -74,6 +75,7 @@ public class FileStructureDialog extends DialogWrapper {
   }
 
   protected void dispose() {
+    myTreeModel.dispose();
     myCommanderPanel.dispose();
     super.dispose();
   }
