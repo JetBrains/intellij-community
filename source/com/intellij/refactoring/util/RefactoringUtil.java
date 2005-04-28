@@ -1101,13 +1101,11 @@ public class RefactoringUtil {
     boolean anyChanged;
     do {
       anyChanged = false;
-      for (Iterator<T> iterator = vertices.iterator(); iterator.hasNext();) {
-        T currentVertex = iterator.next();
+      for (T currentVertex : vertices) {
         if (!result.contains(currentVertex)) {
           if (!initialRelation.value(currentVertex)) {
             Set<T> targets = graph.getTargets(currentVertex);
-            for (Iterator<T> targetsIterator = targets.iterator(); targetsIterator.hasNext();) {
-              T currentTarget = targetsIterator.next();
+            for (T currentTarget : targets) {
               if (result.contains(currentTarget) || initialRelation.value(currentTarget)) {
                 result.add(currentVertex);
                 anyChanged = true;
@@ -1214,8 +1212,7 @@ public class RefactoringUtil {
       }
     }
     PsiDocTag anchor = paramTags.length > 0 ? paramTags[paramTags.length - 1] : null;
-    for (Iterator<PsiDocTag> iterator = newTags.iterator(); iterator.hasNext();) {
-      PsiDocTag psiDocTag = iterator.next();
+    for (PsiDocTag psiDocTag : newTags) {
       anchor = (PsiDocTag)docComment.addAfter(psiDocTag, anchor);
     }
     for (int i = 0; i < paramTags.length; i++) {
@@ -1430,8 +1427,7 @@ public class RefactoringUtil {
                                             final Collection<String> conflicts) {
     if (scopes == null) return;
 
-    for (Iterator<PsiElement> iterator = scopes.iterator(); iterator.hasNext();) {
-      final PsiElement scope = iterator.next();
+    for (final PsiElement scope : scopes) {
       if (scope instanceof PsiPackage || scope instanceof PsiDirectory) return;
     }
 
@@ -1439,8 +1435,7 @@ public class RefactoringUtil {
     if (targetModule == null) return;
     final GlobalSearchScope resolveScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(targetModule);
     final HashSet<PsiElement> reported = new HashSet<PsiElement>();
-    for (Iterator<PsiElement> iterator = scopes.iterator(); iterator.hasNext();) {
-      final PsiElement scope = iterator.next();
+    for (final PsiElement scope : scopes) {
       scope.accept(new PsiRecursiveElementVisitor() {
         public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           super.visitReferenceElement(reference);
@@ -1465,8 +1460,7 @@ public class RefactoringUtil {
   }
 
   private static boolean isAncestor(final PsiElement resolved, final Collection<PsiElement> scopes) {
-    for (Iterator<PsiElement> iterator = scopes.iterator(); iterator.hasNext();) {
-      final PsiElement scope = iterator.next();
+    for (final PsiElement scope : scopes) {
       if (PsiTreeUtil.isAncestor(scope, resolved, false)) return true;
     }
     return false;
