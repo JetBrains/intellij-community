@@ -18,10 +18,8 @@ import com.intellij.util.EventDispatcher;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class EditorTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.EditorTracker");
@@ -36,7 +34,7 @@ public class EditorTracker {
   private static final Editor[] EMPTY_EDITOR_ARRAY = new Editor[0];
   private Editor[] myActiveEditors = EMPTY_EDITOR_ARRAY;
 
-  private EditorFactoryListener myEditorFactoryListener;
+  private MyEditorFactoryListener myEditorFactoryListener;
   private EventDispatcher<EditorTrackerListener> myDispatcher = EventDispatcher.create(EditorTrackerListener.class);
 
   private final IdeFrame myIdeFrame;
@@ -69,32 +67,7 @@ public class EditorTracker {
     });
     myIdeFrame.addWindowFocusListener(myIdeFrameFocusListener);
 
-    myEditorFactoryListener = new EditorFactoryListener() {
-      public void editorCreated(EditorFactoryEvent event) {
-        final Editor editor = event.getEditor();
-        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-        if (psiFile == null) return;
-
-        editor.getComponent().addHierarchyListener(new HierarchyListener() {
-          public void hierarchyChanged(HierarchyEvent e) {
-            registerEditor(editor);
-          }
-        });
-
-        editor.getContentComponent().addFocusListener(new FocusListener() {
-          public void focusGained(FocusEvent e) {
-            editorFocused(editor);
-          }
-
-          public void focusLost(FocusEvent e) {
-          }
-        });
-      }
-
-      public void editorReleased(EditorFactoryEvent event) {
-        unregisterEditor(event.getEditor());
-      }
-    };
+    myEditorFactoryListener = new MyEditorFactoryListener(myProject);
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener);
   }
 
@@ -220,6 +193,7 @@ public class EditorTracker {
   }
 
   public void dispose() {
+    myEditorFactoryListener.dispose();
     EditorFactory.getInstance().removeEditorFactoryListener(myEditorFactoryListener);
     myIdeFrame.removeWindowFocusListener(myIdeFrameFocusListener);
   }
@@ -287,5 +261,60 @@ public class EditorTracker {
 
   public void removeEditorTrackerListener(EditorTrackerListener listener) {
     myDispatcher.removeListener(listener);
+  }
+
+  private class MyEditorFactoryListener implements EditorFactoryListener {
+    private List<Runnable> myExecuteOnEditorRelease;
+    private final Project myProject;
+
+    public MyEditorFactoryListener(final Project project) {
+      myProject = project;
+      myExecuteOnEditorRelease = new ArrayList<Runnable>();
+    }
+
+    public void editorCreated(EditorFactoryEvent event) {
+      final Editor editor = event.getEditor();
+      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      if (psiFile == null) return;
+
+      final JComponent component = editor.getComponent();
+      final JComponent contentComponent = editor.getContentComponent();
+
+      final HierarchyListener hierarchyListener = new HierarchyListener() {
+        public void hierarchyChanged(HierarchyEvent e) {
+          registerEditor(editor);
+        }
+      };
+      component.addHierarchyListener(hierarchyListener);
+
+      final FocusListener focusListener = new FocusListener() {
+        public void focusGained(FocusEvent e) {
+          editorFocused(editor);
+        }
+
+        public void focusLost(FocusEvent e) {
+        }
+      };
+      contentComponent.addFocusListener(focusListener);
+
+      myExecuteOnEditorRelease.add(new Runnable() {
+        public void run() {
+          component.removeHierarchyListener(hierarchyListener);
+          contentComponent.removeFocusListener(focusListener);
+        }
+      });
+    }
+
+    public void editorReleased(EditorFactoryEvent event) {
+      unregisterEditor(event.getEditor());
+      dispose();
+    }
+
+    public void dispose() {
+      for (Iterator<Runnable> it = myExecuteOnEditorRelease.iterator(); it.hasNext();) {
+        it.next().run();
+      }
+      myExecuteOnEditorRelease.clear();
+    }
   }
 }
