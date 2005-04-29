@@ -26,9 +26,8 @@ public abstract class BaseOccurenceManager implements OccurenceManager {
 
       if(myFilter != null) {
         ArrayList result = new ArrayList();
-        for (int i = 0; i < myOccurences.length; i++) {
-          PsiExpression occurence = myOccurences[i];
-          if(myFilter.isOK(occurence)) { result.add(occurence); }
+        for (PsiExpression occurence : myOccurences) {
+          if (myFilter.isOK(occurence)) result.add(occurence);
         }
         if(result.size() > 0) {
           myOccurences = (PsiExpression[]) result.toArray(new PsiExpression[result.size()]);
@@ -65,11 +64,11 @@ public abstract class BaseOccurenceManager implements OccurenceManager {
 
   public static boolean needToDeclareFinal(PsiExpression[] occurrences) {
     PsiElement scopeToDeclare = null;;
-    for (int i = 0; i < occurrences.length; i++) {
-      PsiExpression occurrence = occurrences[i];
-      if(scopeToDeclare == null) {
+    for (PsiExpression occurrence : occurrences) {
+      if (scopeToDeclare == null) {
         scopeToDeclare = occurrence;
-      } else {
+      }
+      else {
         scopeToDeclare = PsiTreeUtil.findCommonParent(scopeToDeclare, occurrence);
       }
     }
@@ -77,8 +76,7 @@ public abstract class BaseOccurenceManager implements OccurenceManager {
       return false;
     }
 
-    for (int i = 0; i < occurrences.length; i++) {
-      PsiExpression occurrence = occurrences[i];
+    for (PsiExpression occurrence : occurrences) {
       PsiElement parent = occurrence;
       while (!parent.equals(scopeToDeclare)) {
         parent = parent.getParent();

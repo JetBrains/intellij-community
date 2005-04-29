@@ -1,16 +1,14 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -27,10 +25,6 @@ public class FieldConflictsResolver {
   private PsiClass myQualifyingClass;
 
   public FieldConflictsResolver(String name, PsiCodeBlock scope) {
-    this(name, scope, new ArrayList<PsiElement>());
-  }
-
-  public FieldConflictsResolver(String name, PsiCodeBlock scope, List<PsiElement> excludeFromScope) {
     myName = name;
     myScope = scope;
     if (myScope == null) return;
@@ -40,11 +34,10 @@ public class FieldConflictsResolver {
     myField = (PsiField) oldVariable;
     final PsiReference[] references = manager.getSearchHelper().findReferences(myField, new LocalSearchScope(myScope), false);
     myReferenceExpressions = new ArrayList<PsiReferenceExpression>();
-    for (int i = 0; i < references.length; i++) {
-      PsiReference reference = references[i];
+    for (PsiReference reference : references) {
       final PsiElement element = reference.getElement();
       if (element instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression) element;
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
         if (referenceExpression.getQualifierExpression() == null) {
           myReferenceExpressions.add(referenceExpression);
         }
@@ -82,8 +75,7 @@ public class FieldConflictsResolver {
   public void fix() throws IncorrectOperationException {
     if (myField == null) return;
     final PsiManager manager = myScope.getManager();
-    for (Iterator<PsiReferenceExpression> iterator = myReferenceExpressions.iterator(); iterator.hasNext();) {
-      PsiReferenceExpression referenceExpression = iterator.next();
+    for (PsiReferenceExpression referenceExpression : myReferenceExpressions) {
       if (!referenceExpression.isValid()) continue;
       final PsiElement newlyResolved = referenceExpression.resolve();
       if (!manager.areElementsEquivalent(newlyResolved, myField)) {

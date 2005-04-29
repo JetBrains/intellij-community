@@ -350,11 +350,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     if (!(child instanceof JspToken && ((JspToken) child).getTokenType() == JspTokenType.JSP_SCRIPTLET_END)) {
       while (true) {
         if (!(child instanceof PsiWhiteSpace)
-                && !(child instanceof PsiComment)
-                && !(child instanceof JspExpression)
-                && !(child instanceof JspToken)
-        )
+            && !(child instanceof PsiComment)
+            && !(child instanceof JspExpression)
+            && !(child instanceof JspToken)
+          ) {
           break;
+        }
         child = child.getNextSibling();
       }
     }
