@@ -54,7 +54,7 @@ public class XmlAspectImpl implements XmlAspect {
       PsiElement psiElement = null;
       while (changedElement != null && (psiElement = changedElement.getPsi()) == null) {
         final ASTNode parent = changedElement.getTreeParent();
-        final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, changedElement, table);
+        final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, changedElement);
         changeInfo.compactChange(changedElement, changesByElement);
         changesByElement = new TreeChangeImpl(parent);
         changesByElement.addChange(changedElement, changeInfo);
@@ -75,7 +75,7 @@ public class XmlAspectImpl implements XmlAspect {
           final ASTNode treeParent = child.getTreeParent();
           if (treeParent == null) return;
           final PsiElement parent = treeParent.getPsi();
-          final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, child, table);
+          final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, child);
 
           changeInfo.compactChange(child, myChange);
           myChange = new TreeChangeImpl(treeParent);

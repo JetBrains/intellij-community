@@ -57,7 +57,7 @@ public class PsiEventWrapperAspect implements PomModelAspect{
         while(changedElement != null && ((psiParent = changedElement.getPsi()) == null ||
                                          !checkPsiForChildren(changesByElement.getAffectedChildren()))){
           final ASTNode parent = changedElement.getTreeParent();
-          final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, changedElement, rootElement.getCharTable());
+          final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, changedElement);
           changeInfo.compactChange(changedElement, changesByElement);
           changesByElement = new TreeChangeImpl(parent);
           changesByElement.addChange(changedElement, changeInfo);

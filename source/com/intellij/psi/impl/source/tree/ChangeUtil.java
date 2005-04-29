@@ -108,7 +108,7 @@ public class ChangeUtil implements Constants {
       prepareAndRunChangeAction(new ChangeAction(){
         public void makeChange(TreeChangeEvent destinationTreeChange) {
           if(parent.getTreeParent() != null){
-            final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, parent, newCharTab);
+            final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, parent);
             changeInfo.setOldLength(parent.getTextLength());
             destinationTreeChange.addElementaryChange(parent, changeInfo);
             TreeUtil.removeRange((TreeElement)parent.getFirstChildNode(), null);
@@ -159,7 +159,7 @@ public class ChangeUtil implements Constants {
     TreeUtil.addChildren(parent, first);
     TreeElement child = first;
     while(child != null){
-      destinationTreeChange.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.ADD, child, newCharTab));
+      destinationTreeChange.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.ADD, child));
       child = child.getTreeNext();
     }
   }
@@ -170,7 +170,7 @@ public class ChangeUtil implements Constants {
                              final TreeElement last) {
     TreeElement child = first;
     while(child != last && child != null){
-      destinationTreeChange.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.REMOVED, child, newCharTab));
+      destinationTreeChange.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.REMOVED, child));
       child = child.getTreeNext();
     }
     TreeUtil.removeRange(first, last);
@@ -183,7 +183,7 @@ public class ChangeUtil implements Constants {
     TreeUtil.insertBefore(anchorBefore, first);
     TreeElement child = first;
     while(child != anchorBefore){
-      destinationTreeChange.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.ADD, child, newCharTab));
+      destinationTreeChange.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.ADD, child));
       child = child.getTreeNext();
     }
   }
@@ -193,7 +193,7 @@ public class ChangeUtil implements Constants {
                               final TreeElement oldChild,
                               final TreeElement newChild) {
     TreeUtil.replaceWithList(oldChild, newChild);
-    final ReplaceChangeInfoImpl change = (ReplaceChangeInfoImpl)ChangeInfoImpl.create(ChangeInfo.REPLACE, newChild, table);
+    final ReplaceChangeInfoImpl change = (ReplaceChangeInfoImpl)ChangeInfoImpl.create(ChangeInfo.REPLACE, newChild);
     sourceTreeChange.addElementaryChange(newChild, change);
     change.setReplaced(oldChild);
   }

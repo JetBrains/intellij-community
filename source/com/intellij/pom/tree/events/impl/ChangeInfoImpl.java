@@ -10,19 +10,19 @@ import com.intellij.pom.tree.events.TreeChange;
 public class ChangeInfoImpl implements ChangeInfo {
   private static final String[] TO_STRING = {"add", "remove", "replace", "changed"};
 
-  public static ChangeInfoImpl create(short type, ASTNode changed, CharTable table){
+  public static ChangeInfoImpl create(short type, ASTNode changed){
     switch(type){
       case REPLACE:
-        return new ReplaceChangeInfoImpl(changed, table);
+        return new ReplaceChangeInfoImpl(changed);
       default:
-        return new ChangeInfoImpl(type, changed, table);
+        return new ChangeInfoImpl(type, changed);
     }
   }
 
   private final short type;
   private int myOldLength = 0;
 
-  protected ChangeInfoImpl(short type, ASTNode changed, CharTable table){
+  protected ChangeInfoImpl(short type, ASTNode changed){
     this.type = type;
     myOldLength = type != ADD ? TreeUtil.getNotCachedLength(changed) : 0;
   }

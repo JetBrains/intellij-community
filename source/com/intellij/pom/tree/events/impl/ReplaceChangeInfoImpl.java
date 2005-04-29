@@ -10,8 +10,8 @@ public class ReplaceChangeInfoImpl extends ChangeInfoImpl implements ReplaceChan
   private ASTNode myReplaced;
   private ASTNode myChanged;
 
-  public ReplaceChangeInfoImpl(ASTNode changed, CharTable table) {
-    super(REPLACE, changed, table);
+  public ReplaceChangeInfoImpl(ASTNode changed) {
+    super(REPLACE, changed);
     myChanged = changed;
   }
 

@@ -60,7 +60,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
         final boolean currentParentHasChange = changesByElement.getChangeByChild(prevParent) != null;
         if(currentParentHasChange && prevParent != element) return;
         if(prevParent != element){
-          final ChangeInfo newChange = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, prevParent, myFileElement.getCharTable());
+          final ChangeInfo newChange = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, prevParent);
           if (change.getChangeType() != ChangeInfo.REMOVED) {
             ((ChangeInfoImpl)newChange).processElementaryChange(currentParent, change, element);
           }
@@ -136,7 +136,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
         }
 
         if(isUnderCompacted){
-          final ChangeInfoImpl compactedChange = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, treeElement, myFileElement.getCharTable());
+          final ChangeInfoImpl compactedChange = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, treeElement);
           compactedChange.compactChange(treeElement, getChangesByElement(treeElement));
 
           iterator.remove();
@@ -254,7 +254,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
         CompositeElement currentParent = (CompositeElement)changed.getTreeParent();
         while(currentParent != null){
           if(myChangedElements.containsKey(currentParent)){
-            final ChangeInfoImpl newChange = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, prevParent, myFileElement.getCharTable());
+            final ChangeInfoImpl newChange = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, prevParent);
             final int newLength = TreeUtil.getNotCachedLength(changed);
             final int oldLength = entry.getValue().getOldLength();
             newChange.setOldLength(TreeUtil.getNotCachedLength(prevParent) - newLength + oldLength);
