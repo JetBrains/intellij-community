@@ -502,8 +502,7 @@ public final class EditorImpl implements EditorEx {
 
   private void fireFocusLost() {
     FocusChangeListener[] listeners = getFocusListeners();
-    for (int i = 0; i < listeners.length; i++) {
-      FocusChangeListener listener = listeners[i];
+    for (FocusChangeListener listener : listeners) {
       listener.focusLost(this);
     }
   }
@@ -514,8 +513,7 @@ public final class EditorImpl implements EditorEx {
 
   private void fireFocusGained() {
     FocusChangeListener[] listeners = getFocusListeners();
-    for (int i = 0; i < listeners.length; i++) {
-      FocusChangeListener listener = listeners[i];
+    for (FocusChangeListener listener : listeners) {
       listener.focusGained(this);
     }
   }
@@ -628,8 +626,8 @@ public final class EditorImpl implements EditorEx {
           FoldRegion region = state.getCurrentFold();
           if (region != null) {
             char[] placeholder = region.getPlaceholderText().toCharArray();
-            for (int j = 0; j < placeholder.length; j++) {
-              c = placeholder[j];
+            for (char aPlaceholder : placeholder) {
+              c = aPlaceholder;
               x += charWidth(c, fontType);
               if (x >= p.x) break outer;
               column++;
@@ -778,8 +776,8 @@ public final class EditorImpl implements EditorEx {
 
           if (region != null) {
             char[] placeholder = region.getPlaceholderText().toCharArray();
-            for (int j = 0; j < placeholder.length; j++) {
-              x += charWidth(placeholder[j], fontType);
+            for (char aPlaceholder : placeholder) {
+              x += charWidth(aPlaceholder, fontType);
               column++;
               if (column >= pos.column) break outer;
             }
@@ -1092,15 +1090,14 @@ public final class EditorImpl implements EditorEx {
     final MarkupModel docMarkup = myDocument.getMarkupModel(myProject);
     if (docMarkup != null) {
       segmentHighlighters = docMarkup.getAllHighlighters();
-      for (int i = 0; i < segmentHighlighters.length; i++) {
-        paintSegmentHighlighterAfterEndOfLine(g, (RangeHighlighterEx)segmentHighlighters[i], startLineNumber,
+      for (RangeHighlighter segmentHighlighter : segmentHighlighters) {
+        paintSegmentHighlighterAfterEndOfLine(g, (RangeHighlighterEx)segmentHighlighter, startLineNumber,
                                               endLineNumber);
       }
     }
 
     segmentHighlighters = getMarkupModel().getAllHighlighters();
-    for (int i = 0; i < segmentHighlighters.length; i++) {
-      RangeHighlighter segmentHighlighter = segmentHighlighters[i];
+    for (RangeHighlighter segmentHighlighter : segmentHighlighters) {
       paintSegmentHighlighterAfterEndOfLine(g, (RangeHighlighterEx)segmentHighlighter, startLineNumber, endLineNumber);
     }
   }
@@ -1461,8 +1458,7 @@ public final class EditorImpl implements EditorEx {
   private void paintLineMarkersSeparators(Graphics g, Rectangle clip, MarkupModel markupModel) {
     if (markupModel == null) return;
     RangeHighlighter[] lineMarkers = markupModel.getAllHighlighters();
-    for (int i = 0; i < lineMarkers.length; i++) {
-      RangeHighlighter lineMarker = lineMarkers[i];
+    for (RangeHighlighter lineMarker : lineMarkers) {
       paintLineMarkerSeparator(lineMarker, clip, g);
     }
   }
@@ -2029,8 +2025,8 @@ public final class EditorImpl implements EditorEx {
     EditorMouseEvent event = new EditorMouseEvent(this, e, getMouseEventArea(e));
 
     EditorMouseListener[] mouseListeners = myMouseListeners.toArray(new EditorMouseListener[myMouseListeners.size()]);
-    for (int i = 0; i < mouseListeners.length; i++) {
-      mouseListeners[i].mousePressed(event);
+    for (EditorMouseListener mouseListener : mouseListeners) {
+      mouseListener.mousePressed(event);
     }
 
     // On some systems (for example on Linux) popup trigger is MOUSE_PRESSED event.
@@ -2057,8 +2053,8 @@ public final class EditorImpl implements EditorEx {
   private void runMouseClickedCommand(final MouseEvent e) {
     EditorMouseEvent event = new EditorMouseEvent(this, e, getMouseEventArea(e));
     EditorMouseListener[] listeners = myMouseListeners.toArray(new EditorMouseListener[myMouseListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].mouseClicked(event);
+    for (EditorMouseListener listener : listeners) {
+      listener.mouseClicked(event);
       if (event.isConsumed()) {
         e.consume();
         return;
@@ -2070,8 +2066,8 @@ public final class EditorImpl implements EditorEx {
     myScrollingTimer.stop();
     EditorMouseEvent event = new EditorMouseEvent(this, e, getMouseEventArea(e));
     EditorMouseListener[] listeners = myMouseListeners.toArray(new EditorMouseListener[myMouseListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].mouseReleased(event);
+    for (EditorMouseListener listener : listeners) {
+      listener.mouseReleased(event);
       if (event.isConsumed()) {
         e.consume();
         return;
@@ -2094,8 +2090,8 @@ public final class EditorImpl implements EditorEx {
   private void runMouseEnteredCommand(MouseEvent e) {
     EditorMouseEvent event = new EditorMouseEvent(this, e, getMouseEventArea(e));
     EditorMouseListener[] listeners = myMouseListeners.toArray(new EditorMouseListener[myMouseListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].mouseEntered(event);
+    for (EditorMouseListener listener : listeners) {
+      listener.mouseEntered(event);
       if (event.isConsumed()) {
         e.consume();
         return;
@@ -2106,8 +2102,8 @@ public final class EditorImpl implements EditorEx {
   private void runMouseExitedCommand(MouseEvent e) {
     EditorMouseEvent event = new EditorMouseEvent(this, e, getMouseEventArea(e));
     EditorMouseListener[] listeners = myMouseListeners.toArray(new EditorMouseListener[myMouseListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].mouseExited(event);
+    for (EditorMouseListener listener : listeners) {
+      listener.mouseExited(event);
       if (event.isConsumed()) {
         e.consume();
         return;
@@ -3432,8 +3428,8 @@ public final class EditorImpl implements EditorEx {
 
       EditorMouseMotionListener[] listeners = myMouseMotionListeners.toArray(
         new EditorMouseMotionListener[myMouseMotionListeners.size()]);
-      for (int i = 0; i < listeners.length; i++) {
-        listeners[i].mouseDragged(event);
+      for (EditorMouseMotionListener listener : listeners) {
+        listener.mouseDragged(event);
       }
     }
 
@@ -3461,8 +3457,8 @@ public final class EditorImpl implements EditorEx {
 
       EditorMouseMotionListener[] listeners = myMouseMotionListeners.toArray(
         new EditorMouseMotionListener[myMouseMotionListeners.size()]);
-      for (int i = 0; i < listeners.length; i++) {
-        listeners[i].mouseMoved(event);
+      for (EditorMouseMotionListener listener : listeners) {
+        listener.mouseMoved(event);
       }
     }
   }
@@ -3671,8 +3667,7 @@ public final class EditorImpl implements EditorEx {
       int offset = editor.getCaretModel().getOffset();
       if (editor.getDocument().getRangeGuard(offset, offset) != null) return false;
 
-      for (int i = 0; i < transferFlavors.length; i++) {
-        DataFlavor transferFlavor = transferFlavors[i];
+      for (DataFlavor transferFlavor : transferFlavors) {
         if (transferFlavor.equals(DataFlavor.stringFlavor)) return true;
       }
 
