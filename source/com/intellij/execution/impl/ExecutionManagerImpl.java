@@ -5,6 +5,8 @@ import com.intellij.ant.impl.MapDataContext;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuidlerFactory;
+import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunStrategy;
@@ -129,17 +131,23 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   public void execute(JavaParameters cmdLine,
                             String contentName,
                             final DataContext dataContext) throws ExecutionException {
+    execute(cmdLine, contentName, dataContext, null);
+  }
+
+  public void execute(JavaParameters cmdLine, String contentName, DataContext dataContext, Filter[] filters) throws ExecutionException {
     JavaProgramRunner defaultRunner = ExecutionRegistry.getInstance().getDefaultRunner();
-    RunStrategy.getInstance().execute(new DefaultRunProfile(cmdLine, contentName), dataContext, defaultRunner, null, null);
+    RunStrategy.getInstance().execute(new DefaultRunProfile(cmdLine, contentName, filters), dataContext, defaultRunner, null, null);
   }
 
   private final class DefaultRunProfile implements RunProfile {
     private JavaParameters myParameters;
     private String myContentName;
+    private Filter[] myFilters;
 
-    public DefaultRunProfile(final JavaParameters parameters, String contentName) {
+    public DefaultRunProfile(final JavaParameters parameters, String contentName, Filter[] filters) {
       myParameters = parameters;
       myContentName = contentName;
+      myFilters = filters;
     }
 
     public RunProfileState getState(DataContext context,
@@ -151,7 +159,13 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           return myParameters;
         }
       };
-      state.setConsoleBuilder(TextConsoleBuidlerFactory.getInstance().createBuilder(myProject));
+      final TextConsoleBuilder builder = TextConsoleBuidlerFactory.getInstance().createBuilder(myProject);
+      if (myFilters != null) {
+        for (int i = 0; i < myFilters.length; i++) {
+          builder.addFilter(myFilters[i]);
+        }
+      }
+      state.setConsoleBuilder(builder);
       return state;
     }
 
