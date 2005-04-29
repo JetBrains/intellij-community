@@ -437,7 +437,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (ApplicationManagerEx.getApplicationEx().isAspectJSupportEnabled()) {
       registerFileTypeWithoutNotification(StdFileTypes.ASPECT = new AspectFileType(), new String[] {"aj"});
     }
-    registerFileTypeWithoutNotification(StdFileTypes.JSP = new NewJspFileType(), parse("jsp;jsf;jspf;tag;tagf"));
+    registerFileTypeWithoutNotification(StdFileTypes.JSP = new NewJspFileType(), parse("xjsp;jsp;jsf;jspf;tag;tagf"));
     registerFileTypeWithoutNotification(StdFileTypes.JSPX = new JspxFileType(), parse ("jspx;tagx"));
     registerFileTypeWithoutNotification(StdFileTypes.PLAIN_TEXT = new PlainTextFileType(), parse("txt;sh;bat;properties;cmd;policy;log;cgi;pl;MF;sql"));
     registerFileTypeWithoutNotification(StdFileTypes.XML = new XmlFileType(), parse("xml;xsd;tld;xsl;jnlp;wsdl;hs;jhm"));
