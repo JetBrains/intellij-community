@@ -86,7 +86,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
       new HandleReadOnlyStatusDialog(myProject, fileInfos).show();
     }
     else {
-      processFiles(Arrays.asList(fileInfos));
+      processFiles(new ArrayList<FileInfo>(Arrays.asList(fileInfos))); // the collection passed is modified
     }
     IdeEventQueue.getInstance().setEventCount(savedEventCount);
     return createResultStatus(files, modificationStamps);
