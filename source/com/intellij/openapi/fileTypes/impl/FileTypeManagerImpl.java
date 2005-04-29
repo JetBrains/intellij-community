@@ -21,6 +21,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.HashSet;
+import com.intellij.lang.Language;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Document;
@@ -426,8 +427,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private void registerStandardFileTypes() {
-    Class elLanguage = ELLanguage.class;
-    if (elLanguage == null || StdFileTypes.ARCHIVE != null) return;
+    Language elLanguage = ELLanguage.INSTANCE; // Do not remove. This loads StdLanguage.
+    if (StdFileTypes.ARCHIVE != null) return;
     registerFileTypeWithoutNotification(StdFileTypes.ARCHIVE = new ArchiveFileType(), parse("zip;jar;war;ear"));
     registerFileTypeWithoutNotification(StdFileTypes.CLASS = new JavaClassFileType(), new String[] {"class"});
     registerFileTypeWithoutNotification(StdFileTypes.HTML = new HtmlFileType(), parse("html;htm;sht;shtm;shtml"));
