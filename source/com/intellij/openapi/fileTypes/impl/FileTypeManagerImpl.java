@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.jsp.el.ELLanguage;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PatternUtil;
@@ -425,7 +426,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private void registerStandardFileTypes() {
-    if (StdFileTypes.ARCHIVE != null) return;
+    Class elLanguage = ELLanguage.class;
+    if (elLanguage == null || StdFileTypes.ARCHIVE != null) return;
     registerFileTypeWithoutNotification(StdFileTypes.ARCHIVE = new ArchiveFileType(), parse("zip;jar;war;ear"));
     registerFileTypeWithoutNotification(StdFileTypes.CLASS = new JavaClassFileType(), new String[] {"class"});
     registerFileTypeWithoutNotification(StdFileTypes.HTML = new HtmlFileType(), parse("html;htm;sht;shtm;shtml"));
@@ -434,9 +436,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (ApplicationManagerEx.getApplicationEx().isAspectJSupportEnabled()) {
       registerFileTypeWithoutNotification(StdFileTypes.ASPECT = new AspectFileType(), new String[] {"aj"});
     }
-    registerFileTypeWithoutNotification(StdFileTypes.JSP = new JspFileType(), parse("jsf;jsp;jspf;tag;tagf"));
+    registerFileTypeWithoutNotification(StdFileTypes.JSP = new NewJspFileType(), parse("jsp;jsf;jspf;tag;tagf"));
     registerFileTypeWithoutNotification(StdFileTypes.JSPX = new JspxFileType(), parse ("jspx;tagx"));
-    registerFileTypeWithoutNotification(StdFileTypes.NEW_JSP = new NewJspFileType(), parse ("xjsp"));
     registerFileTypeWithoutNotification(StdFileTypes.PLAIN_TEXT = new PlainTextFileType(), parse("txt;sh;bat;properties;cmd;policy;log;cgi;pl;MF;sql"));
     registerFileTypeWithoutNotification(StdFileTypes.XML = new XmlFileType(), parse("xml;xsd;tld;xsl;jnlp;wsdl;hs;jhm"));
     registerFileTypeWithoutNotification(StdFileTypes.DTD = new DTDFileType(), parse("dtd;ent;mod"));

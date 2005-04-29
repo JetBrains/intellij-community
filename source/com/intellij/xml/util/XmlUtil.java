@@ -3,6 +3,7 @@ package com.intellij.xml.util;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
@@ -12,7 +13,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.impl.source.xml.XmlTagImpl;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.meta.PsiMetaData;
@@ -38,6 +41,8 @@ import java.util.*;
  * @author Mike
  */
 public class XmlUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlUtil");
+
   public static final String TAGLIB_1_1_URI = "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd";
   public static final String TAGLIB_1_2_URI = "http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd";
   public static final String TAGLIB_1_2_a_URI = "http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_2.dtd";
@@ -50,6 +55,7 @@ public class XmlUtil {
   public static final String XML_SCHEMA_INSTANCE_URI = "http://www.w3.org/2001/XMLSchema-instance";
   public static final String ANT_URI = "http://ant.apache.org/schema.xsd";
   public static final String XHTML_URI = "http://www.w3.org/1999/xhtml";
+  public static final String HTML_URI = "http://www.w3.org/1999/html";
   public static final String EMPTY_NAMESPACE = "";
   public static final Key<String> TEST_PATH = Key.create("TEST PATH");
   public static final String JSP_NAMESPACE = "http://java.sun.com/JSP/Page";
@@ -167,7 +173,8 @@ public class XmlUtil {
       XmlFile xmlFile = (XmlFile)result;
       return xmlFile;
     }
-
+    if(base instanceof JspFile)
+      return TldUtil.getTldFileByUri(uri, (JspFile)base);
     return null;
   }
 
@@ -493,39 +500,44 @@ public class XmlUtil {
 
 
 
-  public static String getDefaultNamespace(final XmlDocument document) {
+  public static String[][] getDefaultNamespaces(final XmlDocument document) {
     final XmlFile file = XmlUtil.getContainingFile(document);
     if (file != null && file.getCopyableUserData(XmlFile.ANT_BUILD_FILE) != null) {
-      return ANT_URI;
+      return new String[][]{new String[]{"", ANT_URI}};
     }
 
     XmlTag tag = document.getRootTag();
-    if (tag == null) return EMPTY_NAMESPACE;
+    if (tag == null) return new String[][]{new String[]{EMPTY_NAMESPACE}};
     if ("project".equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
       if (tag.getAttributeValue("default") != null) {
-        return ANT_URI;
+        return new String[][]{new String[]{"", ANT_URI}};
       }
     }
 
     String namespace = getDtdUri(document);
-    if (namespace != null) return EMPTY_NAMESPACE;
+    if (namespace != null) return new String[][]{new String[]{"", namespace}};
 
     if ("taglib".equals(tag.getName())) {
-      return TAGLIB_1_2_URI;
+      return new String[][]{new String[]{"", TAGLIB_1_2_URI}};
     }
 
     if (file != null) {
       final FileType fileType = file.getFileType();
 
       if (fileType == StdFileTypes.HTML ||
-          fileType == StdFileTypes.XHTML ||
-          fileType == StdFileTypes.JSPX
+          fileType == StdFileTypes.XHTML
           ) {
-        return XHTML_URI;
+        return new String[][]{new String[]{"", XHTML_URI}};
+      }
+      else if (fileType == StdFileTypes.JSPX || fileType == StdFileTypes.JSP){
+        return new String[][]{
+          new String[]{"", XHTML_URI},
+          new String[]{"jsp", JSP_NAMESPACE}
+        };
       }
     }
 
-    return EMPTY_NAMESPACE;
+    return new String[][]{new String[]{"", EMPTY_NAMESPACE}};
   }
 
 
@@ -643,6 +655,58 @@ public class XmlUtil {
         collectEnumerationValues(tag,variants);
       }
     }
+  }
+
+  public static XmlTag createChildTag(final XmlTag xmlTag, String localName, String namespace, String bodyText, boolean enforceNamespacesDeep) {
+    String qname;
+    final String prefix = xmlTag.getPrefixByNamespace(namespace);
+    if (prefix != null && prefix.length() > 0) {
+      qname = prefix + ":" + localName;
+    }
+    else {
+      qname = localName;
+    }
+    try {
+      String tagStart = qname;
+      if (xmlTag.getPrefixByNamespace(namespace) == null) {
+        tagStart += " xmlns=\"" + namespace + "\"";
+      }
+      XmlTag retTag;
+      if (bodyText != null && bodyText.length() > 0) {
+        retTag = xmlTag.getManager().getElementFactory().createTagFromText("<" + tagStart + ">" + bodyText + "</" + qname + ">");
+        if (enforceNamespacesDeep) {
+          retTag.acceptChildren(new PsiRecursiveElementVisitor() {
+            public void visitXmlTag(XmlTag tag) {
+              final String namespacePrefix = tag.getNamespacePrefix();
+              if (namespacePrefix.length() == 0 || xmlTag.getNamespaceByPrefix(namespacePrefix) == null) {
+                String qname;
+                if (prefix != null && prefix.length() > 0) {
+                  qname = prefix + ":" + tag.getLocalName();
+                }
+                else {
+                  qname = tag.getLocalName();
+                }
+                try {
+                  tag.setName(qname);
+                }
+                catch (IncorrectOperationException e) {
+                  LOG.error(e);
+                }
+              }
+              super.visitXmlTag(tag);
+            }
+          });
+        }
+      }
+      else {
+        retTag = xmlTag.getManager().getElementFactory().createTagFromText("<" + tagStart + "/>");
+      }
+      return retTag;
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    return null;
   }
 
   private static class MyAttributeInfo implements Comparable {

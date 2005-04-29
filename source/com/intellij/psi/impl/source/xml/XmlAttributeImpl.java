@@ -76,7 +76,13 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   }
 
   public String getNamespace() {
-    return getName() != null ? getParent().getNamespaceByPrefix(XmlUtil.findPrefixByQualifiedName(getName())) : XmlUtil.EMPTY_NAMESPACE;
+    final String name = getName();
+    if(name != null){
+      final String prefixByQualifiedName = XmlUtil.findPrefixByQualifiedName(name);
+      if(prefixByQualifiedName.length() == 0) return getParent().getNamespace();
+      return getParent().getNamespaceByPrefix(prefixByQualifiedName);
+    }
+    return XmlUtil.EMPTY_NAMESPACE;
   }
 
   public XmlTag getParent(){

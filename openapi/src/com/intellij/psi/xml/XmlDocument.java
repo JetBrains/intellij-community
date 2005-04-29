@@ -7,8 +7,6 @@ package com.intellij.psi.xml;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.xml.XmlNSDescriptor;
 
-import java.util.Map;
-
 /**
  * @author Mike
  */
@@ -17,4 +15,5 @@ public interface XmlDocument extends XmlElement, PsiMetaOwner {
   XmlTag getRootTag();
 
   XmlNSDescriptor getRootTagNSDescriptor();
+  XmlNSDescriptor getDefaultNSDescriptor(final String namespace, final boolean strict);
 }

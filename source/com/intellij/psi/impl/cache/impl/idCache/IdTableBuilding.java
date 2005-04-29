@@ -5,6 +5,7 @@ import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.Language;
+import com.intellij.lang.jsp.NewJspLanguage;
 import com.intellij.lang.cacheBuilder.WordOccurence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lexer.*;
@@ -15,7 +16,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
-import com.intellij.psi.impl.source.parsing.jsp.JspStep1Lexer;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.TodoPattern;
@@ -53,7 +53,7 @@ public class IdTableBuilding {
   }
 
   public interface IdCacheBuilder {
-    void build(char[] chars, int length, TIntIntHashMap wordsTable, TodoPattern[] todoPatterns, int[] todoCounts);
+    void build(char[] chars, int length, TIntIntHashMap wordsTable, TodoPattern[] todoPatterns, int[] todoCounts, final PsiManager manager);
   }
 
   public interface ScanWordProcessor {
@@ -61,7 +61,12 @@ public class IdTableBuilding {
   }
 
   static class TextIdCacheBuilder implements IdCacheBuilder {
-    public void build(char[] chars, int length, TIntIntHashMap wordsTable, TodoPattern[] todoPatterns, int[] todoCounts) {
+    public void build(char[] chars,
+                      int length,
+                      TIntIntHashMap wordsTable,
+                      TodoPattern[] todoPatterns,
+                      int[] todoCounts,
+                      final PsiManager manager) {
       scanWords(wordsTable, chars, 0, length, UsageSearchContext.IN_PLAIN_TEXT);
 
       if (todoCounts != null) {
@@ -86,7 +91,12 @@ public class IdTableBuilding {
       return new JavaLexer(LanguageLevel.JDK_1_3);
     }
 
-    public void build(char[] chars, int length, TIntIntHashMap wordsTable, TodoPattern[] todoPatterns, int[] todoCounts) {
+    public void build(char[] chars,
+                      int length,
+                      TIntIntHashMap wordsTable,
+                      TodoPattern[] todoPatterns,
+                      int[] todoCounts,
+                      final PsiManager manager) {
       Lexer lexer = createLexer();
       JavaFilterLexer filterLexer = new JavaFilterLexer(lexer, wordsTable, todoCounts);
       lexer = new FilterLexer(filterLexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
@@ -102,8 +112,13 @@ public class IdTableBuilding {
   }
 
   static class JspIdCacheBuilder implements IdCacheBuilder {
-    public void build(char[] chars, int length, TIntIntHashMap wordsTable, TodoPattern[] todoPatterns, int[] todoCounts) {
-      Lexer lexer = new JspStep1Lexer(LanguageLevel.JDK_1_3);
+    public void build(char[] chars,
+                      int length,
+                      TIntIntHashMap wordsTable,
+                      TodoPattern[] todoPatterns,
+                      int[] todoCounts,
+                      final PsiManager manager) {
+      Lexer lexer = new com.intellij.psi.impl.source.parsing.jsp.JspLexer(Language.findInstance(NewJspLanguage.class).getBaseLanguage().getParserDefinition().createLexer(manager.getProject()));
       JspFilterLexer filterLexer = new JspFilterLexer(lexer, wordsTable, todoCounts);
       lexer = new FilterLexer(filterLexer, TOKEN_FILTER);
       lexer.start(chars);
@@ -112,7 +127,12 @@ public class IdTableBuilding {
   }
 
   static class XmlIdCacheBuilder implements IdCacheBuilder {
-    public void build(char[] chars, int length, TIntIntHashMap wordsTable, TodoPattern[] todoPatterns, int[] todoCounts) {
+    public void build(char[] chars,
+                      int length,
+                      TIntIntHashMap wordsTable,
+                      TodoPattern[] todoPatterns,
+                      int[] todoCounts,
+                      final PsiManager manager) {
       XmlFilterLexer filterLexer = createLexer(wordsTable, todoCounts);
       filterLexer.start(chars);
       while (filterLexer.getTokenType() != null) {
@@ -139,7 +159,12 @@ public class IdTableBuilding {
   }
 
   static class JspxIdCacheBuilder implements IdCacheBuilder {
-    public void build(char[] chars, int length, TIntIntHashMap wordsTable, TodoPattern[] todoPatterns, int[] todoCounts) {
+    public void build(char[] chars,
+                      int length,
+                      TIntIntHashMap wordsTable,
+                      TodoPattern[] todoPatterns,
+                      int[] todoCounts,
+                      final PsiManager manager) {
       Lexer lexer = new JspxHighlightingLexer();
       JspxFilterLexer filterLexer = new JspxFilterLexer(lexer, wordsTable, todoCounts);
       lexer = new FilterLexer(filterLexer, TOKEN_FILTER);
@@ -149,8 +174,13 @@ public class IdTableBuilding {
   }
 
   static class FormFileIdCacheBuilder extends TextIdCacheBuilder {
-    public void build(char[] chars, int length, final TIntIntHashMap wordsTable, TodoPattern[] todoPatterns, int[] todoCounts) {
-      super.build(chars, length, wordsTable, todoPatterns, todoCounts);
+    public void build(char[] chars,
+                      int length,
+                      final TIntIntHashMap wordsTable,
+                      TodoPattern[] todoPatterns,
+                      int[] todoCounts,
+                      final PsiManager manager) {
+      super.build(chars, length, wordsTable, todoPatterns, todoCounts, manager);
 
       try {
         LwRootContainer container = Utils.getRootContainer(new String(chars),
@@ -239,7 +269,12 @@ public class IdTableBuilding {
       myScanner = scanner;
     }
 
-    public void build(char[] chars, int length, final TIntIntHashMap wordsTable, final TodoPattern[] todoPatterns, final int[] todoCounts) {
+    public void build(char[] chars,
+                      int length,
+                      final TIntIntHashMap wordsTable,
+                      final TodoPattern[] todoPatterns,
+                      final int[] todoCounts,
+                      final PsiManager manager) {
       myScanner.processWords(new CharArrayCharSequence(chars, 0, length), new Processor<WordOccurence>() {
         public boolean process(final WordOccurence t) {
           IdCacheUtil.addOccurrence(wordsTable, t.getText(), convertToMask(t.getKind()));
@@ -273,7 +308,7 @@ public class IdTableBuilding {
     }
   }
 
-  public static Result getBuildingRunnable(PsiManagerImpl manager, FileContent fileContent, final boolean buildTodos) {
+  public static Result getBuildingRunnable(final PsiManagerImpl manager, FileContent fileContent, final boolean buildTodos) {
     if (LOG.isDebugEnabled()){
       LOG.debug(
         "enter: getBuildingRunnable(file='" + fileContent.getVirtualFile() + "' buildTodos='" + buildTodos + "' )"
@@ -308,7 +343,7 @@ public class IdTableBuilding {
     Runnable runnable = new Runnable() {
       public void run() {
         synchronized (PsiLock.LOCK) {
-          cacheBuilder.build(chars, textLength, wordsTable, todoPatterns, todoCounts);
+          cacheBuilder.build(chars, textLength, wordsTable, todoPatterns, todoCounts, manager);
         }
       }
     };

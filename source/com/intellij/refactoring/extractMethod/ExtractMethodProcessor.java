@@ -17,7 +17,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -159,16 +158,6 @@ public class ExtractMethodProcessor implements MatchProvider {
       else {
         myExpression = expression;
       }
-    }
-
-    //TODO temporary for testing JSPX
-    if (myFile instanceof JspFileImpl) {
-      if (myShowErrorDialogs) {
-        RefactoringMessageUtil.showErrorMessage(myRefactoringName,
-                                                myRefactoringName + " refactoring is not supported for JSP", myHelpId,
-                                                myProject);
-      }
-      return false;
     }
 
     myCodeFragment = ControlFlowUtil.findCodeFragment(myElements[0]);

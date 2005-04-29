@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import com.intellij.psi.util.PsiFormatUtil;
 
 import java.util.ArrayList;
@@ -179,9 +178,6 @@ public class RefactoringMessageUtil {
     if (scope instanceof PsiClass) {
       method = ((PsiClass)scope).findMethodBySignature(prototype, true);
     }
-    else if (scope instanceof JspFileImpl) {
-      method = ((JspFileImpl)scope).findMethodBySignature(prototype, true);
-    }
     else {
       LOG.assertTrue(false);
     }
@@ -264,9 +260,6 @@ public class RefactoringMessageUtil {
     String name = newName;
     if (scope instanceof PsiClass) {
       existingField = ((PsiClass)scope).findFieldByName(name, true);
-    }
-    else if (scope instanceof JspFileImpl) {
-      existingField = ((JspFileImpl)scope).findFieldByName(name, true);
     }
     else {
       LOG.assertTrue(false);

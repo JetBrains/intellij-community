@@ -13,9 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.jsp.JspAction;
 import com.intellij.psi.jsp.tagLibrary.JspTagInfo;
-import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.LightweightHint;
 import com.intellij.xml.XmlElementDescriptor;
@@ -79,11 +77,6 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     if (tag != null) {
       showTagInfo(project, editor, tag);
     }
-
-    final JspAction action = ParameterInfoController.findJspAction(file, offset);
-    if (action != null) {
-      showJspActionInfo(project, editor, action);
-    }
   }
 
   private void showTypeParameterInfo(Project project, Editor editor, PsiReferenceParameterList referenceParameterList) {
@@ -135,18 +128,6 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
         new ParameterInfoController(project, editor, offset, hint, 0, parameterClosingChars);
       }
     });
-  }
-
-  private void showJspActionInfo(final Project project, final Editor editor, JspAction action) {
-    PsiMetaData metaData = action.getMetaData();
-    if (!(metaData instanceof JspTagInfo)) {
-      if (metaData == null) {
-        DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
-      }
-      return;
-    }
-
-    showXmlOrJspEditorHint(action, editor, metaData, project);
   }
 
   private void showTagInfo(final Project project, final Editor editor, final XmlTag tag) {

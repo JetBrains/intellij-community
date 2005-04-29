@@ -4,8 +4,8 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.lexer.JavaLexer;
-import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
@@ -20,13 +20,12 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspToken;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -197,13 +196,6 @@ public class EnterHandler extends EditorWriteActionHandler {
       String toInsert = insertSpace && CodeStyleSettingsManager.getSettings(project).INSERT_FIRST_SPACE_IN_LINE ? "\n " : "\n";
       document.insertString(caretOffset, toInsert);
       caretOffset += 1;
-      if (insertSpace && file instanceof JspFile) {
-        PsiDocumentManager.getInstance(project).commitDocument(document);
-        PsiElement elementAt = file.findElementAt(caretOffset);
-        if (elementAt instanceof JspToken && ((JspToken)elementAt).getTokenType() == JspTokenType.JSP_TEMPLATE_DATA) {
-          if (insertSpace) document.deleteString(caretOffset, caretOffset + 1);
-        }
-      }
     }
     else {
       myOriginalHandler.execute(editor, dataContext);

@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocToken;
-import com.intellij.psi.jsp.JspToken;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -581,7 +580,6 @@ public class CtrlMouseHandler implements ProjectComponent {
       PsiElement elementAtPointer = file.findElementAt(offset);
       if (elementAtPointer instanceof PsiIdentifier
               || elementAtPointer instanceof PsiKeyword
-              || elementAtPointer instanceof JspToken
               || elementAtPointer instanceof PsiDocToken
               || elementAtPointer instanceof XmlToken) {
         return new Info(targetElement, elementAtPointer);

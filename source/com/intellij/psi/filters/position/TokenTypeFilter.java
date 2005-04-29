@@ -3,11 +3,10 @@ package com.intellij.psi.filters.position;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.jsp.JspToken;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlToken;
 import org.jdom.Element;
 
 import java.lang.reflect.Field;
@@ -37,8 +36,6 @@ public class TokenTypeFilter implements ElementFilter{
       return ((PsiDocToken)element).getTokenType() == myType;
     else if(element instanceof XmlToken)
       return ((XmlToken)element).getTokenType() == myType;
-    else if(element instanceof JspToken)
-      return ((JspToken)element).getTokenType() == myType;
 
     return false;
   }

@@ -23,6 +23,8 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashMap;
+import com.intellij.lang.Language;
+import com.intellij.lang.jsp.NewJspLanguage;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -152,12 +154,9 @@ public class CompletionUtil {
         return element != null && element.getManager().getEffectiveLanguageLevel() == LanguageLevel.JDK_1_5 ? ourJava15CompletionData : ourJavaCompletionData;
       }
     }
-    else if(file instanceof JspFile &&
-            !(file instanceof PsiJavaFile) // filter out jspx
-            ){
+    else if(file.getLanguage() == Language.findInstance(NewJspLanguage.class))
       return ourJSPCompletionData;
-    }
-    else if(file instanceof XmlFile && file.getFileType()==StdFileTypes.XML) {
+    else if(file instanceof XmlFile && file.getFileType() == StdFileTypes.XML) {
       return ourXmlCompletionData;
     }
     return ourGenericCompletionData;

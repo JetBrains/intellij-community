@@ -48,5 +48,4 @@ public class StdFileTypes {
   public static FileType IDEA_WORKSPACE;
   public static FileType IDEA_PROJECT;
   public static FileType IDEA_MODULE;
-  public static LanguageFileType NEW_JSP;
 }

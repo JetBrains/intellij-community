@@ -94,6 +94,15 @@ public class FilterLexer extends LexerBase {
     return myPrevTokenEnd;
   }
 
+  public LexerPosition getCurrentPosition() {
+    return myOriginal.getCurrentPosition();    //To change body of overridden methods use File | Settings | File Templates.
+  }
+
+  public void restore(LexerPosition position) {
+    myOriginal.restore(position);
+    myPrevTokenEnd = -1;
+  }
+
   public final void locateToken(){
     while(true){
       IElementType tokenType = myOriginal.getTokenType();

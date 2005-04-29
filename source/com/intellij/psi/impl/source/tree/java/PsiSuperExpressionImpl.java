@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
@@ -32,9 +31,6 @@ public class PsiSuperExpressionImpl extends CompositePsiElement implements PsiSu
       if (scope instanceof PsiClass){
         PsiClass aClass = (PsiClass)scope;
         return getSuperType(aClass);
-      }
-      else if (scope instanceof JspFileImpl){
-        return getManager().getElementFactory().createType(((JspFileImpl)scope).getBaseClass());
       }
       if (scope instanceof PsiExpressionList && scope.getParent() instanceof PsiAnonymousClass){
         scope = scope.getParent();

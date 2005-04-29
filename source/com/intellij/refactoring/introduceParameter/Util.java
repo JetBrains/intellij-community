@@ -9,8 +9,6 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspAction;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
@@ -57,7 +55,7 @@ public class Util {
   }
 
   public static PsiMethod getContainingMethod(PsiElement expr) {
-    final PsiElement parent = PsiTreeUtil.getParentOfType(expr, new Class[]{PsiMethod.class, PsiFile.class, JspAction.class});
+    final PsiElement parent = PsiTreeUtil.getParentOfType(expr, new Class[]{PsiMethod.class, PsiFile.class});
     return parent instanceof PsiMethod ? ((PsiMethod)parent) : null;
   }
 

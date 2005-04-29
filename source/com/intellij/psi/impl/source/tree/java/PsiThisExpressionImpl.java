@@ -1,14 +1,14 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.impl.source.jsp.JspFileImpl;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.tree.IElementType;
 
 public class PsiThisExpressionImpl extends CompositePsiElement implements PsiThisExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiThisExpressionImpl");
@@ -33,14 +33,6 @@ public class PsiThisExpressionImpl extends CompositePsiElement implements PsiThi
       if (scope instanceof PsiClass){
         PsiClass aClass = (PsiClass)scope;
         return new PsiImmediateClassType(aClass, PsiSubstitutor.EMPTY);
-      }
-      else if (scope instanceof JspFileImpl){
-        // Not too correct but much better then HttpJspPage :)
-        PsiClass baseClass = ((JspFileImpl)scope).getBaseClass();
-        if(baseClass == null) baseClass = getManager().findClass("javax.servlet.jsp.HttpJspPage", getResolveScope());
-        if(baseClass == null) return PsiType.getJavaLangObject(getManager(), getResolveScope());
-        final PsiClassType type = getManager().getElementFactory().createType(baseClass);
-        return type;
       }
       else if (scope instanceof PsiExpressionList && scope.getParent() instanceof PsiAnonymousClass){
         scope = scope.getParent();

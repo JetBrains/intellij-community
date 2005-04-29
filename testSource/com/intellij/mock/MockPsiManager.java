@@ -9,7 +9,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.javadoc.JavadocManager;
-import com.intellij.psi.jsp.JspElementFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -95,10 +94,6 @@ public class MockPsiManager extends PsiManager {
   }
 
   public PsiElementFactory getElementFactory() {
-    return null;
-  }
-
-  public JspElementFactory getJspElementFactory() {
     return null;
   }
 

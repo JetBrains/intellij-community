@@ -1,9 +1,9 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
@@ -17,11 +17,9 @@ import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.javadoc.*;
-import com.intellij.psi.jsp.JspToken;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,13 +77,6 @@ public class JavaDocCompletionData extends CompletionData {
       variant.addCompletionFilter(TrueFilter.INSTANCE);
       variant.setInsertHandler(new MethodSignatureInsertHandler());
       variant.setItemProperty(LookupItem.FORCE_SHOW_SIGNATURE_ATTR, Boolean.TRUE);
-      registerVariant(variant);
-    }
-
-    {
-      final CompletionVariant variant = new CompletionVariant(new LeftNeighbour(new TextFilter("/")));
-      variant.includeScopeClass(JspToken.class);
-      variant.addCompletion(">", TailType.NONE);
       registerVariant(variant);
     }
   }

@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -13,9 +12,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings.ImportLayoutTable.Entry;
 import com.intellij.psi.codeStyle.CodeStyleSettings.ImportLayoutTable.PackageEntry;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
-import com.intellij.psi.jsp.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -232,7 +230,6 @@ public class ImportHelper{
     PsiManager manager = file.getManager();
     PsiElementFactory factory = manager.getElementFactory();
     PsiResolveHelper helper = manager.getResolveHelper();
-    Project project = manager.getProject();
 
     String className = refClass.getQualifiedName();
     if (className == null) return true;
@@ -333,56 +330,6 @@ public class ImportHelper{
             classesToReimport.add(ref.resolve());
             PsiImportStatement importStatement = (PsiImportStatement)ref.getParent();
             importStatement.delete();
-          }
-        }
-      }
-      else if (file instanceof JspFileImpl){
-        JspFileImpl jspFile = (JspFileImpl)file;
-
-        boolean added = false;
-        JspDirective[] directives = jspFile.getPageDirectives();
-        for(int i = 0; i < directives.length; i++) {
-          JspDirective directive = directives[i];
-          JspAttribute importAttr = JspUtil.findAttributeByName(directive.getAttributes(), "import");
-          if (importAttr != null){
-            JspImportValue importValue = (JspImportValue)importAttr.getValueElement();
-            if (importValue != null){
-              if (useOnDemand){
-                PsiPackage aPackage = refClass.getContainingFile().getContainingDirectory().getPackage();
-                importValue.addOnDemandImport(aPackage.getQualifiedName());
-              }
-              else{
-                importValue.addSingleClassImport(refClass.getQualifiedName());
-              }
-              added = true;
-              break;
-            }
-          }
-        }
-
-        if (!added){
-          // no import directive yet
-          JspDirective directive = manager.getJspElementFactory().createDirectiveFromText("<%@ page import=\"\"%>");
-          directive = (JspDirective)CodeStyleManager.getInstance(project).reformat(directive);
-          directive = (JspDirective)jspFile.add(directive);
-          JspAttribute importAttr = JspUtil.findAttributeByName(directive.getAttributes(), "import");
-          JspImportValue importValue = (JspImportValue)importAttr.getValueElement();
-          if (useOnDemand){
-            PsiPackage aPackage = refClass.getContainingFile().getContainingDirectory().getPackage();
-            importValue.addOnDemandImport(aPackage.getQualifiedName());
-          }
-          else{
-            importValue.addSingleClassImport(refClass.getQualifiedName());
-          }
-        }
-
-        if (useOnDemand){
-          for(int i = 0; i < importRefs.length; i++) {
-            PsiJavaCodeReferenceElement ref = importRefs[i];
-            if (ref.getContainingFile() == jspFile) {
-              classesToReimport.add(ref.resolve());
-              ref.delete();
-            }
           }
         }
       }

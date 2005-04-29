@@ -7,11 +7,9 @@ import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.HtmlTagImpl;
 import com.intellij.psi.impl.source.javadoc.*;
-import com.intellij.psi.impl.source.jsp.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.impl.source.xml.*;
-import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
@@ -74,12 +72,7 @@ public class Factory implements Constants {
         element = new PsiJavaTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);
       }
       else if (type instanceof IJspElementType) {
-        if (type == JspTokenType.JSP_COMMENT) {
-          element = new JspCommentImpl(buffer, startOffset, endOffset, lexerState, table);
-        }
-        else {
-          element = new JspTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);
-        }
+        element = new XmlTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);
       }
       else if (type instanceof IJavaDocElementType) {
         element = new PsiDocTokenImpl(type, buffer, startOffset, endOffset, lexerState, table);
@@ -138,9 +131,6 @@ public class Factory implements Constants {
     }
     else if (type == PLAIN_TEXT_FILE) {
       element = new PlainTextFileElement();
-    }
-    else if (type == JSP_FILE) {
-      element = new JspFileElement();
     }
     else if (type == XML_FILE) {
       element = new XmlFileElement(type);
@@ -372,30 +362,6 @@ public class Factory implements Constants {
     }
     else if (type == CATCH_SECTION) {
       element = new PsiCatchSectionImpl();
-    }
-    else if (type == JSP_DIRECTIVE) {
-      element = new JspDirectiveImpl();
-    }
-    else if (type == JSP_ACTION) {
-      element = new JspActionImpl();
-    }
-    else if (type == JSP_DIRECTIVE_ATTRIBUTE || type == JSP_ACTION_ATTRIBUTE) {
-      element = new JspAttributeImpl(type);
-    }
-    else if (type == JSP_IMPORT_VALUE) {
-      element = new JspImportValueImpl();
-    }
-    else if (type == JSP_DECLARATION) {
-      element = new JspDeclarationImpl();
-    }
-    else if (type == JSP_EXPRESSION) {
-      element = new JspExpressionImpl();
-    }
-    else if (type == JSP_ACTION_ATTRIBUTE_VALUE) {
-      element = new JspAttributeValueImpl();
-    }
-    else if (type == JSP_FILE_REFERENCE) {
-      element = new JspFileReferenceImpl();
     }
     else if (type == XML_DOCUMENT) {
       element = new XmlDocumentImpl();

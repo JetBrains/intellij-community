@@ -20,8 +20,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.jsp.JspToken;
-import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
@@ -47,9 +45,7 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
 
       return fType == StdFileTypes.HTML || fType == StdFileTypes.XHTML || fType == StdFileTypes.JSPX;
     }
-    else {
-      return e instanceof JspToken && ((JspToken)e).getTokenType() == JspTokenType.JSP_TEMPLATE_DATA;
-    }
+    return false;
   }
 
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {

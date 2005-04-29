@@ -18,6 +18,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -64,23 +65,23 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
   }
 
   public PsiElement getParent() {
-    return SourceTreeToPsiMap.treeElementToPsi(myNode.getTreeParent());
+    return SharedImplUtil.getParent(myNode);
   }
 
   public PsiElement getFirstChild() {
-    return SourceTreeToPsiMap.treeElementToPsi(myNode.getFirstChildNode());
+    return SharedImplUtil.getFirstChild(myNode);
   }
 
   public PsiElement getLastChild() {
-    return SourceTreeToPsiMap.treeElementToPsi(myNode.getLastChildNode());
+    return SharedImplUtil.getLastChild(myNode);
   }
 
   public PsiElement getNextSibling() {
-    return SourceTreeToPsiMap.treeElementToPsi(myNode.getTreeNext());
+    return SharedImplUtil.getNextSibling(myNode);
   }
 
   public PsiElement getPrevSibling() {
-    return SourceTreeToPsiMap.treeElementToPsi(myNode.getTreePrev());
+    return SharedImplUtil.getPrevSibling(myNode);
   }
 
   public PsiFile getContainingFile() {

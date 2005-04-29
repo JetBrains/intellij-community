@@ -5,6 +5,7 @@ import com.intellij.lang.BracePair;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.lang.jsp.NewJspLanguage;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -240,17 +241,6 @@ public class BraceMatchingUtil {
       else if (fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX) {
         return tokenType == JavaTokenType.LBRACE ||
                tokenType == JavaTokenType.RBRACE ||
-               tokenType == JspTokenType.JSP_SCRIPTLET_START ||
-               tokenType == JspTokenType.JSP_EXPRESSION_START ||
-               tokenType == JspTokenType.JSP_DECLARATION_START ||
-               tokenType == JspTokenType.JSP_DIRECTIVE_START ||
-               tokenType == JspTokenType.JSP_ACTION_START ||
-               tokenType == JspTokenType.JSP_SCRIPTLET_END ||
-               tokenType == JspTokenType.JSP_EXPRESSION_END ||
-               tokenType == JspTokenType.JSP_DECLARATION_END ||
-               tokenType == JspTokenType.JSP_DIRECTIVE_END ||
-               tokenType == JspTokenType.JSP_EMPTY_ACTION_END ||
-               tokenType == JspTokenType.JSP_ACTION_END ||
                tokenType == XmlTokenType.XML_START_TAG_START ||
                tokenType == XmlTokenType.XML_TAG_END ||
                tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END;

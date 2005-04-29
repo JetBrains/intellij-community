@@ -7,16 +7,15 @@ package com.intellij.psi.util;
 import com.intellij.aspects.psi.PsiIdPattern;
 import com.intellij.aspects.psi.PsiTypeNamePattern;
 import com.intellij.aspects.psi.PsiTypeNamePatternElement;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.jsp.JspElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -431,7 +430,7 @@ public final class PsiUtil {
       return isStatement(expression);
     }
     if (element instanceof PsiDeclarationStatement) {
-      if (parent instanceof PsiCodeBlock || parent instanceof JspElement) return true;
+      if (parent instanceof PsiCodeBlock) return true;
       if (parent instanceof PsiCodeFragment) return true;
 
       if (!(parent instanceof PsiForStatement) || ((PsiForStatement)parent).getBody() == element) {

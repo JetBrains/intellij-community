@@ -2,7 +2,6 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.JspParsingUtil;
 import com.intellij.codeInsight.completion.JspxCompletionData;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -36,8 +35,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 
@@ -352,8 +349,6 @@ public class TypedHandler implements TypedActionHandler {
     if ('>' == charTyped){
       if (file instanceof XmlFile){
         handleXmlGreater(project, editor, fileType);
-      } else if (originalFileType == StdFileTypes.JSP) {
-        handleJspGreater(project, editor);
       }
     }
     else if (')' == charTyped){
@@ -391,8 +386,6 @@ public class TypedHandler implements TypedActionHandler {
     else if ('/' == charTyped){
       if (file instanceof XmlFile){
         handleXmlSlash(project, editor);
-      } else if (originalFileType == StdFileTypes.JSP) {
-        handleJspSlash(project, editor);
       }
     } else if ('=' == charTyped) {
       if (originalFileType == StdFileTypes.JSP) {
@@ -458,17 +451,11 @@ public class TypedHandler implements TypedActionHandler {
         element = element.getNextSibling();
       }
 
-      JspExpression expression = PsiTreeUtil.getParentOfType(element,JspExpression.class);
+      int ptr = current;
+      while(ptr < chars.length() && Character.isWhitespace(chars.charAt(ptr))) ++ptr;
 
-      if (expression!=null) {
-        int ptr = current;
-        while(ptr < chars.length() && Character.isWhitespace(chars.charAt(ptr))) ++ptr;
-
-        if (ptr + 1 < chars.length() && (chars.charAt(ptr)=='%' && chars.charAt(ptr+1)=='>') ) {
-          // we already have %>
-        } else {
-          editor.getDocument().insertString(current,"%>");
-        }
+      if (ptr + 1 >= chars.length() || (chars.charAt(ptr) != '%' || chars.charAt(ptr+1) != '>') ) {
+        editor.getDocument().insertString(current,"%>");
       }
     }
   }
@@ -518,195 +505,6 @@ public class TypedHandler implements TypedActionHandler {
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return;
 
     EditorModificationUtil.insertStringAtCaret(editor, ">");
-  }
-
-  private void handleJspGreater(Project project, Editor editor){
-    final JspAction action = findClosingJspAction(project, editor);
-
-    if (action == null || action.getName().length()==0) {
-      handleStartOfHtmlTag(project,editor);
-      return;
-    }
-
-    if (validateWellformedJspAction(editor,action)) {
-      editor.getDocument().insertString(editor.getCaretModel().getOffset(), "</" + action.getQualifiedName() + ">");
-    }
-  }
-
-  private boolean validateWellformedJspAction(Editor editor,JspAction tag) {
-    JspToken actionEnd = JspUtil.getTokenOfType(tag, JspTokenType.JSP_EMPTY_ACTION_END);
-    if (actionEnd != null) return false;
-
-    int tagOffset = tag.getTextRange().getStartOffset();
-    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(tagOffset);
-    if (BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), StdFileTypes.JSP, iterator, true)) {
-      final PsiElement[] elements = tag.getChildren();
-
-      if (elements.length > 2 &&
-          elements[0] instanceof JspToken &&
-          ((JspToken)elements[0]).getTokenType() == JspTokenType.JSP_ACTION_START &&
-          elements[1] instanceof JspToken &&
-          ((JspToken)elements[1]).getTokenType() == JspTokenType.JSP_ACTION_NAME
-         ) {
-        int nextPtr = 2;
-        if (elements.length > nextPtr &&
-            elements[nextPtr] instanceof JspToken &&
-            ((JspToken)elements[nextPtr]).getTokenType() == JspTokenType.JSP_ACTION_WHITE_SPACE
-            ) {
-          nextPtr++;
-        }
-
-        while(elements.length > nextPtr &&
-              elements[nextPtr] instanceof JspAttribute
-             ) {
-          nextPtr++;
-          if (elements.length > nextPtr &&
-            elements[nextPtr] instanceof JspToken &&
-            ((JspToken)elements[nextPtr]).getTokenType() == JspTokenType.JSP_ACTION_WHITE_SPACE
-            ) {
-            nextPtr++;
-          }
-        }
-
-        if (nextPtr < elements.length && elements[nextPtr].getText().equals("<")) {
-          editor.getDocument().insertString(editor.getCaretModel().getOffset(), "</" + elements[0].getText().substring(1) + elements[1].getText() + ">");
-        }
-      }
-      // <c:out <c:out> </c:out>
-      return false;
-    }
-
-    // check for incomplete local tag <a:aa <caret> </a:aa>
-    // this would mean bad_char (<) bad_char (/) attribute_name (a:aa) token sequence
-    PsiElement element = tag.findElementAt(editor.getCaretModel().getOffset()-tag.getStartOffsetInParent());
-
-    if (element!=null) {
-      element = element.getNextSibling();
-      if (element instanceof JspToken &&
-        ((JspToken)element).getTokenType() == JspTokenType.JSP_BAD_CHARACTER &&
-        element.getText().equals("<")
-        ) {
-      element = element.getNextSibling();
-
-      if (element instanceof JspToken &&
-          ((JspToken)element).getTokenType() == JspTokenType.JSP_BAD_CHARACTER &&
-          element.getText().equals("/")
-         ) {
-        element = element.getNextSibling();
-
-        if (element instanceof JspToken &&
-            ((JspToken)element).getTokenType() == JspTokenType.JSP_ACTION_ATTRIBUTE_NAME &&
-             element.getText().equals(tag.getQualifiedName())
-            ) {
-          return false;
-        }
-      }
-      }
-    }
-
-    return true;
-  }
-
-  private void handleStartOfHtmlTag(Project project, Editor editor) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    JspFile file = (JspFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    final int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
-
-    if (element == null) {
-      element = file.findElementAt(editor.getDocument().getTextLength() - 1);
-      if (element == null) return;
-    }
-    if (element instanceof JspToken &&
-        ((JspToken)element).getTokenType() == JspTokenType.JSP_TEMPLATE_DATA
-        ) {
-      int offsetWithinParent = offset - element.getParent().getTextOffset() - element.getStartOffsetInParent();
-      int index=offsetWithinParent-1;
-      String text = element.getText();
-
-      index = JspParsingUtil.eatAttributes(index, text);
-      index = JspParsingUtil.eatWhiteSpace(index, text);
-      int tagEnd = index+1;
-
-      index = JspParsingUtil.eatTagName(index, text);
-
-      if (index>=0 && text.charAt(index)=='<') {
-        String tagName = text.substring(index+1,tagEnd);
-        if (tagName.length()==0) return;
-
-        // check if the nearest is not the end of that tag
-        int i;
-        for(i=offsetWithinParent;i < text.length() && Character.isWhitespace(text.charAt(i));++i);
-        final String toInsert = "</"+tagName+">";
-        if (!text.startsWith(toInsert,i)) {
-
-          final XmlNSDescriptor descriptor = file.getManager().getJspElementFactory().getXHTMLDescriptor();
-          if (descriptor!=null) {
-            try{
-              final XmlTag tagFromText = file.getManager().getElementFactory().createTagFromText("<"+ tagName + " xmlns=\"" + XmlUtil.XHTML_URI + "\"/>");
-              if(tagFromText != null){
-                final XmlElementDescriptor elementDescriptor = descriptor.getElementDescriptor(tagFromText);
-
-                if (elementDescriptor!=null && elementDescriptor.getContentType() != XmlElementDescriptor.CONTENT_TYPE_EMPTY) {
-                  editor.getDocument().insertString(offset, toInsert);
-                }
-              }
-            }
-            catch(IncorrectOperationException ioe){}
-          }
-        }
-      }
-    }
-  }
-
-  private JspAction findClosingJspAction(Project project, Editor editor) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    JspFile file = (JspFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    final int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
-
-    if (element == null) {
-      element = file.findElementAt(editor.getDocument().getTextLength() - 1);
-      if (element == null) return null;
-    } else {
-      if (!(element instanceof JspToken) ||
-        ((JspToken)element).getTokenType()!=JspTokenType.JSP_ACTION_WHITE_SPACE) return null;
-    }
-
-    while( ( (element instanceof JspToken) &&
-             ((JspToken)element).getTokenType()==JspTokenType.JSP_ACTION_WHITE_SPACE
-           ) ||
-           element instanceof JspAttribute
-          ) {
-      element = element.getPrevSibling();
-    }
-
-    if ( element instanceof JspToken) {
-      if (((JspToken)element).getTokenType()==JspTokenType.JSP_ACTION_NAME &&
-          ((JspToken)element.getPrevSibling()).getTokenType() == JspTokenType.JSP_ACTION_END_TAG_START
-          ) {
-        return null;
-      }
-      element = element.getParent();
-      if (element instanceof JspAttribute) {
-        element = element.getParent();
-      }
-    }
-
-    if (!(element instanceof JspAction)) return null;
-    return (JspAction)element;
-  }
-
-  private void handleJspSlash(Project project, Editor editor){
-    JspAction action = findClosingJspAction(project,editor);
-
-    if (action==null) return;
-
-    if (validateWellformedJspAction(editor,action)) {
-      EditorModificationUtil.insertStringAtCaret(editor, ">");
-    }
   }
 
   private void handleXmlGreater(Project project, Editor editor, FileType fileType){

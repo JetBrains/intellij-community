@@ -9,7 +9,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
-import com.intellij.psi.jsp.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
@@ -35,10 +34,7 @@ public class SelectWordUtil {
     new IfStatementSelectioner(),
     new TypeCastSelectioner(),
     new JavaTokenSelectioner(),
-    new JspTokenSelectioner(),
-    new JspAttributeValueSelectioner(),
     new WordSelectioner(),
-    new JspActionSelectioner(),
     new StatementGroupSelectioner(),
     new HtmlSelectioner(),
     new XmlTagSelectioner(),
@@ -785,26 +781,7 @@ public class SelectWordUtil {
     }
   }
 
-  static class JspActionSelectioner extends BasicSelectioner {
-    public boolean canSelect(PsiElement e) {
-      return e instanceof JspAction;
-    }
-
-    public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-      List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
-
-      JspToken actionEnd = JspUtil.getTokenOfType(e, JspTokenType.JSP_ACTION_END);
-
-      if (actionEnd != null) {
-        result.addAll(expandToWholeLine(editorText, new TextRange(e.getTextRange().getStartOffset(),
-                                                                  actionEnd.getTextRange().getEndOffset())));
-      }
-
-      return result;
-    }
-  }
-
-  static class JavaTokenSelectioner extends BasicSelectioner {
+   static class JavaTokenSelectioner extends BasicSelectioner {
     public boolean canSelect(PsiElement e) {
       return e instanceof PsiJavaToken && !(e instanceof PsiKeyword);
     }
@@ -884,27 +861,6 @@ public class SelectWordUtil {
                                                       rParen.getTextRange().getEndOffset()),
                                         false));
       }
-
-      return result;
-    }
-  }
-
-  static class JspTokenSelectioner extends WordSelectioner {
-    public boolean canSelect(PsiElement e) {
-      return e instanceof JspToken;
-    }
-  }
-
-  static class JspAttributeValueSelectioner extends BasicSelectioner {
-    public boolean canSelect(PsiElement e) {
-      return e instanceof JspAttributeValue;
-    }
-
-    public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-      List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
-
-      TextRange range = e.getTextRange();
-      result.add(new TextRange(range.getStartOffset() - 1, range.getEndOffset() + 1));
 
       return result;
     }

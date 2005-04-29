@@ -29,7 +29,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
-import com.intellij.psi.jsp.JspElement;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiSuperMethodUtil;
@@ -59,7 +58,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   private RefCountHolder myRefCountHolder;
 
-  private final JspHighlightVisitor myJspVisitor;
   private final XmlHighlightVisitor myXmlVisitor;
   private final JavadocHighlightVisitor myJavadocVisitor;
   private EjbHighlightVisitor myEjbHighlightVisitor;
@@ -96,7 +94,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     mySettings = settings;
     myManager = manager;
 
-    myJspVisitor = new JspHighlightVisitor();
     myXmlVisitor = new XmlHighlightVisitor();
     myJavadocVisitor = new JavadocHighlightVisitor(settings);
 
@@ -260,12 +257,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       myHolder.add(HighlightControlFlowUtil.checkMissingReturnStatement(method));
     }
 
-  }
-
-  public void visitJspElement(JspElement element) {
-    element.accept(myJspVisitor);
-    myHolder.addAll(myJspVisitor.getResult());
-    myJspVisitor.clearResult();
   }
 
   public void visitDocComment(PsiDocComment comment) {

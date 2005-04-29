@@ -4,11 +4,8 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.XmlTagImpl;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlUtil;
 
 import java.util.ArrayList;
@@ -22,8 +19,6 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
-  private XmlNSDescriptor documentDescriptor;
-
   public HtmlTagImpl() {
     super(HTML_TAG);
   }
@@ -81,7 +76,9 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
   }
 
   public String getNamespace() {
-    return XmlUtil.XHTML_URI;
+    if(getNamespacePrefix().length() == 0)
+      return XmlUtil.HTML_URI;
+    return super.getNamespace();
   }
 
   public String toString() {

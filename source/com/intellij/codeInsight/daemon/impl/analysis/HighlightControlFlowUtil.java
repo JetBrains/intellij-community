@@ -13,9 +13,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.tree.IElementType;
@@ -39,14 +37,14 @@ public class HighlightControlFlowUtil {
     // do not compute constant expressions for if() statement condition
     // see JLS 14.20 Unreachable Statements
     try {
-      ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body,
+      final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body,
                                                                         LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(),
                                                                         false);
       if (!ControlFlowUtil.returnPresent(controlFlow)) {
-        PsiElement context = body.getRBrace() == null
+        final PsiElement context = body.getRBrace() == null
                                    ? body.getLastChild()
                                    : body.getRBrace();
-        HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
+        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
             HighlightInfoType.ERROR,
             context,
             "Missing return statement");
@@ -68,10 +66,10 @@ public class HighlightControlFlowUtil {
     // do not compute constant expressions for if() statement condition
     // see JLS 14.20 Unreachable Statements
     try {
-      ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeBlock,
+      final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeBlock,
                                                                         LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(),
                                                                         false);
-      PsiElement unreachableStatement = ControlFlowUtil.getUnreachableStatement(controlFlow);
+      final PsiElement unreachableStatement = ControlFlowUtil.getUnreachableStatement(controlFlow);
       if (unreachableStatement != null) {
         return HighlightInfo.createHighlightInfo(
             HighlightInfoType.ERROR,
@@ -87,18 +85,15 @@ public class HighlightControlFlowUtil {
 
   private static boolean isFinalFieldInitialized(PsiField field) {
     if (field.hasInitializer()) return true;
-    boolean isFieldStatic = field.hasModifierProperty(PsiModifier.STATIC);
-    PsiClass aClass = field.getContainingClass();
+    final boolean isFieldStatic = field.hasModifierProperty(PsiModifier.STATIC);
+    final PsiClass aClass = field.getContainingClass();
     if (aClass != null) {
       // field might be assigned in the other field initializers
       if (isFieldInitializedInOtherFieldInitializer(aClass, field, isFieldStatic)) return true;
     }
-    PsiClassInitializer[] initializers;
+    final PsiClassInitializer[] initializers;
     if (aClass != null) {
       initializers = aClass.getInitializers();
-    }
-    else if (field.getContainingFile() instanceof JspFileImpl) {
-      initializers = JspUtil.getInitializers((JspFileImpl)field.getContainingFile());
     }
     else {
       return false;
@@ -115,7 +110,7 @@ public class HighlightControlFlowUtil {
     }
     else {
       // instance field should be initialized at the end of the each constructor
-      PsiMethod[] constructors;
+      final PsiMethod[] constructors;
       if (aClass != null) {
         constructors = aClass.getConstructors();
       }
@@ -131,10 +126,10 @@ public class HighlightControlFlowUtil {
       for (PsiMethod constructor : constructors) {
         PsiCodeBlock ctrBody = constructor.getBody();
         if (ctrBody == null) return false;
-        List<PsiMethod> redirectedConstructors = getRedirectedConstructors(constructor);
+        final List<PsiMethod> redirectedConstructors = getRedirectedConstructors(constructor);
         for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
           PsiMethod redirectedConstructor = redirectedConstructors.get(j);
-          PsiCodeBlock body = redirectedConstructor.getBody();
+          final PsiCodeBlock body = redirectedConstructor.getBody();
           if (body != null && variableDefinitelyAssignedIn(field, body)) continue nextConstructor;
         }
         if (!ctrBody.isValid() || variableDefinitelyAssignedIn(field, ctrBody)) {
@@ -146,9 +141,9 @@ public class HighlightControlFlowUtil {
     }
   }
 
-  private static boolean isFieldInitializedInOtherFieldInitializer(PsiClass aClass,
+  private static boolean isFieldInitializedInOtherFieldInitializer(final PsiClass aClass,
                                                                    PsiField field,
-                                                                   boolean fieldStatic) {
+                                                                   final boolean fieldStatic) {
     PsiField[] fields = aClass.getFields();
     for (PsiField psiField : fields) {
       if (psiField != field
@@ -166,14 +161,14 @@ public class HighlightControlFlowUtil {
    * @return referring constructor
    */
   public static List<PsiMethod> getRedirectedConstructors(PsiMethod constructor) {
-    ConstructorVisitorInfo info = new ConstructorVisitorInfo();
+    final ConstructorVisitorInfo info = new ConstructorVisitorInfo();
     visitConstructorChain(constructor, info);
     if (info.visitedConstructors != null) info.visitedConstructors.remove(constructor);
     return info.visitedConstructors;
   }
 
   public static boolean isRecursivelyCalledConstructor(PsiMethod constructor) {
-    ConstructorVisitorInfo info = new ConstructorVisitorInfo();
+    final ConstructorVisitorInfo info = new ConstructorVisitorInfo();
     visitConstructorChain(constructor, info);
     if (info.recursivelyCalledConstructor == null) return false;
     // our constructor is reached from some other constructor by constructor chain
@@ -189,11 +184,11 @@ public class HighlightControlFlowUtil {
   private static void visitConstructorChain(PsiMethod constructor, ConstructorVisitorInfo info) {
     while (true) {
       if (constructor == null || constructor.getBody() == null) return;
-      PsiCodeBlock body = constructor.getBody();
-      PsiStatement[] statements = body.getStatements();
+      final PsiCodeBlock body = constructor.getBody();
+      final PsiStatement[] statements = body.getStatements();
       if (statements.length == 0) return;
-      PsiStatement statement = statements[0];
-      PsiElement element = new PsiMatcherImpl(statement)
+      final PsiStatement statement = statements[0];
+      final PsiElement element = new PsiMatcherImpl(statement)
           .dot(PsiMatcherImpl.hasClass(PsiExpressionStatement.class))
           .firstChild(PsiMatcherImpl.hasClass(PsiMethodCallExpression.class))
           .firstChild(PsiMatcherImpl.hasClass(PsiReferenceExpression.class))
@@ -248,11 +243,11 @@ public class HighlightControlFlowUtil {
       String description = MessageFormat.format(VARIABLE_NOT_INITIALIZED, new Object[]{field.getName()});
       int start = field.getModifierList().getTextRange().getStartOffset();
       int end = field.getNameIdentifier().getTextRange().getEndOffset();
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
           HighlightInfoType.ERROR,
           start, end,
           description);
-      PsiClass containingClass = field.getContainingClass();
+      final PsiClass containingClass = field.getContainingClass();
       if (containingClass != null && !containingClass.isInterface()) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(field, PsiModifier.FINAL, false));
       }
@@ -268,14 +263,14 @@ public class HighlightControlFlowUtil {
     if (!(element instanceof PsiVariable) || element instanceof ImplicitVariable) return null;
     PsiVariable variable = (PsiVariable)element;
     if (!PsiUtil.isAccessedForReading(expression)) return null;
-    int startOffset = expression.getTextRange().getStartOffset();
-    PsiElement topBlock;
+    final int startOffset = expression.getTextRange().getStartOffset();
+    final PsiElement topBlock;
     if (variable.hasInitializer()) {
       topBlock = PsiUtil.getVariableCodeBlock(variable, variable);
       if (topBlock == null) return null;
     }
     else {
-      PsiElement scope = variable instanceof PsiField
+      final PsiElement scope = variable instanceof PsiField
                                ? variable.getParent()
                                : variable.getParent() != null ? variable.getParent().getParent() : null;
       topBlock = scope instanceof JspFile ? scope : PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
@@ -290,16 +285,16 @@ public class HighlightControlFlowUtil {
         }
         // access to final fields from inner classes always allowed
         if (inInnerClass(expression, ((PsiField)variable).getContainingClass())) return null;
-        PsiElement parent = topBlock.getParent();
-        PsiCodeBlock block;
-        PsiClass aClass;
+        final PsiElement parent = topBlock.getParent();
+        final PsiCodeBlock block;
+        final PsiClass aClass;
         if (parent instanceof PsiMethod) {
           PsiMethod constructor = (PsiMethod)parent;
           if (!parent.getManager().areElementsEquivalent(constructor.getContainingClass(), ((PsiField)variable).getContainingClass())) return null;
           // static variables already initalized in class initalizers
           if (variable.hasModifierProperty(PsiModifier.STATIC)) return null;
           // as a last chance, field may be initalized in this() call
-          List<PsiMethod> redirectedConstructors = getRedirectedConstructors(constructor);
+          final List<PsiMethod> redirectedConstructors = getRedirectedConstructors(constructor);
           for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
             PsiMethod redirectedConstructor = redirectedConstructors.get(j);
             // variable must be initialized before its usage
@@ -314,7 +309,7 @@ public class HighlightControlFlowUtil {
           aClass = constructor.getContainingClass();
         }
         else if (parent instanceof PsiClassInitializer) {
-          PsiClassInitializer classInitializer = (PsiClassInitializer)parent;
+          final PsiClassInitializer classInitializer = (PsiClassInitializer)parent;
           if (!parent.getManager().areElementsEquivalent(classInitializer.getContainingClass(), ((PsiField)variable).getContainingClass())) return null;
           block = classInitializer.getBody();
           aClass = classInitializer.getContainingClass();
@@ -322,7 +317,7 @@ public class HighlightControlFlowUtil {
         else {
           // field reference outside codeblock
           // check variable initialized before its usage
-          PsiField field = (PsiField)variable;
+          final PsiField field = (PsiField)variable;
 
           aClass = field.getContainingClass();
           if (aClass == null || isFieldInitializedInOtherFieldInitializer(aClass, field, field.hasModifierProperty(PsiModifier.STATIC))) {
@@ -330,7 +325,7 @@ public class HighlightControlFlowUtil {
           }
           block = null;
           // initializers will be checked later
-          PsiMethod[] constructors = aClass.getConstructors();
+          final PsiMethod[] constructors = aClass.getConstructors();
           for (PsiMethod constructor : constructors) {
             // variable must be initialized before its usage
             if (startOffset < constructor.getTextRange().getStartOffset()) continue;
@@ -339,7 +334,7 @@ public class HighlightControlFlowUtil {
               return null;
             }
             // as a last chance, field may be initalized in this() call
-            List<PsiMethod> redirectedConstructors = getRedirectedConstructors(constructor);
+            final List<PsiMethod> redirectedConstructors = getRedirectedConstructors(constructor);
             for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
               PsiMethod redirectedConstructor = redirectedConstructors.get(j);
               // variable must be initialized before its usage
@@ -354,7 +349,7 @@ public class HighlightControlFlowUtil {
 
         if (aClass != null) {
           // field may be initialized in class initalizer
-          PsiClassInitializer[] initializers = aClass.getInitializers();
+          final PsiClassInitializer[] initializers = aClass.getInitializers();
           for (PsiClassInitializer initializer : initializers) {
             PsiCodeBlock body = initializer.getBody();
             if (body == null) continue;
@@ -375,7 +370,7 @@ public class HighlightControlFlowUtil {
     Collection<PsiReferenceExpression> codeBlockProblems = uninitializedVarProblems.get(topBlock);
     if (codeBlockProblems == null) {
       try {
-        ControlFlow controlFlow = ControlFlowFactory.getControlFlow(topBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+        final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(topBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
         codeBlockProblems = ControlFlowUtil.getReadBeforeWrite(controlFlow);
       }
       catch (AnalysisCanceledException e) {
@@ -384,7 +379,7 @@ public class HighlightControlFlowUtil {
       uninitializedVarProblems.put(topBlock, codeBlockProblems);
     }
     if (codeBlockProblems.contains(expression)) {
-      String name = expression.getElement().getText();
+      final String name = expression.getElement().getText();
       String description = MessageFormat.format(VARIABLE_NOT_INITIALIZED, new Object[]{name});
       return HighlightInfo.createHighlightInfo(
           HighlightInfoType.ERROR,
@@ -407,15 +402,15 @@ public class HighlightControlFlowUtil {
                                   Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems,
                                   Map<PsiParameter, Boolean> parameterIsReassigned) {
     if (variable instanceof PsiLocalVariable) {
-      PsiElement parent = variable.getParent();
+      final PsiElement parent = variable.getParent();
       if (parent == null) return false;
-      PsiElement declarationScope = parent.getParent();
+      final PsiElement declarationScope = parent.getParent();
       Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = getFinalVariableProblemsInBlock(finalVarProblems, declarationScope);
       return codeBlockProblems.contains(new ControlFlowUtil.VariableInfo(variable, null));
     }
     else if (variable instanceof PsiParameter) {
-      PsiParameter parameter = (PsiParameter)variable;
-      Boolean isReassigned = parameterIsReassigned.get(parameter);
+      final PsiParameter parameter = (PsiParameter)variable;
+      final Boolean isReassigned = parameterIsReassigned.get(parameter);
       if (isReassigned != null) return isReassigned.booleanValue();
       boolean isAssigned = isAssigned(parameter);
       parameterIsReassigned.put(parameter, Boolean.valueOf(isAssigned));
@@ -426,12 +421,12 @@ public class HighlightControlFlowUtil {
     }
   }
 
-  private static boolean isAssigned(PsiParameter parameter) {
-    PsiSearchHelper searchHelper = parameter.getManager().getSearchHelper();
-    PsiReference[] references = searchHelper.findReferences(parameter, new LocalSearchScope(parameter.getDeclarationScope()), true);
+  private static boolean isAssigned(final PsiParameter parameter) {
+    final PsiSearchHelper searchHelper = parameter.getManager().getSearchHelper();
+    final PsiReference[] references = searchHelper.findReferences(parameter, new LocalSearchScope(parameter.getDeclarationScope()), true);
     for (PsiReference reference : references) {
       if (!(reference.getElement() instanceof PsiReferenceExpression)) continue;
-      PsiExpression expression = (PsiExpression)reference.getElement();
+      final PsiExpression expression = (PsiExpression)reference.getElement();
       if (PsiUtil.isAccessedForWriting(expression)) return true;
     }
     return false;
@@ -443,7 +438,7 @@ public class HighlightControlFlowUtil {
                                                                                Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems) {
     if (!PsiUtil.isAccessedForWriting(expression)) return null;
 
-    PsiElement scope = variable instanceof PsiField ? variable.getParent() :
+    final PsiElement scope = variable instanceof PsiField ? variable.getParent() :
                              variable.getParent() == null ? null : variable.getParent().getParent();
     PsiElement codeBlock = PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
     if (codeBlock == null) return null;
@@ -459,11 +454,11 @@ public class HighlightControlFlowUtil {
 
     if (!alreadyAssigned) {
       if (!(variable instanceof PsiField)) return null;
-      PsiField field = (PsiField)variable;
-      PsiClass aClass = field.getContainingClass();
+      final PsiField field = (PsiField)variable;
+      final PsiClass aClass = field.getContainingClass();
       if (aClass == null) return null;
       // field can get assigned in other field inititializers
-      PsiField[] fields = aClass.getFields();
+      final PsiField[] fields = aClass.getFields();
       boolean isFieldStatic = field.hasModifierProperty(PsiModifier.STATIC);
       for (PsiField psiField : fields) {
         PsiExpression initializer = psiField.getInitializer();
@@ -479,20 +474,20 @@ public class HighlightControlFlowUtil {
 
       if (!alreadyAssigned) {
         // field can get assigned in class initializers
-        PsiMember enclosingConstructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
+        final PsiMember enclosingConstructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
         if (enclosingConstructorOrInitializer == null
             || !aClass.getManager().areElementsEquivalent(enclosingConstructorOrInitializer.getParent(), aClass)) {
           return null;
         }
-        PsiClassInitializer[] initializers = aClass.getInitializers();
+        final PsiClassInitializer[] initializers = aClass.getInitializers();
         for (PsiClassInitializer initializer : initializers) {
           if (initializer.hasModifierProperty(PsiModifier.STATIC)
               == field.hasModifierProperty(PsiModifier.STATIC)) {
-            PsiCodeBlock body = initializer.getBody();
+            final PsiCodeBlock body = initializer.getBody();
             if (body == codeBlock) return null;
             if (body == null) continue;
             try {
-              ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body,
+              final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body,
                                                                                 LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
               if (!ControlFlowUtil.isVariableDefinitelyNotAssigned(field, controlFlow)) {
                 alreadyAssigned = true;
@@ -510,10 +505,10 @@ public class HighlightControlFlowUtil {
       if (!alreadyAssigned
           && !field.hasModifierProperty(PsiModifier.STATIC)) {
         // then check if instance field already assigned in other constructor
-        PsiMethod ctr = codeBlock.getParent() instanceof PsiMethod ?
+        final PsiMethod ctr = codeBlock.getParent() instanceof PsiMethod ?
                               (PsiMethod)codeBlock.getParent() : null;
         // assignment to final field in several constructors threatens us only if these are linked (there is this() call in the beginning)
-        List<PsiMethod> redirectedConstructors = ctr != null && ctr.isConstructor() ? getRedirectedConstructors(ctr) : null;
+        final List<PsiMethod> redirectedConstructors = ctr != null && ctr.isConstructor() ? getRedirectedConstructors(ctr) : null;
         for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
           PsiMethod redirectedConstructor = redirectedConstructors.get(j);
           if (redirectedConstructor.getBody() != null &&
@@ -528,7 +523,7 @@ public class HighlightControlFlowUtil {
     if (alreadyAssigned) {
       String description = MessageFormat.format("Variable ''{0}'' might already have been assigned to",
                                                 new Object[]{variable.getName()});
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
           HighlightInfoType.ERROR,
           expression,
           description);
@@ -544,7 +539,7 @@ public class HighlightControlFlowUtil {
     Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = finalVarProblems.get(codeBlock);
     if (codeBlockProblems == null) {
       try {
-        ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+        final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
         codeBlockProblems = ControlFlowUtil.getInitializedTwice(controlFlow);
       }
       catch (AnalysisCanceledException e) {
@@ -560,7 +555,7 @@ public class HighlightControlFlowUtil {
     if (ControlFlowUtil.isVariableAssignedInLoop(expression, resolved)) {
       String description = MessageFormat.format("Variable ''{0}'' might be assigned in loop",
                                                 new Object[]{((PsiVariable)resolved).getName()});
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
           HighlightInfoType.ERROR,
           expression,
           description);
@@ -574,36 +569,36 @@ public class HighlightControlFlowUtil {
   public static HighlightInfo checkCannotWriteToFinal(PsiExpression expression) {
     PsiReferenceExpression reference = null;
     if (expression instanceof PsiAssignmentExpression) {
-      PsiExpression left = ((PsiAssignmentExpression)expression).getLExpression();
+      final PsiExpression left = ((PsiAssignmentExpression)expression).getLExpression();
       if (left instanceof PsiReferenceExpression) {
         reference = (PsiReferenceExpression)left;
       }
     }
     else if (expression instanceof PsiPostfixExpression) {
-      PsiExpression operand = ((PsiPostfixExpression)expression).getOperand();
-      IElementType sign = ((PsiPostfixExpression)expression).getOperationSign().getTokenType();
+      final PsiExpression operand = ((PsiPostfixExpression)expression).getOperand();
+      final IElementType sign = ((PsiPostfixExpression)expression).getOperationSign().getTokenType();
       if (operand instanceof PsiReferenceExpression && (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)) {
         reference = (PsiReferenceExpression)operand;
       }
     }
     else if (expression instanceof PsiPrefixExpression) {
-      PsiExpression operand = ((PsiPrefixExpression)expression).getOperand();
-      IElementType sign = ((PsiPrefixExpression)expression).getOperationSign().getTokenType();
+      final PsiExpression operand = ((PsiPrefixExpression)expression).getOperand();
+      final IElementType sign = ((PsiPrefixExpression)expression).getOperationSign().getTokenType();
       if (operand instanceof PsiReferenceExpression && (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)) {
         reference = (PsiReferenceExpression)operand;
       }
     }
-    PsiElement resolved = reference == null ? null : reference.resolve();
+    final PsiElement resolved = reference == null ? null : reference.resolve();
     PsiVariable variable = resolved instanceof PsiVariable ? (PsiVariable)resolved : null;
     if (variable == null || !variable.hasModifierProperty(PsiModifier.FINAL)) return null;
     if (!canWriteToFinal(variable, expression)) {
-      String name = variable.getName();
+      final String name = variable.getName();
       String description = MessageFormat.format("Cannot assign a value to final variable ''{0}''", new Object[]{name});
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
           HighlightInfoType.ERROR,
           expression,
           description);
-      PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, expression);
+      final PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, expression);
       if (innerClass == null || variable instanceof PsiField) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(variable, PsiModifier.FINAL, false));
       }
@@ -626,7 +621,7 @@ public class HighlightControlFlowUtil {
       // assignment from within inner class is illegal always
       PsiField field = (PsiField)variable;
       if (innerClass != null && !innerClass.getManager().areElementsEquivalent(innerClass, field.getContainingClass())) return false;
-      PsiMember enclosingCtrOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
+      final PsiMember enclosingCtrOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
       return enclosingCtrOrInitializer != null &&
              variable.getManager().areElementsEquivalent(enclosingCtrOrInitializer.getParent(), field.getContainingClass());
     }
@@ -642,11 +637,11 @@ public class HighlightControlFlowUtil {
   //@top
   static HighlightInfo checkVariableMustBeFinal(PsiVariable variable, PsiJavaCodeReferenceElement context) {
     if (variable.hasModifierProperty(PsiModifier.FINAL)) return null;
-    PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, context);
+    final PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, context);
     if (innerClass != null) {
       String description = MessageFormat.format("Variable ''{0}'' is accessed from within inner class. Needs to be declared final.",
                                                 new Object[]{context.getText()});
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, context, description);
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, context, description);
       QuickFixAction.registerQuickFixAction(highlightInfo, new VariableAccessFromInnerClassFix(variable, innerClass));
       return highlightInfo;
     }
@@ -681,14 +676,14 @@ public class HighlightControlFlowUtil {
 
   //@top
   public static HighlightInfo checkInitializerCompleteNormally(PsiClassInitializer initializer) {
-    PsiCodeBlock body = initializer.getBody();
+    final PsiCodeBlock body = initializer.getBody();
     if (body == null) return null;
     // unhandled exceptions already reported
     try {
-      ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body,
+      final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(body,
                                                                         LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(),
                                                                         false);
-      int completionReasons = ControlFlowUtil.getCompletionReasons(controlFlow, 0, controlFlow.getSize());
+      final int completionReasons = ControlFlowUtil.getCompletionReasons(controlFlow, 0, controlFlow.getSize());
       if ((completionReasons & ControlFlowUtil.NORMAL_COMPLETION_REASON) == 0) {
         return HighlightInfo.createHighlightInfo(
             HighlightInfoType.ERROR,

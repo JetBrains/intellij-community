@@ -12,10 +12,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.jsp.JspAction;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspToken;
-import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -236,11 +232,7 @@ class ParameterInfoController {
         myComponent.setCurrentItem(tag);
       }
       else{
-        final JspAction action = findJspAction(file, offset);
-        if (action != null) {
-          myComponent.setCurrentItem(action);
-        }
-        else{
+        {
           if (findParentOfType(file, offset, PsiAnnotation.class) != null) {
             int offset1 = CharArrayUtil.shiftForward(chars, myEditor.getCaretModel().getOffset(), " \t");
             if (chars.charAt(offset1) == ',') {
@@ -533,42 +525,6 @@ class ParameterInfoController {
     else{
       return null;
     }
-  }
-
-  public static JspAction findJspAction(PsiFile file, int offset) {
-    if (!(file instanceof JspFile)) return null;
-
-    PsiElement element = file.findElementAt(offset);
-    if (element == null) return null;
-    element = element.getParent();
-
-    while (element != null) {
-      if (element instanceof JspAction) {
-        JspAction action = (JspAction)element;
-
-        final PsiElement[] children = action.getChildren();
-
-        if (offset <= children[0].getTextRange().getStartOffset()) return null;
-
-        for (int i = 0; i < children.length; i++) {
-          PsiElement child = children[i];
-
-          final TextRange range = child.getTextRange();
-          if (range.getStartOffset() <= offset && range.getEndOffset() > offset) return action;
-
-          if (child instanceof JspToken) {
-            JspToken token = (JspToken)child;
-            if (token.getTokenType() == JspTokenType.JSP_ACTION_END) return null;
-          }
-        }
-
-        return null;
-      }
-
-      element = element.getParent();
-    }
-
-    return null;
   }
 
   public static PsiAnnotationMethod findAnnotationMethod(PsiFile file, int offset) {

@@ -21,7 +21,7 @@ public class ExtractJspIncludeAction extends BaseRefactoringAction {
   }
 
   protected boolean isAvailableForLanguage(Language language) {
-    return language.equals(StdFileTypes.NEW_JSP.getLanguage()) ||
+    return language.equals(StdFileTypes.JSP.getLanguage()) ||
            language.equals(StdFileTypes.JSPX.getLanguage());
   }
 

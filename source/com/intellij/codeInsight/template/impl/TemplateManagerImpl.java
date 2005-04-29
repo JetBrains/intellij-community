@@ -19,9 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspDeclaration;
-import com.intellij.psi.jsp.JspExpression;
-import com.intellij.psi.jsp.JspUtil;
 
 public class TemplateManagerImpl extends TemplateManager implements ProjectComponent {
   protected Project myProject;
@@ -235,15 +232,6 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
       return TemplateContext.OTHER_CONTEXT;
     }
     PsiElement element = file.findElementAt(offset);
-    if (fileType == StdFileTypes.JSP) {
-      PsiElement parent = element;
-      while (parent != null && !(parent instanceof JspExpression) && !(parent instanceof JspDeclaration)) {
-        parent = parent.getParent();
-      }
-      if (parent == null && JspUtil.getContainingScriptletStart(element) == null) {
-        return TemplateContext.JSP_CONTEXT;
-      }
-    }
     if (isInComment(element)) {
       return TemplateContext.JAVA_COMMENT_CONTEXT;
     }

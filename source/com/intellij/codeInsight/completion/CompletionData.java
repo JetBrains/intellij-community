@@ -12,13 +12,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.TrueFilter;
-import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocToken;
-import com.intellij.psi.jsp.JspToken;
-import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jdom.Document;
@@ -237,17 +232,10 @@ public class CompletionData
         || "null".equals(text)
         || "true".equals(text)
         || "false".equals(text)
-        || (insertedElement instanceof JspToken && (
-        ((JspToken)insertedElement).getTokenType() == JspTokenType.JSP_ACTION_NAME ||
-        ((JspToken)insertedElement).getTokenType() == JspTokenType.JSP_ACTION_ATTRIBUTE_NAME ||
-        ((JspToken)insertedElement).getTokenType() == JspTokenType.JSP_ACTION_ATTRIBUTE_VALUE_TOKEN ||
-        ((JspToken)insertedElement).getTokenType() == JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_TOKEN ||
-        ((JspToken)insertedElement).getTokenType() == JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_NAME ||
-        ((JspToken)insertedElement).getTokenType() == JspTokenType.JSP_DIRECTIVE_NAME)) ||
-        (insertedElement instanceof XmlToken && (
-        ((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
-        ((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS ||
-        ((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_NAME))
+        || (insertedElement instanceof XmlToken
+            && (((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
+                ((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS ||
+                ((XmlToken)insertedElement).getTokenType() == XmlTokenType.XML_NAME))
         ){
       return text.substring(0, offsetInElement).trim();
     }

@@ -56,11 +56,12 @@ public class MetaRegistry {
 
     {
       addMetadataBinding(
+        new RootTagFilter(
           new AndFilter(
-              new NamespaceFilter(TAGLIB_URIS),
-              new RootTagFilter(new TextFilter("taglib"))
-          ),
-          TldDescriptor.class);
+            new NamespaceFilter(TAGLIB_URIS),
+            new TextFilter("taglib")
+          )),
+        TldDescriptor.class);
     }
 
     {

@@ -28,7 +28,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.jsp.JspExpression;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -340,7 +339,6 @@ public class RefactoringUtil {
     PsiElement parent = place;
     while (true) {
       if (parent instanceof PsiStatement) break;
-      if (parent instanceof JspExpression) break;
       parent = parent.getParent();
       if (parent == null) return null;
     }
@@ -381,8 +379,7 @@ public class RefactoringUtil {
 
 
   public static boolean isExpressionAnchorElement(PsiElement element) {
-    return element instanceof PsiStatement || element instanceof JspExpression
-           || element instanceof PsiClassInitializer
+    return element instanceof PsiStatement || element instanceof PsiClassInitializer
            || element instanceof PsiField || element instanceof PsiMethod;
   }
 

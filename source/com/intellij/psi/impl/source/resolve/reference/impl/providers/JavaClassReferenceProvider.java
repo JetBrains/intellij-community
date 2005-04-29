@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 
 import java.lang.ref.SoftReference;
@@ -27,11 +28,17 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
   private static final char SEPARATOR = '.';
 
   public PsiReference[] getReferencesByElement(PsiElement element){
-    return getReferencesByString(element.getText(), element, new ReferenceType(ReferenceType.JAVA_CLASS), 0);
+    return getReferencesByElement(element, new ReferenceType(ReferenceType.JAVA_CLASS));
   }
 
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type){
-    return getReferencesByString(element.getText(), element, type, 0);
+    if (element instanceof XmlAttributeValue) {
+      final XmlAttributeValue attributeValue = ((XmlAttributeValue)element);
+      final String valueString = attributeValue.getValue();
+      int offsetInElement = 1;
+      return getReferencesByString(valueString, attributeValue, type, offsetInElement);
+    }
+    return PsiReference.EMPTY_ARRAY;
   }
 
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition){

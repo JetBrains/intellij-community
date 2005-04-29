@@ -31,6 +31,7 @@ import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.*;
@@ -42,6 +43,8 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -355,7 +358,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (refElement.getContainingFile() instanceof JspFile) {
       boolean canBeAccessedByIncludes;
       if (refElement instanceof PsiField || refElement instanceof PsiMethod) {
-        canBeAccessedByIncludes = refElement.getParent() instanceof JspDeclaration;
+        canBeAccessedByIncludes = refElement.getParent() instanceof JspClass;
       }
       else if (refElement instanceof JspImplicitVariable) {
         canBeAccessedByIncludes = true;
@@ -899,21 +902,21 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return true;
   }
 
-  public JspDirective[] findIncludeDirectives(final PsiFile file, SearchScope searchScope) {
+  public XmlTag[] findIncludeDirectives(final PsiFile file, SearchScope searchScope) {
     LOG.assertTrue(searchScope != null);
+    if(!(file instanceof JspFile)) return XmlTag.EMPTY;
 
     String name = file.getVirtualFile().getName();
-    final ArrayList<JspDirective> directives = new ArrayList<JspDirective>();
+    final ArrayList<XmlTag> directives = new ArrayList<XmlTag>();
     PsiElementProcessorEx processor = new PsiElementProcessorEx() {
       public boolean execute(PsiElement element, int offsetInElement) {
         ASTNode parent = (SourceTreeToPsiMap.psiElementToTree(element)).getTreeParent();
         if (parent.getElementType() == ElementType.JSP_FILE_REFERENCE) {
           ASTNode pparent = parent.getTreeParent();
-          if (SourceTreeToPsiMap.treeElementToPsi(pparent) instanceof JspAttribute &&
-              pparent.getTreeParent().getElementType() == ElementType.JSP_DIRECTIVE) {
-            JspDirective directive = (JspDirective)SourceTreeToPsiMap.treeElementToPsi(pparent.getTreeParent());
+          if (SourceTreeToPsiMap.treeElementToPsi(pparent) instanceof XmlAttribute) {
+            XmlTag directive = (XmlTag)pparent.getTreeParent().getPsi();
             if (directive.getName().equals("include")) {
-              JspAttribute attribute = (JspAttribute)SourceTreeToPsiMap.treeElementToPsi(pparent);
+              XmlAttribute attribute = (XmlAttribute)SourceTreeToPsiMap.treeElementToPsi(pparent);
               if (attribute.getName().equals("file")) {
                 PsiFile refFile = (PsiFile)((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(parent)).resolve();
                 if (file.equals(refFile)) {
@@ -930,7 +933,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                             searchScope,
                             name,
                             UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
-    return directives.toArray(new JspDirective[directives.size()]);
+    return directives.toArray(new XmlTag[directives.size()]);
   }
 
   public PsiFile[] findFilesWithTodoItems() {

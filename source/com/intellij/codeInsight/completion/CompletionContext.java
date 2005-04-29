@@ -1,20 +1,14 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.psi.JavaDocTokenType;
-import com.intellij.psi.jsp.JspTokenType;
-import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.javadoc.PsiDocToken;
-import com.intellij.psi.jsp.JspToken;
-import com.intellij.psi.jsp.JspTokenType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 
 public class CompletionContext {
   public final Project project;
@@ -112,15 +106,6 @@ public class CompletionContext {
     else if (element instanceof PsiDocToken) {
       IElementType tokenType = ((PsiDocToken)element).getTokenType();
       return tokenType == JavaDocTokenType.DOC_TAG_VALUE_TOKEN || tokenType == JavaDocTokenType.DOC_TAG_NAME;
-    }
-    else if (element instanceof JspToken) {
-      IElementType tokenType = ((JspToken)element).getTokenType();
-      return tokenType == JspTokenType.JSP_ACTION_NAME ||
-          tokenType == JspTokenType.JSP_ACTION_ATTRIBUTE_NAME ||
-          tokenType == JspTokenType.JSP_ACTION_ATTRIBUTE_VALUE_TOKEN ||
-          tokenType == JspTokenType.JSP_DIRECTIVE_NAME ||
-          tokenType == JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_NAME ||
-          tokenType == JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_TOKEN;
     }
     else if (element instanceof XmlToken) {
       IElementType tokenType = ((XmlToken)element).getTokenType();

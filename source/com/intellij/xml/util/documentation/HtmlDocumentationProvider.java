@@ -7,12 +7,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.xml.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -200,20 +200,16 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
     String key = text.toLowerCase();
     final HtmlTagDescriptor descriptor = HtmlDescriptorsTable.getTagDescriptor(key);
 
-    if (descriptor!=null && !isAttributeContext(context) ) {
+    if (descriptor != null && !isAttributeContext(context) ) {
       PsiManager manager = PsiManager.getInstance(myProject);
-      final XmlNSDescriptor nsDescriptor = manager.getJspElementFactory().getXHTMLDescriptor();
-      if (nsDescriptor!=null) {
-        try {
-          final XmlTag tagFromText = manager.getElementFactory().createTagFromText("<"+ key + " xmlns=\"" + XmlUtil.XHTML_URI + "\"/>");
-
-          if(tagFromText != null){
-            final XmlElementDescriptor elementDescriptor = nsDescriptor.getElementDescriptor(tagFromText);
-            return elementDescriptor.getDeclaration();
-          }
-        } catch(Exception ex) {}
+      try {
+        final XmlTag tagFromText = manager.getElementFactory().createTagFromText("<"+ key + " xmlns=\"" + XmlUtil.XHTML_URI + "\"/>");
+        final XmlElementDescriptor tagDescriptor = tagFromText.getDescriptor();
+        return tagDescriptor != null ? tagDescriptor.getDeclaration() : null;
       }
-    } else {
+      catch(IncorrectOperationException ex) {}
+    }
+    else {
       XmlTag tagContext = findTagContext(context);
       HtmlAttributeDescriptor myAttributeDescriptor = getDescriptor(key,tagContext);
       if (myAttributeDescriptor!=null && tagContext!=null) {

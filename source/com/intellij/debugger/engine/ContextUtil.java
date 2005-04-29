@@ -9,8 +9,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.JspFileImpl;
-import com.intellij.psi.jsp.JspImplicitVariable;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.Location;
 
@@ -109,42 +107,7 @@ public class ContextUtil {
   public static PsiElement getContextElement(final SourcePosition position) {
     if(position == null) return null;
 
-    final PsiFile psiFile = position.getFile();
-    final PsiElement element = getContextElementInText(psiFile, position.getLine());
-
-    if(psiFile instanceof JspFileImpl) {
-      JspFileImpl jspFile = (JspFileImpl)psiFile;
-      JspImplicitVariable[] predefinedVariables = jspFile.getPredefinedVariables();
-      StringBuffer buf = new StringBuffer();
-      buf.append('{');
-      for (int i = 0; i < predefinedVariables.length; i++) {
-        JspImplicitVariable predefinedVariable = predefinedVariables[i];
-        buf.append(predefinedVariable.getText());
-        buf.append(";\n");
-      }
-      buf.append('}');
-
-      if(buf.length() > 2) {
-        PsiElementFactory elementFactory = psiFile.getManager().getElementFactory();
-        try {
-          PsiCodeBlock codeBlockFromText = elementFactory.createCodeBlockFromText(buf.toString(), element);
-          PsiStatement[] statements = codeBlockFromText.getStatements();
-          for (int i = 0; i < statements.length; i++) {
-            PsiDeclarationStatement statement = (PsiDeclarationStatement)statements[i];
-            PsiElement[] declaredElements = statement.getDeclaredElements();
-            for (int j = 0; j < declaredElements.length; j++) {
-              declaredElements[j].putUserData(IS_JSP_IMPLICIT, IS_JSP_IMPLICIT);
-            }
-          }
-          return codeBlockFromText;
-        }
-        catch (IncorrectOperationException e) {
-          LOG.assertTrue(false);
-        }
-      }
-    }
-
-    return element;
+    return getContextElementInText(position.getFile(), position.getLine());
   }
 
   private static PsiElement getContextElementInText(PsiFile psiFile, int lineNumber) {

@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.JavadocManager;
-import com.intellij.psi.jsp.JspElementFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -56,8 +55,6 @@ public abstract class PsiManager implements UserDataHolder {
   public abstract CodeStyleManager getCodeStyleManager();
 
   public abstract PsiElementFactory getElementFactory();
-
-  public abstract JspElementFactory getJspElementFactory();
 
   public abstract PsiSearchHelper getSearchHelper();
 

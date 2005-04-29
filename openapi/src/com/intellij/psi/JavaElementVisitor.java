@@ -346,52 +346,12 @@ public abstract class JavaElementVisitor {
     visitFile(file);
   }
 
-  public void visitJspElement(JspElement element) {
-    visitElement(element);
-  }
-
-  public void visitJspAction(JspAction action){
-    visitJspElement(action);
-  }
-
-  public void visitJspAttribute(JspAttribute attribute){
-    visitJspElement(attribute);
-  }
-
-  public void visitJspDeclaration(JspDeclaration declaration){
-    visitJspElement(declaration);
-  }
-
-  public void visitJspDirective(JspDirective directive){
-    visitJspElement(directive);
-  }
-
-  public void visitJspExpression(JspExpression expression){
-    visitJspElement(expression);
-  }
-
   public void visitImplicitVariable(ImplicitVariable variable) {
     visitLocalVariable(variable);
   }
 
   public void visitJspImplicitVariable(JspImplicitVariable variable){
     visitImplicitVariable(variable);
-  }
-
-  public void visitJspImportValue(JspImportValue value){
-    visitJspElement(value);
-  }
-
-  public void visitJspToken(JspToken token){
-    visitJspElement(token);
-  }
-
-  public void visitJspAttributeValue(JspAttributeValue value) {
-    visitJspElement(value);
-  }
-
-  public void visitJspFileReference(JspFileReference jspFileReference) {
-    visitJspElement(jspFileReference);
   }
 
   public void visitDocToken(PsiDocToken token) {

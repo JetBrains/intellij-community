@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.jsp.JspAction;
 import com.intellij.psi.jsp.tagLibrary.JspTagAttributeInfo;
 import com.intellij.psi.jsp.tagLibrary.JspTagInfo;
 import com.intellij.psi.xml.XmlTag;
@@ -25,7 +24,6 @@ class ParameterInfoComponent extends JPanel{
   private boolean[] myEnabledFlags;
   private int myCurrentParameter;
   private XmlTag myCurrentXmlTag;
-  private JspAction myCurrentJspAction;
 
   private PsiMethod myHighlightedMethod = null;
 
@@ -121,8 +119,8 @@ class ParameterInfoComponent extends JPanel{
 
   private void updateAnnotationMethod(PsiAnnotationMethod method, int i) {
     StringBuffer buffer = new StringBuffer();
-    int highlightStartOffset = -1;
-    int highlightEndOffset = -1;
+    int highlightStartOffset;
+    int highlightEndOffset;
     buffer.append(method.getReturnType().getPresentableText());
     buffer.append(" ");
     highlightStartOffset = buffer.length();
@@ -290,10 +288,9 @@ class ParameterInfoComponent extends JPanel{
 
   public void setCurrentItem (PsiElement element) {
     if (element == null) {
-      myCurrentJspAction = null;
       myCurrentXmlTag = null;
-    } else if (element instanceof XmlTag)  myCurrentXmlTag = (XmlTag)element;
-    else if (element instanceof JspAction) myCurrentJspAction = (JspAction)element;
+    }
+    else if (element instanceof XmlTag)  myCurrentXmlTag = (XmlTag)element;
   }
 
   public void setHighlightedMethod(PsiMethod method) {
@@ -318,13 +315,7 @@ class ParameterInfoComponent extends JPanel{
       for (int j = 0; j < attributes.length; j++) {
         JspTagAttributeInfo attribute = attributes[j];
 
-        if (myCurrentJspAction != null && myCurrentJspAction.getAttribute(attribute.getName()) != null) {
-          if (!(text1.toString().equals(" "))) {
-            text1.append(", ");
-          }
-          text1.append(attribute.getName());
-        }
-        else if (attribute.isRequired()) {
+        if (attribute.isRequired()) {
           if (!(text2.toString().equals(" "))) {
             text2.append(", ");
           }

@@ -26,7 +26,6 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.java.JavaCodeFormatter;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
-import com.intellij.psi.impl.source.jsp.JspFileImpl;
 import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -139,7 +138,7 @@ public class CodeFormatterFacade implements Constants {
       (file instanceof XmlFile
     || file instanceof PsiJavaFile
     || file instanceof DummyHolder) &&
-      !(file instanceof JspxFileImpl || file instanceof JspFileImpl);
+      !(file instanceof JspxFileImpl);
   }
 
   public static Block createBlock(final PsiFile element, final CodeStyleSettings settings) {

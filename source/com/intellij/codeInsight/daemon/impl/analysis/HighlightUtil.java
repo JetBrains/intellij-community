@@ -27,9 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.jsp.JspDeclaration;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspToken;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
@@ -727,7 +725,9 @@ public class HighlightUtil {
   public static String getIncompatibleModifier(String modifier, PsiModifierList modifierList) {
     PsiElement parent = modifierList.getParent();
     if (parent == null || PsiUtil.hasErrorElementChild(parent)) return null;
-    return getIncompatibleModifier(modifier, modifierList, getIncompatibleModifierMap(modifierList));
+    final Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierList);
+    if(incompatibleModifierMap == null) return null;
+    return getIncompatibleModifier(modifier, modifierList, incompatibleModifierMap);
   }
 
   //@top
@@ -736,7 +736,9 @@ public class HighlightUtil {
     if (modifierOwner == null) return null;
     if (PsiUtil.hasErrorElementChild(modifierOwner)) return null;
     String modifier = keyword.getText();
-    Set<String> incompatibles = getIncompatibleModifierMap(modifierList).get(modifier);
+    final Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierList);
+    if(incompatibleModifierMap == null) return null;
+    Set<String> incompatibles = incompatibleModifierMap.get(modifier);
     boolean isAllowed = true;
     PsiElement modifierOwnerParent = modifierOwner.getParent();
     if (modifierOwner instanceof PsiClass) {
@@ -746,20 +748,19 @@ public class HighlightUtil {
             || PsiModifier.PRIVATE.equals(modifier)
             || PsiModifier.PROTECTED.equals(modifier)
             || PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
-          isAllowed &= modifierOwnerParent instanceof PsiClass || modifierOwnerParent instanceof JspDeclaration;
+          isAllowed &= modifierOwnerParent instanceof PsiClass;
         }
       }
       else {
         if (PsiModifier.PUBLIC.equals(modifier)) {
           isAllowed &= modifierOwnerParent instanceof PsiJavaFile
-                       || modifierOwnerParent instanceof PsiClass
-                       || modifierOwnerParent instanceof JspDeclaration;
+                       || modifierOwnerParent instanceof PsiClass;
         }
         else if (PsiModifier.STATIC.equals(modifier)
                  || PsiModifier.PRIVATE.equals(modifier)
                  || PsiModifier.PROTECTED.equals(modifier)
                  || PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
-          isAllowed &= modifierOwnerParent instanceof PsiClass || modifierOwnerParent instanceof JspDeclaration;
+          isAllowed &= modifierOwnerParent instanceof PsiClass;
         }
 
         if (aClass.isEnum()) {
@@ -784,8 +785,7 @@ public class HighlightUtil {
           || PsiModifier.SYNCHRONIZED.equals(modifier)
       ) {
         boolean notInterface = modifierOwnerParent instanceof PsiClass && !((PsiClass)modifierOwnerParent).isInterface();
-        isAllowed &= notInterface || modifierOwnerParent instanceof JspDeclaration;
-        isAllowed &= !(modifierOwner instanceof PsiIntertypeMethod && PsiModifier.PROTECTED.equals(modifier));
+        isAllowed &= notInterface & !(modifierOwner instanceof PsiIntertypeMethod && PsiModifier.PROTECTED.equals(modifier));
       }
     }
     else if (modifierOwner instanceof PsiField) {
@@ -796,8 +796,7 @@ public class HighlightUtil {
           || PsiModifier.SYNCHRONIZED.equals(modifier)
       ) {
         boolean isInterface = modifierOwnerParent instanceof PsiClass && !((PsiClass)modifierOwnerParent).isInterface();
-        isAllowed &= isInterface || modifierOwnerParent instanceof JspDeclaration;
-        isAllowed &= !(modifierOwner instanceof PsiIntertypeField && PsiModifier.PROTECTED.equals(modifier));
+        isAllowed &= isInterface & !(modifierOwner instanceof PsiIntertypeField && PsiModifier.PROTECTED.equals(modifier));
       }
     }
     else if (modifierOwner instanceof PsiClassInitializer) {
@@ -1907,7 +1906,7 @@ public class HighlightUtil {
   public static HighlightInfo checkReference(PsiJavaCodeReferenceElement ref, ResolveResult result, PsiElement resolved) {
     PsiElement refName = ref.getReferenceNameElement();
 
-    if (!(refName instanceof PsiIdentifier) && !(refName instanceof JspToken) && !(refName instanceof PsiKeyword)) return null;
+    if (!(refName instanceof PsiIdentifier) && !(refName instanceof PsiKeyword)) return null;
     HighlightInfo highlightInfo = checkMemberReferencedBeforeConstructorCalled(ref);
     if (highlightInfo != null) return highlightInfo;
 
@@ -1917,9 +1916,7 @@ public class HighlightUtil {
         // do not highlight unknown packages - javac does not care about illegal package names
         if (isInsidePackageStatement(refName)) return null;
         if (result.isPackagePrefixPackageReference()) return null;
-        String description = refName instanceof JspToken
-                             ? "Broken link"
-                             : MessageFormat.format(HighlightVisitorImpl.UNKNOWN_SYMBOL, new Object[]{refName.getText()});
+        String description = MessageFormat.format(HighlightVisitorImpl.UNKNOWN_SYMBOL, new Object[]{refName.getText()});
 
         HighlightInfoType type = HighlightInfoType.WRONG_REF;
 

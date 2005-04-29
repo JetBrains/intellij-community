@@ -280,7 +280,7 @@ public class XmlCompletionData extends CompletionData {
         template.addTextSegment(">");
         template.addEndVariable();
         template.addTextSegment("</");
-        template.addTextSegment(descriptor.getName());
+        template.addTextSegment(descriptor.getName(tag));
         template.addTextSegment(">");
       }
       else if (completionChar == '/') {

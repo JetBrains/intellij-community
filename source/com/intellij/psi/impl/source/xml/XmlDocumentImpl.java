@@ -1,5 +1,7 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.ant.impl.dom.xmlBridge.AntDOMNSDescriptor;
+import com.intellij.j2ee.ExternalResourceManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.PomModel;
@@ -11,17 +13,20 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.impl.meta.MetaRegistry;
+import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlProlog;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.util.XmlNSDescriptorSequence;
+import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TObjectIntHashMap;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Mike
@@ -66,6 +71,75 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   public XmlNSDescriptor getRootTagNSDescriptor() {
     XmlTag rootTag = getRootTag();
     return rootTag != null ? rootTag.getNSDescriptor(rootTag.getNamespace(), false) : null;
+  }
+
+  private final Map<String, XmlNSDescriptor> myDefaultDescriptorsCache = new HashMap<String, XmlNSDescriptor>();
+
+  public void clearCaches() {
+    myDefaultDescriptorsCache.clear();
+    super.clearCaches();
+  }
+
+  public XmlNSDescriptor getDefaultNSDescriptor(final String namespace, final boolean strict) {
+    if(myDefaultDescriptorsCache.containsKey(namespace)) return myDefaultDescriptorsCache.get(namespace);
+    final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
+    myDefaultDescriptorsCache.put(namespace, defaultNSDescriptorInner);
+    return defaultNSDescriptorInner;
+  }
+
+  public XmlNSDescriptor getDefaultNSDescriptorInner(final String namespace, final boolean strict) {
+    final XmlFile containingFile = XmlUtil.getContainingFile(this);
+    if (XmlUtil.ANT_URI.equals(namespace)){
+      final AntDOMNSDescriptor antDOMNSDescriptor = new AntDOMNSDescriptor();
+      antDOMNSDescriptor.init(this);
+      return antDOMNSDescriptor;
+    }
+    else if(XmlUtil.HTML_URI.equals(namespace)){
+      final XmlNSDescriptor xhtmlNSDescriptor = getDefaultNSDescriptor(XmlUtil.XHTML_URI, false);
+      final XmlNSDescriptor htmlDescriptor = new HtmlNSDescriptorImpl(xhtmlNSDescriptor);
+      return htmlDescriptor;
+    }
+    else if(namespace != XmlUtil.EMPTY_NAMESPACE){
+      final XmlFile xmlFile = XmlUtil.findXmlFile(containingFile,
+                                                  ExternalResourceManager.getInstance().getResourceLocation(namespace));
+      if(xmlFile != null){
+        final XmlNSDescriptor descriptor = (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
+        return descriptor;
+      }
+    }
+    if(strict) return null;
+
+    final XmlDoctype doctype = getProlog().getDoctype();
+
+    if (doctype != null){
+      XmlNSDescriptor descr = null;
+      if (doctype.getMarkupDecl() != null){
+        descr = (XmlNSDescriptor)doctype.getMarkupDecl().getMetaData();
+      }
+      if (doctype.getDtdUri() != null){
+        final XmlFile xmlFile = XmlUtil.findXmlFile(containingFile, doctype.getDtdUri());
+        final XmlNSDescriptor descr1 = xmlFile == null ? null : (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
+        if (descr != null && descr1 != null){
+          descr = new XmlNSDescriptorSequence(new XmlNSDescriptor[]{descr, descr1});
+        }
+        else if (descr1 != null) {
+          descr = descr1;
+        }
+      }
+
+      if(descr != null) return descr;
+    }
+
+    try{
+      return (XmlNSDescriptor)((XmlFile)getManager().getElementFactory().createFileFromText(
+        containingFile.getName() + ".dtd",
+        XmlUtil.generateDocumentDTD(this)
+      )).getDocument().getMetaData();
+    }
+    catch(IncorrectOperationException e){
+      LOG.error(e);
+    }
+    return null;
   }
 
   public PsiElement copy() {

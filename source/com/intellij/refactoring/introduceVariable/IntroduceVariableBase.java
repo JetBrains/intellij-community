@@ -145,10 +145,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       if (containerParent instanceof PsiFile) break;
       if (containerParent instanceof PsiMethod) break;
       containerParent = containerParent.getParent();
-      if (containerParent instanceof PsiCodeBlock
-              || containerParent instanceof JspFile
-              || containerParent instanceof JspAction
-      ) {
+      if (containerParent instanceof PsiCodeBlock) {
         lastScope = containerParent;
       }
     }
@@ -202,9 +199,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     if (!IntroduceVariableBase.isLoopOrIf(container)) {
       if (expr.getParent() instanceof PsiExpressionStatement && anchor.equals(anchorStatement)) {
         PsiStatement statement = (PsiStatement) expr.getParent();
-        if (statement.getParent() instanceof PsiCodeBlock
-                || statement.getParent() instanceof JspFile
-                || statement.getParent() instanceof JspAction) {
+        if (statement.getParent() instanceof PsiCodeBlock) {
           tempDeleteSelf = true;
         }
       }
@@ -328,10 +323,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
      * @return
      */
     protected static boolean invalidContainer(PsiElement tempContainer) {
-        return !(tempContainer instanceof PsiCodeBlock)
-               && !(tempContainer instanceof JspFile)
-               && !(tempContainer instanceof JspAction)
-               && !IntroduceVariableBase.isLoopOrIf(tempContainer);
+        return !(tempContainer instanceof PsiCodeBlock) && !IntroduceVariableBase.isLoopOrIf(tempContainer);
     }
 
     protected boolean invokeImpl(Project project, PsiLocalVariable localVariable, Editor editor) {
@@ -343,21 +335,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       PsiElement prev = child.getPrevSibling();
       if (prev instanceof PsiStatement) break;
       if (prev instanceof PsiJavaToken && ((PsiJavaToken)prev).getTokenType() == JavaTokenType.LBRACE) break;
-      if (prev instanceof JspToken && ((JspToken) prev).getTokenType() == JspTokenType.JSP_SCRIPTLET_START) break;
       child = prev;
-      if (child instanceof JspToken && ((JspToken) child).getTokenType() == JspTokenType.JSP_SCRIPTLET_END) break;
-    }
-    if (!(child instanceof JspToken && ((JspToken) child).getTokenType() == JspTokenType.JSP_SCRIPTLET_END)) {
-      while (true) {
-        if (!(child instanceof PsiWhiteSpace)
-            && !(child instanceof PsiComment)
-            && !(child instanceof JspExpression)
-            && !(child instanceof JspToken)
-          ) {
-          break;
-        }
-        child = child.getNextSibling();
-      }
     }
     return child;
   }

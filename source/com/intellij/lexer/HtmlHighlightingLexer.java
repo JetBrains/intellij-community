@@ -127,7 +127,8 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
         if (isHtmlTagState(state)) {
           tokenType = XmlTokenType.XML_TAG_NAME;
         }
-      } else if (tokenType == XmlTokenType.XML_WHITE_SPACE) {
+      }
+      else if (tokenType == XmlTokenType.XML_WHITE_SPACE) {
         tokenType = (getState()!=0)?XmlTokenType.TAG_WHITE_SPACE:XmlTokenType.XML_REAL_WHITE_SPACE;
       }
       return tokenType;

@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.HtmlLexer;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,7 +23,7 @@ import com.intellij.psi.tree.TokenSet;
  */
 public class HTMLParserDefinition implements ParserDefinition {
   public Lexer createLexer(Project project) {
-    return null;
+    return new HtmlLexer();
   }
 
   public IElementType getFileNodeType() {

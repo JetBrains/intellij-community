@@ -8,7 +8,7 @@ package com.intellij.psi.search;
 import com.intellij.aspects.psi.PsiPointcut;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspDirective;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
 
 public interface PsiSearchHelper {
@@ -40,7 +40,7 @@ public interface PsiSearchHelper {
   boolean processAllClasses(PsiElementProcessor<PsiClass> processor, SearchScope searchScope);
   PsiClass[] findAllClasses(SearchScope searchScope);
 
-  JspDirective[] findIncludeDirectives(PsiFile file, SearchScope searchScope);
+  XmlTag[] findIncludeDirectives(PsiFile file, SearchScope searchScope);
 
   PsiFile[] findFilesWithTodoItems();
   TodoItem[] findTodoItems(PsiFile file);

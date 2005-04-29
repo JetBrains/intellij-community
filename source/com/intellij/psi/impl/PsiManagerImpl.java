@@ -37,13 +37,10 @@ import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.javadoc.JavadocManagerImpl;
-import com.intellij.psi.impl.source.jsp.JspElementFactoryImpl;
-import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.javadoc.JavadocManager;
-import com.intellij.psi.jsp.JspElementFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -64,7 +61,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   private FileManager myFileManager;
   private PsiElementFactory myElementFactory;
-  private JspElementFactory myJspElementFactory;
   private PsiSearchHelper mySearchHelper;
   private PsiShortNamesCache myShortNamesCache;
   private PsiResolveHelper myResolveHelper;
@@ -72,7 +68,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   private CacheManager myCacheManager;
   private RepositoryManager myRepositoryManager;
   private RepositoryElementsManager myRepositoryElementsManager;
-  private JspManager myJspManager;
   private JavadocManager myJavadocManager;
   private PsiNameHelper myNameHelper;
   private PsiModificationTrackerImpl myModificationTracker;
@@ -137,7 +132,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
     myFileManager = new FileManagerImpl(this, fileTypeManager, virtualFileManager, fileDocumentManager, projectRootManagerEx);
     myElementFactory = new PsiElementFactoryImpl(this);
-    myJspElementFactory = new JspElementFactoryImpl(this);
     mySearchHelper = new PsiSearchHelperImpl(this);
     myResolveHelper = new PsiResolveHelperImpl(this);
     //myMemoryManager = new MemoryManager();
@@ -458,7 +452,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   public void cleanupForNextTest() {
     //myFileManager.cleanupForNextTest();
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
-    myJspElementFactory = new JspElementFactoryImpl(this);
   }
 
   public PsiFile getFile(FileContent content) {
@@ -803,10 +796,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   public PsiElementFactory getElementFactory() {
     return myElementFactory;
-  }
-
-  public JspElementFactory getJspElementFactory() {
-    return myJspElementFactory;
   }
 
   public PsiSearchHelper getSearchHelper() {

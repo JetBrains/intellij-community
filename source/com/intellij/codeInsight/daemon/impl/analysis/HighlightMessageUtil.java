@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspDeclaration;
 import com.intellij.psi.util.PsiFormatUtil;
 
 public class HighlightMessageUtil {
@@ -30,9 +29,6 @@ public class HighlightMessageUtil {
     }
     else if (symbol instanceof PsiPackage) {
       symbolName = ((PsiPackage)symbol).getQualifiedName();
-    }
-    else if (symbol instanceof JspDeclaration) {
-      symbolName = symbol.getContainingFile().getName();
     }
     else if (symbol instanceof PsiJavaFile) {
       PsiDirectory directory = ((PsiJavaFile) symbol).getContainingDirectory();

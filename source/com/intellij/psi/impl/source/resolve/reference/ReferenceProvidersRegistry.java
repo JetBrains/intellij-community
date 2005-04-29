@@ -9,20 +9,15 @@ import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
-import com.intellij.psi.filters.position.SuperParentFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
+import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
-import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.JspAttributeValueManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PlainFileManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JSPActionReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassListReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspxIncludePathReferenceProvider;
-import com.intellij.psi.jsp.JspAction;
-import com.intellij.psi.jsp.JspAttributeValue;
-import com.intellij.psi.jsp.JspDirective;
-import com.intellij.psi.jsp.JspToken;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspImportListReferenceProvider;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
@@ -53,11 +48,9 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
 
   private ReferenceProvidersRegistry() {
     // Temp scopes declarations
-    myTempScopes.add(JspToken.class);
     myTempScopes.add(PsiIdentifier.class);
 
     // Manipulators mapping
-    registerManipulator(JspAttributeValue.class, new JspAttributeValueManipulator());
     registerManipulator(XmlAttributeValue.class, new XmlAttributeValueManipulator());
     registerManipulator(PsiPlainTextFile.class, new PlainFileManipulator());
     // Binding declarations
@@ -72,7 +65,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           )
         )
       ),
-      JspAttributeValue.class,
+      XmlAttributeValue.class,
       new JavaClassReferenceProvider()
     );
     RegisterInPsi.referenceProviders(this);
@@ -83,27 +76,69 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
             new TextFilter("extends"),
             new ParentElementFilter(
               new AndFilter(
-                new ClassFilter(JspDirective.class),
-                new TextFilter("page")
+                new OrFilter(
+                  new AndFilter(
+                    new ClassFilter(XmlTag.class),
+                    new TextFilter("directive.page")
+                  ),
+                  new AndFilter(
+                    new ClassFilter(JspDirective.class),
+                    new TextFilter("page")
+                  )
+                ),
+                new NamespaceFilter(XmlUtil.JSP_NAMESPACE)
               )
             )
           )
         )
       ),
-      JspAttributeValue.class,
+      XmlAttributeValue.class,
       new JavaClassReferenceProvider()
     );
+
+    registerReferenceProvider(
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new TextFilter("import"),
+            new ParentElementFilter(
+              new AndFilter(
+                new OrFilter(
+                  new AndFilter(
+                    new ClassFilter(XmlTag.class),
+                    new TextFilter("directive.page")
+                  ),
+                  new AndFilter(
+                    new ClassFilter(JspDirective.class),
+                    new TextFilter("page")
+                  )
+                ),
+                new NamespaceFilter(XmlUtil.JSP_NAMESPACE)
+              )
+            )
+          )
+        )
+      ),
+      XmlAttributeValue.class,
+      new JspImportListReferenceProvider()
+    );
+
     registerReferenceProvider(
       new ScopeFilter(
         new AndFilter(
-          new SuperParentFilter(
-            new NamespaceFilter(XmlUtil.JSP_NAMESPACE)
-          ),
+          new ParentElementFilter(new TextFilter("file")),
           new ParentElementFilter(
             new AndFilter(
-              new ClassFilter(XmlTag.class),
-              new TextFilter("directive.include")
-
+              new NamespaceFilter(XmlUtil.JSP_NAMESPACE),
+              new OrFilter(
+                new AndFilter(
+                  new ClassFilter(JspDirective.class),
+                  new TextFilter("include")
+                ),
+                new AndFilter(
+                  new ClassFilter(XmlTag.class),
+                  new TextFilter("directive.include")
+                ))
             ), 2
           )
         )
@@ -116,7 +151,6 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     //                                                                                  new NamespaceFilter(XmlUtil.ANT_URI),
     //                                                                                  new TextFilter("antcall")))))),
     //                          XmlAttributeValue.class, new AntTargetReferenceProvider());
-    registerReferenceProvider(JspAction.class, new JSPActionReferenceProvider());
     registerReferenceProvider(new NotFilter(new ParentElementFilter(new NamespaceFilter(XmlUtil.ANT_URI), 2)),
                               XmlAttributeValue.class, new JavaClassListReferenceProvider());
     registerReferenceProvider(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), XmlToken.class,

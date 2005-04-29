@@ -23,14 +23,14 @@ public class SharedImplUtil {
     return SourceTreeToPsiMap.treeElementToPsi(thisElement.getTreeParent());
   }
 
-  public static PsiElement getFirstChild(CompositeElement element) {
-    final TreeElement firstChild = element.firstChild;
+  public static PsiElement getFirstChild(ASTNode element) {
+    final TreeElement firstChild = (TreeElement)element.getFirstChildNode();
     return firstChild != null ? SourceTreeToPsiMap.treeElementToPsi(firstChild.getTransformedFirstOrSelf()) : null;
   }
 
-  public static PsiElement getLastChild(CompositeElement element) {
-    final TreeElement lastChild = element.lastChild;
-    return lastChild != null ? SourceTreeToPsiMap.treeElementToPsi(lastChild.getTransformedLastOrSelf()) : null;
+  public static PsiElement getLastChild(ASTNode element) {
+    final TreeElement lastChild = (TreeElement)element.getLastChildNode();
+    return lastChild != null ? lastChild.getTransformedLastOrSelf().getPsi() : null;
   }
 
   public static PsiElement getNextSibling(ASTNode thisElement) {

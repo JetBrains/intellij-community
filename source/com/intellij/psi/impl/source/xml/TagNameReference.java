@@ -1,21 +1,19 @@
 package com.intellij.psi.impl.source.xml;
 
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlElementType;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.util.HtmlUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
+import com.intellij.xml.util.XmlUtil;
 
 import java.util.*;
 
@@ -29,9 +27,7 @@ class TagNameReference implements PsiReference {
   }
 
   public XmlTag getElement() {
-    ASTNode parent = TreeUtil.findParent(myNameElement, XmlElementType.XML_TAG);
-    if(parent == null) parent = TreeUtil.findParent(myNameElement, XmlElementType.HTML_TAG);
-    return (XmlTag)SourceTreeToPsiMap.treeElementToPsi(parent);
+    return PsiTreeUtil.getParentOfType(myNameElement.getPsi(), XmlTag.class);
   }
 
   public TextRange getRangeInElement() {
@@ -81,7 +77,11 @@ class TagNameReference implements PsiReference {
   public Object[] getVariants(){
     final List<XmlElementDescriptor> variants = new ArrayList<XmlElementDescriptor>();
     final XmlTag element = getElement();
-    if(!myStartTagFlag) return new Object[]{element.getName()};
+    if(!myStartTagFlag){
+      final String name = element.getName();
+      if(name == null) return new Object[0];
+      return new Object[]{name};
+    }
     final Map<String, XmlElementDescriptor> descriptorsMap = new HashMap<String, XmlElementDescriptor>();
 
     {

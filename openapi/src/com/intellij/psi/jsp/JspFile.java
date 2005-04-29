@@ -5,15 +5,21 @@
 package com.intellij.psi.jsp;
 
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
-import com.intellij.psi.*;
-import com.intellij.psi.jsp.tagLibrary.JspTagLibraryInfo;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.lang.ASTNode;
 
-public interface JspFile extends PsiFile, JspElement {
-  JspDirective[] getTaglibDirectives(); // TODO[ik]: change this method to return something more generic
-
+public interface JspFile extends PsiFile{
   WebModuleProperties getWebModuleProperties();
   WebDirectoryElement getParentWebDirectory();
   String getWebPath();
 
   PsiElement[] getContentsElements();
+
+  boolean isErrorPage();
+  boolean isSessionPage();
+
+  XmlTag[] getDirectiveTags(JspDirectiveKind directiveKind);
+  XmlTag createDirective(ASTNode context, JspDirectiveKind page);
 }
