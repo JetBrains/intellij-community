@@ -37,8 +37,7 @@ public class ConflictsDialog extends DialogWrapper{
     panel.add(scrollPane, BorderLayout.CENTER);
 
     StringBuffer buf = new StringBuffer();
-    for (int idx = 0; idx < myConflictDescriptions.length; idx++) {
-      String description = myConflictDescriptions[idx];
+    for (String description : myConflictDescriptions) {
       buf.append(description).append("<br><br>");
     }
     myMessagePane.setText(buf.toString());
