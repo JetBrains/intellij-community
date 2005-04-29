@@ -2,8 +2,6 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.Formatter;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -211,7 +209,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     if (element == null) return offset;
     if (CodeFormatterFacade.useBlockFormatter(file)
         && CodeFormatterFacade.useBlockFormatter(element.getLanguage())) {
-
+      final long start = System.currentTimeMillis();
       final CodeStyleSettings settings = getSettings();
       final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
       int result = Formatter.getInstance().adjustLineIndent(new PsiBasedFormattingModel(file, settings),
@@ -220,12 +218,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
                                                                   indentOptions,
                                                                   offset,
                                                                   getSignificantRange(file, offset));
-      /*
-      final CompositeElement fileNode = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(file);
-      while (result < file.getTextLength() && fileNode.findLeafElementAt(result).getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
-        result++;
-      }
-      */
+      System.out.println(System.currentTimeMillis() - start);
       return result;
 
     } else {
@@ -252,6 +245,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   private boolean isSignificantJavaElement(final ASTNode current) {
+    if (current.getTreeParent() != null && current.getTreeParent().getElementType() == ElementType.CLASS) return true;
     if (current.getElementType() == ElementType.METHOD) return true;
     if (current.getElementType() == ElementType.CLASS) return true;
     if (ElementType.STATEMENT_BIT_SET.isInSet(current.getElementType())) return true;

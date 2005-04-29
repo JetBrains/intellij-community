@@ -1,12 +1,11 @@
 package com.intellij.psi.formatter.newXmlFormatter.xml;
 
+import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.codeFormatting.general.FormatterUtil;
 
 import java.util.List;
 
@@ -54,13 +53,8 @@ public abstract class AbstractBlock implements Block {
       //EnterActionTest && JavaDocParamTest
     }
     if (node instanceof LeafElement) return false;
-    ChameleonTransforming.transformChildren(node);
-    ASTNode child = node.getFirstChildNode();
-    while (child != null) {
-      if (!containsWhiteSpacesOnly(child)) return false;
-      child = child.getTreeNext();
-    }
-    return true;
+    if (node.getTextLength() == 0) return true;
+    return false;
   }
 
   public ASTNode getTreeNode() {
