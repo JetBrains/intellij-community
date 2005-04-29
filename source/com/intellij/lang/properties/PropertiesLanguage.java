@@ -1,21 +1,19 @@
 package com.intellij.lang.properties;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.Commenter;
-import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.findUsages.FindUsagesProvider;
-import com.intellij.lang.cacheBuilder.WordsScanner;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.project.Project;
-import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.psi.PsiElement;
-import com.intellij.lang.properties.structureView.PropertiesStructureViewModel;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.lang.Commenter;
+import com.intellij.lang.Language;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.findUsages.PropertiesFindUsagesProvider;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.structureView.PropertiesStructureViewModel;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,7 +23,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
  * To change this template use File | Settings | File Templates.
  */
 public class PropertiesLanguage extends Language {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.javascript.JavascriptLanguage");
   private static final Annotator ANNOTATOR = new PropertiesAnnotator();
 
   public PropertiesLanguage() {

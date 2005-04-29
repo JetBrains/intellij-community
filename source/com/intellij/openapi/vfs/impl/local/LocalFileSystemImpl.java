@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -401,6 +402,14 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     return mySynchronizeQueueAlarm;
   }
 
+  public void forceRefreshFile(VirtualFile file) {
+    LOG.assertTrue(!file.isDirectory());
+    final ModalityState modalityState = EventQueue.isDispatchThread() ? ModalityState.current() : ModalityState.NON_MMODAL;
+    getManager().beforeRefreshStart(false, modalityState, EmptyRunnable.getInstance());
+    ((VirtualFileImpl)file).refreshInternal(false, null, modalityState, true);
+    getManager().afterRefreshFinish(false, modalityState);
+  }
+
   void refresh(VirtualFile file,
              boolean recursive,
              boolean storeStatus,
@@ -408,14 +417,14 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
              ModalityState modalityState,
              boolean asynchronous) {
     if (!FileWatcher.isAvailable() || !recursive && !asynchronous) { // We're unable to definitely refresh syncronously by means of file watcher.
-      ((VirtualFileImpl)file).refreshInternal(recursive, worker, modalityState);
+      ((VirtualFileImpl)file).refreshInternal(recursive, worker, modalityState, false);
     }
     else {
       synchronized (LOCK) {
         for (int i = 0; i < myFilesToWatchManual.size(); i++) {
           VirtualFile fileToWatch = myFilesToWatchManual.get(i);
           if (VfsUtil.isAncestor(fileToWatch, file, false)) {
-            ((VirtualFileImpl)file).refreshInternal(recursive, worker, modalityState);
+            ((VirtualFileImpl)file).refreshInternal(recursive, worker, modalityState, false);
             return;
           }
         }
@@ -431,12 +440,12 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
       }
       if (status == DELETED_STATUS) {
         if (((VirtualFileImpl)file).getPhysicalFile().exists()) { // file was deleted but later restored - need to rescan the whole subtree
-          ((VirtualFileImpl)file).refreshInternal(true, worker, modalityState);
+          ((VirtualFileImpl)file).refreshInternal(true, worker, modalityState, false);
         }
       }
       else {
         if (status == DIRTY_STATUS) {
-          ((VirtualFileImpl)file).refreshInternal(false, worker, modalityState);
+          ((VirtualFileImpl)file).refreshInternal(false, worker, modalityState, false);
         }
         if (recursive && ((VirtualFileImpl)file).areChildrenCached()) {
           VirtualFile[] children = file.getChildren();

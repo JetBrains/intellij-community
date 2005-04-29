@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 
@@ -11,8 +10,6 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
  *
  */
 public class DummyFileSystem extends VirtualFileSystem implements ApplicationComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.ex.dummy.DummyFileSystem");
-
   public static final String PROTOCOL = "dummy";
 
   public static DummyFileSystem getInstance() {
@@ -69,4 +66,7 @@ public class DummyFileSystem extends VirtualFileSystem implements ApplicationCom
     return "DummyFileSystem";
   }
 
+  public void forceRefreshFile(VirtualFile file) {
+
+  }
 }

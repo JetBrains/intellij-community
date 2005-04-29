@@ -62,4 +62,8 @@ public class VcsFileSystem extends VirtualFileSystem implements ApplicationCompo
   protected void fireBeforeContentsChange(Object requestor, VirtualFile file) {
     super.fireBeforeContentsChange(requestor, file);
   }
+
+  public void forceRefreshFile(VirtualFile file) {
+
+  }
 }

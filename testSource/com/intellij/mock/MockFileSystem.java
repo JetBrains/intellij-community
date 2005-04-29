@@ -33,6 +33,10 @@ public class MockFileSystem extends VirtualFileSystem {
   public void refresh(boolean asynchronous) {
   }
 
+  public void forceRefreshFile(VirtualFile file) {
+
+  }
+
   public VirtualFile refreshAndFindFileByPath(String path) {
     return findFileByPath(path);
   }

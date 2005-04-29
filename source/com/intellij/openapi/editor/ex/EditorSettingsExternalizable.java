@@ -7,6 +7,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.lang.properties.PropertiesFilesManager;
 import org.jdom.Element;
 
 import java.io.File;
@@ -35,6 +36,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public boolean IS_DND_ENABLED = true;
     public boolean IS_WHEEL_FONTCHANGE_ENABLED = true;
     public boolean IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = true;
+    public boolean IS_NATIVE2ASCII_FOR_PROPERTIES_FILES;
 
     public Object clone() {
       try {
@@ -277,5 +279,14 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
 
   public void setMouseClickSelectionHonorsCamelWords(boolean val) {
     myOptions.IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = val;
+  }
+  public boolean isNative2AsciiForPropertiesFiles() {
+    return myOptions.IS_NATIVE2ASCII_FOR_PROPERTIES_FILES;
+  }
+  public void setNative2AsciiForPropertiesFiles(boolean value) {
+    if (myOptions.IS_NATIVE2ASCII_FOR_PROPERTIES_FILES != value) {
+      myOptions.IS_NATIVE2ASCII_FOR_PROPERTIES_FILES = value;
+      PropertiesFilesManager.getInstance().encodingChanged();
+    }
   }
 }

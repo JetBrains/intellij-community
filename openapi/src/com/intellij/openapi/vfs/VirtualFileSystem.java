@@ -226,4 +226,9 @@ public abstract class VirtualFileSystem {
     return myCachedFileListeners;
   }
 
+  /**
+   * Reloads file (synchronously) from disk regardless of its changed timestamp/contents/etc.
+   * @param file must not be directory
+   */
+  public abstract void forceRefreshFile(VirtualFile file);
 }

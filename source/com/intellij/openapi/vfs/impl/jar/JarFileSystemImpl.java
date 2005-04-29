@@ -33,7 +33,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
         public void contentsChanged(VirtualFileEvent event) {
           JarFileInfo info = myPathToFileInfoMap.get(event.getFile().getPath());
           if (info != null) {
-            refreshInfo(info, true);
+            refreshInfo(info, true, false);
           }
         }
 
@@ -43,7 +43,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
             String oldPath = parent.getPath() + '/' + event.getFileName();
             JarFileInfo info = myPathToFileInfoMap.get(oldPath);
             if (info != null) {
-              refreshInfo(info, true);
+              refreshInfo(info, true, false);
             }
           }
         }
@@ -53,7 +53,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
           String oldPath = event.getOldParent().getPath() + '/' + event.getFileName();
           JarFileInfo info = myPathToFileInfoMap.get(oldPath);
           if (info != null) {
-            refreshInfo(info, true);
+            refreshInfo(info, true, false);
           }
         }
 
@@ -64,7 +64,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
             String oldPath = (parent == null ? "" : parent.getPath() + '/') + event.getOldValue();
             JarFileInfo info = myPathToFileInfoMap.get(oldPath);
             if (info != null) {
-              refreshInfo(info, true);
+              refreshInfo(info, true, false);
             }
           }
         }
@@ -179,11 +179,21 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     }
 
     for (int i = 0; i < infos.length; i++) {
-      refreshInfo(infos[i], asynchronous);
+      refreshInfo(infos[i], asynchronous, false);
     }
   }
 
-  private void refreshInfo(final JarFileInfo info, boolean asynchronous) {
+  public void forceRefreshFile(VirtualFile file) {
+    String path = file.getPath();
+    JarFileInfo jarFileInfo = myPathToFileInfoMap.get(path);
+    if (jarFileInfo == null) {
+      refreshAndFindFileByPath(path);
+      return;
+    }
+    refreshInfo(jarFileInfo, false, true);
+  }
+
+  private void refreshInfo(final JarFileInfo info, boolean asynchronous, final boolean forceRefresh) {
     ModalityState modalityState = EventQueue.isDispatchThread() ? ModalityState.current() : ModalityState.NON_MMODAL;
 
     getManager().beforeRefreshStart(asynchronous, modalityState, null);
@@ -207,7 +217,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
         modalityState
       );
     }
-    else if (info.getTimeStamp() != info.getFile().lastModified()) {
+    else if (info.getTimeStamp() != info.getFile().lastModified() || forceRefresh) {
       LOG.info("timestamp changed");
 
       final VirtualFile rootFile = info.getRootFile();

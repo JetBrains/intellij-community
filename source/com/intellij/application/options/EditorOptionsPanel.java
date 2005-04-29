@@ -84,6 +84,7 @@ public class EditorOptionsPanel {
   private JCheckBox myCbEnableDnD;
   private JCheckBox myCbEnableWheelFontChange;
   private JCheckBox myCbHonorCamelHumpsWhenSelectingByClicking;
+  private JCheckBox myCbNative2Ascii;
 
   public JPanel getPanel() {
     return myPanel;
@@ -245,6 +246,7 @@ public class EditorOptionsPanel {
     myCbEnableDnD.setSelected(editorSettings.isDndEnabled());
     myCbEnableWheelFontChange.setSelected(editorSettings.isWheelFontChangeEnabled());
     myCbHonorCamelHumpsWhenSelectingByClicking.setSelected(editorSettings.isMouseClickSelectionHonorsCamelWords());
+    myCbNative2Ascii.setSelected(editorSettings.isNative2AsciiForPropertiesFiles());
   }
 
   public void apply() {
@@ -365,13 +367,13 @@ public class EditorOptionsPanel {
     codeFoldingSettings.COLLAPSE_ANONYMOUS_CLASSES = myCbCollapseAnonymousClasses.isSelected();
     codeFoldingSettings.COLLAPSE_FILE_HEADER = myCbCollapseFileHeader.isSelected();
 
-    // optmize imports
     codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY = myCbOptimizeImports.isSelected();
     codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = myCbAddUnabmigiousImports.isSelected();
 
     editorSettings.setDndEnabled(myCbEnableDnD.isSelected());
     editorSettings.setWheelFontChangeEnabled(myCbEnableWheelFontChange.isSelected());
     editorSettings.setMouseClickSelectionHonorsCamelWords(myCbHonorCamelHumpsWhenSelectingByClicking.isSelected());
+    editorSettings.setNative2AsciiForPropertiesFiles(myCbNative2Ascii.isSelected());
 
     Editor[] editors = EditorFactory.getInstance().getAllEditors();
     for(int i = 0; i < editors.length; i++){
@@ -475,6 +477,7 @@ public class EditorOptionsPanel {
     isModified |= isModified(myCbEnableDnD, editorSettings.isDndEnabled());
     isModified |= isModified(myCbEnableWheelFontChange, editorSettings.isWheelFontChangeEnabled());
     isModified |= isModified(myCbHonorCamelHumpsWhenSelectingByClicking, editorSettings.isMouseClickSelectionHonorsCamelWords());
+    isModified |= isModified(myCbNative2Ascii, editorSettings.isNative2AsciiForPropertiesFiles());
 
     return isModified;
   }

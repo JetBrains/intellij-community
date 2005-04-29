@@ -3,7 +3,7 @@
   <grid id="442c9" binding="myPanel" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="15" y="40" width="841" height="867"/>
+      <xy x="15" y="40" width="841" height="741"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
@@ -12,7 +12,7 @@
       <grid id="f277d" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="446" height="136"/>
+          <xy x="0" y="0" width="431" height="136"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -24,8 +24,8 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Allow placement of caret after end of line"/>
               <selected value="true"/>
+              <text value="Allow placement of caret after end of line"/>
             </properties>
           </component>
           <component id="7ec0e" class="javax.swing.JCheckBox" binding="myCbCaretInsideTabs">
@@ -48,7 +48,7 @@
           </component>
           <vspacer id="507ef">
             <constraints>
-              <xy x="217" y="96" width="11" height="34"/>
+              <xy x="210" y="96" width="11" height="34"/>
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
             </constraints>
           </vspacer>
@@ -57,7 +57,7 @@
       <grid id="fd84b" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="10" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="141" width="446" height="186"/>
+          <xy x="0" y="141" width="431" height="186"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
         </constraints>
         <properties/>
@@ -69,8 +69,8 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Home"/>
               <selected value="true"/>
+              <text value="Home"/>
             </properties>
           </component>
           <component id="812a0" class="javax.swing.JCheckBox" binding="myCbSmartEnd">
@@ -79,13 +79,13 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="End (on blank line)"/>
               <selected value="true"/>
+              <text value="End (on blank line)"/>
             </properties>
           </component>
           <component id="f23b7" class="javax.swing.JLabel">
             <constraints>
-              <xy x="225" y="24" width="30" height="14"/>
+              <xy x="218" y="24" width="30" height="14"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -94,46 +94,46 @@
           </component>
           <component id="4a9b7" class="javax.swing.JCheckBox" binding="myCbSmartIndentOnEnter">
             <constraints>
-              <xy x="225" y="47" width="99" height="22"/>
+              <xy x="218" y="47" width="99" height="22"/>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Smart indent"/>
-              <selected value="true"/>
               <margin top="2" left="15" bottom="2" right="2"/>
+              <selected value="true"/>
+              <text value="Smart indent"/>
             </properties>
           </component>
           <component id="a7502" class="javax.swing.JCheckBox" binding="myCbInsertPairCurlyBraceOnEnter">
             <constraints>
-              <xy x="225" y="74" width="100" height="22"/>
+              <xy x="218" y="74" width="100" height="22"/>
               <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Insert pair '}'"/>
-              <selected value="true"/>
               <margin top="2" left="15" bottom="2" right="2"/>
+              <selected value="true"/>
+              <text value="Insert pair '}'"/>
             </properties>
           </component>
           <component id="ceab5" class="javax.swing.JCheckBox" binding="myCbInsertScriptletEndOnEnter">
             <constraints>
-              <xy x="225" y="101" width="145" height="22"/>
+              <xy x="218" y="101" width="145" height="22"/>
               <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Insert pair '%&gt;' in JSP"/>
-              <selected value="true"/>
               <margin top="2" left="15" bottom="2" right="2"/>
+              <selected value="true"/>
+              <text value="Insert pair '%&gt;' in JSP"/>
             </properties>
           </component>
           <component id="1ca0e" class="javax.swing.JCheckBox" binding="myCbInsertJavadocStubOnEnter">
             <constraints>
-              <xy x="225" y="128" width="153" height="22"/>
+              <xy x="218" y="128" width="153" height="22"/>
               <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="JavaDoc stub after '/**'"/>
-              <selected value="true"/>
               <margin top="2" left="15" bottom="2" right="2"/>
+              <selected value="true"/>
+              <text value="JavaDoc stub after '/**'"/>
             </properties>
           </component>
           <component id="10d43" class="javax.swing.JCheckBox" binding="myCbInsertPairBracket">
@@ -142,8 +142,8 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Insert pair bracket"/>
               <selected value="true"/>
+              <text value="Insert pair bracket"/>
             </properties>
           </component>
           <component id="4439f" class="javax.swing.JCheckBox" binding="myCbInsertPairQuote">
@@ -152,8 +152,8 @@
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Insert pair quote"/>
               <selected value="true"/>
+              <text value="Insert pair quote"/>
             </properties>
           </component>
           <component id="c3834" class="javax.swing.JCheckBox" binding="myCbCamelWords">
@@ -167,17 +167,17 @@
           </component>
           <vspacer id="f5982">
             <constraints>
-              <xy x="105" y="150" width="11" height="30"/>
+              <xy x="101" y="150" width="11" height="30"/>
               <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
             </constraints>
           </vspacer>
         </children>
       </grid>
-      <grid id="d0941" row-count="8" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="d0941" row-count="9" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="332" width="446" height="237"/>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
+          <xy x="0" y="332" width="431" height="257"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
         </constraints>
         <properties/>
         <border type="etched" title="Display"/>
@@ -197,8 +197,8 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Caret blinking (ms):"/>
               <selected value="true"/>
+              <text value="Caret blinking (ms):"/>
             </properties>
           </component>
           <component id="20e6f" class="javax.swing.JCheckBox" binding="myCbBlockCursor">
@@ -216,8 +216,8 @@
               <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Right margin (configured in Code Style options)"/>
               <selected value="true"/>
+              <text value="Right margin (configured in Code Style options)"/>
             </properties>
           </component>
           <component id="ea277" class="javax.swing.JCheckBox" binding="myCbShowLineNumbers">
@@ -253,8 +253,8 @@
               <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Smooth scrolling"/>
               <selected value="true"/>
+              <text value="Smooth scrolling"/>
             </properties>
           </component>
           <component id="61b58" class="javax.swing.JTextField" binding="myBlinkIntervalField">
@@ -269,12 +269,18 @@
               <text value="500"/>
             </properties>
           </component>
+          <vspacer id="3258a">
+            <constraints>
+              <xy x="59" y="231" width="11" height="20"/>
+              <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+            </constraints>
+          </vspacer>
         </children>
       </grid>
       <grid id="2002d" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="10" vgap="-1">
         <margin top="0" left="5" bottom="5" right="5"/>
         <constraints>
-          <xy x="456" y="141" width="385" height="186"/>
+          <xy x="441" y="141" width="400" height="186"/>
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
         </constraints>
         <properties/>
@@ -287,8 +293,8 @@
             </constraints>
             <properties>
               <actionCommand value="Show code folding outline"/>
-              <text value="Show code folding outline"/>
               <selected value="true"/>
+              <text value="Show code folding outline"/>
             </properties>
           </component>
           <component id="4ead5" class="javax.swing.JLabel">
@@ -306,9 +312,9 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="File header"/>
-              <selected value="true"/>
               <margin top="2" left="15" bottom="2" right="2"/>
+              <selected value="true"/>
+              <text value="File header"/>
             </properties>
           </component>
           <component id="d566b" class="javax.swing.JCheckBox" binding="myCbCollapseImports">
@@ -317,9 +323,9 @@
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Imports"/>
-              <selected value="true"/>
               <margin top="2" left="15" bottom="2" right="2"/>
+              <selected value="true"/>
+              <text value="Imports"/>
             </properties>
           </component>
           <component id="9c053" class="javax.swing.JCheckBox" binding="myCbCollapseJavadocComments">
@@ -328,8 +334,8 @@
               <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="JavaDoc comments"/>
               <margin top="2" left="15" bottom="2" right="2"/>
+              <text value="JavaDoc comments"/>
             </properties>
           </component>
           <component id="6ddbe" class="javax.swing.JCheckBox" binding="myCbCollapseMethodBodies">
@@ -338,48 +344,48 @@
               <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Method bodies"/>
               <margin top="2" left="15" bottom="2" right="2"/>
+              <text value="Method bodies"/>
             </properties>
           </component>
           <component id="fa7e4" class="javax.swing.JCheckBox" binding="myCbCollapseAccessors">
             <constraints>
-              <xy x="189" y="72" width="148" height="22"/>
+              <xy x="196" y="72" width="148" height="22"/>
               <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Simple property accessors"/>
               <margin top="2" left="0" bottom="2" right="2"/>
+              <text value="Simple property accessors"/>
             </properties>
           </component>
           <component id="2aa75" class="javax.swing.JCheckBox" binding="myCbCollapseInnerClasses">
             <constraints>
-              <xy x="189" y="99" width="86" height="22"/>
+              <xy x="196" y="99" width="86" height="22"/>
               <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Inner classes"/>
               <margin top="2" left="0" bottom="2" right="2"/>
+              <text value="Inner classes"/>
             </properties>
           </component>
           <component id="812" class="javax.swing.JCheckBox" binding="myCbCollapseAnonymousClasses">
             <constraints>
-              <xy x="189" y="126" width="116" height="22"/>
+              <xy x="196" y="126" width="116" height="22"/>
               <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Anonymous classes"/>
               <margin top="2" left="0" bottom="2" right="2"/>
+              <text value="Anonymous classes"/>
             </properties>
           </component>
           <component id="bccbc" class="javax.swing.JCheckBox" binding="myCbCollapseXMLTags">
             <constraints>
-              <xy x="189" y="153" width="66" height="22"/>
+              <xy x="196" y="153" width="66" height="22"/>
               <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="XML tags"/>
               <margin top="2" left="0" bottom="2" right="2"/>
+              <text value="XML tags"/>
             </properties>
           </component>
         </children>
@@ -387,7 +393,7 @@
       <grid id="ad5e" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="5" bottom="5" right="5"/>
         <constraints>
-          <xy x="456" y="0" width="385" height="136"/>
+          <xy x="441" y="0" width="400" height="136"/>
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
         </constraints>
         <properties/>
@@ -413,7 +419,7 @@
           </component>
           <component id="820c6" class="javax.swing.JLabel">
             <constraints>
-              <xy x="11" y="97" width="144" height="28"/>
+              <xy x="11" y="97" width="141" height="28"/>
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -422,7 +428,7 @@
           </component>
           <component id="d8fd9" class="javax.swing.JTextField" binding="myClipboardContentLimitTextField">
             <constraints>
-              <xy x="165" y="101" width="30" height="20"/>
+              <xy x="162" y="101" width="30" height="20"/>
               <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0">
                 <preferred-size width="30" height="-1"/>
               </grid>
@@ -437,13 +443,13 @@
               <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Close non-modified files first"/>
               <margin top="2" left="15" bottom="2" right="2"/>
+              <text value="Close non-modified files first"/>
             </properties>
           </component>
           <component id="ce03e" class="javax.swing.JTextField" binding="myRecentFilesLimitField">
             <constraints>
-              <xy x="165" y="20" width="30" height="20"/>
+              <xy x="162" y="20" width="30" height="20"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0">
                 <preferred-size width="30" height="-1"/>
               </grid>
@@ -454,7 +460,7 @@
           </component>
           <component id="30370" class="javax.swing.JTextField" binding="myEditorTabLimitField">
             <constraints>
-              <xy x="165" y="45" width="30" height="20"/>
+              <xy x="162" y="45" width="30" height="20"/>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0">
                 <preferred-size width="30" height="-1"/>
               </grid>
@@ -465,11 +471,11 @@
           </component>
         </children>
       </grid>
-      <grid id="1575b" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="1575b" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="456" y="332" width="385" height="244"/>
-          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+          <xy x="441" y="332" width="400" height="257"/>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -477,7 +483,7 @@
           <grid id="57fec" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="0" width="385" height="75"/>
+              <xy x="0" y="0" width="400" height="75"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
             </constraints>
             <properties/>
@@ -506,7 +512,7 @@
           <grid id="7be5c" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="5" bottom="5" right="5"/>
             <constraints>
-              <xy x="0" y="80" width="385" height="82"/>
+              <xy x="0" y="85" width="400" height="82"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
             </constraints>
             <properties/>
@@ -523,14 +529,14 @@
               </component>
               <component id="4d054" class="javax.swing.JComboBox" binding="myReformatOnPasteCombo">
                 <constraints>
-                  <xy x="92" y="20" width="282" height="23"/>
+                  <xy x="92" y="20" width="297" height="23"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
                 </constraints>
                 <properties/>
               </component>
               <component id="40e26" class="javax.swing.JComboBox" binding="mySmartPasteCombo">
                 <constraints>
-                  <xy x="92" y="48" width="282" height="23"/>
+                  <xy x="92" y="48" width="297" height="23"/>
                   <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
                 </constraints>
                 <properties/>
@@ -546,45 +552,18 @@
               </component>
             </children>
           </grid>
-          <grid id="81c19" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="10" bottom="0" right="10"/>
-            <constraints>
-              <xy x="0" y="167" width="385" height="23"/>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <component id="7b083" class="javax.swing.JLabel">
-                <constraints>
-                  <xy x="10" y="4" width="139" height="14"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Strip trailing spaces on Save:"/>
-                </properties>
-              </component>
-              <component id="3c64d" class="javax.swing.JComboBox" binding="myStripTrailingSpacesCombo">
-                <constraints>
-                  <xy x="159" y="0" width="216" height="23"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
-                </constraints>
-                <properties/>
-              </component>
-            </children>
-          </grid>
           <grid id="40e9c" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="5" bottom="0" right="10"/>
             <constraints>
-              <xy x="0" y="195" width="385" height="49"/>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
+              <xy x="0" y="177" width="400" height="75"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
             </constraints>
             <properties/>
-            <border type="none"/>
+            <border type="etched" title="Imports"/>
             <children>
               <component id="51923" class="javax.swing.JCheckBox" binding="myCbOptimizeImports">
                 <constraints>
-                  <xy x="5" y="0" width="153" height="22"/>
+                  <xy x="11" y="20" width="153" height="22"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -593,7 +572,7 @@
               </component>
               <component id="456a5" class="javax.swing.JCheckBox" binding="myCbAddUnabmigiousImports">
                 <constraints>
-                  <xy x="5" y="27" width="197" height="22"/>
+                  <xy x="11" y="47" width="197" height="22"/>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -606,13 +585,13 @@
       </grid>
       <vspacer id="87514">
         <constraints>
-          <xy x="217" y="688" width="11" height="159"/>
+          <xy x="210" y="701" width="11" height="20"/>
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
       <component id="d9303" class="javax.swing.JSeparator">
         <constraints>
-          <xy x="0" y="865" width="841" height="2"/>
+          <xy x="0" y="739" width="841" height="2"/>
           <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="2" fill="1"/>
         </constraints>
         <properties/>
@@ -620,7 +599,7 @@
       <grid id="91aff" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="581" width="446" height="102"/>
+          <xy x="0" y="594" width="431" height="102"/>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -653,6 +632,59 @@
               <text value="Honor &quot;CamelHumps&quot; words settings when selecting using double click"/>
             </properties>
           </component>
+        </children>
+      </grid>
+      <grid id="dae96" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="441" y="594" width="400" height="102"/>
+          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="81c19" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="10" bottom="0" right="10"/>
+            <constraints>
+              <xy x="0" y="0" width="400" height="23"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="7b083" class="javax.swing.JLabel">
+                <constraints>
+                  <xy x="10" y="4" width="139" height="14"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Strip trailing spaces on Save:"/>
+                </properties>
+              </component>
+              <component id="3c64d" class="javax.swing.JComboBox" binding="myStripTrailingSpacesCombo">
+                <constraints>
+                  <xy x="159" y="0" width="231" height="23"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
+                </constraints>
+                <properties/>
+              </component>
+            </children>
+          </grid>
+          <component id="17762" class="javax.swing.JCheckBox" binding="myCbNative2Ascii">
+            <constraints>
+              <xy x="0" y="28" width="340" height="22"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Transparent native-to-ascii conversion for properties files"/>
+            </properties>
+          </component>
+          <vspacer id="b872c">
+            <constraints>
+              <xy x="194" y="50" width="11" height="52"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+            </constraints>
+          </vspacer>
         </children>
       </grid>
     </children>

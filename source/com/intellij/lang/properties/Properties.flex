@@ -14,7 +14,7 @@ import com.intellij.psi.tree.IElementType;
 %eof}
 
 WHITE_SPACE_CHAR=[\ \n\r\t\f]
-VALUE_CHARACTER=[^\n\r\t\f\\] | "\\"{CRLF} | "\\".
+VALUE_CHARACTER=[^\n\r\f\\] | "\\"{CRLF} | "\\".
 CRLF= \n | \r | \r\n
 END_OF_LINE_COMMENT=("#"|"!")[^\r\n]*
 KEY_SEPARATOR=[\ \t]*[:=][\ \t]* | [\ \t]+

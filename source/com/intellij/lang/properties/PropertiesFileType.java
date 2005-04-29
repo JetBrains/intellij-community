@@ -4,6 +4,7 @@ import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 
 import javax.swing.*;
@@ -60,7 +61,8 @@ public class PropertiesFileType extends LanguageFileType {
   }
 
   public String getCharset(VirtualFile file) {
-    if (System.getProperty("NO_NATIVE2ASCII") == null) {
+    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+    if (editorSettings.isNative2AsciiForPropertiesFiles()) {
       return Native2AsciiCharset.INSTANCE.name();
     }
     else {

@@ -626,7 +626,7 @@ public class VirtualFileImpl extends VirtualFile {
   }
 
   // should not check if file exists - already checked
-  void refreshInternal(final boolean recursive, final WorkerThread worker, final ModalityState modalityState) {
+  void refreshInternal(final boolean recursive, final WorkerThread worker, final ModalityState modalityState, final boolean forceRefresh) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     if (LOG.isDebugEnabled()) {
@@ -718,7 +718,7 @@ public class VirtualFileImpl extends VirtualFile {
                   public void run() {
                     Runnable action = new Runnable() {
                       public void run() {
-                        child.refreshInternal(recursive, worker, modalityState);
+                        child.refreshInternal(recursive, worker, modalityState, false);
                       }
                     };
                     ApplicationManager.getApplication().runReadAction(action);
@@ -727,7 +727,7 @@ public class VirtualFileImpl extends VirtualFile {
               );
             }
             else {
-              child.refreshInternal(recursive, null, modalityState);
+              child.refreshInternal(recursive, null, modalityState, false);
             }
           }
         }
@@ -751,7 +751,7 @@ public class VirtualFileImpl extends VirtualFile {
     else {
       if (myTimeStamp > 0) {
         final long timeStamp = physicalFile.lastModified();
-        if (timeStamp != myTimeStamp) {
+        if (timeStamp != myTimeStamp || forceRefresh) {
           myFileSystem.getManager().addEventToFireByRefresh(
             new Runnable() {
               public void run() {
