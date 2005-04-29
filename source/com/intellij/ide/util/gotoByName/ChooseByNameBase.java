@@ -466,15 +466,11 @@ public abstract class ChooseByNameBase{
         }
         final Runnable request = new Runnable() {
           public void run() {
-            final Runnable request = this;
-            LOG.info ("Rebuild " + hashCode() + " started");
             final CalcElementsCallback callback = new CalcElementsCallback() {
               public void run(final List<?> elements) {
                 synchronized (myRebuildMutex) {
-                  LOG.info ("Rebuild callback " + hashCode() + " of " + request.hashCode()  + " started");
                   ApplicationManager.getApplication().assertIsDispatchThread();
                   if (myDisposedFlag) {
-                    LOG.info ("Rebuild callback " + hashCode() + " of " + request.hashCode() + " disposed");
                     return;
                   }
 
@@ -486,7 +482,6 @@ public abstract class ChooseByNameBase{
                   if (postRunnable != null) {
                     postRunnable.run();
                   }
-                  LOG.info ("Rebuild callback " + hashCode () + " of " + request.hashCode () + " finished");
                 }
               }
             };
@@ -500,11 +495,9 @@ public abstract class ChooseByNameBase{
         };
 
         if (delay > 0) {
-          LOG.info ("Rebuild " + this + " posted with delay " + delay, new Throwable ());
           myAlarm.addRequest(request, delay);
         }
         else {
-          LOG.info ("Rebuild " + this + " posted", new Throwable ());
           request.run();
         }
       }
