@@ -218,7 +218,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
                                                                   indentOptions,
                                                                   offset,
                                                                   getSignificantRange(file, offset));
-      System.out.println(System.currentTimeMillis() - start);
+      //System.out.println(System.currentTimeMillis() - start);
       return result;
 
     } else {
