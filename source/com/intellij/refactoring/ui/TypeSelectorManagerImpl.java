@@ -8,7 +8,6 @@ import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -64,8 +63,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
   private ExpectedTypesProvider.ExpectedClassProvider createOccurrenceClassProvider() {
     final Set<PsiClass> occurrenceClasses = new HashSet<PsiClass>();
-    for (int i = 0; i < myOccurences.length; i++) {
-      final PsiExpression occurence = myOccurences[i];
+    for (final PsiExpression occurence : myOccurences) {
       final PsiType occurrenceType = occurence.getType();
       final PsiClass aClass = PsiUtil.resolveClassInType(occurrenceType);
       if (aClass != null) {
@@ -108,15 +106,13 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
     ArrayList<PsiType> result = normalizeTypeList(allowedTypes);
     return result.toArray(new PsiType[result.size()]);
-
-//    return getSuggestions(expectedTypeInfos);
   }
 
   private PsiType[] getTypesForAll() {
     final ArrayList<ExpectedTypeInfo[]> expectedTypesFromAll = new ArrayList<ExpectedTypeInfo[]>();
-    for (int i = 0; i < myOccurences.length; i++) {
+    for (PsiExpression occurence : myOccurences) {
 
-      final ExpectedTypeInfo[] expectedTypes = myExpectedTypesProvider.getExpectedTypes(myOccurences[i], false, myOccurrenceClassProvider);
+      final ExpectedTypeInfo[] expectedTypes = myExpectedTypesProvider.getExpectedTypes(occurence, false, myOccurrenceClassProvider);
       if (expectedTypes.length > 0) {
         expectedTypesFromAll.add(expectedTypes);
       }
@@ -133,13 +129,10 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
       }
 
       private void checkIfAllowed(PsiType type) {
-        final ExpectedTypeInfo
-            typeInfo = myExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE);
-        for (Iterator<ExpectedTypeInfo[]> iterator = expectedTypesFromAll.iterator(); iterator.hasNext();) {
-          ExpectedTypeInfo[] expectedTypes = iterator.next();
+        final ExpectedTypeInfo typeInfo = myExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE);
+        for (ExpectedTypeInfo[] expectedTypes : expectedTypesFromAll) {
           boolean validFound = false;
-          for (int i = 0; i < expectedTypes.length; i++) {
-            ExpectedTypeInfo expectedType = expectedTypes[i];
+          for (ExpectedTypeInfo expectedType : expectedTypes) {
             if (expectedType.intersect(typeInfo).length != 0) {
               validFound = true;
               break;
@@ -148,7 +141,6 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
           if (!validFound) return;
         }
         allowedTypes.add(type);
-
       }
     });
 
@@ -174,12 +166,13 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
         break;
       }
     }
-    result.add(0, myDefaultType);
+
     final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(myDefaultType);
     if (unboxedType != null) {
       result.remove(unboxedType);
       result.add(0, unboxedType);
     }
+    result.add(0, myDefaultType);
     return result;
   }
 
