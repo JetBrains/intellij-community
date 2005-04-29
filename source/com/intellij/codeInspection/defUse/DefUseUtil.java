@@ -18,7 +18,6 @@ import com.intellij.util.containers.IntArrayList;
 import gnu.trove.THashSet;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -152,8 +151,7 @@ public class DefUseUtil {
     InstructionState startupState = states[instructions.length];
     startupState.touch();
 
-    for (Iterator<PsiVariable> iterator = assignedVariables.iterator(); iterator.hasNext();) {
-      PsiVariable psiVariable = iterator.next();
+    for (PsiVariable psiVariable : assignedVariables) {
       if (psiVariable instanceof PsiField) {
         startupState.mergeUseArmed(psiVariable);
       }
