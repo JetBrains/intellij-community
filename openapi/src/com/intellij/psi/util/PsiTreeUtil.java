@@ -109,8 +109,7 @@ public class PsiTreeUtil {
     if (element == null) return null;
     NextSibling:
     for (PsiElement e = element.getNextSibling(); e != null; e = e.getNextSibling()) {
-      for (int i = 0; i < elementClasses.length; i++) {
-        Class aClass = elementClasses[i];
+      for (Class aClass : elementClasses) {
         if (aClass.isInstance(e)) continue NextSibling;
       }
       return e;
@@ -122,8 +121,7 @@ public class PsiTreeUtil {
     if (element == null) return null;
     NextSibling:
     for (PsiElement e = element.getPrevSibling(); e != null; e = e.getPrevSibling()) {
-      for (int i = 0; i < elementClasses.length; i++) {
-        Class aClass = elementClasses[i];
+      for (Class aClass : elementClasses) {
         if (aClass.isInstance(e)) continue NextSibling;
       }
       return e;
@@ -141,8 +139,7 @@ public class PsiTreeUtil {
     }
 
     while (element != null) {
-      for (int i = 0; i < classes.length; i++) {
-        Class aClass = classes[i];
+      for (Class aClass : classes) {
         if (aClass.isInstance(element)) return element;
       }
       element = element.getParent();
@@ -194,8 +191,7 @@ public class PsiTreeUtil {
     }
 
     final PsiElement[] result = new PsiElement[elements.length];
-    for (int i = 0; i < newRoots.length; i++) {
-      PsiElement newRoot = newRoots[i];
+    for (PsiElement newRoot : newRoots) {
       decodeIndices(newRoot, result);
     }
     return result;
@@ -237,8 +233,7 @@ public class PsiTreeUtil {
   public static <T extends PsiElement> T findElementOfClassAtOffset (PsiFile file, int offset, Class<T> clazz, boolean strictStart) {
     final PsiFile[] psiRoots = file.getPsiRoots();
     T result = null;
-    for (int i = 0; i < psiRoots.length; i++) {
-      PsiFile root = psiRoots[i];
+    for (PsiFile root : psiRoots) {
       final PsiElement elementAt = root.findElementAt(offset);
       if (elementAt != null) {
         final T parent = getParentOfType(elementAt, clazz);
@@ -262,8 +257,7 @@ public class PsiTreeUtil {
   public static <T extends PsiElement> T findElementOfClassAtRange (PsiFile file, int startOffset, int endOffset, Class<T> clazz) {
     final PsiFile[] psiRoots = file.getPsiRoots();
     T result = null;
-    for (int i = 0; i < psiRoots.length; i++) {
-      PsiFile root = psiRoots[i];
+    for (PsiFile root : psiRoots) {
       PsiElement elementAt = root.findElementAt(startOffset);
       T run = getParentOfType(elementAt, clazz, false);
       T prev = run;
