@@ -15,8 +15,8 @@ import java.util.*;
 public class ExceptionUtil {
   public static PsiClassType[] getThrownExceptions(PsiElement[] elements) {
     List<PsiClassType> array = new ArrayList<PsiClassType>();
-    for (int i = 0; i < elements.length; i++) {
-      PsiClassType[] exceptions = getThrownExceptions(elements[i]);
+    for (PsiElement element : elements) {
+      PsiClassType[] exceptions = getThrownExceptions(element);
       addExceptions(array, exceptions);
     }
 
@@ -33,8 +33,7 @@ public class ExceptionUtil {
   private static PsiClassType[] filterOutUncheckedExceptions(PsiClassType[] exceptions) {
     if (exceptions.length == 0) return exceptions;
     List<PsiClassType> array = new ArrayList<PsiClassType>();
-    for (int i = 0; i < exceptions.length; i++) {
-      PsiClassType exception = exceptions[i];
+    for (PsiClassType exception : exceptions) {
       if (!isUncheckedException(exception)) array.add(exception);
     }
     return array.toArray(new PsiClassType[array.size()]);
@@ -70,17 +69,16 @@ public class ExceptionUtil {
       List<PsiClassType> array = new ArrayList<PsiClassType>();
       if (tryBlock != null) {
         PsiClassType[] exceptions = getThrownExceptions(tryBlock);
-        for (int i = 0; i < exceptions.length; i++) {
-          array.add(exceptions[i]);
+        for (PsiClassType exception : exceptions) {
+          array.add(exception);
         }
       }
 
       PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
-      for (int i = 0; i < parameters.length; i++) {
-        PsiParameter parm = parameters[i];
+      for (PsiParameter parm : parameters) {
         PsiType exception = parm.getType();
-        for (int j = array.size()-1; j>=0; j--) {
-          PsiType exception1 = array.get(j);
+        for (int j = array.size() - 1; j >= 0; j--) {
+          PsiClassType exception1 = array.get(j);
           if (exception.isAssignableFrom(exception1)) {
             array.remove(exception1);
           }
@@ -88,8 +86,7 @@ public class ExceptionUtil {
       }
 
       PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-      for (int i = 0; i < catchBlocks.length; i++) {
-        PsiCodeBlock catchBlock = catchBlocks[i];
+      for (PsiCodeBlock catchBlock : catchBlocks) {
         addExceptions(array, getThrownExceptions(catchBlock));
       }
 
@@ -126,15 +123,15 @@ public class ExceptionUtil {
       array.addAll(Arrays.asList(method.getThrowsList().getReferencedTypes()));
     }
     PsiElement[] children = element.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      addExceptions(array, getThrownExceptions(children[i]));
+    for (PsiElement child : children) {
+      addExceptions(array, getThrownExceptions(child));
     }
     return array.toArray(new PsiClassType[array.size()]);
   }
 
   private static void addExceptions(List<PsiClassType> array, PsiClassType[] exceptions) {
-    for (int i = 0; i < exceptions.length; i++) {
-      addException(array, exceptions[i]);
+    for (PsiClassType exception : exceptions) {
+      addException(array, exception);
     }
   }
 
@@ -174,13 +171,11 @@ public class ExceptionUtil {
       final PsiClass superClass = aClass == null ? null : aClass.getSuperClass();
       final PsiMethod[] superConstructors = superClass == null ? PsiMethod.EMPTY_ARRAY : superClass.getConstructors();
       Set<PsiClassType> unhandled = new HashSet<PsiClassType>();
-      for (int i = 0; i < superConstructors.length; i++) {
-        PsiMethod superConstructor = superConstructors[i];
+      for (PsiMethod superConstructor : superConstructors) {
         if (!superConstructor.hasModifierProperty(PsiModifier.PRIVATE) &&
             superConstructor.getParameterList().getParameters().length == 0) {
           final PsiClassType[] exceptionTypes = superConstructor.getThrowsList().getReferencedTypes();
-          for (int j = 0; j < exceptionTypes.length; j++) {
-            PsiClassType exceptionType = exceptionTypes[j];
+          for (PsiClassType exceptionType : exceptionTypes) {
             if (!isUncheckedException(exceptionType) && !isHandled(element, exceptionType, topElement)) {
               unhandled.add(exceptionType);
             }
@@ -193,13 +188,11 @@ public class ExceptionUtil {
       if (aClass != null) {
         final PsiClassInitializer[] initializers = aClass.getInitializers();
         final Set<PsiClassType> thrownByInitializer = new THashSet<PsiClassType>();
-        for (int i = 0; i < initializers.length; i++) {
-          PsiClassInitializer initializer = initializers[i];
+        for (PsiClassInitializer initializer : initializers) {
           if (initializer.hasModifierProperty(PsiModifier.STATIC)) continue;
           thrownByInitializer.clear();
           collectUnhandledExceptions(initializer.getBody(), initializer, thrownByInitializer);
-          for (Iterator<PsiClassType> iterator = thrownByInitializer.iterator(); iterator.hasNext();) {
-            PsiClassType thrown = iterator.next();
+          for (PsiClassType thrown : thrownByInitializer) {
             if (!isHandled(constructor.getBody(), thrown, topElement)) {
               unhandled.add(thrown);
             }
@@ -213,8 +206,7 @@ public class ExceptionUtil {
       if (foundExceptions == null) {
         foundExceptions = new HashSet<PsiClassType>();
       }
-      for (int i = 0; i < unhandledExceptions.length; i++) {
-        PsiClassType unhandledException = unhandledExceptions[i];
+      for (PsiClassType unhandledException : unhandledExceptions) {
         foundExceptions.add(unhandledException);
       }
     }
@@ -253,8 +245,8 @@ public class ExceptionUtil {
       }
     };
 
-    for (int i = 0; i < elements.length; i++) {
-      elements[i].accept(visitor);
+    for (PsiElement element : elements) {
+      element.accept(visitor);
     }
 
     return array.toArray(new PsiClassType[array.size()]);
@@ -309,8 +301,7 @@ public class ExceptionUtil {
     if (referencedTypes != null && referencedTypes.length != 0) {
       List<PsiClassType> result = new ArrayList<PsiClassType>();
 
-      for (int i = 0; i < referencedTypes.length; i++) {
-        PsiClassType referencedType = referencedTypes[i];
+      for (PsiClassType referencedType : referencedTypes) {
         final PsiType type = substitutor.substitute(referencedType);
         if (!(type instanceof PsiClassType)) continue;
         PsiClassType classType = (PsiClassType)type;
@@ -433,8 +424,7 @@ public class ExceptionUtil {
     if (aClass == null) return false;
     final PsiMethod[] constructors = aClass.getConstructors();
     boolean thrown = constructors.length != 0;
-    for (int i = 0; i < constructors.length; i++) {
-      PsiMethod constructor = constructors[i];
+    for (PsiMethod constructor : constructors) {
       if (!isHandledByMethodThrowsClause(constructor, exceptionType)) {
         thrown = false;
         break;
@@ -463,8 +453,7 @@ public class ExceptionUtil {
     }
 
     final PsiParameter[] catchBlockParameters = tryStatement.getCatchBlockParameters();
-    for (int i = 0; i < catchBlockParameters.length; i++) {
-      PsiParameter parameter = catchBlockParameters[i];
+    for (PsiParameter parameter : catchBlockParameters) {
       PsiType paramType = parameter.getType();
       if (paramType.isAssignableFrom(exceptionType)) return true;
     }
@@ -483,8 +472,7 @@ public class ExceptionUtil {
   public static boolean isHandledBy(PsiClassType exceptionType, final PsiClassType[] referencedTypes) {
     if (referencedTypes == null) return false;
 
-    for (int i = 0; i < referencedTypes.length; i++) {
-      PsiClassType classType = referencedTypes[i];
+    for (PsiClassType classType : referencedTypes) {
       if (classType.isAssignableFrom(exceptionType)) return true;
     }
 
