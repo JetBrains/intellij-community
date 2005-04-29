@@ -11,6 +11,7 @@ import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.deductive.builder.SystemBuilder;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.refactoring.typeCook.deductive.resolver.ResolverTree;
+import com.intellij.pom.java.LanguageLevel;
 import junit.textui.TestRunner;
 
 import java.io.File;
@@ -26,6 +27,11 @@ import java.io.PrintWriter;
  */
 
 public class TypeCookTest extends MultiFileTestCase {
+  protected void setUp() throws Exception {
+    super.setUp();
+    myPsiManager.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+  }
+
   public String getTestRoot() {
     return "/refactoring/typeCook/";
   }
