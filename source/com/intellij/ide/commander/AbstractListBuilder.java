@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.Alarm;
+import com.intellij.psi.PsiElement;
 
 import javax.swing.*;
 import java.awt.*;
@@ -88,7 +89,7 @@ public abstract class AbstractListBuilder {
     try {
       AbstractTreeNode oldParent = myCurrentParent;
 
-      buildList((AbstractTreeNode)element);
+      buildList(element);
 
       for (int i = 0; i < myModel.size(); i++) {
         if (myModel.getElementAt(i) instanceof NodeDescriptor) {
@@ -143,7 +144,7 @@ public abstract class AbstractListBuilder {
     }
   }
 
-  public final void enterElement(final Object element, VirtualFile file) {
+  public final void enterElement(final PsiElement element, VirtualFile file) {
     try {
       AbstractTreeNode lastPathNode = null;
       lastPathNode = goDownToElement(element, file);
@@ -300,7 +301,7 @@ public abstract class AbstractListBuilder {
     }
 
     final Object[] children = getChildren(parentDescriptor);
-    final com.intellij.util.containers.HashMap elementToIndexMap = new com.intellij.util.containers.HashMap();
+    final com.intellij.util.containers.HashMap<Object,Integer> elementToIndexMap = new com.intellij.util.containers.HashMap<Object, Integer>();
     for (int i = 0; i < children.length; i++) {
       elementToIndexMap.put(children[i], new Integer(i));
     }
@@ -315,7 +316,7 @@ public abstract class AbstractListBuilder {
       final NodeDescriptor descriptor = (NodeDescriptor)child;
       descriptor.update();
       final Object newElement = descriptor.getElement();
-      final Integer index = (newElement != null) ? (Integer)elementToIndexMap.get(newElement) : null;
+      final Integer index = (newElement != null) ? elementToIndexMap.get(newElement) : null;
       if (index != null) {
         resultDescriptors.add(descriptor);
         descriptor.setIndex(index.intValue());
@@ -325,7 +326,7 @@ public abstract class AbstractListBuilder {
 
     for (Iterator iterator = elementToIndexMap.keySet().iterator(); iterator.hasNext();) {
       final Object child = iterator.next();
-      final Integer index = (Integer)elementToIndexMap.get(child);
+      final Integer index = elementToIndexMap.get(child);
       final NodeDescriptor childDescr = myTreeStructure.createDescriptor(child, parentDescriptor);
       childDescr.setIndex(index.intValue());
       childDescr.update();
