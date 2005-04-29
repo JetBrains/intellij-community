@@ -81,8 +81,7 @@ public class ResolverTree {
 
   private boolean canBePruned(final Binding b) {
     if (mySettings.exhaustive()) return false;
-    for (final Iterator<PsiTypeVariable> v = b.getBoundVariables().iterator(); v.hasNext();) {
-      final PsiTypeVariable var = v.next();
+    for (final PsiTypeVariable var : b.getBoundVariables()) {
       final PsiType type = b.apply(var);
 
       if (!(type instanceof PsiTypeVariable) && isBoundElseWhere(var)) {
@@ -96,9 +95,7 @@ public class ResolverTree {
   private TObjectIntHashMap<PsiTypeVariable> calculateDegree() {
     final TObjectIntHashMap<PsiTypeVariable> result = new TObjectIntHashMap<PsiTypeVariable>();
 
-    for (final Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();) {
-      final Constraint constr = c.next();
-
+    for (final Constraint constr : myConstraints) {
       final PsiTypeVarCollector collector = new PsiTypeVarCollector();
 
       setDegree(collector.getSet(constr.getRight()), result);
@@ -108,8 +105,7 @@ public class ResolverTree {
   }
 
   private void setDegree(final HashSet<PsiTypeVariable> set, TObjectIntHashMap<PsiTypeVariable> result) {
-    for (final Iterator<PsiTypeVariable> v = set.iterator(); v.hasNext();) {
-      final PsiTypeVariable var = v.next();
+    for (final PsiTypeVariable var : set) {
       result.increment(var);
     }
   }
@@ -117,8 +113,7 @@ public class ResolverTree {
   private HashSet<Constraint> apply(final Binding b) {
     final HashSet<Constraint> result = new HashSet<Constraint>();
 
-    for (Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();) {
-      final Constraint constr = c.next();
+    for (final Constraint constr : myConstraints) {
       result.add(constr.apply(b));
     }
 
@@ -128,13 +123,11 @@ public class ResolverTree {
   private HashSet<Constraint> apply(final Binding b, final HashSet<Constraint> additional) {
     final HashSet<Constraint> result = new HashSet<Constraint>();
 
-    for (Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();) {
-      final Constraint constr = c.next();
+    for (final Constraint constr : myConstraints) {
       result.add(constr.apply(b));
     }
 
-    for (Iterator<Constraint> c = additional.iterator(); c.hasNext();) {
-      final Constraint constr = c.next();
+    for (final Constraint constr : additional) {
       result.add(constr.apply(b));
     }
 
@@ -160,9 +153,7 @@ public class ResolverTree {
     final HashMap<PsiTypeVariable, HashSet<PsiTypeVariable>> ins = new HashMap<PsiTypeVariable, HashSet<PsiTypeVariable>>();
     final HashMap<PsiTypeVariable, HashSet<PsiTypeVariable>> outs = new HashMap<PsiTypeVariable, HashSet<PsiTypeVariable>>();
 
-    for (Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();) {
-      final Constraint constraint = c.next();
-
+    for (final Constraint constraint : myConstraints) {
       final PsiType left = constraint.getLeft();
       final PsiType right = constraint.getRight();
 
@@ -231,8 +222,7 @@ public class ResolverTree {
     final LinkedList<Pair<Integer, Integer>> sccs = dfstBuilder.getSCCs();
     final HashMap<PsiTypeVariable, Integer> index = new HashMap<PsiTypeVariable, Integer>();
 
-    for (Iterator<Pair<Integer, Integer>> i = sccs.iterator(); i.hasNext();) {
-      final Pair<Integer, Integer> p = i.next();
+    for (final Pair<Integer, Integer> p : sccs) {
       final Integer biT = p.getFirst();
       final int binum = biT.intValue();
 
@@ -241,9 +231,7 @@ public class ResolverTree {
       }
     }
 
-    for (Iterator<Constraint> c = candidates.iterator(); c.hasNext();) {
-      final Constraint constraint = c.next();
-
+    for (final Constraint constraint : candidates) {
       if (index.get(constraint.getLeft()).equals(index.get(constraint.getRight()))) {
         myConstraints.remove(constraint);
       }
@@ -251,15 +239,14 @@ public class ResolverTree {
 
     Binding binding = myBindingFactory.create();
 
-    for (Iterator<PsiTypeVariable> v = index.keySet().iterator(); v.hasNext();) {
-      final PsiTypeVariable fromVar = v.next();
+    for (final PsiTypeVariable fromVar : index.keySet()) {
       final PsiTypeVariable toVar = dfstBuilder.getNodeByNNumber(index.get(fromVar).intValue());
 
       if (!fromVar.equals(toVar)) {
         binding = binding.compose(myBindingFactory.create(fromVar, toVar));
 
         if (binding == null) {
-        break;
+          break;
         }
       }
     }
@@ -331,9 +318,7 @@ public class ResolverTree {
         final PsiClass[] parents = upperClass.getSupers();
         final PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
 
-        for (int i = 0; i < parents.length; i++) {
-          final PsiClass parent = parents[i];
-
+        for (final PsiClass parent : parents) {
           final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(parent, upperClass, upperSubst);
           if (superSubstitutor != null) {
             final PsiClassType type = factory.createType(parent, superSubstitutor);
@@ -431,75 +416,72 @@ public class ResolverTree {
     final HashMap<PsiTypeVariable, Constraint> myTypeVarConstraints = new HashMap<PsiTypeVariable, Constraint>();
     final HashMap<PsiTypeVariable, Constraint> myVarTypeConstraints = new HashMap<PsiTypeVariable, Constraint>();
 
-    for (Iterator<Constraint> i = myConstraints.iterator(); i.hasNext();) {
-      final Constraint constr = i.next();
-
+    for (final Constraint constr : myConstraints) {
       final PsiType left = constr.getLeft();
       final PsiType right = constr.getRight();
 
       switch ((left instanceof PsiTypeVariable ? 0 : 1) + (right instanceof PsiTypeVariable ? 0 : 2)) {
-      case 0:
-      continue;
+        case 0:
+          continue;
 
-      case 1:
-           {
-             final Constraint c = myTypeVarConstraints.get(right);
+        case 1:
+          {
+            final Constraint c = myTypeVarConstraints.get(right);
 
-             if (c == null) {
-               final Constraint d = myVarTypeConstraints.get(right);
+            if (c == null) {
+              final Constraint d = myVarTypeConstraints.get(right);
 
-               if (d != null) {
-                 reduceInterval(constr, d);
-                 return;
-               }
+              if (d != null) {
+                reduceInterval(constr, d);
+                return;
+              }
 
-               myTypeVarConstraints.put((PsiTypeVariable)right, constr);
-             }
-             else {
-               reduceTypeVar(constr, c);
-               return;
-             }
-           }
-      break;
+              myTypeVarConstraints.put((PsiTypeVariable)right, constr);
+            }
+            else {
+              reduceTypeVar(constr, c);
+              return;
+            }
+          }
+          break;
 
-      case 2:
-           {
-             final Constraint c = myVarTypeConstraints.get(left);
+        case 2:
+        {
+          final Constraint c = myVarTypeConstraints.get(left);
 
-             if (c == null) {
-               final Constraint d = myTypeVarConstraints.get(left);
+          if (c == null) {
+            final Constraint d = myTypeVarConstraints.get(left);
 
-               if (d != null) {
-                 reduceInterval(d, constr);
-                 return;
-               }
+            if (d != null) {
+              reduceInterval(d, constr);
+              return;
+            }
 
-               myVarTypeConstraints.put((PsiTypeVariable)left, constr);
-             }
-             else {
-               reduceVarType(constr, c);
-               return;
-             }
-           break;
-           }
+            myVarTypeConstraints.put((PsiTypeVariable)left, constr);
+          }
+          else {
+            reduceVarType(constr, c);
+            return;
+          }
+          break;
+        }
 
-      case 3:
-           reduceTypeType(constr);
-           return;
+        case 3:
+          reduceTypeType(constr);
+          return;
       }
     }
 
     //T1 < a < b ... < T2
     {
-      for (final Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();) {
-        final Constraint constr = c.next();
+      for (final Constraint constr : myConstraints) {
         final PsiType left = constr.getLeft();
         final PsiType right = constr.getRight();
 
         if (!(left instanceof PsiTypeVariable) && right instanceof PsiTypeVariable) {
           final HashSet<PsiTypeVariable> bound = new PsiTypeVarCollector().getSet(left);
 
-          if (bound.contains(right)){
+          if (bound.contains(right)) {
             myConstraints.remove(constr);
             mySons = new ResolverTree[]{applyRule(myBindingFactory.create(((PsiTypeVariable)right), Bottom.BOTTOM))};
 
@@ -533,8 +515,7 @@ public class ResolverTree {
       Constraint target = null;
       final HashSet<PsiTypeVariable> boundVariables = new HashSet<PsiTypeVariable>();
 
-      for (final Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();) {
-        final Constraint constr = c.next();
+      for (final Constraint constr : myConstraints) {
         final PsiType leftType = constr.getLeft();
         final PsiType rightType = constr.getRight();
 
@@ -554,9 +535,7 @@ public class ResolverTree {
       if (target == null) {
         Binding binding = myBindingFactory.create();
 
-        for (final Iterator<PsiTypeVariable> v = myBindingFactory.getBoundVariables().iterator(); v.hasNext();) {
-          final PsiTypeVariable var = v.next();
-
+        for (final PsiTypeVariable var : myBindingFactory.getBoundVariables()) {
           if (!myCurrentBinding.binds(var) && !boundVariables.contains(var)) {
             binding = binding.compose(myBindingFactory.create(var, Bottom.BOTTOM));
           }
@@ -587,9 +566,7 @@ public class ResolverTree {
   private void logSolution() {
     LOG.debug("Reduced system:");
 
-    for (final Iterator<Constraint> c = myConstraints.iterator(); c.hasNext();) {
-      final Constraint constr = c.next();
-
+    for (final Constraint constr : myConstraints) {
       LOG.debug(constr.toString());
     }
 
@@ -669,9 +646,7 @@ public class ResolverTree {
 
     Constraint prev = null;
 
-    for (Iterator<Pair<PsiType, Binding>> p = union.iterator(); p.hasNext();) {
-      final Pair<PsiType, Binding> pair = p.next();
-
+    for (final Pair<PsiType, Binding> pair : union) {
       if (prev != null) {
         myConstraints.remove(prev);
       }
