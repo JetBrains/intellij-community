@@ -21,7 +21,7 @@ public class MockIntroduceFieldHandler extends IntroduceFieldHandler {
                                                                         PsiElement anchorElementIfAll) {
     SuggestedNameInfo name = CodeStyleManager.getInstance(project).suggestVariableName(VariableKind.FIELD, null, expr, type);
     return new Settings(name.names[0], true,
-            true, true, BaseExpressionToFieldHandler.IN_FIELD_DECLARATION,
+            true, true, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION,
             PsiModifier.PUBLIC,
             null,
             type, true,

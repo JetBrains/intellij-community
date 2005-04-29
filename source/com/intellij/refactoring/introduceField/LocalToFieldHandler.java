@@ -1,5 +1,6 @@
 package com.intellij.refactoring.introduceField;
 
+import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -65,7 +66,7 @@ public class LocalToFieldHandler {
     //LocalToFieldDialog dialog = new LocalToFieldDialog(project, aClass, local, isStatic);
     final String variableName;
     final String fieldName;
-    final int initializerPlace;
+    final BaseExpressionToFieldHandler.InitializationPlace initializerPlace;
     final boolean declareFinal;
     final String fieldVisibility;
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(myProject, local.getType(),
@@ -99,7 +100,7 @@ public class LocalToFieldHandler {
       variableName = local.getName();
       fieldName = dialog.getEnteredName();
       declareFinal = true;
-      initializerPlace = IntroduceFieldHandler.IN_FIELD_DECLARATION;
+      initializerPlace = IN_FIELD_DECLARATION;
       fieldVisibility = dialog.getFieldVisibility();
       final PsiClass destinationClass = dialog.getDestinationClass();
       if (destinationClass != null) {
@@ -126,7 +127,7 @@ public class LocalToFieldHandler {
 
           final PsiMethod enclosingConstructor = BaseExpressionToFieldHandler.getEnclosingConstructor(aaClass, local);
           PsiField field = createField(local, fieldName,
-                                       initializerPlace == IntroduceFieldHandler.IN_FIELD_DECLARATION
+                                       initializerPlace == IN_FIELD_DECLARATION
           );
           if (isStatic) {
             field.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
@@ -139,9 +140,9 @@ public class LocalToFieldHandler {
           field = (PsiField)aaClass.add(field);
           local.normalizeDeclaration();
           PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)local.getParent();
-          final int finalInitializerPlace;
+          final BaseExpressionToFieldHandler.InitializationPlace finalInitializerPlace;
           if (local.getInitializer() == null) {
-            finalInitializerPlace = IntroduceFieldHandler.IN_FIELD_DECLARATION;
+            finalInitializerPlace = IN_FIELD_DECLARATION;
           }
           else {
             finalInitializerPlace = initializerPlace;
@@ -149,24 +150,23 @@ public class LocalToFieldHandler {
           final PsiElementFactory factory = myManager.getElementFactory();
 
           switch (finalInitializerPlace) {
-            case IntroduceFieldHandler.IN_FIELD_DECLARATION:
+            case IN_FIELD_DECLARATION:
               declarationStatement.delete();
               break;
 
-            case IntroduceFieldHandler.IN_CURRENT_METHOD:
+            case IN_CURRENT_METHOD:
               PsiStatement statement = createAssignment(local, fieldName, factory);
               declarationStatement.replace(statement);
               break;
 
-            case IntroduceFieldHandler.IN_CONSTRUCTOR:
+            case IN_CONSTRUCTOR:
               addInitializationToConstructors(local, field, enclosingConstructor, factory);
-              if (enclosingConstructor == null) {
-                declarationStatement.delete();
-              }
               break;
+            case IN_SETUP_METHOD:
+            addInitializationToSetUp(local, field, factory);
           }
 
-          if (enclosingConstructor != null && initializerPlace == IntroduceFieldHandler.IN_CONSTRUCTOR) {
+          if (enclosingConstructor != null && initializerPlace == IN_CONSTRUCTOR) {
             PsiStatement statement = createAssignment(local, fieldName, factory);
             declarationStatement.replace(statement);
           }
@@ -245,42 +245,54 @@ public class LocalToFieldHandler {
     }
   }
 
+  private void addInitializationToSetUp(final PsiLocalVariable local, final PsiField field, final PsiElementFactory factory)
+                                                                                                                             throws IncorrectOperationException {
+    final PsiMethod patternMethod = factory.createMethodFromText("protected void setUp() throws Exception {\nsuper.setUp();}", null);
+    PsiMethod inClass = field.getContainingClass().findMethodBySignature(patternMethod, false);
+    if (inClass == null) {
+      inClass = (PsiMethod)field.getContainingClass().add(patternMethod);
+    }
+    else if (inClass.getBody() == null) {
+      inClass.replace(patternMethod);
+    }
+
+    PsiStatement assignment = createAssignment(local, field.getName(), factory);
+    inClass.getBody().add(assignment);
+    if (!PsiTreeUtil.isAncestor(inClass, local, true)) local.delete();
+  }
+
   private void addInitializationToConstructors(PsiLocalVariable local, PsiField field, PsiMethod enclosingConstructor,
-                                               PsiElementFactory factory) {
-    try {
-      PsiClass aClass = field.getContainingClass();
-      PsiMethod[] constructors = aClass.getConstructors();
-      PsiStatement assignment = createAssignment(local, field.getName(), factory);
-      boolean added = false;
-      for (int idx = 0; idx < constructors.length; idx++) {
-        PsiMethod constructor = constructors[idx];
-        if (constructor == enclosingConstructor) continue;
-        PsiCodeBlock body = constructor.getBody();
-        if (body == null) continue;
-        PsiStatement[] statements = body.getStatements();
-        if (statements.length > 0) {
-          PsiStatement first = statements[0];
-          if (first instanceof PsiExpressionStatement) {
-            PsiExpression expression = ((PsiExpressionStatement)first).getExpression();
-            if (expression instanceof PsiMethodCallExpression) {
-              String text = ((PsiMethodCallExpression)expression).getMethodExpression().getText();
-              if ("this".equals(text)) {
-                continue;
-              }
+                                               PsiElementFactory factory) throws IncorrectOperationException {
+    PsiClass aClass = field.getContainingClass();
+    PsiMethod[] constructors = aClass.getConstructors();
+    PsiStatement assignment = createAssignment(local, field.getName(), factory);
+    boolean added = false;
+    for (PsiMethod constructor : constructors) {
+      if (constructor == enclosingConstructor) continue;
+      PsiCodeBlock body = constructor.getBody();
+      if (body == null) continue;
+      PsiStatement[] statements = body.getStatements();
+      if (statements.length > 0) {
+        PsiStatement first = statements[0];
+        if (first instanceof PsiExpressionStatement) {
+          PsiExpression expression = ((PsiExpressionStatement)first).getExpression();
+          if (expression instanceof PsiMethodCallExpression) {
+            String text = ((PsiMethodCallExpression)expression).getMethodExpression().getText();
+            if ("this".equals(text)) {
+              continue;
             }
           }
         }
-        body.add(assignment);
-        added = true;
       }
-      if (!added && enclosingConstructor == null) {
-        PsiMethod constructor = factory.createConstructor();
-        constructor.getBody().add(assignment);
-        aClass.add(constructor);
-      }
+      body.add(assignment);
+      added = true;
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+    if (!added && enclosingConstructor == null) {
+      PsiMethod constructor = factory.createConstructor();
+      constructor.getBody().add(assignment);
+      aClass.add(constructor);
     }
+
+    if (enclosingConstructor == null) local.delete();
   }
 }

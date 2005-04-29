@@ -1,5 +1,6 @@
 package com.intellij.refactoring.introduceField;
 
+import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
@@ -34,7 +35,7 @@ class IntroduceFieldDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceFieldDialog");
 
   private static boolean ourLastCbFinalState = false;
-  private static int ourLastInializerPlace;
+  private static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
 
   private Project myProject;
   private final PsiClass myParentClass;
@@ -56,6 +57,7 @@ class IntroduceFieldDialog extends DialogWrapper {
   private JRadioButton myRbInConstructor;
   private JRadioButton myRbInCurrentMethod;
   private JRadioButton myRbInFieldDeclaration;
+  private JRadioButton myRbInSetUp;
 
   private JRadioButton myRbPrivate;
   private JRadioButton myRbProtected;
@@ -101,20 +103,23 @@ class IntroduceFieldDialog extends DialogWrapper {
       myRbInConstructor.setEnabled(false);
       myRbInCurrentMethod.setEnabled(false);
       myRbInFieldDeclaration.setEnabled(false);
+      if (myRbInSetUp != null) myRbInSetUp.setEnabled(false);
     }
 
-    if (ourLastInializerPlace == IntroduceFieldHandler.IN_CONSTRUCTOR) {
+    if (ourLastInitializerPlace == IN_CONSTRUCTOR) {
       if (myRbInConstructor.isEnabled()) {
         myRbInConstructor.setSelected(true);
       } else {
         selectInCurrentMethod();
       }
-    } else if (ourLastInializerPlace == IntroduceFieldHandler.IN_FIELD_DECLARATION) {
+    } else if (ourLastInitializerPlace == IN_FIELD_DECLARATION) {
       if (myRbInFieldDeclaration.isEnabled()) {
         myRbInFieldDeclaration.setSelected(true);
       } else {
         selectInCurrentMethod();
       }
+    } else if (ourLastInitializerPlace == IN_SETUP_METHOD && isTestClass() && myRbInSetUp.isEnabled()) {
+      myRbInSetUp.setSelected(true);
     } else {
       selectInCurrentMethod();
     }
@@ -149,18 +154,22 @@ class IntroduceFieldDialog extends DialogWrapper {
     return myNameField.getName();
   }
 
-  public int getInitializerPlace() {
+  public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {
     if (myRbInConstructor.isSelected()) {
-      return IntroduceFieldHandler.IN_CONSTRUCTOR;
+      return IN_CONSTRUCTOR;
     }
     if (myRbInCurrentMethod.isSelected()) {
-      return IntroduceFieldHandler.IN_CURRENT_METHOD;
+      return IN_CURRENT_METHOD;
     }
     if (myRbInFieldDeclaration.isSelected()) {
-      return IntroduceFieldHandler.IN_FIELD_DECLARATION;
+      return IN_FIELD_DECLARATION;
     }
+    if (myRbInSetUp != null && myRbInSetUp.isSelected()) {
+      return IN_SETUP_METHOD;
+    }
+
     LOG.assertTrue(false);
-    return -1;
+    return IN_FIELD_DECLARATION;
   }
 
   public String getFieldVisibility() {
@@ -297,6 +306,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     myRbInConstructor.addItemListener(finalUpdater);
     myRbInCurrentMethod.addItemListener(finalUpdater);
     myRbInFieldDeclaration.addItemListener(finalUpdater);
+    if (myRbInSetUp != null) myRbInSetUp.addItemListener(finalUpdater);
     if (myOccurrencesCount > 1) {
       myCbReplaceAll = new NonFocusableCheckBox(
               "Replace all occurrences of expression (" + myOccurrencesCount + " occurrences)");
@@ -408,10 +418,17 @@ class IntroduceFieldDialog extends DialogWrapper {
     initializationPanel.add(myRbInCurrentMethod);
     initializationPanel.add(myRbInFieldDeclaration);
     initializationPanel.add(myRbInConstructor);
+
+    if (isTestClass()) {
+      myRbInSetUp = new JRadioButton("setUp method");
+      initializationPanel.add(myRbInSetUp);
+    }
+
     ButtonGroup bg = new ButtonGroup();
     bg.add(myRbInCurrentMethod);
     bg.add(myRbInFieldDeclaration);
     bg.add(myRbInConstructor);
+    if (myRbInSetUp != null) bg.add(myRbInSetUp);
 
     visibilityPanel.add(myRbPrivate);
     visibilityPanel.add(myRbPackageLocal);
@@ -433,6 +450,12 @@ class IntroduceFieldDialog extends DialogWrapper {
     mainPanel.add(myCbFinal, BorderLayout.SOUTH);
 
     return mainPanel;
+  }
+
+  private boolean isTestClass() {
+    final PsiManager manager = PsiManager.getInstance(myProject);
+    final PsiClass testCaseClass = manager.findClass("junit.framework.TestCase", myParentClass.getResolveScope());
+    return testCaseClass != null && myParentClass.isInheritor(testCaseClass, true);
   }
 
   private void updateCbFinal() {
@@ -508,7 +531,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     }
 
     ourLastCbFinalState = myCbFinal.isSelected();
-    ourLastInializerPlace = getInitializerPlace();
+    ourLastInitializerPlace = getInitializerPlace();
     RefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY = getFieldVisibility();
 
     myNameSuggestionsManager.nameSelected();
@@ -532,6 +555,7 @@ class IntroduceFieldDialog extends DialogWrapper {
           if (!PsiTreeUtil.isAncestor(initializer, refElement, true)) {
             myRbInFieldDeclaration.setEnabled(false);
             myRbInConstructor.setEnabled(false);
+            if (myRbInSetUp != null) myRbInSetUp.setEnabled(false);
             myCbFinal.setEnabled(false);
             return false;
           }
@@ -539,8 +563,8 @@ class IntroduceFieldDialog extends DialogWrapper {
       }
     }
     PsiElement[] children = initializerPart.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      if (!setEnabledInitializationPlaces(children[i], initializer)) return false;
+    for (PsiElement child : children) {
+      if (!setEnabledInitializationPlaces(child, initializer)) return false;
     }
     return true;
   }

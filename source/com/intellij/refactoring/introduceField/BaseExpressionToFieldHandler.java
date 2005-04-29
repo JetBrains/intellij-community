@@ -8,6 +8,7 @@
  */
 package com.intellij.refactoring.introduceField;
 
+import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -36,9 +37,14 @@ import java.util.List;
 
 public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler");
-  public static final int IN_CURRENT_METHOD = 1;
-  public static final int IN_FIELD_DECLARATION = 2;
-  public static final int IN_CONSTRUCTOR = 3;
+
+  public enum InitializationPlace {
+    IN_CURRENT_METHOD,
+    IN_FIELD_DECLARATION,
+    IN_CONSTRUCTOR,
+    IN_SETUP_METHOD;
+  }
+
   private PsiClass myParentClass;
 
   protected boolean invokeImpl(final Project project, final PsiExpression selectedExpr, final Editor editor) {
@@ -152,19 +158,12 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       }
     }
     final boolean deleteSelf = tempDeleteSelf;
-    /*
-    int col = editor.getCaretColumnNumber();
-    int line = editor.getCaretLineNumber();
-    if (deleteSelf){
-      editor.moveCaret(0, 0); // this prevents autoscrolling
-    }
-    */
 
     final Runnable runnable = new Runnable() {
       public void run() {
         try {
           PsiExpression expr = selectedExpr;
-          int initializerPlace = settings.getInitializerPlace();
+          InitializationPlace initializerPlace = settings.getInitializerPlace();
           final PsiLocalVariable localVariable = settings.getLocalVariable();
           final boolean deleteLocalVariable = settings.isDeleteLocalVariable();
           PsiExpression initializer;
@@ -196,8 +195,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           PsiElement finalAnchorElement = null;
           if (destClass == myParentClass) {
             for (finalAnchorElement = anchorElement;
-              finalAnchorElement != null && finalAnchorElement.getParent() != destClass;
-              finalAnchorElement = finalAnchorElement.getParent());
+                 finalAnchorElement != null && finalAnchorElement.getParent() != destClass;
+                 finalAnchorElement = finalAnchorElement.getParent()) {
+              ;
+            }
           }
           PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? ((PsiMember)finalAnchorElement) : null;
 
@@ -228,6 +229,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           }
           if (initializerPlace == IN_CONSTRUCTOR && initializer != null) {
             addInitializationToConstructors(initializer, field, enclosingConstructor);
+          }
+          if (initializerPlace == IN_SETUP_METHOD && initializer != null) {
+            addInitializationToSetUp(initializer, field);
           }
           if (expr.getParent() instanceof PsiParenthesizedExpression) {
             expr = (PsiExpression)expr.getParent();
@@ -354,11 +358,30 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   public static PsiMethod getEnclosingConstructor(PsiClass parentClass, PsiElement element) {
     if (element == null) return null;
     final PsiMethod[] constructors = parentClass.getConstructors();
-    for (int i = 0; i < constructors.length; i++) {
-      PsiMethod constructor = constructors[i];
+    for (PsiMethod constructor : constructors) {
       if (PsiTreeUtil.isAncestor(constructor, element, false)) return constructor;
     }
     return null;
+  }
+
+  private void addInitializationToSetUp(final PsiExpression initializer, final PsiField field) throws IncorrectOperationException {
+    final PsiManager manager = myParentClass.getManager();
+    final PsiElementFactory factory = manager.getElementFactory();
+    final PsiMethod patternMethod = factory.createMethodFromText("protected void setUp() throws Exception {\nsuper.setUp();\n}", null);
+    PsiMethod inClass = field.getContainingClass().findMethodBySignature(patternMethod, false);
+    if (inClass == null) {
+      inClass = (PsiMethod)field.getContainingClass().add(patternMethod);
+    }
+    else if (inClass.getBody() == null) {
+      inClass.replace(patternMethod);
+    }
+
+    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)factory.createStatementFromText(field.getName() + "= expr;",
+                                                                                                               null);
+    PsiAssignmentExpression expr = (PsiAssignmentExpression)expressionStatement.getExpression();
+    expr.getRExpression().replace(initializer);
+    inClass.getBody().add(expressionStatement);
+    manager.getCodeStyleManager().reformat(inClass.getBody());
   }
 
   private void addInitializationToConstructors(PsiExpression initializerExpression, PsiField field, PsiMethod enclosingConstructor) {
@@ -367,8 +390,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       PsiMethod[] constructors = aClass.getConstructors();
 
       boolean added = false;
-      for (int idx = 0; idx < constructors.length; idx++) {
-        PsiMethod constructor = constructors[idx];
+      for (PsiMethod constructor : constructors) {
         if (constructor == enclosingConstructor) continue;
         PsiCodeBlock body = constructor.getBody();
         if (body == null) continue;
@@ -462,7 +484,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     private boolean myReplaceAll;
     private final boolean myDeclareStatic;
     private final boolean myDeclareFinal;
-    private final int myInitializerPlace;
+    private final InitializationPlace myInitializerPlace;
     private final String myVisibility;
     private final boolean myDeleteLocalVariable;
     private final PsiClass myTargetClass;
@@ -489,7 +511,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return myDeclareFinal;
     }
 
-    public int getInitializerPlace() {
+    public InitializationPlace getInitializerPlace() {
       return myInitializerPlace;
     }
 
@@ -509,7 +531,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     public Settings(String fieldName, boolean replaceAll,
              boolean declareStatic, boolean declareFinal,
-             int initializerPlace, String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
+             InitializationPlace initializerPlace, String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
              boolean deleteLocalVariable, PsiClass targetClass) {
 
       myFieldName = fieldName;

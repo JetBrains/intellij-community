@@ -21,8 +21,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   }
 
   public void invoke(Project project, PsiExpression[] expressions) {
-    for (int i = 0; i < expressions.length; i++) {
-      PsiExpression expression = expressions[i];
+    for (PsiExpression expression : expressions) {
       final PsiFile file = expression.getContainingFile();
       if (!file.isWritable() && !RefactoringMessageUtil.checkReadOnlyStatus(project, file)) return;
     }
@@ -110,7 +109,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       return null;
     }
     return new Settings(dialog.getEnteredName(), dialog.isReplaceAllOccurrences(),
-            true, true, BaseExpressionToFieldHandler.IN_FIELD_DECLARATION,
+            true, true, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION,
             dialog.getFieldVisibility(),
             localVariable,
             dialog.getSelectedType(), dialog.isDeleteVariable(),
