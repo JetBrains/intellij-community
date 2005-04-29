@@ -556,14 +556,6 @@ public class JavaCompletionData extends CompletionData{
 
       this.registerVariant(variant);
     }
-
-    {
-      // null completion
-      final CompletionVariant variant = new CompletionVariant(new NotFilter(new LeftNeighbour(new TextFilter("."))));
-      variant.addCompletion("null",TailType.NONE);
-      variant.includeScopeClass(PsiExpressionList.class);
-      this.registerVariant(variant);
-    }
   }
 
   private void initVariantsInFieldScope() {

@@ -56,15 +56,17 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     // Binding declarations
     registerReferenceProvider(
       new ScopeFilter(
-        new AndFilter(
-          new ParentElementFilter(
-            new TextFilter(new String[]{"class", "type"})
-          ),
-          new ParentElementFilter(
-            new TextFilter("useBean"), 2
+        new ParentElementFilter(
+          new AndFilter(
+            new TextFilter(new String[]{"class", "type"}),
+            new ParentElementFilter(
+              new AndFilter(
+                new TextFilter("useBean"),
+                new NamespaceFilter(XmlUtil.JSP_NAMESPACE)
+              )
+            )
           )
-        )
-      ),
+        )),
       XmlAttributeValue.class,
       new JavaClassReferenceProvider()
     );
