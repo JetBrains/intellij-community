@@ -86,11 +86,16 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     String jreHome;
     if (SystemInfo.isLinux || SystemInfo.isWindows) {
       jreHome = sdkHome + File.separator + "jre";
+      if (!new File(jreHome).exists()) {
+        jreHome = System.getProperty("java.home");
+      }
     }
     else {
       jreHome = System.getProperty("java.home");
     }
-    return JavaSdk.getInstance().createJdk("", jreHome);
+
+    myInternalJavaSdk = JavaSdk.getInstance().createJdk("", jreHome);
+    return myInternalJavaSdk;
   }
 
   public String suggestSdkName(String currentSdkName, String sdkHome) {
@@ -230,26 +235,6 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   public AdditionalDataConfigurable createAdditionalDataConfigurable(final SdkModel sdkModel, SdkModificator sdkModificator) {
-    sdkModel.addListener(new SdkModel.Listener() {
-      public void sdkAdded(Sdk sdk) {
-      }
-
-      public void beforeSdkRemove(Sdk sdk) {
-      }
-
-      public void sdkChanged(Sdk sdk) {
-      }
-
-      public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
-        if (sdk.getSdkType() instanceof IdeaJdk) {
-          String jreHome;
-          if (SystemInfo.isLinux || SystemInfo.isWindows) {
-            jreHome = newSdkHome + File.separator + "jre";
-            myInternalJavaSdk = JavaSdk.getInstance().createJdk("", jreHome);
-          }
-        }
-      }
-    });
     return new IdeaJdkConfigurable();
   }
 
