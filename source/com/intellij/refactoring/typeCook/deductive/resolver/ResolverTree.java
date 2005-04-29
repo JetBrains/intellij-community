@@ -76,7 +76,7 @@ public class ResolverTree {
   }
 
   private boolean isBoundElseWhere(final PsiTypeVariable var) {
-    return myBindingDegree.get(var) > 1 ;
+    return myBindingDegree.get(var) != 1 ;
   }
 
   private boolean canBePruned(final Binding b) {
