@@ -316,8 +316,7 @@ public class FoldingModelImpl implements FoldingModelEx, DocumentListener {
       ArrayList<FoldRegion> visible = new ArrayList<FoldRegion>(myRegions.size());
       FoldRegion[] regions = myRegions.toArray(new FoldRegion[myRegions.size()]);
       FoldRegion currentToplevel = null;
-      for (int i = 0; i < regions.length; i++) {
-        FoldRegion region = regions[i];
+      for (FoldRegion region : regions) {
         if (region.isValid()) {
           visible.add(region);
           if (!region.isExpanded()) {
@@ -344,10 +343,8 @@ public class FoldingModelImpl implements FoldingModelEx, DocumentListener {
       });
 
       FoldRegion[] visibleArrayed = visible.toArray(new FoldRegion[visible.size()]);
-      for (int i = 0; i < visibleArrayed.length; i++) {
-        FoldRegion visibleRegion = visibleArrayed[i];
-        for (int j = 0; j < myCachedTopLevelRegions.length; j++) {
-          FoldRegion topLevelRegion = myCachedTopLevelRegions[j];
+      for (FoldRegion visibleRegion : visibleArrayed) {
+        for (FoldRegion topLevelRegion : myCachedTopLevelRegions) {
           if (contains(topLevelRegion, visibleRegion)) {
             visible.remove(visibleRegion);
             break;
@@ -374,8 +371,7 @@ public class FoldingModelImpl implements FoldingModelEx, DocumentListener {
 
     public void updateCachedOffsets() {
       if (isFoldingEnabled()) {
-        for (int i = 0; i < myCachedVisible.length; i++) {
-          FoldRegion foldRegion = myCachedVisible[i];
+        for (FoldRegion foldRegion : myCachedVisible) {
           if (!foldRegion.isValid()) {
             rebuild();
             return;
