@@ -583,8 +583,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int lastVisibleOffset = myEditor.logicalPositionToOffset(
       myEditor.xyToLogicalPosition(new Point(0, clip.y + clip.height + myEditor.getLineHeight())));
 
-    for (int j = 0; j < visibleFoldRegions.length; j++) {
-      FoldRegion visibleFoldRegion = visibleFoldRegions[j];
+    for (FoldRegion visibleFoldRegion : visibleFoldRegions) {
       if (visibleFoldRegion.getStartOffset() > lastVisibleOffset) continue;
       if (visibleFoldRegion.getEndOffset() < firstVisibleOffset) continue;
       drawAnchor(visibleFoldRegion, width, clip, g, anchorX, false, false);
@@ -628,8 +627,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       drawFoldingLines(myActiveFoldRegion, clip, width, anchorX, g);
     }
 
-    for (int j = 0; j < visibleFoldRegions.length; j++) {
-      FoldRegion visibleFoldRegion = visibleFoldRegions[j];
+    for (FoldRegion visibleFoldRegion : visibleFoldRegions) {
       if (visibleFoldRegion.getStartOffset() > lastVisibleOffset) continue;
       if (visibleFoldRegion.getEndOffset() < firstVisibleOffset) continue;
       drawAnchor(visibleFoldRegion, width, clip, g, anchorX, false, true);
@@ -856,8 +854,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int anchorWidth = getFoldingAnchorWidth();
 
     FoldRegion[] visibleRanges = ((FoldingModelImpl)myEditor.getFoldingModel()).fetchVisible();
-    for (int i = 0; i < visibleRanges.length; i++) {
-      FoldRegion foldRange = visibleRanges[i];
+    for (FoldRegion foldRange : visibleRanges) {
       if (rectByFoldOffset(foldRange.getStartOffset(), anchorWidth, anchorX).contains(x, y)) return foldRange;
       if (rectByFoldOffset(foldRange.getEndOffset(), anchorWidth, anchorX).contains(x, y)) return foldRange;
     }
