@@ -13,8 +13,7 @@ public abstract class EnableDisableAction extends AbstractAction {
     int[] rows = getTable().getSelectedRows();
     if (rows.length > 0) {
       boolean valueToBeSet = false;
-      for (int idx = 0; idx < rows.length; idx++) {
-        final int row = rows[idx];
+      for (final int row : rows) {
         if (!isRowChecked(row)) {
           valueToBeSet = true;
           break;
