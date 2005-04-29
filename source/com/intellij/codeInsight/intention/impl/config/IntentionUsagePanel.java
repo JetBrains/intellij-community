@@ -105,7 +105,9 @@ class IntentionUsagePanel extends JPanel{
     else {
       for (int i = 0; i < oldHighlighters.size(); i++) {
         final RangeHighlighter rangeHighlighter = oldHighlighters.get(i);
-        myEditor.getMarkupModel().removeHighlighter(rangeHighlighter);
+        if (rangeHighlighter.isValid()) {
+          myEditor.getMarkupModel().removeHighlighter(rangeHighlighter);
+        }
       }
     }
     stopBlinking();
