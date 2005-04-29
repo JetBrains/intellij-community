@@ -118,7 +118,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
         // in Aqua LAF which shows drop down list with opened tab. To make it
         // work we also have to specially hande clicks outsode the tab bounds.
         final int index = getTabIndexAt(e.getX(), e.getY());
-        if (MouseEvent.MOUSE_RELEASED == e.getID() || MouseEvent.MOUSE_PRESSED == e.getID()) {
+        if (MouseEvent.MOUSE_PRESSED == e.getID()) {
           if (index != -1) {
             setSelectedIndex(index);
           }
