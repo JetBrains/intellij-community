@@ -47,10 +47,11 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class GeneralCommandLine {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.GeneralCommandLine");
-  private HashMap<String, String> myEnvParams;
+  private Map<String, String> myEnvParams;
   private String myExePath = null;
   private File myWorkDirectory = null;
   private ParametersList myProgramParams = new ParametersList();
@@ -68,7 +69,7 @@ public class GeneralCommandLine {
     myWorkDirectory = workingDirectory;
   }
 
-  public void setEnvParams(final HashMap<String, String> envParams) {
+  public void setEnvParams(final Map<String, String> envParams) {
     myEnvParams = envParams;
   }
 
@@ -183,7 +184,7 @@ public class GeneralCommandLine {
     clone.myExePath = myExePath;
     clone.myWorkDirectory = myWorkDirectory;
     clone.myProgramParams = myProgramParams.clone();
-    clone.myEnvParams = myEnvParams != null ? (HashMap<String, String>)myEnvParams.clone() : null;
+    clone.myEnvParams = myEnvParams != null ? new HashMap<String, String>(myEnvParams) : null;
     return clone;
   }
 
@@ -220,7 +221,7 @@ public class GeneralCommandLine {
             commandLine.addParameters(javaParameters.getProgramParametersList().getList());
             commandLine.setWorkDirectory(javaParameters.getWorkingDirectory());
 
-            final HashMap<String, String> env = javaParameters.getEnv();
+            final Map<String, String> env = javaParameters.getEnv();
             if (env != null) {
               commandLine.setEnvParams(env);
             }

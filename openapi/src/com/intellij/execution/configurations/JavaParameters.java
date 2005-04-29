@@ -16,6 +16,7 @@ import com.intellij.util.PathsList;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.Map;
 
 public class JavaParameters {
   private ProjectJdk myJdk;
@@ -25,7 +26,7 @@ public class JavaParameters {
   private final ParametersList myProgramParameters = new ParametersList();
   private String myWorkingDirectory;
   private Charset myCharset = CharsetToolkit.getIDEOptionsCharset();
-  private HashMap<String, String> myEnv;
+  private Map<String, String> myEnv;
 
   public String getWorkingDirectory() {
     return myWorkingDirectory;
@@ -115,11 +116,11 @@ public class JavaParameters {
     return myClassPath;
   }
 
-  public HashMap<String, String> getEnv() {
+  public Map<String, String> getEnv() {
     return myEnv;
   }
 
-  public void setEnv(final HashMap<String, String> env) {
+  public void setEnv(final Map<String, String> env) {
     myEnv = env;
   }
 }
