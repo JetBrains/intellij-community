@@ -139,6 +139,9 @@ public class Util {
     return false;
   }
 
+  /**
+   * convert external raw types to types explicitly parameterized by Bottom
+   */
   public static PsiType banalize(final PsiType t) {
     if (t instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult result = resolveType(t);

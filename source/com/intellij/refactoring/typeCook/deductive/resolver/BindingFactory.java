@@ -46,6 +46,7 @@ public class BindingFactory {
 
     new Object() {
       public void getGreatestLowerClasses(final PsiClass aClass, final PsiClass bClass, final Set<PsiClass> descendants) {
+        if (bClass.hasModifierProperty(PsiModifier.FINAL)) return;
         if (aClass.isInheritor(bClass, true)) {
           descendants.add(aClass);
         }
@@ -83,8 +84,8 @@ public class BindingFactory {
         final HashSet<PsiTypeVariable> cluster = myFactory.getClusterOf(index);
 
         if (cluster != null) {
-          for (final Iterator<PsiTypeVariable> v = cluster.iterator(); v.hasNext();) {
-            myBindings.put(new Integer(v.next().getIndex()), type);
+          for (PsiTypeVariable var : cluster) {
+            myBindings.put(new Integer(var.getIndex()), type);
           }
         }
       }
@@ -111,8 +112,7 @@ public class BindingFactory {
         PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
 
         if (theClass != null) {
-          for (Iterator<PsiTypeParameter> p = aSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
-            final PsiTypeParameter aParm = p.next();
+          for (final PsiTypeParameter aParm : aSubst.getSubstitutionMap().keySet()) {
             final PsiType aType = aSubst.substitute(aParm);
 
             theSubst = theSubst.put(aParm, apply(aType));
@@ -169,8 +169,8 @@ public class BindingFactory {
 
       final BindingImpl b3 = new BindingImpl();
 
-      for (final Iterator<PsiTypeVariable> v = myBoundVariables.iterator(); v.hasNext();) {
-        final Integer i = new Integer(v.next().getIndex());
+      for (PsiTypeVariable boundVariable : myBoundVariables) {
+        final Integer i = new Integer(boundVariable.getIndex());
 
         final PsiType b1i = b1.myBindings.get(i);
         final PsiType b2i = b2.myBindings.get(i);
@@ -178,57 +178,57 @@ public class BindingFactory {
         final int flag = (b1i == null ? 0 : 1) + (b2i == null ? 0 : 2);
 
         switch (flag) {
-        case 0:
-        break;
+          case 0:
+            break;
 
-        case 1: /* b1(i)\b2(i) */
-             {
-               final PsiType type = b2.apply(b1i);
+          case 1: /* b1(i)\b2(i) */
+            {
+              final PsiType type = b2.apply(b1i);
 
-               if (type == null) {
-                 return null;
-               }
+              if (type == null) {
+                return null;
+              }
 
-               b3.myBindings.put(i, type);
-               b3.myCyclic = type instanceof PsiTypeVariable;
-             }
-        break;
+              b3.myBindings.put(i, type);
+              b3.myCyclic = type instanceof PsiTypeVariable;
+            }
+            break;
 
-        case 2: /* b2(i)\b1(i) */
-             {
-               final PsiType type = b1.apply(b2i);
+          case 2: /* b2(i)\b1(i) */
+            {
+              final PsiType type = b1.apply(b2i);
 
-               if (type == null) {
-                 return null;
-               }
+              if (type == null) {
+                return null;
+              }
 
-               b3.myBindings.put(i, type);
-               b3.myCyclic = type instanceof PsiTypeVariable;
-             }
-        break;
+              b3.myBindings.put(i, type);
+              b3.myCyclic = type instanceof PsiTypeVariable;
+            }
+            break;
 
-        case 3:  /* b2(i) \cap b1(i) */
-             {
-               final Binding common = rise(b1i, b2i, null);
+          case 3:  /* b2(i) \cap b1(i) */
+          {
+            final Binding common = rise(b1i, b2i, null);
 
-               if (common == null) {
-                 return null;
-               }
+            if (common == null) {
+              return null;
+            }
 
-               final PsiType type = common.apply(b1i);
-               if (type == null) {
-                 return null;
-               }
+            final PsiType type = common.apply(b1i);
+            if (type == null) {
+              return null;
+            }
 
-               final PsiType type1 = type;//b2.apply(type);
+            final PsiType type1 = type;//b2.apply(type);
 
-               if (type1 == null) {
-                 return null;
-               }
+            if (type1 == null) {
+              return null;
+            }
 
-               b3.myBindings.put(i, type1);
-               b3.myCyclic = type instanceof PsiTypeVariable;
-             }
+            b3.myBindings.put(i, type1);
+            b3.myCyclic = type instanceof PsiTypeVariable;
+          }
         }
       }
 
@@ -238,8 +238,8 @@ public class BindingFactory {
     public String toString() {
       final StringBuffer buffer = new StringBuffer();
 
-      for (final Iterator<PsiTypeVariable> v = myBoundVariables.iterator(); v.hasNext();) {
-        final Integer i = new Integer(v.next().getIndex());
+      for (PsiTypeVariable boundVariable : myBoundVariables) {
+        final Integer i = new Integer(boundVariable.getIndex());
         final PsiType binding = myBindings.get(i);
 
         if (binding != null) {
@@ -269,8 +269,8 @@ public class BindingFactory {
       int directoin = Binding.NONCOMPARABLE;
       boolean first = true;
 
-      for (final Iterator<PsiTypeVariable> v = myBoundVariables.iterator(); v.hasNext();) {
-        final Integer index = new Integer(v.next().getIndex());
+      for (PsiTypeVariable boundVariable : myBoundVariables) {
+        final Integer index = new Integer(boundVariable.getIndex());
 
         final PsiType x = normalize(b1.myBindings.get(index));
         final PsiType y = normalize(b2.myBindings.get(index));
@@ -463,8 +463,7 @@ public class BindingFactory {
     public Binding reduceRecursive() {
       final BindingImpl binding = (BindingImpl)create();
 
-      for (final Iterator<PsiTypeVariable> v = myBoundVariables.iterator(); v.hasNext();) {
-        final PsiTypeVariable var = v.next();
+      for (final PsiTypeVariable var : myBoundVariables) {
         final Integer index = new Integer(var.getIndex());
         final PsiType type = myBindings.get(index);
 
@@ -498,8 +497,7 @@ public class BindingFactory {
         }
       }
 
-      for (final Iterator<PsiTypeVariable> v = myBoundVariables.iterator(); v.hasNext();) {
-        final PsiTypeVariable var = v.next();
+      for (final PsiTypeVariable var : myBoundVariables) {
         final Integer index = new Integer(var.getIndex());
         final PsiType type = myBindings.get(index);
 
@@ -516,8 +514,7 @@ public class BindingFactory {
     }
 
     public void merge(final Binding b, final boolean removeObject) {
-      for (final Iterator<PsiTypeVariable> v = b.getBoundVariables().iterator(); v.hasNext();) {
-        final PsiTypeVariable var = v.next();
+      for (final PsiTypeVariable var : b.getBoundVariables()) {
         final Integer index = new Integer(var.getIndex());
 
         if (myBindings.get(index) != null) {
@@ -526,20 +523,19 @@ public class BindingFactory {
         else {
           final PsiType type = b.apply(var);
           final PsiClassType javaLangObject =
-          PsiType.getJavaLangObject(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
+            PsiType.getJavaLangObject(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
 
           if (removeObject &&
               javaLangObject.equals(type)) {
             final HashSet<PsiTypeVariable> cluster = myFactory.getClusterOf(var.getIndex());
 
             if (cluster != null) {
-              for (final Iterator<PsiTypeVariable> w = cluster.iterator(); w.hasNext();) {
-                final PsiTypeVariable war = w.next();
+              for (final PsiTypeVariable war : cluster) {
                 final PsiType wtype = b.apply(war);
 
                 if (!javaLangObject.equals(wtype)) {
                   myBindings.put(index, type);
-                break;
+                  break;
                 }
               }
             }
@@ -558,8 +554,8 @@ public class BindingFactory {
     public int getWidth() {
       int w = 0;
 
-      for (final Iterator<PsiType> t = myBindings.values().iterator(); t.hasNext();) {
-        final PsiType type = substitute(t.next());
+      for (PsiType type1 : myBindings.values()) {
+        final PsiType type = substitute(type1);
 
         if (type != null) {
           w++;
@@ -570,8 +566,7 @@ public class BindingFactory {
     }
 
     public boolean isValid() {
-      for (final Iterator<PsiTypeVariable> v = myBoundVariables.iterator(); v.hasNext();) {
-        final PsiTypeVariable var = v.next();
+      for (final PsiTypeVariable var : myBoundVariables) {
         final PsiType type = substitute(var);
 
         if (!var.isValidInContext(type)) {
@@ -626,8 +621,7 @@ public class BindingFactory {
         if (aClass != null) {
           PsiSubstitutor theSubst = PsiSubstitutor.EMPTY;
 
-          for (final Iterator<PsiTypeParameter> p = aSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
-            final PsiTypeParameter parm = p.next();
+          for (final PsiTypeParameter parm : aSubst.getSubstitutionMap().keySet()) {
             final PsiType type = aSubst.substitute(parm);
 
             theSubst = theSubst.put(parm, substitute(type));
@@ -750,16 +744,15 @@ public class BindingFactory {
 
              Binding b = create();
 
-             for (Iterator<PsiTypeParameter> p = xSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
-               final PsiTypeParameter aParm = p.next();
+             for (final PsiTypeParameter aParm : xSubst.getSubstitutionMap().keySet()) {
                final PsiType xType = xSubst.substitute(aParm);
                final PsiType yType = ySubst.substitute(aParm);
 
                final Binding b1 = unify(xType, yType, new Unifier() {
-                                          public Binding unify(final PsiType x, final PsiType y) {
-                                            return balance(x, y, balancer, constraints);
-                                          }
-                                        });
+                 public Binding unify(final PsiType x, final PsiType y) {
+                   return balance(x, y, balancer, constraints);
+                 }
+               });
 
                if (b1 == null) {
                  return null;
@@ -824,8 +817,7 @@ public class BindingFactory {
 
                Binding b = create();
 
-               for (Iterator<PsiTypeParameter> p = xSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
-                 final PsiTypeParameter aParm = p.next();
+               for (final PsiTypeParameter aParm : xSubst.getSubstitutionMap().keySet()) {
                  final PsiType xType = xSubst.substitute(aParm);
                  final PsiType yType = ySubst.substitute(aParm);
 

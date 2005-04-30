@@ -1,8 +1,10 @@
 package com.intellij.refactoring.typeCook;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DummyComplexUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.typeCook.deductive.builder.Result;
@@ -14,7 +16,10 @@ import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 public class TypeCookProcessor extends BaseRefactoringProcessor {
   private PsiElement[] myElements;
@@ -41,9 +46,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
 
     final System[] systems = commonSystem.isolate();
 
-    for (int i = 0; i < systems.length; i++) {
-      final System system = systems[i];
-
+    for (final System system : systems) {
       if (system != null) {
         final ResolverTree tree = new ResolverTree(system);
 
@@ -51,7 +54,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
 
         final Binding solution = tree.getBestSolution();
 
-        if (solution!= null) {
+        if (solution != null) {
           myResult.incorporateSolution(solution);
         }
       }
@@ -61,11 +64,9 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     final UsageInfo[] usages = new UsageInfo[cookedItems.size()];
 
     int i = 0;
-    for (final Iterator<PsiElement> e=cookedItems.iterator(); e.hasNext();) {
-      final PsiElement element = e.next();
-
-      usages[i++] = new UsageInfo(element){
-        public String getTooltipText(){
+    for (final PsiElement element : cookedItems) {
+      usages[i++] = new UsageInfo(element) {
+        public String getTooltipText() {
           return myResult.getCookedType(element).getCanonicalText();
         }
       };
@@ -81,13 +82,19 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(UsageInfo[] usages) {
     final HashSet<PsiElement> victims = new HashSet<PsiElement>();
 
-    for (int i = 0; i < usages.length; i++) {
-      victims.add(usages[i].getElement());
+    for (UsageInfo usage : usages) {
+      victims.add(usage.getElement());
     }
 
     myResult.apply (victims);
 
-    java.lang.System.out.println(myResult.getReport());
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (myProject.isOpen()) {
+          WindowManager.getInstance().getStatusBar(myProject).setInfo(myResult.getReport());
+        }
+      }
+    });
 
     UndoManager.getInstance(myProject).undoableActionPerformed(new DummyComplexUndoableAction()); // force confirmation dialog for undo
   }

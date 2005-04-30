@@ -142,7 +142,7 @@ public class Result {
   }
 
   public String getReport() {
-    return "Items cooked : " + getRatio(myCookedNumber, myVictims.size()) + "\n" +
-           "Casts removed: " + getRatio(myCastsRemoved, myCastsNumber) + "\n";
+    return "Items generified: " + getRatio(myCookedNumber, myVictims.size()) +
+           ", casts removed: " + getRatio(myCastsRemoved, myCastsNumber);
   }
 }

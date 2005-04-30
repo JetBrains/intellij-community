@@ -655,9 +655,12 @@ public class SystemBuilder {
                       public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
                         super.visitTypeCastExpression(expression);
 
-                        system.addCast(expression);
                         final PsiType operandType = e.evaluateType(expression.getOperand());
                         final PsiType castType = e.evaluateType(expression);
+
+                        if (Util.bindsTypeVariables(operandType)) {
+                          system.addCast(expression);
+                        }
 
                         if (operandType.getDeepComponentType() instanceof PsiTypeVariable || castType.getDeepComponentType() instanceof PsiTypeVariable) {
                           system.addSubtypeConstraint(operandType, castType);
