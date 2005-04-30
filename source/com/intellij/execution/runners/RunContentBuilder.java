@@ -4,8 +4,10 @@
  */
 package com.intellij.execution.runners;
 
+import com.intellij.diagnostic.logging.LogConsoleTab;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
@@ -13,15 +15,17 @@ import com.intellij.execution.ui.CloseAction;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposeable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author dyoma
@@ -78,23 +82,36 @@ public class RunContentBuilder {
 
     final JPanel panel = new JPanel(new BorderLayout(2, 0));
     panel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-    final MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited,  panel, myDisposeables.toArray(new Disposeable[myDisposeables.size()]));
 
     if(!ApplicationManager.getApplication().isUnitTestMode()) {
       if (myComponent == null) {
         final ExecutionConsole console = myExecutionResult.getExecutionConsole();
         if (console != null) {
-          myComponent = console.getComponent();
+          myComponent = new JTabbedPane();
+          ((JTabbedPane)myComponent).addTab("Console", console.getComponent());
+          if (myRunProfile instanceof RunConfigurationBase){
+            RunConfigurationBase base = (RunConfigurationBase)myRunProfile;
+            final Map<String, Boolean> logFiles = base.getLogFiles();
+            for (Iterator<String > iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
+              String  file = iterator.next();
+              if (logFiles.get(file).booleanValue()){
+                final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(file));
+                myDisposeables.add(logTab);
+                ((JTabbedPane)myComponent).addTab("Log: " + file, logTab); //todo
+              }
+            }
+          }
         }
       }
-
+      MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited,  panel, myDisposeables.toArray(new Disposeable[myDisposeables.size()]));
       if (myComponent != null) {
         panel.add(myComponent, BorderLayout.CENTER);
       }
       panel.add(createActionToolbar(contentDescriptor, panel), BorderLayout.WEST);
+      return contentDescriptor;
     }
 
-    return contentDescriptor;
+    return new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited,  panel, myDisposeables.toArray(new Disposeable[myDisposeables.size()]));
   }
 
   private JComponent createActionToolbar(final RunContentDescriptor contentDescriptor, final JComponent component) {
@@ -111,8 +128,12 @@ public class RunContentBuilder {
 
     for (Iterator<AnAction> iterator = myRunnerActions.iterator(); iterator.hasNext();) {
       final AnAction anAction = iterator.next();
-      if (anAction != null) actionGroup.add(anAction);
-      else actionGroup.addSeparator();
+      if (anAction != null) {
+        actionGroup.add(anAction);
+      }
+      else {
+        actionGroup.addSeparator();
+      }
     }
 
     final AnAction stopAction = ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);

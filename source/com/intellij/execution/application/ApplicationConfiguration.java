@@ -143,11 +143,13 @@ public class ApplicationConfiguration extends SingleClassConfiguration implement
   }
 
   public void readExternal(final Element element) throws InvalidDataException {
+    super.readExternal(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     readModule(element);
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
+    super.writeExternal(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     writeModule(element);
   }

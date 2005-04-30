@@ -44,8 +44,12 @@ public abstract class ModuleBasedConfiguration extends RuntimeConfiguration {
     myModule.setModule(module);
   }
 
-  public abstract void readExternal(Element element) throws InvalidDataException;
-  public abstract void writeExternal(Element element) throws WriteExternalException;
+  public void readExternal(Element element) throws InvalidDataException{
+    super.readExternal(element);
+  }
+  public void writeExternal(Element element) throws WriteExternalException{
+    super.writeExternal(element);
+  }
 
   protected void readModule(final Element element) throws InvalidDataException {
     myModule.readExternal(element);

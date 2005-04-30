@@ -4,8 +4,8 @@
 package com.intellij.execution.remote;
 
 import com.intellij.debugger.engine.RemoteStateState;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.ModuleBasedConfiguration;
 import com.intellij.execution.junit2.configuration.RunConfigurationModule;
@@ -24,10 +24,12 @@ import java.util.Collection;
 public class RemoteConfiguration extends ModuleBasedConfiguration {
 
   public void writeExternal(final Element element) throws WriteExternalException {
+    super.writeExternal(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
   public void readExternal(final Element element) throws InvalidDataException {
+    super.readExternal(element);
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 

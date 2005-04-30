@@ -13,10 +13,12 @@ import com.intellij.debugger.ui.impl.FramePanel;
 import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.impl.ThreadsPanel;
 import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.diagnostic.logging.LogConsoleTab;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.JavaProgramRunner;
@@ -42,6 +44,10 @@ import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -91,6 +97,7 @@ public class DebuggerSessionTab {
   private boolean myIsJustStarted = true;
 
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
+  private static final Key LOG_CONTENTS = Key.create("LogContent");
 
   public DebuggerSessionTab(Project project) {
     myProject = project;
@@ -219,6 +226,25 @@ public class DebuggerSessionTab {
       myViewsContentManager.removeContent(content);
     }
 
+    clearLogContents();
+
+    ArrayList<Content> logContents = new ArrayList<Content>();
+
+    if (myConfiguration instanceof RunConfigurationBase){
+      RunConfigurationBase base = (RunConfigurationBase)myConfiguration;
+      final Map<String, Boolean> logFiles = base.getLogFiles();
+      int index = 0;
+      for (Iterator<String > iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
+        String  file = iterator.next();
+        if (logFiles.get(file).booleanValue()){
+          final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(file));
+          Content logContent = PeerFactory.getInstance().getContentFactory().createContent(logTab.getComponent(), "Log: " + file, false);
+          //todo icons
+          logContent.putUserData(CONTENT_KIND, LOG_CONTENTS);
+          logContents.add(logContent);
+        }
+      }
+    }
     content = PeerFactory.getInstance().getContentFactory().createContent(myConsole.getComponent(), "Console", false);
     content.setIcon(CONSOLE_ICON);
     content.putUserData(CONTENT_KIND, CONSOLE_CONTENT);
@@ -229,6 +255,10 @@ public class DebuggerSessionTab {
     myViewsContentManager.addContent(content);
     for (int i = 0; i < contents.length; i++) {
       myViewsContentManager.addContent(contents[i]);
+    }
+
+    for (Iterator<Content> iterator = logContents.iterator(); iterator.hasNext();) {
+      myViewsContentManager.addContent(iterator.next());
     }
 
     if(myToolBarPanel != null) {
@@ -244,6 +274,15 @@ public class DebuggerSessionTab {
     myContentPanel.add(myToolBarPanel, BorderLayout.WEST);
 
     return myRunContentDescriptor;
+  }
+
+  private void clearLogContents() {
+    for (int i = 0; i < myViewsContentManager.getContentCount(); i++) {
+      final Content content = myViewsContentManager.getContent(i);
+      if (content.getUserData(CONTENT_KIND) == LOG_CONTENTS){
+        myViewsContentManager.removeContent(content);
+      }
+    }
   }
 
   private void updateWatchTreeTab() {
