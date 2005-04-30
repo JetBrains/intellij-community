@@ -35,12 +35,23 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.RawCommandLineEditor;
+import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
+import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.util.Iterator;
+import java.util.Map;
 
 public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfiguration> {
 
@@ -49,11 +60,41 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   private JLabel myModuleLabel = new JLabel("Choose classpath and jdk from module:");
   private LabeledComponent<RawCommandLineEditor> myVMParameters = new LabeledComponent<RawCommandLineEditor>();
 
+  private JCheckBox myShowLogs = new JCheckBox("Show idea.log");
 
   private PluginRunConfiguration myPRC;
 
-  public PluginRunConfigurationEditor(PluginRunConfiguration prc) {
+  public PluginRunConfigurationEditor(final PluginRunConfiguration prc) {
     myPRC = prc;
+    myShowLogs.setSelected(isShow(prc));
+    myShowLogs.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        setShow(prc, myShowLogs.isSelected());
+      }
+    });
+    myModules.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        if (myModules.getSelectedItem() != null){
+          prc.removeAllLogFiles();
+          final ProjectJdk jdk = ModuleRootManager.getInstance((Module)myModules.getSelectedItem()).getJdk();
+          if (jdk != null && jdk.getSdkType() instanceof IdeaJdk){
+            prc.addLogFile(((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome() + File.separator + "system" + File.separator + "log" + File.separator + "idea.log", myShowLogs.isSelected());
+          }
+        }
+      }
+    });
+  }
+
+  private void setShow(PluginRunConfiguration prc, Boolean show){
+    final Map<String, Boolean> logFiles = prc.getLogFiles();
+    for (Iterator<String> iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
+      String s = iterator.next();
+      logFiles.put(s, show);
+    }
+  }
+
+  private boolean isShow(PluginRunConfiguration prc){
+    return prc.getLogFiles().values().contains(Boolean.TRUE);
   }
 
   public void resetEditorFrom(PluginRunConfiguration prc) {
@@ -85,15 +126,15 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
       }
     });
     JPanel wholePanel = new JPanel(new GridBagLayout());
-    wholePanel.add(myModuleLabel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST,
-                                                                            GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
-    wholePanel.add(myModules, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST,
-                                                                            GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
     myVMParameters.setText("&VM Parameters");
     myVMParameters.setComponent(new RawCommandLineEditor());
     myVMParameters.getComponent().setDialodCaption(myVMParameters.getRawText());
-    wholePanel.add(myVMParameters, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
-                                                                            GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
+    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0);
+    wholePanel.add(myVMParameters, gc);
+    wholePanel.add(myShowLogs, gc);
+    wholePanel.add(myModuleLabel, gc);
+    gc.weighty = 1;
+    wholePanel.add(myModules, gc);
     return wholePanel;
   }
 

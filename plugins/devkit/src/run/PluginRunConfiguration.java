@@ -60,7 +60,6 @@ public class PluginRunConfiguration extends RunConfigurationBase {
   private String myModuleName;
 
   public String VM_PARAMETERS;
-
   public PluginRunConfiguration(final Project project, final ConfigurationFactory factory, final String name) {
     super(project, factory, name);
   }
@@ -185,6 +184,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
       myModuleName = module.getAttributeValue("name");
     }
     DefaultJDOMExternalizer.readExternal(this, element);
+    super.readExternal(element);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -196,6 +196,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
     }));
     element.addContent(moduleElement);
     DefaultJDOMExternalizer.writeExternal(this, element);
+    super.writeExternal(element);
   }
 
   public Module getModule() {
