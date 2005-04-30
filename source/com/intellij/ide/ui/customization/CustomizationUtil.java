@@ -36,11 +36,11 @@ public class CustomizationUtil {
       }
     }
 
-    return new CashedAction(text, group.isPopup(), group, schema, defaultGroupName);
+    return new CachedAction(text, group.isPopup(), group, schema, defaultGroupName);
   }
 
 
-  private static AnAction [] getReordableChildren(ActionGroup group, CustomActionsSchema schema, String defaultGroupName, AnActionEvent e, boolean forceUpdate) {
+  private static AnAction [] getReordableChildren(ActionGroup group, CustomActionsSchema schema, String defaultGroupName, AnActionEvent e) {
      String text = group.getTemplatePresentation().getText();
      ActionManager actionManager = ActionManager.getInstance();
      final ArrayList<AnAction> reordableChildren = new ArrayList<AnAction>();
@@ -50,14 +50,17 @@ public class CustomizationUtil {
        ActionUrl actionUrl = iterator.next();
        if ((actionUrl.getParentGroup().equals(text) ||
             actionUrl.getParentGroup().equals(defaultGroupName) ||
-            actionUrl.getParentGroup().equals(actionManager.getId(group))) &&
-           reordableChildren.size() >= actionUrl.getAbsolutePosition()) {
+            actionUrl.getParentGroup().equals(actionManager.getId(group))) ) {
          AnAction componentAction = actionUrl.getComponentAction();
          if (componentAction != null) {
            if (actionUrl.getActionType() == ActionUrl.ADDED) {
-             reordableChildren.add(actionUrl.getAbsolutePosition(), componentAction);
+             if (reordableChildren.size() > actionUrl.getAbsolutePosition()){
+               reordableChildren.add(actionUrl.getAbsolutePosition(), componentAction);
+             } else {
+               reordableChildren.add(componentAction);
+             }
            }
-           else if (actionUrl.getActionType() == ActionUrl.DELETED && reordableChildren.size() != actionUrl.getAbsolutePosition()) {
+           else if (actionUrl.getActionType() == ActionUrl.DELETED && reordableChildren.size() > actionUrl.getAbsolutePosition()) {
              final AnAction anAction = reordableChildren.get(actionUrl.getAbsolutePosition());
              //for unnamed groups
              if (anAction.getTemplatePresentation().getText() == null && anAction instanceof ActionGroup) {
@@ -87,13 +90,13 @@ public class CustomizationUtil {
      return reordableChildren.toArray(new AnAction[reordableChildren.size()]);
    }
 
-  private static class CashedAction extends ActionGroup {
+  private static class CachedAction extends ActionGroup {
     private boolean myForceUpdate;
     private ActionGroup myGroup;
     private AnAction[] myChildren;
     private CustomActionsSchema mySchema;
     private String myDefaultGroupName;
-    public CashedAction(String shortName, boolean popup, final ActionGroup group, CustomActionsSchema schema, String defaultGroupName) {
+    public CachedAction(String shortName, boolean popup, final ActionGroup group, CustomActionsSchema schema, String defaultGroupName) {
       super(shortName, popup);
       myGroup = group;
       mySchema = schema;
@@ -103,15 +106,19 @@ public class CustomizationUtil {
 
     public AnAction[] getChildren(final AnActionEvent e) {
       if (myForceUpdate){
-        myChildren = getReordableChildren(myGroup, mySchema, myDefaultGroupName, e, myForceUpdate);
+        myChildren = getReordableChildren(myGroup, mySchema, myDefaultGroupName, e);
         myForceUpdate = false;
         return myChildren;
       } else {
         if (!(myGroup instanceof DefaultActionGroup) || myChildren == null){
-          myChildren = getReordableChildren(myGroup, mySchema, myDefaultGroupName, e, false);
+          myChildren = getReordableChildren(myGroup, mySchema, myDefaultGroupName, e);
         }
         return myChildren;
       }
+    }
+
+    public void update(AnActionEvent e) {
+      myGroup.update(e);
     }
   }
 
