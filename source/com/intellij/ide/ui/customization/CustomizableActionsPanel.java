@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.ui.*;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -221,7 +222,15 @@ public class CustomizableActionsPanel {
       }
     }, true);
 
-    controller.addRemoveAction("Remove customization schema");
+    final ReorderableListController<CustomActionsSchema>.RemoveActionDescription removeActionDescription = controller.addRemoveAction("Remove customization schema");
+    removeActionDescription.setEnableCondition(new Condition<CustomActionsSchema>() {
+      public boolean value(final CustomActionsSchema schema) {
+        if (schema.getName().equals("default")){
+          return false;
+        }
+        return true;
+      }
+    });
     controller.addCopyAction("Copy schema", new Convertor<CustomActionsSchema, CustomActionsSchema>() {
       public CustomActionsSchema convert(final CustomActionsSchema o) {
         final CustomActionsSchema customActionsSchema = o.copyFrom();
@@ -390,15 +399,21 @@ public class CustomizableActionsPanel {
     CustomizableActionsSchemas.getInstance().setActiveSchema(mySelectedSchema);
   }
 
-  public void apply(){
+  public void apply() throws ConfigurationException {
     final ArrayList<TreePath> treePaths = TreeUtil.collectExpandedPaths(myActionsTree);
     if (mySelectedSchema != null){
       CustomizationUtil.optimizeSchema(myActionsTree, mySelectedSchema);
     }
     final CustomizableActionsSchemas allSchemasComponent = CustomizableActionsSchemas.getInstance();
     allSchemasComponent.clear();
+    Set<String> names = new HashSet<String>();
     for (int i = 0; i < myCustomizationSchemas.getSize(); i++){
       final CustomActionsSchema schema = (CustomActionsSchema)myCustomizationSchemas.getElementAt(i);
+      final String name = schema.getName();
+      if (names.contains(name)){
+        throw new ConfigurationException("Please, specify new name for schema \'" + name + "\'.");
+      }
+      names.add(name);
       if (schema.isModified()){
         schema.resetMainActionGroups();
       }
