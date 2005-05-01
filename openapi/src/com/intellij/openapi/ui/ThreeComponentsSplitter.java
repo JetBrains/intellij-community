@@ -227,17 +227,17 @@ public class ThreeComponentsSplitter extends JPanel {
 
     if (myFirstComponent != null) {
       myFirstComponent.setBounds(firstRect);
-      myFirstComponent.validate();
+      myFirstComponent.revalidate();
     }
 
     if (myInnerComponent != null) {
       myInnerComponent.setBounds(innerRect);
-      myInnerComponent.validate();
+      myInnerComponent.revalidate();
     }
 
     if (myLastComponent != null) {
       myLastComponent.setBounds(lastRect);
-      myLastComponent.validate();
+      myLastComponent.revalidate();
     }
   }
 
