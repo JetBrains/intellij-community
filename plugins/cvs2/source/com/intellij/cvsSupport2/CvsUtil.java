@@ -270,7 +270,11 @@ public class CvsUtil {
     if (tag.startsWith(STICKY_DATE_PREFIX)) {
       return tag.substring(STICKY_DATE_PREFIX.length());
     }
-    return null;
+    if (tag.startsWith(STICKY_BRANCH_TAG_PREFIX)) {
+      return tag.substring(STICKY_BRANCH_TAG_PREFIX.length());
+    }
+    
+    return tag;
   }
 
   public static String loadStickyTagFrom(File file) {

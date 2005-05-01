@@ -23,17 +23,16 @@ import com.intellij.openapi.vcs.fileView.DualViewColumnInfo;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualTreeElement;
 import com.intellij.ui.dualView.DualView;
-import com.intellij.util.TreeItem;
 import com.intellij.util.Icons;
+import com.intellij.util.TreeItem;
 import com.intellij.util.text.LineReader;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.IdeaUIManager;
@@ -631,7 +630,7 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
 
       LvcsAction action = getVirtualFile() != null ? startLvcsAction(revision) : LvcsAction.EMPTY;
 
-      byte[] revisionContent = null;
+      final byte[] revisionContent;
       try {
         revision.loadContent();
         revisionContent = revision.getContent();
@@ -911,11 +910,7 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
     protected abstract Comparable getDataOf(Object o);
 
     public Comparator getComparator() {
-      return new Comparator() {
-        public int compare(Object o, Object o1) {
-          return getDataOf(o).compareTo(getDataOf(o1));
-        }
-      };
+      return this;
     }
 
     public Object valueOf(Object object) {

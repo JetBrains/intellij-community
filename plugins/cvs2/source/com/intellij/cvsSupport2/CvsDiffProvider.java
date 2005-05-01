@@ -26,7 +26,12 @@ public class CvsDiffProvider implements DiffProvider{
   }
 
   public VcsRevisionNumber getLastRevision(VirtualFile virtualFile) {
-    return new CvsRevisionNumber("HEAD");
+    final String stickyData = CvsUtil.getStickyDateForDirectory(virtualFile.getParent());
+    if (stickyData != null) {
+      return new CvsRevisionNumber(stickyData);
+    } else {
+      return new CvsRevisionNumber("HEAD");      
+    }
   }
 
   public VcsFileContent createFileContent(final VcsRevisionNumber revisionNumber, VirtualFile selectedFile) {
