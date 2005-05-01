@@ -3,9 +3,7 @@ package com.intellij.application.options;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.ex.Descriptor;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolsPanel;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -25,9 +23,16 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
     add(getAutoreparsePanel(), BorderLayout.NORTH);
   }
 
- 
+
   protected void initDescriptors() {
     super.initDescriptors();
+    InspectionTool[] tools = mySelectedProfile.getInspectionTools();
+    for (int i = 0; i < tools.length; i++) {
+      final InspectionTool tool = tools[i];
+      if (tool instanceof LocalInspectionToolWrapper) {
+        myDescriptors.add(new Descriptor(tool, mySelectedProfile));
+      }
+    }
     addGeneralDescriptors();
   }
 

@@ -68,10 +68,7 @@ public class Descriptor {
     myKey = key;
     myConfig = null;
     myEnabled = inspectionProfile.isToolEnabled(key);
-    myChooser = new InspectionToolsPanel.LevelChooser();
-    final HighlightDisplayLevel errorLevel = inspectionProfile.getErrorLevel(key);
-    myChooser.setLevel(errorLevel);
-    myLevel = errorLevel;
+    myLevel = inspectionProfile.getErrorLevel(key);
   }
 
   public Descriptor(InspectionTool tool, InspectionProfile.ModifiableModel inspectionProfile) {
@@ -90,13 +87,21 @@ public class Descriptor {
     if (myKey == null) {
       myKey = HighlightDisplayKey.register(tool.getShortName());
     }
-    myAdditionalConfigPanel = tool.createOptionsPanel();
-    myChooser = new InspectionToolsPanel.LevelChooser();
-    HighlightDisplayLevel level = inspectionProfile.getErrorLevel(myKey);
-    myChooser.setLevel(level);
-    myLevel = level;
+    myLevel = inspectionProfile.getErrorLevel(myKey);
     myEnabled = inspectionProfile.isToolEnabled(myKey);
     myTool = tool;
+  }
+
+  public boolean equals(Object obj) {
+    if (!(obj instanceof Descriptor)) return false;
+    final Descriptor descriptor = (Descriptor)obj;
+    return myKey.equals(descriptor.getKey()) &&
+           myLevel.equals(descriptor.getLevel()) &&
+           myEnabled == descriptor.isEnabled();
+  }
+
+  public int hashCode() {
+    return myKey.hashCode() + 29 * myLevel.hashCode();
   }
 
   public boolean isEnabled() {
@@ -120,6 +125,10 @@ public class Descriptor {
   }
 
   public JComponent getAdditionalConfigPanel(InspectionProfile.ModifiableModel inspectionProfile) {
+    if (myAdditionalConfigPanel == null && myTool != null){
+      myAdditionalConfigPanel = myTool.createOptionsPanel();
+      return myAdditionalConfigPanel;
+    }
     if (myKey.equals(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG)){
       myAdditionalConfigPanel = createAdditionalJavadocTagsPanel(inspectionProfile);
     } else if (myKey.equals(HighlightDisplayKey.UNUSED_SYMBOL)){
@@ -133,11 +142,11 @@ public class Descriptor {
   }
 
   public InspectionToolsPanel.LevelChooser getChooser() {
+    if (myChooser == null){
+      myChooser = new InspectionToolsPanel.LevelChooser();
+      myChooser.setLevel(myLevel);
+    }
     return myChooser;
-  }
-
-  public void setChooserLevel(HighlightDisplayLevel level) {
-    getChooser().setLevel(level);
   }
 
   public Element getConfig() {
