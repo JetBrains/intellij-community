@@ -663,7 +663,7 @@ public class BindingFactory {
                 }
                 else {
                   /* ? super T1, T2 */
-                  if (!xType.getCanonicalText().equals("java.lang.Object")) {
+                  if (xType != null && !xType.getCanonicalText().equals("java.lang.Object")) {
                     return null;
                   }
                   return create();
@@ -676,7 +676,7 @@ public class BindingFactory {
                     return create((PsiTypeVariable)yType, PsiWildcardType.createSuper(PsiManager.getInstance(myProject), xType));
                   }
                   else {
-                    if (constraints != null) {
+                    if (constraints != null && xType != null && yType != null) {
                       constraints.add(new Subtype(xType, yType));
                     }
 
@@ -688,7 +688,7 @@ public class BindingFactory {
                     return create(((PsiTypeVariable)yType), PsiWildcardType.createExtends(PsiManager.getInstance(myProject), xType));
                   }
                   else {
-                    if (constraints != null) {
+                    if (constraints != null && yType != null && xType != null) {
                       constraints.add(new Subtype(yType, xType));
                     }
 
@@ -699,13 +699,13 @@ public class BindingFactory {
            case 3:
                 switch ((((PsiWildcardType)x).isExtends() ? 0 : 1) + (((PsiWildcardType)y).isExtends() ? 0 : 2)) {
                 case 0: /* ? super T1, ? super T2 */
-                     if (constraints != null) {
+                     if (constraints != null && xType != null && yType != null) {
                        constraints.add(new Subtype(yType, xType));
                      }
                      return balance(xType, yType, balancer, constraints);
 
                 case 1: /* ? extends T1, ? super T2 */
-                     if (constraints != null) {
+                     if (constraints != null && xType != null && yType != null) {
                        constraints.add(new Subtype(xType, yType));
                      }
                      return balance(xType, yType, balancer, constraints);
@@ -714,7 +714,7 @@ public class BindingFactory {
                      return null;
 
                 case 3: /* ? extends T1, ? extends T2*/
-                     if (constraints != null) {
+                     if (constraints != null && xType != null && yType != null) {
                        constraints.add(new Subtype(xType, yType));
                      }
                      return balance(xType, yType, balancer, constraints);

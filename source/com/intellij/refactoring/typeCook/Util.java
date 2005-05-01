@@ -154,8 +154,24 @@ public class Util {
         final PsiTypeParameter theParm = p.next();
         final PsiType actualType = theSubst.substitute(theParm);
 
-        if (actualType == null || actualType instanceof PsiWildcardType) {
+        if (actualType == null /*|| actualType instanceof PsiWildcardType*/) {
           subst = subst.put(theParm, Bottom.BOTTOM);
+        }
+        else if (actualType instanceof PsiWildcardType) {
+          final PsiWildcardType wctype = (PsiWildcardType)actualType;
+          final PsiType bound = wctype.getBound();
+
+          if (bound == null) {
+            subst = subst.put(theParm, actualType);
+          }
+          else {
+            final PsiType banabound = banalize(bound);
+
+            subst = subst.put(theParm,
+                              wctype.isExtends()
+                              ? PsiWildcardType.createExtends(theManager, banabound)
+                              : PsiWildcardType.createSuper(theManager, banabound));
+          }
         }
         else {
           final PsiType banType = banalize(actualType);
@@ -404,7 +420,9 @@ public class Util {
               aType = ((PsiWildcardType)aType).getBound();
             }
 
-            list.add(factory.createTypeElement(aType == null ? PsiType.getJavaLangObject(list.getManager(), list.getResolveScope()) : aType));
+            list.add(factory.createTypeElement(aType == null
+                                               ? PsiType.getJavaLangObject(list.getManager(), list.getResolveScope())
+                                               : aType));
           }
         }
       }

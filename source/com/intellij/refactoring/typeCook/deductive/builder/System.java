@@ -222,6 +222,13 @@ public class System {
 
               }
             }
+            else if (t instanceof PsiWildcardType){
+              final PsiType bound = ((PsiWildcardType)t).getBound();
+
+              if (bound != null){
+                visit(bound);
+              }
+            }
           }
         }.visit(constraint);
 

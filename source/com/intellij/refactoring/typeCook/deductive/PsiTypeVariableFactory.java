@@ -113,8 +113,9 @@ public class PsiTypeVariableFactory {
                                    return Boolean.FALSE;
                                  }
 
-                                 for (final Iterator<PsiTypeParameter> p = aSubst.getSubstitutionMap().keySet().iterator(); p.hasNext();) {
-                                   final PsiTypeParameter parm = p.next();
+                                 final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aClass);
+                                 while (iterator.hasNext()) {
+                                   final PsiTypeParameter parm = iterator.next();
                                    final PsiType type = aSubst.substitute(parm);
 
                                    if (type != null){
