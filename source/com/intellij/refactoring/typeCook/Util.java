@@ -57,41 +57,36 @@ public class Util {
       PsiSubstitutor subst = result.getSubstitutor();
       PsiManager manager = aclass.getManager();
 
-      if (aclass.hasTypeParameters()) {
-        PsiTypeParameter[] parms = getTypeParametersList(aclass);
-        PsiSubstitutor newbst = PsiSubstitutor.EMPTY;
+      final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aclass);
+      PsiSubstitutor newbst = PsiSubstitutor.EMPTY;
+      boolean anyBottom = false;
+      while(iterator.hasNext()) {
+        final PsiTypeParameter typeParameter = iterator.next();
+        PsiType p = subst.substitute(typeParameter);
 
-        boolean anyBottom = false;
+        if (p != null) {
+          PsiType pp = normalize(p, objectBottom);
 
-        for (int i = 0; i < parms.length; i++) {
-          PsiType p = subst.substitute(parms[i]);
-
-          if (p != null) {
-            PsiType pp = normalize(p, objectBottom);
-
-            if (pp == null) {
-              return null;
-            }
-
-            if (pp == Bottom.BOTTOM || (objectBottom && pp.getCanonicalText().equals("java.lang.Object"))) {
-              anyBottom = true;
-            }
-
-            newbst = newbst.put(parms[i], pp);
+          if (pp == null) {
+            return null;
           }
-          else {
+
+          if (pp == Bottom.BOTTOM || (objectBottom && pp.getCanonicalText().equals("java.lang.Object"))) {
             anyBottom = true;
           }
-        }
 
-        if (anyBottom || newbst == PsiSubstitutor.EMPTY) {
-          newbst = manager.getElementFactory().createRawSubstitutor(aclass);
+          newbst = newbst.put(typeParameter, pp);
         }
-
-        return manager.getElementFactory().createType(aclass, newbst);
+        else {
+          anyBottom = true;
+        }
       }
 
-      return manager.getElementFactory().createType(aclass);
+      if (anyBottom || newbst == PsiSubstitutor.EMPTY) {
+        newbst = manager.getElementFactory().createRawSubstitutor(aclass);
+      }
+
+      return manager.getElementFactory().createType(aclass, newbst);
     }
     else {
       return t;
@@ -123,10 +118,9 @@ public class Util {
         return true;
       }
 
-      final PsiTypeParameter[] parameters = getTypeParametersList(element);
-
-      for (int i = 0; i < parameters.length; i++) {
-        final PsiType actual = subst.substitute(parameters[i]);
+      final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(element);
+      while(iterator.hasNext()) {
+        final PsiType actual = subst.substitute(iterator.next());
         if (!(actual instanceof PsiTypeParameter) && isRaw(actual, settings, false)) return true;
       }
 
@@ -224,10 +218,10 @@ public class Util {
       return params == null || params.contains(theClass);
     }
     else if (theClass.hasTypeParameters()) {
-      PsiTypeParameter[] parms = Util.getTypeParametersList(theClass);
+      final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(theClass);
 
-      for (int i = 0; i < parms.length; i++) {
-        PsiType bound = theSubst.substitute(parms[i]);
+      while(iterator.hasNext()) {
+        PsiType bound = theSubst.substitute(iterator.next());
 
         if (bound != null && bindsTypeParameters(bound, params)) {
           return true;

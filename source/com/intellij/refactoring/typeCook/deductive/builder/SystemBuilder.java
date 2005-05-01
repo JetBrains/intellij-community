@@ -232,10 +232,9 @@ public class SystemBuilder {
               }
               else {
                 final PsiClass cClass = method.getContainingClass();
-                final PsiTypeParameter[] classParms = Util.getTypeParametersList(cClass);
-
-                for (int i = 0; i < classParms.length; i++) {
-                  final PsiTypeParameter classParm = classParms[i];
+                final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(cClass);
+                while(iterator.hasNext()) {
+                  final PsiTypeParameter classParm = iterator.next();
                   final PsiTypeVariable var = myTypeVariableFactory.create();
 
                   qualifierSubstitutor = qualifierSubstitutor.put(classParm, var);
