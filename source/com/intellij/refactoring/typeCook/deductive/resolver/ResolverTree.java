@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.deductive.PsiExtendedTypeVisitor;
@@ -76,7 +77,7 @@ public class ResolverTree {
   }
 
   private boolean isBoundElseWhere(final PsiTypeVariable var) {
-    return myBindingDegree.get(var) != 1 ;
+    return myBindingDegree.get(var) != 1;
   }
 
   private boolean canBePruned(final Binding b) {
@@ -194,30 +195,30 @@ public class ResolverTree {
     }
 
     final DFSTBuilder<PsiTypeVariable> dfstBuilder = new DFSTBuilder<PsiTypeVariable>(new Graph<PsiTypeVariable>() {
-                                                                                        public Collection<PsiTypeVariable> getNodes() {
-                                                                                          return nodes;
-                                                                                        }
+      public Collection<PsiTypeVariable> getNodes() {
+        return nodes;
+      }
 
-                                                                                        public Iterator<PsiTypeVariable> getIn(final PsiTypeVariable n) {
-                                                                                          final HashSet<PsiTypeVariable> in = ins.get(n);
+      public Iterator<PsiTypeVariable> getIn(final PsiTypeVariable n) {
+        final HashSet<PsiTypeVariable> in = ins.get(n);
 
-                                                                                          if (in == null) {
-                                                                                            return new HashSet<PsiTypeVariable>().iterator();
-                                                                                          }
+        if (in == null) {
+          return new HashSet<PsiTypeVariable>().iterator();
+        }
 
-                                                                                          return in.iterator();
-                                                                                        }
+        return in.iterator();
+      }
 
-                                                                                        public Iterator<PsiTypeVariable> getOut(final PsiTypeVariable n) {
-                                                                                          final HashSet<PsiTypeVariable> out = outs.get(n);
+      public Iterator<PsiTypeVariable> getOut(final PsiTypeVariable n) {
+        final HashSet<PsiTypeVariable> out = outs.get(n);
 
-                                                                                          if (out == null) {
-                                                                                            return new HashSet<PsiTypeVariable>().iterator();
-                                                                                          }
+        if (out == null) {
+          return new HashSet<PsiTypeVariable>().iterator();
+        }
 
-                                                                                          return out.iterator();
-                                                                                        }
-                                                                                      });
+        return out.iterator();
+      }
+    });
 
     final LinkedList<Pair<Integer, Integer>> sccs = dfstBuilder.getSCCs();
     final HashMap<PsiTypeVariable, Integer> index = new HashMap<PsiTypeVariable, Integer>();
@@ -271,6 +272,29 @@ public class ResolverTree {
     if (sinkBinding != null) numSons++;
     Binding wcrdBinding = mySettings.cookToWildcards() ? myBindingFactory.riseWithWildcard(left, right, addendumWcrd) : null;
     if (wcrdBinding != null) numSons++;
+    Binding omitBinding = null;
+
+    if (mySettings.exhaustive()) {
+      final PsiClassType.ClassResolveResult rightResult = Util.resolveType(right);
+      final PsiClassType.ClassResolveResult leftResult = Util.resolveType(left);
+
+      final PsiClass rightClass = rightResult.getElement();
+      final PsiClass leftClass = leftResult.getElement();
+
+      if (rightClass != null && leftClass != null && rightClass.getManager().areElementsEquivalent(rightClass, leftClass)) {
+        if (PsiUtil.typeParametersIterator(rightClass).hasNext()) {
+          omitBinding = myBindingFactory.create();
+          numSons++;
+          for (PsiType type : rightResult.getSubstitutor().getSubstitutionMap().values()) {
+            if (! (type instanceof Bottom)) {
+              numSons--;
+              omitBinding = null;
+              break;
+            }
+          }
+        }
+      }
+    }
 
     if (numSons == 0) return;
 
@@ -279,7 +303,7 @@ public class ResolverTree {
       sinkBinding = null;
     }
 
-    if (riseBinding != null && wcrdBinding != null && riseBinding.equals(wcrdBinding)){
+    if (riseBinding != null && wcrdBinding != null && riseBinding.equals(wcrdBinding)) {
       numSons--;
       wcrdBinding = null;
     }
@@ -300,6 +324,10 @@ public class ResolverTree {
 
     if (wcrdBinding != null) {
       mySons[n++] = applyRule(wcrdBinding, addendumWcrd);
+    }
+
+    if (omitBinding != null) {
+      mySons[n++] = applyRule(omitBinding, addendumWcrd);
     }
   }
 
@@ -533,6 +561,37 @@ public class ResolverTree {
       }
 
       if (target == null) {
+        if (mySettings.exhaustive()) {
+          for (final Constraint constr : myConstraints) {
+            final PsiType left = constr.getLeft();
+            final PsiType right = constr.getRight();
+
+            PsiType[] range = null;
+            PsiTypeVariable var = null;
+
+            if (left instanceof PsiTypeVariable && !(right instanceof PsiTypeVariable)) {
+              range = getTypeRange(PsiType.getJavaLangObject(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject)),
+                                   right);
+              var = (PsiTypeVariable)left;
+            }
+
+            if (range == null && right instanceof PsiTypeVariable && !(left instanceof PsiTypeVariable)) {
+              range = new PsiType[]{right};
+              var = (PsiTypeVariable)right;
+            }
+
+            if (range != null) {
+              mySons = new ResolverTree[range.length];
+
+              for (int i = 0; i < range.length; i++) {
+                mySons[i] = applyRule(myBindingFactory.create(var, range[i]));
+              }
+
+              return;
+            }
+          }
+        }
+
         Binding binding = myBindingFactory.create();
 
         for (final PsiTypeVariable var : myBindingFactory.getBoundVariables()) {
@@ -588,42 +647,42 @@ public class ResolverTree {
 
   private void reduceTypeVar(final Constraint x, final Constraint y) {
     reduceSideVar(x, y, new Reducer() {
-                    public LinkedList<Pair<PsiType, Binding>> unify(final PsiType x, final PsiType y) {
-                      return myBindingFactory.intersect(x, y);
-                    }
+      public LinkedList<Pair<PsiType, Binding>> unify(final PsiType x, final PsiType y) {
+        return myBindingFactory.intersect(x, y);
+      }
 
-                    public Constraint create(final PsiTypeVariable var, final PsiType type) {
-                      return new Subtype(type, var);
-                    }
+      public Constraint create(final PsiTypeVariable var, final PsiType type) {
+        return new Subtype(type, var);
+      }
 
-                    public PsiType getType(final Constraint c) {
-                      return c.getLeft();
-                    }
+      public PsiType getType(final Constraint c) {
+        return c.getLeft();
+      }
 
-                    public PsiTypeVariable getVar(final Constraint c) {
-                      return (PsiTypeVariable)c.getRight();
-                    }
-                  });
+      public PsiTypeVariable getVar(final Constraint c) {
+        return (PsiTypeVariable)c.getRight();
+      }
+    });
   }
 
   private void reduceVarType(final Constraint x, final Constraint y) {
     reduceSideVar(x, y, new Reducer() {
-                    public LinkedList<Pair<PsiType, Binding>> unify(final PsiType x, final PsiType y) {
-                      return myBindingFactory.union(x, y);
-                    }
+      public LinkedList<Pair<PsiType, Binding>> unify(final PsiType x, final PsiType y) {
+        return myBindingFactory.union(x, y);
+      }
 
-                    public Constraint create(final PsiTypeVariable var, final PsiType type) {
-                      return new Subtype(var, type);
-                    }
+      public Constraint create(final PsiTypeVariable var, final PsiType type) {
+        return new Subtype(var, type);
+      }
 
-                    public PsiType getType(final Constraint c) {
-                      return c.getRight();
-                    }
+      public PsiType getType(final Constraint c) {
+        return c.getRight();
+      }
 
-                    public PsiTypeVariable getVar(final Constraint c) {
-                      return (PsiTypeVariable)c.getLeft();
-                    }
-                  });
+      public PsiTypeVariable getVar(final Constraint c) {
+        return (PsiTypeVariable)c.getLeft();
+      }
+    });
   }
 
   private void reduceSideVar(final Constraint x, final Constraint y, final Reducer reducer) {
