@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.jsp.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
@@ -336,6 +335,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       if (prev instanceof PsiStatement) break;
       if (prev instanceof PsiJavaToken && ((PsiJavaToken)prev).getTokenType() == JavaTokenType.LBRACE) break;
       child = prev;
+    }
+
+    while (child instanceof PsiWhiteSpace || child instanceof PsiComment) {
+      child = child.getNextSibling();
     }
     return child;
   }
