@@ -145,7 +145,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
       return captureWildcard ? arg : PsiType.NULL;
     } else {
       if (arg == null || arg.getDeepComponentType() instanceof PsiPrimitiveType ||
-          PsiUtil.resolveClassInType(arg) != null) {
+          PsiUtil.resolveClassInType(arg) != null || arg instanceof PsiTypeVariable) {
         return arg;
       }
     }
