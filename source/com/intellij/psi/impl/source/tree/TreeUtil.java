@@ -376,4 +376,8 @@ public class TreeUtil {
     element.setTreePrev(null);
     element.setTreeParent(null);
   }
+
+  public static ASTNode prevLeaf(final ASTNode node) {
+    return ParseUtil.prevLeaf((TreeElement)node, null);
+  }
 }
