@@ -5,7 +5,6 @@ import com.intellij.psi.*;
 import com.siyeh.ig.*;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public class SwitchStatementWithConfusingDeclarationInspection
@@ -42,22 +41,20 @@ public class SwitchStatementWithConfusingDeclarationInspection
         }
 
         public void visitSwitchStatement(PsiSwitchStatement statement){
-            final Set variablesInCurrentBranch = new HashSet(10);
-            final Set variablesInPreviousBranches = new HashSet(10);
+            final Set<PsiLocalVariable> variablesInCurrentBranch = new HashSet<PsiLocalVariable>(10);
+            final Set<PsiLocalVariable> variablesInPreviousBranches = new HashSet<PsiLocalVariable>(10);
             final PsiCodeBlock body = statement.getBody();
             if(body == null){
                 return;
             }
             final PsiStatement[] statements = body.getStatements();
-            for(int i = 0; i < statements.length; i++){
-                final PsiStatement child = statements[i];
+            for(final PsiStatement child : statements){
                 if(child instanceof PsiDeclarationStatement){
                     final PsiDeclarationStatement declaration =
                             (PsiDeclarationStatement) child;
                     final PsiElement[] declaredElements =
                             declaration.getDeclaredElements();
-                    for(int j = 0; j < declaredElements.length; j++){
-                        final PsiElement declaredElement = declaredElements[j];
+                    for(final PsiElement declaredElement : declaredElements){
                         if(declaredElement instanceof PsiLocalVariable){
                             final PsiLocalVariable localVar =
                                     (PsiLocalVariable) declaredElement;
@@ -72,11 +69,10 @@ public class SwitchStatementWithConfusingDeclarationInspection
                 final LocalVariableAccessVisitor visitor =
                         new LocalVariableAccessVisitor();
                 child.accept(visitor);
-                final Set accessedVariables = visitor.getAccessedVariables();
-                for(Iterator iterator = accessedVariables.iterator();
-                    iterator.hasNext();){
+                final Set<PsiElement> accessedVariables = visitor.getAccessedVariables();
+                for(Object accessedVariable : accessedVariables){
                     final PsiLocalVariable localVar =
-                            (PsiLocalVariable) iterator.next();
+                            (PsiLocalVariable) accessedVariable;
                     if(variablesInPreviousBranches.contains(localVar)){
                         variablesInPreviousBranches.remove(localVar);
                         registerVariableError(localVar);

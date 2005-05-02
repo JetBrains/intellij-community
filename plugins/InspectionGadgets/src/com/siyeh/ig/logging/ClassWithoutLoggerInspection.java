@@ -100,9 +100,8 @@ public class ClassWithoutLoggerInspection extends ClassInspection {
                 return;
             }
             final PsiField[] fields = aClass.getFields();
-            for (int i = 0; i < fields.length; i++) {
-                if(isLogger(fields[i]))
-                {
+            for(PsiField field : fields){
+                if(isLogger(field)){
                     return;
                 }
             }

@@ -15,9 +15,9 @@ public class ComparisonUtils {
     private ComparisonUtils() {
         super();
     }
-    private static final Map s_invertedComparisons = new HashMap(6);
-    private static final Set s_comparisonStrings = new HashSet(6);
-    private static final Map s_swappedComparisons = new HashMap(6);
+    private static final Map<String,String> s_invertedComparisons = new HashMap<String, String>(6);
+    private static final Set<String> s_comparisonStrings = new HashSet<String>(6);
+    private static final Map<String,String> s_swappedComparisons = new HashMap<String, String>(6);
 
     static {
         s_comparisonStrings.add("==");
@@ -58,7 +58,7 @@ public class ComparisonUtils {
     }
 
     public static String getFlippedComparison(String str) {
-        return (String) s_swappedComparisons.get(str);
+        return s_swappedComparisons.get(str);
     }
 
     public static boolean isEqualityComparison(PsiBinaryExpression operator) {
@@ -71,7 +71,7 @@ public class ComparisonUtils {
     }
 
     public static String getNegatedComparison(String str){
-        return (String) s_invertedComparisons.get(str);
+        return s_invertedComparisons.get(str);
     }
 
 }

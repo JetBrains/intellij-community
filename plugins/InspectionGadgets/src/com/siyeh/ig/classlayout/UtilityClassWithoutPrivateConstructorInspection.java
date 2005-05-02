@@ -85,9 +85,9 @@ public class UtilityClassWithoutPrivateConstructorInspection extends ClassInspec
 
     private static boolean hasPrivateConstructor(PsiClass aClass) {
         final PsiMethod[] methods = aClass.getMethods();
-        for (int i = 0; i < methods.length; i++) {
-            final PsiMethod method = methods[i];
-            if (method.isConstructor() && method.hasModifierProperty(PsiModifier.PRIVATE)) {
+        for(final PsiMethod method : methods){
+            if(method.isConstructor() && method
+                    .hasModifierProperty(PsiModifier.PRIVATE)){
                 return true;
             }
         }

@@ -18,7 +18,7 @@ public class ForLoopThatDoesntUseLoopVariableInspection
     }
 
     public String buildErrorString(PsiElement location){
-        final List compenentsMissing = new ArrayList(3);
+        final List<String> compenentsMissing = new ArrayList<String>(3);
         final PsiJavaToken forToken = (PsiJavaToken) location;
         final PsiForStatement forStatement =
                 (PsiForStatement) forToken.getParent();
@@ -32,7 +32,7 @@ public class ForLoopThatDoesntUseLoopVariableInspection
         final String missingComponents;
         final String doString;
         if(compenentsMissing.size() == 1){
-            missingComponents = (String) compenentsMissing.get(0);
+            missingComponents = compenentsMissing.get(0);
             doString = "does";
         } else{
             missingComponents = compenentsMissing.get(0) + " and " +

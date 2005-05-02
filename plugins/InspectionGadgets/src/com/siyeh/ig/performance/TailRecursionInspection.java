@@ -25,7 +25,7 @@ public class TailRecursionInspection extends ExpressionInspection{
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
         final PsiMethod containingMethod =
-                (PsiMethod) PsiTreeUtil.getParentOfType(location,
+                PsiTreeUtil.getParentOfType(location,
                                                         PsiMethod.class);
         if(mayBeReplacedByIterativeMethod(containingMethod)){
             return new RemoveTailRecursionFix();
@@ -42,8 +42,7 @@ public class TailRecursionInspection extends ExpressionInspection{
         final PsiParameterList parameterList =
                 containingMethod.getParameterList();
         final PsiParameter[] parameters = parameterList.getParameters();
-        for(int i = 0; i < parameters.length; i++){
-            final PsiParameter parameter = parameters[i];
+        for(final PsiParameter parameter : parameters){
             if(parameter.hasModifierProperty(PsiModifier.FINAL)){
                 return false;
             }
@@ -64,7 +63,7 @@ public class TailRecursionInspection extends ExpressionInspection{
                 final PsiElement methodNameToken =
                         descriptor.getPsiElement();
                 final PsiMethod method =
-                        (PsiMethod) PsiTreeUtil.getParentOfType(methodNameToken,
+                        PsiTreeUtil.getParentOfType(methodNameToken,
                                                                 PsiMethod.class);
 
                 final PsiCodeBlock body = method.getBody();
@@ -153,9 +152,9 @@ public class TailRecursionInspection extends ExpressionInspection{
                 if(children.length == 0){
                     out.append(text);
                 } else{
-                    for(int i = 0; i < children.length; i++){
-                        final PsiElement child = children[i];
-                        replaceTailCalls(child, method, out, containedTailCallInLoop);
+                    for(final PsiElement child : children){
+                        replaceTailCalls(child, method, out,
+                                         containedTailCallInLoop);
                     }
                 }
             }
@@ -199,7 +198,7 @@ public class TailRecursionInspection extends ExpressionInspection{
                 return;
             }
             final PsiMethod containingMethod =
-                    (PsiMethod) PsiTreeUtil.getParentOfType(statement,
+                    PsiTreeUtil.getParentOfType(statement,
                                                             PsiMethod.class);
             if(containingMethod == null){
                 return;

@@ -69,7 +69,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends Expression
                 return;
             }
             final PsiCodeBlock codeBlock =
-                    (PsiCodeBlock) PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+                    PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
             if (codeBlock == null) {
                 return;
             }

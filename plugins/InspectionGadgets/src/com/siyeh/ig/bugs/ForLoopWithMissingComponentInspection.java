@@ -18,7 +18,7 @@ public class ForLoopWithMissingComponentInspection extends StatementInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        final List components = new ArrayList(3);
+        final List<String> components = new ArrayList<String>(3);
         final PsiJavaToken forToken = (PsiJavaToken) location;
         final PsiForStatement forStatement = (PsiForStatement) forToken.getParent();
 
@@ -33,7 +33,7 @@ public class ForLoopWithMissingComponentInspection extends StatementInspection {
         }
         final String missingComponents;
         if (components.size() == 1) {
-            missingComponents = (String) components.get(0);
+            missingComponents = components.get(0);
         } else if (components.size() == 2) {
             missingComponents = components.get(0) + " and " + components.get(1);
         } else {

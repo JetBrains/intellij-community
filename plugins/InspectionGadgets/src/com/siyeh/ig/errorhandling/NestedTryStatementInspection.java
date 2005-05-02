@@ -32,7 +32,7 @@ public class NestedTryStatementInspection extends StatementInspection {
 
         public void visitTryStatement(PsiTryStatement statement) {
             super.visitTryStatement(statement);
-            final PsiTryStatement parentTry = (PsiTryStatement) PsiTreeUtil.getParentOfType(statement,
+            final PsiTryStatement parentTry = PsiTreeUtil.getParentOfType(statement,
                     PsiTryStatement.class);
             if (parentTry == null) {
                 return;

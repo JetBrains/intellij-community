@@ -113,7 +113,7 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
         if(constantValue == null){
             return false;
         }
-        final long constantLongValue = ((Long) constantValue).longValue();
+        final long constantLongValue = (Long) constantValue;
 
         final long constantMaskValue;
         final PsiExpression maskRhs = maskExpression.getROperand();
@@ -124,11 +124,11 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
             if (rhsValue == null) {
                 return false; // Might indeed be the case with "null" literal whoes constant value evaluates to null. Check out (a|null) case.
             }
-            constantMaskValue = ((Long) rhsValue).longValue();
+            constantMaskValue = ((Long) rhsValue);
         } else{
             final Object lhsValue =
                     ConstantExpressionUtil.computeCastTo(maskLhs, PsiType.LONG);
-            constantMaskValue = ((Long) lhsValue).longValue();
+            constantMaskValue = ((Long) lhsValue);
         }
 
         if(tokenType.equals(JavaTokenType.OR)){

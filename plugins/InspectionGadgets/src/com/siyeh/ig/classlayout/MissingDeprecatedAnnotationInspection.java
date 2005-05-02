@@ -144,8 +144,7 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
         if(annotations == null){
             return false;
         }
-        for(int i = 0; i < annotations.length; i++){
-            final PsiAnnotation annotation = annotations[i];
+        for(final PsiAnnotation annotation : annotations){
             final PsiJavaCodeReferenceElement reference = annotation.getNameReferenceElement();
             final PsiClass annotationClass =
                     (PsiClass) reference.resolve();
@@ -167,8 +166,8 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
             return false;
         }
         final PsiDocTag[] tags = comment.getTags();
-        for(int i = 0; i < tags.length; i++){
-            final String tagName = tags[i].getName();
+        for(PsiDocTag tag : tags){
+            final String tagName = tag.getName();
             if("deprecated".equals(tagName)){
                 return true;
             }

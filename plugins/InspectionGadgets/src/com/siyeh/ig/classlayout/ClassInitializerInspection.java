@@ -38,9 +38,8 @@ public class ClassInitializerInspection extends ClassInspection {
         public void visitClass(PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes
             final PsiClassInitializer[] initializers = aClass.getInitializers();
-            for (int i = 0; i < initializers.length; i++) {
-                final PsiClassInitializer initializer = initializers[i];
-                if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
+            for(final PsiClassInitializer initializer : initializers){
+                if(!initializer.hasModifierProperty(PsiModifier.STATIC)){
                     final PsiCodeBlock body = initializer.getBody();
                     final PsiJavaToken leftBrace = body.getLBrace();
                     registerError(leftBrace);

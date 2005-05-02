@@ -6,8 +6,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 class VariableAccessVisitor extends PsiRecursiveElementVisitor {
-    private final Set m_synchronizedAccesses = new HashSet(2);
-    private final Set m_unsynchronizedAccesses = new HashSet(2);
+    private final Set<PsiElement> m_synchronizedAccesses = new HashSet<PsiElement>(2);
+    private final Set<PsiElement> m_unsynchronizedAccesses = new HashSet<PsiElement>(2);
     private boolean m_inInitializer = false;
     private boolean m_inSynchronizedContext = false;
 
@@ -73,8 +73,8 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor {
         m_inInitializer = false;
     }
 
-    public Set getInappropriatelyAccessedFields() {
-        final Set out = new HashSet(m_synchronizedAccesses);
+    public Set<PsiElement> getInappropriatelyAccessedFields() {
+        final Set<PsiElement> out = new HashSet<PsiElement>(m_synchronizedAccesses);
         out.retainAll(m_unsynchronizedAccesses);
         return out;
     }

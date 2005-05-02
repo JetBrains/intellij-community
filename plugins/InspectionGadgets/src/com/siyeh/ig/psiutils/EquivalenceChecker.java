@@ -125,16 +125,16 @@ public class EquivalenceChecker{
                                                               PsiDeclarationStatement statement2){
         final PsiElement[] elements1 = statement1.getDeclaredElements();
         final List vars1 = new ArrayList(elements1.length);
-        for(int i = 0; i < elements1.length; i++){
-            if(elements1[i] instanceof PsiLocalVariable){
-                vars1.add(elements1[i]);
+        for(PsiElement aElements1 : elements1){
+            if(aElements1 instanceof PsiLocalVariable){
+                vars1.add(aElements1);
             }
         }
         final PsiElement[] elements2 = statement2.getDeclaredElements();
         final List vars2 = new ArrayList(elements2.length);
-        for(int i = 0; i < elements2.length; i++){
-            if(elements2[i] instanceof PsiLocalVariable){
-                vars2.add(elements2[i]);
+        for(PsiElement aElements2 : elements2){
+            if(aElements2 instanceof PsiLocalVariable){
+                vars2.add(aElements2);
             }
         }
         if(vars1.size() != vars2.size()){

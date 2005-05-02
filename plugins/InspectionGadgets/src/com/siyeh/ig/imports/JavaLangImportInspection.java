@@ -45,8 +45,8 @@ public class JavaLangImportInspection extends ClassInspection {
             }
             final PsiImportList importList = file.getImportList();
             final PsiImportStatement[] importStatements = importList.getImportStatements();
-            for (int i = 0; i < importStatements.length; i++) {
-                checkImportStatment(importStatements[i], file);
+            for(PsiImportStatement importStatement : importStatements){
+                checkImportStatment(importStatement, file);
             }
         }
 

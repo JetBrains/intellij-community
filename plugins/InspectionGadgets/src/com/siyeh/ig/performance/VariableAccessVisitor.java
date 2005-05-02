@@ -6,10 +6,10 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import java.util.*;
 
 class VariableAccessVisitor extends PsiRecursiveElementVisitor {
-    private final Map m_accessCounts = new HashMap(2);
-    private final Set m_overAccessedFields = new HashSet(2);
-    private static final Integer ONE = new Integer(1);
-    private static final Integer TWO = new Integer(2);
+    private final Map<PsiElement,Integer> m_accessCounts = new HashMap<PsiElement, Integer>(2);
+    private final Set<PsiElement> m_overAccessedFields = new HashSet<PsiElement>(2);
+    private static final Integer ONE = 1;
+    private static final Integer TWO = 2;
 
     VariableAccessVisitor() {
         super();
@@ -26,15 +26,15 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor {
         if (!(element instanceof PsiField)) {
             return;
         }
-        final Set overAccessedFields = m_overAccessedFields;
+        final Set<PsiElement> overAccessedFields = m_overAccessedFields;
         if (overAccessedFields.contains(element)) {
             return;
         }
         if (ControlFlowUtils.isInLoop(element)) {
             overAccessedFields.add(element);
         }
-        final Map accessCounts = m_accessCounts;
-        final Integer count = (Integer) accessCounts.get(element);
+        final Map<PsiElement,Integer> accessCounts = m_accessCounts;
+        final Integer count = accessCounts.get(element);
         if (count == null) {
             accessCounts.put(element, ONE);
         } else if (count.equals(ONE)) {
@@ -44,7 +44,7 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public Set getOveraccessedFields() {
+    public Set<PsiElement> getOveraccessedFields() {
         return Collections.unmodifiableSet(m_overAccessedFields);
     }
 }

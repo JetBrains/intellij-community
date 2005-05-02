@@ -43,7 +43,7 @@ public class StringBufferReplaceableByStringInspection
             super.visitLocalVariable(variable);
 
             final PsiCodeBlock codeBlock =
-                    (PsiCodeBlock) PsiTreeUtil.getParentOfType(variable,
+                    PsiTreeUtil.getParentOfType(variable,
                                                                PsiCodeBlock.class);
             if(codeBlock == null){
                 return;

@@ -42,12 +42,11 @@ public class OnDemandImportInspection extends ClassInspection {
             final PsiImportList importList = file.getImportList();
             if (importList != null) {
                 final PsiImportStatement[] importStatements = importList.getImportStatements();
-                for (int i = 0; i < importStatements.length; i++) {
-                    final PsiImportStatement importStatement = importStatements[i];
+                for(final PsiImportStatement importStatement : importStatements){
                     final PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
 
-                    if (importStatement.isOnDemand()) {
-                        if (reference != null) {
+                    if(importStatement.isOnDemand()){
+                        if(reference != null){
                             registerError(reference);
                         }
                     }

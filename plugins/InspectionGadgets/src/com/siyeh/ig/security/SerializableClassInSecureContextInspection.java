@@ -43,10 +43,9 @@ public class SerializableClassInSecureContextInspection extends ClassInspection 
                 return;
             }
             final PsiMethod[] methods = aClass.getMethods();
-            for (int i = 0; i < methods.length; i++) {
-                final PsiMethod method = methods[i];
-                if (SerializationUtils.isWriteObject(method)) {
-                    if (ControlFlowUtils.methodAlwaysThrowsException(method)) {
+            for(final PsiMethod method : methods){
+                if(SerializationUtils.isWriteObject(method)){
+                    if(ControlFlowUtils.methodAlwaysThrowsException(method)){
                         return;
                     }
                 }

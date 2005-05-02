@@ -7,10 +7,8 @@ import com.siyeh.ig.psiutils.LibraryUtil;
 import java.util.*;
 
 class ClassAccessVisitor extends PsiRecursiveElementVisitor {
-    private final Map m_accessCounts = new HashMap(2);
-    private final Set m_overAccessedClasses = new HashSet(2);
-    private static final Integer ONE = new Integer(1);
-    private static final Integer TWO = new Integer(2);
+    private final Map<PsiClass,Integer> m_accessCounts = new HashMap<PsiClass, Integer>(2);
+    private final Set<PsiClass> m_overAccessedClasses = new HashSet<PsiClass>(2);
     private final PsiClass currentClass;
 
     ClassAccessVisitor(PsiClass currentClass) {
@@ -28,7 +26,7 @@ class ClassAccessVisitor extends PsiRecursiveElementVisitor {
         if (currentClass.equals(calledClass)) {
             return;
         }
-        final Set overAccessedClasses = m_overAccessedClasses;
+        final Set<PsiClass> overAccessedClasses = m_overAccessedClasses;
         if(overAccessedClasses.contains(calledClass)){
             return;
         }
@@ -48,21 +46,21 @@ class ClassAccessVisitor extends PsiRecursiveElementVisitor {
             if(lexicallyEnclosingClass.isInheritor(calledClass, true)){
                 return;
             }
-            lexicallyEnclosingClass = (PsiClass) PsiTreeUtil.getParentOfType(lexicallyEnclosingClass,
+            lexicallyEnclosingClass = PsiTreeUtil.getParentOfType(lexicallyEnclosingClass,
                                                                              PsiClass.class);
         }
-        final Map accessCounts = m_accessCounts;
-        final Integer count = (Integer) accessCounts.get(calledClass);
+        final Map<PsiClass,Integer> accessCounts = m_accessCounts;
+        final Integer count = accessCounts.get(calledClass);
         if (count == null) {
-            accessCounts.put(calledClass, ONE);
-        } else if (count.equals(ONE)) {
-            accessCounts.put(calledClass, TWO);
+            accessCounts.put(calledClass, 1);
+        } else if (count.equals(1)) {
+            accessCounts.put(calledClass, 2);
         } else {
             overAccessedClasses.add(calledClass);
         }
     }
 
-    public Set getOveraccessedClasses() {
+    public Set<PsiClass> getOveraccessedClasses() {
         return Collections.unmodifiableSet(m_overAccessedClasses);
     }
 }

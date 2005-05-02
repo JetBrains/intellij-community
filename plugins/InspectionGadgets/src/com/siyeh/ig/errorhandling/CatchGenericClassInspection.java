@@ -39,16 +39,15 @@ public class CatchGenericClassInspection extends StatementInspection {
             final PsiManager manager = statement.getManager();
             final PsiElementFactory factory = manager.getElementFactory();
 
-            final Set exceptionsThrown =
+            final Set<PsiType> exceptionsThrown =
                     ExceptionUtils.calculateExceptionsThrown(tryBlock, factory);
             final PsiParameter[] parameters = statement.getCatchBlockParameters();
-            for (int i = 0; i < parameters.length; i++) {
-                final PsiParameter parameter = parameters[i];
+            for(final PsiParameter parameter : parameters){
                 checkParameter(parameter, exceptionsThrown);
             }
         }
 
-        private void checkParameter(PsiParameter parameter, Set exceptionsThrown) {
+        private void checkParameter(PsiParameter parameter, Set<PsiType> exceptionsThrown) {
             final PsiType type = parameter.getType();
             if (type == null) {
                 return;

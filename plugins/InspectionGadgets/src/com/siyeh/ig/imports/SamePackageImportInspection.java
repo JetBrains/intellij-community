@@ -45,19 +45,19 @@ public class SamePackageImportInspection extends ClassInspection {
             final String packageName = file.getPackageName();
             final PsiImportList importList = file.getImportList();
             final PsiImportStatement[] importStatements = importList.getImportStatements();
-            for (int i = 0; i < importStatements.length; i++) {
-                final PsiImportStatement importStatement = importStatements[i];
+            for(final PsiImportStatement importStatement : importStatements){
                 final PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
-                if (reference != null) {
+                if(reference != null){
                     final String text = importStatement.getQualifiedName();
-                    if (importStatement.isOnDemand()) {
-                        if (packageName.equals(text)) {
+                    if(importStatement.isOnDemand()){
+                        if(packageName.equals(text)){
                             registerError(importStatement);
                         }
-                    } else {
+                    } else{
                         final int classNameIndex = text.lastIndexOf((int) '.');
-                        final String parentName = classNameIndex < 0 ? "" : text.substring(0, classNameIndex);
-                        if (packageName.equals(parentName)) {
+                        final String parentName = classNameIndex < 0?"":
+                                text.substring(0, classNameIndex);
+                        if(packageName.equals(parentName)){
                             registerError(importStatement);
                         }
                     }

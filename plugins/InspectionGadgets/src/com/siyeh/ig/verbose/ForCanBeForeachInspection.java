@@ -221,13 +221,11 @@ public class ForCanBeForeachInspection extends StatementInspection{
                     out.append(element.getText());
                 } else{
                     boolean skippingWhiteSpace = false;
-                    for(int i = 0; i < children.length; i++){
-                        final PsiElement child = children[i];
-
+                    for(final PsiElement child : children){
                         if(child.equals(childToSkip)){
                             skippingWhiteSpace = true;
                         } else if(child instanceof PsiWhiteSpace &&
-                                        skippingWhiteSpace){
+                                skippingWhiteSpace){
                             //don't do anything
                         } else{
                             skippingWhiteSpace = false;
@@ -254,13 +252,11 @@ public class ForCanBeForeachInspection extends StatementInspection{
                     out.append(element.getText());
                 } else{
                     boolean skippingWhiteSpace = false;
-                    for(int i = 0; i < children.length; i++){
-                        final PsiElement child = children[i];
-
+                    for(final PsiElement child : children){
                         if(child.equals(childToSkip)){
                             skippingWhiteSpace = true;
                         } else if(child instanceof PsiWhiteSpace &&
-                                        skippingWhiteSpace){
+                                skippingWhiteSpace){
                             //don't do anything
                         } else{
                             skippingWhiteSpace = false;

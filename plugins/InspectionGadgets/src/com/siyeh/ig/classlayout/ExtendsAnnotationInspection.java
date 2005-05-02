@@ -59,11 +59,10 @@ public class ExtendsAnnotationInspection extends ClassInspection{
             if(extendsList != null){
                 final PsiJavaCodeReferenceElement[] elements =
                         extendsList.getReferenceElements();
-                for(int i = 0; i < elements.length; i++){
-                    final PsiJavaCodeReferenceElement element = elements[i];
+                for(final PsiJavaCodeReferenceElement element : elements){
                     final PsiElement referent = element.resolve();
                     if(referent instanceof PsiClass){
-                                ((PsiClass) referent).isAnnotationType();
+                        ((PsiClass) referent).isAnnotationType();
                         if(((PsiClass) referent).isAnnotationType()){
                             registerError(element);
                         }
@@ -74,11 +73,10 @@ public class ExtendsAnnotationInspection extends ClassInspection{
             if(implementsList != null){
                 final PsiJavaCodeReferenceElement[] elements =
                         implementsList.getReferenceElements();
-                for(int i = 0; i < elements.length; i++){
-                    final PsiJavaCodeReferenceElement element = elements[i];
+                for(final PsiJavaCodeReferenceElement element : elements){
                     final PsiElement referent = element.resolve();
                     if(referent instanceof PsiClass){
-                                ((PsiClass) referent).isAnnotationType();
+                        ((PsiClass) referent).isAnnotationType();
                         if(((PsiClass) referent).isAnnotationType()){
                             registerError(element);
                         }

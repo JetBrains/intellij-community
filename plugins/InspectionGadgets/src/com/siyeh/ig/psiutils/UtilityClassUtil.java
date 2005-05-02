@@ -34,9 +34,8 @@ public class UtilityClassUtil {
     private static boolean allFieldsStatic(PsiClass aClass) {
         boolean allFieldsStatic = true;
         final PsiField[] fields = aClass.getFields();
-        for (int i = 0; i < fields.length; i++) {
-            final PsiField field = fields[i];
-            if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+        for(final PsiField field : fields){
+            if(!field.hasModifierProperty(PsiModifier.STATIC)){
                 allFieldsStatic = false;
             }
         }
@@ -45,10 +44,9 @@ public class UtilityClassUtil {
 
     private static boolean allMethodsStatic(PsiClass aClass) {
         final PsiMethod[] methods = aClass.getMethods();
-        for (int i = 0; i < methods.length; i++) {
-            final PsiMethod method = methods[i];
-            if (!(method.isConstructor() ||
-                    method.hasModifierProperty(PsiModifier.STATIC))) {
+        for(final PsiMethod method : methods){
+            if(!(method.isConstructor() ||
+                    method.hasModifierProperty(PsiModifier.STATIC))){
                 return false;
             }
         }

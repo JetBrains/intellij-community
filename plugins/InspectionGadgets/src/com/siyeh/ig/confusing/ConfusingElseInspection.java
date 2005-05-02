@@ -50,7 +50,7 @@ public class ConfusingElseInspection extends StatementInspection {
                 return;
             }
 
-            final PsiStatement nextStatement = (PsiStatement)PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
+            final PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
 
             if (nextStatement == null) {
                 return;

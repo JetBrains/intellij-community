@@ -35,7 +35,7 @@ public class OverridableMethodCallInConstructorInspection extends MethodInspecti
         public void visitMethodCallExpression(PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiMethod method =
-                    (PsiMethod) PsiTreeUtil.getParentOfType(call,
+                    PsiTreeUtil.getParentOfType(call,
                                                             PsiMethod.class);
             if(method == null) {
                 return;

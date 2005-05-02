@@ -6,7 +6,6 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public class TooBroadCatchInspection extends StatementInspection {
@@ -43,20 +42,19 @@ public class TooBroadCatchInspection extends StatementInspection {
             if (tryBlock == null) {
                 return;
             }
-            final Set exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(tryBlock, factory);
+            final Set<PsiType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(tryBlock, factory);
             final int numExceptionsThrown = exceptionsThrown.size();
-            final Set exceptionsCaught = new HashSet(numExceptionsThrown);
+            final Set<PsiType> exceptionsCaught = new HashSet<PsiType>(numExceptionsThrown);
             final PsiParameter[] parameters = statement.getCatchBlockParameters();
-            for (int i = 0; i < parameters.length; i++) {
-                final PsiParameter parameter = parameters[i];
+            for(final PsiParameter parameter : parameters){
                 final PsiType typeCaught = parameter.getType();
-                for (Iterator iterator = exceptionsThrown.iterator(); iterator.hasNext();) {
-                    final PsiType typeThrown = (PsiType) iterator.next();
-                    if (exceptionsCaught.contains(typeThrown)) {
+                for(Object aExceptionsThrown : exceptionsThrown){
+                    final PsiType typeThrown = (PsiType) aExceptionsThrown;
+                    if(exceptionsCaught.contains(typeThrown)){
                         // don't do anything
-                    } else if (typeCaught.equals(typeThrown)) {
+                    } else if(typeCaught.equals(typeThrown)){
                         exceptionsCaught.add(typeCaught);
-                    } else if (typeCaught.isAssignableFrom(typeThrown)) {
+                    } else if(typeCaught.isAssignableFrom(typeThrown)){
                         exceptionsCaught.add(typeCaught);
                         final String typeThrownText = typeThrown.getPresentableText();
                         final PsiTypeElement typeElement = parameter.getTypeElement();

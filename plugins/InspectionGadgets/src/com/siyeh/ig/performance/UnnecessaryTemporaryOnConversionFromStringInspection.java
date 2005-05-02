@@ -12,9 +12,9 @@ import java.util.Map;
 
 public class UnnecessaryTemporaryOnConversionFromStringInspection extends ExpressionInspection {
     /** @noinspection StaticCollection*/
-    private static final Map s_basicTypeMap = new HashMap(6);
+    private static final Map<String,String> s_basicTypeMap = new HashMap<String, String>(6);
     /** @noinspection StaticCollection*/
-    private static final Map s_conversionMap = new HashMap(6);
+    private static final Map<String,String> s_conversionMap = new HashMap<String, String>(6);
 
     static {
         s_basicTypeMap.put("java.lang.Short", "shortValue");
@@ -58,7 +58,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends Expres
         final String qualifierType = type.getPresentableText();
         final String canonicalType = type.getCanonicalText();
 
-        final String conversionName = (String) s_conversionMap.get(canonicalType);
+        final String conversionName = s_conversionMap.get(canonicalType);
         if (TypeUtils.typeEquals("java.lang.Boolean", type)) {
             return qualifierType + '.' + conversionName + '(' + arg.getText() + ").booleanValue()";
         } else {
@@ -109,7 +109,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends Expres
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            final Map basicTypeMap = s_basicTypeMap;
+            final Map<String,String> basicTypeMap = s_basicTypeMap;
             if(!basicTypeMap.containsValue(methodName)){
                 return;
             }
@@ -136,7 +136,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends Expres
             if(!basicTypeMap.containsKey(typeText)){
                 return;
             }
-            final Object mappingMethod = basicTypeMap.get(typeText);
+            final String mappingMethod = basicTypeMap.get(typeText);
             if(!mappingMethod.equals(methodName)){
                 return;
             }

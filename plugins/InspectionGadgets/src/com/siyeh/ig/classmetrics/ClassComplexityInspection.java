@@ -69,8 +69,7 @@ public class ClassComplexityInspection
         final ComplexityVisitor visitor = new ComplexityVisitor();
         int complexity = 0;
         final PsiClassInitializer[] initializers = aClass.getInitializers();
-        for (int i = 0; i < initializers.length; i++) {
-            final PsiClassInitializer initializer = initializers[i];
+        for(final PsiClassInitializer initializer : initializers){
             visitor.reset();
             initializer.accept(visitor);
             complexity += visitor.getComplexity();
@@ -81,8 +80,7 @@ public class ClassComplexityInspection
     private static int calculateComplexityForMethods(PsiMethod[] methods) {
         final ComplexityVisitor visitor = new ComplexityVisitor();
         int complexity = 0;
-        for (int i = 0; i < methods.length; i++) {
-            final PsiMethod method = methods[i];
+        for(final PsiMethod method : methods){
             visitor.reset();
             method.accept(visitor);
             complexity += visitor.getComplexity();

@@ -38,10 +38,7 @@ import com.siyeh.ig.threading.*;
 import com.siyeh.ig.verbose.*;
 import com.siyeh.ig.visibility.*;
 import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
-import com.siyeh.ig.j2me.AbstractClassWithOnlyOneDirectInheritorInspection;
-import com.siyeh.ig.j2me.InterfaceWithOnlyOneDirectInheritorInspection;
-import com.siyeh.ig.j2me.OverlyLargePrimitiveArrayInitializerInspection;
-import com.siyeh.ig.j2me.CheckForOutOfMemoryOnLargeArrayAllocationInspection;
+import com.siyeh.ig.j2me.*;
 
 import java.io.*;
 import java.util.*;
@@ -49,7 +46,7 @@ import java.util.*;
 public class InspectionGadgetsPlugin implements ApplicationComponent,
                                                 InspectionToolProvider{
     private static final int NUM_INSPECTIONS = 420;
-    private final List m_inspectionClasses = new ArrayList(NUM_INSPECTIONS);
+    private final List<Class> m_inspectionClasses = new ArrayList<Class>(NUM_INSPECTIONS);
     private static final String DESCRIPTION_DIRECTORY_NAME =
             "C:/My Open Source Projects/InspectionGadgetsSVN/src/inspectionDescriptions/";
     private final InspectionGadgetsTelemetry telemetry = new InspectionGadgetsTelemetry();
@@ -81,8 +78,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         out.println(classes.length + " Inspections");
         out.println(numQuickFixes + " Quick Fixes");
 
-        for(int i = 0; i < classes.length; i++){
-            final Class aClass = classes[i];
+        for(final Class aClass : classes){
             final String className = aClass.getName();
             try{
                 final LocalInspectionTool inspection =
@@ -110,15 +106,13 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
 
         out.println();
         out.println("Inspections enabled by default:");
-        for(int i = 0; i < classes.length; i++){
-            final Class aClass = classes[i];
+        for(final Class aClass : classes){
             final String className = aClass.getName();
             try{
                 final LocalInspectionTool inspection =
                         (LocalInspectionTool) aClass.newInstance();
-                if(inspection.isEnabledByDefault())
-                {
-                    out.println("\t"+inspection.getDisplayName());
+                if(inspection.isEnabledByDefault()){
+                    out.println('\t' + inspection.getDisplayName());
                 }
             } catch(InstantiationException e){
                 out.print("Couldn't instantiate ");
@@ -133,19 +127,18 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         }
         final File descriptionDirectory = new File(DESCRIPTION_DIRECTORY_NAME);
         final File[] descriptionFiles = descriptionDirectory.listFiles();
-        final Set descriptionFilesSet = new HashSet(descriptionFiles.length);
-        for(int i = 0; i < descriptionFiles.length; i++){
-            if(!descriptionFiles[i].getName().startsWith(".")){
-                descriptionFilesSet.add(descriptionFiles[i]);
+        final Set<File> descriptionFilesSet = new HashSet<File>(descriptionFiles.length);
+        for(File descriptionFile1 : descriptionFiles){
+            if(!descriptionFile1.getName().startsWith(".")){
+                descriptionFilesSet.add(descriptionFile1);
             }
         }
-        for(int i = 0; i < classes.length; i++){
-            final Class aClass = classes[i];
+        for(final Class aClass : classes){
             final String className = aClass.getName();
             final String simpleClassName =
                     className.substring(className.lastIndexOf('.') + 1,
                                         className.length() -
-                    "Inspection".length());
+                                                "Inspection".length());
             final String fileName =
                     DESCRIPTION_DIRECTORY_NAME + simpleClassName + ".html";
             final File descriptionFile = new File(fileName);
@@ -155,9 +148,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
                 out.println("Couldn't find documentation file: " + fileName);
             }
         }
-        for(Iterator unusedDescriptionFiles = descriptionFilesSet.iterator();
-            unusedDescriptionFiles.hasNext();){
-            final File file = (File) unusedDescriptionFiles.next();
+        for(final File file : descriptionFilesSet){
             out.println("Unused documentation file: " + file.getAbsolutePath());
         }
     }
@@ -181,15 +172,14 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
 
     private static int countQuickFixes(Class[] classes, PrintStream out){
         int numQuickFixes = 0;
-        for(int i = 0; i < classes.length; i++){
-            final Class aClass = classes[i];
+        for(final Class aClass : classes){
             final String className = aClass.getName();
             try{
                 final LocalInspectionTool inspection =
                         (LocalInspectionTool) aClass.newInstance();
-                    if(((BaseInspection) inspection).hasQuickFix()){
-                        numQuickFixes++;
-                    }
+                if(((BaseInspection) inspection).hasQuickFix()){
+                    numQuickFixes++;
+                }
             } catch(InstantiationException e){
                 out.print("Couldn't instantiate ");
                 out.println(className);
@@ -206,7 +196,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
 
     public static InspectionGadgetsPlugin getInstance(){
         final Application application = ApplicationManager.getApplication();
-        return (InspectionGadgetsPlugin) application.getComponent(InspectionGadgetsPlugin.class);
+        return application.getComponent(InspectionGadgetsPlugin.class);
     }
 
     public String getComponentName(){
@@ -215,7 +205,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
 
     public Class[] getInspectionClasses(){
         final int numInspections = m_inspectionClasses.size();
-        return (Class[]) m_inspectionClasses.toArray(new Class[numInspections]);
+        return m_inspectionClasses.toArray(new Class[numInspections]);
     }
 
     public void initComponent(){
@@ -250,7 +240,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerResourceManagementInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(JNDIResourceInspection.class);
         inspectionClasses.add(SocketResourceInspection.class);
         inspectionClasses.add(IOResourceInspection.class);
@@ -259,14 +249,14 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerLoggingInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(ClassWithoutLoggerInspection.class);
         inspectionClasses.add(ClassWithMultipleLoggersInspection.class);
         inspectionClasses.add(NonStaticFinalLoggerInspection.class);
     }
 
     private void registerSecurityInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(DeserializableClassInSecureContextInspection.class);
         inspectionClasses.add(SerializableClassInSecureContextInspection.class);
         inspectionClasses.add(CloneableClassInSecureContextInspection.class);
@@ -283,7 +273,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerImportInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(UnusedImportInspection.class);
         inspectionClasses.add(RedundantImportInspection.class);
         inspectionClasses.add(OnDemandImportInspection.class);
@@ -294,7 +284,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerNamingInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         //inspectionClasses.add(PackageNamingConventionInspection.class);
         inspectionClasses.add(JUnitTestClassNamingConventionInspection.class);
         inspectionClasses.add(JUnitAbstractTestClassNamingConventionInspection.class);
@@ -324,7 +314,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerBugInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(IntegerDivisionInFloatingPointContextInspection.class);
         inspectionClasses.add(NonShortCircuitBooleanInspection.class);
         inspectionClasses.add(ComparisonOfShortAndCharInspection.class);
@@ -383,7 +373,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerAbstractionInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(DuplicateStringLiteralInspection.class);
         inspectionClasses.add(FeatureEnvyInspection.class);
         inspectionClasses.add(InstanceofChainInspection.class);
@@ -405,7 +395,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerClassLayoutInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(FinalClassInspection.class);
         inspectionClasses.add(EmptyClassInspection.class);
         inspectionClasses.add(AnonymousInnerClassInspection.class);
@@ -456,7 +446,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerVisibilityInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(FieldHidesSuperclassFieldInspection.class);
         inspectionClasses.add(InnerClassVariableHidesOuterClassVariableInspection.class);
         inspectionClasses.add(ParameterHidingMemberVariableInspection.class);
@@ -468,7 +458,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerEncapsulationInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(PublicFieldInspection.class);
         inspectionClasses.add(PackageVisibleFieldInspection.class);
         inspectionClasses.add(ProtectedFieldInspection.class);
@@ -483,7 +473,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerInitializerInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(StaticVariableInitializationInspection.class);
         inspectionClasses.add(InstanceVariableInitializationInspection.class);
         inspectionClasses.add(AbstractMethodCallInConstructorInspection.class);
@@ -495,7 +485,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerConfusingInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(ClassEscapesItsScopeInspection.class);
         inspectionClasses.add(ConfusingFloatingPointLiteralInspection.class);
         inspectionClasses.add(OverlyComplexArithmeticExpressionInspection.class);
@@ -536,7 +526,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerVerboseInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(UnnecessaryLabelOnBreakStatementInspection.class);
         inspectionClasses.add(UnnecessaryLabelOnContinueStatementInspection.class);
         inspectionClasses.add(PointlessBooleanExpressionInspection.class);
@@ -574,7 +564,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerStyleInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(ReturnThisInspection.class);
         inspectionClasses.add(ConstantOnLHSOfComparisonInspection.class);
         inspectionClasses.add(ConstantOnRHSOfComparisonInspection.class);
@@ -588,7 +578,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerExceptionInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(CatchGenericClassInspection.class);
         inspectionClasses.add(EmptyCatchBlockInspection.class);
         inspectionClasses.add(UnusedCatchParameterInspection.class);
@@ -612,7 +602,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerFinalizationInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(FinalizeInspection.class);
         inspectionClasses.add(FinalizeNotProtectedInspection.class);
         inspectionClasses.add(FinalizeCallsSuperFinalizeInspection.class);
@@ -620,7 +610,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerSerializationInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(SerializableHasSerializationMethodsInspection.class);
         inspectionClasses.add(SerializableHasSerialVersionUIDFieldInspection.class);
         inspectionClasses.add(ReadObjectInitializationInspection.class);
@@ -638,7 +628,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerThreadingInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(DoubleCheckedLockingInspection.class);
         inspectionClasses.add(BusyWaitInspection.class);
         inspectionClasses.add(ArithmeticOnVolatileFieldInspection.class);
@@ -670,7 +660,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerMethodMetricsInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(ThreeNegationsPerMethodInspection.class);
         inspectionClasses.add(MethodWithMultipleLoopsInspection.class);
         inspectionClasses.add(MultipleReturnPointsPerMethodInspection.class);
@@ -683,7 +673,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerClassMetricsInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(AnonymousClassComplexityInspection.class);
         inspectionClasses.add(AnonymousClassMethodCountInspection.class);
         inspectionClasses.add(ClassComplexityInspection.class);
@@ -696,7 +686,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerPortabilityInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(RuntimeExecInspection.class);
         inspectionClasses.add(SystemExitInspection.class);
         inspectionClasses.add(SystemGetenvInspection.class);
@@ -719,7 +709,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerInternationalInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(StringLiteralInspection.class);
         inspectionClasses.add(CharacterComparisonInspection.class);
         inspectionClasses.add(MagicCharacterInspection.class);
@@ -736,7 +726,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerPerformanceInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(PrivateMemberAccessBetweenOuterAndInnerClassInspection.class);
         inspectionClasses.add(ObjectAllocationInLoopInspection.class);
         inspectionClasses.add(InstantiatingObjectToGetClassObjectInspection.class);
@@ -775,15 +765,17 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerJ2MEInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(AbstractClassWithOnlyOneDirectInheritorInspection.class);
         inspectionClasses.add(InterfaceWithOnlyOneDirectInheritorInspection.class);
         inspectionClasses.add(CheckForOutOfMemoryOnLargeArrayAllocationInspection.class);
         inspectionClasses.add(OverlyLargePrimitiveArrayInitializerInspection.class);
+        inspectionClasses.add(RecordStoreResourceInspection.class);
+        inspectionClasses.add(ConnectionResourceInspection.class);
     }
 
     private void registerMaturityInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(SystemOutErrInspection.class);
         inspectionClasses.add(ThrowablePrintStackTraceInspection.class);
         inspectionClasses.add(TodoCommentInspection.class);
@@ -793,7 +785,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerJUnitInspections(){
-        final List inspectionClasses = m_inspectionClasses;
+        final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(AssertsWithoutMessagesInspection.class);
         inspectionClasses.add(TestCaseWithConstructorInspection.class);
         inspectionClasses.add(MisspelledSetUpInspection.class);

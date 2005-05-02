@@ -43,12 +43,11 @@ public class ClassWithoutToStringInspection extends ClassInspection {
                 return;
             }
             final PsiMethod[] methods = aClass.getMethods();
-            for (int i = 0; i < methods.length; i++) {
-                final PsiMethod method = methods[i];
+            for(final PsiMethod method : methods){
                 final String methodName = method.getName();
                 final PsiParameterList paramList = method.getParameterList();
                 final PsiParameter[] parameters = paramList.getParameters();
-                if ("toString".equals(methodName) && parameters.length == 0) {
+                if("toString".equals(methodName) && parameters.length == 0){
                     return;
                 }
             }

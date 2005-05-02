@@ -20,11 +20,11 @@ public class AutoUnboxingInspection extends ExpressionInspection{
     /**
          * @noinspection StaticCollection
          */
-    private static final Map s_unboxingMethods = new HashMap(8);
+    private static final Map<String,String> s_unboxingMethods = new HashMap<String, String>(8);
     /**
          * @noinspection StaticCollection
          */
-    private static final Set s_numberTypes = new HashSet(8);
+    private static final Set<String> s_numberTypes = new HashSet<String>(8);
     private final AutoUnboxingFix fix = new AutoUnboxingFix();
 
     static{
@@ -86,7 +86,7 @@ public class AutoUnboxingInspection extends ExpressionInspection{
             final String expectedTypeText = expectedType.getCanonicalText();
             final String typeText = type.getCanonicalText();
             final String expressionText = expression.getText();
-            final Object boxClassName = s_unboxingMethods.get(expectedTypeText);
+            final String boxClassName = s_unboxingMethods.get(expectedTypeText);
             if(TypeUtils.typeEquals("java.lang.Boolean", type)){
                 replaceExpression(project, expression,
                                   expressionText + '.' + boxClassName + "()");

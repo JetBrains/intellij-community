@@ -42,11 +42,10 @@ public class SingleClassImportInspection extends ClassInspection {
             }
             final PsiImportList importList = file.getImportList();
             final PsiImportStatement[] importStatements = importList.getImportStatements();
-            for (int i = 0; i < importStatements.length; i++) {
-                final PsiImportStatement importStatement = importStatements[i];
-                if (!importStatement.isOnDemand()) {
+            for(final PsiImportStatement importStatement : importStatements){
+                if(!importStatement.isOnDemand()){
                     final PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
-                    if (reference != null) {
+                    if(reference != null){
                         registerError(reference);
                     }
                 }

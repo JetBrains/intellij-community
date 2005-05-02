@@ -42,14 +42,13 @@ class CyclomaticComplexityVisitor extends PsiRecursiveElementVisitor {
         }
         final PsiStatement[] statements = body.getStatements();
         boolean pendingLabel = false;
-        for (int i = 0; i < statements.length; i++) {
-            final PsiStatement child = statements[i];
-            if (child instanceof PsiSwitchLabelStatement) {
-                if (!pendingLabel) {
+        for(final PsiStatement child : statements){
+            if(child instanceof PsiSwitchLabelStatement){
+                if(!pendingLabel){
                     m_complexity++;
                 }
                 pendingLabel = true;
-            } else {
+            } else{
                 pendingLabel = false;
             }
         }

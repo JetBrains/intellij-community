@@ -91,7 +91,7 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
         /**
          * @noinspection StaticCollection
          */
-        private static final Set arithmeticTokens = new HashSet(4);
+        private static final Set<IElementType> arithmeticTokens = new HashSet<IElementType>(4);
 
         static
         {
@@ -163,13 +163,13 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
     /** @noinspection FloatingPointEquality*/
         private static boolean isZero(PsiExpression expression) {
         final Double value = (Double) ConstantExpressionUtil.computeCastTo(expression, PsiType.DOUBLE);
-        return value != null && value.doubleValue() == 0.0;
+        return value != null && (value) == 0.0;
     }
 
     /** @noinspection FloatingPointEquality*/
     private static boolean isOne(PsiExpression expression) {
         final Double value = (Double) ConstantExpressionUtil.computeCastTo(expression, PsiType.DOUBLE);
-        return value != null && value.doubleValue() == 1.0;
+        return value != null && (value) == 1.0;
     }
 
 }

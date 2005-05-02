@@ -132,8 +132,7 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection{
                 return;
             }
             final PsiElement[] children = modifiers.getChildren();
-            for(int i = 0; i < children.length; i++){
-                final PsiElement child = children[i];
+            for(final PsiElement child : children){
                 final String text = child.getText();
                 if(PsiModifier.STATIC.equals(text)){
                     registerError(child);
@@ -162,8 +161,7 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection{
                 return;
             }
             final PsiElement[] children = modifiers.getChildren();
-            for(int i = 0; i < children.length; i++){
-                final PsiElement child = children[i];
+            for(final PsiElement child : children){
                 final String text = child.getText();
                 if(PsiModifier.PRIVATE.equals(text)){
                     registerError(child);

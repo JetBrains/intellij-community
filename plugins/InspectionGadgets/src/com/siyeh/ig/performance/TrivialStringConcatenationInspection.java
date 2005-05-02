@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class TrivialStringConcatenationInspection extends ExpressionInspection{
     /** @noinspection StaticCollection*/
-    private static final Map s_typeToWrapperMap = new HashMap(6);
+    private static final Map<String,String> s_typeToWrapperMap = new HashMap<String, String>(6);
 
     static{
         s_typeToWrapperMap.put("char", "Character");

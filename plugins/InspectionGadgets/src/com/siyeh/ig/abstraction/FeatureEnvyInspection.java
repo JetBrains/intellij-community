@@ -10,7 +10,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
 
-import java.util.Iterator;
 import java.util.Set;
 
 public class FeatureEnvyInspection extends MethodInspection {
@@ -47,9 +46,8 @@ public class FeatureEnvyInspection extends MethodInspection {
             final PsiClass containingClass = method.getContainingClass();
             final ClassAccessVisitor visitor = new ClassAccessVisitor(containingClass);
             method.accept(visitor);
-            final Set overaccessedClasses = visitor.getOveraccessedClasses();
-            for (Iterator iterator = overaccessedClasses.iterator(); iterator.hasNext();) {
-                final PsiClass aClass = (PsiClass) iterator.next();
+            final Set<PsiClass> overaccessedClasses = visitor.getOveraccessedClasses();
+            for(PsiClass aClass : overaccessedClasses){
                 registerError(nameIdentifier, aClass);
             }
         }

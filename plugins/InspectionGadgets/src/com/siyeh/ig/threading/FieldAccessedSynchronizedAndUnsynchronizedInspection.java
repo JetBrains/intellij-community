@@ -10,7 +10,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
 
-import java.util.Iterator;
 import java.util.Set;
 
 public class FieldAccessedSynchronizedAndUnsynchronizedInspection extends ClassInspection {
@@ -43,12 +42,12 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection extends ClassI
         public void visitClass(PsiClass aClass) {
             final VariableAccessVisitor visitor = new VariableAccessVisitor();
             aClass.accept(visitor);
-            final Set fields = visitor.getInappropriatelyAccessedFields();
-            for (Iterator iterator = fields.iterator(); iterator.hasNext();) {
-                final PsiField field = (PsiField) iterator.next();
-                if (!field.hasModifierProperty(PsiModifier.FINAL)) {
+            final Set<PsiElement> fields = visitor.getInappropriatelyAccessedFields();
+            for(Object field1 : fields){
+                final PsiField field = (PsiField) field1;
+                if(!field.hasModifierProperty(PsiModifier.FINAL)){
                     final PsiClass containingClass = field.getContainingClass();
-                    if (aClass.equals(containingClass)) {
+                    if(aClass.equals(containingClass)){
                         registerFieldError(field);
                     }
                 }

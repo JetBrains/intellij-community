@@ -71,13 +71,13 @@ public class MultipleTypedDeclarationInspection extends VariableInspection {
             if (!childrenContainTypeElement(field)) {
                 return;
             }
-            final List fields = getSiblingFields(field);
+            final List<PsiField> fields = getSiblingFields(field);
 
             if (fields.size() > 1) {
                 final PsiType baseType = ((PsiVariable) fields.get(0)).getType();
                 boolean hasMultipleTypes = false;
                 for (int i = 1; i < fields.size(); i++) {
-                    final PsiField var = (PsiField) fields.get(i);
+                    final PsiField var = fields.get(i);
                     final PsiType varType = var.getType();
                     if (!varType.equals(baseType)) {
                         hasMultipleTypes = true;
@@ -85,24 +85,24 @@ public class MultipleTypedDeclarationInspection extends VariableInspection {
                 }
                 if (hasMultipleTypes) {
                     for (int i = 1; i < fields.size(); i++) {
-                        final PsiField var = (PsiField) fields.get(i);
+                        final PsiField var = fields.get(i);
                         registerVariableError(var);
                     }
                 }
             }
         }
 
-        public static List getSiblingFields(PsiField field) {
-            final List out = new ArrayList(5);
+        public static List<PsiField> getSiblingFields(PsiField field) {
+            final List<PsiField> out = new ArrayList<PsiField>(5);
             out.add(field);
             PsiField nextfield =
-                    (PsiField) PsiTreeUtil.getNextSiblingOfType(field,
+                    PsiTreeUtil.getNextSiblingOfType(field,
                             PsiField.class);
             while (nextfield != null &&
                     nextfield.getTypeElement().equals(field.getTypeElement())) {
                 out.add(nextfield);
                 nextfield =
-                        (PsiField) PsiTreeUtil.getNextSiblingOfType(nextfield,
+                        PsiTreeUtil.getNextSiblingOfType(nextfield,
                                 PsiField.class);
             }
 
@@ -111,8 +111,8 @@ public class MultipleTypedDeclarationInspection extends VariableInspection {
 
         public static boolean childrenContainTypeElement(PsiElement field) {
             final PsiElement[] children = field.getChildren();
-            for (int i = 0; i < children.length; i++) {
-                if (children[i] instanceof PsiTypeElement) {
+            for(PsiElement aChildren : children){
+                if(aChildren instanceof PsiTypeElement){
                     return true;
                 }
             }

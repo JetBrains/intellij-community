@@ -9,7 +9,7 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
     /**
          * @noinspection StaticCollection
          */
-    private static final Set queryNames = new HashSet(10);
+    private static final Set<String> queryNames = new HashSet<String>(10);
 
     static{
         queryNames.add("get");

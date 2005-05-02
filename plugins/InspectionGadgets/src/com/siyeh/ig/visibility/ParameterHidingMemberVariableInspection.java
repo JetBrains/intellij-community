@@ -69,7 +69,7 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
                 return;
             }
             final PsiMethod method =
-                    (PsiMethod) PsiTreeUtil.getParentOfType(variable,
+                    PsiTreeUtil.getParentOfType(variable,
                                                             PsiMethod.class);
             if(method == null){
                 return;
@@ -98,12 +98,11 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
             }
             final String variableName = variable.getName();
             final PsiField[] fields = aClass.getAllFields();
-            for(int i = 0; i < fields.length; i++){
-                final PsiField field = fields[i];
+            for(final PsiField field : fields){
                 if(checkFieldName(field, variableName, aClass)){
                     if(m_ignoreStaticMethodParametersHidingInstanceFields &&
-                               !field.hasModifierProperty(PsiModifier.STATIC) &&
-                               method.hasModifierProperty(PsiModifier.STATIC)){
+                            !field.hasModifierProperty(PsiModifier.STATIC) &&
+                            method.hasModifierProperty(PsiModifier.STATIC)){
                         continue;
                     }
                     registerVariableError(variable);

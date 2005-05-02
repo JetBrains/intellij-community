@@ -32,7 +32,7 @@ public class BreakStatementInspection extends StatementInspection {
             super.visitBreakStatement(statement);
 
             final PsiSwitchStatement switchStatement =
-                    (PsiSwitchStatement) PsiTreeUtil.getParentOfType(statement, PsiSwitchStatement.class);
+                    PsiTreeUtil.getParentOfType(statement, PsiSwitchStatement.class);
             if (switchStatement != null &&
                     isBreakAtTopLevel(switchStatement, statement)) {
                 return;
@@ -46,9 +46,8 @@ public class BreakStatementInspection extends StatementInspection {
                 return false;
             }
             final PsiStatement[] statements = body.getStatements();
-            for (int i = 0; i < statements.length; i++) {
-                final PsiStatement child = statements[i];
-                if (child.equals(statement)) {
+            for(final PsiStatement child : statements){
+                if(child.equals(statement)){
                     return true;
                 }
             }

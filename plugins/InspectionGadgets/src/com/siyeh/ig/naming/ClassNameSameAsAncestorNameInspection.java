@@ -46,11 +46,10 @@ public class ClassNameSameAsAncestorNameInspection extends ClassInspection {
 
             final String className = aClass.getName();
 
-            final Set alreadyVisited = new HashSet(8);
+            final Set<PsiClass> alreadyVisited = new HashSet<PsiClass>(8);
             final PsiClass[] supers = aClass.getSupers();
-            for (int i = 0; i < supers.length; i++) {
-                final PsiClass aSuper = supers[i];
-                if (hasMatchingName(aSuper, className, alreadyVisited)) {
+            for(final PsiClass aSuper : supers){
+                if(hasMatchingName(aSuper, className, alreadyVisited)){
                     registerClassError(aClass);
                 }
             }
@@ -58,7 +57,7 @@ public class ClassNameSameAsAncestorNameInspection extends ClassInspection {
 
 
         private static boolean hasMatchingName(PsiClass aSuper, String className,
-                                               Set alreadyVisited) {
+                                               Set<PsiClass> alreadyVisited) {
             if (alreadyVisited.contains(aSuper)) {
                 return false;
             }
@@ -68,8 +67,8 @@ public class ClassNameSameAsAncestorNameInspection extends ClassInspection {
                 return true;
             }
             final PsiClass[] supers = aSuper.getSupers();
-            for (int i = 0; i < supers.length; i++) {
-                if (hasMatchingName(supers[i], className, alreadyVisited)) {
+            for(PsiClass aSupers : supers){
+                if(hasMatchingName(aSupers, className, alreadyVisited)){
                     return true;
                 }
             }

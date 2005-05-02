@@ -48,8 +48,8 @@ public class TypeUtils {
             return true;
         }
         final PsiType[] superTypes = type.getSuperTypes();
-        for (int i = 0; i < superTypes.length; i++) {
-            if (typeInherits(superTypes[i], typeName)) {
+        for(PsiType superType : superTypes){
+            if(typeInherits(superType, typeName)){
                 return true;
             }
         }

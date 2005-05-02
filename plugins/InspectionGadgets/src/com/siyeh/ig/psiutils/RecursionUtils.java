@@ -107,9 +107,8 @@ public class RecursionUtils {
         if (statements == null) {
             return true;
         }
-        for (int i = 0; i < statements.length; i++) {
-            final PsiStatement statement = statements[i];
-            if (statementMayReturnBeforeRecursing(statement, method)) {
+        for(final PsiStatement statement : statements){
+            if(statementMayReturnBeforeRecursing(statement, method)){
                 return true;
             }
         }
@@ -128,9 +127,8 @@ public class RecursionUtils {
             return true;
         }
         final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-        for (int i = 0; i < catchBlocks.length; i++) {
-            final PsiCodeBlock catchBlock = catchBlocks[i];
-            if (codeBlockMayReturnBeforeRecursing(catchBlock, method, false)) {
+        for(final PsiCodeBlock catchBlock : catchBlocks){
+            if(codeBlockMayReturnBeforeRecursing(catchBlock, method, false)){
                 return true;
             }
         }
@@ -161,12 +159,11 @@ public class RecursionUtils {
             return true;
         }
         final PsiStatement[] statements = block.getStatements();
-        for (int i = 0; i < statements.length; i++) {
-            final PsiStatement statement = statements[i];
-            if (statementMayReturnBeforeRecursing(statement, method)) {
+        for(final PsiStatement statement : statements){
+            if(statementMayReturnBeforeRecursing(statement, method)){
                 return true;
             }
-            if (statementMustRecurse(statement, method)) {
+            if(statementMustRecurse(statement, method)){
                 return false;
             }
         }
@@ -270,9 +267,8 @@ public class RecursionUtils {
         if (initializers == null) {
             return false;
         }
-        for (int i = 0; i < initializers.length; i++) {
-            final PsiExpression initializer = initializers[i];
-            if (expressionMustRecurse(initializer, method)) {
+        for(final PsiExpression initializer : initializers){
+            if(expressionMustRecurse(initializer, method)){
                 return true;
             }
         }
@@ -323,9 +319,8 @@ public class RecursionUtils {
     private static boolean newExpressionMustRecurse(PsiNewExpression exp, PsiMethod method) {
         final PsiExpression[] arrayDimensions = exp.getArrayDimensions();
         if (arrayDimensions != null) {
-            for (int i = 0; i < arrayDimensions.length; i++) {
-                final PsiExpression arrayDimension = arrayDimensions[i];
-                if (expressionMustRecurse(arrayDimension, method)) {
+            for(final PsiExpression arrayDimension : arrayDimensions){
+                if(expressionMustRecurse(arrayDimension, method)){
                     return true;
                 }
             }
@@ -341,9 +336,8 @@ public class RecursionUtils {
         final PsiExpressionList argumentList = exp.getArgumentList();
         if (argumentList != null) {
             final PsiExpression[] args = argumentList.getExpressions();
-            for (int i = 0; i < args.length; i++) {
-                final PsiExpression arg = args[i];
-                if (expressionMustRecurse(arg, method)) {
+            for(final PsiExpression arg : args){
+                if(expressionMustRecurse(arg, method)){
                     return true;
                 }
             }
@@ -369,9 +363,8 @@ public class RecursionUtils {
         final PsiExpressionList argumentList = exp.getArgumentList();
         if (argumentList != null) {
             final PsiExpression[] args = argumentList.getExpressions();
-            for (int i = 0; i < args.length; i++) {
-                final PsiExpression arg = args[i];
-                if (expressionMustRecurse(arg, method)) {
+            for(final PsiExpression arg : args){
+                if(expressionMustRecurse(arg, method)){
                     return true;
                 }
             }
@@ -395,9 +388,8 @@ public class RecursionUtils {
                 return false;
             }
             final PsiExpression[] expressions = expressionList.getExpressions();
-            for (int i = 0; i < expressions.length; i++) {
-                final PsiExpression expression = expressions[i];
-                if (expressionMustRecurse(expression, method)) {
+            for(final PsiExpression expression : expressions){
+                if(expressionMustRecurse(expression, method)){
                     return true;
                 }
             }
@@ -411,12 +403,11 @@ public class RecursionUtils {
             if (declaredElements == null) {
                 return false;
             }
-            for (int i = 0; i < declaredElements.length; i++) {
-                final PsiElement declaredElement = declaredElements[i];
-                if (declaredElement instanceof PsiLocalVariable) {
+            for(final PsiElement declaredElement : declaredElements){
+                if(declaredElement instanceof PsiLocalVariable){
                     final PsiLocalVariable variable = (PsiLocalVariable) declaredElement;
                     final PsiExpression initializer = variable.getInitializer();
-                    if (expressionMustRecurse(initializer, method)) {
+                    if(expressionMustRecurse(initializer, method)){
                         return true;
                     }
                 }
@@ -481,9 +472,8 @@ public class RecursionUtils {
         if (statements == null) {
             return false;
         }
-        for (int i = 0; i < statements.length; i++) {
-            final PsiStatement statement = statements[i];
-            if (statementMustRecurse(statement, method)) {
+        for(final PsiStatement statement : statements){
+            if(statementMustRecurse(statement, method)){
                 return true;
             }
         }

@@ -125,11 +125,9 @@ public class MemberSignature implements Comparable
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         final StringBuffer signatureBuffer = new StringBuffer();
         signatureBuffer.append('(');
-        for (int i = 0; i < parameters.length; i++)
-        {
-            final PsiParameter parameter = parameters[i];
+        for(final PsiParameter parameter : parameters){
             final PsiType type = parameter.getType();
-			signatureBuffer.append(createTypeSignature(type));
+            signatureBuffer.append(createTypeSignature(type));
         }
         signatureBuffer.append(')');
         final PsiType returnType = method.getReturnType();

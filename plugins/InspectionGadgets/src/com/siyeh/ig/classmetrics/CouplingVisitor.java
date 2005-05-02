@@ -14,7 +14,7 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
     private final PsiClass m_class;
     private final boolean m_includeJavaClasses;
     private final boolean m_includeLibraryClasses;
-    private final Set m_dependencies = new HashSet(10);
+    private final Set<String> m_dependencies = new HashSet<String>(10);
 
     CouplingVisitor(PsiClass aClass, boolean includeJavaClasses,
                     boolean includeLibraryClasses) {
@@ -50,16 +50,16 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
             return;
         }
         final PsiClassType[] throwsTypes = throwsList.getReferencedTypes();
-        for (int i = 0; i < throwsTypes.length; i++) {
-            addDependency(throwsTypes[i]);
+        for(PsiClassType throwsType : throwsTypes){
+            addDependency(throwsType);
         }
     }
 
     private void addDependenciesForParameters(PsiMethod method) {
         final PsiParameterList parameterList = method.getParameterList();
         final PsiParameter[] parameters = parameterList.getParameters();
-        for (int i = 0; i < parameters.length; i++) {
-            final PsiType paramType = parameters[i].getType();
+        for(PsiParameter parameter : parameters){
+            final PsiType paramType = parameter.getType();
             addDependency(paramType);
         }
     }
@@ -89,16 +89,16 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
         }
         m_inClass = wasInClass;
         final PsiType[] superTypes = aClass.getSuperTypes();
-        for (int i = 0; i < superTypes.length; i++) {
-            addDependency(superTypes[i]);
+        for(PsiType superType : superTypes){
+            addDependency(superType);
         }
     }
 
     public void visitTryStatement(PsiTryStatement statement) {
         super.visitTryStatement(statement);
         final PsiParameter[] catchBlockParameters = statement.getCatchBlockParameters();
-        for (int i = 0; i < catchBlockParameters.length; i++) {
-            final PsiType catchType = catchBlockParameters[i].getType();
+        for(PsiParameter catchBlockParameter : catchBlockParameters){
+            final PsiType catchType = catchBlockParameter.getType();
             addDependency(catchType);
         }
     }

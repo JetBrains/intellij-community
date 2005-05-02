@@ -17,11 +17,10 @@ public class TodoUtil{
         final PsiManager psiManager = comment.getManager();
         final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
         final TodoItem[] todoItems = searchHelper.findTodoItems(file);
-        for(int i = 0; i < todoItems.length; i++){
-            final TodoItem todoItem = todoItems[i];
+        for(final TodoItem todoItem : todoItems){
             final TextRange commentTextRange = comment.getTextRange();
             final TextRange todoTextRange = todoItem.getTextRange();
-            if(commentTextRange.contains(todoTextRange)) {
+            if(commentTextRange.contains(todoTextRange)){
                 return true;
             }
         }

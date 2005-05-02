@@ -40,23 +40,22 @@ public class ThrowCaughtLocallyInspection extends StatementInspection {
             }
 
             PsiTryStatement containingTryStatement =
-                    (PsiTryStatement) PsiTreeUtil.getParentOfType(statement, PsiTryStatement.class);
+                    PsiTreeUtil.getParentOfType(statement, PsiTryStatement.class);
             while (containingTryStatement != null) {
                 final PsiCodeBlock tryBlock = containingTryStatement.getTryBlock();
                 if (PsiTreeUtil.isAncestor(tryBlock, statement, true)) {
                     final PsiParameter[] catchBlockParameters =
                             containingTryStatement.getCatchBlockParameters();
-                    for (int i = 0; i < catchBlockParameters.length; i++) {
-                        final PsiParameter parameter = catchBlockParameters[i];
+                    for(final PsiParameter parameter : catchBlockParameters){
                         final PsiType parameterType = parameter.getType();
-                        if (parameterType.isAssignableFrom(exceptionType)) {
+                        if(parameterType.isAssignableFrom(exceptionType)){
                             registerStatementError(statement);
                             return;
                         }
                     }
                 }
                 containingTryStatement =
-                        (PsiTryStatement) PsiTreeUtil.getParentOfType(containingTryStatement, PsiTryStatement.class);
+                        PsiTreeUtil.getParentOfType(containingTryStatement, PsiTryStatement.class);
             }
         }
     }

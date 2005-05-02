@@ -49,8 +49,7 @@ public class UnnecessaryFinalOnParameterInspection extends MethodInspection {
             if (parameters == null) {
                 return;
             }
-            for (int i = 0; i < parameters.length; i++) {
-                final PsiParameter parameter = parameters[i];
+            for(final PsiParameter parameter : parameters){
                 checkParameter(method, parameter);
             }
         }

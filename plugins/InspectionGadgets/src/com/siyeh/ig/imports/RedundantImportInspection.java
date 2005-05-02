@@ -48,24 +48,23 @@ public class RedundantImportInspection extends ClassInspection {
             }
             final PsiImportList importList = file.getImportList();
             final PsiImportStatement[] importStatements = importList.getImportStatements();
-            final Set imports = new HashSet(importStatements.length);
-            for (int i = 0; i < importStatements.length; i++) {
-                final PsiImportStatement importStatement = importStatements[i];
+            final Set<String> imports = new HashSet<String>(importStatements.length);
+            for(final PsiImportStatement importStatement : importStatements){
                 final String text = importStatement.getQualifiedName();
-                if (text == null) {
+                if(text == null){
                     return;
                 }
-                if (imports.contains(text)) {
+                if(imports.contains(text)){
                     registerError(importStatement);
                 }
-                if (!importStatement.isOnDemand()) {
+                if(!importStatement.isOnDemand()){
                     final int classNameIndex = text.lastIndexOf((int) '.');
-                    if (classNameIndex < 0) {
+                    if(classNameIndex < 0){
                         return;
                     }
                     final String parentName = text.substring(0, classNameIndex);
-                    if (imports.contains(parentName)) {
-                        if (!ImportUtils.hasOnDemandImportConflict(text, file)) {
+                    if(imports.contains(parentName)){
+                        if(!ImportUtils.hasOnDemandImportConflict(text, file)){
                             registerError(importStatement);
                         }
                     }

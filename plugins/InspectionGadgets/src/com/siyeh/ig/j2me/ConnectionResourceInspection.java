@@ -1,4 +1,4 @@
-package com.siyeh.ig.resources;
+package com.siyeh.ig.j2me;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
@@ -7,15 +7,14 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.psiutils.TypeUtils;
 
-public class SocketResourceInspection extends ExpressionInspection{
+public class ConnectionResourceInspection extends ExpressionInspection{
     public String getID(){
-        return "SocketOpenedButNotSafelyClosed";
+        return "ConnectionOpenedButNotSafelyClosed";
     }
 
     public String getDisplayName(){
-        return "Socket opened but not safely closed";
+        return "Connection opened but not safely closed";
     }
 
     public String getGroupDisplayName(){
@@ -32,11 +31,11 @@ public class SocketResourceInspection extends ExpressionInspection{
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
                                                boolean onTheFly){
-        return new SocketResourceVisitor(this, inspectionManager, onTheFly);
+        return new RecordStoreResourceVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class SocketResourceVisitor extends BaseInspectionVisitor{
-        private SocketResourceVisitor(BaseInspection inspection,
+    private static class RecordStoreResourceVisitor extends BaseInspectionVisitor{
+        private RecordStoreResourceVisitor(BaseInspection inspection,
                                   InspectionManager inspectionManager,
                                   boolean isOnTheFly){
             super(inspection, inspectionManager, isOnTheFly);
@@ -44,7 +43,7 @@ public class SocketResourceInspection extends ExpressionInspection{
 
         public void visitMethodCallExpression(PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            if(!isSocketFactoryMethod(expression)) {
+            if(!isConnectionFactoryMethod(expression)) {
                 return;
             }
             final PsiElement parent = expression.getParent();
@@ -68,10 +67,9 @@ public class SocketResourceInspection extends ExpressionInspection{
             PsiElement currentContext = expression;
             while(true){
                 final PsiTryStatement tryStatement =
-                        PsiTreeUtil.getParentOfType(currentContext,
-                                                                      PsiTryStatement.class);
-                if(tryStatement == null) {
-                    registerError(expression);
+                        PsiTreeUtil.getParentOfType(currentContext, PsiTryStatement.class);
+                if(tryStatement == null){
+                registerError(expression);
                     return;
                 }
                 if(resourceIsOpenedInTryAndClosedInFinally(tryStatement,
@@ -83,46 +81,6 @@ public class SocketResourceInspection extends ExpressionInspection{
             }
         }
 
-        public void visitNewExpression(PsiNewExpression expression){
-            super.visitNewExpression(expression);
-            if(!isSocketResource(expression)){
-                return;
-            }
-            final PsiElement parent = expression.getParent();
-            if(!(parent instanceof PsiAssignmentExpression)){
-                registerError(expression);
-                return;
-            }
-            final PsiAssignmentExpression assignment =
-                    (PsiAssignmentExpression) parent;
-            final PsiExpression lhs = assignment.getLExpression();
-            if(!(lhs instanceof PsiReferenceExpression)){
-                return;
-            }
-            final PsiElement referent =
-                    ((PsiReference) lhs).resolve();
-            if(referent == null || !(referent instanceof PsiVariable)){
-                return;
-            }
-            final PsiVariable boundVariable = (PsiVariable) referent;
-
-            PsiElement currentContext = expression;
-            while(true){
-                final PsiTryStatement tryStatement =
-                        PsiTreeUtil.getParentOfType(currentContext,
-                                                                      PsiTryStatement.class);
-                if(tryStatement == null){
-                    registerError(expression);
-                    return;
-                }
-                if(resourceIsOpenedInTryAndClosedInFinally(tryStatement,
-                                                           expression,
-                                                           boundVariable)){
-                    return;
-                }
-                currentContext = tryStatement;
-            }
-        }
 
         private static boolean resourceIsOpenedInTryAndClosedInFinally(PsiTryStatement tryStatement,
                                                                        PsiExpression lhs,
@@ -176,7 +134,7 @@ public class SocketResourceInspection extends ExpressionInspection{
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if(!"close".equals(methodName)){
+            if(!"closeRecordStore".equals(methodName)){
                 return;
             }
             final PsiExpression qualifier =
@@ -200,30 +158,27 @@ public class SocketResourceInspection extends ExpressionInspection{
         }
     }
 
-    private static boolean isSocketResource(PsiNewExpression expression){
-        return TypeUtils.expressionHasTypeOrSubtype("java.net.Socket",
-                                                    expression)||
-                TypeUtils.expressionHasTypeOrSubtype("java.net.DatagramSocket",
-                                                    expression)||
-                TypeUtils.expressionHasTypeOrSubtype("java.net.ServerSocket",
-                                                    expression);
-    }
-
-    private static boolean isSocketFactoryMethod(PsiMethodCallExpression expression){
+    private static boolean isConnectionFactoryMethod(PsiMethodCallExpression expression){
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();
         if(methodExpression == null) {
             return false;
         }
         final String methodName = methodExpression.getReferenceName();
-        if(!"accept".equals(methodName)) {
+        if(!"open".equals(methodName)) {
             return false;
         }
-        final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if(qualifier == null) {
+        final PsiMethod method = expression.resolveMethod();
+        if(method == null)
+        {
             return false;
         }
-        return TypeUtils.expressionHasTypeOrSubtype("java.net.ServerSocket",
-                                                    qualifier);
+        final PsiClass containingClass = method.getContainingClass();
+        if(containingClass == null)
+        {
+            return false;
+        }
+        final String className = containingClass.getQualifiedName();
+        return "javax.microedition.io.Connector".equals(className);
     }
 
 }

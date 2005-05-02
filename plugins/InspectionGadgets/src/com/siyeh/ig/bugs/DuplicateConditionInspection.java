@@ -49,14 +49,14 @@ public class DuplicateConditionInspection extends ExpressionInspection{
                     return;
                 }
             }
-            final Set conditions = new HashSet();
+            final Set<PsiExpression> conditions = new HashSet<PsiExpression>();
             collectConditionsForIfStatement(statement, conditions);
             final int numConditions = conditions.size();
             if(numConditions < 2){
                 return;
             }
             final PsiExpression[] conditionArray =
-                    (PsiExpression[]) conditions.toArray(new PsiExpression[numConditions]);
+                    conditions.toArray(new PsiExpression[numConditions]);
             final boolean[] matched = new boolean[conditionArray.length];
             Arrays.fill(matched, false);
             for(int i = 0; i < conditionArray.length; i++){
@@ -85,7 +85,7 @@ public class DuplicateConditionInspection extends ExpressionInspection{
         }
 
         private void collectConditionsForIfStatement(PsiIfStatement statement,
-                                       Set conditions){
+                                       Set<PsiExpression> conditions){
             final PsiExpression condition = statement.getCondition();
             collectConditionsForExpression(condition, conditions);
             final PsiStatement branch = statement.getElseBranch();
@@ -95,7 +95,7 @@ public class DuplicateConditionInspection extends ExpressionInspection{
             }
         }
 
-        private void collectConditionsForExpression(PsiExpression condition, Set conditions){
+        private void collectConditionsForExpression(PsiExpression condition, Set<PsiExpression> conditions){
             if(condition == null)
             {
                 return;

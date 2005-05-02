@@ -17,7 +17,7 @@ import java.util.HashSet;
 
 public class MalformedRegexInspection extends ExpressionInspection{
     /** @noinspection StaticCollection*/
-    private static final Set regexMethodNames = new HashSet(5);
+    private static final Set<String> regexMethodNames = new HashSet<String>(5);
 
     static
     {

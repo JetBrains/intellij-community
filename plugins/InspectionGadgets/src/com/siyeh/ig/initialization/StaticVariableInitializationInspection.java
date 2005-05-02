@@ -71,11 +71,11 @@ public class StaticVariableInitializationInspection extends FieldInspection {
             }
 
             final PsiClassInitializer[] initializers = containingClass.getInitializers();
-            for (int i = 0; i < initializers.length; i++) {
-                final PsiClassInitializer initializer = initializers[i];
-                if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
+            for(final PsiClassInitializer initializer : initializers){
+                if(initializer.hasModifierProperty(PsiModifier.STATIC)){
                     final PsiCodeBlock body = initializer.getBody();
-                    if (InitializationUtils.blockMustAssignVariableOrFail(field, body)) {
+                    if(InitializationUtils.blockMustAssignVariableOrFail(field,
+                                                                         body)){
                         return;
                     }
                 }

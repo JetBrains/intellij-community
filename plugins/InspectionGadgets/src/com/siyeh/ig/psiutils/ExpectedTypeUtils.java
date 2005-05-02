@@ -11,7 +11,7 @@ import java.util.HashSet;
 
 public class ExpectedTypeUtils{
     /** @noinspection StaticCollection*/
-    private static final Set arithmeticOps = new HashSet(5);
+    private static final Set<IElementType> arithmeticOps = new HashSet<IElementType>(5);
     static
     {
         arithmeticOps.add(JavaTokenType.PLUS);
@@ -232,7 +232,7 @@ public class ExpectedTypeUtils{
 
         public void visitReturnStatement(PsiReturnStatement returnStatement){
             final PsiMethod method =
-                    (PsiMethod) PsiTreeUtil.getParentOfType(returnStatement,
+                    PsiTreeUtil.getParentOfType(returnStatement,
                                                             PsiMethod.class);
             if(method == null){
                 expectedType = null;
@@ -244,10 +244,10 @@ public class ExpectedTypeUtils{
         public void visitDeclarationStatement(PsiDeclarationStatement declaration){
             final PsiElement[] declaredElements =
                     declaration.getDeclaredElements();
-            for(int i = 0; i < declaredElements.length; i++){
-                if(declaredElements[i] instanceof PsiVariable){
+            for(PsiElement declaredElement1 : declaredElements){
+                if(declaredElement1 instanceof PsiVariable){
                     final PsiVariable declaredElement =
-                            (PsiVariable) declaredElements[i];
+                            (PsiVariable) declaredElement1;
                     final PsiExpression initializer =
                             declaredElement.getInitializer();
                     if(wrappedExp.equals(initializer)){

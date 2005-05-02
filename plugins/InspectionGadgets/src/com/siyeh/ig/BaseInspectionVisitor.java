@@ -13,7 +13,7 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
     private final BaseInspection m_inspection;
     private final InspectionManager m_inspectionManager;
     protected final boolean m_onTheFly;
-    private List m_errors = null;
+    private List<ProblemDescriptor> m_errors = null;
 
     protected BaseInspectionVisitor(BaseInspection inspection,
                                     InspectionManager inspectionManager,
@@ -68,8 +68,7 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
             return;
         }
         final PsiElement[] children = modifiers.getChildren();
-        for(int i = 0; i < children.length; i++){
-            final PsiElement child = children[i];
+        for(final PsiElement child : children){
             final String text = child.getText();
             if(modifier.equals(text)){
                 registerError(child);
@@ -98,7 +97,7 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
 
     private void addError(ProblemDescriptor problem){
         if(m_errors == null){
-            m_errors = new ArrayList(5);
+            m_errors = new ArrayList<ProblemDescriptor>(5);
         }
         m_errors.add(problem);
     }
@@ -122,12 +121,12 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
 
     public ProblemDescriptor[] getErrors()
     {
-        final List errors = m_errors;
+        final List<ProblemDescriptor> errors = m_errors;
         if(errors == null){
             return null;
         } else{
             final int numErrors = errors.size();
-            return (ProblemDescriptor[]) errors.toArray(new ProblemDescriptor[numErrors]);
+            return errors.toArray(new ProblemDescriptor[numErrors]);
         }
     }
 

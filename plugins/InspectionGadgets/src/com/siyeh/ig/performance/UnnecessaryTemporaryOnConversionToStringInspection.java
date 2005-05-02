@@ -11,7 +11,7 @@ import java.util.Set;
 
 public class UnnecessaryTemporaryOnConversionToStringInspection extends ExpressionInspection {
     /** @noinspection StaticCollection*/
-    private static final Set s_basicTypes = new HashSet(6);
+    private static final Set<String> s_basicTypes = new HashSet<String>(6);
 
     static {
         s_basicTypes.add("java.lang.Short");

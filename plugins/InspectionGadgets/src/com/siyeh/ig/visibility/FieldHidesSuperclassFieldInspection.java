@@ -66,7 +66,7 @@ public class FieldHidesSuperclassFieldInspection extends FieldInspection {
                 return;    //special case
             }
             PsiClass ancestorClass = aClass.getSuperClass();
-            final Set visitedClasses = new HashSet();
+            final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
             while (ancestorClass != null) {
                 if (!visitedClasses.add(ancestorClass)) {
                     return;

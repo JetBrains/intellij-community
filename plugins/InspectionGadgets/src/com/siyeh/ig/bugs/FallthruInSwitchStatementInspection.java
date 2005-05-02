@@ -38,14 +38,13 @@ public class FallthruInSwitchStatementInspection extends StatementInspection {
                 return;
             }
             final PsiStatement[] statements = body.getStatements();
-            for (int i = 0; i < statements.length; i++) {
-                final PsiStatement child = statements[i];
-                if (child instanceof PsiSwitchLabelStatement) {
-                    if (!switchLabelValid) {
+            for(final PsiStatement child : statements){
+                if(child instanceof PsiSwitchLabelStatement){
+                    if(!switchLabelValid){
                         registerError(child);
                     }
                     switchLabelValid = true;
-                } else {
+                } else{
                     switchLabelValid = !ControlFlowUtils.statementMayCompleteNormally(child);
                 }
             }

@@ -14,7 +14,7 @@ import java.util.Set;
 
 public class JDBCPrepareStatementWithNonConstantStringInspection extends ExpressionInspection{
     /** @noinspection StaticCollection*/
-    private static Set s_execMethodNames = new HashSet(4);
+    private static Set<String> s_execMethodNames = new HashSet<String>(4);
 
     static
     {

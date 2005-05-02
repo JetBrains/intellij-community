@@ -37,8 +37,8 @@ public class TextLabelInSwitchStatementInspection extends StatementInspection {
             if (statements == null) {
                 return;
             }
-            for (int i = 0; i < statements.length; i++) {
-                checkForLabel(statements[i]);
+            for(PsiStatement statement1 : statements){
+                checkForLabel(statement1);
             }
         }
 

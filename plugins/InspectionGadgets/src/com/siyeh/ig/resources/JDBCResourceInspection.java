@@ -36,12 +36,12 @@ public class JDBCResourceInspection extends ExpressionInspection{
     /**
          * @noinspection StaticCollection
          */
-    private static final Set creationMethodNameSet = new HashSet(8);
+    private static final Set<String> creationMethodNameSet = new HashSet<String>(8);
 
     static
     {
-        for(int i = 0; i < creationMethodClassName.length; i++){
-            creationMethodNameSet.add(creationMethodClassName[i]);
+        for(String aCreationMethodClassName : creationMethodClassName){
+            creationMethodNameSet.add(aCreationMethodClassName);
         }
     }
 
@@ -102,7 +102,7 @@ public class JDBCResourceInspection extends ExpressionInspection{
             PsiElement currentContext = expression;
             while(true){
                 final PsiTryStatement tryStatement =
-                        (PsiTryStatement) PsiTreeUtil.getParentOfType(currentContext,
+                        PsiTreeUtil.getParentOfType(currentContext,
                                                                       PsiTryStatement.class);
                 if(tryStatement == null){
                     registerError(expression);

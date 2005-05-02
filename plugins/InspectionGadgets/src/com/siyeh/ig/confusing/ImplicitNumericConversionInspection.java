@@ -17,16 +17,16 @@ import java.util.Map;
 
 public class ImplicitNumericConversionInspection extends ExpressionInspection {
     /** @noinspection StaticCollection*/
-    private static final Map s_typePrecisions = new HashMap(7);
+    private static final Map<PsiType,Integer> s_typePrecisions = new HashMap<PsiType, Integer>(7);
 
     static{
-        s_typePrecisions.put(PsiType.BYTE, new Integer(1));
-        s_typePrecisions.put(PsiType.CHAR, new Integer(2));
-        s_typePrecisions.put(PsiType.SHORT, new Integer(2));
-        s_typePrecisions.put(PsiType.INT, new Integer(3));
-        s_typePrecisions.put(PsiType.LONG, new Integer(4));
-        s_typePrecisions.put(PsiType.FLOAT, new Integer(5));
-        s_typePrecisions.put(PsiType.DOUBLE, new Integer(6));
+        s_typePrecisions.put(PsiType.BYTE, 1);
+        s_typePrecisions.put(PsiType.CHAR, 2);
+        s_typePrecisions.put(PsiType.SHORT, 2);
+        s_typePrecisions.put(PsiType.INT, 3);
+        s_typePrecisions.put(PsiType.LONG, 4);
+        s_typePrecisions.put(PsiType.FLOAT, 5);
+        s_typePrecisions.put(PsiType.DOUBLE, 6);
     }
 
     /** @noinspection PublicField*/
@@ -219,9 +219,9 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
 
 
     private static boolean hasLowerPrecision(PsiType expressionType, PsiType expectedType) {
-        final Integer operandPrecision = (Integer) s_typePrecisions.get(expressionType);
-        final Integer castPrecision = (Integer) s_typePrecisions.get(expectedType);
-        return operandPrecision.intValue() <= castPrecision.intValue();
+        final Integer operandPrecision = s_typePrecisions.get(expressionType);
+        final Integer castPrecision = s_typePrecisions.get(expectedType);
+        return operandPrecision <= castPrecision;
     }
 
 }

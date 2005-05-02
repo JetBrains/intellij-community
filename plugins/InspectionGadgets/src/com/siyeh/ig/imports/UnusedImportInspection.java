@@ -43,9 +43,8 @@ public class UnusedImportInspection extends ClassInspection {
             }
             final PsiImportList importList = file.getImportList();
             final PsiImportStatement[] importStatements = importList.getImportStatements();
-            for (int i = 0; i < importStatements.length; i++) {
-                final PsiImportStatement importStatement = importStatements[i];
-                if (!isNecessaryImport(importStatement, file.getClasses())) {
+            for(final PsiImportStatement importStatement : importStatements){
+                if(!isNecessaryImport(importStatement, file.getClasses())){
                     registerError(importStatement);
                 }
             }
@@ -53,11 +52,11 @@ public class UnusedImportInspection extends ClassInspection {
 
         private static boolean isNecessaryImport(PsiImportStatement importStatement, PsiClass[] classes) {
             final ImportIsUsedVisitor visitor = new ImportIsUsedVisitor(importStatement);
-            for (int i = 0; i < classes.length; i++) {
-                classes[i].accept(visitor);
-                final PsiClass[] innerClasses = classes[i].getInnerClasses();
-                for (int j = 0; j < innerClasses.length; j++) {
-                    innerClasses[j].accept(visitor);
+            for(PsiClass aClasses : classes){
+                aClasses.accept(visitor);
+                final PsiClass[] innerClasses = aClasses.getInnerClasses();
+                for(PsiClass innerClass : innerClasses){
+                    innerClass.accept(visitor);
                 }
             }
             return visitor.isUsed();

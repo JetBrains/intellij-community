@@ -17,7 +17,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 public class BadExceptionCaughtInspection extends ExpressionInspection {
@@ -27,7 +26,7 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
             "java.lang.IllegalMonitorStateException," +
             "java.lang.ArrayOutOfBoundsException";
 
-    private final List exceptionsList = new ArrayList(32);
+    private final List<Object> exceptionsList = new ArrayList<Object>(32);
 
     {
         parseExceptionsString();
@@ -41,8 +40,8 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
     private void parseExceptionsString() {
         exceptionsList.clear();
         final String[] strings = exceptionCheckString.split(",");
-        for (int i = 0; i < strings.length; i++ ) {
-            exceptionsList.add(strings[i]);
+        for(String string : strings){
+            exceptionsList.add(string);
         }
     }
 
@@ -54,13 +53,13 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
     private void formatCallCheckString() {
         final StringBuffer buffer = new StringBuffer();
         boolean first = true;
-        for (Iterator iterator = exceptionsList.iterator(); iterator.hasNext();) {
-            if (first) {
+        for(Object aExceptionsList : exceptionsList){
+            if(first){
                 first = false;
-            } else {
+            } else{
                 buffer.append(',');
             }
-            final String exceptionName = (String) iterator.next();
+            final String exceptionName = (String) aExceptionsList;
             buffer.append(exceptionName);
         }
         exceptionCheckString = buffer.toString();
@@ -99,25 +98,21 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
 
             super.visitTryStatement(statement);
             final PsiParameter[] catchBlockParameters = statement.getCatchBlockParameters();
-            for (int i = 0; i < catchBlockParameters.length; i++) {
-                final PsiParameter parameter = catchBlockParameters[i];
-                if(parameter == null)
-                {
+            for(final PsiParameter parameter : catchBlockParameters){
+                if(parameter == null){
                     continue;
                 }
                 final PsiType type = parameter.getType();
-                if(type == null)
-                {
+                if(type == null){
                     continue;
                 }
                 final String text = type.getCanonicalText();
-                if(text == null)
-                {
+                if(text == null){
                     continue;
                 }
-                for (Iterator iterator = exceptionsList.iterator(); iterator.hasNext();) {
-                    final String exceptionClass = (String) iterator.next();
-                    if (text.equals(exceptionClass)) {
+                for(Object aExceptionsList : exceptionsList){
+                    final String exceptionClass = (String) aExceptionsList;
+                    if(text.equals(exceptionClass)){
                         final PsiTypeElement typeElement = parameter.getTypeElement();
                         registerError(typeElement);
                     }

@@ -47,13 +47,14 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection extends Metho
                 return;
             }
             final PsiMethod[] methods = aClass.getMethods();
-            for (int i = 0; i < methods.length; i++) {
-                if (!methods[i].equals(method)) {
-                    final String testMethName = methods[i].getName();
+            for(PsiMethod method1 : methods){
+                if(!method1.equals(method)){
+                    final String testMethName = method1.getName();
 
-                    final int testParameterCount = calculateParamCount(methods[i]);
-                    if (testMethName != null && methodName.equals(testMethName) &&
-                            parameterCount == testParameterCount) {
+                    final int testParameterCount = calculateParamCount(method1);
+                    if(testMethName != null && methodName
+                            .equals(testMethName) &&
+                            parameterCount == testParameterCount){
                         registerMethodError(method);
                     }
                 }

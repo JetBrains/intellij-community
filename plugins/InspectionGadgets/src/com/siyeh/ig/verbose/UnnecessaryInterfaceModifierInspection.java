@@ -133,10 +133,9 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
                     return;
                 }
                 final PsiElement[] children = modifiers.getChildren();
-                for (int i = 0; i < children.length; i++) {
-                    final PsiElement child = children[i];
+                for(final PsiElement child : children){
                     final String text = child.getText();
-                    if (PsiModifier.ABSTRACT.equals(text)) {
+                    if(PsiModifier.ABSTRACT.equals(text)){
                         registerError(child);
                     }
                 }
@@ -148,11 +147,10 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
                     return;
                 }
                 final PsiElement[] children = modifiers.getChildren();
-                for (int i = 0; i < children.length; i++) {
-                    final PsiElement child = children[i];
+                for(final PsiElement child : children){
                     final String text = child.getText();
-                    if (PsiModifier.PUBLIC.equals(text) ||
-                            PsiModifier.STATIC.equals(text)) {
+                    if(PsiModifier.PUBLIC.equals(text) ||
+                            PsiModifier.STATIC.equals(text)){
                         registerError(child);
                     }
                 }

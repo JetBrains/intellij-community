@@ -137,7 +137,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
 
     private static class PointlessBooleanExpressionVisitor
             extends BaseInspectionVisitor{
-        private static final Set booleanTokens = new HashSet(10);
+        private static final Set<IElementType> booleanTokens = new HashSet<IElementType>(10);
 
         static
         {
@@ -256,7 +256,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
         final Boolean value =
                 (Boolean) ConstantExpressionUtil.computeCastTo(expression,
                                                                PsiType.BOOLEAN);
-        return value != null && value.booleanValue();
+        return value != null && (value);
     }
 
     private static boolean isFalse(PsiExpression expression){
@@ -266,6 +266,6 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
         final Boolean value =
                 (Boolean) ConstantExpressionUtil.computeCastTo(expression,
                                                                PsiType.BOOLEAN);
-        return value != null && !value.booleanValue();
+        return value != null && !(value);
     }
 }

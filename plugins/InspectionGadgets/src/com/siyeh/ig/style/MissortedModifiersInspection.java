@@ -15,21 +15,21 @@ public class MissortedModifiersInspection extends ClassInspection {
 
     private static final int NUM_MODIFIERS = 11;
     /** @noinspection StaticCollection*/
-    private static final Map s_modifierOrder = new HashMap(NUM_MODIFIERS);
+    private static final Map<String,Integer> s_modifierOrder = new HashMap<String, Integer>(NUM_MODIFIERS);
     private final SortModifiersFix fix = new SortModifiersFix();
 
     static {
-        s_modifierOrder.put("public", new Integer(0));
-        s_modifierOrder.put("protected", new Integer(1));
-        s_modifierOrder.put("private", new Integer(2));
-        s_modifierOrder.put("static", new Integer(3));
-        s_modifierOrder.put("abstract", new Integer(4));
-        s_modifierOrder.put("final", new Integer(5));
-        s_modifierOrder.put("transient", new Integer(6));
-        s_modifierOrder.put("volatile", new Integer(7));
-        s_modifierOrder.put("synchronized", new Integer(8));
-        s_modifierOrder.put("native", new Integer(9));
-        s_modifierOrder.put("strictfp", new Integer(10));
+        s_modifierOrder.put("public", 0);
+        s_modifierOrder.put("protected", 1);
+        s_modifierOrder.put("private", 2);
+        s_modifierOrder.put("static", 3);
+        s_modifierOrder.put("abstract", 4);
+        s_modifierOrder.put("final", 5);
+        s_modifierOrder.put("transient", 6);
+        s_modifierOrder.put("volatile", 7);
+        s_modifierOrder.put("synchronized", 8);
+        s_modifierOrder.put("native", 9);
+        s_modifierOrder.put("strictfp", 10);
     }
 
     public String getDisplayName() {
@@ -60,15 +60,13 @@ public class MissortedModifiersInspection extends ClassInspection {
         public void applyFix(Project project, ProblemDescriptor descriptor) {
             if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
             final PsiModifierList modifierList = (PsiModifierList) descriptor.getPsiElement();
-            final List simpleModifiers = new ArrayList();
+            final List<String> simpleModifiers = new ArrayList<String>();
             final PsiElement[] children = modifierList.getChildren();
-            for (int i = 0; i < children.length; i++) {
-                final PsiElement child = children[i];
-
-                if (child instanceof PsiJavaToken) {
+            for(final PsiElement child : children){
+                if(child instanceof PsiJavaToken){
                     simpleModifiers.add(child.getText());
                 }
-                if (child instanceof PsiAnnotation) {
+                if(child instanceof PsiAnnotation){
                 }
             }
             Collections.sort(simpleModifiers, new ModifierComparator());
@@ -77,25 +75,25 @@ public class MissortedModifiersInspection extends ClassInspection {
 
         }
 
-        private static void addModifiersInOrder(List modifiers,
+        private static void addModifiersInOrder(List<String> modifiers,
                                                 PsiModifierList modifierList) {
-            for (Iterator iterator = modifiers.iterator(); iterator.hasNext();) {
-                final String modifier = (String) iterator.next();
-                try {
+            for(Object modifier1 : modifiers){
+                final String modifier = (String) modifier1;
+                try{
                     modifierList.setModifierProperty(modifier, true);
-                } catch (IncorrectOperationException e) {
+                } catch(IncorrectOperationException e){
                     s_logger.error(e);
                 }
             }
         }
 
-        private static void clearModifiers(List modifiers,
+        private static void clearModifiers(List<String> modifiers,
                                            PsiModifierList modifierList) {
-            for (Iterator iterator = modifiers.iterator(); iterator.hasNext();) {
-                final String modifier = (String) iterator.next();
-                try {
+            for(Object modifier1 : modifiers){
+                final String modifier = (String) modifier1;
+                try{
                     modifierList.setModifierProperty(modifier, false);
-                } catch (IncorrectOperationException e) {
+                } catch(IncorrectOperationException e){
                     s_logger.error(e);
                 }
             }
@@ -158,32 +156,29 @@ public class MissortedModifiersInspection extends ClassInspection {
                 return false;
             }
 
-            final List simpleModifiers = new ArrayList();
+            final List<PsiElement> simpleModifiers = new ArrayList<PsiElement>();
             final PsiElement[] children = modifierList.getChildren();
-            for (int i = 0; i < children.length; i++) {
-                final PsiElement child = children[i];
-
-                if (child instanceof PsiJavaToken) {
+            for(final PsiElement child : children){
+                if(child instanceof PsiJavaToken){
                     simpleModifiers.add(child);
                 }
-                if (child instanceof PsiAnnotation) {
-                    if (simpleModifiers.size() != 0) {
+                if(child instanceof PsiAnnotation){
+                    if(simpleModifiers.size() != 0){
                         return true; //things aren't in order, since annotations come first
                     }
                 }
             }
             int currentModifierIndex = -1;
 
-            for (Iterator iterator = simpleModifiers.iterator();
-                 iterator.hasNext();) {
-                final PsiJavaToken token = (PsiJavaToken) iterator.next();
+            for(Object simpleModifier : simpleModifiers){
+                final PsiJavaToken token = (PsiJavaToken) simpleModifier;
                 final String text = token.getText();
-                final Integer modifierIndex = (Integer) s_modifierOrder.get(text);
-                if (modifierIndex == null) {
+                final Integer modifierIndex = s_modifierOrder.get(text);
+                if(modifierIndex == null){
                     return false;
                 }
-                final int nextModifierIndex = modifierIndex.intValue();
-                if (currentModifierIndex >= nextModifierIndex) {
+                final int nextModifierIndex = modifierIndex;
+                if(currentModifierIndex >= nextModifierIndex){
                     return true;
                 }
                 currentModifierIndex = nextModifierIndex;

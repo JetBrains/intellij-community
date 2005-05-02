@@ -127,8 +127,8 @@ public class WhileLoopSpinsOnFieldInspection extends MethodInspection {
                 if (statements == null) {
                     return false;
                 }
-                for (int i = 0; i < statements.length; i++) {
-                    if (!statementIsEmpty(statements[i])) {
+                for(PsiStatement statement1 : statements){
+                    if(!statementIsEmpty(statement1)){
                         return false;
                     }
                 }

@@ -60,9 +60,8 @@ public class MethodCountInspection
     private static int calculateTotalMethodCount(PsiClass aClass) {
         final PsiMethod[] methods = aClass.getMethods();
         int totalCount = 0;
-        for (int i = 0; i < methods.length; i++) {
-            final PsiMethod method = methods[i];
-            if (!method.isConstructor()) {
+        for(final PsiMethod method : methods){
+            if(!method.isConstructor()){
                 totalCount++;
             }
         }

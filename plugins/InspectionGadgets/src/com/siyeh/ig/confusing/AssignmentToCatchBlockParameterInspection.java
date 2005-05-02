@@ -46,7 +46,7 @@ public class AssignmentToCatchBlockParameterInspection
                 final PsiExpression variable =
                         (PsiExpression) descriptor.getPsiElement();
                 final PsiCatchSection catchSection =
-                        (PsiCatchSection) PsiTreeUtil.getParentOfType(variable,
+                        PsiTreeUtil.getParentOfType(variable,
                                                                       PsiCatchSection.class);
 
                 final PsiCodeBlock body = catchSection.getCatchBlock();
@@ -113,8 +113,7 @@ public class AssignmentToCatchBlockParameterInspection
             if(children.length == 0){
                 out.append(text);
             } else{
-                for(int i = 0; i < children.length; i++){
-                    final PsiElement child = children[i];
+                for(final PsiElement child : children){
                     replaceVariableName(child, newName,
                                         originalName, out);
                 }

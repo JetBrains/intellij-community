@@ -100,8 +100,8 @@ public class ClassWithMultipleLoggersInspection extends ClassInspection {
             }
             int numLoggers = 0;
             final PsiField[] fields = aClass.getFields();
-            for (int i = 0; i < fields.length; i++) {
-                if (isLogger(fields[i])) {
+            for(PsiField field : fields){
+                if(isLogger(field)){
                     numLoggers++;
                 }
             }

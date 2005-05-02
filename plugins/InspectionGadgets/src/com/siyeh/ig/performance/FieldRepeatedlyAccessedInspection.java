@@ -9,7 +9,6 @@ import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 
 import javax.swing.*;
-import java.util.Iterator;
 import java.util.Set;
 
 public class FieldRepeatedlyAccessedInspection extends MethodInspection {
@@ -55,11 +54,11 @@ public class FieldRepeatedlyAccessedInspection extends MethodInspection {
             }
             final VariableAccessVisitor visitor = new VariableAccessVisitor();
             method.accept(visitor);
-            final Set fields = visitor.getOveraccessedFields();
-            for (Iterator iterator = fields.iterator(); iterator.hasNext();) {
-                final PsiField field = (PsiField) iterator.next();
-                if (!m_ignoreFinalFields ||
-                        !field.hasModifierProperty(PsiModifier.FINAL)) {
+            final Set<PsiElement> fields = visitor.getOveraccessedFields();
+            for(Object field1 : fields){
+                final PsiField field = (PsiField) field1;
+                if(!m_ignoreFinalFields ||
+                        !field.hasModifierProperty(PsiModifier.FINAL)){
                     registerError(nameIdentifier, field);
                 }
             }

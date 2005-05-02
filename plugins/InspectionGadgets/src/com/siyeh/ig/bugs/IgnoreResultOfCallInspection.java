@@ -21,7 +21,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,7 +39,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         "java.math.BigDecimal,.*," +
         "java.net.InetAddress,.*";
 
-    private final List callsToCheck = new ArrayList(32);
+    private final List<ReturnCheckSpecification> callsToCheck = new ArrayList<ReturnCheckSpecification>(32);
 
     {
         parseCallCheckString();
@@ -70,14 +69,14 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
     private void formatCallCheckString(){
         final StringBuffer buffer = new StringBuffer();
         boolean first = true;
-        for(Iterator iterator = callsToCheck.iterator(); iterator.hasNext();){
+        for(Object aCallsToCheck : callsToCheck){
             if(first){
                 first = false;
             } else{
                 buffer.append(',');
             }
             final ReturnCheckSpecification returnCheckSpecification =
-                    (ReturnCheckSpecification) iterator.next();
+                    (ReturnCheckSpecification) aCallsToCheck;
             final String methodName = returnCheckSpecification.getMethodName();
             final String className = returnCheckSpecification.getClassName();
             buffer.append(className);
@@ -163,13 +162,12 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
             if(methodName == null){
                 return;
             }
-            for(Iterator iterator = callsToCheck.iterator();
-                iterator.hasNext();){
+            for(Object aCallsToCheck : callsToCheck){
                 final ReturnCheckSpecification spec =
-                        (ReturnCheckSpecification) iterator.next();
+                        (ReturnCheckSpecification) aCallsToCheck;
                 final Pattern methodNamePattern = spec.getMethodNamePattern();
                 if(methodNamePattern != null &&
-                           methodNamesMatch(methodName, methodNamePattern)){
+                        methodNamesMatch(methodName, methodNamePattern)){
                     final String classNameToCompare = spec.getClassName();
                     if(ClassUtils.isSubclass(aClass, classNameToCompare)){
                         registerMethodCallError(call);
@@ -265,7 +263,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
 
         public Object getValueAt(int rowIndex, int columnIndex){
             final ReturnCheckSpecification spec =
-                    (ReturnCheckSpecification) callsToCheck.get(
+                    callsToCheck.get(
                             rowIndex);
             if(columnIndex == 0){
                 return spec.getClassName();
@@ -276,7 +274,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
 
         public void setValueAt(Object aValue, int rowIndex, int columnIndex){
             final ReturnCheckSpecification spec =
-                    (ReturnCheckSpecification) callsToCheck.get(
+                    callsToCheck.get(
                             rowIndex);
             if(columnIndex == 0){
                 spec.setClassName((String) aValue);

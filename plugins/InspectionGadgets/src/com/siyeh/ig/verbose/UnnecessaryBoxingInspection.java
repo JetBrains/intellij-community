@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class UnnecessaryBoxingInspection extends ExpressionInspection {
-    private static final Map s_boxingArgs = new HashMap(8);
+    private static final Map<String,String> s_boxingArgs = new HashMap<String, String>(8);
     private final UnnecessaryBoxingFix fix = new UnnecessaryBoxingFix();
 
     static {
@@ -37,7 +37,7 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
     public boolean isEnabledByDefault(){
         return true;
     }
-    
+
     public String buildErrorString(PsiElement location) {
         return "Unnecessary boxing #ref #loc";
     }
@@ -110,7 +110,7 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
             }
 
             final String argumentTypeText = argumentType.getCanonicalText();
-            final Object boxableConstructorType = s_boxingArgs.get(constructorTypeText);
+            final String boxableConstructorType = s_boxingArgs.get(constructorTypeText);
             if (!boxableConstructorType.equals(argumentTypeText)) {
                 return;
             }

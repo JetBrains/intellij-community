@@ -69,8 +69,7 @@ public class ClassWithoutNoArgConstructorInspection extends ClassInspection{
 
     private static boolean classHasNoArgConstructor(PsiClass aClass){
         final PsiMethod[] constructors = aClass.getConstructors();
-        for(int i = 0; i < constructors.length; i++){
-            final PsiMethod constructor = constructors[i];
+        for(final PsiMethod constructor : constructors){
             final PsiParameterList parameterList =
                     constructor.getParameterList();
             if(parameterList != null){

@@ -39,24 +39,23 @@ public class StaticInheritanceInspection extends ClassInspection{
             final PsiField[] allFields = iface.getAllFields();
 
             final PsiClass implementingClass =
-                    (PsiClass) PsiTreeUtil.getParentOfType(referenceElement,
+                    PsiTreeUtil.getParentOfType(referenceElement,
                                                            PsiClass.class);
             final PsiManager manager = referenceElement.getManager();
             final PsiSearchHelper searchHelper = manager.getSearchHelper();
             final SearchScope searchScope = implementingClass.getUseScope();
-            for(int i = 0; i < allFields.length; i++){
-                final PsiField field = allFields[i];
+            for(final PsiField field : allFields){
                 final PsiReference[] references =
                         searchHelper.findReferences(field, searchScope, false);
 
-                for(int j = 0; j < references.length; j++){
+                for(PsiReference reference1 : references){
                     final PsiReferenceExpression reference =
-                            (PsiReferenceExpression) references[j];
+                            (PsiReferenceExpression) reference1;
                     if(!reference.isQualified()){
                         final String referenceText = reference.getText();
                         replaceExpression(project, reference,
                                           referencedClassName + '.' +
-                                referenceText);
+                                                  referenceText);
                     } else{
                         final PsiExpression qualifier =
                                 reference.getQualifierExpression();
@@ -68,12 +67,12 @@ public class StaticInheritanceInspection extends ClassInspection{
                             if(!referent.equals(iface)){
                                 replaceExpression(project, reference,
                                                   referencedClassName + '.' +
-                                        referenceName);
+                                                          referenceName);
                             }
                         } else{
                             replaceExpression(project, reference,
                                               referencedClassName + '.' +
-                                    referenceName);
+                                                      referenceName);
                         }
                     }
                 }
@@ -102,8 +101,7 @@ public class StaticInheritanceInspection extends ClassInspection{
             }
             final PsiJavaCodeReferenceElement[] refs =
                     implementsList.getReferenceElements();
-            for(int i = 0; i < refs.length; i++){
-                final PsiJavaCodeReferenceElement ref = refs[i];
+            for(final PsiJavaCodeReferenceElement ref : refs){
                 final PsiClass iface = (PsiClass) ref.resolve();
                 if(iface != null){
                     if(interfaceContainsOnlyConstants(iface)){
@@ -122,8 +120,7 @@ public class StaticInheritanceInspection extends ClassInspection{
                 return false;
             }
             final PsiClass[] parentInterfaces = iface.getInterfaces();
-            for(int i = 0; i < parentInterfaces.length; i++){
-                final PsiClass parentInterface = parentInterfaces[i];
+            for(final PsiClass parentInterface : parentInterfaces){
                 if(!interfaceContainsOnlyConstants(parentInterface)){
                     return false;
                 }

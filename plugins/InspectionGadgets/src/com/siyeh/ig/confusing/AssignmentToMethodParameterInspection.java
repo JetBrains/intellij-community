@@ -45,7 +45,7 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
                 final PsiExpression variable =
                         (PsiExpression) descriptor.getPsiElement();
                 final PsiMethod method =
-                        (PsiMethod) PsiTreeUtil.getParentOfType(variable,
+                        PsiTreeUtil.getParentOfType(variable,
                                                                 PsiMethod.class);
 
                 final PsiCodeBlock body = method.getBody();
@@ -109,8 +109,7 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
             if(children.length == 0){
                 out.append(text);
             } else{
-                for(int i = 0; i < children.length; i++){
-                    final PsiElement child = children[i];
+                for(final PsiElement child : children){
                     replaceVariableName(child, newName,
                                         originalName, out);
                 }

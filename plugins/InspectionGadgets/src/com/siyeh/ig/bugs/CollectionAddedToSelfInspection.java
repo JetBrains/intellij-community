@@ -73,9 +73,8 @@ public class CollectionAddedToSelfInspection extends ExpressionInspection {
                 return;
             }
             final PsiExpression[] args = argumentList.getExpressions();
-            for(int i = 0; i < args.length; i++){
-                if(EquivalenceChecker.expressionsAreEquivalent(qualifier, args[i]))
-                {
+            for(PsiExpression arg : args){
+                if(EquivalenceChecker.expressionsAreEquivalent(qualifier, arg)){
                     hasMatchingArg = true;
                 }
             }

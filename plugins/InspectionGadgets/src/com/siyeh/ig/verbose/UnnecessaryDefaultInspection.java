@@ -79,12 +79,11 @@ public class UnnecessaryDefaultInspection extends StatementInspection {
             }
             boolean containsDefault = false;
             int numCases = 0;
-            for (int i = 0; i < statements.length; i++) {
-                final PsiStatement child = statements[i];
-                if (child instanceof PsiSwitchLabelStatement) {
-                    if (((PsiSwitchLabelStatement) child).isDefaultCase()) {
+            for(final PsiStatement child : statements){
+                if(child instanceof PsiSwitchLabelStatement){
+                    if(((PsiSwitchLabelStatement) child).isDefaultCase()){
                         containsDefault = true;
-                    } else {
+                    } else{
                         numCases++;
                     }
                 }
@@ -94,12 +93,10 @@ public class UnnecessaryDefaultInspection extends StatementInspection {
             }
             final PsiField[] fields = aClass.getFields();
             int numEnums = 0;
-            for (int i = 0; i < fields.length; i++) {
-                final PsiField field = fields[i];
-                if (field.getType().equals(type)) {
+            for(final PsiField field : fields){
+                if(field.getType().equals(type)){
                     numEnums++;
                 }
-
             }
             return numEnums == numCases;
         }

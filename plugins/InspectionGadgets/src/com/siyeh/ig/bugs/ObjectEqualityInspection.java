@@ -152,7 +152,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
                 return;
             }
             final PsiMethod method =
-                    (PsiMethod) PsiTreeUtil.getParentOfType(expression,
+                    PsiTreeUtil.getParentOfType(expression,
                                                             PsiMethod.class);
             if(method != null) {
                 final String methodName = method.getName();

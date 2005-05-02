@@ -73,7 +73,7 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection {
         public void visitLocalVariable(PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             final PsiCodeBlock codeBlock =
-                    (PsiCodeBlock) PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+                    PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
             if (codeBlock == null) {
                 return;
             }

@@ -63,25 +63,24 @@ public class MethodOverridesStaticMethodInspection extends MethodInspection {
             }
             final int numParameters = parameters.length;
             PsiClass ancestorClass = aClass.getSuperClass();
-            final Set visitedClasses = new HashSet();
+            final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
             while (ancestorClass != null) {
                 if (!visitedClasses.add(ancestorClass)) {
                     return;
                 }
                 final PsiMethod[] methods = ancestorClass.findMethodsByName(methName, false);
                 if (methods != null) {
-                    for (int i = 0; i < methods.length; i++) {
-                        final PsiMethod testMethod = methods[i];
+                    for(final PsiMethod testMethod : methods){
                         final PsiParameterList testParametersList = testMethod.getParameterList();
-                        if (testParametersList == null) {
+                        if(testParametersList == null){
                             continue;
                         }
                         final int numTestParameters = testParametersList.getParameters().length;
-                        if (numParameters != numTestParameters) {
+                        if(numParameters != numTestParameters){
                             continue;
                         }
-                        if (testMethod.hasModifierProperty(PsiModifier.STATIC) &&
-                                !testMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
+                        if(testMethod.hasModifierProperty(PsiModifier.STATIC) &&
+                                !testMethod.hasModifierProperty(PsiModifier.PRIVATE)){
                             registerMethodError(method);
                             return;
                         }

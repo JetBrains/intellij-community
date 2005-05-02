@@ -41,17 +41,16 @@ public class SerialVersionUIDNotStaticFinalInspection extends ClassInspection {
             }
             PsiField badSerialVersionUIDField = null;
             final PsiField[] fields = aClass.getFields();
-            for (int i = 0; i < fields.length; i++) {
-                final PsiField field = fields[i];
-                if (isSerialVersionUID(field)) {
-                    if (!field.hasModifierProperty(PsiModifier.STATIC) ||
+            for(final PsiField field : fields){
+                if(isSerialVersionUID(field)){
+                    if(!field.hasModifierProperty(PsiModifier.STATIC) ||
                             !field.hasModifierProperty(PsiModifier.PRIVATE) ||
-                            !field.hasModifierProperty(PsiModifier.FINAL)) {
+                            !field.hasModifierProperty(PsiModifier.FINAL)){
                         badSerialVersionUIDField = field;
                         break;
-                    } else {
+                    } else{
                         final PsiType type = field.getType();
-                        if (!PsiType.LONG.equals(type)) {
+                        if(!PsiType.LONG.equals(type)){
                             badSerialVersionUIDField = field;
                             break;
                         }

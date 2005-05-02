@@ -15,7 +15,7 @@ import java.util.Set;
 
 public class AssertsWithoutMessagesInspection extends ExpressionInspection {
 
-    private static final Set s_assertMethods = new HashSet(10);
+    private static final Set<String> s_assertMethods = new HashSet<String>(10);
 
     static {
         s_assertMethods.add("assertTrue");

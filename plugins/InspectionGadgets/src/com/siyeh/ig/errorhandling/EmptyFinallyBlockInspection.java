@@ -42,10 +42,9 @@ public class EmptyFinallyBlockInspection extends StatementInspection {
                 return;
             }
             final PsiElement[] children = statement.getChildren();
-            for (int j = 0; j < children.length; j++) {
-                final PsiElement child = children[j];
+            for(final PsiElement child : children){
                 final String childText = child.getText();
-                if ("finally".equals(childText)) {
+                if("finally".equals(childText)){
                     registerError(child);
                     return;
                 }

@@ -19,12 +19,12 @@ public class MagicNumberInspection extends ExpressionInspection {
                 "1L", "2L", "0l", "1l", "2l", "0.0", "1.0", "0.0F", "1.0F", "0.0f", "1.0f"
             };
     /** @noinspection StaticCollection*/
-    private static final Set s_specialCaseLiterals = new HashSet(NUM_SPECIAL_CASE_LITERALS);
+    private static final Set<String> s_specialCaseLiterals = new HashSet<String>(NUM_SPECIAL_CASE_LITERALS);
     private final IntroduceConstantFix fix = new IntroduceConstantFix();
 
     static {
-        for (int i = 0; i < s_specialCaseLiteralArray.length; i++) {
-            s_specialCaseLiterals.add(s_specialCaseLiteralArray[i]);
+        for(String string : s_specialCaseLiteralArray){
+            s_specialCaseLiterals.add(string);
         }
     }
 
@@ -85,7 +85,7 @@ public class MagicNumberInspection extends ExpressionInspection {
 
         private static boolean isDeclaredConstant(PsiLiteralExpression expression) {
             final PsiField field =
-                    (PsiField) PsiTreeUtil.getParentOfType(expression, PsiField.class);
+                    PsiTreeUtil.getParentOfType(expression, PsiField.class);
             if (field == null) {
                 return false;
             }

@@ -4,19 +4,17 @@ import com.intellij.codeInspection.LocalInspectionTool;
 
 import java.util.Comparator;
 
-class InspectionComparator implements Comparator {
+class InspectionComparator implements Comparator<Class> {
     InspectionComparator() {
         super();
     }
 
-    public int compare(Object o1, Object o2) {
-        final Class class1 = (Class) o1;
-        final Class class2 = (Class) o2;
+    public int compare(Class class1, Class class2) {
         final LocalInspectionTool inspection1;
         final LocalInspectionTool inspection2;
         try {
             inspection1 = (LocalInspectionTool) class1.newInstance();
-            inspection2 = (LocalInspectionTool) class2.newInstance();
+            inspection2 = (LocalInspectionTool)class2.newInstance();
         } catch (InstantiationException e) {
             return -1;
         } catch (IllegalAccessException e) {

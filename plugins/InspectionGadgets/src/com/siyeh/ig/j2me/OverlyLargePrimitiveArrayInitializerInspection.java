@@ -75,8 +75,7 @@ public class OverlyLargePrimitiveArrayInitializerInspection
             final PsiArrayInitializerExpression arrayExpression = (PsiArrayInitializerExpression) expression;
             final PsiExpression[] initializers = arrayExpression.getInitializers();
             int out = 0;
-            for(int i = 0; i < initializers.length; i++){
-                final PsiExpression initializer = initializers[i];
+            for(final PsiExpression initializer : initializers){
                 out += calculateNumElements(initializer);
             }
             return out;

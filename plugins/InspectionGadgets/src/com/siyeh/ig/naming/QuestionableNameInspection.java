@@ -18,7 +18,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 public class QuestionableNameInspection extends ClassInspection{
@@ -26,7 +25,7 @@ public class QuestionableNameInspection extends ClassInspection{
     public String nameCheckString = "foo,bar,baz";
     private final RenameFix fix = new RenameFix();
 
-    private List nameList = new ArrayList(32);
+    private List<Object> nameList = new ArrayList<Object>(32);
 
     {
         parseNameString();
@@ -40,8 +39,8 @@ public class QuestionableNameInspection extends ClassInspection{
     private void parseNameString(){
         nameList.clear();
         final String[] strings = nameCheckString.split(",");
-        for(int i = 0; i < strings.length; i++){
-            nameList.add(strings[i]);
+        for(String string : strings){
+            nameList.add(string);
         }
     }
 
@@ -53,13 +52,13 @@ public class QuestionableNameInspection extends ClassInspection{
     private void formatNameCheckString(){
         final StringBuffer buffer = new StringBuffer();
         boolean first = true;
-        for(Iterator iterator = nameList.iterator(); iterator.hasNext();){
+        for(Object aNameList : nameList){
             if(first){
                 first = false;
             } else{
                 buffer.append(',');
             }
-            final String exceptionName = (String) iterator.next();
+            final String exceptionName = (String) aNameList;
             buffer.append(exceptionName);
         }
         nameCheckString = buffer.toString();

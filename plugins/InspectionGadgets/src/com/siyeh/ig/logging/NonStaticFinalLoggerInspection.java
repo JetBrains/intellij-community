@@ -100,12 +100,10 @@ public class NonStaticFinalLoggerInspection extends ClassInspection {
                 return;
             }
             final PsiField[] fields = aClass.getFields();
-            for (int i = 0; i < fields.length; i++) {
-                final PsiField field = fields[i];
-                if (isLogger(field)) {
-                    if(!field.hasModifierProperty(PsiModifier.STATIC)||
-                            !field.hasModifierProperty(PsiModifier.FINAL))
-                    {
+            for(final PsiField field : fields){
+                if(isLogger(field)){
+                    if(!field.hasModifierProperty(PsiModifier.STATIC) ||
+                            !field.hasModifierProperty(PsiModifier.FINAL)){
                         registerFieldError(field);
                     }
                 }

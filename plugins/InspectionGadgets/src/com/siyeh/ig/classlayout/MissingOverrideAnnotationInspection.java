@@ -108,8 +108,7 @@ public class MissingOverrideAnnotationInspection extends MethodInspection{
         if(annotations == null){
             return false;
         }
-        for(int i = 0; i < annotations.length; i++){
-            final PsiAnnotation annotation = annotations[i];
+        for(final PsiAnnotation annotation : annotations){
             final PsiJavaCodeReferenceElement reference =
                     annotation.getNameReferenceElement();
             final PsiClass annotationClass =

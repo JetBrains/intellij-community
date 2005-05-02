@@ -9,7 +9,7 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
     /**
          * @noinspection StaticCollection
          */
-    private static final Set updateNames = new HashSet(10);
+    private static final Set<String> updateNames = new HashSet<String>(10);
 
     static{
         updateNames.add("add");

@@ -42,12 +42,11 @@ public class RefusedBequestInspection extends MethodInspection{
             PsiMethod leastConcreteSuperMethod = null;
             final PsiMethod[] superMethods =
                     PsiSuperMethodUtil.findSuperMethods(method, true);
-            for(int i = 0; i < superMethods.length; i++){
-                final PsiMethod superMethod = superMethods[i];
+            for(final PsiMethod superMethod : superMethods){
                 final PsiClass containingClass =
                         superMethod.getContainingClass();
                 if(!superMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
-                           !containingClass.isInterface()){
+                        !containingClass.isInterface()){
                     leastConcreteSuperMethod = superMethod;
                     break;
                 }

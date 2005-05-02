@@ -43,14 +43,13 @@ public class InnerClassMayBeStaticInspection extends ClassInspection {
                 final PsiSearchHelper searchHelper = manager.getSearchHelper();
                 final SearchScope useScope = innerClass.getUseScope();
                 final PsiReference[] references = searchHelper.findReferences(innerClass, useScope, false);
-                for (int i = 0; i < references.length; i++) {
-                    final PsiReference reference = references[i];
+                for(final PsiReference reference : references){
                     final PsiElement element = reference.getElement();
                     final PsiElement parent = element.getParent();
-                    if (parent instanceof PsiNewExpression) {
+                    if(parent instanceof PsiNewExpression){
                         final PsiNewExpression newExpression = (PsiNewExpression) parent;
                         final PsiExpression qualifier = newExpression.getQualifier();
-                        if (qualifier != null) {
+                        if(qualifier != null){
                             qualifier.delete();
                         }
                     }
@@ -82,12 +81,11 @@ public class InnerClassMayBeStaticInspection extends ClassInspection {
         public void visitClass(PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes
             final PsiClass[] innerClasses = aClass.getInnerClasses();
-            for (int i = 0; i < innerClasses.length; i++) {
-                final PsiClass innerClass = innerClasses[i];
-                if (!innerClass.hasModifierProperty(PsiModifier.STATIC)) {
+            for(final PsiClass innerClass : innerClasses){
+                if(!innerClass.hasModifierProperty(PsiModifier.STATIC)){
                     final InnerClassReferenceVisitor visitor = new InnerClassReferenceVisitor(innerClass);
                     innerClass.accept(visitor);
-                    if (visitor.areReferenceStaticallyAccessible()) {
+                    if(visitor.areReferenceStaticallyAccessible()){
                         registerClassError(innerClass);
                     }
                 }

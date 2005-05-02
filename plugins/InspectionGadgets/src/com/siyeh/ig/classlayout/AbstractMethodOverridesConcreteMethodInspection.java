@@ -48,13 +48,12 @@ public class AbstractMethodOverridesConcreteMethodInspection extends MethodInspe
                 return;
             }
             final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
-            for (int i = 0; i < superMethods.length; i++) {
-                final PsiMethod superMethod = superMethods[i];
+            for(final PsiMethod superMethod : superMethods){
                 final PsiClass superClass = superMethod.getContainingClass();
                 final String superClassName = superClass.getQualifiedName();
-                if (!superClass.isInterface() &&
+                if(!superClass.isInterface() &&
                         !"java.lang.Object".equals(superClassName) &&
-                        !superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                        !superMethod.hasModifierProperty(PsiModifier.ABSTRACT)){
                     registerMethodError(method);
                     return;
                 }

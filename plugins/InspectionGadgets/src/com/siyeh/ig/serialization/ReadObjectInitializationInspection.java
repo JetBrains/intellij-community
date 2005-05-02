@@ -48,9 +48,8 @@ public class ReadObjectInitializationInspection extends FieldInspection {
                 return;
             }
             final PsiField[] fields = aClass.getFields();
-            for (int i = 0; i < fields.length; i++) {
-                final PsiField field = fields[i];
-                if (!isFieldInitialized(field, method)) {
+            for(final PsiField field : fields){
+                if(!isFieldInitialized(field, method)){
                     registerFieldError(field);
                 }
             }

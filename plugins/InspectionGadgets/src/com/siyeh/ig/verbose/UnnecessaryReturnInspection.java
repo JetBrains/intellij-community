@@ -29,7 +29,7 @@ public class UnnecessaryReturnInspection extends StatementInspection{
 
     public String buildErrorString(PsiElement location){
         final PsiMethod method =
-                (PsiMethod) PsiTreeUtil.getParentOfType(location,
+                PsiTreeUtil.getParentOfType(location,
                                                         PsiMethod.class);
         if(method.isConstructor()){
             return "#ref is unnecessary as the last statement in a constructor #loc";
@@ -72,7 +72,7 @@ public class UnnecessaryReturnInspection extends StatementInspection{
         public void visitReturnStatement(PsiReturnStatement statement){
             super.visitReturnStatement(statement);
             final PsiMethod method =
-                    (PsiMethod) PsiTreeUtil.getParentOfType(statement,
+                    PsiTreeUtil.getParentOfType(statement,
                                                             PsiMethod.class);
             if(method == null){
                 return;

@@ -60,8 +60,8 @@ public class HardcodedLineSeparatorsInspection extends ExpressionInspection {
                 if (value == null) {
                     return;
                 }
-                if (value.charValue() == NEW_LINE_CHAR
-                        || value.charValue() == RETURN_CHAR) {
+                if ((value) == NEW_LINE_CHAR
+                        || (value) == RETURN_CHAR) {
                     registerError(expression);
                 }
             }

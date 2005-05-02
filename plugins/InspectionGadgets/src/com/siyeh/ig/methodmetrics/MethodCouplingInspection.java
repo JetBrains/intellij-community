@@ -50,7 +50,7 @@ public class MethodCouplingInspection
         final NumberFormat formatter = NumberFormat.getIntegerInstance();
         formatter.setParseIntegerOnly(true);
         final JFormattedTextField valueField = new JFormattedTextField(formatter);
-        valueField.setValue(new Integer(m_limit));
+        valueField.setValue(m_limit);
         valueField.setColumns(4);
         final Document document = valueField.getDocument();
         document.addDocumentListener(new DocumentListener() {

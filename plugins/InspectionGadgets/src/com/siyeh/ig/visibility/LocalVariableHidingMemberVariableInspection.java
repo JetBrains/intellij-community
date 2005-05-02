@@ -89,7 +89,7 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
             super.visitLocalVariable(variable);
             if (m_ignoreStaticMethods) {
                 final PsiMethod aMethod =
-                        (PsiMethod) PsiTreeUtil.getParentOfType(variable,
+                        PsiTreeUtil.getParentOfType(variable,
                                                                 PsiMethod.class);
                 if (aMethod == null) {
                     return;
@@ -105,9 +105,8 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
             }
             final String variableName = variable.getName();
             final PsiField[] fields = aClass.getAllFields();
-            for (int i = 0; i < fields.length; i++) {
-                final PsiField field = fields[i];
-                if (checkFieldName(field, variableName, aClass)) {
+            for(final PsiField field : fields){
+                if(checkFieldName(field, variableName, aClass)){
                     registerVariableError(variable);
                 }
             }
@@ -125,9 +124,8 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
             }
             final String variableName = variable.getName();
             final PsiField[] fields = aClass.getAllFields();
-            for (int i = 0; i < fields.length; i++) {
-                final PsiField field = fields[i];
-                if (checkFieldName(field, variableName, aClass)) {
+            for(final PsiField field : fields){
+                if(checkFieldName(field, variableName, aClass)){
                     registerVariableError(variable);
                 }
             }

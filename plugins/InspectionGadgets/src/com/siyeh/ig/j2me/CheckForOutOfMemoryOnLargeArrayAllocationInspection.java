@@ -59,13 +59,12 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
             }
             int size = 1;
             final PsiExpression[] dimensions = expression.getArrayDimensions();
-            for(int i = 0; i < dimensions.length; i++){
-                final PsiExpression dimension = dimensions[i];
+            for(final PsiExpression dimension : dimensions){
                 final Integer intValue =
                         (Integer) ConstantExpressionUtil.computeCastTo(dimension,
                                                                        PsiType.INT);
                 if(intValue != null){
-                    size *= intValue.intValue();
+                    size *= (intValue);
                 }
             }
             if(size <= m_limit){
@@ -96,10 +95,9 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
 
     private static boolean catchesOOME(PsiTryStatement statement){
         final PsiCatchSection[] sections = statement.getCatchSections();
-        for(int i = 0; i < sections.length; i++){
-            final PsiCatchSection section = sections[i];
+        for(final PsiCatchSection section : sections){
             final PsiType catchType = section.getCatchType();
-            if(catchType!=null){
+            if(catchType != null){
                 final String typeText = catchType.getCanonicalText();
                 if("java.lang.OutOfMemoryError".equals(typeText)){
                     return true;

@@ -52,7 +52,7 @@ public class SerializableWithUnconstructableAncestorInspection extends ClassInsp
                 return;
             }
             PsiClass ancestor = aClass.getSuperClass();
-            final Set visitedClasses = new HashSet(16);
+            final Set<PsiClass> visitedClasses = new HashSet<PsiClass>(16);
             while (ancestor != null && SerializationUtils.isSerializable(ancestor)) {
                 ancestor = ancestor.getSuperClass();
                 if (!visitedClasses.add(ancestor)) {
@@ -73,20 +73,21 @@ public class SerializableWithUnconstructableAncestorInspection extends ClassInsp
             boolean hasConstructor = false;
             boolean hasNoArgConstructor = false;
             final PsiMethod[] methods = ancestor.getMethods();
-            for (int i = 0; i < methods.length; i++) {
-                final PsiMethod method = methods[i];
-                if (method.isConstructor()) {
+            for(final PsiMethod method : methods){
+                if(method.isConstructor()){
                     hasConstructor = true;
                     final PsiParameterList params = method.getParameterList();
-                    if (params != null) {
-                        if (params.getParameters().length == 0
-                                && (method.hasModifierProperty(PsiModifier.PUBLIC) ||
-                                    method.hasModifierProperty(PsiModifier.PROTECTED))) {
+                    if(params != null){
+                        if(params.getParameters().length == 0
+                                &&
+                                (method
+                                        .hasModifierProperty(PsiModifier.PUBLIC) ||
+                                        method
+                                                .hasModifierProperty(PsiModifier.PROTECTED))){
                             hasNoArgConstructor = true;
                         }
                     }
                 }
-
             }
             return hasNoArgConstructor || !hasConstructor;
         }

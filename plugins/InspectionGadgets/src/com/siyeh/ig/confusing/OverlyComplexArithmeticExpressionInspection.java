@@ -54,7 +54,7 @@ public class OverlyComplexArithmeticExpressionInspection extends ExpressionInspe
     }
 
     private class SwitchStatementWithTooManyBranchesVisitor extends BaseInspectionVisitor {
-        private  final Set arithmeticTokens = new HashSet(5);
+        private  final Set<IElementType> arithmeticTokens = new HashSet<IElementType>(5);
         {
             arithmeticTokens.add(JavaTokenType.PLUS);
             arithmeticTokens.add(JavaTokenType.MINUS);

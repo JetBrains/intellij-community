@@ -9,11 +9,10 @@ import com.siyeh.ig.VariableInspection;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Iterator;
 
 public class ObsoleteCollectionInspection extends VariableInspection{
 
-    private static final Set s_obsoleteCollectionTypes = new HashSet(2);
+    private static final Set<String> s_obsoleteCollectionTypes = new HashSet<String>(2);
 
     static{
         s_obsoleteCollectionTypes.add("java.util.Vector");
@@ -73,11 +72,9 @@ public class ObsoleteCollectionInspection extends VariableInspection{
             if(type == null){
                 return false;
             }
-            for(Iterator iterator = s_obsoleteCollectionTypes.iterator();
-                iterator.hasNext();){
-                final String typeName = (String) iterator.next();
-                if(type.equalsToText(typeName))
-                {
+            for(Object s_obsoleteCollectionType : s_obsoleteCollectionTypes){
+                final String typeName = (String) s_obsoleteCollectionType;
+                if(type.equalsToText(typeName)){
                     return true;
                 }
             }

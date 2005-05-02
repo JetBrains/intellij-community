@@ -59,19 +59,18 @@ public class CovariantCompareToInspection extends MethodInspection {
                 return;
             }
             final PsiMethod[] methods = aClass.getMethods();
-            for (int i = 0; i < methods.length; i++) {
-                if (isNonVariantCompareTo(methods[i])) {
+            for(PsiMethod method1 : methods){
+                if(isNonVariantCompareTo(method1)){
                     return;
                 }
             }
             final PsiClassType[] implementsListTypes = aClass.getImplementsListTypes();
-            for (int i = 0; i < implementsListTypes.length; i++) {
-                final PsiClassType implementedType = implementsListTypes[i];
+            for(final PsiClassType implementedType : implementsListTypes){
                 final String implementedClassName = implementedType.getClassName();
-                if (("java.lang.Comparable".equals(implementedClassName) ||
+                if(("java.lang.Comparable".equals(implementedClassName) ||
                         "Comparable".equals(implementedClassName)
-                        )
-                        && implementedType.hasParameters()) {
+                )
+                        && implementedType.hasParameters()){
                     return;
                 }
             }

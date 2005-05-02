@@ -48,7 +48,8 @@ public class CloneableImplementsCloneInspection extends ClassInspection {
 
         public void visitClass(PsiClass aClass) {
             // no call to super, so it doesn't drill down
-            if (aClass.isInterface()  || aClass.isAnnotationType()) {
+            if (aClass.isInterface()  || aClass.isAnnotationType()
+                    || aClass.isEnum()) {
                 return;
             }
             if (m_ignoreCloneableDueToInheritance) {
@@ -61,9 +62,8 @@ public class CloneableImplementsCloneInspection extends ClassInspection {
                 }
             }
             final PsiMethod[] methods = aClass.getMethods();
-            for (int i = 0; i < methods.length; i++) {
-                final PsiMethod method = methods[i];
-                if (CloneUtils.isClone(method)) {
+            for(final PsiMethod method : methods){
+                if(CloneUtils.isClone(method)){
                     return;
                 }
             }

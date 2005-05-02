@@ -15,13 +15,13 @@ public class ClassUtils {
 
     private static final int NUM_IMMUTABLE_TYPES = 17;
     /** @noinspection StaticCollection*/
-    private static final Set immutableTypes = new HashSet(NUM_IMMUTABLE_TYPES);
+    private static final Set<String> immutableTypes = new HashSet<String>(NUM_IMMUTABLE_TYPES);
     /** @noinspection StaticCollection*/
-    private static final Set primitiveNumericTypes = new HashSet(6);
+    private static final Set<PsiType> primitiveNumericTypes = new HashSet<PsiType>(6);
     /** @noinspection StaticCollection*/
-    private static final Set numericTypes = new HashSet(6);
+    private static final Set<String> numericTypes = new HashSet<String>(6);
     /** @noinspection StaticCollection*/
-    private static final Set integralTypes = new HashSet(10);
+    private static final Set<PsiType> integralTypes = new HashSet<PsiType>(10);
 
     static
     {
@@ -62,7 +62,7 @@ public class ClassUtils {
     private ClassUtils(){
         super();
     }
-    
+
     public static boolean isSubclass(PsiClass aClass, String ancestorName) {
         final PsiManager psiManager = aClass.getManager();
         final Project project = psiManager.getProject();
@@ -154,7 +154,7 @@ public class ClassUtils {
     }
 
     public static PsiClass getContainingClass(PsiElement aClass) {
-        return (PsiClass) PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
+        return PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
     }
 
     public static PsiClass getOutermostContainingClass(PsiClass aClass) {
@@ -171,7 +171,7 @@ public class ClassUtils {
     }
 
     public static PsiMethod getContainingMethod(PsiElement element){
-        return (PsiMethod) PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+        return PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     }
 
     public static boolean isClassVisibleFromClass(PsiClass baseClass,

@@ -86,8 +86,8 @@ public class UnusedCatchParameterInspection extends StatementInspection{
             }
 
             final PsiCatchSection[] catchSections = statement.getCatchSections();
-            for(int i = 0; i < catchSections.length; i++){
-                checkCatchSection(catchSections[i]);
+            for(PsiCatchSection catchSection : catchSections){
+                checkCatchSection(catchSection);
             }
         }
 
@@ -99,8 +99,7 @@ public class UnusedCatchParameterInspection extends StatementInspection{
             }
             if(m_ignoreCatchBlocksWithComments){
                 final PsiElement[] children = block.getChildren();
-                for(int j = 0; j < children.length; j++){
-                    final PsiElement child = children[j];
+                for(final PsiElement child : children){
                     if(child instanceof PsiComment){
                         return;
                     }

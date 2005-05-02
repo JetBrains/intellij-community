@@ -40,7 +40,7 @@ public class OverriddenMethodCallInConstructorInspection extends MethodInspectio
         public void visitMethodCallExpression(PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiMethod method =
-                    (PsiMethod) PsiTreeUtil.getParentOfType(call,
+                    PsiTreeUtil.getParentOfType(call,
                                                             PsiMethod.class);
             if(method == null) {
                 return;
@@ -87,7 +87,7 @@ public class OverriddenMethodCallInConstructorInspection extends MethodInspectio
             final Project project = psiManager.getProject();
             final SearchScope globalScope = GlobalSearchScope.allScope(project);
             final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
-            final PsiElementProcessor.FindElement processor = new PsiElementProcessor.FindElement();
+            final PsiElementProcessor.FindElement<PsiMethod> processor = new PsiElementProcessor.FindElement<PsiMethod>();
             searchHelper.processOverridingMethods(processor, method, globalScope, true);
             return processor.getFoundElement()!=null;
         }

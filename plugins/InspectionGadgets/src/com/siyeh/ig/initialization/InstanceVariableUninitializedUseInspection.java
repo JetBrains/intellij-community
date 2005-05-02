@@ -80,14 +80,13 @@ public class InstanceVariableUninitializedUseInspection
             if (!isInitializedInInitializer(field)) {
                 final PsiMethod[] constructors = aClass.getConstructors();
 
-                for (int i = 0; i < constructors.length; i++) {
-                    final PsiMethod constructor = constructors[i];
+                for(final PsiMethod constructor : constructors){
                     final PsiCodeBlock body = constructor.getBody();
                     iru.blockMustAssignVariable(field, body);
                 }
             }
 
-            final List badReads = iru.getUninitializedReads();
+            final List<PsiExpression> badReads = iru.getUninitializedReads();
             for (int i = 0; i < badReads.size(); i++) {
                 final PsiElement element = (PsiElement) badReads.get(i);
                 registerError(element);
@@ -98,11 +97,10 @@ public class InstanceVariableUninitializedUseInspection
         private boolean isInitializedInInitializer(PsiField field) {
             final PsiClass aClass = field.getContainingClass();
             final PsiClassInitializer[] initializers = aClass.getInitializers();
-            for (int i = 0; i < initializers.length; i++) {
-                final PsiClassInitializer initializer = initializers[i];
-                if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
+            for(final PsiClassInitializer initializer : initializers){
+                if(!initializer.hasModifierProperty(PsiModifier.STATIC)){
                     final PsiCodeBlock body = initializer.getBody();
-                    if (iru.blockMustAssignVariable(field, body)) {
+                    if(iru.blockMustAssignVariable(field, body)){
                         return true;
                     }
                 }

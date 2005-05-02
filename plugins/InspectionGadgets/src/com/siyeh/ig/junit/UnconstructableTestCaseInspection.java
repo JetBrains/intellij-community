@@ -58,8 +58,7 @@ public class UnconstructableTestCaseInspection extends ClassInspection{
                 return;
             }
 
-            for(int i = 0; i < constructors.length; i++){
-                final PsiMethod constructor = constructors[i];
+            for(final PsiMethod constructor : constructors){
                 hasConstructor = true;
                 if(!constructor.hasModifierProperty(PsiModifier.PUBLIC)){
                     continue;

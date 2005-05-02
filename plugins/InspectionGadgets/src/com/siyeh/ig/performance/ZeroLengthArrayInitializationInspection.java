@@ -76,7 +76,7 @@ public class ZeroLengthArrayInitializationInspection extends ExpressionInspectio
 
         private static boolean isDeclaredConstant(PsiExpression expression) {
             final PsiField field =
-                    (PsiField) PsiTreeUtil.getParentOfType(expression, PsiField.class);
+                    PsiTreeUtil.getParentOfType(expression, PsiField.class);
             if (field == null) {
                 return false;
             }

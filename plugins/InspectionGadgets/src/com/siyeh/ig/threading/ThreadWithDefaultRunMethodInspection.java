@@ -68,9 +68,9 @@ public class ThreadWithDefaultRunMethodInspection extends ExpressionInspection{
                 if(args == null){
                     return;
                 }
-                for(int i = 0; i < args.length; i++){
+                for(PsiExpression arg : args){
                     if(TypeUtils.expressionHasTypeOrSubtype("java.lang.Runnable",
-                                                   args[i])){
+                                                            arg)){
                         return;
                     }
                 }
@@ -100,9 +100,9 @@ public class ThreadWithDefaultRunMethodInspection extends ExpressionInspection{
                 if(args == null){
                     return;
                 }
-                for(int i = 0; i < args.length; i++){
+                for(PsiExpression arg : args){
                     if(TypeUtils.expressionHasTypeOrSubtype("java.lang.Runnable",
-                                                   args[i])){
+                                                            arg)){
                         return;
                     }
                 }
@@ -113,8 +113,7 @@ public class ThreadWithDefaultRunMethodInspection extends ExpressionInspection{
 
         private static boolean definesRun(PsiAnonymousClass aClass){
             final PsiMethod[] methods = aClass.getMethods();
-            for(int i = 0; i < methods.length; i++){
-                final PsiMethod method = methods[i];
+            for(final PsiMethod method : methods){
                 final String methodName = method.getName();
                 if("run".equals(methodName)){
                     final PsiParameterList parameterList =

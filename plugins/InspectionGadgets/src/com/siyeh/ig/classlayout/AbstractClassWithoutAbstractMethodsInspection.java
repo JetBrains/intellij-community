@@ -54,31 +54,28 @@ public class AbstractClassWithoutAbstractMethodsInspection extends ClassInspecti
 
         private static boolean hasAbstractMethods(PsiClass aClass) {
             final PsiMethod[] methods = aClass.getMethods();
-            final Set overriddenMethods = calculateOverriddenMethods(methods);
+            final Set<PsiMethod> overriddenMethods = calculateOverriddenMethods(methods);
             final PsiMethod[] allMethods = aClass.getAllMethods();
-            for (int i = 0; i < allMethods.length; i++) {
-                final PsiMethod method = allMethods[i];
-                if (method.hasModifierProperty(PsiModifier.ABSTRACT) &&
-                        !overriddenMethods.contains(method)) {
+            for(final PsiMethod method : allMethods){
+                if(method.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                        !overriddenMethods.contains(method)){
                     return true;
                 }
             }
             return false;
         }
 
-        private static Set calculateOverriddenMethods(PsiMethod[] methods) {
-            final Set overriddenMethods = new HashSet(methods.length);
-            for (int i = 0; i < methods.length; i++) {
-                final PsiMethod method = methods[i];
+        private static Set<PsiMethod> calculateOverriddenMethods(PsiMethod[] methods) {
+            final Set<PsiMethod> overriddenMethods = new HashSet<PsiMethod>(methods.length);
+            for(final PsiMethod method : methods){
                 calculateOverriddenMethods(method, overriddenMethods);
             }
             return overriddenMethods;
         }
 
-        private static void calculateOverriddenMethods(PsiMethod method, Set overriddenMethods) {
+        private static void calculateOverriddenMethods(PsiMethod method, Set<PsiMethod> overriddenMethods) {
             final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
-            for (int j = 0; j < superMethods.length; j++) {
-                final PsiMethod superMethod = superMethods[j];
+            for(final PsiMethod superMethod : superMethods){
                 overriddenMethods.add(superMethod);
             }
         }

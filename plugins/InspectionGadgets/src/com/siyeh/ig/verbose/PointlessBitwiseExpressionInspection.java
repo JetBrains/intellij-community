@@ -95,7 +95,7 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
         /**
          * @noinspection StaticCollection
          */
-        private static final Set bitwiseTokens = new HashSet(4);
+        private static final Set<IElementType> bitwiseTokens = new HashSet<IElementType>(4);
 
         static
         {
@@ -198,19 +198,19 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
         if (value == null) {
             return false;
         }
-        if (value instanceof Integer && ((Integer) value).intValue() == 0) {
+        if (value instanceof Integer && ((Integer) value) == 0) {
             return true;
         }
-        if (value instanceof Long && ((Long) value).longValue() == 0L) {
+        if (value instanceof Long && ((Long) value) == 0L) {
             return true;
         }
-        if (value instanceof Short && ((Short) value).shortValue() == 0) {
+        if (value instanceof Short && ((Short) value) == 0) {
             return true;
         }
-        if (value instanceof Character && ((Character) value).charValue() == 0) {
+        if (value instanceof Character && ((Character) value) == 0) {
             return true;
         }
-        return value instanceof Byte && ((Byte) value).byteValue() == 0;
+        return value instanceof Byte && ((Byte) value) == 0;
     }
 
     private static boolean isAllOnes(PsiExpression expression, PsiType expressionType) {
@@ -218,20 +218,19 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
         if (value == null) {
             return false;
         }
-        if (value instanceof Integer && ((Integer) value).intValue() == 0xffffffff) {
+        if (value instanceof Integer && ((Integer) value) == 0xffffffff) {
             return true;
         }
-        if (value instanceof Long && ((Long) value).longValue() == 0xffffffffffffffffL) {
+        if (value instanceof Long && ((Long) value) == 0xffffffffffffffffL) {
             return true;
         }
-        if (value instanceof Short && ((Short) value).shortValue() == (short) 0xffff) {
+        if (value instanceof Short && ((Short) value) == (short) 0xffff) {
             return true;
         }
-        if (value instanceof Character && ((Character) value).charValue() == (char) 0xffff) {
+        if (value instanceof Character && ((Character) value) == (char) 0xffff) {
             return true;
         }
-        return value instanceof Byte &&
-                        ((Byte) value).byteValue() == (byte) 0xff;
+        return value instanceof Byte && ((Byte) value) == (byte) 0xff;
     }
 
 }

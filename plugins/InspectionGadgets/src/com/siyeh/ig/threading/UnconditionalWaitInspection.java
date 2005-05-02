@@ -57,54 +57,53 @@ public class UnconditionalWaitInspection extends MethodInspection {
             if (statements.length == 0) {
                 return;
             }
-            for (int i = 0; i < statements.length; i++) {
-                final PsiStatement statement = statements[i];
-                if (isConditional(statement)) {
+            for(final PsiStatement statement : statements){
+                if(isConditional(statement)){
                     return;
                 }
-                if (!(statement instanceof PsiExpressionStatement)) {
+                if(!(statement instanceof PsiExpressionStatement)){
                     continue;
                 }
                 final PsiExpression firstExpression =
                         ((PsiExpressionStatement) statement).getExpression();
-                if (!(firstExpression instanceof PsiMethodCallExpression)) {
+                if(!(firstExpression instanceof PsiMethodCallExpression)){
                     continue;
                 }
                 final PsiMethodCallExpression methodCallExpression =
                         (PsiMethodCallExpression) firstExpression;
                 final PsiReferenceExpression methodExpression =
                         methodCallExpression.getMethodExpression();
-                if (methodExpression == null) {
+                if(methodExpression == null){
                     continue;
                 }
                 final String methodName = methodExpression.getReferenceName();
 
-                if (!"wait".equals(methodName)) {
+                if(!"wait".equals(methodName)){
                     continue;
                 }
                 final PsiMethod method = methodCallExpression.resolveMethod();
-                if (method == null) {
+                if(method == null){
                     continue;
                 }
                 final PsiParameterList paramList = method.getParameterList();
-                if (paramList == null) {
+                if(paramList == null){
                     continue;
                 }
                 final PsiParameter[] parameters = paramList.getParameters();
                 final int numParams = parameters.length;
-                if (numParams > 2) {
+                if(numParams > 2){
                     continue;
                 }
-                if (numParams > 0) {
+                if(numParams > 0){
                     final PsiType parameterType = parameters[0].getType();
-                    if (!parameterType.equals(PsiType.LONG)) {
+                    if(!parameterType.equals(PsiType.LONG)){
                         continue;
                     }
                 }
 
-                if (numParams > 1) {
+                if(numParams > 1){
                     final PsiType parameterType = parameters[1].getType();
-                    if (!parameterType.equals(PsiType.INT)) {
+                    if(!parameterType.equals(PsiType.INT)){
                         continue;
                     }
                 }

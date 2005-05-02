@@ -23,14 +23,13 @@ public class SingletonUtil {
     private static boolean containsOneStaticSelfInstance(PsiClass aClass) {
         final PsiField[] fields = aClass.getFields();
         int numSelfInstances = 0;
-        for (int i = 0; i < fields.length; i++) {
-            final PsiField field = fields[i];
+        for(final PsiField field : fields){
             final String className = aClass.getQualifiedName();
-            if (field.hasModifierProperty(PsiModifier.STATIC)) {
+            if(field.hasModifierProperty(PsiModifier.STATIC)){
                 final PsiType type = field.getType();
-                if (type != null) {
+                if(type != null){
                     final String fieldTypeName = type.getCanonicalText();
-                    if (fieldTypeName.equals(className)) {
+                    if(fieldTypeName.equals(className)){
                         numSelfInstances++;
                     }
                 }
@@ -45,13 +44,12 @@ public class SingletonUtil {
 
     private static boolean hasVisibleConstructor(PsiClass aClass) {
         final PsiMethod[] methods = aClass.getConstructors();
-        for (int i = 0; i < methods.length; i++) {
-            final PsiMethod method = methods[i];
+        for(final PsiMethod method : methods){
             if(method.hasModifierProperty(PsiModifier.PUBLIC)){
                 return true;
             }
             if(!method.hasModifierProperty(PsiModifier.PRIVATE) &&
-                       !method.hasModifierProperty(PsiModifier.PROTECTED)){
+                    !method.hasModifierProperty(PsiModifier.PROTECTED)){
                 return true;
             }
         }

@@ -9,7 +9,7 @@ class IconHelper{
     }
 
     public static ImageIcon getIcon(String location){
-        final Class thisClass = IconHelper.class;
+        final Class<IconHelper> thisClass = IconHelper.class;
         final URL resource = thisClass.getResource(location);
         return new ImageIcon(resource);
     }

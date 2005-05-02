@@ -35,7 +35,7 @@ public class ClassInheritanceDepthInspection
 
     public String buildErrorString(PsiElement location) {
         final PsiClass aClass = (PsiClass) location.getParent();
-        final int count = getInheritanceDepth(aClass, new HashSet());
+        final int count = getInheritanceDepth(aClass, new HashSet<PsiClass>());
         return "#ref is too deep in inheritance tree (inheritance depth = " + count + ") #loc";
     }
 
@@ -55,7 +55,7 @@ public class ClassInheritanceDepthInspection
 
             // note: no call to super
 
-            final int inheritanceDepth = getInheritanceDepth(aClass, new HashSet());
+            final int inheritanceDepth = getInheritanceDepth(aClass, new HashSet<PsiClass>());
             if (inheritanceDepth <= getLimit()) {
                 return;
             }
@@ -63,7 +63,7 @@ public class ClassInheritanceDepthInspection
         }
     }
 
-    private int getInheritanceDepth(PsiClass aClass, Set visited) {
+    private int getInheritanceDepth(PsiClass aClass, Set<PsiClass> visited) {
         if (visited.contains(aClass)) {
             return 0;
         }
@@ -73,9 +73,9 @@ public class ClassInheritanceDepthInspection
             return 0;
         }
         int maxAncestorDepth = 0;
-        for (int i = 0; i < supers.length; i++) {
-            final int ancestorDepth = getInheritanceDepth(supers[i], visited);
-            if (ancestorDepth > maxAncestorDepth) {
+        for(PsiClass aSupers : supers){
+            final int ancestorDepth = getInheritanceDepth(aSupers, visited);
+            if(ancestorDepth > maxAncestorDepth){
                 maxAncestorDepth = ancestorDepth;
             }
         }

@@ -47,9 +47,8 @@ public class SimpleDateFormatWithoutLocaleInspection extends ExpressionInspectio
             {
                 return;
             }
-            for (int i = 0; i < args.length; i++) {
-                if(TypeUtils.expressionHasType("java.util.Locale", args[i]))
-                {
+            for(PsiExpression arg : args){
+                if(TypeUtils.expressionHasType("java.util.Locale", arg)){
                     return;
                 }
             }

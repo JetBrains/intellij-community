@@ -11,21 +11,21 @@ public class CollectionUtils{
     /**
      * @noinspection StaticCollection
      */
-    private static final Set s_collectionClassesRequiringCapacity =
-             new HashSet(10);
+    private static final Set<String> s_collectionClassesRequiringCapacity =
+             new HashSet<String>(10);
     /**
      * @noinspection StaticCollection
      */
-    private static final Set s_allCollectionClasses = new HashSet(10);
+    private static final Set<String> s_allCollectionClasses = new HashSet<String>(10);
     /**
      * @noinspection StaticCollection
      */
-    private static final Set s_allCollectionClassesAndInterfaces =
-            new HashSet(10);
+    private static final Set<String> s_allCollectionClassesAndInterfaces =
+            new HashSet<String>(10);
     /**
      * @noinspection StaticCollection
      */
-    private static final Map s_interfaceForCollection = new HashMap(10);
+    private static final Map<String,String> s_interfaceForCollection = new HashMap<String, String>(10);
 
     static {
         s_collectionClassesRequiringCapacity.add("java.util.BitSet");

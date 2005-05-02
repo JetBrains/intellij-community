@@ -61,11 +61,10 @@ public class ParametersPerMethodInspection extends MethodMetricInspection {
             }
 
             final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
-            for (int i = 0; i < superMethods.length; i++) {
-                final PsiMethod superMethod = superMethods[i];
+            for(final PsiMethod superMethod : superMethods){
                 final PsiClass containingClass = superMethod.getContainingClass();
-                if (containingClass != null) {
-                    if (LibraryUtil.classIsInLibrary(containingClass)) {
+                if(containingClass != null){
+                    if(LibraryUtil.classIsInLibrary(containingClass)){
                         return;
                     }
                 }

@@ -66,7 +66,7 @@ public class ResultSetIndexZeroInspection extends ExpressionInspection {
                 return;
             }
             final Integer val = (Integer) ConstantExpressionUtil.computeCastTo(arg, PsiType.INT);
-            if(val == null || val.intValue()!=0)
+            if(val == null || (val)!=0)
             {
                 return;
             }

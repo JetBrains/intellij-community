@@ -40,18 +40,17 @@ public class SerialPersistentFieldsWithWrongSignatureInspection extends ClassIns
 
             PsiField badSerialPersistentFields = null;
             final PsiField[] fields = aClass.getFields();
-            for (int i = 0; i < fields.length; i++) {
-                final PsiField field = fields[i];
-                if (isSerialPersistentFields(field)) {
+            for(final PsiField field : fields){
+                if(isSerialPersistentFields(field)){
 
-                    if (!field.hasModifierProperty(PsiModifier.PRIVATE) ||
+                    if(!field.hasModifierProperty(PsiModifier.PRIVATE) ||
                             !field.hasModifierProperty(PsiModifier.STATIC) ||
-                            !field.hasModifierProperty(PsiModifier.FINAL)) {
+                            !field.hasModifierProperty(PsiModifier.FINAL)){
                         badSerialPersistentFields = field;
                         break;
-                    } else {
+                    } else{
                         final PsiType type = field.getType();
-                        if (type != null) {
+                        if(type != null){
                             badSerialPersistentFields = field;
                             break;
                         }

@@ -36,8 +36,8 @@ public class SerializationUtils{
         final PsiReferenceList implementsList = aClass.getImplementsList();
         if(implementsList != null){
             final PsiJavaCodeReferenceElement[] interfaces = implementsList.getReferenceElements();
-            for(int i = 0; i < interfaces.length; i++){
-                final PsiClass implemented = (PsiClass) interfaces[i].resolve();
+            for(PsiJavaCodeReferenceElement aInterfaces : interfaces){
+                final PsiClass implemented = (PsiClass) aInterfaces.resolve();
                 if(implemented != null){
                     final String name = implemented.getQualifiedName();
                     if(SERIALIZABLE_CLASS_NAME.equals(name)){
@@ -51,8 +51,7 @@ public class SerializationUtils{
 
     public static boolean hasReadObject(PsiClass aClass){
         final PsiMethod[] methods = aClass.getMethods();
-        for(int i = 0; i < methods.length; i++){
-            final PsiMethod method = methods[i];
+        for(final PsiMethod method : methods){
             if(isReadObject(method)){
                 return true;
             }
@@ -62,8 +61,7 @@ public class SerializationUtils{
 
     public static boolean hasWriteObject(PsiClass aClass){
         final PsiMethod[] methods = aClass.getMethods();
-        for(int i = 0; i < methods.length; i++){
-            final PsiMethod method = methods[i];
+        for(final PsiMethod method : methods){
             if(isWriteObject(method)){
                 return true;
             }
@@ -141,8 +139,8 @@ public class SerializationUtils{
             return true;
         }
         final PsiType[] superTypes = componentType.getSuperTypes();
-        for(int i = 0; i < superTypes.length; i++){
-            if(TypeUtils.typeEquals(SERIALIZABLE_CLASS_NAME, superTypes[i])){
+        for(PsiType superType : superTypes){
+            if(TypeUtils.typeEquals(SERIALIZABLE_CLASS_NAME, superType)){
                 return true;
             }
         }

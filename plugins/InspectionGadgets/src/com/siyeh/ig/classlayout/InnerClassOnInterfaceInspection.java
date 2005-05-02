@@ -15,7 +15,7 @@ public class InnerClassOnInterfaceInspection extends ClassInspection{
      * @noinspection PublicField
      */
     public boolean m_ignoreInnerInterfaces = false;
-    
+
     private final MoveClassFix fix = new MoveClassFix();
 
     public String getID(){
@@ -70,8 +70,7 @@ public class InnerClassOnInterfaceInspection extends ClassInspection{
                 return;
             }
             final PsiClass[] innerClasses = aClass.getInnerClasses();
-            for(int i = 0; i < innerClasses.length; i++){
-                final PsiClass innerClass = innerClasses[i];
+            for(final PsiClass innerClass : innerClasses){
                 checkInnerClass(innerClass);
             }
         }

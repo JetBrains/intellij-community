@@ -54,8 +54,8 @@ public class UtilityClassWithPublicConstructorInspection extends ClassInspection
                 final PsiElement classNameIdentifer = descriptor.getPsiElement();
                 final PsiClass psiClass = (PsiClass) classNameIdentifer.getParent();
                 final PsiMethod[] constructors = psiClass.getConstructors();
-                for (int i = 0; i < constructors.length; i++) {
-                    final PsiModifierList modifierList = constructors[i].getModifierList();
+                for(PsiMethod constructor : constructors){
+                    final PsiModifierList modifierList = constructor.getModifierList();
                     modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
                 }
             } catch (IncorrectOperationException e) {
@@ -92,9 +92,9 @@ public class UtilityClassWithPublicConstructorInspection extends ClassInspection
 
     private static boolean hasPublicConstructor(PsiClass aClass) {
         final PsiMethod[] methods = aClass.getMethods();
-        for (int i = 0; i < methods.length; i++) {
-            final PsiMethod method = methods[i];
-            if (method.isConstructor() && method.hasModifierProperty(PsiModifier.PUBLIC)) {
+        for(final PsiMethod method : methods){
+            if(method.isConstructor() && method
+                    .hasModifierProperty(PsiModifier.PUBLIC)){
                 return true;
             }
         }

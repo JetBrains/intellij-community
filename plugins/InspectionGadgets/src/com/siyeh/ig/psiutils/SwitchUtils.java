@@ -14,9 +14,8 @@ public class SwitchUtils{
     final PsiCodeBlock body = statement.getBody();
         int branches = 0;
         final PsiStatement[] statements = body.getStatements();
-        for (int i = 0; i < statements.length; i++) {
-            final PsiStatement child = statements[i];
-            if (child instanceof PsiSwitchLabelStatement) {
+        for(final PsiStatement child : statements){
+            if(child instanceof PsiSwitchLabelStatement){
                 branches++;
             }
         }

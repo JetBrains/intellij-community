@@ -225,19 +225,19 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
                  */
         private static boolean checkForInitialization(PsiElement call){
             final PsiMethod method =
-                    (PsiMethod) PsiTreeUtil.getParentOfType(call,
+                    PsiTreeUtil.getParentOfType(call,
                                                             PsiMethod.class);
             if(method != null){
                 return method.isConstructor();
             }
             final PsiField field =
-                    (PsiField) PsiTreeUtil.getParentOfType(call,
+                    PsiTreeUtil.getParentOfType(call,
                                                            PsiField.class);
             if(field != null){
                 return true;
             }
             final PsiClassInitializer classInitializer =
-                    (PsiClassInitializer) PsiTreeUtil.getParentOfType(call,
+                    PsiTreeUtil.getParentOfType(call,
                                                                       PsiClassInitializer.class);
             if(classInitializer != null){
                 return !classInitializer.hasModifierProperty(PsiModifier.STATIC);
@@ -252,9 +252,7 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
                 return null;
             }
             final PsiExpression[] argExpressions = peList.getExpressions();
-            for(int i = 0; i < argExpressions.length; i++){
-                final PsiExpression argExpression = argExpressions[i];
-
+            for(final PsiExpression argExpression : argExpressions){
                 if(argExpression instanceof PsiThisExpression){
                     return (PsiThisExpression) argExpression;
                 }

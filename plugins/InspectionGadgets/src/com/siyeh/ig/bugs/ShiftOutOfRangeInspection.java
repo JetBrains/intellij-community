@@ -29,7 +29,7 @@ public class ShiftOutOfRangeInspection extends ExpressionInspection{
         final PsiExpression rhs = binaryExp.getROperand();
         final Integer value = (Integer) ConstantExpressionUtil.computeCastTo(rhs,
                                                                   PsiType.INT);
-        if(value.intValue()>0){
+        if((value)>0){
             return "Shift operation #ref by overly large constant value #loc";
         } else{
             return "Shift operation #ref by negative constant value #loc";
@@ -76,7 +76,7 @@ public class ShiftOutOfRangeInspection extends ExpressionInspection{
             {
                 return;
             }
-            final int value = valueObject.intValue();
+            final int value = valueObject;
             if(expressionType.equals(PsiType.LONG)){
                 if(value < 0 || value>63)
                 {

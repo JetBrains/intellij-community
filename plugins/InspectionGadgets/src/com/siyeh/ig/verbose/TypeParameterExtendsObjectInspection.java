@@ -48,8 +48,8 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection{
             final PsiReferenceList extendsList = element.getExtendsList();
             final PsiJavaCodeReferenceElement[] elements =
                     extendsList.getReferenceElements();
-            for(int i = 0; i < elements.length; i++){
-                deleteElement(elements[i]);
+            for(PsiJavaCodeReferenceElement element1 : elements){
+                deleteElement(element1);
             }
         }
     }
@@ -73,11 +73,10 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection{
             if(extendsList != null){
                 final PsiJavaCodeReferenceElement[] elements =
                         extendsList.getReferenceElements();
-                for(int i = 0; i < elements.length; i++){
-                    final PsiJavaCodeReferenceElement element = elements[i];
+                for(final PsiJavaCodeReferenceElement element : elements){
                     final String text = element.getText();
                     if("Object".equals(text) ||
-                               "java.lang.Object".equals(text)){
+                            "java.lang.Object".equals(text)){
                         registerError(nameIdentifier);
                     }
                 }

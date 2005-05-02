@@ -149,8 +149,8 @@ public class MethodMayBeStaticInspection extends MethodInspection {
                 return;
             }
             // ignore overridden methods
-            final PsiElementProcessor.FindElement processor =
-                    new PsiElementProcessor.FindElement();
+            final PsiElementProcessor.FindElement<PsiMethod> processor =
+                    new PsiElementProcessor.FindElement<PsiMethod>();
             final PsiManager manager = method.getManager();
             final PsiSearchHelper helper = manager.getSearchHelper();
             helper.processOverridingMethods(processor, method,

@@ -104,11 +104,11 @@ public class InstanceMethodNamingConventionInspection extends ConventionInspecti
         private boolean isOverrideOfLibraryMethod(PsiMethod method) {
             final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
 
-            for (int i = 0; i < superMethods.length; i++) {
+            for(PsiMethod superMethod : superMethods){
                 final PsiClass containingClass =
-                        superMethods[i].getContainingClass();
-                if (containingClass != null &&
-                        LibraryUtil.classIsInLibrary(containingClass)) {
+                        superMethod.getContainingClass();
+                if(containingClass != null &&
+                        LibraryUtil.classIsInLibrary(containingClass)){
                     return true;
                 }
             }

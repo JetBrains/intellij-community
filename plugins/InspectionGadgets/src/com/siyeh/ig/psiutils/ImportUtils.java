@@ -23,11 +23,10 @@ public class ImportUtils {
     private static boolean hasExactImportMatch(String fqName, PsiJavaFile file) {
         final PsiImportList imports = file.getImportList();
         final PsiImportStatement[] importStatements = imports.getImportStatements();
-        for (int i = 0; i < importStatements.length; i++) {
-            final PsiImportStatement importStatement = importStatements[i];
-            if (!importStatement.isOnDemand()) {
+        for(final PsiImportStatement importStatement : importStatements){
+            if(!importStatement.isOnDemand()){
                 final String importName = importStatement.getQualifiedName();
-                if (importName.equals(fqName)) {
+                if(importName.equals(fqName)){
                     return true;
                 }
             }
@@ -41,13 +40,12 @@ public class ImportUtils {
         final int lastDotIndex = fqName.lastIndexOf((int) '.');
         final String shortName = fqName.substring(lastDotIndex + 1);
         final String dottedShortName = '.' + shortName;
-        for (int i = 0; i < importStatements.length; i++) {
-            final PsiImportStatement importStatement = importStatements[i];
-            if (!importStatement.isOnDemand()) {
+        for(final PsiImportStatement importStatement : importStatements){
+            if(!importStatement.isOnDemand()){
                 final String importName = importStatement.getQualifiedName();
 
-                if (!importName.equals(fqName)) {
-                    if (importName.endsWith(dottedShortName)) {
+                if(!importName.equals(fqName)){
+                    if(importName.endsWith(dottedShortName)){
                         return true;
                     }
                 }
@@ -62,25 +60,23 @@ public class ImportUtils {
         final int lastDotIndex = fqName.lastIndexOf((int) '.');
         final String shortName = fqName.substring(lastDotIndex + 1);
         final String packageName = fqName.substring(0, lastDotIndex);
-        for (int i = 0; i < importStatements.length; i++) {
-            final PsiImportStatement importStatement = importStatements[i];
-            if (importStatement.isOnDemand()) {
+        for(final PsiImportStatement importStatement : importStatements){
+            if(importStatement.isOnDemand()){
                 final PsiJavaCodeReferenceElement ref = importStatement.getImportReference();
-                if (ref == null) {
+                if(ref == null){
                     continue;
                 }
                 final String packageText = ref.getText();
-                if (packageText.equals(packageName)) {
+                if(packageText.equals(packageName)){
                     continue;
                 }
                 final PsiElement element = ref.resolve();
-                if (element != null && element instanceof PsiPackage) {
+                if(element != null && element instanceof PsiPackage){
                     final PsiPackage aPackage = (PsiPackage) element;
                     final PsiClass[] classes = aPackage.getClasses();
-                    for (int j = 0; j < classes.length; j++) {
-                        final PsiClass aClass = classes[j];
+                    for(final PsiClass aClass : classes){
                         final String className = aClass.getName();
-                        if (shortName.equals(className)) {
+                        if(shortName.equals(className)){
                             return true;
                         }
                     }
@@ -94,9 +90,9 @@ public class ImportUtils {
         final int lastDotIndex = fqName.lastIndexOf((int) '.');
         final String shortName = fqName.substring(lastDotIndex + 1);
         final PsiClass[] classes = file.getClasses();
-        for (int i = 0; i < classes.length; i++) {
-            if (shortName.equals(classes[i].getName())) {
-                if (!fqName.equals(classes[i].getQualifiedName())) {
+        for(PsiClass aClasses : classes){
+            if(shortName.equals(aClasses.getName())){
+                if(!fqName.equals(aClasses.getQualifiedName())){
                     return true;
                 }
             }

@@ -169,7 +169,7 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
                 if(value == null){
                     return;
                 }
-                final char charValue = value.charValue();
+                final char charValue = value;
                 if(charValue == BACKSLASH || charValue == SLASH){
                     registerError(expression);
                 }

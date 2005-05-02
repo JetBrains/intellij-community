@@ -68,7 +68,7 @@ public class ChannelResourceInspection extends ExpressionInspection{
             PsiElement currentContext = expression;
             while(true){
                 final PsiTryStatement tryStatement =
-                        (PsiTryStatement) PsiTreeUtil.getParentOfType(currentContext,
+                        PsiTreeUtil.getParentOfType(currentContext,
                                                                       PsiTryStatement.class);
                 if(tryStatement == null) {
                     registerError(expression);

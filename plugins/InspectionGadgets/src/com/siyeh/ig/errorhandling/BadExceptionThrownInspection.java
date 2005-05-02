@@ -20,7 +20,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 public class BadExceptionThrownInspection extends ExpressionInspection {
@@ -33,7 +32,7 @@ public class BadExceptionThrownInspection extends ExpressionInspection {
             "java.lang.ClassCastException," +
             "java.lang.ArrayOutOfBoundsException";
 
-    private final List exceptionsList = new ArrayList(32);
+    private final List<Object> exceptionsList = new ArrayList<Object>(32);
 
     {
         parseCallCheckString();
@@ -47,8 +46,8 @@ public class BadExceptionThrownInspection extends ExpressionInspection {
     private void parseCallCheckString() {
         exceptionsList.clear();
         final String[] strings = exceptionCheckString.split(",");
-        for (int i = 0; i < strings.length; i++ ) {
-            exceptionsList.add(strings[i]);
+        for(String string : strings){
+            exceptionsList.add(string);
         }
     }
 
@@ -60,13 +59,13 @@ public class BadExceptionThrownInspection extends ExpressionInspection {
     private void formatCallCheckString() {
         final StringBuffer buffer = new StringBuffer();
         boolean first = true;
-        for (Iterator iterator = exceptionsList.iterator(); iterator.hasNext();) {
-            if (first) {
+        for(Object aExceptionsList : exceptionsList){
+            if(first){
                 first = false;
-            } else {
+            } else{
                 buffer.append(',');
             }
-            final String exceptionName = (String) iterator.next();
+            final String exceptionName = (String) aExceptionsList;
             buffer.append(exceptionName);
         }
         exceptionCheckString = buffer.toString();
@@ -119,10 +118,9 @@ public class BadExceptionThrownInspection extends ExpressionInspection {
                 return;
             }
             final String text = type.getCanonicalText();
-            for (Iterator iterator = exceptionsList.iterator(); iterator.hasNext();) {
-                final String exceptionClass = (String) iterator.next();
-                if(text.equals(exceptionClass))
-                {
+            for(Object aExceptionsList : exceptionsList){
+                final String exceptionClass = (String) aExceptionsList;
+                if(text.equals(exceptionClass)){
                     registerStatementError(statement);
                     return;
                 }

@@ -81,10 +81,10 @@ public class InstanceVariableInitializationInspection extends FieldInspection {
                 return;
             }
 
-            for (int i = 0; i < constructors.length; i++) {
-                final PsiMethod constructor = constructors[i];
+            for(final PsiMethod constructor : constructors){
                 final PsiCodeBlock body = constructor.getBody();
-                if (!InitializationUtils.blockMustAssignVariableOrFail(field, body)) {
+                if(!InitializationUtils.blockMustAssignVariableOrFail(field,
+                                                                      body)){
                     registerFieldError(field);
                     return;
                 }
@@ -95,11 +95,11 @@ public class InstanceVariableInitializationInspection extends FieldInspection {
         private boolean isInitializedInInitializer(PsiField field) {
             final PsiClass aClass = field.getContainingClass();
             final PsiClassInitializer[] initializers = aClass.getInitializers();
-            for (int i = 0; i < initializers.length; i++) {
-                final PsiClassInitializer initializer = initializers[i];
-                if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
+            for(final PsiClassInitializer initializer : initializers){
+                if(!initializer.hasModifierProperty(PsiModifier.STATIC)){
                     final PsiCodeBlock body = initializer.getBody();
-                    if (InitializationUtils.blockMustAssignVariableOrFail(field, body)) {
+                    if(InitializationUtils.blockMustAssignVariableOrFail(field,
+                                                                         body)){
                         return true;
                     }
                 }

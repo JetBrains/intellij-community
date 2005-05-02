@@ -44,9 +44,8 @@ public class NonSynchronizedMethodOverridesSynchronizedMethodInspection extends 
                 return;
             }
             final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
-            for (int i = 0; i < superMethods.length; i++) {
-                final PsiMethod superMethod = superMethods[i];
-                if (superMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+            for(final PsiMethod superMethod : superMethods){
+                if(superMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)){
                     registerMethodError(method);
                     return;
                 }

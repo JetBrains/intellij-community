@@ -17,7 +17,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 public class BadExceptionDeclaredInspection extends MethodInspection {
@@ -30,7 +29,7 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
             "java.lang.ClassCastException," +
             "java.lang.ArrayOutOfBoundsException";
 
-    private final List exceptionsList = new ArrayList(32);
+    private final List<Object> exceptionsList = new ArrayList<Object>(32);
 
     {
         parseCallCheckString();
@@ -44,8 +43,8 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
     private void parseCallCheckString() {
         exceptionsList.clear();
         final String[] strings = exceptionCheckString.split(",");
-        for (int i = 0; i < strings.length; i++ ) {
-            exceptionsList.add(strings[i]);
+        for(String string : strings){
+            exceptionsList.add(string);
         }
     }
 
@@ -57,13 +56,13 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
     private void formatCallCheckString() {
         final StringBuffer buffer = new StringBuffer();
         boolean first = true;
-        for (Iterator iterator = exceptionsList.iterator(); iterator.hasNext();) {
-            if (first) {
+        for(Object aExceptionsList : exceptionsList){
+            if(first){
                 first = false;
-            } else {
+            } else{
                 buffer.append(',');
             }
-            final String exceptionName = (String) iterator.next();
+            final String exceptionName = (String) aExceptionsList;
             buffer.append(exceptionName);
         }
         exceptionCheckString = buffer.toString();
@@ -115,19 +114,17 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
             {
                 return;
             }
-            for (int i = 0; i < references.length; i++) {
-                final PsiClass thrownClass = (PsiClass) references[i].resolve();
-                if(thrownClass != null)
-                {
+            for(PsiJavaCodeReferenceElement reference : references){
+                final PsiClass thrownClass = (PsiClass) reference.resolve();
+                if(thrownClass != null){
                     final String text = thrownClass.getQualifiedName();
-                    for (Iterator iterator = exceptionsList.iterator(); iterator.hasNext();) {
-                        final String exceptionClass = (String) iterator.next();
-                        if (text.equals(exceptionClass)) {
-                            registerError(references[i]);
+                    for(Object aExceptionsList : exceptionsList){
+                        final String exceptionClass = (String) aExceptionsList;
+                        if(text.equals(exceptionClass)){
+                            registerError(reference);
                         }
                     }
                 }
-
             }
         }
     }

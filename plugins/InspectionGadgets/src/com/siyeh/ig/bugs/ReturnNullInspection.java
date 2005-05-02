@@ -88,7 +88,7 @@ public class ReturnNullInspection extends StatementInspection {
                 return;
             }
             final PsiMethod method =
-                    (PsiMethod) PsiTreeUtil.getParentOfType(value,
+                    PsiTreeUtil.getParentOfType(value,
                                                             PsiMethod.class);
             if(method == null) {
                 return;

@@ -86,7 +86,7 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
             return false;
         }
         final PsiCodeBlock containingScope =
-                (PsiCodeBlock) PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+                PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
         if (containingScope == null) {
             return false;
         }
@@ -114,12 +114,12 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
     private static boolean isImmediatelyReturned(PsiVariable variable) {
 
         final PsiCodeBlock containingScope =
-                (PsiCodeBlock) PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+                PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
         if (containingScope == null) {
             return false;
         }
         final PsiDeclarationStatement declarationStatement =
-                (PsiDeclarationStatement) PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
+                PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
         if (declarationStatement == null) {
             return false;
         }
@@ -150,12 +150,12 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
     private static boolean isImmediatelyThrown(PsiVariable variable) {
 
         final PsiCodeBlock containingScope =
-                (PsiCodeBlock) PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+                PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
         if (containingScope == null) {
             return false;
         }
         final PsiDeclarationStatement declarationStatement =
-                (PsiDeclarationStatement) PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
+                PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
         if (declarationStatement == null) {
             return false;
         }
@@ -187,12 +187,12 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
     private static boolean isImmediatelyAssigned(PsiVariable variable) {
 
         final PsiCodeBlock containingScope =
-                (PsiCodeBlock) PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+                PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
         if (containingScope == null) {
             return false;
         }
         final PsiDeclarationStatement declarationStatement =
-                (PsiDeclarationStatement) PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
+                PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
         if (declarationStatement == null) {
             return false;
         }
@@ -244,12 +244,12 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
     private static boolean isImmediatelyAssignedAsDeclaration(PsiVariable variable) {
 
         final PsiCodeBlock containingScope =
-                (PsiCodeBlock) PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+                PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
         if (containingScope == null) {
             return false;
         }
         final PsiDeclarationStatement declarationStatement =
-                (PsiDeclarationStatement) PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
+                PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
         if (declarationStatement == null) {
             return false;
         }

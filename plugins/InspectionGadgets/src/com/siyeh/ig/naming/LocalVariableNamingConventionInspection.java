@@ -171,12 +171,12 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
         final JFormattedTextField minLengthField = new JFormattedTextField(formatter);
         final Font panelFont = panel.getFont();
         minLengthField.setFont(panelFont);
-        minLengthField.setValue(new Integer(m_minLength));
+        minLengthField.setValue(m_minLength);
         minLengthField.setColumns(2);
 
         final JFormattedTextField maxLengthField = new JFormattedTextField(formatter);
         maxLengthField.setFont(panelFont);
-        maxLengthField.setValue(new Integer(m_maxLength));
+        maxLengthField.setValue(m_maxLength);
         maxLengthField.setColumns(2);
 
         final JFormattedTextField regexField = new JFormattedTextField(new RegExFormatter());

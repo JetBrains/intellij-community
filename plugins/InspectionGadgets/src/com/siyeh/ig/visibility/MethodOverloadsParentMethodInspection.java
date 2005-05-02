@@ -60,7 +60,7 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection {
                 return;
             }
             PsiClass ancestorClass = aClass.getSuperClass();
-            final Set visitedClasses = new HashSet();
+            final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
             while (ancestorClass != null) {
                 if (!visitedClasses.add(ancestorClass)) {
                     return;
@@ -83,15 +83,15 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection {
             final PsiParameter[] parameters = parameterList.getParameters();
             final PsiMethod[] methods = ancestorClass.findMethodsByName(methName, false);
             if (methods != null) {
-                for (int i = 0; i < methods.length; i++) {
-                    final PsiMethod testMethod = methods[i];
-
-                    if (!testMethod.hasModifierProperty(PsiModifier.PRIVATE)
-                            && !testMethod.hasModifierProperty(PsiModifier.STATIC)) {
+                for(final PsiMethod testMethod : methods){
+                    if(!testMethod.hasModifierProperty(PsiModifier.PRIVATE)
+                            &&
+                            !testMethod.hasModifierProperty(PsiModifier.STATIC)){
                         final PsiParameterList testParameterList = testMethod.getParameterList();
                         final PsiParameter[] testParameters = testParameterList.getParameters();
-                        if (testParameters.length == parameters.length &&
-                                !parametersAreCompatible(parameters, testParameters)) {
+                        if(testParameters.length == parameters.length &&
+                                !parametersAreCompatible(parameters,
+                                                         testParameters)){
                             return true;
                         }
                     }
@@ -117,9 +117,8 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection {
         private static boolean methodOverrides(PsiMethod meth, PsiClass ancestorClass) {
             // This code is generics aware.
             final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(meth, true);
-            for (int i = 0; i < superMethods.length; i++) {
-                final PsiMethod superMethod = superMethods[i];
-                if (ancestorClass.equals(superMethod.getContainingClass())) {
+            for(final PsiMethod superMethod : superMethods){
+                if(ancestorClass.equals(superMethod.getContainingClass())){
                     return true;
                 }
             }

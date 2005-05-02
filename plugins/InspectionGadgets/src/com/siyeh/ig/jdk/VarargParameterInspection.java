@@ -41,9 +41,8 @@ public class VarargParameterInspection extends MethodInspection {
             if (parameters == null) {
                 return;
             }
-            for (int i = 0; i < parameters.length; i++) {
-                final PsiParameter parameter = parameters[i];
-                if (parameter.isVarArgs()) {
+            for(final PsiParameter parameter : parameters){
+                if(parameter.isVarArgs()){
                     registerMethodError(method);
                     return;
                 }

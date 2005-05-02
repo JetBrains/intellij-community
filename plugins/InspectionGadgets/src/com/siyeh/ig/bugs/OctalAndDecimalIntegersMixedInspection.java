@@ -37,14 +37,13 @@ public class OctalAndDecimalIntegersMixedInspection extends ExpressionInspection
             final PsiExpression[] initializers = expression.getInitializers();
             boolean hasDecimalLiteral = false;
             boolean hasOctalLiteral = false;
-            for (int i = 0; i < initializers.length; i++) {
-                final PsiExpression initializer = initializers[i];
-                if (initializer instanceof PsiLiteralExpression) {
+            for(final PsiExpression initializer : initializers){
+                if(initializer instanceof PsiLiteralExpression){
                     final PsiLiteralExpression literal = (PsiLiteralExpression) initializer;
-                    if (isDecimalLiteral(literal)) {
+                    if(isDecimalLiteral(literal)){
                         hasDecimalLiteral = true;
                     }
-                    if (isOctalLiteral(literal)) {
+                    if(isOctalLiteral(literal)){
                         hasOctalLiteral = true;
                     }
                 }

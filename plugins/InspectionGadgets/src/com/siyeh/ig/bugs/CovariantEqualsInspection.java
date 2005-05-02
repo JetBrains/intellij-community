@@ -59,8 +59,8 @@ public class CovariantEqualsInspection extends MethodInspection {
                 return;
             }
             final PsiMethod[] methods = aClass.getMethods();
-            for (int i = 0; i < methods.length; i++) {
-                if (isNonVariantEquals(methods[i])) {
+            for(PsiMethod method1 : methods){
+                if(isNonVariantEquals(method1)){
                     return;
                 }
             }

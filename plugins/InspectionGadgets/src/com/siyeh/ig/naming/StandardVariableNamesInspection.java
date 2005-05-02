@@ -12,7 +12,7 @@ import java.util.Map;
 
 public class StandardVariableNamesInspection extends VariableInspection {
 
-    private static final Map s_expectedTypes = new HashMap(10);
+    private static final Map<String,String> s_expectedTypes = new HashMap<String, String>(10);
     private final RenameFix fix = new RenameFix();
 
     static {
@@ -49,7 +49,7 @@ public class StandardVariableNamesInspection extends VariableInspection {
 
     public String buildErrorString(PsiElement location) {
         final String variableName = location.getText();
-        final String expectedType = (String) s_expectedTypes.get(variableName);
+        final String expectedType = s_expectedTypes.get(variableName);
         return "Variable name '#ref' doesn't have type " + expectedType + " #loc";
     }
 
@@ -66,7 +66,7 @@ public class StandardVariableNamesInspection extends VariableInspection {
         public void visitVariable(PsiVariable var) {
             super.visitVariable(var);
             final String variableName = var.getName();
-            final String expectedType = (String) s_expectedTypes.get(variableName);
+            final String expectedType = s_expectedTypes.get(variableName);
             if (expectedType == null) {
                 return;
             }

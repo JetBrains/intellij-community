@@ -60,14 +60,14 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends StatementInspec
         }
 
         private static boolean argIsCatchParameter(PsiExpression[] args) {
-            for (int i = 0; i < args.length; i++) {
-                final PsiExpression arg = args[i];
-                if (arg instanceof PsiReferenceExpression) {
+            for(final PsiExpression arg : args){
+                if(arg instanceof PsiReferenceExpression){
                     final PsiReferenceExpression ref = (PsiReferenceExpression) arg;
                     final PsiElement referent = ref.resolve();
-                    if (referent != null
+                    if(referent != null
                             && referent instanceof PsiParameter
-                            && ((PsiParameter)referent).getDeclarationScope() instanceof PsiCatchSection) {
+                            &&
+                            ((PsiParameter) referent).getDeclarationScope() instanceof PsiCatchSection){
                         return true;
                     }
                 }

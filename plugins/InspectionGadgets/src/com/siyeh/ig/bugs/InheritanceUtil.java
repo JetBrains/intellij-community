@@ -28,10 +28,9 @@ class InheritanceUtil{
         final SearchScope searchScope = class1.getUseScope();
         final PsiClass[] inheritors =
                 searchHelper.findInheritors(class1, searchScope, true);
-        for(int i = 0; i < inheritors.length; i++){
-            final PsiClass inheritor = inheritors[i];
+        for(final PsiClass inheritor : inheritors){
             if(inheritor.equals(class2) ||
-                       inheritor.isInheritor(class2, true)){
+                    inheritor.isInheritor(class2, true)){
                 return true;
             }
         }

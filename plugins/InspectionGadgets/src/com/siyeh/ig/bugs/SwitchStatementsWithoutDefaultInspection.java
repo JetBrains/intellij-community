@@ -59,10 +59,9 @@ public class SwitchStatementsWithoutDefaultInspection extends StatementInspectio
                 return false;
             }
             final PsiStatement[] statements = body.getStatements();
-            for (int i = 0; i < statements.length; i++) {
-                final PsiStatement child = statements[i];
-                if (child instanceof PsiSwitchLabelStatement &&
-                        ((PsiSwitchLabelStatement) child).isDefaultCase()) {
+            for(final PsiStatement child : statements){
+                if(child instanceof PsiSwitchLabelStatement &&
+                        ((PsiSwitchLabelStatement) child).isDefaultCase()){
                     return true;
                 }
             }
@@ -97,21 +96,18 @@ public class SwitchStatementsWithoutDefaultInspection extends StatementInspectio
             if (statements == null) {
                 return false;
             }
-            for (int i = 0; i < statements.length; i++) {
-                final PsiStatement child = statements[i];
-                if (child instanceof PsiSwitchLabelStatement) {
+            for(final PsiStatement child : statements){
+                if(child instanceof PsiSwitchLabelStatement){
                     numCases++;
                 }
             }
             final PsiField[] fields = aClass.getFields();
             int numEnums = 0;
-            for (int i = 0; i < fields.length; i++) {
-                final PsiField field = fields[i];
+            for(final PsiField field : fields){
                 final PsiType fieldType = field.getType();
-                if (fieldType.equals(type)) {
+                if(fieldType.equals(type)){
                     numEnums++;
                 }
-
             }
             return numEnums == numCases;
         }

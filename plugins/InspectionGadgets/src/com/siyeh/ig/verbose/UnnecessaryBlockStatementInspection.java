@@ -10,7 +10,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public class UnnecessaryBlockStatementInspection extends StatementInspection{
@@ -118,24 +117,22 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
             if(statements == null){
                 return false;
             }
-            final Set declaredVars = new HashSet();
-            for(int i = 0; i < statements.length; i++){
-                final PsiStatement statement = statements[i];
+            final Set<PsiElement> declaredVars = new HashSet<PsiElement>();
+            for(final PsiStatement statement : statements){
                 if(statement instanceof PsiDeclarationStatement){
                     final PsiDeclarationStatement declaration =
                             (PsiDeclarationStatement) statement;
                     final PsiElement[] vars = declaration.getDeclaredElements();
-                    for(int j = 0; j < vars.length; j++){
-                        if(vars[j] instanceof PsiLocalVariable){
-                            declaredVars.add(vars[j]);
+                    for(PsiElement var : vars){
+                        if(var instanceof PsiLocalVariable){
+                            declaredVars.add(var);
                         }
                     }
                 }
             }
-            for(Iterator iterator = declaredVars.iterator();
-                iterator.hasNext();){
+            for(Object declaredVar : declaredVars){
                 final PsiLocalVariable variable =
-                        (PsiLocalVariable) iterator.next();
+                        (PsiLocalVariable) declaredVar;
                 final String variableName = variable.getName();
                 if(conflictingDeclarationExists(variableName, parentBlock,
                                                 block)){

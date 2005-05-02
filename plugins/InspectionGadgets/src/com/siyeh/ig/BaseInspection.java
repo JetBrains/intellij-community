@@ -127,8 +127,7 @@ public abstract class BaseInspection extends LocalInspectionTool{
 
     public boolean hasQuickFix(){
         final Method[] methods = getClass().getDeclaredMethods();
-        for(int i = 0; i < methods.length; i++){
-            final Method method = methods[i];
+        for(final Method method : methods){
             final String methodName = method.getName();
             if("buildFix".equals(methodName)){
                 return true;

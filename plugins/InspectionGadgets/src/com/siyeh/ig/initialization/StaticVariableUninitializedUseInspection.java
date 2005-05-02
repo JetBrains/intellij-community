@@ -76,17 +76,16 @@ public class StaticVariableUninitializedUseInspection extends FieldInspection {
             final InitializationReadUtils iru;
             iru = new InitializationReadUtils();
 
-            for (int i = 0; i < initializers.length; i++) {
-                final PsiClassInitializer initializer = initializers[i];
-                if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
+            for(final PsiClassInitializer initializer : initializers){
+                if(initializer.hasModifierProperty(PsiModifier.STATIC)){
                     final PsiCodeBlock body = initializer.getBody();
-                    if (iru.blockMustAssignVariable(field, body)) {
+                    if(iru.blockMustAssignVariable(field, body)){
                         break;
                     }
                 }
             }
 
-            final List badReads = iru.getUninitializedReads();
+            final List<PsiExpression> badReads = iru.getUninitializedReads();
             for (int i = 0; i < badReads.size(); i++) {
                 final PsiElement element = (PsiElement) badReads.get(i);
                 registerError(element);

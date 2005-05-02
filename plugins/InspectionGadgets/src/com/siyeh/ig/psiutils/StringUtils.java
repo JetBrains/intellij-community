@@ -4,7 +4,7 @@ import java.util.Set;
 import java.util.HashSet;
 
 public class StringUtils{
-    private static final Set keywordTable = new HashSet();
+    private static final Set<String> keywordTable = new HashSet<String>();
 
     static
     {

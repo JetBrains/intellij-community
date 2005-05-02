@@ -61,10 +61,10 @@ public class MethodNamesDifferOnlyByCaseInspection extends MethodInspection {
                 return;
             }
             final PsiMethod[] methods = aClass.getMethods();
-            for (int i = 0; i < methods.length; i++) {
-                final String testMethName = methods[i].getName();
-                if (testMethName != null && !methodName.equals(testMethName) &&
-                        methodName.equalsIgnoreCase(testMethName)) {
+            for(PsiMethod testMethod : methods){
+                final String testMethName = testMethod.getName();
+                if(testMethName != null && !methodName.equals(testMethName) &&
+                        methodName.equalsIgnoreCase(testMethName)){
                     registerError(nameIdentifier, testMethName);
                 }
             }

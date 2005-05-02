@@ -50,9 +50,8 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassIns
 
             final PsiField[] fields = aClass.getFields();
             boolean hasSerialVersionUID = false;
-            for (int i = 0; i < fields.length; i++) {
-                final PsiField field = fields[i];
-                if (isSerialVersionUID(field)) {
+            for(final PsiField field : fields){
+                if(isSerialVersionUID(field)){
                     hasSerialVersionUID = true;
                 }
             }

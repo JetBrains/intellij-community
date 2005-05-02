@@ -76,8 +76,8 @@ public class MultipleDeclarationInspection extends VariableInspection {
 
         public static boolean childrenContainTypeElement(PsiElement field) {
             final PsiElement[] children = field.getChildren();
-            for (int i = 0; i < children.length; i++) {
-                if (children[i] instanceof PsiTypeElement) {
+            for(PsiElement aChildren : children){
+                if(aChildren instanceof PsiTypeElement){
                     return true;
                 }
             }

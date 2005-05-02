@@ -71,9 +71,8 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends StatementInsp
                 return false;
             }
             int numCases = 0;
-            for (int i = 0; i < statements.length; i++) {
-                final PsiStatement child = statements[i];
-                if (child instanceof PsiSwitchLabelStatement) {
+            for(final PsiStatement child : statements){
+                if(child instanceof PsiSwitchLabelStatement){
                     if(!((PsiSwitchLabelStatement) child).isDefaultCase()){
                         numCases++;
                     }
@@ -81,12 +80,10 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends StatementInsp
             }
             final PsiField[] fields = aClass.getFields();
             int numEnums = 0;
-            for (int i = 0; i < fields.length; i++) {
-                final PsiField field = fields[i];
-                if (field.getType().equals(type)) {
+            for(final PsiField field : fields){
+                if(field.getType().equals(type)){
                     numEnums++;
                 }
-
             }
             return numEnums != numCases;
         }

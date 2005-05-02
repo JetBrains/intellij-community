@@ -12,22 +12,21 @@ public class CloneUtils {
     }
 
     public static boolean isCloneable(PsiClass aClass) {
-        return isCloneable(aClass, new HashSet());
+        return isCloneable(aClass, new HashSet<String>());
     }
 
-    private static boolean isCloneable(PsiClass aClass, Set alreadyChecked) {
+    private static boolean isCloneable(PsiClass aClass, Set<String> alreadyChecked) {
         final String qualifiedName = aClass.getQualifiedName();
         if (alreadyChecked.contains(qualifiedName)) {
             return false;
         }
         alreadyChecked.add(qualifiedName);
         final PsiClass[] supers = aClass.getSupers();
-        for (int i = 0; i < supers.length; i++) {
-            final PsiClass aSuper = supers[i];
-            if ("java.lang.Cloneable".equals(aSuper.getQualifiedName())) {
+        for(final PsiClass aSuper : supers){
+            if("java.lang.Cloneable".equals(aSuper.getQualifiedName())){
                 return true;
             }
-            if (isCloneable(aSuper, alreadyChecked)) {
+            if(isCloneable(aSuper, alreadyChecked)){
                 return true;
             }
         }
@@ -36,9 +35,9 @@ public class CloneUtils {
 
     public static boolean isDirectlyCloneable(PsiClass aClass) {
         final PsiClass[] interfaces = aClass.getInterfaces();
-        for (int i = 0; i < interfaces.length; i++) {
-            final String qualifiedName = interfaces[i].getQualifiedName();
-            if ("java.lang.Cloneable".equals(qualifiedName)) {
+        for(PsiClass aInterfaces : interfaces){
+            final String qualifiedName = aInterfaces.getQualifiedName();
+            if("java.lang.Cloneable".equals(qualifiedName)){
                 return true;
             }
         }

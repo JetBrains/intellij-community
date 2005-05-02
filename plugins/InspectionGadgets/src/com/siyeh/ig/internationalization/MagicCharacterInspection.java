@@ -11,7 +11,7 @@ import java.util.Set;
 
 public class MagicCharacterInspection extends ExpressionInspection {
 
-    private static final Set s_specialCaseLiterals = new HashSet(1);
+    private static final Set<String> s_specialCaseLiterals = new HashSet<String>(1);
     private final IntroduceConstantFix fix = new IntroduceConstantFix();
 
     static {
@@ -76,7 +76,7 @@ public class MagicCharacterInspection extends ExpressionInspection {
 
         private static boolean isDeclaredConstant(PsiLiteralExpression expression) {
             final PsiField field =
-                    (PsiField) PsiTreeUtil.getParentOfType(expression, PsiField.class);
+                    PsiTreeUtil.getParentOfType(expression, PsiField.class);
             if (field == null) {
                 return false;
             }

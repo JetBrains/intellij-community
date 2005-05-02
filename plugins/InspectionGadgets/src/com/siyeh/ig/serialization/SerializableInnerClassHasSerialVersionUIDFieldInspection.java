@@ -85,9 +85,9 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection extends Cl
         private boolean hasSerialVersionUIDField(PsiClass aClass) {
             final PsiField[] fields = aClass.getFields();
             boolean hasSerialVersionUID = false;
-            for (int i = 0; i < fields.length; i++) {
-                final String fieldName = fields[i].getName();
-                if ("serialVersionUID".equals(fieldName)) {
+            for(PsiField field : fields){
+                final String fieldName = field.getName();
+                if("serialVersionUID".equals(fieldName)){
                     hasSerialVersionUID = true;
                 }
             }

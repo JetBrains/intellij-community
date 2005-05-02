@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class UnnecessaryUnboxingInspection extends ExpressionInspection {
-    private static final Map s_unboxingMethods = new HashMap(8);
+    private static final Map<String,String> s_unboxingMethods = new HashMap<String, String>(8);
     private final UnnecessaryUnboxingFix fix = new UnnecessaryUnboxingFix();
 
     static {
@@ -111,7 +111,7 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
             if (!s_unboxingMethods.containsKey(qualifierTypeName)) {
                 return;
             }
-            final Object unboxingMethod = s_unboxingMethods.get(qualifierTypeName);
+            final String unboxingMethod = s_unboxingMethods.get(qualifierTypeName);
             if (!unboxingMethod.equals(methodName)) {
                 return;
             }

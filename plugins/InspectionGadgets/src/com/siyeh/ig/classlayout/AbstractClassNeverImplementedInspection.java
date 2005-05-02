@@ -56,10 +56,9 @@ public class AbstractClassNeverImplementedInspection extends ClassInspection {
             final SearchScope searchScope = aClass.getUseScope();
             final PsiClass[] inheritors =
                     searchHelper.findInheritors(aClass, searchScope, true);
-            for(int i = 0; i < inheritors.length; i++){
-                final PsiClass inheritor = inheritors[i];
+            for(final PsiClass inheritor : inheritors){
                 if(!inheritor.isInterface() && !inheritor.isAnnotationType() &&
-                           !inheritor.hasModifierProperty(PsiModifier.ABSTRACT)){
+                        !inheritor.hasModifierProperty(PsiModifier.ABSTRACT)){
                     return true;
                 }
             }

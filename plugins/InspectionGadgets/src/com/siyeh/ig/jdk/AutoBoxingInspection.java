@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class AutoBoxingInspection extends ExpressionInspection {
     /** @noinspection StaticCollection*/
-    private static final Map s_boxingClasses = new HashMap(8);
+    private static final Map<String,String> s_boxingClasses = new HashMap<String, String>(8);
     private final AutoBoxingFix fix = new AutoBoxingFix();
 
     static {
@@ -65,7 +65,7 @@ public class AutoBoxingInspection extends ExpressionInspection {
                 final String classToConstruct = expectedType.getPresentableText();
                 newExpression = "new " + classToConstruct + '(' + expression.getText() + ')';
             } else {
-                final String classToConstruct = (String) s_boxingClasses.get(expression.getType().getPresentableText());
+                final String classToConstruct = s_boxingClasses.get(expression.getType().getPresentableText());
                 newExpression = "new " + classToConstruct + '(' + expression.getText() + ')';
             }
             replaceExpression(project, expression, newExpression);

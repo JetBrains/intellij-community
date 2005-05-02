@@ -75,9 +75,7 @@ public class RedundantImplementsInspection extends ClassInspection{
             final PsiReferenceList extendsList = aClass.getExtendsList();
             final PsiJavaCodeReferenceElement[] extendsElements =
                     extendsList.getReferenceElements();
-            for(int i = 0; i < extendsElements.length; i++){
-                final PsiJavaCodeReferenceElement implementsElement =
-                        extendsElements[i];
+            for(final PsiJavaCodeReferenceElement implementsElement : extendsElements){
                 final PsiElement referent = implementsElement.resolve();
                 if(referent != null && referent instanceof PsiClass){
                     final PsiClass implementedClass = (PsiClass) referent;
@@ -97,9 +95,7 @@ public class RedundantImplementsInspection extends ClassInspection{
                     extendsList.getReferenceElements();
             final PsiJavaCodeReferenceElement[] implementsElements =
                     implementsList.getReferenceElements();
-            for(int i = 0; i < implementsElements.length; i++){
-                final PsiJavaCodeReferenceElement implementsElement =
-                        implementsElements[i];
+            for(final PsiJavaCodeReferenceElement implementsElement : implementsElements){
                 final PsiElement referent = implementsElement.resolve();
                 if(referent != null && referent instanceof PsiClass){
                     final PsiClass implementedClass = (PsiClass) referent;
@@ -113,12 +109,10 @@ public class RedundantImplementsInspection extends ClassInspection{
                                            PsiJavaCodeReferenceElement implementsElement,
                                            PsiJavaCodeReferenceElement[] extendsElements,
                                            PsiJavaCodeReferenceElement[] implementsElements){
-            for(int j = 0; j < extendsElements.length; j++){
-                final PsiJavaCodeReferenceElement extendsElement =
-                        extendsElements[j];
+            for(final PsiJavaCodeReferenceElement extendsElement : extendsElements){
                 final PsiElement extendsReferent = extendsElement.resolve();
                 if(extendsReferent != null &&
-                                   extendsReferent instanceof PsiClass){
+                        extendsReferent instanceof PsiClass){
                     final PsiClass extendedClass = (PsiClass) extendsReferent;
                     if(extendedClass.isInheritor(implementedClass, true)){
                         registerError(implementsElement);
@@ -126,14 +120,12 @@ public class RedundantImplementsInspection extends ClassInspection{
                     }
                 }
             }
-            for(int j = 0; j < implementsElements.length; j++){
-                final PsiJavaCodeReferenceElement testImplementElement =
-                        implementsElements[j];
+            for(final PsiJavaCodeReferenceElement testImplementElement : implementsElements){
                 if(!testImplementElement.equals(implementsElement)){
                     final PsiElement implementsReferent =
                             testImplementElement.resolve();
                     if(implementsReferent != null &&
-                                       implementsReferent instanceof PsiClass){
+                            implementsReferent instanceof PsiClass){
                         final PsiClass testImplementedClass =
                                 (PsiClass) implementsReferent;
                         if(testImplementedClass.isInheritor(implementedClass,
@@ -150,14 +142,12 @@ public class RedundantImplementsInspection extends ClassInspection{
                                             PsiJavaCodeReferenceElement implementsElement,
                                             PsiJavaCodeReferenceElement[] extendsElements){
 
-            for(int j = 0; j < extendsElements.length; j++){
-                final PsiJavaCodeReferenceElement testImplementElement =
-                        extendsElements[j];
+            for(final PsiJavaCodeReferenceElement testImplementElement : extendsElements){
                 if(!testImplementElement.equals(implementsElement)){
                     final PsiElement implementsReferent =
                             testImplementElement.resolve();
                     if(implementsReferent != null &&
-                                       implementsReferent instanceof PsiClass){
+                            implementsReferent instanceof PsiClass){
                         final PsiClass testImplementedClass =
                                 (PsiClass) implementsReferent;
                         if(testImplementedClass.isInheritor(implementedClass,

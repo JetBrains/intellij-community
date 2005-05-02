@@ -20,7 +20,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInspection{
@@ -28,7 +27,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
     public String nameCheckString = "is,can,has,should";
     private final RenameFix fix = new RenameFix();
 
-    private List nameList = new ArrayList(32);
+    private List<Object> nameList = new ArrayList<Object>(32);
 
     {
         parseNameString();
@@ -42,8 +41,8 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
     private void parseNameString(){
         nameList.clear();
         final String[] strings = nameCheckString.split(",");
-        for(int i = 0; i < strings.length; i++){
-            nameList.add(strings[i]);
+        for(String string : strings){
+            nameList.add(string);
         }
     }
 
@@ -55,13 +54,13 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
     private void formatNameCheckString(){
         final StringBuffer buffer = new StringBuffer();
         boolean first = true;
-        for(Iterator iterator = nameList.iterator(); iterator.hasNext();){
+        for(Object aNameList : nameList){
             if(first){
                 first = false;
             } else{
                 buffer.append(',');
             }
-            final String exceptionName = (String) iterator.next();
+            final String exceptionName = (String) aNameList;
             buffer.append(exceptionName);
         }
         nameCheckString = buffer.toString();
@@ -117,10 +116,9 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
                 return;
             }
             final String name = method.getName();
-            for(Iterator iterator = nameList.iterator(); iterator.hasNext();){
-                final String prefix = (String) iterator.next();
-                if(name.startsWith(prefix))
-                {
+            for(Object aNameList : nameList){
+                final String prefix = (String) aNameList;
+                if(name.startsWith(prefix)){
                     return;
                 }
             }
@@ -144,9 +142,9 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
             final PsiMethod[] superMethods =
                     PsiSuperMethodUtil.findSuperMethods(method);
 
-            for(int i = 0; i < superMethods.length; i++){
+            for(PsiMethod superMethod : superMethods){
                 final PsiClass containingClass =
-                        superMethods[i].getContainingClass();
+                        superMethod.getContainingClass();
                 if(containingClass != null &&
                         LibraryUtil.classIsInLibrary(containingClass)){
                     return true;

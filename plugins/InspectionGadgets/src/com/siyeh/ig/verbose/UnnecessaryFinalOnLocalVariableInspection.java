@@ -43,24 +43,23 @@ public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection 
             if (declaredElements == null || declaredElements.length == 0) {
                 return;
             }
-            for (int i = 0; i < declaredElements.length; i++) {
-                final PsiElement declaredElement = declaredElements[i];
-                if (!(declaredElement instanceof PsiLocalVariable)) {
+            for(final PsiElement declaredElement : declaredElements){
+                if(!(declaredElement instanceof PsiLocalVariable)){
                     return;
                 }
                 final PsiLocalVariable variable = (PsiLocalVariable) declaredElement;
-                if (!variable.hasModifierProperty(PsiModifier.FINAL)) {
+                if(!variable.hasModifierProperty(PsiModifier.FINAL)){
                     return;
                 }
             }
             final PsiCodeBlock containingBlock =
-                    (PsiCodeBlock) PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
+                    PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
             if (containingBlock == null) {
                 return;
             }
-            for (int i = 0; i < declaredElements.length; i++) {
-                final PsiLocalVariable variable = (PsiLocalVariable) declaredElements[i];
-                if (variableIsUsedInInnerClass(containingBlock, variable)) {
+            for(PsiElement declaredElement1 : declaredElements){
+                final PsiLocalVariable variable = (PsiLocalVariable) declaredElement1;
+                if(variableIsUsedInInnerClass(containingBlock, variable)){
                     return;
                 }
             }
@@ -71,12 +70,14 @@ public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection 
         public void visitTryStatement(PsiTryStatement statement) {
             super.visitTryStatement(statement);
             final PsiCatchSection[] catchSections = statement.getCatchSections();
-            for (int i = 0; i < catchSections.length; i++) {
-                final PsiParameter parameter = catchSections[i].getParameter();
-                final PsiCodeBlock catchBlock = catchSections[i].getCatchBlock();
-                if (parameter == null || catchBlock == null) continue;
-                if (parameter.hasModifierProperty(PsiModifier.FINAL) &&
-                        !variableIsUsedInInnerClass(catchBlock, parameter)) {
+            for(PsiCatchSection catchSection : catchSections){
+                final PsiParameter parameter = catchSection.getParameter();
+                final PsiCodeBlock catchBlock = catchSection.getCatchBlock();
+                if(parameter == null || catchBlock == null){
+                    continue;
+                }
+                if(parameter.hasModifierProperty(PsiModifier.FINAL) &&
+                        !variableIsUsedInInnerClass(catchBlock, parameter)){
                     registerModifierError(PsiModifier.FINAL, parameter);
                 }
             }

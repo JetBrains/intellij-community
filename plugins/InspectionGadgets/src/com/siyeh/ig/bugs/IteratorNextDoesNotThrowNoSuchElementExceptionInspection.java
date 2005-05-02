@@ -10,7 +10,6 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 
-import java.util.Iterator;
 import java.util.Set;
 
 public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
@@ -75,13 +74,12 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
             final PsiElementFactory elementFactory =
                     psiManager.getElementFactory();
 
-            final Set exceptions =
+            final Set<PsiType> exceptions =
                     ExceptionUtils.calculateExceptionsThrown(method,
                                                              elementFactory);
-            for(Iterator exceptionsThrown = exceptions.iterator();
-                exceptionsThrown.hasNext();){
+            for(Object exception : exceptions){
                 final PsiClassType type =
-                        (PsiClassType) exceptionsThrown.next();
+                        (PsiClassType) exception;
                 if(type.equalsToText("java.util.NoSuchElementException")){
                     return;
                 }

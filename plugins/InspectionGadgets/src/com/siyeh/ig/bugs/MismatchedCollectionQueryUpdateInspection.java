@@ -88,7 +88,7 @@ public class MismatchedCollectionQueryUpdateInspection
         public void visitLocalVariable(PsiLocalVariable variable){
             super.visitLocalVariable(variable);
             final PsiCodeBlock codeBlock =
-                    (PsiCodeBlock) PsiTreeUtil.getParentOfType(variable,
+                    PsiTreeUtil.getParentOfType(variable,
                                                                PsiCodeBlock.class);
             if(codeBlock == null){
                 return;
@@ -205,8 +205,7 @@ public class MismatchedCollectionQueryUpdateInspection
             return false;
         }
         final PsiExpression[] expressions = argumentList.getExpressions();
-        for(int i = 0; i < expressions.length; i++){
-            final PsiExpression arg = expressions[i];
+        for(final PsiExpression arg : expressions){
             final PsiType argType = arg.getType();
             if(argType == null){
                 return false;
