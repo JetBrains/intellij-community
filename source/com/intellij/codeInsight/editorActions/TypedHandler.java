@@ -15,19 +15,20 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
-import com.intellij.psi.jsp.*;
-import com.intellij.psi.jsp.el.ELTokenType;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
+import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
@@ -37,6 +38,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.lang.ASTNode;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -478,29 +480,15 @@ public class TypedHandler implements TypedActionHandler {
 
     XmlFile file = (XmlFile)PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     final int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
+    PsiElement element = file.findElementAt(offset - 1);
 
-    if (!(element instanceof PsiWhiteSpace)) return;
-    while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
+    ASTNode prevLeaf = element.getNode();
+    if (!"/".equals(prevLeaf.getText())) return;
+    while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
+    if(prevLeaf == null) return;
 
-    if (!(element instanceof XmlToken)) return;
-    XmlToken token = (XmlToken)element;
-    if (!"/".equals(token.getText())) return;
-
-    PsiElement prevSibling = element.getPrevSibling();
-    if (prevSibling!=null) {
-      element = prevSibling;
-    } else {
-      PsiElement parent = element.getParent();
-      if(parent instanceof XmlText) {
-        element = parent.getPrevSibling();
-      }
-    }
-
-    while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
-    if (!(element instanceof XmlTag)) return;
-
-    XmlTag tag = (XmlTag)element;
+    final XmlTag tag = PsiTreeUtil.getParentOfType(prevLeaf.getPsi(), XmlTag.class);
+    if(tag == null) return;
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) != null) return;
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return;
 
