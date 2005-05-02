@@ -10,6 +10,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import org.jdom.Element;
 
@@ -58,6 +59,19 @@ public abstract class LocalInspectionTool {
   public ProblemDescriptor[] checkField(PsiField field, InspectionManager manager, boolean isOnTheFly) {
     return null;
   }
+
+  /**
+     * Override this to report problems at file level.
+     *
+     * @param file       to check.
+     * @param manager    InspectionManager to ask for ProblemDescriptor's from.
+     * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
+     * @return <code>null</code> if no problems found or not applicable at field level.
+     */
+  public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
+    return null;
+  }
+
 
   public abstract String getGroupDisplayName();
 

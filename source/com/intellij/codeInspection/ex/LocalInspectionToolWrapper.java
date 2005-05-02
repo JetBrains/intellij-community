@@ -34,7 +34,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     return myTool;
   }
 
-  public void processFile(PsiJavaFile file) {
+  public void processFile(PsiFile file) {
     file.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitElement(expression);
@@ -97,6 +97,18 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
           }
         }
       }
+
+      public void visitFile(PsiFile file) {
+        super.visitFile(file);
+        ProblemDescriptor[] problemDescriptions = myTool.checkFile(file, getManager(), false);
+        if (problemDescriptions != null) {
+          RefManager refManager = getManager().getRefManager();
+          RefElement refElement = refManager.getReference(file);
+          if (refElement != null) {
+            addProblemElement(refElement, problemDescriptions);
+          }
+        }
+      }
     });
   }
 
@@ -110,7 +122,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
       public void visitReferenceExpression(PsiReferenceExpression expression) {
       }
 
-      public void visitJavaFile(PsiJavaFile file) {
+      public void visitFile(PsiFile file) {
         processFile(file);
       }
     });

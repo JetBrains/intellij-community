@@ -114,7 +114,7 @@ public class AnalysisScope {
     }
     PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       public void visitFile(PsiFile file) {
-        if (file instanceof PsiJavaFile && !(file instanceof PsiCompiledElement)) {
+        if (/*file instanceof PsiJavaFile && */!(file instanceof PsiCompiledElement)) {
           final VirtualFile virtualFile = file.getVirtualFile();
           if (!myIncludeTestSource){
             if (fileIndex == null || fileIndex.isInTestSourceContent(virtualFile)){
@@ -259,7 +259,8 @@ public class AnalysisScope {
       final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       projectFileIndex.iterateContent(new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
-          if (projectFileIndex.isContentJavaSourceFile(fileOrDir) && (myIncludeTestSource ? true : !projectFileIndex.isInTestSourceContent(fileOrDir))) {
+          if (fileOrDir.isDirectory()) return true;
+          if (projectFileIndex.isInSourceContent(fileOrDir) && (myIncludeTestSource ? true : !projectFileIndex.isInTestSourceContent(fileOrDir))) {
             PsiFile psiFile = PsiManager.getInstance(myProject).findFile(fileOrDir);
             LOG.assertTrue(psiFile != null);
             psiFile.accept(visitor);
@@ -272,7 +273,8 @@ public class AnalysisScope {
       final FileIndex moduleFileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
       moduleFileIndex.iterateContent(new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
-          if (moduleFileIndex.isContentJavaSourceFile(fileOrDir) && (myIncludeTestSource ? true : !moduleFileIndex.isInTestSourceContent(fileOrDir))) {
+          if (fileOrDir.isDirectory()) return true;
+          if (moduleFileIndex.isInSourceContent(fileOrDir) && (myIncludeTestSource ? true : !moduleFileIndex.isInTestSourceContent(fileOrDir))) {
             PsiFile psiFile = PsiManager.getInstance(myModule.getProject()).findFile(fileOrDir);
             LOG.assertTrue(psiFile != null);
             psiFile.accept(visitor);
@@ -287,7 +289,8 @@ public class AnalysisScope {
         final FileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
         moduleFileIndex.iterateContent(new ContentIterator() {
           public boolean processFile(VirtualFile fileOrDir) {
-            if (moduleFileIndex.isContentJavaSourceFile(fileOrDir) && (myIncludeTestSource ? true : !moduleFileIndex.isInTestSourceContent(fileOrDir))) {
+            if (fileOrDir.isDirectory()) return true;
+            if (moduleFileIndex.isInSourceContent(fileOrDir) && (myIncludeTestSource ? true : !moduleFileIndex.isInTestSourceContent(fileOrDir))) {
               PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(fileOrDir);
               LOG.assertTrue(psiFile != null);
               psiFile.accept(visitor);

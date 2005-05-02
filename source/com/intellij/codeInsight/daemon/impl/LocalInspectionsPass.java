@@ -31,7 +31,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
@@ -115,6 +118,13 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
               if (iManager.isToCheckMember(psiField, currentTool.getID())) {
                 appendDescriptors(currentTool.checkField(psiField, iManager, true), currentTool);
               }
+            }
+          }
+          else if (element instanceof PsiFile){
+            PsiFile psiFile = (PsiFile)element;
+            for (int k = 0; k < tools.length; k++) {
+              currentTool = tools[k];              
+              appendDescriptors(currentTool.checkFile(psiFile, iManager, true), currentTool);
             }
           }
         }

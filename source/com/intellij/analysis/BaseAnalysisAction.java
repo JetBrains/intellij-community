@@ -52,7 +52,6 @@ public abstract class BaseAnalysisAction extends AnAction {
       FileProjectOrModuleDialog dlg = new FileProjectOrModuleDialog(project,
                                                                     scope.getDisplayName(),
                                                                     module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil.getModuleNameInReadAction(module) : null,
-                                                                    calledFromNonJavaFile,
                                                                     scope.getScopeType() == AnalysisScope.PROJECT);
       dlg.show();
       if (!dlg.isOK()) return;
@@ -138,20 +137,14 @@ public abstract class BaseAnalysisAction extends AnAction {
     private JRadioButton myModuleButton;
     private JCheckBox myInspectTestSource;
     private Project myProject;
-    public FileProjectOrModuleDialog(Project project, String fileName, String moduleName, boolean nonJavaFile, boolean isProjectScope) {
+    public FileProjectOrModuleDialog(Project project, String fileName, String moduleName, boolean isProjectScope) {
       super(true);
       myProject = project;
       myFileName = fileName;
       myModuleName = moduleName;
       init();
       setTitle("Specify " + myTitle + " Scope");
-      if (nonJavaFile) {
-        myFileButton.setEnabled(false);
-        myProjectButton.setSelected(true);
-      }
-      else {
-        myFileButton.setSelected(true);
-      }
+      myFileButton.setSelected(true);
       if (isProjectScope){
         myFileButton.setVisible(false);
         myProjectButton.setSelected(true);
