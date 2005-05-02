@@ -41,6 +41,6 @@ public class ExtractSuperClassViewDescriptor extends UsageViewDescriptorAdapter 
   }
 
   public String getProcessedElementsHeader() {
-    return "Extract supreclass with members to directory";
+    return "Extract superclass with members to directory";
   }
 }
