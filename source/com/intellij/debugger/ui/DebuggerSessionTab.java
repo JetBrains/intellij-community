@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.CloseAction;
@@ -226,11 +227,12 @@ public class DebuggerSessionTab {
       myViewsContentManager.removeContent(content);
     }
 
-    clearLogContents();
+
 
     ArrayList<Content> logContents = new ArrayList<Content>();
 
-    if (myConfiguration instanceof RunConfigurationBase){
+    if (myConfiguration instanceof RunConfigurationBase && !(myConfiguration instanceof JUnitConfiguration)){
+      clearLogContents();
       RunConfigurationBase base = (RunConfigurationBase)myConfiguration;
       final Map<String, Boolean> logFiles = base.getLogFiles();
       int index = 0;

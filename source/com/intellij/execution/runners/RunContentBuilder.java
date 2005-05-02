@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.CloseAction;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -87,17 +88,21 @@ public class RunContentBuilder {
       if (myComponent == null) {
         final ExecutionConsole console = myExecutionResult.getExecutionConsole();
         if (console != null) {
-          myComponent = new JTabbedPane();
-          ((JTabbedPane)myComponent).addTab("Console", console.getComponent());
-          if (myRunProfile instanceof RunConfigurationBase){
-            RunConfigurationBase base = (RunConfigurationBase)myRunProfile;
-            final Map<String, Boolean> logFiles = base.getLogFiles();
-            for (Iterator<String > iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
-              String  file = iterator.next();
-              if (logFiles.get(file).booleanValue()){
-                final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(file));
-                myDisposeables.add(logTab);
-                ((JTabbedPane)myComponent).addTab("Log: " + file, logTab); //todo
+          if (myRunProfile instanceof JUnitConfiguration){
+            myComponent = console.getComponent();
+          } else {
+            myComponent = new JTabbedPane();
+            ((JTabbedPane)myComponent).addTab("Console", console.getComponent());
+            if (myRunProfile instanceof RunConfigurationBase){
+              RunConfigurationBase base = (RunConfigurationBase)myRunProfile;
+              final Map<String, Boolean> logFiles = base.getLogFiles();
+              for (Iterator<String > iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
+                String  file = iterator.next();
+                if (logFiles.get(file).booleanValue()){
+                  final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(file));
+                  myDisposeables.add(logTab);
+                  ((JTabbedPane)myComponent).addTab("Log: " + file, logTab); //todo
+                }
               }
             }
           }
