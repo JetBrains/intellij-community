@@ -63,8 +63,9 @@ public class TreeChangeImpl implements TreeChange {
           ((ChangeInfoImpl)changeInfo).setOldLength(current.getOldLength());
           myChanges.put(child, changeInfo);
         }
-        else
+        else {
           removeChangeInternal(child);
+        }
 
       }
       return;
@@ -186,7 +187,7 @@ public class TreeChangeImpl implements TreeChange {
     while (newChangesIterator.hasNext()) {
       Pair<ASTNode, Integer> pair = newChangesIterator.next();
       final ASTNode child = pair.getFirst();
-      final ChangeInfo change = impl.getChangeByChild(child);
+      ChangeInfo change = impl.getChangeByChild(child);
 
       if (change.getChangeType() == ChangeInfo.REMOVED) {
         final ChangeInfo oldChange = getChangeByChild(child);
@@ -194,6 +195,12 @@ public class TreeChangeImpl implements TreeChange {
           switch (oldChange.getChangeType()) {
             case ChangeInfo.ADD:
               removeChangeInternal(child);
+              break;
+            case ChangeInfo.REPLACE:
+              final ASTNode replaced = ((ReplaceChangeInfoImpl)oldChange).getReplaced();
+              removeChangeInternal(child);
+              myChanges.put(replaced, ChangeInfoImpl.create(ChangeInfo.REMOVED, replaced));
+              addChangeAtOffset(replaced, getOldOffset(pair.getSecond().intValue()));
               break;
             case ChangeInfo.CONTENTS_CHANGED:
               ((ChangeInfoImpl)change).setOldLength(oldChange.getOldLength());
@@ -213,18 +220,23 @@ public class TreeChangeImpl implements TreeChange {
           switch (oldChange.getChangeType()) {
             case ChangeInfo.ADD:
               removeChangeInternal(child);
-              addChange(child, ChangeInfoImpl.create(ChangeInfo.ADD, child));
+              change = ChangeInfoImpl.create(ChangeInfo.ADD, child);
               break;
             case ChangeInfo.CONTENTS_CHANGED:
               ((ChangeInfoImpl)change).setOldLength(oldChange.getOldLength());
-            default:
-              addChange(child, oldChange);
+              break;
+            case ChangeInfo.REPLACE:
+              change = ChangeInfoImpl.create(ChangeInfo.REPLACE, child);
+              ((ReplaceChangeInfoImpl)change).setReplaced(((ReplaceChangeInfoImpl)oldChange).getReplaced());
+              removeChangeInternal(replaceChangeInfo.getReplaced());
               break;
           }
         }
-        else addChange(child, change);
+        addChange(child, change);
       }
-      else addChange(child, change);
+      else {
+        addChange(child, change);
+      }
     }
   }
 
