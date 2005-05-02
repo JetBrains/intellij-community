@@ -5,6 +5,8 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.ClassFilter;
+import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -228,7 +230,25 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return (LineBreakpoint)breakpoint.init();
   }
 
+  protected boolean moveTo(SourcePosition position) {
+    if (!canAddLineBreakpoint(myProject, getDocument(), position.getLine())) {
+      return false;
+    }
+    return super.moveTo(position);
+  }
+
   public static boolean canAddLineBreakpoint(Project project, final Document document, final int lineIndex) {
+    if (lineIndex < 0 || lineIndex >= document.getLineCount()) {
+      return false;
+    }
+    final BreakpointWithHighlighter breakpointAtLine = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().findBreakpoint(
+      document,
+      document.getLineStartOffset(lineIndex)
+    );
+    if (breakpointAtLine != null && CATEGORY.equals(breakpointAtLine.getCategory())) {
+      // there already exists a line breakpoint at this line
+      return false;
+    }
     final boolean[] canAdd = new boolean[]{false};
 
     PsiDocumentManager.getInstance(project).commitDocument(document);

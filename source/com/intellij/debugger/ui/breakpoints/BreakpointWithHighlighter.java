@@ -142,7 +142,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   public boolean isValid() {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
       public Boolean compute() {
-        return new Boolean(getSourcePosition() != null && getSourcePosition().getFile().isValid());
+        return getSourcePosition() != null && getSourcePosition().getFile().isValid()? Boolean.TRUE : Boolean.FALSE;
       }
     }).booleanValue();
   }
@@ -260,7 +260,8 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
           updateCaches(null);
           updateGutter();
           afterUpdate.run();
-        } else {
+        } 
+        else {
           final ModalityState modalityState = ModalityState.current();
 
           debugProcess.getManagerThread().invoke(new DebuggerCommandImpl() {
@@ -271,11 +272,11 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
                 }
               });
               DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-                          public void run() {
-                            updateGutter();
-                            afterUpdate.run();
-                          }
-                        }, modalityState);
+                public void run() {
+                  updateGutter();
+                  afterUpdate.run();
+                }
+              }, modalityState);
             }
           });
         }
@@ -287,9 +288,9 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     if(myVisible) {
       if (getHighlighter() != null && getHighlighter().isValid() && isValid()) {
         setupGutterRenderer();
-      } else {
-        DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(
-          BreakpointWithHighlighter.this);
+      } 
+      else {
+        DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(BreakpointWithHighlighter.this);
       }
     }
   }
@@ -357,8 +358,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       public AnAction getMiddleButtonClickAction() {
         return new AnAction() {
           public void actionPerformed(AnActionEvent e) {
-            boolean value = !ENABLED;
-            ENABLED = value;
+            ENABLED = !ENABLED;
             DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().breakpointChanged(BreakpointWithHighlighter.this);
             updateUI();
           }
@@ -388,10 +388,14 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   protected boolean moveTo(SourcePosition position) {
-    RangeHighlighter oldHighlighter = myHighlighter;
 
     Document document = getDocument();
-    myHighlighter = createHighlighter(myProject, document, position.getLine());
+    final RangeHighlighter newHighlighter = createHighlighter(myProject, document, position.getLine());
+    if (newHighlighter == null) {
+      return false;
+    }
+    final RangeHighlighter oldHighlighter = myHighlighter;
+    myHighlighter = newHighlighter;
 
     reload();
     if(!isValid()) {
