@@ -1127,7 +1127,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private class MyDragSourceListener implements DragSourceListener{
     public void dragEnter(DragSourceDragEvent dsde) {
-      dsde.getDragSourceContext().setCursor(null);//setCursor (dsde.getDragSourceContext());
+      final DragSourceContext context = dsde.getDragSourceContext();
+      if (EditorGutterComponentImpl.this.contains(dsde.getLocation())){
+        int line = myEditor.xyToLogicalPosition(new Point(0, (int)dsde.getLocation().getY())).line;
+        setCursor (context, line);
+      } else {
+        context.setCursor(null);
+      }
     }
 
     public void dragOver(DragSourceDragEvent dsde) {}
@@ -1136,8 +1142,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       dsde.getDragSourceContext().setCursor(null);//setCursor (dsde.getDragSourceContext());
     }
 
-    private void setCursor (DragSourceContext context) {
-      final Cursor cursor = myGutterDraggableObject.getCursor ();
+    private void setCursor(DragSourceContext context, final int line) {
+      final Cursor cursor = myGutterDraggableObject.getCursor (line);
       context.setCursor(cursor);
     }
 

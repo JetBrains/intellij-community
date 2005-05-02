@@ -4,8 +4,8 @@ import com.intellij.debugger.*;
 import com.intellij.debugger.actions.ViewBreakpointsAction;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -379,7 +379,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
             return moveTo(SourcePosition.createFromLine(getSourcePosition().getFile(), line));
           }
 
-          public Cursor getCursor() {
+          public Cursor getCursor(int line) {
             return new Cursor (Cursor.MOVE_CURSOR);
           }
         };

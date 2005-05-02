@@ -15,5 +15,5 @@ public interface GutterDraggableObject {
 
   public boolean copy (int line);
 
-  Cursor getCursor();
+  Cursor getCursor(int line);
 }
