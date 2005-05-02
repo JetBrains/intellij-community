@@ -133,7 +133,8 @@ public class EditorWindow {
       }
       final int histFileIndex = findComponentIndex(editor.getComponent());
       if (histFileIndex >= 0) {
-        return histFileIndex;
+        // if the file being closed is located before the hist file, then after closing the index of the histFile will be shifted by -1
+        return fileIndex < histFileIndex ? histFileIndex - 1 : histFileIndex;
       }
     }
     // by default select previous neighbour

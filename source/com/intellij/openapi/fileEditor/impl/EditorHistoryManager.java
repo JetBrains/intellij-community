@@ -170,7 +170,7 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
       entry.mySelectedProvider = selectedEditorWithProvider.getSecond ();
       LOG.assertTrue(entry.mySelectedProvider != null);
 
-      if(changed && changeOrder){
+      if(changed || changeOrder){
         myEntriesList.remove(entry);
         myEntriesList.add(entry);
       }
