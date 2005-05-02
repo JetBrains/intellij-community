@@ -215,22 +215,23 @@ public class TreeChangeImpl implements TreeChange {
       }
       else if (change.getChangeType() == ChangeInfo.REPLACE) {
         ReplaceChangeInfo replaceChangeInfo = (ReplaceChangeInfo)change;
-        final ChangeInfo oldChange = getChangeByChild(replaceChangeInfo.getReplaced());
+        final ASTNode replaced = replaceChangeInfo.getReplaced();
+        final ChangeInfo oldChange = getChangeByChild(replaced);
         if (oldChange != null) {
           switch (oldChange.getChangeType()) {
             case ChangeInfo.ADD:
-              removeChangeInternal(child);
               change = ChangeInfoImpl.create(ChangeInfo.ADD, child);
               break;
             case ChangeInfo.CONTENTS_CHANGED:
               ((ChangeInfoImpl)change).setOldLength(oldChange.getOldLength());
               break;
             case ChangeInfo.REPLACE:
+              final ASTNode oldReplaced = ((ReplaceChangeInfoImpl)oldChange).getReplaced();
               change = ChangeInfoImpl.create(ChangeInfo.REPLACE, child);
-              ((ReplaceChangeInfoImpl)change).setReplaced(((ReplaceChangeInfoImpl)oldChange).getReplaced());
-              removeChangeInternal(replaceChangeInfo.getReplaced());
+              ((ReplaceChangeInfoImpl)change).setReplaced(oldReplaced);
               break;
           }
+          removeChangeInternal(replaced);
         }
         addChange(child, change);
       }
