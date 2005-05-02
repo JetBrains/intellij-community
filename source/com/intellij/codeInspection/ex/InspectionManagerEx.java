@@ -38,6 +38,8 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -402,13 +404,14 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   public void processSearchRequests() {
-    final PsiSearchHelper helper = PsiManager.getInstance(getProject()).getSearchHelper();
+    final PsiManager psiManager = PsiManager.getInstance(getProject());
+    final PsiSearchHelper helper = psiManager.getSearchHelper();
     final RefManager refManager = getRefManager();
     final AnalysisScope scope = refManager.getScope();
 
     final SearchScope searchScope = new GlobalSearchScope() {
       public boolean contains(VirtualFile file) {
-        return !scope.contains(file);
+        return !scope.contains(file) || file.getFileType() != StdFileTypes.JAVA;
       }
 
       public int compare(VirtualFile file1, VirtualFile file2) {
@@ -576,7 +579,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return new PsiReferenceProcessor() {
       public boolean execute(PsiReference reference) {
         AnalysisScope scope = getRefManager().getScope();
-        if (scope.contains(reference.getElement()) ||
+        if ((scope.contains(reference.getElement()) && reference.getElement().getContainingFile() instanceof PsiJavaFile) ||
             PsiTreeUtil.getParentOfType(reference.getElement(), PsiDocComment.class) != null) {
           return true;
         }
