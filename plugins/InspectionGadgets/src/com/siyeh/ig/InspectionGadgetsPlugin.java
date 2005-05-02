@@ -9,10 +9,7 @@ import com.siyeh.ig.abstraction.*;
 import com.siyeh.ig.bugs.*;
 import com.siyeh.ig.classlayout.*;
 import com.siyeh.ig.classmetrics.*;
-import com.siyeh.ig.cloneable.CloneCallsConstructorsInspection;
-import com.siyeh.ig.cloneable.CloneCallsSuperCloneInspection;
-import com.siyeh.ig.cloneable.CloneDeclaresCloneNotSupportedInspection;
-import com.siyeh.ig.cloneable.CloneableImplementsCloneInspection;
+import com.siyeh.ig.cloneable.*;
 import com.siyeh.ig.confusing.*;
 import com.siyeh.ig.encapsulation.*;
 import com.siyeh.ig.errorhandling.*;
@@ -33,8 +30,7 @@ import com.siyeh.ig.methodmetrics.*;
 import com.siyeh.ig.naming.*;
 import com.siyeh.ig.performance.*;
 import com.siyeh.ig.portability.*;
-import com.siyeh.ig.resources.IOResourceInspection;
-import com.siyeh.ig.resources.JDBCResourceInspection;
+import com.siyeh.ig.resources.*;
 import com.siyeh.ig.security.*;
 import com.siyeh.ig.serialization.*;
 import com.siyeh.ig.style.*;
@@ -42,6 +38,10 @@ import com.siyeh.ig.threading.*;
 import com.siyeh.ig.verbose.*;
 import com.siyeh.ig.visibility.*;
 import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
+import com.siyeh.ig.j2me.AbstractClassWithOnlyOneDirectInheritorInspection;
+import com.siyeh.ig.j2me.InterfaceWithOnlyOneDirectInheritorInspection;
+import com.siyeh.ig.j2me.OverlyLargePrimitiveArrayInitializerInspection;
+import com.siyeh.ig.j2me.CheckForOutOfMemoryOnLargeArrayAllocationInspection;
 
 import java.io.*;
 import java.util.*;
@@ -245,13 +245,17 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         registerLoggingInspections();
         registerSecurityInspections();
         registerResourceManagementInspections();
+        registerJ2MEInspections();
         Collections.sort(m_inspectionClasses, new InspectionComparator());
     }
 
     private void registerResourceManagementInspections(){
         final List inspectionClasses = m_inspectionClasses;
+        inspectionClasses.add(JNDIResourceInspection.class);
+        inspectionClasses.add(SocketResourceInspection.class);
         inspectionClasses.add(IOResourceInspection.class);
         inspectionClasses.add(JDBCResourceInspection.class);
+        inspectionClasses.add(ChannelResourceInspection.class);
     }
 
     private void registerLoggingInspections(){
@@ -273,6 +277,9 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(JDBCPrepareStatementWithNonConstantStringInspection.class);
         inspectionClasses.add(CustomClassloaderInspection.class);
         inspectionClasses.add(CustomSecurityManagerInspection.class);
+        inspectionClasses.add(SystemSetSecurityManagerInspection.class);
+        inspectionClasses.add(ClassLoaderInstantiationInspection.class);
+        inspectionClasses.add(SystemPropertiesInspection.class);
     }
 
     private void registerImportInspections(){
@@ -352,6 +359,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(MismatchedCollectionQueryUpdateInspection.class);
         inspectionClasses.add(TextLabelInSwitchStatementInspection.class);
         inspectionClasses.add(AssignmentToNullInspection.class);
+        inspectionClasses.add(ConditionalExpressionWithIdenticalBranchesInspection.class);
+        inspectionClasses.add(IfStatementWithIdenticalBranchesInspection.class);
         inspectionClasses.add(DuplicateConditionInspection.class);
         inspectionClasses.add(IteratorNextDoesNotThrowNoSuchElementExceptionInspection.class);
         inspectionClasses.add(ReturnNullInspection.class);
@@ -431,7 +440,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(ClassNameDiffersFromFileNameInspection.class);
         inspectionClasses.add(MarkerInterfaceInspection.class);
         inspectionClasses.add(FieldHasSetterButNoGetterInspection.class);
-        inspectionClasses.add(InterfaceNeverImplementedInspection.class);
+        inspectionClasses.add(OverlyLargePrimitiveArrayInitializerInspection.class);
         inspectionClasses.add(AbstractClassNeverImplementedInspection.class);
         inspectionClasses.add(MissingDeprecatedAnnotationInspection.class);
         inspectionClasses.add(MissingOverrideAnnotationInspection.class);
@@ -439,6 +448,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerCloneInspections(){
+        m_inspectionClasses.add(CloneInNonCloneableClassInspection.class);
         m_inspectionClasses.add(CloneableImplementsCloneInspection.class);
         m_inspectionClasses.add(CloneCallsConstructorsInspection.class);
         m_inspectionClasses.add(CloneCallsSuperCloneInspection.class);
@@ -637,6 +647,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(ThreadWithDefaultRunMethodInspection.class);
         inspectionClasses.add(NakedNotifyInspection.class);
         inspectionClasses.add(UnconditionalWaitInspection.class);
+        inspectionClasses.add(ThreadYieldInspection.class);
+        inspectionClasses.add(ThreadStopSuspendResumeInspection.class);
         inspectionClasses.add(WhileLoopSpinsOnFieldInspection.class);
         inspectionClasses.add(WaitNotInLoopInspection.class);
         inspectionClasses.add(VolatileLongOrDoubleFieldInspection.class);
@@ -662,6 +674,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(ThreeNegationsPerMethodInspection.class);
         inspectionClasses.add(MethodWithMultipleLoopsInspection.class);
         inspectionClasses.add(MultipleReturnPointsPerMethodInspection.class);
+        inspectionClasses.add(ThrownExceptionsPerMethodInspection.class);
         inspectionClasses.add(ParametersPerMethodInspection.class);
         inspectionClasses.add(CyclomaticComplexityInspection.class);
         inspectionClasses.add(NestingDepthInspection.class);
@@ -759,6 +772,14 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(ZeroLengthArrayInitializationInspection.class);
         inspectionClasses.add(CallToSimpleGetterInClassInspection.class);
         inspectionClasses.add(CallToSimpleSetterInClassInspection.class);
+    }
+
+    private void registerJ2MEInspections(){
+        final List inspectionClasses = m_inspectionClasses;
+        inspectionClasses.add(AbstractClassWithOnlyOneDirectInheritorInspection.class);
+        inspectionClasses.add(InterfaceWithOnlyOneDirectInheritorInspection.class);
+        inspectionClasses.add(CheckForOutOfMemoryOnLargeArrayAllocationInspection.class);
+        inspectionClasses.add(OverlyLargePrimitiveArrayInitializerInspection.class);
     }
 
     private void registerMaturityInspections(){

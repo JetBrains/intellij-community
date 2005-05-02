@@ -9,7 +9,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ExpressionEquivalenceChecker;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ErrorUtil;
 
 public class TrivialIfInspection extends StatementInspection{
@@ -375,7 +375,7 @@ public class TrivialIfInspection extends StatementInspection{
             }
             final PsiExpression thenLhs = thenExpression.getLExpression();
             final PsiExpression elseLhs = elseExpression.getLExpression();
-            return ExpressionEquivalenceChecker.expressionsAreEquivalent(thenLhs,
+            return EquivalenceChecker.expressionsAreEquivalent(thenLhs,
                                                                          elseLhs);
         } else{
             return false;
@@ -400,7 +400,7 @@ public class TrivialIfInspection extends StatementInspection{
             }
             final PsiExpression thenLhs = thenExpression.getLExpression();
             final PsiExpression elseLhs = elseExpression.getLExpression();
-            return ExpressionEquivalenceChecker.expressionsAreEquivalent(thenLhs,
+            return EquivalenceChecker.expressionsAreEquivalent(thenLhs,
                                                                          elseLhs);
         } else{
             return false;
@@ -435,7 +435,7 @@ public class TrivialIfInspection extends StatementInspection{
             }
             final PsiExpression thenLhs = thenExpression.getLExpression();
             final PsiExpression elseLhs = elseExpression.getLExpression();
-            return ExpressionEquivalenceChecker.expressionsAreEquivalent(thenLhs,
+            return EquivalenceChecker.expressionsAreEquivalent(thenLhs,
                                                                          elseLhs);
         } else{
             return false;
@@ -470,7 +470,7 @@ public class TrivialIfInspection extends StatementInspection{
             }
             final PsiExpression thenLhs = thenExpression.getLExpression();
             final PsiExpression elseLhs = elseExpression.getLExpression();
-            return ExpressionEquivalenceChecker.expressionsAreEquivalent(thenLhs,
+            return EquivalenceChecker.expressionsAreEquivalent(thenLhs,
                                                                          elseLhs);
         } else{
             return false;
@@ -541,7 +541,7 @@ public class TrivialIfInspection extends StatementInspection{
         }
         final PsiExpression lhs1 = expression1.getLExpression();
         final PsiExpression lhs2 = expression2.getLExpression();
-        return ExpressionEquivalenceChecker.expressionsAreEquivalent(lhs1,
+        return EquivalenceChecker.expressionsAreEquivalent(lhs1,
                                                                      lhs2);
     }
 }

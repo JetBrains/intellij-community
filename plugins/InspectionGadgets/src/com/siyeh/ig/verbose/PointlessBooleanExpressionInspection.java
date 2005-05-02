@@ -15,17 +15,6 @@ import java.util.HashSet;
 public class PointlessBooleanExpressionInspection extends ExpressionInspection{
     private final BooleanLiteralComparisonFix fix =
             new BooleanLiteralComparisonFix();
-    private static final Set booleanTokens = new HashSet(10);
-    static
-    {
-        booleanTokens.add(JavaTokenType.ANDAND);
-        booleanTokens.add(JavaTokenType.AND);
-        booleanTokens.add(JavaTokenType.OROR);
-        booleanTokens.add(JavaTokenType.OR);
-        booleanTokens.add(JavaTokenType.XOR);
-        booleanTokens.add(JavaTokenType.EQEQ);
-        booleanTokens.add(JavaTokenType.NE);
-    }
 
     public String getDisplayName(){
         return "Pointless boolean expression";
@@ -148,7 +137,18 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
 
     private static class PointlessBooleanExpressionVisitor
             extends BaseInspectionVisitor{
+        private static final Set booleanTokens = new HashSet(10);
 
+        static
+        {
+            booleanTokens.add(JavaTokenType.ANDAND);
+            booleanTokens.add(JavaTokenType.AND);
+            booleanTokens.add(JavaTokenType.OROR);
+            booleanTokens.add(JavaTokenType.OR);
+            booleanTokens.add(JavaTokenType.XOR);
+            booleanTokens.add(JavaTokenType.EQEQ);
+            booleanTokens.add(JavaTokenType.NE);
+        }
         private PointlessBooleanExpressionVisitor(BaseInspection inspection,
                                                   InspectionManager inspectionManager,
                                                   boolean isOnTheFly){

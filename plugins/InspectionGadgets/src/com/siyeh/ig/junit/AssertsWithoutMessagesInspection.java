@@ -25,6 +25,7 @@ public class AssertsWithoutMessagesInspection extends ExpressionInspection {
         s_assertMethods.add("assertNotNull");
         s_assertMethods.add("assertSame");
         s_assertMethods.add("assertNotSame");
+        s_assertMethods.add("fail");
     }
 
     public String getID(){

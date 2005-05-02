@@ -10,12 +10,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
-
-public abstract class InspectionGadgetsFix implements LocalQuickFix {
-    protected void deleteElement(PsiElement element) {
-        try {
+public abstract class InspectionGadgetsFix implements LocalQuickFix{
+    protected void deleteElement(PsiElement element){
+        try{
             element.delete();
-        } catch (IncorrectOperationException e) {
+        } catch(IncorrectOperationException e){
             final Class aClass = getClass();
             final String className = aClass.getName();
             final Logger logger = Logger.getInstance(className);
@@ -23,15 +22,17 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
         }
     }
 
-    protected void replaceExpression(Project project, PsiExpression expression, String newExpression) {
-        try {
+    protected void replaceExpression(Project project, PsiExpression expression,
+                                     String newExpression){
+        try{
             final PsiManager psiManager = PsiManager.getInstance(project);
             final PsiElementFactory factory = psiManager.getElementFactory();
-            final PsiExpression newExp = factory.createExpressionFromText(newExpression, null);
+            final PsiExpression newExp = factory.createExpressionFromText(newExpression,
+                                                                          null);
             final PsiElement replacementExp = expression.replace(newExp);
             final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
             styleManager.reformat(replacementExp);
-        } catch (IncorrectOperationException e) {
+        } catch(IncorrectOperationException e){
             final Class aClass = getClass();
             final String className = aClass.getName();
             final Logger logger = Logger.getInstance(className);
@@ -39,15 +40,17 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
         }
     }
 
-    protected void replaceStatement(Project project, PsiStatement statement, String newStatement) {
-        try {
+    protected void replaceStatement(Project project, PsiStatement statement,
+                                    String newStatement){
+        try{
             final PsiManager psiManager = PsiManager.getInstance(project);
             final PsiElementFactory factory = psiManager.getElementFactory();
-            final PsiStatement newExp = factory.createStatementFromText(newStatement, null);
+            final PsiStatement newExp = factory.createStatementFromText(newStatement,
+                                                                        null);
             final PsiElement replacementExp = statement.replace(newExp);
             final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
             styleManager.reformat(replacementExp);
-        } catch (IncorrectOperationException e) {
+        } catch(IncorrectOperationException e){
             final Class aClass = getClass();
             final String className = aClass.getName();
             final Logger logger = Logger.getInstance(className);
@@ -56,11 +59,18 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
     }
 
     public static boolean isQuickFixOnReadOnlyFile(Project project,
-                                                    ProblemDescriptor descriptor){
+                                                   ProblemDescriptor descriptor){
         final ReadonlyStatusHandler handler = ReadonlyStatusHandler.getInstance(project);
         final PsiElement problemElement = descriptor.getPsiElement();
+        if(problemElement == null){
+            return false;
+        }
         final PsiFile containingPsiFile = problemElement.getContainingFile();
+        if(containingPsiFile == null){
+            return false;
+        }
         final VirtualFile virtualFile = containingPsiFile.getVirtualFile();
-        return handler.ensureFilesWritable(new VirtualFile[]{virtualFile}).hasReadonlyFiles();
+        return handler.ensureFilesWritable(new VirtualFile[]{virtualFile})
+                .hasReadonlyFiles();
     }
 }

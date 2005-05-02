@@ -1,19 +1,18 @@
     Logging not wrapped in if block
     Public method without logging
     Logger constructed without the current class name as argument.
+    Configure Log4J in a file
+    Prohibitted Log4J levels
     Incorrect lazy initialization of static field
     Avoid repeated casting
     Class name with forbidden name component
-    Paired open/close for Sockets
-    Paired open/close for Channels
-    Paired open/close for JNDI resources (Context, NamingEnumeration)
     Paired acquire/release for Locks
     Empty zip file entry
     Empty jar file entry
     getClass().getResource()
     Inefficient use of keySet iterator rather than entrySet iterator
     Unsigned right shift cast to short or byte
-    Servlet class with instance variables
+    Assignment to instance variable of Servlet outside of initServlet()
     Struts Action class with instance variables
     Math call on constant value
     call to runFinalizersOnExit()
@@ -22,14 +21,30 @@
     Constant month outside range of 0..11
     JDBC close order
     JDBC connection createStatement()
-    Configure Log4J in a file
-    Prohibitted Log4J levels
     Require load factor on maps
     Look for ArrayIndexOutOfBounds errors statically
+    J2ME Connection resource inspection
+    J2ME RecordStore resource inspection
+    Hibernate resource inspection
+    Synchronization minimization
+    Constructor can be chained
+    Non-final field of exception class
+    Static initializer which creates an instance before all static variables are initialized
+    Initializing a static final field with a static non-final field
+    Use of non-final static field during class initialization
+    Use Datasource rather than DriverManager to get JDBC connections
+    Do not call methods in loop conditions
+    Do not access array lengths in loop conditions
+    Do not use Hashtable methods on Property objects
+    clone() final, for security
+    SecureRandom(), rather than Random() or Math.random()
 
+    Move stuff to "J2ME" or "Memory" categories
+
+    Move and restructure categories
     Static import quickfix
     Vararg quickfix
-    Non non-static initializer quickfix
+    Non-static initializer quickfix
     Fix the "variable accessed in synchronized and unsynchronized contexts"
        to deal with unsynchronized private methods called only from synchronized contexts
     Telemetry sorting

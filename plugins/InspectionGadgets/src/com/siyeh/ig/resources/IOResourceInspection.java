@@ -26,8 +26,7 @@ public class IOResourceInspection extends ExpressionInspection{
         final PsiExpression expression = (PsiExpression) location;
         final PsiType type = expression.getType();
         final String text = type.getPresentableText();
-        return text +
-                       " should be opened in a try block, and closed in a finally block #loc";
+        return text + " should be opened in a try block, and closed in a finally block #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,

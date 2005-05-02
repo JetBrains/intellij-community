@@ -190,6 +190,14 @@ public class CollectionUtils{
         final String className = resolved.getQualifiedName();
         return s_allCollectionClassesAndInterfaces.contains(className);
     }
+    public static boolean isWeakCollectionClass(PsiType type){
+        final String typeText = type.getCanonicalText();
+        if(typeText == null)
+        {
+            return false;
+        }
+        return "java.util.WeakHashMap".equals(typeText);
+    }
 
     public static boolean isConstantArrayOfZeroSize(PsiField field){
         if(!field.hasModifierProperty(PsiModifier.STATIC) ||

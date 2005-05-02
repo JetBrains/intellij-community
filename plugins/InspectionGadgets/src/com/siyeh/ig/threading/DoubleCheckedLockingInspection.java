@@ -7,7 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ExpressionEquivalenceChecker;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 
 public class DoubleCheckedLockingInspection extends ExpressionInspection {
@@ -68,7 +68,7 @@ public class DoubleCheckedLockingInspection extends ExpressionInspection {
             }
             final PsiIfStatement innerIf = (PsiIfStatement) statements[0];
             final PsiExpression innerCondition = innerIf.getCondition();
-            if (!ExpressionEquivalenceChecker.expressionsAreEquivalent(innerCondition, outerCondition)) {
+            if (!EquivalenceChecker.expressionsAreEquivalent(innerCondition, outerCondition)) {
                 return;
             }
             registerStatementError(statement);

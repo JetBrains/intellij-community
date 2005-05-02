@@ -12,18 +12,7 @@ import java.util.Set;
 import java.util.HashSet;
 
 public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
-    /** @noinspection StaticCollection*/
-    private static final Set bitwiseTokens = new HashSet(4);
 
-    static
-    {
-        bitwiseTokens.add(JavaTokenType.AND);
-        bitwiseTokens.add(JavaTokenType.OR);
-        bitwiseTokens.add(JavaTokenType.XOR);
-        bitwiseTokens.add(JavaTokenType.LTLT);
-        bitwiseTokens.add(JavaTokenType.GTGT);
-        bitwiseTokens.add(JavaTokenType.GTGTGT);
-    }
     private final PointlessBitwiseFix fix = new PointlessBitwiseFix();
 
     public String getDisplayName() {
@@ -103,6 +92,21 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
     }
 
     private static class PointlessBitwiseVisitor extends BaseInspectionVisitor {
+        /**
+         * @noinspection StaticCollection
+         */
+        private static final Set bitwiseTokens = new HashSet(4);
+
+        static
+        {
+            bitwiseTokens.add(JavaTokenType.AND);
+            bitwiseTokens.add(JavaTokenType.OR);
+            bitwiseTokens.add(JavaTokenType.XOR);
+            bitwiseTokens.add(JavaTokenType.LTLT);
+            bitwiseTokens.add(JavaTokenType.GTGT);
+            bitwiseTokens.add(JavaTokenType.GTGTGT);
+        }
+
         private PointlessBitwiseVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

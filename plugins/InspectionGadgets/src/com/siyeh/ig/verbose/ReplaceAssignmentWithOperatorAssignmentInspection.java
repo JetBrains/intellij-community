@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.*;
-import com.siyeh.ig.psiutils.ExpressionEquivalenceChecker;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 
@@ -127,7 +127,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
             if(SideEffectChecker.mayHaveSideEffects(lhs)){
                 return;
             }
-            if(!ExpressionEquivalenceChecker.expressionsAreEquivalent(lhs,
+            if(!EquivalenceChecker.expressionsAreEquivalent(lhs,
                                                                       lOperand)){
                 return;
             }

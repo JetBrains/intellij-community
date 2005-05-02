@@ -546,6 +546,10 @@ public class ForCanBeForeachInspection extends StatementInspection{
 
         final PsiClass qualifierClass =
                 ((PsiClassType) qualifierType).resolve();
+        if(qualifierClass == null)
+        {
+            return false;
+        }
         if(!ClassUtils.isSubclass(qualifierClass, "java.lang.Iterable") &&
                    !ClassUtils.isSubclass(qualifierClass,
                                           "java.util.Collection")){

@@ -14,15 +14,7 @@ import java.util.Set;
 import java.util.HashSet;
 
 public class PointlessArithmeticExpressionInspection extends ExpressionInspection {
-    /** @noinspection StaticCollection*/
-    private static final Set arithmeticTokens = new HashSet(4);
-    static
-    {
-        arithmeticTokens.add(JavaTokenType.PLUS);
-        arithmeticTokens.add(JavaTokenType.MINUS);
-        arithmeticTokens.add(JavaTokenType.ASTERISK);
-        arithmeticTokens.add(JavaTokenType.DIV);
-    }
+
 
     private final PointlessArithmeticFix fix = new PointlessArithmeticFix();
 
@@ -96,6 +88,19 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
     }
 
     private static class PointlessArithmeticVisitor extends BaseInspectionVisitor {
+        /**
+         * @noinspection StaticCollection
+         */
+        private static final Set arithmeticTokens = new HashSet(4);
+
+        static
+        {
+            arithmeticTokens.add(JavaTokenType.PLUS);
+            arithmeticTokens.add(JavaTokenType.MINUS);
+            arithmeticTokens.add(JavaTokenType.ASTERISK);
+            arithmeticTokens.add(JavaTokenType.DIV);
+        }
+
         private PointlessArithmeticVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }
@@ -156,7 +161,7 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
     }
 
     /** @noinspection FloatingPointEquality*/
-    private static boolean isZero(PsiExpression expression) {
+        private static boolean isZero(PsiExpression expression) {
         final Double value = (Double) ConstantExpressionUtil.computeCastTo(expression, PsiType.DOUBLE);
         return value != null && value.doubleValue() == 0.0;
     }

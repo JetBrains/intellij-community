@@ -14,15 +14,6 @@ import java.util.HashSet;
 
 public class OverlyComplexArithmeticExpressionInspection extends ExpressionInspection {
     private static final int TERM_LIMIT = 6;
-    /** @noinspection StaticCollection*/
-    private static final Set arithmeticTokens = new HashSet(5);
-    static{
-        arithmeticTokens.add(JavaTokenType.PLUS);
-        arithmeticTokens.add(JavaTokenType.MINUS);
-        arithmeticTokens.add(JavaTokenType.ASTERISK);
-        arithmeticTokens.add(JavaTokenType.DIV);
-        arithmeticTokens.add(JavaTokenType.PERC);
-    }
 
 
     /** @noinspection PublicField*/
@@ -63,6 +54,15 @@ public class OverlyComplexArithmeticExpressionInspection extends ExpressionInspe
     }
 
     private class SwitchStatementWithTooManyBranchesVisitor extends BaseInspectionVisitor {
+        private  final Set arithmeticTokens = new HashSet(5);
+        {
+            arithmeticTokens.add(JavaTokenType.PLUS);
+            arithmeticTokens.add(JavaTokenType.MINUS);
+            arithmeticTokens.add(JavaTokenType.ASTERISK);
+            arithmeticTokens.add(JavaTokenType.DIV);
+            arithmeticTokens.add(JavaTokenType.PERC);
+        }
+
         private SwitchStatementWithTooManyBranchesVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }

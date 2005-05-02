@@ -7,7 +7,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.psiutils.ExpressionEquivalenceChecker;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -70,7 +70,7 @@ public class DuplicateConditionInspection extends ExpressionInspection{
                     }
                     final PsiExpression testCondition = conditionArray[j];
                     final boolean areEquivalent =
-                            ExpressionEquivalenceChecker.expressionsAreEquivalent(condition,
+                            EquivalenceChecker.expressionsAreEquivalent(condition,
                                                                                   testCondition);
                     if(areEquivalent){
                         registerError(testCondition);

@@ -7,7 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.ExpressionEquivalenceChecker;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 
 public class CollectionAddedToSelfInspection extends ExpressionInspection {
 
@@ -74,7 +74,7 @@ public class CollectionAddedToSelfInspection extends ExpressionInspection {
             }
             final PsiExpression[] args = argumentList.getExpressions();
             for(int i = 0; i < args.length; i++){
-                if(ExpressionEquivalenceChecker.expressionsAreEquivalent(qualifier, args[i]))
+                if(EquivalenceChecker.expressionsAreEquivalent(qualifier, args[i]))
                 {
                     hasMatchingArg = true;
                 }

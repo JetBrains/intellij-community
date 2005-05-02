@@ -241,7 +241,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             final String baseName;
             final CodeStyleManager codeStyleManager =
                     CodeStyleManager.getInstance(project);
-            if(containerName == null){
+            if(containerName != null){
                 baseName = StringUtils.createSingularFromName(containerName);
             } else{
 
@@ -360,6 +360,10 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         }
         final PsiExpression qualifier =
                 initialMethodExpression.getQualifierExpression();
+        if(qualifier == null)
+        {
+            return false;
+        }
         final PsiType qualifierType = qualifier.getType();
         if(!(qualifierType instanceof PsiClassType)){
             return false;
@@ -367,6 +371,10 @@ public class WhileCanBeForeachInspection extends StatementInspection{
 
         final PsiClass qualifierClass =
                 ((PsiClassType) qualifierType).resolve();
+        if(qualifierClass == null)
+        {
+            return false;
+        }
         if(!ClassUtils.isSubclass(qualifierClass, "java.lang.Iterable") &&
                    !ClassUtils.isSubclass(qualifierClass, "java.util.Collection")) {
             return false;
