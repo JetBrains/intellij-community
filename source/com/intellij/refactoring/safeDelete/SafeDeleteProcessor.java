@@ -57,8 +57,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return isInside(place, Arrays.asList(ancestors));
   }
   private boolean isInside(PsiElement place, Collection<? extends PsiElement> ancestors) {
-    for (Iterator<? extends PsiElement> iterator = ancestors.iterator(); iterator.hasNext();) {
-      PsiElement element = iterator.next();
+    for (PsiElement element : ancestors) {
       if (PsiTreeUtil.isAncestor(element, place, false)) return true;
       if (place instanceof PsiComment && element instanceof PsiClass) {
         final PsiClass aClass = ((PsiClass)element);
@@ -77,18 +76,21 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   protected UsageInfo[] findUsages() {
     ArrayList<UsageInfo> usages = new ArrayList<UsageInfo>();
-    for (int i = 0; i < myElements.length; i++) {
-      PsiElement element = myElements[i];
+    for (PsiElement element : myElements) {
       if (element instanceof PsiClass) {
-        findClassUsages(((PsiClass) element), usages);
-      } else if (element instanceof PsiMethod) {
-        findMethodUsages(((PsiMethod) element), usages);
-      } else if (element instanceof PsiField) {
-        findFieldUsages((PsiField) element, usages);
-      } else if (element instanceof PsiFile) {
-        findFileUsages((PsiFile) element, usages);
-      } else if (element instanceof PsiNamedElement) {
-        findGenericElementUsages (element, usages);
+        findClassUsages(((PsiClass)element), usages);
+      }
+      else if (element instanceof PsiMethod) {
+        findMethodUsages(((PsiMethod)element), usages);
+      }
+      else if (element instanceof PsiField) {
+        findFieldUsages((PsiField)element, usages);
+      }
+      else if (element instanceof PsiFile) {
+        findFileUsages((PsiFile)element, usages);
+      }
+      else if (element instanceof PsiNamedElement) {
+        findGenericElementUsages(element, usages);
       }
     }
     final UsageInfo[] result = usages.toArray(new UsageInfo[usages.size()]);
@@ -102,8 +104,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       declarations = ((PropertiesFile)file).getProperties();
     }
 
-    for (int i = 0; i < declarations.length; i++) {
-      findGenericElementUsages(declarations[i], usages);
+    for (PsiElement declaration : declarations) {
+      findGenericElementUsages(declaration, usages);
     }
   }
 
@@ -111,8 +113,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     PsiManager manager = element.getManager();
 
     final PsiReference[] references = manager.getSearchHelper().findReferences(element, GlobalSearchScope.projectScope(myProject), false);
-    for (int i = 0; i < references.length; i++) {
-      final PsiElement refElement = references[i].getElement();
+    for (PsiReference reference : references) {
+      final PsiElement refElement = reference.getElement();
       if (!isInside(refElement, myElements)) {
         usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(refElement, element, false));
       }
@@ -124,20 +126,17 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     UsageInfo[] usages = u[0];
     ArrayList<String> conflicts = new ArrayList<String>();
 
-    for (int i = 0; i < myElements.length; i++) {
-      PsiElement element = myElements[i];
-
-      if(element instanceof PsiMethod) {
-        final PsiClass containingClass = ((PsiMethod) element).getContainingClass();
+    for (PsiElement element : myElements) {
+      if (element instanceof PsiMethod) {
+        final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
 
         if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods((PsiMethod) element);
-          for (int j = 0; j < superMethods.length; j++) {
-            PsiMethod superMethod = superMethods[j];
+          final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods((PsiMethod)element);
+          for (PsiMethod superMethod : superMethods) {
             if (isInside(superMethod, myElements)) continue;
-            if(superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            if (superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
               String message = ConflictsUtil.getDescription(element, true) + " implements "
-                      + ConflictsUtil.getDescription(superMethod, true) + ".";
+                               + ConflictsUtil.getDescription(superMethod, true) + ".";
               conflicts.add(message);
               break;
             }
@@ -148,8 +147,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
     final HashMap<PsiElement,UsageHolder> elementsToUsageHolders = sortUsages(usages);
     final Collection<UsageHolder> usageHolders = elementsToUsageHolders.values();
-    for (Iterator<UsageHolder> iterator = usageHolders.iterator(); iterator.hasNext();) {
-      UsageHolder usageHolder = iterator.next();
+    for (UsageHolder usageHolder : usageHolders) {
       if (usageHolder.getNonCodeUsagesNumber() != usageHolder.getUnsafeUsagesNumber()) {
         final String description = usageHolder.getDescription();
         if (description != null) {
@@ -270,13 +268,14 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   private UsageInfo[] filterAndQueryOverriding(UsageInfo[] usages) {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     ArrayList<UsageInfo> overridingMethods = new ArrayList<UsageInfo>();
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
-      if(usage.isNonCodeUsage) {
+    for (UsageInfo usage : usages) {
+      if (usage.isNonCodeUsage) {
         result.add(usage);
-      } else if (usage instanceof SafeDeleteOverridingMethodUsageInfo) {
+      }
+      else if (usage instanceof SafeDeleteOverridingMethodUsageInfo) {
         overridingMethods.add(usage);
-      } else {
+      }
+      else {
         result.add(usage);
       }
     }
@@ -299,11 +298,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   private HashMap<PsiElement,UsageHolder> sortUsages(UsageInfo[] usages) {
     HashMap<PsiElement,UsageHolder> result = new HashMap<PsiElement, UsageHolder>();
 
-    for (int i = 0; i < usages.length; i++) {
-      final UsageInfo usage = usages[i];
-
+    for (final UsageInfo usage : usages) {
       if (usage instanceof SafeDeleteUsageInfo) {
-        final PsiElement referencedElement = ((SafeDeleteUsageInfo) usage).getReferencedElement();
+        final PsiElement referencedElement = ((SafeDeleteUsageInfo)usage).getReferencedElement();
         if (!result.containsKey(referencedElement)) {
           result.put(referencedElement, new UsageHolder(referencedElement, usages));
         }
@@ -331,9 +328,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   private UsageInfo[] filterToBeDeleted(UsageInfo[] infos) {
     ArrayList<UsageInfo> list = new ArrayList<UsageInfo>();
-    for (int i = 0; i < infos.length; i++) {
-      UsageInfo info = infos[i];
-      if(!(info instanceof SafeDeleteReferenceUsageInfo) || (((SafeDeleteReferenceUsageInfo) info).isSafeDelete())) {
+    for (UsageInfo info : infos) {
+      if (!(info instanceof SafeDeleteReferenceUsageInfo) || (((SafeDeleteReferenceUsageInfo)info).isSafeDelete())) {
         list.add(info);
       }
     }
@@ -342,26 +338,26 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   protected void performRefactoring(UsageInfo[] usages) {
     try {
-      for (int i = 0; i < usages.length; i++) {
-        UsageInfo usage = usages[i];
-        if (usage instanceof SafeDeleteReferenceUsageInfo && ((SafeDeleteReferenceUsageInfo) usage).isSafeDelete()) {
-          ((SafeDeleteReferenceUsageInfo) usage).deleteElement();
-        } else if (usage instanceof SafeDeletePrivatizeMethod) {
-          ((SafeDeletePrivatizeMethod) usage).getMethod().getModifierList().setModifierProperty(PsiModifier.PRIVATE, true);
-        } else if (usage instanceof SafeDeleteOverridingMethodUsageInfo) {
-          ((SafeDeleteOverridingMethodUsageInfo) usage).getOverridingMethod().delete();
+      for (UsageInfo usage : usages) {
+        if (usage instanceof SafeDeleteReferenceUsageInfo && ((SafeDeleteReferenceUsageInfo)usage).isSafeDelete()) {
+          ((SafeDeleteReferenceUsageInfo)usage).deleteElement();
+        }
+        else if (usage instanceof SafeDeletePrivatizeMethod) {
+          ((SafeDeletePrivatizeMethod)usage).getMethod().getModifierList().setModifierProperty(PsiModifier.PRIVATE, true);
+        }
+        else if (usage instanceof SafeDeleteOverridingMethodUsageInfo) {
+          ((SafeDeleteOverridingMethodUsageInfo)usage).getOverridingMethod().delete();
 
         }
       }
 
-      for (int i = 0; i < myElements.length; i++) {
-        PsiElement element = myElements[i];
-        if(element instanceof PsiVariable) {
-          ((PsiVariable) element).normalizeDeclaration();
+      for (PsiElement element : myElements) {
+        if (element instanceof PsiVariable) {
+          ((PsiVariable)element).normalizeDeclaration();
         }
 
         if (element instanceof PsiTypeParameter) {
-            deleteTypeParameterExternalUsages((PsiTypeParameter)element);
+          deleteTypeParameterExternalUsages((PsiTypeParameter)element);
         }
         element.delete();
       }
@@ -376,8 +372,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
     PsiSearchHelper searchHelper = typeParameter.getManager().getSearchHelper();
     PsiReference[] ownerReferences = searchHelper.findReferences(owner, typeParameter.getResolveScope(), false);
-    for (int j = 0; j < ownerReferences.length; j++) {
-      PsiReference reference = ownerReferences[j];
+    for (PsiReference reference : ownerReferences) {
       if (reference instanceof PsiJavaCodeReferenceElement) {
         PsiTypeElement[] typeArgs = ((PsiJavaCodeReferenceElement)reference).getParameterList().getTypeParameterElements();
         if (typeArgs.length > index) {
@@ -407,8 +402,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
     final PsiReference[] references = manager.getSearchHelper().findReferences(psiClass, projectScope, false);
 
-    for (int i = 0; i < references.length; i++) {
-      PsiReference reference = references[i];
+    for (PsiReference reference : references) {
       final PsiElement element = reference.getElement();
 
       if (!isInside(element, myElements)) {
@@ -435,18 +429,18 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   private boolean containsOnlyPrivates(final PsiClass aClass) {
     final PsiField[] fields = aClass.getFields();
-    for (int i = 0; i < fields.length; i++) {
-      if (!fields[i].hasModifierProperty(PsiModifier.PRIVATE)) return false;
+    for (PsiField field : fields) {
+      if (!field.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     }
 
     final PsiMethod[] methods = aClass.getMethods();
-    for (int i = 0; i < methods.length; i++) {
-      if (!methods[i].hasModifierProperty(PsiModifier.PRIVATE)) return false;
+    for (PsiMethod method : methods) {
+      if (!method.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     }
 
     final PsiClass[] inners = aClass.getInnerClasses();
-    for (int i = 0; i < inners.length; i++) {
-      if (!inners[i].hasModifierProperty(PsiModifier.PRIVATE)) return false;
+    for (PsiClass inner : inners) {
+      if (!inner.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     }
 
     return true;
@@ -466,8 +460,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
             removeDeletedMethods(searchHelper.findOverridingMethods(psiMethod, projectScope, true));
 
     boolean anyRefs = false;
-    for (int i = 0; i < references.length; i++) {
-      PsiReference reference = references[i];
+    for (PsiReference reference : references) {
       final PsiElement element = reference.getElement();
       if (!isInside(element, myElements) && !isInside(element, overridingMethods)) {
         usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(element, psiMethod, false));
@@ -478,8 +471,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     final UsageInsideDeleted usageInsideDeleted;
     if (!anyRefs) {
       HashMap<PsiMethod,PsiReference[]> methodToReferences = new HashMap<PsiMethod, PsiReference[]>();
-      for (int i = 0; i < overridingMethods.length; i++) {
-        PsiMethod overridingMethod = overridingMethods[i];
+      for (PsiMethod overridingMethod : overridingMethods) {
         final PsiReference[] overridingReferences = searchHelper.findReferences(overridingMethod, projectScope, false);
         methodToReferences.put(overridingMethod, overridingReferences);
       }
@@ -501,16 +493,15 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   private PsiMethod[] removeDeletedMethods(PsiMethod[] methods) {
     ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
-    for (int i = 0; i < methods.length; i++) {
-      PsiMethod method = methods[i];
+    for (PsiMethod method : methods) {
       boolean isDeleted = false;
-      for (int j = 0; j < myElements.length; j++) {
-        PsiElement element = myElements[j];
-        if(element == method) {
-          isDeleted = true; break;
+      for (PsiElement element : myElements) {
+        if (element == method) {
+          isDeleted = true;
+          break;
         }
       }
-      if(!isDeleted) {
+      if (!isDeleted) {
         list.add(method);
       }
     }
@@ -527,15 +518,13 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     HashSet<PsiMethod> passConstructors = new HashSet<PsiMethod>();
     do {
       passConstructors.clear();
-      for (Iterator<PsiMethod> iterator = newConstructors.iterator(); iterator.hasNext();) {
-        PsiMethod method = iterator.next();
+      for (PsiMethod method : newConstructors) {
         final PsiReference[] references = constructorsToRefs.get(method);
-        for (int i = 0; i < references.length; i++) {
-          PsiReference reference = references[i];
+        for (PsiReference reference : references) {
           PsiMethod overridingConstructor = getOverridingConstructorOfSuperCall(reference.getElement());
-          if(overridingConstructor != null && !constructorsToRefs.containsKey(overridingConstructor)) {
+          if (overridingConstructor != null && !constructorsToRefs.containsKey(overridingConstructor)) {
             PsiReference[] overridingConstructorReferences =
-                    searchHelper.findReferences(overridingConstructor, GlobalSearchScope.projectScope(myProject), false);
+              searchHelper.findReferences(overridingConstructor, GlobalSearchScope.projectScope(myProject), false);
             constructorsToRefs.put(overridingConstructor, overridingConstructorReferences);
             passConstructors.add(overridingConstructor);
           }
@@ -563,9 +552,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     boolean anyNewBadRefs;
     do {
       anyNewBadRefs = false;
-      for (Iterator<PsiMethod> iterator = overridingMethods.iterator(); iterator.hasNext();) {
-        PsiMethod overridingMethod = iterator.next();
-
+      for (PsiMethod overridingMethod : overridingMethods) {
         if (validOverriding.contains(overridingMethod)) {
           final PsiReference[] overridingReferences = methodToReferences.get(overridingMethod);
           boolean anyOverridingRefs = false;
@@ -580,8 +567,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
             validOverriding.remove(overridingMethod);
             anyNewBadRefs = true;
 
-            for (int j = 0; j < originalReferences.length; j++) {
-              PsiReference reference = originalReferences[j];
+            for (PsiReference reference : originalReferences) {
               final PsiElement element = reference.getElement();
               if (!isInside(element, myElements) && !isInside(element, overridingMethods)) {
                 usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(element, originalMethod, false));
@@ -594,19 +580,17 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
     while(anyNewBadRefs && !validOverriding.isEmpty());
 
-    for (Iterator<PsiMethod> iterator = validOverriding.iterator(); iterator.hasNext();) {
-      PsiMethod method = iterator.next();
+    for (PsiMethod method : validOverriding) {
       if (method != originalMethod) {
 
         usages.add(new SafeDeleteOverridingMethodUsageInfo(method, originalMethod));
       }
     }
 
-    for (Iterator<PsiMethod> iterator = overridingMethods.iterator(); iterator.hasNext();) {
-      PsiMethod method = iterator.next();
-      if(!validOverriding.contains(method)) {
+    for (PsiMethod method : overridingMethods) {
+      if (!validOverriding.contains(method)) {
         final boolean methodCanBePrivate =
-                canBePrivate(method, methodToReferences.get(method), validOverriding);
+          canBePrivate(method, methodToReferences.get(method), validOverriding);
         if (methodCanBePrivate) {
           usages.add(new SafeDeletePrivatizeMethod(method, originalMethod));
         }
@@ -652,11 +636,10 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       LOG.assertTrue(false);
       return false;
     }
-    for (int i = 0; i < references.length; i++) {
-      PsiReference reference = references[i];
+    for (PsiReference reference : references) {
       final PsiElement element = reference.getElement();
-      if(!isInside(element, myElements) && !isInside(element, deleted)
-              && !manager.getResolveHelper().isAccessible(method, privateModifierList, element, null)) {
+      if (!isInside(element, myElements) && !isInside(element, deleted)
+          && !manager.getResolveHelper().isAccessible(method, privateModifierList, element, null)) {
         return false;
       }
     }
@@ -667,14 +650,14 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     PsiManager manager = psiField.getManager();
     final PsiReference[] references = manager.getSearchHelper().findReferences(psiField, GlobalSearchScope.projectScope(myProject), false);
 
-    for (int i = 0; i < references.length; i++) {
-      PsiReference reference = references[i];
+    for (PsiReference reference : references) {
       if (!myInsideDeletedElements.isInsideDeleted(reference.getElement())) {
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
-        if(parent instanceof PsiAssignmentExpression && element == ((PsiAssignmentExpression) parent).getLExpression()) {
-          usages.add(new SafeDeleteFieldWriteReference(((PsiAssignmentExpression) parent), psiField));
-        } else {
+        if (parent instanceof PsiAssignmentExpression && element == ((PsiAssignmentExpression)parent).getLExpression()) {
+          usages.add(new SafeDeleteFieldWriteReference(((PsiAssignmentExpression)parent), psiField));
+        }
+        else {
           usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(reference.getElement(), psiField, false));
         }
       }
@@ -742,12 +725,11 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     ArrayList<PsiElement> elements = new ArrayList<PsiElement>(Arrays.asList(elementsToDelete));
     HashSet<PsiElement> elementsToDeleteSet = new HashSet<PsiElement>(Arrays.asList(elementsToDelete));
 
-    for (int i = 0; i < elementsToDelete.length; i++) {
-      PsiElement psiElement = elementsToDelete[i];
+    for (PsiElement psiElement : elementsToDelete) {
       if (psiElement instanceof PsiField) {
-        PsiField field = (PsiField) psiElement;
+        PsiField field = (PsiField)psiElement;
         final String propertyName =
-                manager.getCodeStyleManager().variableNameToPropertyName(field.getName(), VariableKind.FIELD);
+          manager.getCodeStyleManager().variableNameToPropertyName(field.getName(), VariableKind.FIELD);
 
         PsiClass aClass = field.getContainingClass();
         if (aClass != null) {
