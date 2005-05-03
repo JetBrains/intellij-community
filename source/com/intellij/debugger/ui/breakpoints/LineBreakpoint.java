@@ -230,13 +230,13 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return (LineBreakpoint)breakpoint.init();
   }
 
-  protected boolean moveTo(SourcePosition position) {
+  public boolean canMoveTo(SourcePosition position) {
     if (!canAddLineBreakpoint(myProject, getDocument(), position.getLine())) {
       return false;
     }
-    return super.moveTo(position);
+    return super.canMoveTo(position);
   }
-
+  
   public static boolean canAddLineBreakpoint(Project project, final Document document, final int lineIndex) {
     if (lineIndex < 0 || lineIndex >= document.getLineCount()) {
       return false;

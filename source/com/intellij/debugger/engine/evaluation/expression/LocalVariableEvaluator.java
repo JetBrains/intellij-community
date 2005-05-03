@@ -90,7 +90,7 @@ class LocalVariableEvaluator implements Evaluator {
 
         public Type getExpectedType() throws ClassNotLoadedException {
           try {
-            return myEvaluatedVariable.getVariable().type();
+            return myEvaluatedVariable.getType();
           } catch (EvaluateException e) {
             LOG.error(e);
             return null;

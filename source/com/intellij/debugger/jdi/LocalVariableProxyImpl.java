@@ -4,8 +4,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.LocalVariableProxy;
 import com.intellij.openapi.util.Comparing;
-import com.sun.jdi.IncompatibleThreadStateException;
-import com.sun.jdi.LocalVariable;
+import com.sun.jdi.*;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -17,6 +16,7 @@ public class LocalVariableProxyImpl extends JdiProxy implements LocalVariablePro
   private final String              myVariableName;
 
   private LocalVariable myVariable;
+  private Type myVariableType;
 
   public LocalVariableProxyImpl(StackFrameProxyImpl frame, LocalVariable variable) {
     super(frame.myTimer);
@@ -24,10 +24,17 @@ public class LocalVariableProxyImpl extends JdiProxy implements LocalVariablePro
     myVariableName = variable.name();
 
     myVariable = variable;
+    try {
+      myVariableType = variable.type();
+    }
+    catch (ClassNotLoadedException e) {
+      myVariableType = null;
+    }
   }
 
   protected void clearCaches() {
     myVariable = null;
+    myVariableType = null;
   }
 
   public LocalVariable getVariable() throws EvaluateException {
@@ -44,6 +51,13 @@ public class LocalVariableProxyImpl extends JdiProxy implements LocalVariablePro
     return myVariable;
   }
 
+  public Type getType() throws EvaluateException, ClassNotLoadedException {
+    if (myVariableType == null) {
+      myVariableType = getVariable().type();
+    }
+    return myVariableType;
+  }
+  
   public StackFrameProxyImpl getFrame() {
     return myFrame;
   }

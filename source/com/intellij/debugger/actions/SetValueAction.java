@@ -123,7 +123,7 @@ public class SetValueAction extends DebuggerAction {
           public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
                                                                                            InvalidTypeException,
                                                                                            EvaluateException {
-            debuggerContext.getFrameProxy().setValue(local, preprocessValue(evaluationContext, newValue, local.getVariable().type()));
+            debuggerContext.getFrameProxy().setValue(local, preprocessValue(evaluationContext, newValue, local.getType()));
             update(debuggerContext);
           }
 

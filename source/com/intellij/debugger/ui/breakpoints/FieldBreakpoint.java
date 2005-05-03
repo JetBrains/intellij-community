@@ -89,25 +89,38 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   }
 
   public PsiField getPsiField() {
-    final PsiClass psiClass = getPsiClass();
-    if(psiClass != null){
-      PsiField field = psiClass.findFieldByName(myFieldName, true);
-      if(field != null) {
-        return field;
+    final SourcePosition sourcePosition = getSourcePosition();
+    final PsiField field = ApplicationManager.getApplication().runReadAction((Computable<PsiField>)new Computable<PsiField>() {
+      public PsiField compute() {
+        final PsiClass psiClass = getPsiClassAt(sourcePosition);
+        return psiClass != null ? psiClass.findFieldByName(myFieldName, true) : null;
       }
+    });
+    if (field != null) {
+      return field;
     }
+    return getPsiFieldAt(sourcePosition);
+  }
 
+  protected PsiField getPsiFieldAt(final SourcePosition sourcePosition) {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiField>() {
       public PsiField compute() {
-        PsiElement element = getSourcePosition().getFile().findElementAt(getSourcePosition().getOffset());
-        return PsiTreeUtil.getParentOfType(element, PsiField.class, false);
+        PsiFile psiFile = sourcePosition.getFile();
+        Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
+
+        if(document == null) {
+          return null;
+        }
+
+        final int offset = CharArrayUtil.shiftForward(document.getCharsSequence(), sourcePosition.getOffset(), " \t");
+        return PsiTreeUtil.getParentOfType(psiFile.findElementAt(offset), PsiField.class, false);
       }
     });
   }
 
   protected void reload(PsiFile psiFile) {
     super.reload(psiFile);
-    PsiField field = getPsiField();
+    PsiField field = getPsiFieldAt(getSourcePosition());
     if(field != null) {
       myFieldName = field.getName();
       myIsStatic = field.hasModifierProperty(PsiModifier.STATIC);
@@ -118,16 +131,10 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   }
 
   protected boolean moveTo(SourcePosition position) {
-    PsiFile psiFile = position.getFile();
-    Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
-
-    if(document == null) return false;
-
-    final int offset = CharArrayUtil.shiftForward(document.getCharsSequence(), position.getOffset(), " \t");
-    PsiField field = PsiTreeUtil.getParentOfType(psiFile.findElementAt(offset), PsiField.class);
-
-    if(field == null) return false;
-
+    final PsiField field = getPsiFieldAt(position);
+    if (field == null) {
+      return false;
+    }
     return super.moveTo(SourcePosition.createFromElement(field));
   }
 
@@ -236,12 +243,12 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     return (FieldBreakpoint)breakpoint.init();
   }
 
+  public boolean canMoveTo(final SourcePosition position) {
+    return super.canMoveTo(position) && getPsiFieldAt(position) != null;
+  }
+
   public boolean isValid() {
-    return super.isValid() && ApplicationManager.getApplication().runReadAction(new Computable<PsiField>() {
-      public PsiField compute() {
-        return getPsiField();
-      }
-    }) != null;
+    return super.isValid() && getPsiField() != null;
   }
 
   public boolean isAt(Document document, int offset) {

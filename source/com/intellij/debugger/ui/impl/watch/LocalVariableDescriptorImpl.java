@@ -39,15 +39,14 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
     myLocalVariable = local;
   }
 
-  private boolean calcPrimitive(LocalVariable local, EvaluationContextImpl evaluationContext) {
+  private boolean calcPrimitive(LocalVariableProxyImpl local, EvaluationContextImpl evaluationContext) throws EvaluateException {
     try {
-      return local.type() instanceof PrimitiveType;
+      return local.getType() instanceof PrimitiveType;
     }
     catch (ClassNotLoadedException e) {
       try {
-        evaluationContext.getDebugProcess().loadClass(evaluationContext, myTypeName,
-                                                      evaluationContext.getClassLoader());
-        return local.type() instanceof PrimitiveType;
+        evaluationContext.getDebugProcess().loadClass(evaluationContext, myTypeName, evaluationContext.getClassLoader());
+        return local.getType() instanceof PrimitiveType;
       }
       catch (Exception e1) {
         LOG.debug(e1);
@@ -93,7 +92,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
     myIsVisible = myFrameProxy.isLocalVariableVisible(getLocalVariable());
     if (myIsVisible) {
       myTypeName = getLocalVariable().getVariable().typeName();
-      myIsPrimitive = calcPrimitive(getLocalVariable().getVariable(), evaluationContext);
+      myIsPrimitive = calcPrimitive(getLocalVariable(), evaluationContext);
       return myFrameProxy.getValue(getLocalVariable());
     }
 

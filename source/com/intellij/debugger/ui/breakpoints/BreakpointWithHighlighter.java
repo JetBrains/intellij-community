@@ -36,6 +36,7 @@ import org.jdom.Element;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.dnd.DragSource;
 
 /**
  * User: lex
@@ -140,9 +141,13 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   public boolean isValid() {
+    return isPositionValid(getSourcePosition());
+  }
+
+  protected static boolean isPositionValid(final SourcePosition sourcePosition) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
       public Boolean compute() {
-        return getSourcePosition() != null && getSourcePosition().getFile().isValid()? Boolean.TRUE : Boolean.FALSE;
+        return sourcePosition != null && sourcePosition.getFile().isValid()? Boolean.TRUE : Boolean.FALSE;
       }
     }).booleanValue();
   }
@@ -208,11 +213,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(getHighlighter().getDocument());
       if(psiFile != null) {
         mySourcePosition = SourcePosition.createFromOffset(psiFile, getHighlighter().getStartOffset());
-
-        long modificationStamp = mySourcePosition.getFile().getModificationStamp();
-        if(modificationStamp != myTimeStamp) {
-          reload(psiFile);
-        }
+        reload(psiFile);
         return;
       }
     }
@@ -330,9 +331,14 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   public PsiClass getPsiClass() {
+    final SourcePosition sourcePosition = getSourcePosition();
+    return getPsiClassAt(sourcePosition);
+  }
+
+  protected PsiClass getPsiClassAt(final SourcePosition sourcePosition) {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
       public PsiClass compute() {
-        return JVMNameUtil.getClassAt(getSourcePosition());
+        return JVMNameUtil.getClassAt(sourcePosition);
       }
     });
   }
@@ -372,7 +378,6 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       public GutterDraggableObject getDraggableObject() {
         return new GutterDraggableObject() {
           public void removeSelf() {
-            //DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(BreakpointWithHighlighter.this);
           }
 
           public boolean copy(int line) {
@@ -380,15 +385,22 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
           }
 
           public Cursor getCursor(int line) {
-            return new Cursor (Cursor.MOVE_CURSOR);
+            final SourcePosition newPosition = SourcePosition.createFromLine(getSourcePosition().getFile(), line);
+            return canMoveTo(newPosition)? DragSource.DefaultMoveDrop : DragSource.DefaultMoveNoDrop;
           }
         };
       }
     });
   }
 
+  public boolean canMoveTo(final SourcePosition position) {
+    return isPositionValid(position);
+  }
+  
   protected boolean moveTo(SourcePosition position) {
-
+    if (!canMoveTo(position)) {
+      return false;
+    }
     Document document = getDocument();
     final RangeHighlighter newHighlighter = createHighlighter(myProject, document, position.getLine());
     if (newHighlighter == null) {

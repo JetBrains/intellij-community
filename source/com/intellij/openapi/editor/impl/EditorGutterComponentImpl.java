@@ -1127,24 +1127,33 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private class MyDragSourceListener implements DragSourceListener{
     public void dragEnter(DragSourceDragEvent dsde) {
-      final DragSourceContext context = dsde.getDragSourceContext();
-      if (EditorGutterComponentImpl.this.contains(dsde.getLocation())){
-        int line = myEditor.xyToLogicalPosition(new Point(0, (int)dsde.getLocation().getY())).line;
-        setCursor (context, line);
-      } else {
-        context.setCursor(null);
-      }
+      updateCursor(dsde);
     }
 
-    public void dragOver(DragSourceDragEvent dsde) {}
+    public void dragOver(DragSourceDragEvent dsde) {
+      updateCursor(dsde);
+    }
 
     public void dropActionChanged(DragSourceDragEvent dsde) {
       dsde.getDragSourceContext().setCursor(null);//setCursor (dsde.getDragSourceContext());
     }
 
-    private void setCursor(DragSourceContext context, final int line) {
-      final Cursor cursor = myGutterDraggableObject.getCursor (line);
-      context.setCursor(cursor);
+    private void updateCursor(final DragSourceDragEvent dsde) {
+      final DragSourceContext context = dsde.getDragSourceContext();
+      final Point screenPoint = dsde.getLocation();
+      if (screenPoint != null) {
+        final Point gutterPoint = new Point(screenPoint);
+        SwingUtilities.convertPointFromScreen(gutterPoint, EditorGutterComponentImpl.this);
+        if (EditorGutterComponentImpl.this.contains(gutterPoint)){
+          final Point editorPoint = new Point(screenPoint);
+          SwingUtilities.convertPointFromScreen(editorPoint, myEditor.getContentComponent());
+          int line = myEditor.xyToLogicalPosition(new Point(0, (int)editorPoint.getY())).line;
+          final Cursor cursor = myGutterDraggableObject.getCursor(line);
+          context.setCursor(cursor);
+          return;
+        }
+      }
+      context.setCursor(null);
     }
 
     public void dragDropEnd(DragSourceDropEvent dsde) {
