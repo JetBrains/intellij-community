@@ -59,6 +59,10 @@ public class CvsTabbedWindow implements ProjectComponent {
   public void initComponent() { }
 
   public void disposeComponent() {
+    if (myOutput != null) {
+      EditorFactory.getInstance().releaseEditor(myOutput);
+      myOutput = null;      
+    }
   }
 
   public void projectClosed() {
