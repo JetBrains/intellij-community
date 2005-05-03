@@ -119,4 +119,10 @@ public class Patches {
   public static final boolean MAC_RESUME_VM_HACK = SystemInfo.isMac;
 
   public static final boolean MAC_HIDE_QUIT_HACK = /*SystemInfo.isMac &&*/ "false".equals(System.getProperty("idea.smooth.progress"));
+
+  /**
+   * Causes calling thread to lock up aquiring content of the system clipboard on linux. Being called from the swing thread an
+   * application stops responding.
+   */
+  public static final boolean SUN_BUG_ID_4818143 = SystemInfo.isLinux;
 }

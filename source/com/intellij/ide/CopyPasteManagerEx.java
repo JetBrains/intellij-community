@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -16,6 +17,7 @@ import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.Patches;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,6 +38,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 //  private static long ourInvokationCounter = 0;
 
   private ArrayList myListeners = new ArrayList();
+  private static final int DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS = 2000;
 
   public CopyPasteManagerEx() {
     myDatas = new ArrayList<Transferable>();
@@ -57,8 +60,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
   public PsiElement[] getElements(boolean[] isCopied) {
     try {
-      Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-      Transferable content = clipboard.getContents(this);
+      Transferable content = getSystemClipboardContents();
       Object transferData;
       try {
         transferData = content.getTransferData(ourDataFlavor);
@@ -87,6 +89,41 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     }
   }
 
+  private Transferable getSystemClipboardContents() {
+    if (Patches.SUN_BUG_ID_4818143) {
+      final Transferable[] contents = new Transferable[] {null};
+      final boolean[] success = new boolean[] {false};
+      Runnable runnable = new Runnable() {
+        public void run() {
+          contents[0] = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(CopyPasteManagerEx.this);
+          success[0] = true;
+        }
+      };
+
+      final Thread worker = new Thread(runnable, "Clipboard accessor");
+      worker.start();
+      try {
+        worker.join(DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS);
+      }
+      catch (InterruptedException e) { /*  no luck */ }
+
+      if (success[0]) return contents[0];
+      worker.interrupt();
+
+      showWorkaroundMessage();
+
+      return null;
+    }
+    else {
+      return Toolkit.getDefaultToolkit().getSystemClipboard().getContents(this);
+    }
+  }
+
+  private void showWorkaroundMessage() {
+    Messages.showErrorDialog("You're seeing this message because of the workaround to JRE issue: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143\n" +
+                             "IDEA would hang otherwise. The system clipboard might be not working correctly. It is recommended to restart IDEA.", "System Error");
+  }
+
   PsiElement[] getElements(final Transferable content) {
     if (content == null) return null;
     Object transferData;
@@ -110,26 +147,15 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   public void clear() {
     Transferable old = getContents();
     myRecentData = null;
-    setTransferable(new StringSelection(""));
+    setSystemClipboardContent(new StringSelection(""));
     fireContentChanged(old);
   }
 
   private void setElements(PsiElement[] elements, boolean copied) {
     Transferable old = getContents();
     myRecentData = new MyData(elements, copied);
-    setTransferable(new MyTransferable(myRecentData));
+    setSystemClipboardContent(new MyTransferable(myRecentData));
     fireContentChanged(old);
-  }
-
-  private void setTransferable(Transferable transferable) {
-    try {
-      Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-      clipboard.setContents(transferable, this);
-    } catch (Exception e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(e);
-      }
-    }
   }
 
   public boolean isCutElement(Object element) {
@@ -403,7 +429,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   private void setSystemClipboardContent(Transferable content) {
     for (int i = 0; i < 3; i++) {
       try {
-        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(content, this);
+        doSetSystemClipboard(content);
       } catch (IllegalStateException e) {
         try {
           Thread.sleep(50);
@@ -412,6 +438,31 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
         continue;
       }
       break;
+    }
+  }
+
+  private void doSetSystemClipboard(final Transferable content) {
+    if (Patches.SUN_BUG_ID_4818143) {
+      final boolean[] success = new boolean[]{false};
+      Thread worker = new Thread(new Runnable() {
+        public void run() {
+          Toolkit.getDefaultToolkit().getSystemClipboard().setContents(content, CopyPasteManagerEx.this);
+          success[0] = true;
+        }
+      }, "Clipboard accessor");
+
+      worker.start();
+
+      try {
+        worker.join(DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS);
+      }
+      catch (InterruptedException e) {
+        // no luck
+      }
+      if (!success[0]) showWorkaroundMessage();
+    }
+    else {
+      Toolkit.getDefaultToolkit().getSystemClipboard().setContents(content, this);
     }
   }
 
@@ -457,7 +508,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
     for (int i = 0; i < 3; i++) {
       try {
-        contents = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(this);
+        contents = getSystemClipboardContents();
       } catch (IllegalStateException e) {
         try {
           Thread.sleep(50);
@@ -474,7 +525,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   public Transferable[] getAllContents() {
     deleteAfterAllowedMaximum();
 
-    Transferable content = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(this);
+    Transferable content = getSystemClipboardContents();
     if (content != null) {
       try {
         String clipString = getStringContent(content);
