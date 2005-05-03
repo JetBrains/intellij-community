@@ -90,17 +90,29 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   private Transferable getSystemClipboardContents() {
-    if (Patches.SUN_BUG_ID_4818143) {
-      final Transferable[] contents = new Transferable[] {null};
-      final boolean[] success = new boolean[] {false};
-      Runnable runnable = new Runnable() {
-        public void run() {
-          contents[0] = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(CopyPasteManagerEx.this);
-          success[0] = true;
+    final Transferable[] contents = new Transferable[] {null};
+    final boolean[] success = new boolean[] {false};
+    Runnable accessor = new Runnable() {
+      public void run() {
+        for (int i = 0; i < 3; i++) {
+          try {
+            contents[0] = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(CopyPasteManagerEx.this);
+          } catch (IllegalStateException e) {
+            try {
+              Thread.sleep(50);
+            } catch (InterruptedException e1) {
+            }
+            continue;
+          }
+          break;
         }
-      };
 
-      final Thread worker = new Thread(runnable, "Clipboard accessor");
+        success[0] = true;
+      }
+    };
+
+    if (Patches.SUN_BUG_ID_4818143) {
+      final Thread worker = new Thread(accessor, "Clipboard accessor");
       worker.start();
       try {
         worker.join(DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS);
@@ -109,13 +121,13 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
       if (success[0]) return contents[0];
       worker.interrupt();
-
       showWorkaroundMessage();
 
       return null;
     }
     else {
-      return Toolkit.getDefaultToolkit().getSystemClipboard().getContents(this);
+      accessor.run();
+      return contents[0];
     }
   }
 
@@ -426,43 +438,44 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     fireContentChanged(old);
   }
 
-  private void setSystemClipboardContent(Transferable content) {
-    for (int i = 0; i < 3; i++) {
-      try {
-        doSetSystemClipboard(content);
-      } catch (IllegalStateException e) {
-        try {
-          Thread.sleep(50);
-        } catch (InterruptedException e1) {
+  private void setSystemClipboardContent(final Transferable content) {
+    final boolean[] success = new boolean[]{false};
+    final Runnable accessor = new Runnable() {
+      public void run() {
+        for (int i = 0; i < 3; i++) {
+          try {
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(content, CopyPasteManagerEx.this);
+          }
+          catch (IllegalStateException e) {
+            try {
+              Thread.sleep(50);
+            }
+            catch (InterruptedException e1) {
+            }
+            continue;
+          }
+          break;
         }
-        continue;
+        success[0] = true;
       }
-      break;
-    }
-  }
+    };
 
-  private void doSetSystemClipboard(final Transferable content) {
     if (Patches.SUN_BUG_ID_4818143) {
-      final boolean[] success = new boolean[]{false};
-      Thread worker = new Thread(new Runnable() {
-        public void run() {
-          Toolkit.getDefaultToolkit().getSystemClipboard().setContents(content, CopyPasteManagerEx.this);
-          success[0] = true;
-        }
-      }, "Clipboard accessor");
-
+      Thread worker = new Thread(accessor, "Clipboard accessor");
       worker.start();
 
       try {
         worker.join(DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS);
       }
-      catch (InterruptedException e) {
-        // no luck
+      catch (InterruptedException e) { /* no luck */ }
+
+      if (!success[0]) {
+        showWorkaroundMessage();
+        worker.interrupt();
       }
-      if (!success[0]) showWorkaroundMessage();
     }
     else {
-      Toolkit.getDefaultToolkit().getSystemClipboard().setContents(content, this);
+      accessor.run();
     }
   }
 
@@ -504,22 +517,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   public Transferable getContents() {
-    Transferable contents = null;
-
-    for (int i = 0; i < 3; i++) {
-      try {
-        contents = getSystemClipboardContents();
-      } catch (IllegalStateException e) {
-        try {
-          Thread.sleep(50);
-        } catch (InterruptedException e1) {
-        }
-        continue;
-      }
-      break;
-    }
-
-    return contents;
+    return getSystemClipboardContents();
   }
 
   public Transferable[] getAllContents() {
