@@ -49,6 +49,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.HashMap;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -99,6 +100,8 @@ public class DebuggerSessionTab {
 
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
   private static final Key LOG_CONTENTS = Key.create("LogContent");
+
+  private ArrayList<LogConsoleTab> myLogTabs = new ArrayList<LogConsoleTab>();
 
   public DebuggerSessionTab(Project project) {
     myProject = project;
@@ -235,11 +238,11 @@ public class DebuggerSessionTab {
       clearLogContents();
       RunConfigurationBase base = (RunConfigurationBase)myConfiguration;
       final Map<String, Boolean> logFiles = base.getLogFiles();
-      int index = 0;
       for (Iterator<String > iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
         String  file = iterator.next();
         if (logFiles.get(file).booleanValue()){
           final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(file));
+          myLogTabs.add(logTab);
           Content logContent = PeerFactory.getInstance().getContentFactory().createContent(logTab.getComponent(), "Log: " + file, false);
           //todo icons
           logContent.putUserData(CONTENT_KIND, LOG_CONTENTS);
@@ -378,6 +381,10 @@ public class DebuggerSessionTab {
     myWatchPanel.dispose();
     myViewsContentManager.removeAllContents();
 
+    for (Iterator<LogConsoleTab> iterator = myLogTabs.iterator(); iterator.hasNext();) {
+      iterator.next().dispose();
+    }
+    
     myConsole = null;
   }
 
