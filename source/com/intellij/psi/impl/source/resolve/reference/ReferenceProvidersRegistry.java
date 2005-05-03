@@ -148,6 +148,26 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       XmlAttributeValue.class,
       new JspxIncludePathReferenceProvider()
     );
+
+    registerReferenceProvider(
+      new ScopeFilter(
+        new AndFilter(
+          new ParentElementFilter(new TextFilter("page")),
+          new ParentElementFilter(
+            new AndFilter(
+              new NamespaceFilter(XmlUtil.JSP_NAMESPACE),
+                new AndFilter(
+                  new ClassFilter(XmlTag.class),
+                  new TextFilter("include")
+                )
+            ), 2
+          )
+        )
+      ),
+      XmlAttributeValue.class,
+      new JspxIncludePathReferenceProvider()
+    );
+
     //registerReferenceProvider(new ScopeFilter(new ParentElementFilter(new AndFilter(new TextFilter("target"),
     //                                                                                new ParentElementFilter(new AndFilter(
     //                                                                                  new NamespaceFilter(XmlUtil.ANT_URI),
