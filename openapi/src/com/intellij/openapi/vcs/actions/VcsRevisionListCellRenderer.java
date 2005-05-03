@@ -11,16 +11,13 @@ import java.text.DateFormat;
 public class VcsRevisionListCellRenderer extends ColoredListCellRenderer {
   public static final DateFormat DATE_FORMAT = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT);
 
-  protected void customizeCellRenderer(
-    JList list,
-    Object value,
-    int index,
-    boolean selected,
-    boolean hasFocus
-    ) {
+  protected void customizeCellRenderer(JList list,
+                                       Object value,
+                                       int index,
+                                       boolean selected,
+                                       boolean hasFocus) {
 
-    append(getRevisionString(((VcsFileRevision)value)),
-      SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+    append(getRevisionString(((VcsFileRevision)value)), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
   }
 
   private String getRevisionString(final VcsFileRevision revision) {
