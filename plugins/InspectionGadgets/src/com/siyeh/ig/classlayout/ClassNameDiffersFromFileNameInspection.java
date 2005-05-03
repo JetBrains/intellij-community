@@ -4,10 +4,8 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ClassInspection;
-import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.*;
+import com.siyeh.ig.fixes.RenameFix;
 
 public class ClassNameDiffersFromFileNameInspection extends ClassInspection {
 
@@ -21,6 +19,23 @@ public class ClassNameDiffersFromFileNameInspection extends ClassInspection {
 
     public String buildErrorString(PsiElement location) {
         return "Class name #ref differs from file name #loc";
+    }
+
+    protected InspectionGadgetsFix buildFix(PsiElement location){
+        final PsiClass aClass = (PsiClass) location.getParent();
+        final PsiJavaFile file = (PsiJavaFile) aClass.getParent();
+        final String fileName = file.getName();
+        final int prefixIndex = fileName.indexOf((int) '.');
+        final String filenameWithoutPrefix = fileName.substring(0, prefixIndex);
+        final PsiClass[] classes = file.getClasses();
+        for(PsiClass psiClass : classes){
+            final String className = psiClass.getName();
+            if(className.equals(filenameWithoutPrefix))
+            {
+                return null;
+            }
+        }
+        return new RenameFix(filenameWithoutPrefix);
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
