@@ -173,13 +173,13 @@ public class RefactoringUtil {
     String identifierToSearch = index >= 0 ? stringToSearch.substring(index + 1) : stringToSearch;
 
     PsiLiteralExpression[] literals = helper.findStringLiteralsContainingIdentifier(identifierToSearch, scope);
-    for (int i = 0; i < literals.length; i++) {
-      processStringOrComment(literals[i], stringToSearch, results, factory);
+    for (PsiLiteralExpression literal : literals) {
+      processStringOrComment(literal, stringToSearch, results, factory);
     }
 
     PsiElement[] comments = helper.findCommentsContainingIdentifier(identifierToSearch, scope);
-    for (int i = 0; i < comments.length; i++) {
-      processStringOrComment(comments[i], stringToSearch, results, factory);
+    for (PsiElement comment : comments) {
+      processStringOrComment(comment, stringToSearch, results, factory);
     }
   }
 
@@ -256,8 +256,7 @@ public class RefactoringUtil {
   public static void renameNonCodeUsages(final Project project, final UsageInfo[] usages) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     HashMap<PsiFile,ArrayList<UsageOffset>> filesToOffsetsMap = new HashMap<PsiFile, ArrayList<UsageOffset>>();
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
 
       if (element == null || !element.isValid()) continue;
@@ -327,8 +326,7 @@ public class RefactoringUtil {
     }
     else {
       PsiElement[] children = element.getChildren();
-      for (int i = 0; i < children.length; i++) {
-        PsiElement child = children[i];
+      for (PsiElement child : children) {
         addReturnStatements(vector, child);
       }
     }
@@ -478,8 +476,7 @@ public class RefactoringUtil {
     PsiManager manager = variable.getManager();
     PsiSearchHelper helper = manager.getSearchHelper();
     PsiReference[] refs = helper.findReferences(variable, scope, false);
-    for (int i = 0; i < refs.length; i++) {
-      PsiReference reference = refs[i];
+    for (PsiReference reference : refs) {
       if (reference != null) {
         reference.handleElementRename(newName);
       }
@@ -553,8 +550,7 @@ public class RefactoringUtil {
   public static PsiJavaCodeReferenceElement removeFromReferenceList(PsiReferenceList refList, PsiClass aClass)
     throws IncorrectOperationException {
     PsiJavaCodeReferenceElement[] refs = refList.getReferenceElements();
-    for (int i = 0; i < refs.length; i++) {
-      PsiJavaCodeReferenceElement ref = refs[i];
+    for (PsiJavaCodeReferenceElement ref : refs) {
       if (ref.isReferenceTo(aClass)) {
         PsiJavaCodeReferenceElement refCopy = (PsiJavaCodeReferenceElement)ref.copy();
         ref.delete();
@@ -566,8 +562,7 @@ public class RefactoringUtil {
 
   public static PsiJavaCodeReferenceElement findReferenceToClass(PsiReferenceList refList, PsiClass aClass) {
     PsiJavaCodeReferenceElement[] refs = refList.getReferenceElements();
-    for (int i = 0; i < refs.length; i++) {
-      PsiJavaCodeReferenceElement ref = refs[i];
+    for (PsiJavaCodeReferenceElement ref : refs) {
       if (ref.isReferenceTo(aClass)) {
         return ref;
       }
@@ -656,9 +651,7 @@ public class RefactoringUtil {
     if (paramList != null) {
       PsiParameter[] params = paramList.getParameters();
 
-      for (int i = 0; i < params.length; i++) {
-        PsiParameter param = params[i];
-
+      for (PsiParameter param : params) {
         if (param.hasModifierProperty(PsiModifier.FINAL)) {
           param.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
         }
@@ -668,8 +661,7 @@ public class RefactoringUtil {
 
   public static PsiElement getAnchorElementForMultipleExpressions(PsiExpression[] occurrences, PsiElement scope) {
     PsiElement anchor = null;
-    for (int i = 0; i < occurrences.length; i++) {
-      PsiExpression occurrence = occurrences[i];
+    for (PsiExpression occurrence : occurrences) {
       if (scope != null && !PsiTreeUtil.isAncestor(scope, occurrence, false)) {
         continue;
       }
@@ -710,8 +702,7 @@ public class RefactoringUtil {
         int endOffset = occurrences[occurrences.length - 1].getTextRange().getEndOffset();
         PsiStatement[] statements = switchStatement.getBody().getStatements();
         boolean isInDifferentCases = false;
-        for (int i = 0; i < statements.length; i++) {
-          PsiStatement statement = statements[i];
+        for (PsiStatement statement : statements) {
           if (statement instanceof PsiSwitchLabelStatement) {
             int caseOffset = statement.getTextOffset();
             if (startOffset < caseOffset && caseOffset < endOffset) {
@@ -861,9 +852,7 @@ public class RefactoringUtil {
 
     PsiElement[] children = element.getChildren();
 
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
-
+    for (PsiElement child : children) {
       int childResult = verifySafeCopyExpressionSubElement(child);
       result = Math.max(result, childResult);
     }
@@ -1033,9 +1022,7 @@ public class RefactoringUtil {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
     final PsiClass[] inheritors = manager.getSearchHelper().findInheritors(aClass, projectScope, false);
 
-    for (int i = 0; i < inheritors.length; i++) {
-      PsiClass inheritor = inheritors[i];
-
+    for (PsiClass inheritor : inheritors) {
       visitImplicitSuperConstructorUsages(inheritor, implicitConstructorUsageVistor, aClass);
     }
   }
@@ -1046,8 +1033,7 @@ public class RefactoringUtil {
     final PsiMethod baseDefaultConstructor = findDefaultConstructor (superClass);
     final PsiMethod[] constructors = subClass.getConstructors();
     if (constructors.length > 0) {
-      for (int j = 0; j < constructors.length; j++) {
-        PsiMethod constructor = constructors[j];
+      for (PsiMethod constructor : constructors) {
         final PsiStatement[] statements = constructor.getBody().getStatements();
         if (statements.length < 1 || !isSuperOrThisCall(statements[0], true, true)) {
           implicitConstructorUsageVistor.visitConstructor(constructor, baseDefaultConstructor);
@@ -1061,8 +1047,7 @@ public class RefactoringUtil {
 
   private static PsiMethod findDefaultConstructor(final PsiClass aClass) {
     final PsiMethod[] constructors = aClass.getConstructors();
-    for (int i = 0; i < constructors.length; i++) {
-      PsiMethod constructor = constructors[i];
+    for (PsiMethod constructor : constructors) {
       if (constructor.getParameterList().getParameters().length == 0) return constructor;
     }
 
@@ -1158,8 +1143,7 @@ public class RefactoringUtil {
 
   public static boolean isModifiedInScope(PsiVariable variable, PsiElement scope) {
     final PsiReference[] references = variable.getManager().getSearchHelper().findReferences(variable, new LocalSearchScope(scope), false);
-    for (int i = 0; i < references.length; i++) {
-      PsiReference reference = references[i];
+    for (PsiReference reference : references) {
       if (isAssignmentLHS(reference.getElement())) return true;
     }
     return false;
@@ -1179,11 +1163,9 @@ public class RefactoringUtil {
     final PsiDocTag[] paramTags = docComment.findTagsByName("param");
     if (parameters.length > 0 && newParameters.size() < parameters.length && paramTags.length == 0) return;
     Map<PsiParameter, PsiDocTag> tagForParam = new HashMap<PsiParameter, PsiDocTag>();
-    for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
+    for (PsiParameter parameter : parameters) {
       boolean found = false;
-      for (int j = 0; j < paramTags.length; j++) {
-        PsiDocTag paramTag = paramTags[j];
+      for (PsiDocTag paramTag : paramTags) {
         if (parameter.getName().equals(getNameOfReferencedParameter(paramTag))) {
           tagForParam.put(parameter, paramTag);
           found = true;
@@ -1196,8 +1178,7 @@ public class RefactoringUtil {
     }
 
     List<PsiDocTag> newTags = new ArrayList<PsiDocTag>();
-    for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
+    for (PsiParameter parameter : parameters) {
       if (tagForParam.containsKey(parameter)) {
         final PsiDocTag psiDocTag = tagForParam.get(parameter);
         if (psiDocTag != null) {
@@ -1212,8 +1193,7 @@ public class RefactoringUtil {
     for (PsiDocTag psiDocTag : newTags) {
       anchor = (PsiDocTag)docComment.addAfter(psiDocTag, anchor);
     }
-    for (int i = 0; i < paramTags.length; i++) {
-      PsiDocTag paramTag = paramTags[i];
+    for (PsiDocTag paramTag : paramTags) {
       paramTag.delete();
     }
   }
@@ -1221,8 +1201,7 @@ public class RefactoringUtil {
   public static PsiDirectory createPackageDirectoryInSourceRoot(PackageWrapper aPackage, final VirtualFile sourceRoot)
     throws IncorrectOperationException {
     final PsiDirectory[] directories = aPackage.getDirectories();
-    for (int i = 0; i < directories.length; i++) {
-      PsiDirectory directory = directories[i];
+    for (PsiDirectory directory : directories) {
       if (VfsUtil.isAncestor(sourceRoot, directory.getVirtualFile(), false)) {
         return directory;
       }
@@ -1231,8 +1210,7 @@ public class RefactoringUtil {
     final String[] shortNames = qNameToCreate.split("\\.");
     PsiDirectory current = aPackage.getManager().findDirectory(sourceRoot);
     LOG.assertTrue(current != null);
-    for (int i = 0; i < shortNames.length; i++) {
-      String shortName = shortNames[i];
+    for (String shortName : shortNames) {
       PsiDirectory subdirectory = current.findSubdirectory(shortName);
       if (subdirectory == null) {
         subdirectory = current.createSubdirectory(shortName);
@@ -1258,8 +1236,7 @@ public class RefactoringUtil {
 
   public static PsiDirectory findPackageDirectoryInSourceRoot(PackageWrapper aPackage, final VirtualFile sourceRoot) {
     final PsiDirectory[] directories = aPackage.getDirectories();
-    for (int i = 0; i < directories.length; i++) {
-      PsiDirectory directory = directories[i];
+    for (PsiDirectory directory : directories) {
       if (VfsUtil.isAncestor(sourceRoot, directory.getVirtualFile(), false)) {
         return directory;
       }
@@ -1274,8 +1251,7 @@ public class RefactoringUtil {
     final String[] shortNames = qNameToCreate.split("\\.");
     PsiDirectory current = aPackage.getManager().findDirectory(sourceRoot);
     LOG.assertTrue(current != null);
-    for (int i = 0; i < shortNames.length; i++) {
-      String shortName = shortNames[i];
+    for (String shortName : shortNames) {
       PsiDirectory subdirectory = current.findSubdirectory(shortName);
       if (subdirectory == null) {
         return null;
@@ -1293,8 +1269,7 @@ public class RefactoringUtil {
     }
     else {
       Map<String, Ref<Integer>> map = new HashMap<String, Ref<Integer>>();
-      for (int i = 0; i < elements.length; i++) {
-        PsiElement element = elements[i];
+      for (PsiElement element : elements) {
         final String type = UsageViewUtil.getType(element);
         Ref<Integer> ref = map.get(type);
         if (ref == null) {
@@ -1460,5 +1435,4 @@ public class RefactoringUtil {
     }
     return false;
   }
-
 }

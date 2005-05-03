@@ -301,13 +301,12 @@ public class RedundantCastUtil {
         }
       }
 
-      for (int i = 0; i < args.length; i++) {
-        PsiExpression arg = args[i];
-        if (arg instanceof PsiTypeCastExpression){
+      for (PsiExpression arg : args) {
+        if (arg instanceof PsiTypeCastExpression) {
           PsiExpression castOperand = ((PsiTypeCastExpression)arg).getOperand();
           castOperand.accept(this);
         }
-        else{
+        else {
           arg.accept(this);
         }
       }
