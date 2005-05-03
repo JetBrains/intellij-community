@@ -21,6 +21,8 @@ public class PsiAnchor {
   private PsiElement myElement;
 
   public PsiAnchor(PsiElement element) {
+    LOG.assertTrue(element.isValid());
+    
     if (element instanceof PsiCompiledElement || element instanceof PsiMember) {
       myElement = element;
     }
