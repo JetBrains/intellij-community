@@ -844,6 +844,10 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
       return myRevision.getRevisionDate();
     }
 
+    public String getBranchName() {
+      return myRevision.getBranchName();
+    }
+
     public byte[] getContent() throws IOException {
       return myRevision.getContent();
     }

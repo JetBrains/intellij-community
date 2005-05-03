@@ -55,4 +55,7 @@ public class CurrentRevision implements VcsFileRevision {
     return myRevisionNumber;
   }
 
+  public String getBranchName() {
+    return null;
+  }
 }

@@ -24,6 +24,10 @@ public interface VcsFileRevision extends VcsFileContent {
       return "";
     }
 
+    public String getBranchName() {
+      return null;
+    }
+
     public void loadContent(){
     }
 
@@ -37,6 +41,7 @@ public interface VcsFileRevision extends VcsFileContent {
   };
 
   VcsRevisionNumber getRevisionNumber();
+  String getBranchName();
   Date getRevisionDate();
   String getAuthor();
   String getCommitMessage();

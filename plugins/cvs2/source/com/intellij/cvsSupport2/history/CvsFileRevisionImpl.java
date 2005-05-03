@@ -93,4 +93,32 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return getRevisionNumber().asString();
   }
 
+  public String getBranchName() {
+    final String branches = myCvsRevision.getBranches();
+    if (branches == null || branches.length() == 0) {
+      return null;
+    }
+    final StringBuffer buffer = new StringBuffer();
+    
+    final String[] branchNames = branches.split(";");
+    for (int i = 0; i < branchNames.length; i++) {
+      String branchName = branchNames[i];
+      final CvsRevisionNumber revisionNumber = new CvsRevisionNumber(branchName.trim());
+      CvsRevisionNumber headRevNumber = revisionNumber.removeTailVersions(1);
+      CvsRevisionNumber symRevNumber = headRevNumber.addTailVersions(new int[]{0, 2});
+      final List symNames = myLogInformation.getSymNamesForRevision(symRevNumber.asString());
+      if (!symNames.isEmpty()) {
+        for (Iterator iterator = symNames.iterator(); iterator.hasNext();) {
+          SymbolicName symbolicName = (SymbolicName)iterator.next();
+          if (buffer.length() > 0){
+            buffer.append(", ");
+          }
+          buffer.append(symbolicName.getName());
+        }
+      }      
+    }
+
+    return buffer.toString();        
+    
+  }
 }

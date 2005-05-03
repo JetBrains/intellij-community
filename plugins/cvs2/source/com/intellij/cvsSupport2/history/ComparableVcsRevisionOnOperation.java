@@ -85,4 +85,8 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
     return null;
   }
 
+  public String getBranchName() {
+    return null;
+  }
+
 }

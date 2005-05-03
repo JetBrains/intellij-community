@@ -9,7 +9,7 @@ import java.text.SimpleDateFormat;
 import java.text.DateFormat;
 
 public class VcsRevisionListCellRenderer extends ColoredListCellRenderer {
-  private static final DateFormat DATE_FORMAT = SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT);
+  public static final DateFormat DATE_FORMAT = SimpleDateFormat.getDateTimeInstance(SimpleDateFormat.SHORT, SimpleDateFormat.SHORT);
 
   protected void customizeCellRenderer(
     JList list,
@@ -18,8 +18,24 @@ public class VcsRevisionListCellRenderer extends ColoredListCellRenderer {
     boolean selected,
     boolean hasFocus
     ) {
-    final VcsFileRevision revision = ((VcsFileRevision)value);
-    append(revision.getRevisionNumber().asString() + " " + DATE_FORMAT.format(revision.getRevisionDate()) + " " + revision.getAuthor(),
+
+    append(getRevisionString(((VcsFileRevision)value)),
       SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+  }
+
+  private String getRevisionString(final VcsFileRevision revision) {
+    final StringBuffer result = new StringBuffer();
+    result.append(revision.getRevisionNumber().asString());
+    final String branchName = revision.getBranchName();
+    if (branchName != null && branchName.length() > 0) {
+      result.append("(");
+      result.append(branchName);
+      result.append(")");
+    }
+    result.append(" ");
+    result.append(DATE_FORMAT.format(revision.getRevisionDate()));
+    result.append(" ");
+    result.append(revision.getAuthor());
+    return  result.toString();
   }
 }

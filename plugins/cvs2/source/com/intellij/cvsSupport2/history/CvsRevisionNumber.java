@@ -2,6 +2,7 @@ package com.intellij.cvsSupport2.history;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.util.text.StringUtil;
 
 /**
  * author: lesya
@@ -109,4 +110,26 @@ public class CvsRevisionNumber implements VcsRevisionNumber {
     return myStringRepresentation;
   }
 
+  public CvsRevisionNumber removeTailVersions(final int i) {
+    if (mySubRevisions.length < i) return this;
+    final int[] resultSubVersions = new int[mySubRevisions.length - i];
+    System.arraycopy(mySubRevisions, 0, resultSubVersions, 0, resultSubVersions.length);
+    return new CvsRevisionNumber(createStringRepresentation(resultSubVersions),resultSubVersions);
+  }
+
+  private static String createStringRepresentation(final int[] versions) {
+    return StringUtil.join(versions, ".");
+  }
+
+  public CvsRevisionNumber addTailVersions(final int[] versions) {
+    final int[] resultSubVersions = new int[mySubRevisions.length + versions.length];
+    System.arraycopy(mySubRevisions, 0, resultSubVersions, 0, mySubRevisions.length);
+    System.arraycopy(versions, 0, resultSubVersions, mySubRevisions.length, versions.length);
+    return new CvsRevisionNumber(createStringRepresentation(resultSubVersions),resultSubVersions);
+    
+  }
+
+  public boolean isTopVersion() {
+    return mySubRevisions.length <= 2;
+  }
 }
