@@ -7,12 +7,12 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
-public class ThreadYieldInspection extends ExpressionInspection {
+public class SystemRunFinalizersOnExitInspection extends ExpressionInspection {
     public String getID(){
-        return "CallToThreadYield";
+        return "CallToSystemRunFinalizersOnExit";
     }
     public String getDisplayName() {
-        return "Call to 'Thread.yield()'";
+        return "Call to 'System.runFinalizersOnExit()'";
     }
 
     public String getGroupDisplayName() {
@@ -21,15 +21,15 @@ public class ThreadYieldInspection extends ExpressionInspection {
 
     public String buildErrorString(PsiElement location) {
 
-        return "Call to Thread.#ref() #loc";
+        return "Call to System.#ref() #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ThreadYieldVisitor(this, inspectionManager, onTheFly);
+        return new SystemRunFinalizersOnExitVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class ThreadYieldVisitor extends BaseInspectionVisitor {
-        private ThreadYieldVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class SystemRunFinalizersOnExitVisitor extends BaseInspectionVisitor {
+        private SystemRunFinalizersOnExitVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
@@ -40,17 +40,17 @@ public class ThreadYieldInspection extends ExpressionInspection {
             if (methodExpression == null) {
                 return;
             }
-            if (!isSetSecurityManager(expression)) {
+            if (!isRunFinalizersOnExit(expression)) {
                 return;
             }
             registerMethodCallError(expression);
         }
 
-        private static boolean isSetSecurityManager(PsiMethodCallExpression expression) {
+        private static boolean isRunFinalizersOnExit(PsiMethodCallExpression expression) {
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
 
             final String methodName = methodExpression.getReferenceName();
-            if (!"yield".equals(methodName) ) {
+            if (!"runFinalizersOnExit".equals(methodName) ) {
                 return false;
             }
             final PsiMethod method = expression.resolveMethod();
@@ -65,7 +65,7 @@ public class ThreadYieldInspection extends ExpressionInspection {
             if (className == null) {
                 return false;
             }
-            return "java.lang.Thread".equals(className);
+            return "java.lang.System".equals(className);
         }
     }
 

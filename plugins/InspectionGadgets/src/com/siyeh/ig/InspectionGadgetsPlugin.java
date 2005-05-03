@@ -269,6 +269,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(CustomSecurityManagerInspection.class);
         inspectionClasses.add(SystemSetSecurityManagerInspection.class);
         inspectionClasses.add(ClassLoaderInstantiationInspection.class);
+        inspectionClasses.add(UnsecureRandomNumberGenerationInspection.class);
         inspectionClasses.add(SystemPropertiesInspection.class);
     }
 
@@ -348,6 +349,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(MismatchedArrayReadWriteInspection.class);
         inspectionClasses.add(MismatchedCollectionQueryUpdateInspection.class);
         inspectionClasses.add(TextLabelInSwitchStatementInspection.class);
+        inspectionClasses.add(UseOfPropertiesAsHashtableInspection.class);
         inspectionClasses.add(AssignmentToNullInspection.class);
         inspectionClasses.add(ConditionalExpressionWithIdenticalBranchesInspection.class);
         inspectionClasses.add(IfStatementWithIdenticalBranchesInspection.class);
@@ -637,6 +639,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(ThreadWithDefaultRunMethodInspection.class);
         inspectionClasses.add(NakedNotifyInspection.class);
         inspectionClasses.add(UnconditionalWaitInspection.class);
+        inspectionClasses.add(SystemRunFinalizersOnExitInspection.class);
         inspectionClasses.add(ThreadYieldInspection.class);
         inspectionClasses.add(ThreadStopSuspendResumeInspection.class);
         inspectionClasses.add(WhileLoopSpinsOnFieldInspection.class);
@@ -772,6 +775,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(OverlyLargePrimitiveArrayInitializerInspection.class);
         inspectionClasses.add(RecordStoreResourceInspection.class);
         inspectionClasses.add(ConnectionResourceInspection.class);
+        inspectionClasses.add(MethodCallInLoopConditionInspection.class);
+        inspectionClasses.add(ArrayLengthInLoopConditionInspection.class);
     }
 
     private void registerMaturityInspections(){

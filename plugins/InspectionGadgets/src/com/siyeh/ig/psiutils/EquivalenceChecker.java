@@ -45,6 +45,7 @@ public class EquivalenceChecker{
     private static final int THROW_STATEMENT = 16;
     private static final int TRY_STATEMENT = 17;
     private static final int WHILE_STATEMENT = 18;
+    private static final int FOR_EACH_STATEMENT = 19;
 
     public static boolean statementsAreEquivalent(PsiStatement exp1,
                                                   PsiStatement exp2){
@@ -89,6 +90,9 @@ public class EquivalenceChecker{
             case FOR_STATEMENT:
                 return forStatementsAreEquivalent((PsiForStatement) exp1,
                                                   (PsiForStatement) exp2);
+            case FOR_EACH_STATEMENT:
+                return forEachStatementsAreEquivalent((PsiForeachStatement) exp1,
+                                                      (PsiForeachStatement) exp2);
             case IF_STATEMENT:
                 return ifStatementsAreEquivalent((PsiIfStatement) exp1,
                                                  (PsiIfStatement) exp2);
@@ -124,25 +128,25 @@ public class EquivalenceChecker{
     private static boolean declarationStatementsAreEquivalent(PsiDeclarationStatement statement1,
                                                               PsiDeclarationStatement statement2){
         final PsiElement[] elements1 = statement1.getDeclaredElements();
-        final List vars1 = new ArrayList(elements1.length);
-        for(PsiElement aElements1 : elements1){
-            if(aElements1 instanceof PsiLocalVariable){
-                vars1.add(aElements1);
+        final List<PsiLocalVariable> vars1 = new ArrayList<PsiLocalVariable>(elements1.length);
+        for(PsiElement anElement : elements1){
+            if(anElement instanceof PsiLocalVariable){
+                vars1.add((PsiLocalVariable) anElement);
             }
         }
         final PsiElement[] elements2 = statement2.getDeclaredElements();
-        final List vars2 = new ArrayList(elements2.length);
-        for(PsiElement aElements2 : elements2){
-            if(aElements2 instanceof PsiLocalVariable){
-                vars2.add(aElements2);
+        final List<PsiLocalVariable> vars2 = new ArrayList<PsiLocalVariable>(elements2.length);
+        for(PsiElement anElement : elements2){
+            if(anElement instanceof PsiLocalVariable){
+                vars2.add((PsiLocalVariable) anElement);
             }
         }
         if(vars1.size() != vars2.size()){
             return false;
         }
         for(int i = 0; i < vars1.size(); i++){
-            final PsiLocalVariable var1 = (PsiLocalVariable) vars1.get(i);
-            final PsiLocalVariable var2 = (PsiLocalVariable) vars2.get(i);
+            final PsiLocalVariable var1 = vars1.get(i);
+            final PsiLocalVariable var2 = vars2.get(i);
             if(localVariableAreEquivalent(var1, var2)){
                 return false;
             }
@@ -255,6 +259,26 @@ public class EquivalenceChecker{
         final PsiStatement update1 = statement1.getUpdate();
         final PsiStatement update2 = statement2.getUpdate();
         if(!statementsAreEquivalent(update1, update2)){
+            return false;
+        }
+        final PsiStatement body1 = statement1.getBody();
+        final PsiStatement body2 = statement2.getBody();
+        return statementsAreEquivalent(body1, body2);
+    }
+
+    private static boolean forEachStatementsAreEquivalent(PsiForeachStatement statement1,
+                                                          PsiForeachStatement statement2){
+        final PsiExpression value1 = statement1.getIteratedValue();
+        final PsiExpression value2 = statement2.getIteratedValue();
+        if(!expressionsAreEquivalent(value1, value2)){
+            return false;
+        }
+        final PsiParameter parameter1 = statement1.getIterationParameter();
+        final PsiParameter parameter2 = statement1.getIterationParameter();
+        if(!parameter1.getName().equals(parameter2.getName())){
+            return false;
+        }
+        if(!parameter1.getType().equals(parameter2.getType())){
             return false;
         }
         final PsiStatement body1 = statement1.getBody();
@@ -749,6 +773,9 @@ public class EquivalenceChecker{
         }
         if(statement instanceof PsiForStatement){
             return FOR_STATEMENT;
+        }
+        if(statement instanceof PsiForeachStatement){
+            return FOR_EACH_STATEMENT;
         }
         if(statement instanceof PsiIfStatement){
             return IF_STATEMENT;

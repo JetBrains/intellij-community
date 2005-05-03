@@ -15,7 +15,6 @@
     Assignment to instance variable of Servlet outside of initServlet()
     Struts Action class with instance variables
     Math call on constant value
-    call to runFinalizersOnExit()
     Instantiation of utility class
     readLine not checked for null
     Constant month outside range of 0..11
@@ -23,8 +22,6 @@
     JDBC connection createStatement()
     Require load factor on maps
     Look for ArrayIndexOutOfBounds errors statically
-    J2ME Connection resource inspection
-    J2ME RecordStore resource inspection
     Hibernate resource inspection
     Synchronization minimization
     Constructor can be chained
@@ -33,11 +30,8 @@
     Initializing a static final field with a static non-final field
     Use of non-final static field during class initialization
     Use Datasource rather than DriverManager to get JDBC connections
-    Do not call methods in loop conditions
-    Do not access array lengths in loop conditions
     Do not use Hashtable methods on Property objects
     clone() final, for security
-    SecureRandom(), rather than Random() or Math.random()
 
     Move stuff to "J2ME" or "Memory" categories
 

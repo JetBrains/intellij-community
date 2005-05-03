@@ -26,7 +26,7 @@ public class AutoBoxingInspection extends ExpressionInspection {
         s_boxingClasses.put("byte", "Byte");
         s_boxingClasses.put("float", "Float");
         s_boxingClasses.put("double", "Double");
-        s_boxingClasses.put("long", "Long");
+        s_boxingClasses.put("char", "Character");
     }
 
     public String getDisplayName() {

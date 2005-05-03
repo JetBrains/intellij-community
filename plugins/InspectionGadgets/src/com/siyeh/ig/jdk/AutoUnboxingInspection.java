@@ -36,6 +36,7 @@ public class AutoUnboxingInspection extends ExpressionInspection{
         s_unboxingMethods.put("float", "floatValue");
         s_unboxingMethods.put("long", "longValue");
         s_unboxingMethods.put("double", "doubleValue");
+        s_unboxingMethods.put("char", "charValue");
 
         s_numberTypes.add("java.lang.Integer");
         s_numberTypes.add("java.lang.Short");
@@ -43,6 +44,7 @@ public class AutoUnboxingInspection extends ExpressionInspection{
         s_numberTypes.add("java.lang.Double");
         s_numberTypes.add("java.lang.Float");
         s_numberTypes.add("java.lang.Byte");
+        s_numberTypes.add("java.lang.Character");
         s_numberTypes.add("java.lang.Number");
     }
 
