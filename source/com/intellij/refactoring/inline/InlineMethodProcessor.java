@@ -184,7 +184,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private void doRefactoring(UsageInfo[] usages) {
-    myMethodCopy = (PsiMethod)myMethod.copy();
     try {
       if (myInlineThisOnly) {
         if (myMethod.isConstructor()) {
@@ -291,6 +290,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private void inlineMethodCall(PsiReferenceExpression ref) throws IncorrectOperationException {
+    myMethodCopy = (PsiMethod)myMethod.copy();
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression)ref.getParent();
 
     PsiSubstitutor callSubstitutor = getCallSubstitutor(methodCall);
