@@ -49,11 +49,12 @@ public class ImageLoader implements Serializable {
   }
 
   public static Image loadFromResource(String s, Class aClass) {
+    URL url = aClass.getResource(s);
+    return url != null ? loadFromURL(url) : null;
+  }
+
+  public static Image loadFromURL(final URL url) {
     try {
-      URL url = aClass.getResource(s);
-      if (url == null) {
-        return null;
-      }
       Image image = (Image)myUrl2Image.get(url.toString());
       if (image != null) {
         return image;

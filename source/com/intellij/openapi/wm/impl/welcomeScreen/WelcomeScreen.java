@@ -121,12 +121,13 @@ public class WelcomeScreen {
     //Create the list of installed plugins
     PluginDescriptor[] myInstalledPlugins = PluginManager.getPlugins();
     if (myInstalledPlugins == null || myInstalledPlugins.length == 0) {
-      addListItemToPlugins(pluginsListPanel, "<html><i>No plugins currently installed.</i></html>", null, null, null);
+      addListItemToPlugins(pluginsListPanel, "<html><i>No plugins currently installed.</i></html>", null, null, null, null);
     }
     else {
       for (int i = 0; i < myInstalledPlugins.length; i++) {
         PluginDescriptor plugin = myInstalledPlugins[i];
-        addListItemToPlugins(pluginsListPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(), plugin.getUrl());
+        addListItemToPlugins(pluginsListPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(),
+                             plugin.getPluginClassLoader(), plugin.getUrl());
         // TODO[pti]: check whether plugin has a welcome-action, and if yes, add it to 'ourPluginsWithActions' ArrayList
       }
     }
@@ -407,7 +408,7 @@ public class WelcomeScreen {
     panel.add(shortDescription, gBC);
   }
 
-  public void addListItemToPlugins(JPanel panel, String name, String description, String iconPath, final String url) {
+  public void addListItemToPlugins(JPanel panel, String name, String description, String iconPath, ClassLoader pluginClassLoader, final String url) {
 
     if (StringUtil.isEmptyOrSpaces(name)) {
       return;
@@ -424,7 +425,7 @@ public class WelcomeScreen {
       logoImage = EmptyIcon.create(PLUGIN_LOGO_SIZE.width, PLUGIN_LOGO_SIZE.height);
     }
     else {
-      logoImage = IconLoader.getIcon(iconPath);
+      logoImage = IconLoader.findIcon(iconPath, pluginClassLoader);
       if (logoImage == null) logoImage = EmptyIcon.create(PLUGIN_LOGO_SIZE.width, PLUGIN_LOGO_SIZE.height);
     }
     JLabel imageLabel = new JLabel(logoImage);

@@ -16,6 +16,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Map;
+import java.net.URL;
 
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
@@ -92,6 +93,25 @@ public final class IconLoader {
     }
 
     final Image image = ImageLoader.loadFromResource(path, aClass);
+    return checkIcon(image, path);
+  }
+
+  public static Icon findIcon(final String path, final ClassLoader aClassLoader) {
+    final Application application = ApplicationManager.getApplication();
+    if (application != null && application.isUnitTestMode()) {
+      return EMPTY_ICON;
+    }
+
+    if (!path.startsWith("/")) return null;
+
+    final URL url = aClassLoader.getResource(path.substring(1));
+    if (url == null) return null;
+
+    final Image image = ImageLoader.loadFromURL(url);
+    return checkIcon(image, path);
+  }
+
+  private static Icon checkIcon(final Image image, final String path) {
     if(image == null || image.getHeight(ourFakeComponent) < 1 || image.getHeight(ourFakeComponent) < 1){ // image wasn't loaded or broken
       return null;
     }
