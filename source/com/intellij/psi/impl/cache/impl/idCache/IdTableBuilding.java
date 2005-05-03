@@ -5,6 +5,7 @@ import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.Language;
+import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.jsp.NewJspLanguage;
 import com.intellij.lang.cacheBuilder.WordOccurence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
@@ -253,9 +254,12 @@ public class IdTableBuilding {
 
     final Language lang = psiFile.getLanguage();
     if (lang != null) {
-      final WordsScanner scanner = lang.getFindUsagesProvider().getWordsScanner();
-      if (scanner != null) {
-        return new WordsScannerIdCacheBuilderAdapter(scanner);
+      final FindUsagesProvider findUsagesProvider = lang.getFindUsagesProvider();
+      if (findUsagesProvider != null) {
+        final WordsScanner scanner = findUsagesProvider.getWordsScanner();
+        if (scanner != null) {
+          return new WordsScannerIdCacheBuilderAdapter(scanner);
+        }
       }
     }
 
