@@ -67,8 +67,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
   private static boolean isParameterAssignedToField(final PsiParameter parameter) {
     final PsiSearchHelper searchHelper = parameter.getManager().getSearchHelper();
     final PsiReference[] references = searchHelper.findReferences(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false);
-    for (int i = 0; i < references.length; i++) {
-      PsiReference reference = references[i];
+    for (PsiReference reference : references) {
       if (!(reference instanceof PsiReferenceExpression)) continue;
       final PsiReferenceExpression expression = (PsiReferenceExpression)reference;
       if (!(expression.getParent() instanceof PsiAssignmentExpression)) continue;
@@ -85,19 +84,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
 
   private static PsiParameter findParameterAtCursor(final PsiFile file, final Editor editor) {
     final int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
-    if (element == null) return null;
-    PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
-    if (parameter != null) {
-      return parameter;
-    }
-    if (!(element instanceof PsiWhiteSpace)) {
-      element = file.findElementAt(offset-1);
-      if (element == null) return null;
-      parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
-    }
-
-    return parameter;
+    return PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiParameter.class, false);
   }
 
   public String getFamilyName() {
@@ -137,10 +124,11 @@ public class CreateFieldFromParameterAction implements IntentionAction {
       }
       names = namesList.toArray(new String[namesList.size()]);
 
+      boolean myBeFinal = ((PsiMethod)myParameter.getDeclarationScope()).isConstructor();
       CreateFieldFromParameterDialog dialog = new CreateFieldFromParameterDialog(
         project,
         names,
-        type.getCanonicalText(), targetClass);
+        type.getCanonicalText(), targetClass, myBeFinal);
       dialog.show();
 
       if (!dialog.isOK()) return;

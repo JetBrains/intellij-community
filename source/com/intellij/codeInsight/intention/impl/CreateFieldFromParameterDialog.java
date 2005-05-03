@@ -20,18 +20,19 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
   private final String[] myNames;
   private final String myType;
   private PsiClass myTargetClass;
+  private final boolean myFieldMayBeFinal;
 
   private JComponent myNameField;
   private JCheckBox myCbFinal;
-  private boolean myCbFinalState;
   private static final String PROPERTY_NAME = "CREATE_FIELD_FROM_PARAMETER_DECLARE_FINAL";
 
-  public CreateFieldFromParameterDialog(Project project, String[] names, String type, PsiClass targetClass) {
+  public CreateFieldFromParameterDialog(Project project, String[] names, String type, PsiClass targetClass, final boolean fieldMayBeFinal) {
     super(project, true);
     myProject = project;
     myNames = names;
     myType = type;
     myTargetClass = targetClass;
+    myFieldMayBeFinal = fieldMayBeFinal;
 
     setTitle("Create Field");
 
@@ -40,18 +41,17 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
 
   protected void doOKAction() {
     if (myCbFinal.isEnabled()) {
-      PropertiesComponent.getInstance().setValue(PROPERTY_NAME, ""+myCbFinalState);
+      PropertiesComponent.getInstance().setValue(PROPERTY_NAME, ""+myCbFinal.isSelected());
     }
 
     final PsiField[] fields = myTargetClass.getFields();
-    for (int i = 0; i < fields.length; i++) {
-      PsiField field = fields[i];
+    for (PsiField field : fields) {
       if (field.getName().equals(getEnteredName())) {
         int result = Messages.showOkCancelDialog(
-            getContentPane(),
-            "Use existing field " + getEnteredName() + "?",
-            "Field Already Exists",
-            Messages.getQuestionIcon());
+          getContentPane(),
+          "Use existing field " + getEnteredName() + "?",
+          "Field Already Exists",
+          Messages.getQuestionIcon());
         if (result == 0) {
           close(OK_EXIT_CODE);
         }
@@ -81,11 +81,10 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
 
   public boolean isDeclareFinal() {
     if (myCbFinal.isEnabled()) {
-      return myCbFinalState;
+      return myCbFinal.isSelected();
     }
-    else {
-      return true;
-    }
+
+    return false;
   }
 
   protected JComponent createNorthPanel() {
@@ -197,19 +196,22 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
 
     myCbFinal = new JCheckBox("Declare final");
     myCbFinal.setMnemonic('f');
-    myCbFinalState = PropertiesComponent.getInstance().isTrueValue(PROPERTY_NAME);
+    if (myFieldMayBeFinal) {
+      myCbFinal.setSelected(PropertiesComponent.getInstance().isTrueValue(PROPERTY_NAME));
+    } else {
+      myCbFinal.setSelected(false);
+      myCbFinal.setEnabled(false);
+    }
+
     gbConstraints.gridy++;
     panel.add(myCbFinal, gbConstraints);
     myCbFinal.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         requestFocusInNameWindow();
         if (myCbFinal.isEnabled()) {
-          myCbFinalState = myCbFinal.isSelected();
         }
       }
     });
-
-    updateControls();
 
     return panel;
   }
@@ -221,10 +223,6 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
     else {
       ((JComboBox) myNameField).getEditor().getEditorComponent().requestFocusInWindow();
     }
-  }
-
-  private void updateControls() {
-    myCbFinal.setSelected(myCbFinalState);
   }
 
   private void updateOkStatus() {
