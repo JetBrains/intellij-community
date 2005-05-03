@@ -12,10 +12,13 @@ import com.intellij.pom.xml.impl.events.XmlDocumentChangedImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.CachedValueImpl;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
@@ -73,7 +76,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return rootTag != null ? rootTag.getNSDescriptor(rootTag.getNamespace(), false) : null;
   }
 
-  private final Map<String, XmlNSDescriptor> myDefaultDescriptorsCache = new HashMap<String, XmlNSDescriptor>();
+  private final Map<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCache = new HashMap<String, CachedValue<XmlNSDescriptor>>();
 
   public void clearCaches() {
     myDefaultDescriptorsCache.clear();
@@ -81,9 +84,13 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   }
 
   public XmlNSDescriptor getDefaultNSDescriptor(final String namespace, final boolean strict) {
-    if(myDefaultDescriptorsCache.containsKey(namespace)) return myDefaultDescriptorsCache.get(namespace);
+    if(myDefaultDescriptorsCache.containsKey(namespace)) return myDefaultDescriptorsCache.get(namespace).getValue();
     final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
-    myDefaultDescriptorsCache.put(namespace, defaultNSDescriptorInner);
+    myDefaultDescriptorsCache.put(namespace, new CachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>(){
+      public Result<XmlNSDescriptor> compute() {
+        return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, defaultNSDescriptorInner.getDependences());
+      }
+    }, false));
     return defaultNSDescriptorInner;
   }
 
