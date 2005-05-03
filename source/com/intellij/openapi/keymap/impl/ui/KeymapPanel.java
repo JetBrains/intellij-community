@@ -835,8 +835,7 @@ public class KeymapPanel extends JPanel {
       myKeymapListModel.addElement(keymap);
     }
 
-    myActionsTree.reset(myActiveKeymap, QuickListsManager.getInstance().getAllQuickLists());
-
+    
     myQuickListsModel.removeAllElements();
     QuickList[] allQuickLists = QuickListsManager.getInstance().getAllQuickLists();
     for (int i = 0; i < allQuickLists.length; i++) {
@@ -846,7 +845,6 @@ public class KeymapPanel extends JPanel {
 
     mySelectedKeymap = (KeymapImpl)myKeymapListModel.elementAt(0);
     myKeymapList.setSelectedValue(myActiveKeymap, true);
-    processCurrentKeymapChanged();
   }
 
   public void apply() throws ConfigurationException{

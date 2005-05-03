@@ -5,7 +5,9 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * User: anna
@@ -21,6 +23,8 @@ public class Group {
    * Group or action id (String) or Separator or QuickList
    */
   private ArrayList myChildren;
+
+  private Set<String> myIds = new HashSet<String>();
 
   public Group(String name, String id, Icon icon, Icon openIcon) {
     myName = name;
@@ -71,7 +75,7 @@ public class Group {
   }
 
   public boolean containsId(String id) {
-    for (int i=0; i < myChildren.size(); i++) {
+    /*for (int i=0; i < myChildren.size(); i++) {
       Object child = myChildren.get(i);
       if (child instanceof String) {
         if (id.equals(child)) {
@@ -87,7 +91,24 @@ public class Group {
         }
       }
     }
-    return false;
+    return false;*/
+    return myIds.contains(id);
+  }
+
+  public Set<String> initIds(){
+    for (int i=0; i < myChildren.size(); i++) {
+      Object child = myChildren.get(i);
+      if (child instanceof String) {
+        myIds.add((String)child);
+      }
+      else if (child instanceof QuickList) {
+        myIds.add(((QuickList)child).getActionId());
+      }
+      else if (child instanceof Group) {
+        myIds.addAll(((Group)child).initIds());
+      }
+    }
+    return myIds;
   }
 
   public ArrayList getChildren() {
@@ -116,8 +137,8 @@ public class Group {
   }
 
   public String getActionQualifiedPath(String id) {
-    for (int i=0; i < myChildren.size(); i++) {
-      Object child = myChildren.get(i);
+    for (Iterator iterator = myChildren.iterator(); iterator.hasNext();) {
+      Object child = iterator.next();
       if (child instanceof QuickList) {
         child = ((QuickList)child).getActionId();
       }
@@ -159,7 +180,7 @@ public class Group {
   }
 
   public void addAll(Group group) {
-    Iterator iterator = group.getChildren().iterator();
+    Iterator<Object> iterator = group.getChildren().iterator();
     while (iterator.hasNext()) {
       Object o = iterator.next();
       if (o instanceof String) {
@@ -191,7 +212,7 @@ public class Group {
     if (groupToRestorePresentation != null){
       group.copyFrom(groupToRestorePresentation);
     }
-    for (Iterator iterator = myChildren.iterator(); iterator.hasNext();) {
+    for (Iterator<Object> iterator = myChildren.iterator(); iterator.hasNext();) {
       Object o = iterator.next();
       if (o instanceof String){
         group.add(actionManager.getAction((String)o));

@@ -91,6 +91,7 @@ public class ActionsTreeUtil {
   }
 
   private static Group createGuiDesignerActionsGroup(Group mainGroup) {
+    mainGroup.initIds();
     Group group = new Group("GUI Designer", IdeActions.GROUP_GUI_DESIGNER_EDITOR_POPUP, null, null);
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup uiGroup = (ActionGroup)actionManager.getAction(IdeActions.GROUP_GUI_DESIGNER_EDITOR_POPUP);
@@ -322,6 +323,7 @@ public class ActionsTreeUtil {
   }
 
   private static Group createOtherGroup(Group addedActions, final Keymap keymap) {
+    addedActions.initIds();
     ArrayList<String> result = new ArrayList<String>();
 
     if (keymap != null) {
