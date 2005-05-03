@@ -138,7 +138,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
           final String noNamespaceDeclaration = getAttributeValue("noNamespaceSchemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
           final String schemaLocationDeclaration = getAttributeValue("schemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
           if(noNamespaceDeclaration != null){
-            initializeSchema(XmlUtil.EMPTY_NAMESPACE, noNamespaceDeclaration);
+            initializeSchema(XmlUtil.EMPTY_URI, noNamespaceDeclaration);
           }
           if(schemaLocationDeclaration != null){
             final StringTokenizer tokenizer = new StringTokenizer(schemaLocationDeclaration);
@@ -158,7 +158,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
               final XmlAttribute attribute = attributes[i];
               if(attribute.isNamespaceDeclaration()){
                 String ns = attribute.getValue();
-                if (ns == null) ns = XmlUtil.EMPTY_NAMESPACE;
+                if (ns == null) ns = XmlUtil.EMPTY_URI;
                 if(myNSDescriptorsMap == null || !myNSDescriptorsMap.containsKey(ns)) initializeSchema(ns, ns);
               }
             }
@@ -352,6 +352,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   }
 
   public XmlAttribute getAttribute(String name, String namespace) {
+    if(namespace == XmlUtil.ANY_URI || namespace.equals(getParentTag().getNamespace())) return getAttribute(name);
     final String prefix = getPrefixByNamespace(namespace);
     String qname =  prefix != null && prefix.length() > 0 ? prefix + ":" + name : name;
     return getAttribute(qname);
@@ -374,7 +375,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   public String getNamespace() {
     if(myNamespace != null) return myNamespace;
     final String namespace = getNamespaceByPrefix(getNamespacePrefix());
-    return myNamespace = (namespace != null ? namespace : XmlUtil.EMPTY_NAMESPACE);
+    return myNamespace = (namespace != null ? namespace : XmlUtil.EMPTY_URI);
   }
 
   public String getNamespacePrefix() {
@@ -394,11 +395,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       if(ns != null) return ns;
     }
     if(parent instanceof XmlTag) return ((XmlTag)parent).getNamespaceByPrefix(prefix);
-    return XmlUtil.EMPTY_NAMESPACE;
+    return XmlUtil.EMPTY_URI;
   }
 
   public String getPrefixByNamespace(String namespace){
-    if(namespace == XmlUtil.EMPTY_NAMESPACE || namespace == XmlUtil.ALL_NAMESPACE) return "";
     final PsiElement parent = getParent();
     initNamespaceMaps(parent);
     if(myNamespaceMap != null){

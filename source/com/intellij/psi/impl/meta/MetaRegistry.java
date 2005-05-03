@@ -37,7 +37,7 @@ public class MetaRegistry {
   private static final String[] TAGLIB_URIS = new String[]{XmlUtil.TAGLIB_1_1_URI, XmlUtil.TAGLIB_1_2_a_URI, XmlUtil.TAGLIB_1_2_URI, XmlUtil.TAGLIB_2_0_URI, XmlUtil.TAGLIB_1_2_b_URI,};
   private static final String[] SCHEMA_URIS = { XmlUtil.XML_SCHEMA_URI, XmlUtil.XML_SCHEMA_URI2, XmlUtil.XML_SCHEMA_URI3 };
   private static final String[] JSP_URIS = {
-    XmlUtil.JSP_NAMESPACE,
+    XmlUtil.JSP_URI,
     "http://java.sun.com/products/jsp/dtd/jsp_1_0.dtd",
     "http://java.sun.com/xml/ns/j2ee/jsp_2_0.xsd",
     "http://java.sun.com/dtd/jspxml.xsd",

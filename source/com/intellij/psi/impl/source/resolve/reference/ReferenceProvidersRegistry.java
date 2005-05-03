@@ -62,7 +62,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
             new ParentElementFilter(
               new AndFilter(
                 new TextFilter("useBean"),
-                new NamespaceFilter(XmlUtil.JSP_NAMESPACE)
+                new NamespaceFilter(XmlUtil.JSP_URI)
               )
             )
           )
@@ -88,7 +88,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
                     new TextFilter("page")
                   )
                 ),
-                new NamespaceFilter(XmlUtil.JSP_NAMESPACE)
+                new NamespaceFilter(XmlUtil.JSP_URI)
               )
             )
           )
@@ -115,7 +115,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
                     new TextFilter("page")
                   )
                 ),
-                new NamespaceFilter(XmlUtil.JSP_NAMESPACE)
+                new NamespaceFilter(XmlUtil.JSP_URI)
               )
             )
           )
@@ -131,7 +131,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           new ParentElementFilter(new TextFilter("file")),
           new ParentElementFilter(
             new AndFilter(
-              new NamespaceFilter(XmlUtil.JSP_NAMESPACE),
+              new NamespaceFilter(XmlUtil.JSP_URI),
               new OrFilter(
                 new AndFilter(
                   new ClassFilter(JspDirective.class),
@@ -155,7 +155,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           new ParentElementFilter(new TextFilter("page")),
           new ParentElementFilter(
             new AndFilter(
-              new NamespaceFilter(XmlUtil.JSP_NAMESPACE),
+              new NamespaceFilter(XmlUtil.JSP_URI),
                 new AndFilter(
                   new ClassFilter(XmlTag.class),
                   new TextFilter("include")

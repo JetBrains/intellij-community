@@ -99,7 +99,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       final XmlNSDescriptor htmlDescriptor = new HtmlNSDescriptorImpl(xhtmlNSDescriptor);
       return htmlDescriptor;
     }
-    else if(namespace != XmlUtil.EMPTY_NAMESPACE){
+    else if(namespace != XmlUtil.EMPTY_URI){
       final XmlFile xmlFile = XmlUtil.findXmlFile(containingFile,
                                                   ExternalResourceManager.getInstance().getResourceLocation(namespace));
       if(xmlFile != null){

@@ -54,10 +54,10 @@ public class XmlUtil {
   public static final String ANT_URI = "http://ant.apache.org/schema.xsd";
   public static final String XHTML_URI = "http://www.w3.org/1999/xhtml";
   public static final String HTML_URI = "http://www.w3.org/1999/html";
-  public static final String EMPTY_NAMESPACE = "";
+  public static final String EMPTY_URI = "";
   public static final Key<String> TEST_PATH = Key.create("TEST PATH");
-  public static final String JSP_NAMESPACE = "http://java.sun.com/JSP/Page";
-  public static final String ALL_NAMESPACE = "http://www.intellij.net/ns/all";
+  public static final String JSP_URI = "http://java.sun.com/JSP/Page";
+  public static final String ANY_URI = "http://www.intellij.net/ns/any";
 
   public static String getSchemaLocation(XmlTag tag, String namespace) {
     final String uri = ExternalResourceManagerEx.getInstanceEx().getResourceLocation(namespace);
@@ -505,7 +505,7 @@ public class XmlUtil {
     }
 
     XmlTag tag = document.getRootTag();
-    if (tag == null) return new String[][]{new String[]{EMPTY_NAMESPACE}};
+    if (tag == null) return new String[][]{new String[]{EMPTY_URI}};
     if ("project".equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
       if (tag.getAttributeValue("default") != null) {
         return new String[][]{new String[]{"", ANT_URI}};
@@ -530,12 +530,12 @@ public class XmlUtil {
       else if (fileType == StdFileTypes.JSPX || fileType == StdFileTypes.JSP){
         return new String[][]{
           new String[]{"", XHTML_URI},
-          new String[]{"jsp", JSP_NAMESPACE}
+          new String[]{"jsp", JSP_URI}
         };
       }
     }
 
-    return new String[][]{new String[]{"", EMPTY_NAMESPACE}};
+    return new String[][]{new String[]{"", EMPTY_URI}};
   }
 
 
@@ -812,7 +812,7 @@ public class XmlUtil {
   public static String findNamespaceByPrefix(final String prefix, XmlTag contextTag) {
     final String s = contextTag.getNamespaceByPrefix(prefix);
     if (s != null) return s;
-    return EMPTY_NAMESPACE;
+    return EMPTY_URI;
   }
 
   public static final String findPrefixByQualifiedName(String name) {

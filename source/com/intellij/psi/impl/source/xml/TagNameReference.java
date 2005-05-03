@@ -98,7 +98,7 @@ class TagNameReference implements PsiReference {
       }
     }
     final List<String> namespaces = new ArrayList<String>(Arrays.asList(element.knownNamespaces()));
-    namespaces.add(XmlUtil.EMPTY_NAMESPACE); // empty namespace
+    namespaces.add(XmlUtil.EMPTY_URI); // empty namespace
     final Iterator<String> nsIterator = namespaces.iterator();
 
     final Set<XmlNSDescriptor> visited = new HashSet<XmlNSDescriptor>();

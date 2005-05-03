@@ -81,7 +81,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
         }
       }
       else if (equalsToSchemaName(tag, "include")) {
-        final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", XmlUtil.ALL_NAMESPACE);
+        final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", tag.getNamespace());
         if (schemaLocation != null) {
           final XmlFile xmlFile = XmlUtil.findXmlFile(rootTag.getContainingFile(), schemaLocation.getValue());
           if (xmlFile != null) {

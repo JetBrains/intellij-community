@@ -36,7 +36,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     addInternalResource(J2EE_1_3 + "connector_1_0.dtd", "connector_1_0.dtd");
     addInternalResource(J2EE_1_3 + "jspxml.xsd", "jspxml.xsd");
     addInternalResource(J2EE_1_3 + "jspxml.dtd", "jspxml.dtd");
-    addInternalResource(XmlUtil.JSP_NAMESPACE,"jspxml2.xsd");
+    addInternalResource(XmlUtil.JSP_URI,"jspxml2.xsd");
     addInternalResource("http://java.sun.com/products/jsp/dtd/jsp_1_0.dtd","jspxml.dtd");
 
     addInternalResource(J2EE_1_3 + "web-jsptaglibrary_1_2.dtd", "web-jsptaglibrary_1_2.dtd");
