@@ -87,14 +87,22 @@ public class WhileCanBeForeachInspection extends StatementInspection{
                     (PsiMethodCallExpression) iterator.getInitializer();
             final PsiExpression collection = initializer.getMethodExpression()
                             .getQualifierExpression();
-            final String typeString = iterator.getTypeElement().getText();
-
+            final PsiClassType type = (PsiClassType) collection.getType();
+            final PsiType[] parameters = type.getParameters();
             final String contentTypeString;
-            if(typeString.indexOf((int) '<') >= 0){
-                final int contentTypeStart = typeString.indexOf((int) '<') + 1;
-                final int contentTypeEnd = typeString.lastIndexOf((int) '>');
-                contentTypeString = typeString.substring(contentTypeStart,
-                                                         contentTypeEnd);
+            if(parameters.length == 1){
+                final PsiType parameterType = parameters[0];
+                if(parameterType instanceof PsiWildcardType){
+                    final PsiWildcardType wildcardType = (PsiWildcardType) parameterType;
+                    final PsiType bound = wildcardType.getBound();
+                    if(bound == null){
+                        contentTypeString = "Object";
+                    } else{
+                        contentTypeString = bound.getPresentableText();
+                    }
+                } else{
+                    contentTypeString = parameterType.getPresentableText();
+                }
             } else{
                 contentTypeString = "Object";
             }
@@ -111,7 +119,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
 
             final String iteratorName = iterator.getName();
             final boolean isDeclaration =
-                    isIteratorNextDeclaration(firstStatement, iteratorName);
+                    isIteratorNextDeclaration(firstStatement, iteratorName, contentTypeString);
             if(isDeclaration){
                 final PsiDeclarationStatement decl =
                         (PsiDeclarationStatement) firstStatement;
@@ -145,7 +153,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             out.append("for(" + finalString + contentTypeString + ' ' +
                     contentVariableName + ": " + collection.getText() + ')');
             replaceIteratorNext(body, contentVariableName, iteratorName,
-                                statementToSkip, out);
+                                statementToSkip, out, contentTypeString);
             return out.toString();
         }
 
@@ -153,9 +161,10 @@ public class WhileCanBeForeachInspection extends StatementInspection{
                                          String contentVariableName,
                                          String iteratorName,
                                          PsiElement childToSkip,
-                                         StringBuffer out){
+                                         StringBuffer out,
+                                          String contentTypeString){
 
-            if(isIteratorNext(element, iteratorName)){
+            if(isIteratorNext(element, iteratorName, contentTypeString)){
                 out.append(contentVariableName);
             } else{
                 final PsiElement[] children = element.getChildren();
@@ -173,7 +182,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
                             skippingWhiteSpace = false;
                             replaceIteratorNext(child, contentVariableName,
                                                 iteratorName,
-                                                childToSkip, out);
+                                                childToSkip, out, contentTypeString);
                         }
                     }
                 }
@@ -181,7 +190,8 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         }
 
         private boolean isIteratorNextDeclaration(PsiStatement statement,
-                                                  String iteratorName){
+                                                  String iteratorName,
+                                                  String contentType){
             if(!(statement instanceof PsiDeclarationStatement)){
                 return false;
             }
@@ -196,13 +206,27 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             }
             final PsiLocalVariable var = (PsiLocalVariable) elements[0];
             final PsiExpression initializer = var.getInitializer();
-            return isIteratorNext(initializer, iteratorName);
+            return isIteratorNext(initializer, iteratorName, contentType);
         }
 
         private boolean isIteratorNext(PsiElement element,
-                                       String iteratorNameName){
+                                       String iteratorName, String contentType){
             if(element == null){
                 return false;
+            }
+            if(element instanceof PsiTypeCastExpression){
+
+                final PsiTypeCastExpression castExpression = ((PsiTypeCastExpression) element);
+                final PsiType type = castExpression.getType();
+                if(type == null){
+                    return false;
+                }
+                if(!type.getPresentableText().equals(contentType)){
+                    return false;
+                }
+                final PsiExpression operand =
+                        castExpression.getOperand();
+                return isIteratorNext(operand, iteratorName, contentType);
             }
             if(!(element instanceof PsiMethodCallExpression)){
                 return false;
@@ -227,7 +251,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             if(qualifier == null){
                 return false;
             }
-            if(!iteratorNameName.equals(qualifier.getText())){
+            if(!iteratorName.equals(qualifier.getText())){
                 return false;
             }
             final String referenceName = reference.getReferenceName();

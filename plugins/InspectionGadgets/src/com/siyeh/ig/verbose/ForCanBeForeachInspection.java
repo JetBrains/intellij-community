@@ -89,15 +89,26 @@ public class ForCanBeForeachInspection extends StatementInspection{
             final PsiMethodCallExpression initializer =
                     (PsiMethodCallExpression) iterator.getInitializer();
             final PsiExpression collection = initializer.getMethodExpression()
-                            .getQualifierExpression();
-            final String typeString = iterator.getTypeElement().getText();
-
+                    .getQualifierExpression();
+            final PsiClassType type = (PsiClassType) collection.getType();
+            final PsiType[] parameters = type.getParameters();
             final String contentTypeString;
-            if(typeString.indexOf((int) '<') >= 0){
-                final int contentTypeStart = typeString.indexOf((int) '<') + 1;
-                final int contentTypeEnd = typeString.lastIndexOf((int) '>');
-                contentTypeString = typeString.substring(contentTypeStart,
-                                                         contentTypeEnd);
+            if(parameters.length == 1){
+                final PsiType parameterType = parameters[0];
+                if(parameterType instanceof PsiWildcardType){
+                    final PsiWildcardType wildcardType = (PsiWildcardType) parameterType;
+                    final PsiType bound = wildcardType.getBound();
+                    if(bound == null)
+                    {
+                        contentTypeString = "Object";
+                    }
+                    else
+                    {
+                        contentTypeString = bound.getPresentableText();
+                    }
+                } else{
+                    contentTypeString = parameterType.getPresentableText();
+                }
             } else{
                 contentTypeString = "Object";
             }
@@ -114,7 +125,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
 
             final String iteratorName = iterator.getName();
             final boolean isDeclaration =
-                    isIteratorNextDeclaration(firstStatement, iteratorName);
+                    isIteratorNextDeclaration(firstStatement, iteratorName, contentTypeString);
             if(isDeclaration){
                 final PsiDeclarationStatement decl =
                         (PsiDeclarationStatement) firstStatement;
@@ -148,7 +159,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             out.append("for(" + finalString + contentTypeString + ' ' +
                     contentVariableName + ": " + collection.getText() + ')');
             replaceIteratorNext(body, contentVariableName, iteratorName,
-                                statementToSkip, out);
+                                statementToSkip, out, contentTypeString);
             return out.toString();
         }
 
@@ -242,9 +253,10 @@ public class ForCanBeForeachInspection extends StatementInspection{
                                          String contentVariableName,
                                          String iteratorName,
                                          PsiElement childToSkip,
-                                         StringBuffer out){
+                                         StringBuffer out,
+                                         String contentType){
 
-            if(isIteratorNext(element, iteratorName)){
+            if(isIteratorNext(element, iteratorName, contentType)){
                 out.append(contentVariableName);
             } else{
                 final PsiElement[] children = element.getChildren();
@@ -262,7 +274,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
                             skippingWhiteSpace = false;
                             replaceIteratorNext(child, contentVariableName,
                                                 iteratorName,
-                                                childToSkip, out);
+                                                childToSkip, out, contentType);
                         }
                     }
                 }
@@ -290,7 +302,8 @@ public class ForCanBeForeachInspection extends StatementInspection{
         }
 
         private boolean isIteratorNextDeclaration(PsiStatement statement,
-                                                  String iteratorName){
+                                                  String iteratorName,
+                                                  String contentType){
             if(!(statement instanceof PsiDeclarationStatement)){
                 return false;
             }
@@ -305,7 +318,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             }
             final PsiLocalVariable var = (PsiLocalVariable) elements[0];
             final PsiExpression initializer = var.getInitializer();
-            return isIteratorNext(initializer, iteratorName);
+            return isIteratorNext(initializer, iteratorName, contentType);
         }
 
         private boolean isArrayLookup(PsiElement element, String indexName,
@@ -335,9 +348,26 @@ public class ForCanBeForeachInspection extends StatementInspection{
         }
 
         private boolean isIteratorNext(PsiElement element,
-                                       String iteratorNameName){
+                                       String iteratorName, String contentType){
             if(element == null){
                 return false;
+            }
+            if(element instanceof PsiTypeCastExpression)
+            {
+
+                final PsiTypeCastExpression castExpression = ((PsiTypeCastExpression) element);
+                final PsiType type = castExpression.getType();
+                if(type == null)
+                {
+                    return false;
+                }
+                if(!type.getPresentableText().equals(contentType))
+                {
+                    return false;
+                }
+                final PsiExpression operand =
+                        castExpression.getOperand();
+                return isIteratorNext(operand, iteratorName, contentType);
             }
             if(!(element instanceof PsiMethodCallExpression)){
                 return false;
@@ -362,7 +392,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             if(qualifier == null){
                 return false;
             }
-            if(!iteratorNameName.equals(qualifier.getText())){
+            if(!iteratorName.equals(qualifier.getText())){
                 return false;
             }
             final String referenceName = reference.getReferenceName();
@@ -415,11 +445,11 @@ public class ForCanBeForeachInspection extends StatementInspection{
             final LanguageLevel languageLevel =
                     manager.getEffectiveLanguageLevel();
             if(languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                       languageLevel.equals(LanguageLevel.JDK_1_4)){
+                    languageLevel.equals(LanguageLevel.JDK_1_4)){
                 return;
             }
             if(isArrayLoopStatement(forStatement) ||
-                       isCollectionLoopStatement(forStatement)){
+                    isCollectionLoopStatement(forStatement)){
                 registerStatementError(forStatement);
             }
         }
@@ -495,8 +525,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
         }
         final PsiLocalVariable declaredVar =
                 (PsiLocalVariable) declaration.getDeclaredElements()[0];
-        if(declaredVar == null)
-        {
+        if(declaredVar == null){
             return false;
         }
         final PsiType declaredVarType = declaredVar.getType();
@@ -531,8 +560,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             return false;
         }
         final PsiExpression qualifier = initialMethodExpression.getQualifierExpression();
-        if(qualifier == null)
-        {
+        if(qualifier == null){
             return false;
         }
         final PsiType qualifierType = qualifier.getType();
@@ -542,13 +570,12 @@ public class ForCanBeForeachInspection extends StatementInspection{
 
         final PsiClass qualifierClass =
                 ((PsiClassType) qualifierType).resolve();
-        if(qualifierClass == null)
-        {
+        if(qualifierClass == null){
             return false;
         }
         if(!ClassUtils.isSubclass(qualifierClass, "java.lang.Iterable") &&
-                   !ClassUtils.isSubclass(qualifierClass,
-                                          "java.util.Collection")){
+                !ClassUtils.isSubclass(qualifierClass,
+                                       "java.util.Collection")){
 
             return false;
         }

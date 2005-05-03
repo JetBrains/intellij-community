@@ -42,6 +42,16 @@ public class ForCanBeForEachInspection {
         }
         return total;
     }
+    
+    public int wildBazoom() {
+        int total = 0;
+        final List<? extends Integer> ints = new ArrayList<Integer>();
+        for (Iterator<? extends Integer> iterator = ints.iterator(); iterator.hasNext();) {
+            final Integer value = iterator.next();
+            total += value.intValue();
+        }
+        return total;
+    }
 
 
     public static String[] getAttributes(){
