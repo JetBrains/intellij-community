@@ -12,12 +12,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
-import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -923,7 +921,7 @@ public class XmlUtil {
 
   public static String decode(String text){
     if (text.length() == 0) return text;
-    if(text.charAt(0) != '&' || text.length() > 6 || text.length() < 3){
+    if(text.charAt(0) != '&' || text.length() < 3){
       if(text.indexOf('<') < 0 && text.indexOf('>') < 0) return text;
       return text.replaceAll("<!\\[CDATA\\[", "").replaceAll("\\]\\]>", "");
     }
@@ -945,6 +943,9 @@ public class XmlUtil {
     }
     if(text.equals("&quot;")) {
       return "\"";
+    }
+    if(text.startsWith("&quot;") && text.endsWith("&quot;")) {
+      return "\"" + text.substring(6, text.length() - 6) + "\"";
     }
     if(text.startsWith("&#")) {
       text.substring(3, text.length() - 1);

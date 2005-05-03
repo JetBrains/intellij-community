@@ -1464,7 +1464,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       char[] text = psiFile.textToCharArray();
       for (int index = LowLevelSearchUtil.searchWord(text, 0, text.length, searcher); index >= 0;) {
         PsiReference referenceAt = psiFile.findReferenceAt(index);
-        if (referenceAt == null || referenceAt.isSoft()) { //?
+        if (referenceAt == null) {
           if (!processor.process(psiFile, index, index + searcher.getPattern().length())) break AllFilesLoop;
         }
 

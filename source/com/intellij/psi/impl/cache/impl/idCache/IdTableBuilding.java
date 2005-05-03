@@ -120,7 +120,7 @@ public class IdTableBuilding {
                       int[] todoCounts,
                       final PsiManager manager) {
       Lexer lexer = new com.intellij.psi.impl.source.parsing.jsp.JspLexer(Language.findInstance(NewJspLanguage.class).getBaseLanguage().getParserDefinition().createLexer(manager.getProject()));
-      JspFilterLexer filterLexer = new JspFilterLexer(lexer, wordsTable, todoCounts);
+      JspxFilterLexer filterLexer = new JspxFilterLexer(lexer, wordsTable, todoCounts);
       lexer = new FilterLexer(filterLexer, TOKEN_FILTER);
       lexer.start(chars);
       while (lexer.getTokenType() != null) lexer.advance();
