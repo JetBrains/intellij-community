@@ -13,6 +13,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.search.LowLevelSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -23,6 +24,7 @@ import com.intellij.refactoring.util.occurences.OccurenceFilter;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 
@@ -79,7 +81,6 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     if (!(originalExpression.getValue() instanceof String)) return;
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(originalExpression.getProject());
     final String stringToFind = (String)originalExpression.getValue();
-    if (stringToFind.length() < MIN_STRING_LENGTH) return;
     final PsiSearchHelper searchHelper = originalExpression.getManager().getSearchHelper();
     final List<String> words = StringUtil.getWordsIn(stringToFind);
     if (words.size() == 0) return;
@@ -93,32 +94,40 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     Set<PsiFile> resultFiles = null;
     for (int i = 0; i < words.size(); i++) {
       String word = words.get(i);
-      final Set<PsiFile> files = new THashSet<PsiFile>();
-      searchHelper.processAllFilesWithWordInLiterals(word, scope, new Processor<PsiFile>() {
-        public boolean process(PsiFile file) {
-          files.add(file);
-          return true;
-        }
-      });
-      final boolean firstTime = i == 0;
-      if (firstTime) {
-        resultFiles = files;
-      }
-      else {
-        resultFiles.retainAll(files);
-      }
-      if (resultFiles.size() == 0) return;
-    }
-    final List<PsiExpression> foundExpr = new ArrayList<PsiExpression>();
-    for (Iterator<PsiFile> iterator = resultFiles.iterator(); iterator.hasNext();) {
-      PsiFile file = iterator.next();
-      file.accept(new PsiRecursiveElementVisitor() {
-        public void visitLiteralExpression(PsiLiteralExpression expression) {
-          if (expression != originalExpression && Comparing.equal(stringToFind, expression.getValue())) {
-            foundExpr.add(expression);
+      if (word.length() >= MIN_STRING_LENGTH) {
+        final Set<PsiFile> files = new THashSet<PsiFile>();
+        searchHelper.processAllFilesWithWordInLiterals(word, scope, new Processor<PsiFile>() {
+          public boolean process(PsiFile file) {
+            files.add(file);
+            return true;
           }
+        });
+        final boolean firstTime = i == 0;
+        if (firstTime) {
+          resultFiles = files;
         }
-      });
+        else {
+          resultFiles.retainAll(files);
+        }
+        if (resultFiles.size() == 0) return;
+      }
+    }
+    if (resultFiles == null || resultFiles.size() == 0) return;
+    final List<PsiExpression> foundExpr = new ArrayList<PsiExpression>();
+    for (PsiFile file : resultFiles) {
+      char[] text = file.textToCharArray();
+      StringSearcher searcher = new StringSearcher(stringToFind);
+      for (int offset = LowLevelSearchUtil.searchWord(text, 0, text.length, searcher);
+           offset >= 0;
+           offset = LowLevelSearchUtil.searchWord(text, offset + searcher.getPattern().length(), text.length, searcher)
+        ) {
+        PsiElement element = file.findElementAt(offset);
+        if (!(element.getParent() instanceof PsiLiteralExpression)) continue;
+        PsiLiteralExpression expression = (PsiLiteralExpression)element.getParent();
+        if (expression != originalExpression && Comparing.equal(stringToFind, expression.getValue())) {
+          foundExpr.add(expression);
+        }
+      }
     }
     if (foundExpr.size() == 0) return;
     Set<PsiClass> classes = new THashSet<PsiClass>();

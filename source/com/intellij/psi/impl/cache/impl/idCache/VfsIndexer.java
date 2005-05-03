@@ -18,14 +18,14 @@ public class VfsIndexer {
       VirtualFile root,
       VirtualFileFilter filter) throws IOException {
 
-    List result = new ArrayList();
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
 
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null){
       progress.setText2("Scanning files in " + root.getPresentableUrl() + "...");
     }
 
-    DataOutputStream out = stream != null ? new DataOutputStream(stream) : null;
+    DataOutputStream out = stream == null ? null : new DataOutputStream(stream);
 
     _writeFileIndex(out, root, filter, result);
 
@@ -33,10 +33,10 @@ public class VfsIndexer {
       out.flush();
     }
 
-    return (VirtualFile[])result.toArray(new VirtualFile[result.size()]);
+    return result.toArray(new VirtualFile[result.size()]);
   }
 
-  private static void _writeFileIndex(DataOutputStream out, VirtualFile file, VirtualFileFilter filter, List result) throws IOException {
+  private static void _writeFileIndex(DataOutputStream out, VirtualFile file, VirtualFileFilter filter, List<VirtualFile> result) throws IOException {
     ProgressManager.getInstance().checkCanceled();
 
     result.add(file);
@@ -74,7 +74,7 @@ public class VfsIndexer {
       VirtualFile root,
       VirtualFileFilter filter
       ) throws IOException {
-    List result = new ArrayList();
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
 
     DataInputStream in = new DataInputStream(stream);
 
@@ -82,10 +82,10 @@ public class VfsIndexer {
     LOG.assertTrue(root.getName().equals(rootName));
     _readFileIndex(in, root, filter, result);
 
-    return (VirtualFile[])result.toArray(new VirtualFile[result.size()]);
+    return result.toArray(new VirtualFile[result.size()]);
   }
 
-  private static void _readFileIndex(DataInputStream in, VirtualFile file, VirtualFileFilter filter, List result) throws IOException {
+  private static void _readFileIndex(DataInputStream in, VirtualFile file, VirtualFileFilter filter, List<VirtualFile> result) throws IOException {
     ProgressManager.getInstance().checkCanceled();
 
     result.add(file);
