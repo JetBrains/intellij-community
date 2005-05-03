@@ -290,7 +290,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private void inlineMethodCall(PsiReferenceExpression ref) throws IncorrectOperationException {
+    ChangeContextUtil.encodeContextInfo(myMethod, false);
     myMethodCopy = (PsiMethod)myMethod.copy();
+    ChangeContextUtil.clearContextInfo(myMethod);
+
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression)ref.getParent();
 
     PsiSubstitutor callSubstitutor = getCallSubstitutor(methodCall);
@@ -460,9 +463,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private BlockData prepareBlock(PsiReferenceExpression ref, final PsiSubstitutor callSubstitutor) throws IncorrectOperationException {
-    ChangeContextUtil.encodeContextInfo(myMethod, false);
-
-    ChangeContextUtil.clearContextInfo(myMethod);
     final PsiCodeBlock block = myMethodCopy.getBody();
     final PsiStatement[] originalStatements = block.getStatements();
 
