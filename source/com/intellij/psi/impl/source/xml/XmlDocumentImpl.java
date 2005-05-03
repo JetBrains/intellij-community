@@ -85,13 +85,13 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
   public XmlNSDescriptor getDefaultNSDescriptor(final String namespace, final boolean strict) {
     if(myDefaultDescriptorsCache.containsKey(namespace)) return myDefaultDescriptorsCache.get(namespace).getValue();
-    final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
     myDefaultDescriptorsCache.put(namespace, new CachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>(){
       public Result<XmlNSDescriptor> compute() {
+        final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
         return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, defaultNSDescriptorInner.getDependences());
       }
     }, false));
-    return defaultNSDescriptorInner;
+    return getDefaultNSDescriptor(namespace, strict);
   }
 
   public XmlNSDescriptor getDefaultNSDescriptorInner(final String namespace, final boolean strict) {
