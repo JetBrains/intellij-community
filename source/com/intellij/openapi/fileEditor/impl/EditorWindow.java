@@ -115,26 +115,28 @@ public class EditorWindow {
   }
 
   private int calcIndexToSelect(VirtualFile fileBeingClosed, final int fileIndex) {
-    final int currentlySelectedIndex = myTabbedPane.getSelectedIndex();
-    if (currentlySelectedIndex != fileIndex) {
-      // if the file being closed is not currently selected, keep the currently selected file open
-      return fileIndex < currentlySelectedIndex ? currentlySelectedIndex - 1 : -1;
-    }
-    // try to open last visited file
-    final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().myProject).getFiles();
-    for (int idx = histFiles.length - 1; idx >= 0; idx--) {
-      final VirtualFile histFile = histFiles[idx];
-      if (histFile.equals(fileBeingClosed)) {
-        continue;
+    if (UISettings.getInstance().ACTIVATE_MRU_EDITOR_ON_CLOSE) {
+      final int currentlySelectedIndex = myTabbedPane.getSelectedIndex();
+      if (currentlySelectedIndex != fileIndex) {
+        // if the file being closed is not currently selected, keep the currently selected file open
+        return fileIndex < currentlySelectedIndex ? currentlySelectedIndex - 1 : -1;
       }
-      final EditorWithProviderComposite editor = findFileComposite(histFile);
-      if (editor == null) {
-        continue; // ????
-      }
-      final int histFileIndex = findComponentIndex(editor.getComponent());
-      if (histFileIndex >= 0) {
-        // if the file being closed is located before the hist file, then after closing the index of the histFile will be shifted by -1
-        return fileIndex < histFileIndex ? histFileIndex - 1 : histFileIndex;
+      // try to open last visited file
+      final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().myProject).getFiles();
+      for (int idx = histFiles.length - 1; idx >= 0; idx--) {
+        final VirtualFile histFile = histFiles[idx];
+        if (histFile.equals(fileBeingClosed)) {
+          continue;
+        }
+        final EditorWithProviderComposite editor = findFileComposite(histFile);
+        if (editor == null) {
+          continue; // ????
+        }
+        final int histFileIndex = findComponentIndex(editor.getComponent());
+        if (histFileIndex >= 0) {
+          // if the file being closed is located before the hist file, then after closing the index of the histFile will be shifted by -1
+          return fileIndex < histFileIndex ? histFileIndex - 1 : histFileIndex;
+        }
       }
     }
     // by default select previous neighbour

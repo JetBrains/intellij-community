@@ -56,7 +56,10 @@ public class EditorOptionsPanel {
 
   private JTextField myEditorTabLimitField;
   private JTextField myRecentFilesLimitField;
-  private JCheckBox myCloseNonModifiedFilesFirstCheckBox;
+  private JRadioButton myCloseNonModifiedFilesFirstRadio;
+  private JRadioButton myCloseLRUFilesRadio;
+  private JRadioButton myActivateMRUEditorOnCloseRadio;
+  private JRadioButton myActivateLeftEditorOnCloseRadio;
 
   private JCheckBox myCbHighlightScope;
   private JCheckBox myCbFolding;
@@ -118,6 +121,14 @@ public class EditorOptionsPanel {
     myStripTrailingSpacesCombo.addItem(STRIP_CHANGED);
     myStripTrailingSpacesCombo.addItem(STRIP_ALL);
     myStripTrailingSpacesCombo.addItem(STRIP_NONE);
+    
+    final ButtonGroup editortabs = new ButtonGroup();
+    editortabs.add(myActivateLeftEditorOnCloseRadio);
+    editortabs.add(myActivateMRUEditorOnCloseRadio);
+    
+    final ButtonGroup closePolicy = new ButtonGroup();
+    closePolicy.add(myCloseNonModifiedFilesFirstRadio);
+    closePolicy.add(myCloseLRUFilesRadio);
   }
 
 
@@ -161,9 +172,22 @@ public class EditorOptionsPanel {
 
     myEditorTabLimitField.setText(Integer.toString(uiSettings.EDITOR_TAB_LIMIT));
     myRecentFilesLimitField.setText(Integer.toString(uiSettings.RECENT_FILES_LIMIT));
-    myCloseNonModifiedFilesFirstCheckBox.setSelected(uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST);
     myClipboardContentLimitTextField.setText(Integer.toString(uiSettings.MAX_CLIPBOARD_CONTENTS));
-
+    
+    // Editor Tabs
+    if (uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST) {
+      myCloseNonModifiedFilesFirstRadio.setSelected(true);
+    }
+    else {
+      myCloseLRUFilesRadio.setSelected(true);
+    }
+    if (uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE) {
+      myActivateMRUEditorOnCloseRadio.setSelected(true);
+    }
+    else {
+      myActivateLeftEditorOnCloseRadio.setSelected(true);
+    }
+    
     // Paste
 
     switch(codeInsightSettings.REFORMAT_ON_PASTE){
@@ -311,8 +335,9 @@ public class EditorOptionsPanel {
         }
       }catch (NumberFormatException ignored){}
     }
-    uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST=myCloseNonModifiedFilesFirstCheckBox.isSelected();
-
+    uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST = myCloseNonModifiedFilesFirstRadio.isSelected();
+    uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE = myActivateMRUEditorOnCloseRadio.isSelected();
+    
     int maxClipboardContents = getMaxClipboardContents();
     if (uiSettings.MAX_CLIPBOARD_CONTENTS != maxClipboardContents) {
       uiSettings.MAX_CLIPBOARD_CONTENTS = maxClipboardContents;
@@ -432,7 +457,8 @@ public class EditorOptionsPanel {
     // Limits
     isModified |= isModified(myEditorTabLimitField, UISettings.getInstance().EDITOR_TAB_LIMIT);
     isModified |= isModified(myRecentFilesLimitField, UISettings.getInstance().RECENT_FILES_LIMIT);
-    isModified |= isModified(myCloseNonModifiedFilesFirstCheckBox, uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST);
+    isModified |= isModified(myCloseNonModifiedFilesFirstRadio, uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST);
+    isModified |= isModified(myActivateMRUEditorOnCloseRadio, uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE);
     isModified |= getMaxClipboardContents() != uiSettings.MAX_CLIPBOARD_CONTENTS;
 
     // Paste
@@ -482,7 +508,7 @@ public class EditorOptionsPanel {
     return isModified;
   }
 
-  private static boolean isModified(JCheckBox checkBox, boolean value) {
+  private static boolean isModified(JToggleButton checkBox, boolean value) {
     return checkBox.isSelected() != value;
   }
 

@@ -30,6 +30,7 @@ public class UISettings implements NamedJDOMExternalizable, ApplicationComponent
   public boolean HIDE_KNOWN_EXTENSION_IN_TABS = false;
   public boolean SHOW_ICONS_IN_QUICK_NAVIGATION = true;
   public boolean CLOSE_NON_MODIFIED_FILES_FIRST = false;
+  public boolean ACTIVATE_MRU_EDITOR_ON_CLOSE = false;
   public boolean ANTIALIASING_IN_EDITOR;
   public boolean MOVE_MOUSE_ON_DEFAULT_BUTTON = false;
   public boolean ENABLE_ALPHA_MODE = false;
