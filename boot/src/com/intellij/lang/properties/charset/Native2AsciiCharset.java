@@ -9,21 +9,21 @@ import java.nio.charset.CharsetEncoder;
  */
 
 public class Native2AsciiCharset extends Charset {
-    public static final Charset INSTANCE = new Native2AsciiCharset("ASCII_TO_NATIVE", null);
+  public static final Charset INSTANCE = new Native2AsciiCharset("NATIVE_TO_ASCII", null);
 
-    public Native2AsciiCharset(String canonicalName, String[] aliases) {
-        super(canonicalName, aliases);
-    }
+  public Native2AsciiCharset(String canonicalName, String[] aliases) {
+    super(canonicalName, aliases);
+  }
 
-    public boolean contains(Charset cs) {
-        return false;
-    }
+  public boolean contains(Charset cs) {
+    return false;
+  }
 
-    public CharsetDecoder newDecoder() {
-        return new Native2AsciiCharsetDecoder();
-    }
+  public CharsetDecoder newDecoder() {
+    return new Native2AsciiCharsetDecoder();
+  }
 
-    public CharsetEncoder newEncoder() {
-        return new Native2AsciiCharsetEncoder();
-    }
+  public CharsetEncoder newEncoder() {
+    return new Native2AsciiCharsetEncoder();
+  }
 }
