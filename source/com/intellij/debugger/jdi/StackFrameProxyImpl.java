@@ -41,7 +41,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     checkValid();
     if (myIsObsolete == null) {
       try {
-        boolean isObsolete = (getVirtualMachine().versionHigher("1.4") && location().method().isObsolete());
+        boolean isObsolete = (getVirtualMachine().canRedefineClasses() && location().method().isObsolete());
         myIsObsolete = isObsolete? Boolean.TRUE : Boolean.FALSE;
       }
       catch (InvalidStackFrameException e) {
