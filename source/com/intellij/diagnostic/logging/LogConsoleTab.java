@@ -23,7 +23,7 @@ public class LogConsoleTab extends JPanel implements Disposeable{
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
   private ReaderThread myReaderThread;
 
-
+  private static final long PROCESS_IDLE_TIMEOUT = 10;
   public LogConsoleTab(Project project, File file) {
     super(new BorderLayout());
     myProject = project;
@@ -91,11 +91,18 @@ public class LogConsoleTab extends JPanel implements Disposeable{
     public void run() {
       while (myRunning){
         try {
-          while (myFileStream.available() > 0){
+          final int length = myFileStream.available();
+          for (int i = 0; i < length; i++) {
             addMessage(myFileStream.read());
+          }
+          synchronized (this) {
+            wait(PROCESS_IDLE_TIMEOUT);
           }
         }
         catch (IOException e) {
+          LOG.error(e);
+        }
+        catch (InterruptedException e) {
           LOG.error(e);
         }
       }

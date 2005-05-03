@@ -20,6 +20,7 @@ import com.intellij.util.ui.ListTableModel;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -49,7 +50,19 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase>{
     myModel = new ListTableModel(new ColumnInfo[]{IS_SHOW, FILE});
     myFilesTable = new TableView(myModel);
     myFilesTable.setShowGrid(false);
-
+    myFilesTable.getColumnModel().getColumn(0).setCellRenderer(new TableCellRenderer() {
+      public Component getTableCellRendererComponent(JTable table, Object value,
+                                                     boolean isSelected, boolean hasFocus,
+                                                     int row, int column) {
+        final Component component = myFilesTable.getDefaultRenderer(Boolean.class).getTableCellRendererComponent(table, value, isSelected, hasFocus,
+                                                                                                                 row, column);
+        if (component instanceof JComponent) {
+          ((JComponent)component).setBorder(null);
+        }
+        return component;
+      }
+    });
+    myFilesTable.setColumnSelectionAllowed(false);
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
          ArrayList<MyFileListElement> newList = new ArrayList<MyFileListElement>(myModel.getItems());
@@ -185,7 +198,9 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase>{
                                                 myProject,
                                                 new FileChooserDescriptor(true, false, false, false, false, true),
                                                 TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
-          return new CellEditorComponentWithBrowseButton(myFileChooser, this);
+          final CellEditorComponentWithBrowseButton rendererComponent = new CellEditorComponentWithBrowseButton(myFileChooser, this);
+          rendererComponent.setBorder(null);
+          return rendererComponent;
         }
       };
     }
