@@ -3,6 +3,7 @@ package com.intellij.ide.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.lang.properties.psi.Property;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -85,7 +86,11 @@ public class DeleteUtil {
     for (int i = 0; i < elements.length; i++) {
       final PsiElement elementToDelete = elements[i];
 
-      if (elementToDelete instanceof PsiMethod) {
+      if (elementToDelete instanceof Property) {
+        objName[0] = ((Property)elementToDelete).getName();
+        objName[1] = "property";
+      }
+      else if (elementToDelete instanceof PsiMethod) {
         objName[0] = ((PsiMethod)elementToDelete).getName();
         objName[1] = "method";
         methods++;

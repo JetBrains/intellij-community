@@ -6,6 +6,7 @@ import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.findUsages.PropertiesFindUsagesProvider;
@@ -69,4 +70,11 @@ public class PropertiesLanguage extends Language {
     return new PropertiesCommenter();
   }
 
+  public RefactoringSupportProvider getRefactoringSupportProvider() {
+    return new RefactoringSupportProvider() {
+      public boolean isSafeDeleteAvailable(PsiElement element) {
+        return true;
+      }
+    };
+  }
 }
