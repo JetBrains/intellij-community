@@ -107,7 +107,7 @@ public class StringUtils{
             singularName = 'a' + capitalize(name);
         }
         if(isKeyword(singularName)){
-            return 'a' + capitalize(name);
+            return 'a' + capitalize(singularName);
         } else{
             return singularName;
         }

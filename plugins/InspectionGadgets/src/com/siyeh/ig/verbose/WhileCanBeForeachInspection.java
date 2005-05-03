@@ -203,7 +203,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             }
             if(!(elements[0] instanceof PsiLocalVariable)){
                 return false;
-            }
+            }         
             final PsiLocalVariable var = (PsiLocalVariable) elements[0];
             final PsiExpression initializer = var.getInitializer();
             return isIteratorNext(initializer, iteratorName, contentType);
