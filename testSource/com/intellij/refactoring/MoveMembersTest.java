@@ -64,16 +64,14 @@ public class MoveMembersTest extends MultiFileTestCase {
 
     PsiElement[] children = sourceClass.getChildren();
     ArrayList members = new ArrayList();
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
+    for (PsiElement child : children) {
       if (child instanceof PsiMethod || child instanceof PsiField || child instanceof PsiClass) {
         members.add(child);
       }
     }
 
     LinkedHashSet<PsiMember> memberSet = new LinkedHashSet<PsiMember>();
-    for (int i = 0; i < memberIndices.length; i++) {
-      int index = memberIndices[i];
+    for (int index : memberIndices) {
       PsiMember member = (PsiMember)members.get(index);
       assertTrue(member.hasModifierProperty(PsiModifier.STATIC));
       memberSet.add(member);

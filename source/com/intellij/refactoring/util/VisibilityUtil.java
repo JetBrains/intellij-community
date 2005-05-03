@@ -47,18 +47,17 @@ public class VisibilityUtil  {
 
   public static String getVisibilityModifier(PsiModifierList list) {
     if (list == null) return PsiModifier.PACKAGE_LOCAL;
-    for (int i = 0; i < visibilityModifiers.length; i++) {
-      String modifier = visibilityModifiers[i];
-      if(list.hasModifierProperty(modifier))
+    for (String modifier : visibilityModifiers) {
+      if (list.hasModifierProperty(modifier)) {
         return modifier;
+      }
     }
     return PsiModifier.PACKAGE_LOCAL;
   }
 
   public static boolean isVisibilityModifier(String s) {
-    for (int i = 0; i < visibilityModifiers.length; i++) {
-      String modifier = visibilityModifiers[i];
-      if(modifier.equals(s)) return true;
+    for (String modifier : visibilityModifiers) {
+      if (modifier.equals(s)) return true;
     }
 
     return false;

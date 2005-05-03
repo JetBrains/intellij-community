@@ -87,8 +87,8 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     ArrayList<UsageInfo> usages = new ArrayList<UsageInfo>();
     myNonNewConstructorUsages = new ArrayList<PsiElement>();
 
-    for (int i = 0; i < references.length; i++) {
-      PsiElement element = references[i].getElement();
+    for (PsiReference reference : references) {
+      PsiElement element = reference.getElement();
 
       if (element.getParent() instanceof PsiNewExpression) {
         usages.add(new UsageInfo(element.getParent()));
@@ -127,8 +127,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
     HashSet<PsiElement> reportedContainers = new HashSet<PsiElement>();
     final String targetClassDescription = ConflictsUtil.getDescription(myTargetClass, true);
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       final PsiElement container = ConflictsUtil.getContainer(usage.getElement());
       if (!reportedContainers.contains(container)) {
         reportedContainers.add(container);
@@ -141,8 +140,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     }
 
     if (myIsInner) {
-      for (int i = 0; i < usages.length; i++) {
-        UsageInfo usage = usages[i];
+      for (UsageInfo usage : usages) {
         final PsiField field = PsiTreeUtil.getParentOfType(usage.getElement(), PsiField.class);
         if (field != null) {
           final PsiClass containingClass = field.getContainingClass();
@@ -194,8 +192,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
       if (myConstructor != null) {
         myConstructor.getModifierList().setModifierProperty(PsiModifier.PRIVATE, true);
         VisibilityUtil.escalateVisibility(myConstructor, factoryMethod);
-        for (Iterator<PsiElement> iterator = myNonNewConstructorUsages.iterator(); iterator.hasNext();) {
-          PsiElement place = iterator.next();
+        for (PsiElement place : myNonNewConstructorUsages) {
           VisibilityUtil.escalateVisibility(myConstructor, place);
         }
       }
@@ -207,8 +204,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
         VisibilityUtil.escalateVisibility(constructor, myTargetClass);
       }
 
-      for (int i = 0; i < usages.length; i++) {
-        UsageInfo usage = usages[i];
+      for (UsageInfo usage : usages) {
         PsiNewExpression newExpression = (PsiNewExpression)usage.getElement();
 
         VisibilityUtil.escalateVisibility(factoryMethod, newExpression);
@@ -272,8 +268,8 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
     PsiParameter[] params = factoryMethod.getParameterList().getParameters();
 
-    for (int i = 0; i < params.length; i++) {
-      PsiExpression paramRef = myFactory.createExpressionFromText(params[i].getName(), null);
+    for (PsiParameter parameter : params) {
+      PsiExpression paramRef = myFactory.createExpressionFromText(parameter.getName(), null);
       argumentList.add(paramRef);
     }
     factoryMethod.getBody().add(returnStatement);
