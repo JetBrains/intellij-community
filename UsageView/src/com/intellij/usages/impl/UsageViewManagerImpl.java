@@ -29,7 +29,7 @@ import java.awt.event.ActionEvent;
  * Time: 4:49:07 PM
  * To change this template use File | Settings | File Templates.
  */
-public class UsageViewManagerImpl implements UsageViewManager, ProjectComponent {
+public class UsageViewManagerImpl extends UsageViewManager implements ProjectComponent {
   private Project myProject;
 
   public UsageViewManagerImpl(Project project) {

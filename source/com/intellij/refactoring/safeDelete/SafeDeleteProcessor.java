@@ -1,5 +1,9 @@
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.lang.Language;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -14,16 +18,16 @@ import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
-import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.usageView.*;
+import com.intellij.usageView.FindUsagesCommand;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usages.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import com.intellij.lang.Language;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
 
 import java.util.*;
 
@@ -182,47 +186,27 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   private void showUsages(final UsageInfo[] usages) {
-    class Descriptor extends UsageViewDescriptorAdapter {
-      Descriptor() {
-        super(usages, null);
-      }
+    UsageViewPresentation presentation = new UsageViewPresentation();
+    presentation.setTabText("Safe Delete");
+    presentation.setTargetsNodeText("Attempting to delete");
+    presentation.setShowReadOnlyStatusAsRed(true);
+    presentation.setShowCancelButton(true);
+    presentation.setCodeUsagesString("References found in code");
+    presentation.setNonCodeUsagesString("Occurrences found in comments, strings and non-java files");
+    presentation.setUsagesString("usages");
 
-      public PsiElement[] getElements() {
-        return myElements;
-      }
-
-      public void refresh(PsiElement[] elements) {
-        refreshUsages(elements);
-      }
-
-      public String getProcessedElementsHeader() {
-        return "Attempting to delete";
-      }
-
-      public String getCodeReferencesText(int usagesCount, int filesCount) {
-        return "References in code " + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference");
-      }
-
-      public String getCommentReferencesText(int usagesCount, int filesCount) {
-        return "Occurrences found in comments, strings and non-java files "
-                + UsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "occurrence");
-      }
-
-      public boolean isSearchInText() {
-        return mySearchInCommentsAndStrings || mySearchNonJava;
-      }
-
-      public boolean canRefresh() {
-        return false;
-      }
-
-      public boolean isCancelInCommonGroup() {
-        return true;
-      }
+    UsageViewManager manager = UsageViewManager.getInstance(myProject);
+    UsageTarget[] targets = new UsageTarget[myElements.length];
+    for (int i = 0; i < targets.length; i++) {
+      targets[i] = new PsiElement2UsageTargetAdapter(myElements[i]);
     }
-    final UsageView usageView = UsageViewManager.getInstance(myProject).addContent("Unsuccessful safe delete", new Descriptor(), false,
-                                                                                   true, true, true, true);
-    usageView.addDoProcessAction(new RerunSafeDelete(myProject, myElements, usageView), "Retry", null, "&Rerun Safe Delete");
+
+    final UsageView usageView = manager.showUsages(
+      targets,
+      UsageInfoToUsageConverter.convert(new UsageInfoToUsageConverter.TargetElementsDescriptor(myElements), usages),
+      presentation
+    );
+    usageView.addPerformOperationAction(new RerunSafeDelete(myProject, myElements, usageView), "Retry", null, "Rerun Safe Delete", 'r');
   }
 
   public PsiElement[] getElements() {
@@ -248,7 +232,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            UsageViewManager.getInstance(myProject).closeContent(myUsageView);
+            myUsageView.close();
             ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
             for (int i = 0; i < myPointers.length; i++) {
               SmartPsiElementPointer pointer = myPointers[i];

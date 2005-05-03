@@ -156,8 +156,8 @@ public abstract class BaseRefactoringProcessor {
 
   private void ensureFilesWritable(UsageInfo[] usages) {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
-    for (int i = 0; i < usages.length; i++) {
-      final PsiFile file = usages[i].getElement().getContainingFile();
+    for (UsageInfo usage : usages) {
+      final PsiFile file = usage.getElement().getContainingFile();
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
         files.add(virtualFile);
@@ -295,8 +295,7 @@ public abstract class BaseRefactoringProcessor {
     Set<Usage> usages = usageView.getExcludedUsages();
 
     Set<UsageInfo> excludedUsageInfos = new HashSet<UsageInfo>();
-    for (Iterator<Usage> i = usages.iterator(); i.hasNext();) {
-      Usage usage = i.next();
+    for (Usage usage : usages) {
       if (usage instanceof UsageInfo2UsageAdapter) {
         excludedUsageInfos.add(((UsageInfo2UsageAdapter)usage).getUsageInfo());
       }
@@ -356,9 +355,8 @@ public abstract class BaseRefactoringProcessor {
 
   private void removeRedundantImports(final Set<PsiJavaFile> javaFiles) {
     final CodeStyleManager styleManager = PsiManager.getInstance(myProject).getCodeStyleManager();
-    for (Iterator<PsiJavaFile> iterator = javaFiles.iterator(); iterator.hasNext();) {
+    for (PsiJavaFile file : javaFiles) {
       try {
-        final PsiJavaFile file = iterator.next();
         if (file.getVirtualFile() != null) {
           styleManager.removeRedundantImports(file);
         }
@@ -371,8 +369,8 @@ public abstract class BaseRefactoringProcessor {
 
   private Set<PsiJavaFile> getTouchedJavaFiles(final UsageInfo[] usages) {
     Set<PsiJavaFile> javaFiles = new HashSet<PsiJavaFile>();
-    for (int i = 0; i < usages.length; i++) {
-      final PsiElement element = usages[i].getElement();
+    for (UsageInfo usage : usages) {
+      final PsiElement element = usage.getElement();
       if (element != null) {
         final PsiFile file = element.getContainingFile();
         if (file instanceof PsiJavaFile) {

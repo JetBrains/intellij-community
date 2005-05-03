@@ -2,6 +2,7 @@ package com.intellij.usages;
 
 
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.project.Project;
 
 /**
  * Created by IntelliJ IDEA.
@@ -10,23 +11,27 @@ import com.intellij.openapi.util.Factory;
  * Time: 4:14:03 PM
  * To change this template use File | Settings | File Templates.
  */
-public interface UsageViewManager {
-  UsageView createUsageView(UsageTarget[] targets, Usage[] usages, UsageViewPresentation presentation);
+public abstract class UsageViewManager {
+  public static UsageViewManager getInstance (Project project) {
+    return project.getComponent(UsageViewManager.class);
+  }
 
-  UsageView showUsages(UsageTarget[] searchedFor, Usage[] foundUsages, UsageViewPresentation presentation);
+  public abstract UsageView createUsageView(UsageTarget[] targets, Usage[] usages, UsageViewPresentation presentation);
 
-  UsageView searchAndShowUsages(UsageTarget[] searchFor,
+  public abstract UsageView showUsages(UsageTarget[] searchedFor, Usage[] foundUsages, UsageViewPresentation presentation);
+
+  public abstract UsageView searchAndShowUsages(UsageTarget[] searchFor,
                                 Factory<UsageSearcher> searcherFactory,
                                 boolean showPanelIfOnlyOneUsage,
                                 boolean showNotFoundMessage, UsageViewPresentation presentation,
                                 UsageViewStateListener listener);
 
-  interface UsageViewStateListener {
+  public interface UsageViewStateListener {
     void usageViewCreated(UsageView usageView);
     void findingUsagesFinished(final UsageView usageView);
   }
 
-  void searchAndShowUsages(UsageTarget[] searchFor,
+  public abstract void searchAndShowUsages(UsageTarget[] searchFor,
                            Factory<UsageSearcher> searcherFactory,
                            FindUsagesProcessPresentation processPresentation,
                            UsageViewPresentation presentation,
