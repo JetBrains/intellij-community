@@ -29,7 +29,15 @@ import java.util.*;
 public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
   private static final Comparator<FeatureDescriptor> DISPLAY_NAME_COMPARATOR = new Comparator<FeatureDescriptor>() {
     public int compare(FeatureDescriptor fd1, FeatureDescriptor fd2) {
-      return fd1.getDisplayName().compareTo(fd2.getDisplayName());
+      final String displayName1 = fd1.getDisplayName();
+      final String displayName2 = fd2.getDisplayName();
+      if (displayName1 != null && displayName2 != null) {
+        return displayName1.compareTo(displayName2);
+      }
+      if (displayName2 != null){
+        return -1;
+      }
+      return 1;
     }
   };
   private static final Comparator<FeatureDescriptor> GROUP_NAME_COMPARATOR = new Comparator<FeatureDescriptor>() {
