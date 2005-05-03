@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -147,7 +148,11 @@ public class WhileCanBeForeachInspection extends StatementInspection{
                                                            whileStatement,
                                                            contentType, null);
                 }
-                finalString = "";
+                if(CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS){
+                    finalString = "final ";
+                } else{
+                    finalString = "";
+                }
                 statementToSkip = null;
             }
             out.append("for(" + finalString + contentTypeString + ' ' +
@@ -203,7 +208,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             }
             if(!(elements[0] instanceof PsiLocalVariable)){
                 return false;
-            }         
+            }
             final PsiLocalVariable var = (PsiLocalVariable) elements[0];
             final PsiExpression initializer = var.getInitializer();
             return isIteratorNext(initializer, iteratorName, contentType);

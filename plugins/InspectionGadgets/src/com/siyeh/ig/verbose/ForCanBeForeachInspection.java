@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
@@ -153,7 +154,11 @@ public class ForCanBeForeachInspection extends StatementInspection{
                                                            forStatement,
                                                            contentType, null);
                 }
-                finalString = "";
+                if(CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS){
+                    finalString = "final ";
+                } else{
+                    finalString = "";
+                }
                 statementToSkip = null;
             }
             out.append("for(" + finalString + contentTypeString + ' ' +
