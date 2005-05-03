@@ -5,10 +5,10 @@ import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.Language;
-import com.intellij.lang.findUsages.FindUsagesProvider;
-import com.intellij.lang.jsp.NewJspLanguage;
 import com.intellij.lang.cacheBuilder.WordOccurence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
+import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.lang.jsp.NewJspLanguage;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -119,7 +119,9 @@ public class IdTableBuilding {
                       TodoPattern[] todoPatterns,
                       int[] todoCounts,
                       final PsiManager manager) {
-      Lexer lexer = new com.intellij.psi.impl.source.parsing.jsp.JspLexer(Language.findInstance(NewJspLanguage.class).getBaseLanguage().getParserDefinition().createLexer(manager.getProject()));
+
+      final NewJspLanguage jspLanguage = Language.findInstance(NewJspLanguage.class);
+      Lexer lexer = jspLanguage.createCacheBuilderLexer(manager.getProject());
       JspxFilterLexer filterLexer = new JspxFilterLexer(lexer, wordsTable, todoCounts);
       lexer = new FilterLexer(filterLexer, TOKEN_FILTER);
       lexer.start(chars);
