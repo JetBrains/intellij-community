@@ -29,22 +29,23 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.jsp.*;
+import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.jsp.JspImplicitVariable;
+import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -971,7 +972,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     else {
       // collect comment offsets to prevent long locks by PsiManagerImpl.LOCK
       synchronized (PsiLock.LOCK) {
-        final Lexer lexer = ((PsiFileImpl)file).createLexer();
+        final Language lang = file.getLanguage();
+        if (lang == null) return EMPTY_TODO_ITEMS;
+        Lexer lexer = lang.getSyntaxHighlighter(file.getProject()).getHighlightingLexer();;
         TokenSet commentTokens = null;
         if (file instanceof PsiJavaFile || file instanceof JspFile) {
           commentTokens = ElementType.COMMENT_BIT_SET;
@@ -980,7 +983,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           commentTokens = XML_COMMENT_BIT_SET;
         }
         else {
-          final Language lang = file.getLanguage();
           if (lang != null) {
             final ParserDefinition parserDefinition = lang.getParserDefinition();
             if (parserDefinition != null) {
