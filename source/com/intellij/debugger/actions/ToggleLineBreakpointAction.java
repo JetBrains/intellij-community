@@ -5,6 +5,7 @@ import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
+import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -74,7 +75,15 @@ public class ToggleLineBreakpointAction extends AnAction {
     PlaceInDocument place = getPlace(event);
     if (place != null) {
       Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
-      toEnable = LineBreakpoint.canAddLineBreakpoint(project, place.getDocument(), place.getDocument().getLineNumber(place.getOffset()));
+      final Document document = place.getDocument();
+      final int offset = place.getOffset();
+      final BreakpointWithHighlighter breakpointAtLine = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().findBreakpoint(document, offset);
+      if (breakpointAtLine != null && LineBreakpoint.CATEGORY.equals(breakpointAtLine.getCategory())) {
+        toEnable = true;
+      }
+      else {
+        toEnable = LineBreakpoint.canAddLineBreakpoint(project, document, document.getLineNumber(offset));
+      }
     }
 
     Presentation presentation = event.getPresentation();
