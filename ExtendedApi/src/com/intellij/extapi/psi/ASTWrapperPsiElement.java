@@ -85,7 +85,8 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
   }
 
   public PsiFile getContainingFile() {
-    return getParent().getContainingFile();
+    final PsiElement parent = getParent();
+    return (parent != null)?parent.getContainingFile():null;
   }
 
   public TextRange getTextRange() {
@@ -204,7 +205,8 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
   }
 
   public boolean isValid() {
-    return getContainingFile().isValid();
+    final PsiFile containingFile = getContainingFile();
+    return (containingFile!=null)?containingFile.isValid():false;
   }
 
   public boolean isWritable() {
