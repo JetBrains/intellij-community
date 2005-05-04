@@ -3,6 +3,7 @@ package com.intellij.ide.structureView.impl.java;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Icons;
 
 import java.util.*;
 
@@ -36,7 +37,7 @@ public class PropertiesGrouper implements Grouper{
   }
 
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData("Show Properties", null, IconLoader.getIcon("/nodes/property.png"));
+    return new ActionPresentationData("Show Properties", null, Icons.PROPERTY_ICON);
   }
 
   public String getName() {

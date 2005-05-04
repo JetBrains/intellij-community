@@ -5,6 +5,7 @@
 package com.intellij.ant;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.Icons;
 
 import javax.swing.*;
 
@@ -12,13 +13,11 @@ import javax.swing.*;
  * @author dyoma
  */
 public class AntElementRole {
-  public static final Icon PROPERTY_ICON = IconLoader.getIcon("/nodes/property.png");
-  public static final Icon TARGET_ICON = IconLoader.getIcon("/ant/target.png");
   public static final Icon TASK_ICON = IconLoader.getIcon("/ant/task.png");
   private final String myName;
   private final Icon myIcon;
-  public static final AntElementRole TARGET_ROLE = new AntElementRole("Ant target", TARGET_ICON);
-  public static final AntElementRole PROPERTY_ROLE = new AntElementRole("Ant property", PROPERTY_ICON);
+  public static final AntElementRole TARGET_ROLE = new AntElementRole("Ant target", Icons.ANT_TARGET_ICON);
+  public static final AntElementRole PROPERTY_ROLE = new AntElementRole("Ant property", Icons.PROPERTY_ICON);
   public static final AntElementRole TASK_ROLE = new AntElementRole("Ant task", TASK_ICON);
 
   public AntElementRole(String name, Icon icon) {
