@@ -286,10 +286,12 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
 
     private void registerNamingInspections(){
         final List<Class> inspectionClasses = m_inspectionClasses;
-        //inspectionClasses.add(PackageNamingConventionInspection.class);
         inspectionClasses.add(JUnitTestClassNamingConventionInspection.class);
         inspectionClasses.add(JUnitAbstractTestClassNamingConventionInspection.class);
         inspectionClasses.add(ClassNamingConventionInspection.class);
+        inspectionClasses.add(EnumeratedClassNamingConventionInspection.class);
+        inspectionClasses.add(EnumeratedConstantNamingConventionInspection.class);
+        inspectionClasses.add(AnnotationNamingConventionInspection.class);
         inspectionClasses.add(InterfaceNamingConventionInspection.class);
         inspectionClasses.add(InstanceVariableNamingConventionInspection.class);
         inspectionClasses.add(StaticVariableNamingConventionInspection.class);

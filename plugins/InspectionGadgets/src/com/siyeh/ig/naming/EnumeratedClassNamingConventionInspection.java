@@ -10,13 +10,13 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 
-public class ClassNamingConventionInspection extends ConventionInspection {
+public class EnumeratedClassNamingConventionInspection extends ConventionInspection {
     private static final int DEFAULT_MIN_LENGTH = 8;
     private static final int DEFAULT_MAX_LENGTH = 64;
     private final RenameFix fix = new RenameFix();
 
     public String getDisplayName() {
-        return "Class naming convention";
+        return "Enumerated class naming convention";
     }
 
     public String getGroupDisplayName() {
@@ -35,11 +35,11 @@ public class ClassNamingConventionInspection extends ConventionInspection {
         final PsiClass aClass = (PsiClass) location.getParent();
         final String className = aClass.getName();
         if (className.length() < getMinLength()) {
-            return "Class name '#ref' is too short #loc";
+            return "Enumerated class name '#ref' is too short #loc";
         } else if (className.length() > getMaxLength()) {
-            return "Class name '#ref' is too long #loc";
+            return "Enumerated class name '#ref' is too long #loc";
         }
-        return "Class name '#ref' doesn't match regex '" + getRegex() + "' #loc";
+        return "Enumerated class name '#ref' doesn't match regex '" + getRegex() + "' #loc";
     }
 
     protected String getDefaultRegex() {
@@ -59,11 +59,13 @@ public class ClassNamingConventionInspection extends ConventionInspection {
     }
 
     public ProblemDescriptor[] doCheckClass(PsiClass aClass, InspectionManager mgr, boolean isOnTheFly) {
+
         if (!aClass.isPhysical()) {
             return super.doCheckClass(aClass, mgr, isOnTheFly);
         }
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
         aClass.accept(visitor);
+
         return visitor.getErrors();
     }
 
@@ -73,7 +75,7 @@ public class ClassNamingConventionInspection extends ConventionInspection {
         }
 
         public void visitClass(PsiClass aClass) {
-            if (aClass.isInterface() || aClass.isAnnotationType()|| aClass.isEnum()) {
+            if (!aClass.isEnum()) {
                 return;
             }
             final String name = aClass.getName();

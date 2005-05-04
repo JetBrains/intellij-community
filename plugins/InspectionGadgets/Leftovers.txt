@@ -31,6 +31,9 @@
     Use of non-final static field during class initialization
     Use Datasource rather than DriverManager to get JDBC connections
     clone() final, for security
+    Annotation class naming convention
+    Enum class naming convention
+    Enum constant naming convention
 
     Move stuff to "J2ME" or "Memory" categories
 

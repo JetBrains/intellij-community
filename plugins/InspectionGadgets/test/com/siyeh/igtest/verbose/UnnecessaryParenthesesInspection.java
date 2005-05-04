@@ -1,5 +1,8 @@
 package com.siyeh.igtest.verbose;
 
+import java.util.List;
+import java.util.ArrayList;
+
 public class UnnecessaryParenthesesInspection
 {
 
@@ -24,6 +27,8 @@ public class UnnecessaryParenthesesInspection
         System.out.println("k = " + k);
         final int hash = ((this).hashCode());
         final int hash2 = (("x" + "y").hashCode());
+        List list = new ArrayList();
+        (list.subList(1, 2)).get(0); 
     }
 
 }

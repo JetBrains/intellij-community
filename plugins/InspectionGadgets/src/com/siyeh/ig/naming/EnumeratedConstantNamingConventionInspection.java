@@ -2,21 +2,20 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 
-public class ClassNamingConventionInspection extends ConventionInspection {
-    private static final int DEFAULT_MIN_LENGTH = 8;
-    private static final int DEFAULT_MAX_LENGTH = 64;
+public class EnumeratedConstantNamingConventionInspection extends ConventionInspection {
+    private static final int DEFAULT_MIN_LENGTH = 5;
+    private static final int DEFAULT_MAX_LENGTH = 32;
     private final RenameFix fix = new RenameFix();
 
     public String getDisplayName() {
-        return "Class naming convention";
+        return "Enumerated constant naming convention";
     }
 
     public String getGroupDisplayName() {
@@ -32,14 +31,14 @@ public class ClassNamingConventionInspection extends ConventionInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        final PsiClass aClass = (PsiClass) location.getParent();
-        final String className = aClass.getName();
-        if (className.length() < getMinLength()) {
-            return "Class name '#ref' is too short #loc";
-        } else if (className.length() > getMaxLength()) {
-            return "Class name '#ref' is too long #loc";
+        final PsiField field = (PsiField) location.getParent();
+        final String fieldName = field.getName();
+        if (fieldName.length() < getMinLength()) {
+            return "Enumerated constant name '#ref' is too short #loc";
+        } else if (fieldName.length() > getMaxLength()) {
+            return "Enumerated constant name '#ref' is too long #loc";
         }
-        return "Class name '#ref' doesn't match regex '" + getRegex() + "' #loc";
+        return "Enumerated constant '#ref' doesn't match regex '" + getRegex() + "' #loc";
     }
 
     protected String getDefaultRegex() {
@@ -58,12 +57,16 @@ public class ClassNamingConventionInspection extends ConventionInspection {
         return new NamingConventionsVisitor(this, inspectionManager, onTheFly);
     }
 
-    public ProblemDescriptor[] doCheckClass(PsiClass aClass, InspectionManager mgr, boolean isOnTheFly) {
-        if (!aClass.isPhysical()) {
-            return super.doCheckClass(aClass, mgr, isOnTheFly);
+    public ProblemDescriptor[] doCheckField(PsiField field, InspectionManager mgr, boolean isOnTheFly) {
+        final PsiClass containingClass = field.getContainingClass();
+        if (containingClass == null) {
+            return super.doCheckField(field, mgr, isOnTheFly);
+        }
+        if (!containingClass.isPhysical()) {
+            return super.doCheckField(field, mgr, isOnTheFly);
         }
         final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
-        aClass.accept(visitor);
+        field.accept(visitor);
         return visitor.getErrors();
     }
 
@@ -72,19 +75,16 @@ public class ClassNamingConventionInspection extends ConventionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
-            if (aClass.isInterface() || aClass.isAnnotationType()|| aClass.isEnum()) {
+        public void visitEnumConstant(PsiEnumConstant constant){
+            super.visitEnumConstant(constant);
+            final String name = constant.getName();
+            if(name == null){
                 return;
             }
-            final String name = aClass.getName();
-            if (name == null) {
+            if(isValid(name)){
                 return;
             }
-            if (isValid(name)) {
-                return;
-            }
-            registerClassError(aClass);
+            registerFieldError(constant);
         }
-
     }
 }
