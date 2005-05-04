@@ -21,4 +21,5 @@ public interface PropertiesTokenTypes {
   IElementType KEY_VALUE_SEPARATOR = new PropertiesElementType("KEY_VALUE_SEPARATOR");
 
   TokenSet COMMENTS = TokenSet.create(new IElementType[] {END_OF_LINE_COMMENT});
+  TokenSet WHITESPACES = TokenSet.create(new IElementType[] {PropertiesTokenTypes.WHITE_SPACE});
 }

@@ -3,6 +3,7 @@ package com.intellij.lang.xhtml;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
+import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -20,35 +21,7 @@ import com.intellij.psi.tree.TokenSet;
  * Time: 1:02:53 PM
  * To change this template use File | Settings | File Templates.
  */
-public class XHTMLParserDefinition implements ParserDefinition {
-  public Lexer createLexer(Project project) {
-    return null;
-  }
-
-  public IElementType getFileNodeType() {
-    return null;
-  }
-
-  public TokenSet getWhitespaceTokens() {
-    return null;
-  }
-
-  public TokenSet getCommentTokens() {
-    return null;
-  }
-
-  public PsiParser createParser(final Project project) {
-    return null;
-  }
-
-  public PsiElement createElement(ASTNode node) {
-    return null;
-  }
-
-  public PsiFile createFile(final Project project, VirtualFile file) {
-    return new XmlFileImpl(project, file);
-  }
-
+public class XHTMLParserDefinition extends XMLParserDefinition {
   public PsiFile createFile(final Project project, String name, CharSequence text) {
     return new XmlFileImpl(project, name, text, StdFileTypes.XHTML);
   }

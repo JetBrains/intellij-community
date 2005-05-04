@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -31,11 +32,11 @@ public class HTMLParserDefinition implements ParserDefinition {
   }
 
   public TokenSet getWhitespaceTokens() {
-    return null;
+    return XmlTokenType.WHITESPACES;
   }
 
   public TokenSet getCommentTokens() {
-    return null;
+    return XmlTokenType.COMMENTS;
   }
 
   public PsiParser createParser(final Project project) {

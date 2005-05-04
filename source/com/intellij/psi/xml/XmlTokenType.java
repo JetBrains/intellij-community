@@ -6,6 +6,7 @@ package com.intellij.psi.xml;
 
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
 
 public interface XmlTokenType {
@@ -76,4 +77,7 @@ public interface XmlTokenType {
   IElementType XML_BAD_CHARACTER = new IXmlLeafElementType("XML_BAD_CHARACTER");
   IElementType XML_EMBEDDED_CHAMELEON = new IXmlLeafElementType("XML_EMBEDDED_CONTENT");
   IElementType XML_MARKUP_DECL = XmlElementType.XML_MARKUP;
+
+  TokenSet COMMENTS = TokenSet.create(new IElementType[] {XML_COMMENT_START, XML_COMMENT_CHARACTERS, XML_COMMENT_END});
+  TokenSet WHITESPACES = TokenSet.create(new IElementType[] {XML_WHITE_SPACE, XML_REAL_WHITE_SPACE});
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.tree.IElementType;
@@ -34,11 +35,11 @@ public class JavaParserDefinition implements ParserDefinition {
   }
 
   public TokenSet getWhitespaceTokens() {
-    return null;
+    return JavaTokenType.WHITESPACE_BIT_SET;
   }
 
   public TokenSet getCommentTokens() {
-    return null;
+    return JavaTokenType.COMMENT_BIT_SET;
   }
 
   public PsiParser createParser(final Project project) {

@@ -163,6 +163,10 @@ public interface JavaTokenType extends TokenType{
     WHITE_SPACE, END_OF_LINE_COMMENT, C_STYLE_COMMENT, DOC_COMMENT
   });
 
+  TokenSet WHITESPACE_BIT_SET = TokenSet.create(new IElementType[]{
+    WHITE_SPACE
+  });
+
   TokenSet COMMENT_BIT_SET = TokenSet.create(new IElementType[]{
     END_OF_LINE_COMMENT, C_STYLE_COMMENT, DOC_COMMENT
   });

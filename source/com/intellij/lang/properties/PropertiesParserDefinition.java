@@ -35,7 +35,7 @@ public class PropertiesParserDefinition implements ParserDefinition {
   }
 
   public TokenSet getWhitespaceTokens() {
-    return TokenSet.create(new IElementType[] {PropertiesTokenTypes.WHITE_SPACE});
+    return PropertiesTokenTypes.WHITESPACES;
   }
 
   public TokenSet getCommentTokens() {
