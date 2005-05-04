@@ -3,6 +3,7 @@ package com.intellij.refactoring.safeDelete;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.lang.Language;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,16 +58,16 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     myElements = elements;
   }
 
-  private boolean isInside(PsiElement place, PsiElement[] ancestors) {
+  private static boolean isInside(PsiElement place, PsiElement[] ancestors) {
     return isInside(place, Arrays.asList(ancestors));
   }
-  private boolean isInside(PsiElement place, Collection<? extends PsiElement> ancestors) {
+  private static boolean isInside(PsiElement place, Collection<? extends PsiElement> ancestors) {
     for (PsiElement element : ancestors) {
       if (PsiTreeUtil.isAncestor(element, place, false)) return true;
       if (place instanceof PsiComment && element instanceof PsiClass) {
-        final PsiClass aClass = ((PsiClass)element);
+        final PsiClass aClass = (PsiClass) element;
         if (aClass.getParent() instanceof PsiJavaFile) {
-          final PsiJavaFile file = ((PsiJavaFile)aClass.getParent());
+          final PsiJavaFile file = (PsiJavaFile) aClass.getParent();
           if (PsiTreeUtil.isAncestor(file, place, false)) {
             if (file.getClasses().length == 1) { // file will be deleted on class deletion
               return true;
@@ -82,10 +83,10 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     ArrayList<UsageInfo> usages = new ArrayList<UsageInfo>();
     for (PsiElement element : myElements) {
       if (element instanceof PsiClass) {
-        findClassUsages(((PsiClass)element), usages);
+        findClassUsages((PsiClass) element, usages);
       }
       else if (element instanceof PsiMethod) {
-        findMethodUsages(((PsiMethod)element), usages);
+        findMethodUsages((PsiMethod) element, usages);
       }
       else if (element instanceof PsiField) {
         findFieldUsages((PsiField)element, usages);
@@ -103,7 +104,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   private void findFileUsages(final PsiFile file, final ArrayList<UsageInfo> usages) {
     findGenericElementUsages(file, usages);
-    PsiElement[] declarations = PsiElement.EMPTY_ARRAY;
+    List<Property> declarations = Collections.EMPTY_LIST;
     if (file instanceof PropertiesFile) {
       declarations = ((PropertiesFile)file).getProperties();
     }
@@ -279,7 +280,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
    * @param usages
    * @return Map from elements to UsageHolders
    */
-  private HashMap<PsiElement,UsageHolder> sortUsages(UsageInfo[] usages) {
+  private static HashMap<PsiElement,UsageHolder> sortUsages(UsageInfo[] usages) {
     HashMap<PsiElement,UsageHolder> result = new HashMap<PsiElement, UsageHolder>();
 
     for (final UsageInfo usage : usages) {
@@ -310,10 +311,10 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return super.isPreviewUsages(filterToBeDeleted(usages));
   }
 
-  private UsageInfo[] filterToBeDeleted(UsageInfo[] infos) {
+  private static UsageInfo[] filterToBeDeleted(UsageInfo[] infos) {
     ArrayList<UsageInfo> list = new ArrayList<UsageInfo>();
     for (UsageInfo info : infos) {
-      if (!(info instanceof SafeDeleteReferenceUsageInfo) || (((SafeDeleteReferenceUsageInfo)info).isSafeDelete())) {
+      if (!(info instanceof SafeDeleteReferenceUsageInfo) || ((SafeDeleteReferenceUsageInfo) info).isSafeDelete()) {
         list.add(info);
       }
     }
@@ -350,7 +351,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void deleteTypeParameterExternalUsages(PsiTypeParameter typeParameter) throws IncorrectOperationException {
+  private static void deleteTypeParameterExternalUsages(PsiTypeParameter typeParameter) throws IncorrectOperationException {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();
     int index = owner.getTypeParameterList().getTypeParameterIndex(typeParameter);
 
@@ -394,7 +395,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         if (parent instanceof PsiReferenceList) {
           final PsiElement pparent = parent.getParent();
           if (pparent instanceof PsiClass) {
-            final PsiClass inheritor = ((PsiClass)pparent);
+            final PsiClass inheritor = (PsiClass) pparent;
             //If psiClass contains only private members, then it is safe to remove it and change inheritor's extends/implements accordingly
             if (justPrivates) {
               if (parent.equals(inheritor.getExtendsList()) || parent.equals(inheritor.getImplementsList())) {
@@ -411,7 +412,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     addNonCodeUsages(psiClass, usages, myInsideDeletedElements);
   }
 
-  private boolean containsOnlyPrivates(final PsiClass aClass) {
+  private static boolean containsOnlyPrivates(final PsiClass aClass) {
     final PsiField[] fields = aClass.getFields();
     for (PsiField field : fields) {
       if (!field.hasModifierProperty(PsiModifier.PRIVATE)) return false;
@@ -639,7 +640,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiAssignmentExpression && element == ((PsiAssignmentExpression)parent).getLExpression()) {
-          usages.add(new SafeDeleteFieldWriteReference(((PsiAssignmentExpression)parent), psiField));
+          usages.add(new SafeDeleteFieldWriteReference((PsiAssignmentExpression) parent, psiField));
         }
         else {
           usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(reference.getElement(), psiField, false));
