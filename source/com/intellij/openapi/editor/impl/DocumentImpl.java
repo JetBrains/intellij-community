@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CoModifiableList;
 import com.intellij.util.containers.WeakList;
@@ -26,7 +27,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.*;
 
-public class DocumentImpl implements DocumentEx {
+public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
 
   private ArrayList<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
@@ -37,7 +38,6 @@ public class DocumentImpl implements DocumentEx {
   private CharArray myText;
 
   private boolean myIsReadOnly = false;
-  private final THashMap<Object, Object> myUserDataMap = new THashMap<Object, Object>(4);
   private boolean isStripTrailingSpacesEnabled = true;
   private long myModificationStamp;
   private HashMap<Project, MarkupModel> myProjectToMarkupModelMap = new HashMap<Project, MarkupModel>();
@@ -145,23 +145,6 @@ public class DocumentImpl implements DocumentEx {
 
     for (int i = 0; i < editors.length; i++) {
       editors[i].getCaretModel().moveToVisualPosition(visualCarets[i]);
-    }
-  }
-
-  public <T> void putUserData(Key<T> key, T value) {
-    synchronized (myUserDataMap) {
-      if (value != null) {
-        myUserDataMap.put(key, value);
-      }
-      else {
-        myUserDataMap.remove(key);
-      }
-    }
-  }
-
-  public <T> T getUserData(Key<T> key) {
-    synchronized (myUserDataMap) {
-      return (T)myUserDataMap.get(key);
     }
   }
 
