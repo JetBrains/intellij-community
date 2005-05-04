@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.jsp.el.ELTokenType;
@@ -268,6 +269,23 @@ public class TypedHandler implements TypedActionHandler {
   static class JavaQuoteHandler extends SimpleTokenSetQuoteHandler {
     public JavaQuoteHandler() {
       super(new IElementType[] { JavaTokenType.STRING_LITERAL, JavaTokenType.CHARACTER_LITERAL});
+    }
+
+    public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
+      boolean closingQuote = super.isClosingQuote(iterator, offset);
+
+      if (closingQuote) {
+        // check escape next
+        if (!iterator.atEnd()) {
+          iterator.advance();
+          
+          if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.isInSet( iterator.getTokenType() )) {
+            closingQuote = false;
+          }
+          iterator.retreat();
+        }
+      }
+      return closingQuote;
     }
   }
 
