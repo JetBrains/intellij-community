@@ -32,7 +32,7 @@ public class UnusedPropertyInspection extends LocalInspectionTool {
   }
 
   public String getShortName() {
-    return "Unused Property";
+    return "UnusedProperty";
   }
 
   public ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly) {
