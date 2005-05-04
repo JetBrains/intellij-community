@@ -15,6 +15,7 @@ public interface PsiBuilder {
   IElementType getTokenType();
   void advanceLexer();
   int getCurrentOffset();
+  String getTokenText();
 
   interface Marker {
     Marker preceed();

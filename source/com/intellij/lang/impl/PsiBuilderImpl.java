@@ -154,6 +154,10 @@ public class PsiBuilderImpl implements PsiBuilder {
     return token.myTokenStart;
   }
 
+  public String getTokenText() {
+    return getCurrentToken().getTokenText();
+  }
+
   public Token getCurrentToken() {
     Token lastToken;
     while (true) {
