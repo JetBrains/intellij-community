@@ -39,6 +39,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
   private ArrayList myListeners = new ArrayList();
   private static final int DELAY_UNTIL_ABORT_CLIPBOARD_ACCESS = 2000;
+  private boolean myIsWarningShown = false;
 
   public CopyPasteManagerEx() {
     myDatas = new ArrayList<Transferable>();
@@ -132,8 +133,10 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   private void showWorkaroundMessage() {
+    if (myIsWarningShown) return;
     Messages.showErrorDialog("You're seeing this message because of the workaround to JRE issue: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143\n" +
                              "IDEA would hang otherwise. The system clipboard might be not working correctly. It is recommended to restart IDEA.", "System Error");
+    myIsWarningShown = true;
   }
 
   PsiElement[] getElements(final Transferable content) {
