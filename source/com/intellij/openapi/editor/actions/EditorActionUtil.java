@@ -122,47 +122,50 @@ public class EditorActionUtil {
   }
 
   public static boolean isWordStart(CharSequence text, int offset, boolean isCamel) {
-    char first = text.charAt(offset - 1);
-    char second = text.charAt(offset);
-    final boolean firstIsIdentifierPart = Character.isJavaIdentifierPart(first);
-    final boolean secondIsIdentifierPart = Character.isJavaIdentifierPart(second);
+    char prev = offset > 0 ? text.charAt(offset - 1) : 0;
+    char current = text.charAt(offset);
+    char next = offset + 1 < text.length() ? text.charAt(offset + 1) : 0;
+
+    final boolean firstIsIdentifierPart = Character.isJavaIdentifierPart(prev);
+    final boolean secondIsIdentifierPart = Character.isJavaIdentifierPart(current);
     if (!firstIsIdentifierPart && secondIsIdentifierPart) {
       return true;
     }
-    
+
     if (isCamel) {
       if (firstIsIdentifierPart && secondIsIdentifierPart &&
-          (Character.isLowerCase(first) && Character.isUpperCase(second) ||
-           first == '_' && second != '_' ||
-           offset + 1 < text.length() && Character.isUpperCase(first) && Character.isUpperCase(second) && Character.isLowerCase(text.charAt(offset + 1)))) {
+          (Character.isLowerCase(prev) && Character.isUpperCase(current) ||
+           prev == '_' && current != '_' ||
+           Character.isUpperCase(prev) && Character.isUpperCase(current) && Character.isLowerCase(next))) {
         return true;
       }
     }
 
-    return (Character.isWhitespace(first) || firstIsIdentifierPart) &&
-           !Character.isWhitespace(second) && !secondIsIdentifierPart;
+    return (Character.isWhitespace(prev) || firstIsIdentifierPart) &&
+           !Character.isWhitespace(current) && !secondIsIdentifierPart;
   }
 
   public static boolean isWordEnd(CharSequence text, int offset, boolean isCamel) {
-    char first = text.charAt(offset - 1);
-    char second = text.charAt(offset);
-    final boolean firstIsIdentifiePart = Character.isJavaIdentifierPart(first);
-    final boolean secondIsIdentifierPart = Character.isJavaIdentifierPart(second);
+    char prev = offset > 0 ? text.charAt(offset - 1) : 0;
+    char current = text.charAt(offset);
+    char next = offset + 1 < text.length() ? text.charAt(offset + 1) : 0;
+
+    final boolean firstIsIdentifiePart = Character.isJavaIdentifierPart(prev);
+    final boolean secondIsIdentifierPart = Character.isJavaIdentifierPart(current);
     if (firstIsIdentifiePart && !secondIsIdentifierPart) {
       return true;
     }
 
     if (isCamel) {
       if (firstIsIdentifiePart && secondIsIdentifierPart &&
-          (Character.isLowerCase(first) && Character.isUpperCase(second) || first != '_' && second == '_' ||
-          offset + 1 < text.length() && Character.isUpperCase(first) &&
-          Character.isUpperCase(second) && Character.isLowerCase(text.charAt(offset + 1)))) {
+          (Character.isLowerCase(prev) && Character.isUpperCase(current) || prev != '_' && current == '_' ||
+          Character.isUpperCase(prev) && Character.isUpperCase(current) && Character.isLowerCase(next))) {
         return true;
       }
     }
 
-    return !Character.isWhitespace(first) && !firstIsIdentifiePart &&
-           (Character.isWhitespace(second) || secondIsIdentifierPart);
+    return !Character.isWhitespace(prev) && !firstIsIdentifiePart &&
+           (Character.isWhitespace(current) || secondIsIdentifierPart);
   }
 
   public static void moveCaretToLineStart(Editor editor, boolean isWithSelection) {
