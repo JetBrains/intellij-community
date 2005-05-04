@@ -217,4 +217,8 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
   public boolean isComplete() {
     return getGetter() != null || getSetter() != null;
   }
+
+  public Object getValue() {
+    return this;
+  }
 }
