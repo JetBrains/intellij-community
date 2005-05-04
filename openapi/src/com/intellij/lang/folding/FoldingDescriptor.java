@@ -11,6 +11,8 @@ import com.intellij.openapi.util.TextRange;
  * To change this template use File | Settings | File Templates.
  */
 public class FoldingDescriptor {
+  public static final FoldingDescriptor[] EMPTY = new FoldingDescriptor[0];
+
   private ASTNode myElement;
   private TextRange myRange;
 
