@@ -33,12 +33,10 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
 
   public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type){
     if (element instanceof XmlAttributeValue) {
-      final XmlAttributeValue attributeValue = ((XmlAttributeValue)element);
-      final String valueString = attributeValue.getValue();
-      int offsetInElement = 1;
-      return getReferencesByString(valueString, attributeValue, type, offsetInElement);
+      final String valueString = ((XmlAttributeValue)element).getValue();
+      return getReferencesByString(valueString, element, type, 1);
     }
-    return PsiReference.EMPTY_ARRAY;
+    return getReferencesByString(element.getText(), element, type, 0);
   }
 
   public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition){
@@ -116,8 +114,9 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
                                                             myStartInElement + (nextDot > 0 ? nextDot : str.length())),
                                               index++, subreferenceText);
         referencesList.add(currentContextRef);
-        if((currentDot = nextDot) < 0)
+        if ((currentDot = nextDot) < 0) {
           break;
+        }
       }
 
       myReferences = referencesList.toArray(new JavaReference[referencesList.size()]);
@@ -180,8 +179,9 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
       }
 
       public boolean isReferenceTo(PsiElement element) {
-        if(element instanceof PsiClass || element instanceof PsiPackage)
+        if (element instanceof PsiClass || element instanceof PsiPackage) {
           return super.isReferenceTo(element);
+        }
         return false;
       }
 
@@ -219,8 +219,9 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
           PsiPackage psiPackage = (PsiPackage)element;
           qualifiedName = psiPackage.getQualifiedName();
         }
-        else
+        else {
           throw new IncorrectOperationException("Cannot bind to " + element);
+        }
 
         final String newName = qualifiedName;
         final TextRange range = new TextRange(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
