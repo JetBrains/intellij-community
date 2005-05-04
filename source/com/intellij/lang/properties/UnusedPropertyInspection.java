@@ -45,7 +45,7 @@ public class UnusedPropertyInspection extends LocalInspectionTool {
     GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependenciesScope(module);
     for (Property property : properties) {
       PsiReferenceProcessor.FindElement processor = new PsiReferenceProcessor.FindElement();
-      searchHelper.processReferences(processor, property, searchScope, true);
+      searchHelper.processReferences(processor, property, searchScope, false);
       if (!processor.isFound()) {
         ProblemDescriptor descriptor = manager.createProblemDescriptor(property, "Unused property", QUICK_FIX, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
         descriptors.add(descriptor);
