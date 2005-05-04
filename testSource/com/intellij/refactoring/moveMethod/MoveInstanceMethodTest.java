@@ -25,6 +25,8 @@ public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
 
   public void testRecursive() throws Exception { doTest(true, 0); }
 
+  public void testRecursive1() throws Exception { doTest(true, 0); }
+
   public void testQualifiedThis() throws Exception { doTest(true, 0); }
 
   public void testTwoParams() throws Exception { doTest(true, 0); }

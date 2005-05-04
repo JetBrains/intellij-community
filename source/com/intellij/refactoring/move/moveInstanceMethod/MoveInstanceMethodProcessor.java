@@ -71,8 +71,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       conflicts.addAll(Arrays.asList(MoveMembersProcessor.analyzeAccessibilityConflicts(methods, myTargetClass, new LinkedHashSet<String>(), myNewVisibility)));
     }
     else {
-      for (int i = 0; i < usages.length; i++) {
-        final UsageInfo usage = usages[i];
+      for (final UsageInfo usage : usages) {
         if (usage instanceof InheritorUsageInfo) {
           conflicts.addAll(Arrays.asList(MoveMembersProcessor.analyzeAccessibilityConflicts(
             methods, ((InheritorUsageInfo)usage).getInheritor(), new LinkedHashSet<String>(), myNewVisibility)));
@@ -82,8 +81,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
     if (myTargetVariable instanceof PsiParameter) {
       PsiParameter parameter = (PsiParameter)myTargetVariable;
-      for (int i = 0; i < usages.length; i++) {
-        final UsageInfo usageInfo = usages[i];
+      for (final UsageInfo usageInfo : usages) {
         if (usageInfo instanceof MethodCallUsageInfo) {
           final PsiMethodCallExpression methodCall = ((MethodCallUsageInfo)usageInfo).getMethodCallExpression();
           final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
@@ -93,7 +91,8 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
             instanceValue = RefactoringUtil.unparenthesizeExpression(instanceValue);
             if (instanceValue instanceof PsiLiteralExpression && ((PsiLiteralExpression)instanceValue).getValue() == null) {
               String message =
-                ConflictsUtil.getDescription(ConflictsUtil.getContainer(methodCall), true) + " contains call with null argument for parameter " +
+                ConflictsUtil.getDescription(ConflictsUtil.getContainer(methodCall), true) +
+                " contains call with null argument for parameter " +
                 ConflictsUtil.htmlEmphasize(parameter.getName());
               conflicts.add(message);
             }
@@ -116,13 +115,15 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     final PsiSearchHelper searchHelper = manager.getSearchHelper();
     final PsiReference[] refs = searchHelper.findReferences(myMethod, searchScope, false);
     final List<UsageInfo> usages = new ArrayList<UsageInfo>();
-    for (int i = 0; i < refs.length; i++) {
-      final PsiElement element = refs[i].getElement();
+    for (PsiReference ref : refs) {
+      final PsiElement element = ref.getElement();
       if (element instanceof PsiReferenceExpression) {
         usages.add(new MethodCallUsageInfo((PsiReferenceExpression)element));
-      } else if (element instanceof PsiDocTagValue) {
+      }
+      else if (element instanceof PsiDocTagValue) {
         usages.add(new JavadocUsageInfo(((PsiDocTagValue)element)));
-      } else {
+      }
+      else {
         LOG.assertTrue(false, "Unknown reference found");
       }
     }
@@ -164,8 +165,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
                                   final GlobalSearchScope searchScope,
                                   final List<UsageInfo> usages) {
     final PsiClass[] inheritors = searchHelper.findInheritors(aClass, searchScope, false);
-    for (int i = 0; i < inheritors.length; i++) {
-      PsiClass inheritor = inheritors[i];
+    for (PsiClass inheritor : inheritors) {
       if (!inheritor.isInterface()) {
         usages.add(new InheritorUsageInfo(inheritor));
       }
@@ -195,14 +195,15 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
     PsiMethod patternMethod = createPatternMethod();
     final List<PsiReference> docRefs = new ArrayList<PsiReference>();
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       if (usage instanceof InheritorUsageInfo) {
         final PsiClass inheritor = ((InheritorUsageInfo)usage).getInheritor();
         addMethodToClass(inheritor, patternMethod);
-      } else if (usage instanceof MethodCallUsageInfo) {
-        correctMethodCall (((MethodCallUsageInfo)usage).getMethodCallExpression(), false);
-      } else if (usage instanceof JavadocUsageInfo) {
+      }
+      else if (usage instanceof MethodCallUsageInfo) {
+        correctMethodCall(((MethodCallUsageInfo)usage).getMethodCallExpression());
+      }
+      else if (usage instanceof JavadocUsageInfo) {
         docRefs.add(usage.getElement().getReference());
       }
     }
@@ -212,8 +213,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
       final PsiMethod method = addMethodToClass(myTargetClass, patternMethod);
       myMethod.delete();
-      for (Iterator<PsiReference> it = docRefs.iterator(); it.hasNext();) {
-        PsiReference reference = it.next();
+      for (PsiReference reference : docRefs) {
         reference.bindToElement(method);
       }
     }
@@ -222,26 +222,19 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
   }
 
-  private void correctMethodCall(final PsiMethodCallExpression expression, boolean isInternalCall) {
+  private void correctMethodCall(final PsiMethodCallExpression expression) {
     try {
       final PsiManager manager = myMethod.getManager();
       PsiReferenceExpression methodExpression = expression.getMethodExpression();
       if (!methodExpression.isReferenceTo(myMethod)) return;
       final PsiExpression oldQualifier = methodExpression.getQualifierExpression();
       PsiExpression newQualifier = null;
+
       if (myTargetVariable instanceof PsiParameter) {
         final int index = myMethod.getParameterList().getParameterIndex((PsiParameter)myTargetVariable);
         final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
         if (index < arguments.length) {
-          final PsiClass classReferencedByThis = MoveMethodUtil.getClassReferencedByThis(methodExpression);
-          if (isInternalCall && classReferencedByThis != null) {
-            //See MoveInstanceMethodTest.testRecursive
-            final String paramName = getParameterNameToCreate(classReferencedByThis);
-            newQualifier = manager.getElementFactory().createExpressionFromText(paramName, null);
-          }
-          else {
-            newQualifier = (PsiExpression)arguments[index].copy();
-          }
+          newQualifier = (PsiExpression)arguments[index].copy();
           arguments[index].delete();
         }
       }
@@ -250,25 +243,23 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
         newQualifier = manager.getElementFactory().createExpressionFromText(myTargetVariable.getName(), null);
       }
 
-      PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null) {
-        final PsiElement resolved = methodExpression.resolve();
-        String thisArgumentText = "this";
-        if (resolved instanceof PsiMember) {
-          final PsiClass containingClass = ((PsiMember)resolved).getContainingClass();
-          if (containingClass != null) {
-            if (isInternalCall) {
-              //To be correctly overwritten in recursive visitor invocation
-              thisArgumentText = myTargetVariable.getName();
-            }
-            else if (!manager.areElementsEquivalent(myMethod.getContainingClass(), containingClass)) {
-              thisArgumentText = containingClass.getName() + ".this";
-            }
+      final PsiClass classReferencedByThis = MoveMethodUtil.getClassReferencedByThis(methodExpression);
+      if (classReferencedByThis != null) {
+        String thisArgumentText = null;
+        if (manager.areElementsEquivalent(myMethod.getContainingClass(), classReferencedByThis)) {
+          if (myOldClassParameterNames.containsKey(myMethod.getContainingClass())) {
+            thisArgumentText = "this";
           }
+        } else {
+          thisArgumentText = classReferencedByThis.getName() + ".this";
         }
-        qualifier = manager.getElementFactory().createExpressionFromText(thisArgumentText, null);
+
+        if (thisArgumentText != null) {
+          final PsiExpression newArgument = manager.getElementFactory().createExpressionFromText(thisArgumentText, null);
+          expression.getArgumentList().add(newArgument);
+        }
       }
-      expression.getArgumentList().add(qualifier);
+
 
       if (newQualifier != null) {
         if (newQualifier instanceof PsiThisExpression && ((PsiThisExpression)newQualifier).getQualifier() == null) {
@@ -380,7 +371,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           }
 
           public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-            correctMethodCall(expression, true);
+            correctMethodCall(expression);
             super.visitMethodCallExpression(expression);
           }
         });
@@ -406,11 +397,10 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   }
 
   private void addParameters(final PsiElementFactory factory, final PsiMethod methodCopy) throws IncorrectOperationException {
-    final Set entries = myOldClassParameterNames.entrySet();
-    for (Iterator iterator = entries.iterator(); iterator.hasNext();) {
-      Map.Entry entry = (Map.Entry)iterator.next();
-      final PsiClassType type = factory.createType((PsiClass)entry.getKey());
-      final PsiParameter parameter = factory.createParameter((String)entry.getValue(), type);
+    final Set<Map.Entry<PsiClass, String>> entries = myOldClassParameterNames.entrySet();
+    for (final Map.Entry<PsiClass, String> entry : entries) {
+      final PsiClassType type = factory.createType(entry.getKey());
+      final PsiParameter parameter = factory.createParameter(entry.getValue(), type);
       methodCopy.getParameterList().add(parameter);
     }
   }
