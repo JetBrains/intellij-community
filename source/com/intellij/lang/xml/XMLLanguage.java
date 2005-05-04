@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
@@ -24,6 +25,7 @@ import com.intellij.psi.search.UsageSearchContext;
  * To change this template use File | Settings | File Templates.
  */
 public class XMLLanguage extends Language {
+  private FoldingBuilder myFoldingBuilder;
   protected static final CDATAOnAnyEncodedPolicy CDATA_ON_ANY_ENCODED_POLICY = new CDATAOnAnyEncodedPolicy();
   protected static final EncodeEachSymbolPolicy ENCODE_EACH_SYMBOL_POLICY = new EncodeEachSymbolPolicy();
 
@@ -57,5 +59,10 @@ public class XMLLanguage extends Language {
 
   public Commenter getCommenter() {
     return new XmlCommenter();
+  }
+
+  public FoldingBuilder getFoldingBuilder() {
+    if (myFoldingBuilder == null) myFoldingBuilder = new XmlFoldingBuilder();
+    return myFoldingBuilder;
   }
 }

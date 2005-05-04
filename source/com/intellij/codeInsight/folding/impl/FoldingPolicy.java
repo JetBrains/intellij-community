@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -65,12 +64,6 @@ class FoldingPolicy {
       TextRange range = getFileHeader((PsiJavaFile) file);
       if (range != null && document.getLineNumber(range.getEndOffset()) > document.getLineNumber(range.getStartOffset())) {
         map.put(file, range);
-      }
-    } else if (file instanceof XmlFile) {
-      XmlDocument xmlDocument = ((XmlFile) file).getDocument();
-      XmlTag rootTag = xmlDocument == null ? null : xmlDocument.getRootTag();
-      if (rootTag != null) {
-        addElementsToFold(map, rootTag, document);
       }
     }
 
@@ -152,18 +145,6 @@ class FoldingPolicy {
     }
   }
 
-  private static void addElementsToFold(Map<PsiElement,TextRange> map, XmlTag tag, Document document) {
-    if (addToFold(map, tag, document, false)) {
-      PsiElement[] children = tag.getChildren();
-      for (int i = 0; i < children.length; i++) {
-        if (children[i] instanceof XmlTag) {
-          ProgressManager.getInstance().checkCanceled();
-          addElementsToFold(map, (XmlTag)children[i], document);
-        }
-      }
-    }
-  }
-
   public static TextRange getRangeToFold(PsiElement element) {
     if (element instanceof PsiMethod) {
       if (CodeGenerator.SETUP_METHOD_NAME.equals(((PsiMethod) element).getName())) {
@@ -203,33 +184,6 @@ class FoldingPolicy {
       return new TextRange(startOffset, endOffset);
     } else if (element instanceof PsiDocComment) {
       return element.getTextRange();
-    } else if (element instanceof XmlTag) {
-      XmlTag tag = (XmlTag) element;
-      ASTNode tagNameElement = XmlChildRole.START_TAG_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(tag));
-      if (tagNameElement == null) return null;
-
-      int nameEnd = tagNameElement.getTextRange().getEndOffset();
-      int end = tag.getLastChild().getTextRange().getStartOffset();
-
-      XmlAttribute[] attributes = tag.getAttributes();
-      if (attributes.length > 0) {
-        XmlAttribute lastAttribute = attributes[attributes.length - 1];
-        XmlAttribute lastAttributeBeforeCR = null;
-        for (PsiElement child = tag.getFirstChild(); child != lastAttribute.getNextSibling(); child = child.getNextSibling()) {
-          if (child instanceof XmlAttribute) {
-            lastAttributeBeforeCR = (XmlAttribute) child;
-          } else if (child instanceof PsiWhiteSpace) {
-            if (child.textContains('\n')) break;
-          }
-        }
-
-        if (lastAttributeBeforeCR != null) {
-          int attributeEnd = lastAttributeBeforeCR.getTextRange().getEndOffset();
-          return new TextRange(attributeEnd, end);
-        }
-      }
-
-      return new TextRange(nameEnd, end);
     } else {
       return null;
     }
@@ -271,8 +225,6 @@ class FoldingPolicy {
       return "{...}";
     } else if (element instanceof PsiDocComment) {
       return "/**...*/";
-    } else if (element instanceof XmlTag) {
-      return "...";
     } else if (element instanceof PsiFile) {
       return "/.../";
     } else {
@@ -310,8 +262,6 @@ class FoldingPolicy {
       return element.getParent() instanceof PsiFile ? false : settings.COLLAPSE_INNER_CLASSES;
     } else if (element instanceof PsiDocComment) {
       return settings.COLLAPSE_JAVADOCS;
-    } else if (element instanceof XmlTag) {
-      return settings.COLLAPSE_XML_TAGS;
     } else if (element instanceof PsiJavaFile) {
       return settings.COLLAPSE_FILE_HEADER;
     } else {
