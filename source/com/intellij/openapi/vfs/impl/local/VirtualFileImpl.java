@@ -368,6 +368,8 @@ public class VirtualFileImpl extends VirtualFile {
     VirtualFileImpl oldParent = myParent;
     myFileSystem.fireBeforeFileMovement(requestor, this, newParent);
 
+    newParent.getChildren(); // Init children.
+
     PhysicalFile physicalFile = getPhysicalFile();
     PhysicalFile newPhysicalParent = ((VirtualFileImpl)newParent).getPhysicalFile();
     PhysicalFile newPhysicalFile = newPhysicalParent.createChild(name);
