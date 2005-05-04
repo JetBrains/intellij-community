@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,11 +25,11 @@ public class PropertiesFileStructureViewElement extends PsiTreeElementBase<Prope
   }
 
   public StructureViewTreeElement[] getChildrenBase() {
-    Property[] properties = getElement().getProperties();
-
-    StructureViewTreeElement[] elements = new StructureViewTreeElement[properties.length];
-    for (int i = 0; i < properties.length; i++) {
-      Property property = properties[i];
+    List<Property> properties = getElement().getProperties();
+                                              
+    StructureViewTreeElement[] elements = new StructureViewTreeElement[properties.size()];
+    for (int i = 0; i < properties.size(); i++) {
+      Property property = properties.get(i);
       elements[i] = new PropertiesStructureViewElement(property);
     }
     return elements;

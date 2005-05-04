@@ -14,8 +14,8 @@ public class PropertiesElementFactory {
     String filename = "dummy." + PropertiesSupportLoader.FILE_TYPE.getDefaultExtension();
     String text = escape(name) + "=" + value;
     final PropertiesFile dummyFile = (PropertiesFile)def.createFile(project, filename, text);
-    return dummyFile.getProperties()[0];
-  }
+    return dummyFile.getProperties().get(0);
+  }                   
 
   private static String escape(String name) {
     if (StringUtil.startsWithChar(name, '#')) {
