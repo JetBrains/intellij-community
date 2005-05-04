@@ -3,11 +3,13 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.aspects.psi.IAspectElementType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.HtmlTagImpl;
 import com.intellij.psi.impl.source.javadoc.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspText;
+import com.intellij.psi.impl.source.jsp.jspXml.JspCommentImpl;
 import com.intellij.psi.impl.source.tree.java.*;
 import com.intellij.psi.impl.source.xml.*;
 import com.intellij.psi.tree.IChameleonElementType;
@@ -60,6 +62,9 @@ public class Factory implements Constants {
     }
     else if (type == IDENTIFIER) {
       element = new PsiIdentifierImpl(buffer, startOffset, endOffset, lexerState, table);
+    }
+    else if (type == JspTokenType.JSP_COMMENT) {
+      element = new JspCommentImpl(buffer, startOffset, endOffset, lexerState, table);
     }
     else if (type == JspElementType.HOLDER_TEMPLATE_DATA) {
       element = new JspText(buffer, startOffset, endOffset, table);
