@@ -687,6 +687,19 @@ class JavaDocInfoGenerator {
 
   private void generateLinkValue(PsiInlineDocTag tag, StringBuffer buffer, boolean plainLink) {
     PsiElement[] tagElements = tag.getDataElements();
+    String text = createLinkText(tagElements);
+    if (text.length() > 0) {
+      int index = JavaDocUtil.extractReference(text);
+      String refText = text.substring(0, index).trim();
+      String label = text.substring(index).trim();
+      if (label.length() == 0) {
+        label = null;
+      }
+      generateLink(buffer, refText, label, tagElements[0], plainLink);
+    }
+  }
+
+  private String createLinkText(final PsiElement[] tagElements) {
     int predictOffset = tagElements.length > 0
                         ? tagElements[0].getTextOffset() + tagElements[0].getText().length()
                         : 0;
@@ -704,15 +717,7 @@ class JavaDocInfoGenerator {
       }
     }
     String text = buffer1.toString().trim();
-    if (text.length() > 0) {
-      int index = JavaDocUtil.extractReference(text);
-      String refText = text.substring(0, index).trim();
-      String label = text.substring(index).trim();
-      if (label.length() == 0) {
-        label = null;
-      }
-      generateLink(buffer, refText, label, tagElements[0], plainLink);
-    }
+    return text;
   }
 
   private void generateDeprecatedSection(StringBuffer buffer, PsiDocComment comment) {
@@ -748,20 +753,15 @@ class JavaDocInfoGenerator {
         PsiDocTag tag = tags[i];
         PsiElement[] elements = tag.getDataElements();
         if (elements.length > 0) {
-          String text = elements[0].getText();
-          if (StringUtil.startsWithChar(text, '\"') || StringUtil.startsWithChar(text, '<')) {
-            buffer.append(text);
+          String text = createLinkText(elements);
+
+          int index = JavaDocUtil.extractReference(text);
+          String refText = text.substring(0, index).trim();
+          String label = text.substring(index).trim();
+          if (label.length() == 0) {
+            label = null;
           }
-          else {
-            int index = JavaDocUtil.extractReference(text);
-            String refText = text.substring(0, index).trim();
-            String label = text.substring(index).trim();
-            if (label.length() == 0) {
-              label = null;
-            }
-            generateLink(buffer, refText, label, comment, false);
-          }
-          generateValue(buffer, elements, 1, ourEmptyElementsProvider);
+          generateLink(buffer, refText, label, comment, false);
         }
         if (i < tags.length - 1) {
           buffer.append(",\n");

@@ -25,6 +25,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
     DOC_METHOD_OR_FIELD_REF,
     DOC_COMMENT_DATA,
     DOC_INLINE_TAG,
+    DOC_REFERENCE_HOLDER
   });
 
   public PsiInlineDocTagImpl() {

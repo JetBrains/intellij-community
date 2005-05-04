@@ -26,6 +26,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag {
     DOC_PARAMETER_REF,
     DOC_COMMENT_DATA,
     DOC_INLINE_TAG,
+    DOC_REFERENCE_HOLDER
   });
 
   public PsiDocTagImpl() {
