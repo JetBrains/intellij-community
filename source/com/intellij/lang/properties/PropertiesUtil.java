@@ -10,10 +10,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.util.CommonProcessors;
-import gnu.trove.THashSet;
+import com.intellij.util.Processor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author cdr
@@ -37,29 +37,20 @@ public class PropertiesUtil {
     }
   };
 
-  public static List<Property> findPropertiesByKey(Project project, String key) {
+  public static List<Property> findPropertiesByKey(Project project, final String key) {
     final PsiSearchHelper searchHelper = PsiManager.getInstance(project).getSearchHelper();
-    List<Property> properties = new ArrayList<Property>();
+    final List<Property> properties = new ArrayList<Property>();
 
-    final Set<PsiFile> files = new THashSet<PsiFile>();
-    searchHelper.processAllFilesWithWord(key, PROP_FILES_SCOPE, new CommonProcessors.CollectProcessor<PsiFile>(files));
-
-    for (Iterator<PsiFile> iterator = files.iterator(); iterator.hasNext();) {
-      PsiFile file = iterator.next();
-      if (file instanceof PropertiesFile) {
-        addPropertiesInFile((PropertiesFile)file, key, properties);
+    searchHelper.processAllFilesWithWord(key, PROP_FILES_SCOPE, new Processor<PsiFile>() {
+      public boolean process(PsiFile file) {
+        if (file instanceof PropertiesFile) {
+          properties.addAll(((PropertiesFile) file).findPropertiesByKey(key));
+        }
+        return true;
       }
-    }
+    });
+
     return properties;
   }
 
-  private static void addPropertiesInFile(final PropertiesFile file, final String key, final List<Property> properties) {
-    Property[] allProperties = file.getProperties();
-    for (int i = 0; i < allProperties.length; i++) {
-      Property property = allProperties[i];
-      if (key.equals(property.getKey())) {
-        properties.add(property);
-      }
-    }
-  }
 }

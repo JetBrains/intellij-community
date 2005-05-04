@@ -17,12 +17,12 @@ public interface FindUsagesProvider {
    * @param searchContext represents find usages request,
    * a combination of constants in {@link com.intellij.psi.search.UsageSearchContext}
    */
-  public boolean mayHaveReferences(IElementType token, final short searchContext);
+  boolean mayHaveReferences(IElementType token, final short searchContext);
 
   /**
    * @return word scanner for building caches in this language's files
    */
-  public WordsScanner getWordsScanner();
+  WordsScanner getWordsScanner();
 
   /**
    * @param psiElement

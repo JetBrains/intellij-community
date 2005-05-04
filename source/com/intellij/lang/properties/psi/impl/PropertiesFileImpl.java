@@ -9,9 +9,9 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -21,7 +21,8 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
-  private Map<String,Property> myProperties;
+  private Map<String,List<Property>> myPropertiesMap;
+  private List<Property> myProperties;
 
   public PropertiesFileImpl(Project project, VirtualFile file) {
     super(project, file, PropertiesSupportLoader.FILE_TYPE.getLanguage());
@@ -39,34 +40,46 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return "Property file:" + getName();
   }
 
-  public Property[] getProperties() {
-    if (myProperties == null) {
-      readProperties();
-    }
-    return myProperties.values().toArray(new Property[myProperties.size()]);
+  public List<Property> getProperties() {
+    ensurePropertiesLoaded();
+    return myProperties;
   }
 
-  private void readProperties() {
+  private void ensurePropertiesLoaded() {
+    if (myPropertiesMap != null) {
+      return;
+    }
     final ASTNode[] props = getNode().findChildrenByFilter(PropertiesElementTypes.PROPERTIES);
-    myProperties = new LinkedHashMap<String, Property>();
-    for (int i = 0; i < props.length; i++) {
-      final ASTNode prop = props[i];
-      final Property property = (Property)prop.getPsi();
-      if (!myProperties.containsKey(property.getKey())) {
-        myProperties.put(property.getKey(), property);
+    myPropertiesMap = new LinkedHashMap<String, List<Property>>();
+    myProperties = new ArrayList<Property>(props.length);
+    for (final ASTNode prop : props) {
+      final Property property = (Property) prop.getPsi();
+      String key = property.getKey();
+      List<Property> list = myPropertiesMap.get(key);
+      if (list == null) {
+        list = new SmartList<Property>();
+        myPropertiesMap.put(key, list);
       }
+      list.add(property);
+      myProperties.add(property);
     }
   }
 
   public Property findPropertyByKey(String key) {
-    if (myProperties == null) {
-      readProperties();
-    }
-    return myProperties.get(key);
+    ensurePropertiesLoaded();
+    List<Property> list = myPropertiesMap.get(key);
+    return list == null ? null : list.get(0);
+  }
+
+  public List<Property> findPropertiesByKey(String key) {
+    ensurePropertiesLoaded();
+    List<Property> list = myPropertiesMap.get(key);
+    return list == null ? Collections.EMPTY_LIST : list;
   }
 
   public void subtreeChanged() {
     super.subtreeChanged();
+    myPropertiesMap = null;
     myProperties = null;
   }
 }

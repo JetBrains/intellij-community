@@ -65,15 +65,14 @@ public class PropertyReference implements PsiReference {
       if (!file.isValid()) continue;
       PropertiesFile propertiesFile = (PropertiesFile)psiManager.findFile(file);
       if (propertiesFile == null) continue;
-      Property[] properties = propertiesFile.getProperties();
-      for (int i = 0; i < properties.length; i++) {
-        Property property = properties[i];
+      List<Property> properties = propertiesFile.getProperties();
+      for (Property property : properties) {
         variants.add(property.getKey());
       }
     }
     return variants.toArray(new Object[variants.size()]);
   }
-
+  
   public List<Property> suggestProperties() {
     return PropertiesUtil.findPropertiesByKey(getElement().getProject(), myKey);
   }

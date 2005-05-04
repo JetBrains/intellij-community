@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -38,8 +39,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -187,14 +186,13 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
   private static boolean isInspectionToolIdMentioned(String inspectionsList, String inspectionToolID) {
     String[] ids = inspectionsList.split(",");
-    for (int i = 0; i < ids.length; i++) {
-      String id = ids[i];
+    for (String id : ids) {
       if (id.equals(inspectionToolID) || id.equals("ALL")) return true;
     }
     return false;
   }
 
-  public boolean isToCheckMember(PsiDocCommentOwner owner, String inspectionToolID) {
+  public static boolean isToCheckMember(PsiDocCommentOwner owner, String inspectionToolID) {
     PsiDocComment docComment = owner.getDocComment();
     if (docComment != null) {
       PsiDocTag inspectionTag = docComment.findTagByName(SUPPRESS_INSPECTIONS_TAG_NAME);
@@ -211,10 +209,9 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
         PsiAnnotationMemberValue attributeValue = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
         if (attributeValue instanceof PsiArrayInitializerMemberValue) {
           PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)attributeValue).getInitializers();
-          for (int i = 0; i < initializers.length; i++) {
-            PsiAnnotationMemberValue initializer = initializers[i];
+          for (PsiAnnotationMemberValue initializer : initializers) {
             if (initializer instanceof PsiLiteralExpression) {
-              Object value = ((PsiLiteralExpression)initializer).getValue();
+              Object value = ((PsiLiteralExpression) initializer).getValue();
               if (inspectionToolID.equals(value) || "ALL".equals(value)) return false;
             }
           }
@@ -224,7 +221,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     return true;
   }
 
-  public boolean inspectionResultSuppressed(final PsiElement place, String id) {
+  public static boolean inspectionResultSuppressed(final PsiElement place, String id) {
     PsiStatement statement = PsiTreeUtil.getParentOfType(place, PsiStatement.class);
     if (statement != null) {
       PsiElement prev = PsiTreeUtil.skipSiblingsBackward(statement, new Class[]{PsiWhiteSpace.class});
@@ -242,7 +239,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);
     }
     while (container instanceof PsiTypeParameter);
-    return container == null || !isToCheckMember((PsiDocCommentOwner)container, id);
+    return container != null && !isToCheckMember((PsiDocCommentOwner)container, id);
   }
 
   public UIOptions getUIOptions() {
@@ -438,8 +435,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
             final List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(psiClass);
             helper.processInheritors(new PsiElementProcessor<PsiClass>() {
-              public boolean execute(PsiClass element) {
-                PsiClass inheritor = element;
+              public boolean execute(PsiClass inheritor) {
                 if (scope.contains(inheritor)) return true;
                 DerivedClassesProcessor[] processorsArrayed = processors.toArray(new DerivedClassesProcessor[processors.size()]);
                 for (int j = 0; j < processorsArrayed.length; j++) {
@@ -466,8 +462,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
             final List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(psiMethod);
             helper.processOverridingMethods(new PsiElementProcessor<PsiMethod>() {
-              public boolean execute(PsiMethod element) {
-                PsiMethod derivedMethod = element;
+              public boolean execute(PsiMethod derivedMethod) {
                 if (scope.contains(derivedMethod)) return true;
                 DerivedMethodsProcessor[] processorsArrayed = processors.toArray(new DerivedMethodsProcessor[processors.size()]);
                 for (int j = 0; j < processorsArrayed.length; j++) {
@@ -561,8 +556,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
   private static List<PsiElement> getSortedIDs(Map<PsiElement,?> requests) {
     List<PsiElement> result = new ArrayList<PsiElement>();
-    for (Iterator<PsiElement> iterator = requests.keySet().iterator(); iterator.hasNext();) {
-      PsiElement id = iterator.next();
+    for (PsiElement id : requests.keySet()) {
       result.add(id);
     }
 
@@ -668,8 +662,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     do {
       processSearchRequests();
       InspectionTool[] requestors = needRepeatSearchRequest.toArray(new InspectionTool[needRepeatSearchRequest.size()]);
-      for (int i = 0; i < requestors.length; i++) {
-        InspectionTool requestor = requestors[i];
+      for (InspectionTool requestor : requestors) {
         if (!requestor.queryExternalUsagesRequests()) needRepeatSearchRequest.remove(requestor);
       }
       int oldSearchRequestCount = FIND_EXTERNAL_USAGES.getTotalAmount();
@@ -686,8 +679,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
                         List<InspectionTool> needRepeatSearchRequest,
                         final AnalysisScope scope) {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
-    for (int i = 0; i < tools.length; i++) {
-      InspectionTool tool = tools[i];
+    for (InspectionTool tool : tools) {
       if (getCurrentProfile().isToolEnabled(HighlightDisplayKey.find(tool.getShortName()))) tool.initialize(this);
     }
 
@@ -713,8 +705,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       LOG.error(e);
     }
 
-    for (int i = 0; i < tools.length; i++) {
-      InspectionTool tool = tools[i];
+    for (InspectionTool tool : tools) {
       if (getCurrentProfile().isToolEnabled(HighlightDisplayKey.find(tool.getShortName())) &&
           !(tool instanceof LocalInspectionToolWrapper)) {
         try {
@@ -738,18 +729,16 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
                                                                    final AnalysisScope scope) {
     ArrayList<LocalInspectionToolWrapper> localTools = new ArrayList<LocalInspectionToolWrapper>();
     myJobDescriptors = new ArrayList<JobDescriptor>();
-    for (int i = 0; i < tools.length; i++) {
-      InspectionTool tool = tools[i];
+    for (InspectionTool tool : tools) {
       if (getCurrentProfile().isToolEnabled(HighlightDisplayKey.find(tool.getShortName()))) {
         if (tool instanceof LocalInspectionToolWrapper) {
-          LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)tool;
+          LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper) tool;
           localTools.add(wrapper);
           appendJobDescriptor(LOCAL_ANALYSIS);
-        }
-        else {
+        } else {
           JobDescriptor[] jobDescriptors = tool.getJobDescriptors();
-          for (int j = 0; j < jobDescriptors.length; j++) {
-            appendJobDescriptor(jobDescriptors[j]);
+          for (JobDescriptor jobDescriptor : jobDescriptors) {
+            appendJobDescriptor(jobDescriptor);
           }
         }
       }

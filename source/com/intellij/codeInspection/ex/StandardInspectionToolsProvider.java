@@ -6,6 +6,7 @@ import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspecti
 import com.intellij.codeInspection.dependencyViolation.DependencyViolationInspection;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.codeInsight.i18n.I18nInspection;
+import com.intellij.lang.properties.UnusedPropertyInspection;
 
 /**
  * @author max
@@ -46,7 +47,9 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
       com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode.class,
       com.intellij.codeInspection.ejb.EJBInspection.class,
 
+
       I18nInspection.class,
+      UnusedPropertyInspection.class,
 
       DependencyViolationInspection.class,
       FieldCanBeLocalInspection.class,

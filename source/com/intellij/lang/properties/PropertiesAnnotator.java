@@ -8,6 +8,8 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.psi.PsiElement;
 
+import java.util.Collection;
+
 /**
  * @author cdr
  */
@@ -16,8 +18,8 @@ class PropertiesAnnotator implements Annotator {
     if (!(element instanceof Property)) return;
     final Property origProperty = (Property)element;
     PropertiesFile propertiesFile = (PropertiesFile)element.getContainingFile();
-    Property other = propertiesFile.findPropertyByKey(origProperty.getKey());
-    if (other != origProperty) {
+    Collection<Property> others = propertiesFile.findPropertiesByKey(origProperty.getKey());
+    if (others.size() != 1) {
       Annotation annotation = holder.createErrorAnnotation(((PropertyImpl)origProperty).getKeyNode(), "Duplicate property key");
       annotation.registerFix(new RemovePropertyFix(origProperty));
     }

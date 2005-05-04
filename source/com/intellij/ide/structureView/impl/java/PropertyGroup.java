@@ -135,11 +135,6 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
   }
 
 
-
-  public Object getValue() {
-    return this;
-  }
-
   public String getGetterName() {
     return PropertyUtil.suggestGetterName(myPropertyName, myPropertyType);
   }

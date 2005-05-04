@@ -8,7 +8,10 @@ package com.intellij.lang.properties.psi;
 
 import com.intellij.psi.PsiFile;
 
+import java.util.List;
+
 public interface PropertiesFile extends PsiFile {
-  Property[] getProperties();
+  List<Property> getProperties();
   Property findPropertyByKey(String key);
+  List<Property> findPropertiesByKey(String key);
 }

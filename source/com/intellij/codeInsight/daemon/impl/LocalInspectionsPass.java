@@ -82,17 +82,17 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
           element = PsiTreeUtil.getParentOfType(element, CHECKABLE, true);
         }
       }
+      workSet.add(myFile);
 
       myDescriptors = new ArrayList<ProblemDescriptor>();
       myLevels = new ArrayList<HighlightInfoType>();
       myTools = new ArrayList<LocalInspectionTool>();
 
       LocalInspectionTool[] tools = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getHighlightingLocalInspectionTools();
-      for (PsiElement psiElement : workSet) {
+      for (PsiElement element : workSet) {
         ProgressManager.getInstance().checkCanceled();
         LocalInspectionTool currentTool = null;
         try {
-          PsiElement element = psiElement;
           if (element instanceof PsiMethod) {
             PsiMethod psiMethod = (PsiMethod)element;
             for (LocalInspectionTool tool : tools) {
