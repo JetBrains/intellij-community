@@ -37,6 +37,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
   protected Icon myIcon;
   private List<RangeMarker> myRangeMarkers = new ArrayList<RangeMarker>();
   private TextChunk[] myTextChunks;
+  private UsageInfo2UsageAdapter.MyUsagePresentation myUsagePresentation;
 
   public UsageInfo2UsageAdapter(final UsageInfo usageInfo) {
     myUsageInfo = usageInfo;
@@ -66,22 +67,15 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     }
 
     initChunks();
+    myUsagePresentation = new MyUsagePresentation();
   }
 
   private void initChunks() {
     myTextChunks = new ChunkExtractor(getElement(), myRangeMarkers, myUsageInfo.startOffset).extractChunks();
   }
-
+  
   public UsagePresentation getPresentation() {
-    return new UsagePresentation() {
-      public TextChunk[] getText() {
-        return myTextChunks;
-      }
-
-      public Icon getIcon() {
-        return myIcon;
-      }
-    };
+    return myUsagePresentation;
   }
 
   public boolean isValid() {
@@ -238,5 +232,35 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
 
   public UsageInfo getUsageInfo() {
     return myUsageInfo;
+  }
+
+  private class MyUsagePresentation implements UsagePresentation {
+    private long myModificationStamp;
+
+    public MyUsagePresentation() {
+      myModificationStamp = getCurrentModificationStamp();
+    }
+
+    private long getCurrentModificationStamp() {
+      final PsiFile containingFile = getElement().getContainingFile();
+      return containingFile == null? -1L : containingFile.getModificationStamp();
+    }
+
+    public TextChunk[] getText() {
+      final PsiElement element = getElement();
+      if (element != null && element.isValid()) {
+        // the check below makes sence only for valid PsiElement
+        final long currentModificationStamp = getCurrentModificationStamp();
+        if (currentModificationStamp != myModificationStamp) {
+          initChunks();
+          myModificationStamp = currentModificationStamp;
+        }
+      }
+      return myTextChunks;
+    }
+
+    public Icon getIcon() {
+      return myIcon;
+    }
   }
 }

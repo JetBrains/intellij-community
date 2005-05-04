@@ -34,34 +34,7 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
       throw new IllegalArgumentException("Element is not a navigation item: " + element);
     }
 
-    final NavigationItem navItem = (NavigationItem)element;
-    final ItemPresentation presentation = navItem.getPresentation();
-
-    final String nodeText = UsageViewUtil.createNodeText(element, true);
-    final Icon iconOpen = presentation != null ? presentation.getIcon(true) : null;
-    final Icon iconClosed = presentation != null ? presentation.getIcon(false) : null;
-    myPresentation = new ItemPresentation() {
-      public String getPresentableText() {
-        return nodeText;
-      }
-
-      public String getLocationString() {
-        return null;
-      }
-
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
-
-      public Icon getIcon(boolean open) {
-        if (!isValid() || presentation == null) {
-          return open ? iconOpen : iconClosed;
-        }
-        else {
-          return presentation.getIcon(open);
-        }
-      }
-    };
+    myPresentation = new MyItemPresentation(element);
   }
 
   public String getName() {
@@ -136,5 +109,62 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget {
     }
 
     return targets;
+  }
+
+  private class MyItemPresentation implements ItemPresentation {
+    private String myPresentableText;
+    private long myModificationStamp;
+    private final PsiElement myElement;
+    private final ItemPresentation myPresentation;
+    private final Icon myIconOpen;
+    private final Icon myIconClosed;
+
+    public MyItemPresentation(final PsiElement element) {
+      myElement = element;
+      myPresentation = ((NavigationItem)element).getPresentation();
+      myIconOpen = myPresentation != null ? myPresentation.getIcon(true) : null;
+      myIconClosed = myPresentation != null ? myPresentation.getIcon(false) : null;
+      myPresentableText = createPresentableText(myElement);
+      myModificationStamp = getCurrentModificationStamp();
+    }
+
+    public String getPresentableText() {
+      if (!myElement.isValid()) {
+        // cannot update anything, just return the last text
+        return myPresentableText;
+      }
+      final long currentModificationStamp = getCurrentModificationStamp();
+      if (myModificationStamp != currentModificationStamp) {
+        myPresentableText = createPresentableText(myElement);
+        myModificationStamp = currentModificationStamp;
+      }
+      return myPresentableText;
+    }
+    
+    private String createPresentableText(final PsiElement element) {
+      return UsageViewUtil.createNodeText(element, true);
+    }
+
+    private long getCurrentModificationStamp() {
+      final PsiFile containingFile = myElement.getContainingFile();
+      return containingFile == null? -1L : containingFile.getModificationStamp();
+    }
+    
+    public String getLocationString() {
+      return null;
+    }
+
+    public TextAttributesKey getTextAttributesKey() {
+      return null;
+    }
+
+    public Icon getIcon(boolean open) {
+      if (!isValid() || myPresentation == null) {
+        return open ? myIconOpen : myIconClosed;
+      }
+      else {
+        return myPresentation.getIcon(open);
+      }
+    }
   }
 }

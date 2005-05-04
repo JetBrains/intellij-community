@@ -28,6 +28,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private void addTargetNodes() {
     if (myTargets.length == 0) return;
     myTargetNodes = new UsageTargetNode[myTargets.length];
+    myTargetsNode.removeAllChildren();
     for (int i = 0; i < myTargets.length; i++) {
       UsageTarget target = myTargets[i];
       UsageTargetNode targetNode = new UsageTargetNode(target, this);
@@ -67,7 +68,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   public void reset() {
     myRootNode.removeAllChildren();
     if (myTargets.length > 0) {
-      myRootNode.add(myTargetsNode);
+      addTargetNodes();
     }
   }
 
