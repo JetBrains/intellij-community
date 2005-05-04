@@ -62,7 +62,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.TooManyListenersException;
 
-public final class EditorImpl implements EditorEx {
+public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
   private final DocumentImpl myDocument;
@@ -90,7 +90,6 @@ public final class EditorImpl implements EditorEx {
   private final ScrollingTimer myScrollingTimer = new ScrollingTimer();
 
   private final Key<Object> MOUSE_DRAGGED_GROUP = Key.create("MouseDraggedGroup");
-  private final Map<Object, Object> myUserDataMap = new THashMap<Object, Object>();
 
   private final DocumentListener myEditorDocumentAdapter;
 
@@ -353,19 +352,6 @@ public final class EditorImpl implements EditorEx {
     myPlainFontMetrics = null;
     myScrollingModel.dispose();
     myGutterComponent.dispose();
-  }
-
-  public <T> void putUserData(Key<T> key, T value) {
-    if (value != null) {
-      myUserDataMap.put(key, value);
-    }
-    else {
-      myUserDataMap.remove(key);
-    }
-  }
-
-  public <T> T getUserData(Key<T> key) {
-    return (T)myUserDataMap.get(key);
   }
 
   private void initComponent() {
