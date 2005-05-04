@@ -19,6 +19,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Created by IntelliJ IDEA.
@@ -57,6 +59,10 @@ public abstract class Language {
     catch (IllegalAccessException e) {
       LOG.error(e);
     }
+  }
+  
+  public Collection<Language> getRegisteredLanguages() {
+    return Collections.unmodifiableCollection(ourRegisteredLanguages.values());
   }
 
   public static <T extends Language> T findInstance(Class<T> klass) {
