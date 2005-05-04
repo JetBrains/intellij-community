@@ -3,8 +3,6 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -19,15 +17,16 @@ public class PsiMultiReference implements PsiReference{
   private final PsiReference[] myReferences;
   private final PsiElement myElement;
 
+  private int myChoosenOne = -1;
+
   public PsiMultiReference(PsiReference[] references, PsiElement element){
     myReferences = references;
     myElement = element;
   }
 
-  private int myChoosenOne = -1;
 
   private PsiReference chooseReference(){
-    if(myChoosenOne > 0){
+    if(myChoosenOne != -1){
       return myReferences[myChoosenOne];
     }
     boolean flag = false;
@@ -100,8 +99,4 @@ public class PsiMultiReference implements PsiReference{
     return false;
   }
 
-  public void processVariants(final PsiScopeProcessor processor, PsiSubstitutor substitutor){
-    if(chooseReference() instanceof GenericReference)
-      ((GenericReference)chooseReference()).processVariants(processor);
-  }
 }

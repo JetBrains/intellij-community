@@ -18,6 +18,8 @@ import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.ListPopup;
+import com.intellij.lang.properties.PropertyReference;
+import com.intellij.lang.properties.psi.Property;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -73,17 +75,16 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
-  private void chooseAmbiguousTarget(final Project project, final Editor editor, int offset) {
+  private static void chooseAmbiguousTarget(final Project project, final Editor editor, int offset) {
     final PsiElement[] candidates = suggestCandidates(project, editor, offset);
-    if (candidates.length == 0) {
-      return;
-    } else if (candidates.length == 1) {
+    if (candidates.length == 1) {
       Navigatable navigatable = EditSourceUtil.getDescriptor(candidates[0]);
       if (navigatable != null && navigatable.canNavigate()) {
         navigatable.navigate(true);
       }
-    } else {
-      String title = " Go To Overloaded Declaration Of " + ((PsiNamedElement) candidates[0]).getName();
+    }
+    else if (candidates.length > 1) {
+      String title = " Go To Declaration Of " + ((PsiNamedElement)candidates[0]).getName();
       ListPopup listPopup = NavigationUtil.getPsiElementPopup(candidates, title, project);
       LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
       Point caretLocation = editor.logicalPositionToXY(caretPosition);
@@ -96,7 +97,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
-  private PsiElement[] suggestCandidates(Project project, Editor editor, int offset) {
+  private static PsiElement[] suggestCandidates(Project project, Editor editor, int offset) {
     PsiReference reference = TargetElementUtil.findReference(editor, offset);
     if (reference != null) {
       PsiElement parent = reference.getElement().getParent();
@@ -126,6 +127,10 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
         }
         return methods.toArray(new PsiElement[methods.size()]);
       }
+      if (reference instanceof PropertyReference) {
+        List<Property> properties = ((PropertyReference)reference).suggestProperties();
+        return properties.toArray(new PsiElement[properties.size()]);
+      }
     }
     return PsiElement.EMPTY_ARRAY;
   }
@@ -134,7 +139,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return false;
   }
 
-  protected int getOffset(Editor editor) {
+  protected static int getOffset(Editor editor) {
     return editor.getCaretModel().getOffset();
   }
 

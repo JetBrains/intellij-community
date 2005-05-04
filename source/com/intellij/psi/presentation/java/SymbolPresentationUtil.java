@@ -31,9 +31,10 @@
  */
 package com.intellij.psi.presentation.java;
 
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 
@@ -48,33 +49,35 @@ public class SymbolPresentationUtil {
         PsiFormatUtil.SHOW_TYPE
       );
     }
-    else{
-      return ((PsiNamedElement)element).getName();
-    }
+    return ((PsiNamedElement)element).getName();
   }
 
   public static String getSymbolContainerText(PsiElement element) {
-    String result;
-    PsiElement container = element instanceof PsiClass ? ((PsiClass)element).getScope() : element.getParent();
-    if (container instanceof PsiClass){
-      String qName = ((PsiClass)container).getQualifiedName();
-      if (qName != null){
-        result = qName;
-      }
-      else{
-        result = ((PsiClass)container).getName();
-      }
+    final String result;
+    if (element instanceof Property) {
+      result = element.getContainingFile().getName();
     }
-    else if (container instanceof PsiJavaFile){
-      result = ((PsiJavaFile)container).getPackageName();
-    }
-    else{//TODO: local classes
-      result = null;
+    else {
+      PsiElement container = element instanceof PsiClass ? ((PsiClass)element).getScope() : element.getParent();
+      if (container instanceof PsiClass) {
+        String qName = ((PsiClass)container).getQualifiedName();
+        if (qName != null) {
+          result = qName;
+        }
+        else {
+          result = ((PsiClass)container).getName();
+        }
+      }
+      else if (container instanceof PsiJavaFile) {
+        result = ((PsiJavaFile)container).getPackageName();
+      }
+      else {//TODO: local classes
+        result = null;
+      }
     }
 
-    String text = result;
-    if (text == null || text.trim().length() == 0) return null;
-    return "(in " + text + ")";
+    if (result == null || result.trim().length() == 0) return null;
+    return "(in " + result + ")";
   }
 
   public static ItemPresentation getMethodPresentation(final PsiMethod psiMethod) {

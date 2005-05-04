@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * @author cdr
  */
-class PropertyReference implements PsiReference {
+public class PropertyReference implements PsiReference {
   private final String myKey;
   private final PsiLiteralExpression myLiteralExpression;
 
@@ -36,7 +36,7 @@ class PropertyReference implements PsiReference {
   public PsiElement resolve() {
     List<Property> properties = PropertiesUtil.findPropertiesByKey(getElement().getProject(), myKey);
 
-    return properties.size() == 0 ? null : properties.get(0);
+    return properties.size() == 1 ? properties.get(0) : null;
   }
 
   public String getCanonicalText() {
@@ -72,6 +72,10 @@ class PropertyReference implements PsiReference {
       }
     }
     return variants.toArray(new Object[variants.size()]);
+  }
+
+  public List<Property> suggestProperties() {
+    return PropertiesUtil.findPropertiesByKey(getElement().getProject(), myKey);
   }
 
   public boolean isSoft() {
