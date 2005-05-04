@@ -27,7 +27,9 @@ public class XmlFoldingBuilder implements FoldingBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.xml.XmlFoldingBuilder");
 
   public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document) {
-    XmlFile file = ((XmlFile)node.getPsi());
+    final PsiElement psiElement = node.getPsi();
+    if (!(psiElement instanceof XmlFile)) return FoldingDescriptor.EMPTY;
+    XmlFile file = ((XmlFile)psiElement);
     final XmlDocument xmlDocument = file.getDocument();
     XmlTag rootTag = xmlDocument == null ? null : xmlDocument.getRootTag();
     List<FoldingDescriptor> foldings = null;
