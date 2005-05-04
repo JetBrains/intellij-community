@@ -22,6 +22,8 @@ public class UnnecessaryParenthesesInspection
         System.out.println("y = " + y);
         System.out.println("z = " + z);
         System.out.println("k = " + k);
+        final int hash = ((this).hashCode());
+        final int hash2 = (("x" + "y").hashCode());
     }
 
 }

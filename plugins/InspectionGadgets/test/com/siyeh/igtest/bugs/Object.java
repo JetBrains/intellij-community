@@ -1,4 +1,4 @@
-package com.siyeh.igtest.verbose;
+package com.siyeh.igtest.bugs;
 
 /**
  * Created by IntelliJ IDEA.

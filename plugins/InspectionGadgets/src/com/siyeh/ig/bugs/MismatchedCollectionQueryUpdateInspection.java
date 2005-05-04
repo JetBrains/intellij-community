@@ -73,14 +73,9 @@ public class MismatchedCollectionQueryUpdateInspection
             }
             final boolean written =
                     collectionContentsAreUpdated(field, containingClass);
-            if(!written)
-            {
-                registerFieldError(field);
-                return;
-            }
             final boolean read =
                     collectionContentsAreQueried(field, containingClass);
-            if( !read){
+            if( read!=written){
                 registerFieldError(field);
             }
         }
