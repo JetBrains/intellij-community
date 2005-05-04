@@ -97,7 +97,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
     final Factory<ProgressIndicator> progressIndicatorFactory = processPresentation.getProgressIndicatorFactory();
 
     UsageViewImplUtil.runProcessWithProgress(
-      progressIndicatorFactory.create(),
+      (progressIndicatorFactory != null)?progressIndicatorFactory.create():null,
       new Runnable() {
         public void run() {
           runnable.searchUsages();
@@ -200,9 +200,6 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
     }
 
     private void searchUsages() {
-      if (!myProcessPresentation.isShowNotFoundMessage()) {
-        openView();
-      }
       UsageSearcher usageSearcher = mySearcherFactory.create();
       usageSearcher.generate(new Processor<Usage>() {
         public boolean process(final Usage usage) {
@@ -279,7 +276,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
         });
       }
       else {
-        myUsageView[0].setSearchInProgress(false);
+        if (myUsageView[0] != null) myUsageView[0].setSearchInProgress(false);
       }
 
       if (myListener != null) {

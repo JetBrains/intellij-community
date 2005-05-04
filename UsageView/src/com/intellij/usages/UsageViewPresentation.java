@@ -22,6 +22,7 @@ public class UsageViewPresentation {
   private boolean myShowCancelButton = false;
   private boolean myOpenInNewTab = true;
   private boolean myCodeUsages = true;
+  private String myUsagesWord = "usage";
 
   private List<Action> myNotFoundActions;
 
@@ -112,6 +113,14 @@ public class UsageViewPresentation {
 
   public List<Action> getNotFoundActions() {
     return myNotFoundActions;
+  }
+
+  public String getUsagesWord() {
+    return myUsagesWord;
+  }
+
+  public void setUsagesWord(final String usagesWord) {
+    myUsagesWord = usagesWord;
   }
 }
 

@@ -65,7 +65,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         GroupNode node = (GroupNode)treeNode;
 
         if (node.isRoot()) {
-          append("Usages", patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES));
+          append(StringUtil.capitalize(myPresentation.getUsagesWord()), patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES));
         }
         else {
           append(node.getGroup().getText(myView),
@@ -74,7 +74,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         }
 
         int count = node.getRecursiveUsageCount();
-        append(" (" + StringUtil.pluralize(count + " usage", count) + ")", patchAttrs(node, myNumberOfUsagesAttribute));
+        append(" (" + StringUtil.pluralize(count + " " + myPresentation.getUsagesWord(), count) + ")", patchAttrs(node, myNumberOfUsagesAttribute));
       }
       else if (treeNode instanceof UsageNode) {
         UsageNode node = (UsageNode)treeNode;
