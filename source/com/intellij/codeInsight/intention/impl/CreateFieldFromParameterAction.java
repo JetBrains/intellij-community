@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -84,7 +85,14 @@ public class CreateFieldFromParameterAction implements IntentionAction {
 
   private static PsiParameter findParameterAtCursor(final PsiFile file, final Editor editor) {
     final int offset = editor.getCaretModel().getOffset();
-    return PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiParameter.class, false);
+    final PsiParameterList parameterList = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiParameterList.class, false);
+    if (parameterList == null) return null;
+    final PsiParameter[] parameters = parameterList.getParameters();
+    for (PsiParameter parameter : parameters) {
+      final TextRange range = parameter.getTextRange();
+      if (range.getStartOffset() <= offset && offset <= range.getEndOffset()) return parameter;
+    }
+    return null;
   }
 
   public String getFamilyName() {
