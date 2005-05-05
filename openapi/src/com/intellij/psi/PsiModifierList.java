@@ -8,6 +8,7 @@ import com.intellij.util.IncorrectOperationException;
 
 public interface PsiModifierList extends PsiElement {
   boolean hasModifierProperty(String name);
+  boolean hasExplicitModifier(String name);
   void setModifierProperty(String name, boolean value) throws IncorrectOperationException;
   void checkSetModifierProperty(String name, boolean value) throws IncorrectOperationException;
 

@@ -57,6 +57,10 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
     return (myFlags & flag) != 0;
   }
 
+  public boolean hasExplicitModifier(String name) {
+    return hasModifierProperty(name);
+  }
+
   public void setModifierProperty(String name, boolean value) throws IncorrectOperationException {
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }

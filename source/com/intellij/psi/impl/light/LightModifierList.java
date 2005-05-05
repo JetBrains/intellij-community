@@ -12,6 +12,10 @@ public class LightModifierList extends LightElement implements PsiModifierList{
     return false;
   }
 
+  public boolean hasExplicitModifier(String name) {
+    return false;
+  }
+
   public void setModifierProperty(String name, boolean value) throws IncorrectOperationException{
     throw new IncorrectOperationException();
   }

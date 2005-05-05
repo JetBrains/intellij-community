@@ -176,6 +176,12 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
     }
   }
 
+  public boolean hasExplicitModifier(String name) {
+    final CompositeElement tree = calcTreeElement();
+    IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
+    return TreeUtil.findChild(tree, type) != null;
+  }
+
   public void setModifierProperty(String name, boolean value) throws IncorrectOperationException{
     checkSetModifierProperty(name, value);
 
