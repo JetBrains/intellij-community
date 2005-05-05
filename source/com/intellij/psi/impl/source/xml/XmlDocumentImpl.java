@@ -76,16 +76,21 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return rootTag != null ? rootTag.getNSDescriptor(rootTag.getNamespace(), false) : null;
   }
 
-  private final Map<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCache = new HashMap<String, CachedValue<XmlNSDescriptor>>();
+  private final Map<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>();
+  private final Map<String, CachedValue<XmlNSDescriptor>> myDefaultDescriptorsCacheNotStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>();
 
   public void clearCaches() {
-    myDefaultDescriptorsCache.clear();
+    myDefaultDescriptorsCacheStrict.clear();
+    myDefaultDescriptorsCacheNotStrict.clear();
     super.clearCaches();
   }
 
   public XmlNSDescriptor getDefaultNSDescriptor(final String namespace, final boolean strict) {
-    if(myDefaultDescriptorsCache.containsKey(namespace)) return myDefaultDescriptorsCache.get(namespace).getValue();
-    myDefaultDescriptorsCache.put(namespace, new CachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>(){
+    final Map<String, CachedValue<XmlNSDescriptor>> defaultDescriptorsCache;
+    if(strict) defaultDescriptorsCache = myDefaultDescriptorsCacheStrict;
+    else defaultDescriptorsCache = myDefaultDescriptorsCacheNotStrict;
+    if(defaultDescriptorsCache.containsKey(namespace)) return defaultDescriptorsCache.get(namespace).getValue();
+    defaultDescriptorsCache.put(namespace, new CachedValueImpl<XmlNSDescriptor>(getManager(), new CachedValueProvider<XmlNSDescriptor>(){
       public Result<XmlNSDescriptor> compute() {
         final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
         return new Result<XmlNSDescriptor>(defaultNSDescriptorInner, defaultNSDescriptorInner != null ? defaultNSDescriptorInner.getDependences() : new Object[0]);
