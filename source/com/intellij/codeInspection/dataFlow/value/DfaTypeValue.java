@@ -10,6 +10,7 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.HashMap;
+import com.intellij.openapi.util.Comparing;
 
 import java.util.ArrayList;
 
@@ -25,9 +26,10 @@ public class DfaTypeValue extends DfaValue {
       myStringToObject = new HashMap<String, ArrayList<DfaTypeValue>>();
     }
 
-    public DfaTypeValue create(PsiType myType) {
-      mySharedInstance.myType = myType;
-      mySharedInstance.myCanonicalText = myType.getCanonicalText();
+    public DfaTypeValue create(PsiType type, boolean nullable) {
+      mySharedInstance.myType = type;
+      mySharedInstance.myCanonicalText = type.getCanonicalText();
+      mySharedInstance.myIsNullable = nullable;
       if (mySharedInstance.myCanonicalText == null) {
         mySharedInstance.myCanonicalText = "null";
       }
@@ -44,22 +46,28 @@ public class DfaTypeValue extends DfaValue {
         }
       }
 
-      DfaTypeValue result = new DfaTypeValue(myType, myFactory);
+      DfaTypeValue result = new DfaTypeValue(type, nullable, myFactory);
       conditions.add(result);
       return result;
+    }
+
+    public DfaTypeValue create(PsiType type) {
+      return create(type, false);
     }
   }
 
   private PsiType myType;
   private String myCanonicalText;
+  private boolean myIsNullable;
 
   private DfaTypeValue(DfaValueFactory factory) {
     super(factory);
   }
 
-  private DfaTypeValue(PsiType type, DfaValueFactory factory) {
+  private DfaTypeValue(PsiType type, boolean isNullable, DfaValueFactory factory) {
     super(factory);
     myType = type;
+    myIsNullable = isNullable;
     myCanonicalText = type.getCanonicalText();
     if (myCanonicalText == null) {
       myCanonicalText = "null";
@@ -70,12 +78,16 @@ public class DfaTypeValue extends DfaValue {
     return myType;
   }
 
+  public boolean isNullable() {
+    return myIsNullable;
+  }
+
   public String toString() {
-    return myCanonicalText;
+    return myCanonicalText + ", nullable=" + myIsNullable;
   }
 
   private boolean hardEquals(DfaTypeValue aType) {
-    return aType.toString().equals(toString());
+    return Comparing.equal(myCanonicalText, aType.myCanonicalText) && myIsNullable == aType.myIsNullable;
   }
 
   public boolean isAssignableFrom(DfaTypeValue dfaType) {

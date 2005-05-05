@@ -4,11 +4,13 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.Nullable;
+
 /**
  * @author ven
  */
 public interface PsiCall extends PsiElement {
   PsiExpressionList getArgumentList();
-  PsiMethod resolveMethod();
+  @Nullable PsiMethod resolveMethod();
   ResolveResult resolveMethodGenerics();
 }

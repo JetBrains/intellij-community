@@ -28,6 +28,8 @@ public interface DfaMemoryState {
 
   boolean applyCondition(DfaValue dfaCond);
 
+  boolean applyNotNull(DfaValue value);
+
   void flushFields(DataFlowRunner runner);
 
   void flushVariable(DfaVariableValue variable);

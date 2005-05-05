@@ -17,31 +17,34 @@ import java.util.Iterator;
 public class DfaVariableState implements Cloneable {
   private HashSet<DfaTypeValue> myInstanceofValues;
   private HashSet<DfaTypeValue> myNotInstanceofValues;
+  private boolean myNullable = false;
 
   public DfaVariableState() {
     myInstanceofValues = new HashSet<DfaTypeValue>();
     myNotInstanceofValues = new HashSet<DfaTypeValue>();
   }
 
+  public boolean isNullable() {
+    return myNullable;
+  }
+
   private boolean checkInstanceofValue(DfaTypeValue dfaType) {
     if (myInstanceofValues.contains(dfaType)) return true;
 
-    for (Iterator iterator = myNotInstanceofValues.iterator(); iterator.hasNext();) {
-      DfaTypeValue dfaTypeValue = (DfaTypeValue) iterator.next();
+    for (DfaTypeValue dfaTypeValue : myNotInstanceofValues) {
       if (dfaTypeValue.isAssignableFrom(dfaType)) return false;
     }
 
-    for (Iterator iterator = myInstanceofValues.iterator(); iterator.hasNext();) {
-      DfaTypeValue dfaTypeValue = (DfaTypeValue)iterator.next();
-      if (!dfaType.isConvertibleFrom(dfaTypeValue)) {
-        return false;
-      }
+    for (DfaTypeValue dfaTypeValue : myInstanceofValues) {
+      if (!dfaType.isConvertibleFrom(dfaTypeValue)) return false;
     }
 
     return true;
   }
 
   public boolean setInstanceofValue(DfaTypeValue dfaType) {
+    myNullable = dfaType.isNullable();
+
     if (dfaType.getType() instanceof PsiPrimitiveType) return true;
 
     if (checkInstanceofValue(dfaType)) {
@@ -55,8 +58,7 @@ public class DfaVariableState implements Cloneable {
   public boolean addNotInstanceofValue(DfaTypeValue dfaType) {
     if (myNotInstanceofValues.contains(dfaType)) return true;
 
-    for (Iterator iterator = myInstanceofValues.iterator(); iterator.hasNext();) {
-      DfaTypeValue dfaTypeValue = (DfaTypeValue) iterator.next();
+    for (DfaTypeValue dfaTypeValue : myInstanceofValues) {
       if (dfaType.isAssignableFrom(dfaTypeValue)) return false;
     }
 
@@ -72,7 +74,9 @@ public class DfaVariableState implements Cloneable {
     if (obj == this) return true;
     if (!(obj instanceof DfaVariableState)) return false;
     DfaVariableState aState = (DfaVariableState) obj;
-    return myInstanceofValues.equals(aState.myInstanceofValues) && myNotInstanceofValues.equals(aState.myNotInstanceofValues);
+    return myInstanceofValues.equals(aState.myInstanceofValues) &&
+           myNotInstanceofValues.equals(aState.myNotInstanceofValues) &&
+           myNullable == aState.myNullable;
   }
 
   protected Object clone() throws CloneNotSupportedException {
@@ -80,6 +84,7 @@ public class DfaVariableState implements Cloneable {
 
     newState.myInstanceofValues = (HashSet<DfaTypeValue>) myInstanceofValues.clone();
     newState.myNotInstanceofValues = (HashSet<DfaTypeValue>) myNotInstanceofValues.clone();
+    newState.myNullable = myNullable;
 
     return newState;
   }
@@ -102,6 +107,11 @@ public class DfaVariableState implements Cloneable {
       if (iterator.hasNext()) buf.append(", ");
     }
     buf.append("}");
+    buf.append(", nullable=" + myNullable);
     return buf.toString();
+  }
+
+  public void setNullable(final boolean nullable) {
+    myNullable = nullable;
   }
 }

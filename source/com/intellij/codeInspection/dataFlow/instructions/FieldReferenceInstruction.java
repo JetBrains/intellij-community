@@ -3,10 +3,7 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReferenceExpression;
@@ -17,32 +14,18 @@ import com.intellij.psi.PsiVariable;
  */
 public class FieldReferenceInstruction extends Instruction {
   private PsiExpression myExpression;
-  private DfaRelationValue myDfaNotNull;
 
-  public FieldReferenceInstruction(PsiReferenceExpression expression, DfaValueFactory factory) {
-    this(expression.getQualifierExpression(), factory);
+  public FieldReferenceInstruction(PsiReferenceExpression expression) {
     myExpression = expression;
   }
 
-  public FieldReferenceInstruction(PsiArrayAccessExpression expression, DfaValueFactory factory) {
-    this(expression.getArrayExpression(), factory);
+  public FieldReferenceInstruction(PsiArrayAccessExpression expression) {
     myExpression = expression;
-  }
-
-  private FieldReferenceInstruction(PsiExpression varReferenceExpression, DfaValueFactory factory) {
-    myDfaNotNull = null;
-    if (varReferenceExpression instanceof PsiReferenceExpression) {
-      PsiVariable psiVariable = DfaValueFactory.resolveVariable((PsiReferenceExpression)varReferenceExpression);
-      if (psiVariable != null) {
-        DfaVariableValue dfaVariable = factory.getVarFactory().create(psiVariable, false);
-        DfaConstValue dfaNull = factory.getConstFactory().getNull();
-        myDfaNotNull = factory.getRelationFactory().create(dfaVariable, dfaNull, "==", true);
-      }
-    }
   }
 
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
-    if (myDfaNotNull != null && !memState.applyCondition(myDfaNotNull)) {
+    final DfaValue qualifier = memState.pop();
+    if (!memState.applyNotNull(qualifier)) {
       runner.onInstructionProducesNPE(this);
       return new DfaInstructionState[0];
     }

@@ -18,17 +18,16 @@ import gnu.trove.TLongHashSet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Stack;
 
 public class DfaMemoryStateImpl implements DfaMemoryState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl");
   private ArrayList<SortedIntSet> myEqClasses;
   private int myStateSize;
-  private Stack myStack;
+  private Stack<DfaValue> myStack;
   private TIntStack myOffsetStack;
   private TLongHashSet myDistinctClasses;
-  private com.intellij.util.containers.HashMap myVariableStates;
+  private HashMap myVariableStates;
   private DfaValueFactory myFactory;
 
   public DfaMemoryStateImpl(final DfaValueFactory factory) {
@@ -40,7 +39,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     empty.myEqClasses = new ArrayList<SortedIntSet>();
     empty.myStateSize = 0;
-    empty.myStack = new Stack();
+    empty.myStack = new Stack<DfaValue>();
     empty.myDistinctClasses = new TLongHashSet();
     empty.myVariableStates = new HashMap();
     empty.myOffsetStack = new TIntStack(1);
@@ -50,11 +49,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public DfaMemoryState createCopy() {
     DfaMemoryStateImpl newState = new DfaMemoryStateImpl(myFactory);
 
-    newState.myStack = (Stack) myStack.clone();
+    newState.myStack = (Stack<DfaValue>)myStack.clone();
     newState.myDistinctClasses = new TLongHashSet(myDistinctClasses.toArray());
     newState.myEqClasses = new ArrayList<SortedIntSet>();
     newState.myStateSize = myStateSize;
-    newState.myVariableStates = new com.intellij.util.containers.HashMap();
+    newState.myVariableStates = new HashMap();
     newState.myOffsetStack = new TIntStack(myOffsetStack);
 
     for (int i = 0; i < myEqClasses.size(); i++) {
@@ -63,11 +62,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     try {
-      for (Iterator iterator = myVariableStates.keySet().iterator(); iterator.hasNext();) {
-        DfaVariableValue dfaVariableValue = (DfaVariableValue) iterator.next();
-        newState.myVariableStates.put(dfaVariableValue, ((DfaVariableState) myVariableStates.get(dfaVariableValue)).clone());
+      for (Object o : myVariableStates.keySet()) {
+        DfaVariableValue dfaVariableValue = (DfaVariableValue)o;
+        newState.myVariableStates.put(dfaVariableValue, ((DfaVariableState)myVariableStates.get(dfaVariableValue)).clone());
       }
-    } catch (CloneNotSupportedException e) {
+    }
+    catch (CloneNotSupportedException e) {
       LOG.error(e);
     }
     return newState;
@@ -76,7 +76,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public boolean equals(Object obj) {
     if (obj == this) return true;
     if (!(obj instanceof DfaMemoryState)) return false;
-    DfaMemoryStateImpl that = (DfaMemoryStateImpl) obj;
+    DfaMemoryStateImpl that = (DfaMemoryStateImpl)obj;
 
     if (myStateSize != that.myStateSize) return false;
     if (myDistinctClasses.size() != that.myDistinctClasses.size()) return false;
@@ -88,7 +88,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     int[] permutation = getPermutationToSortedState();
     int[] thatPermutation = that.getPermutationToSortedState();
 
-    for(int i = 0; i < myStateSize; i++) {
+    for (int i = 0; i < myStateSize; i++) {
       SortedIntSet thisClass = myEqClasses.get(permutation[i]);
       SortedIntSet thatClass = that.myEqClasses.get(thatPermutation[i]);
       if (thisClass == null) break;
@@ -189,8 +189,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     result.append(" distincts: ");
     long[] dclasses = myDistinctClasses.toArray();
-    for (int i = 0; i < dclasses.length; i++) {
-      long pair = dclasses[i];
+    for (long pair : dclasses) {
       result.append("{");
       appendClass(result, low(pair));
       result.append(", ");
@@ -207,7 +206,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public DfaValue pop() {
-    return (DfaValue) myStack.pop();
+    return myStack.pop();
   }
 
   public void push(DfaValue value) {
@@ -230,25 +229,28 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     flushVariable(var);
     if (value instanceof DfaUnknownValue) return;
 
-    if (value instanceof DfaNewValue) {
-      DfaTypeValue dfaType = myFactory.getTypeFactory().create(((DfaNewValue)value).getType());
+    if (value instanceof DfaNotNullValue) {
+      DfaTypeValue dfaType = myFactory.getTypeFactory().create(((DfaNotNullValue)value).getType());
       DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().create(var, dfaType, "instanceof", false);
       DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
       DfaRelationValue dfaNotNull = myFactory.getRelationFactory().create(var, dfaNull, "==", true);
       applyCondition(dfaInstanceof);
       applyCondition(dfaNotNull);
-    } else if (value instanceof DfaTypeValue) {
+    }
+    else if (value instanceof DfaTypeValue) {
       DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().create(var, value, "instanceof", false);
       applyInstanceofOrNull(dfaInstanceof);
-    } else {
+    }
+    else {
       DfaRelationValue dfaEqual = myFactory.getRelationFactory().create(var, value, "==", false);
       applyCondition(dfaEqual);
 
       if (value instanceof DfaVariableValue) {
         try {
-          DfaVariableState newState = (DfaVariableState) (getVariableState((DfaVariableValue) value)).clone();
+          DfaVariableState newState = (DfaVariableState)getVariableState((DfaVariableValue)value).clone();
           myVariableStates.put(var, newState);
-        } catch (CloneNotSupportedException e) {
+        }
+        catch (CloneNotSupportedException e) {
           LOG.error(e);
         }
       }
@@ -284,14 +286,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     int nConst = 0;
     int[] c1s = c1.toNativeArray();
-    for (int i = 0; i < c1s.length; i++) {
-      DfaValue dfaValue = myFactory.getValue(c1s[i]);
+    for (int c11 : c1s) {
+      DfaValue dfaValue = myFactory.getValue(c11);
       if (dfaValue instanceof DfaConstValue) nConst++;
     }
 
     int[] c2s = c2.toNativeArray();
-    for (int i = 0; i < c2s.length; i++) {
-      DfaValue dfaValue = myFactory.getValue(c2s[i]);
+    for (int c21 : c2s) {
+      DfaValue dfaValue = myFactory.getValue(c21);
       if (dfaValue instanceof DfaConstValue) nConst++;
     }
 
@@ -299,9 +301,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     TLongArrayList c2Pairs = new TLongArrayList();
     long[] distincts = myDistinctClasses.toArray();
-    for (int i = 0; i < distincts.length; i++) {
-      int pc1 = low(distincts[i]);
-      int pc2 = high(distincts[i]);
+    for (long distinct : distincts) {
+      int pc1 = low(distinct);
+      int pc2 = high(distinct);
       boolean addedToC1 = false;
 
       if (pc1 == c1Index || pc2 == c1Index) {
@@ -310,18 +312,17 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
       if (pc1 == c2Index || pc2 == c2Index) {
         if (addedToC1) return false;
-        c2Pairs.add(distincts[i]);
+        c2Pairs.add(distinct);
       }
     }
 
     c1.add(c2.toNativeArray());
     long[] c2Array = c2Pairs.toNativeArray();
     myDistinctClasses.removeAll(c2Array);
-    myEqClasses.set(c2Index,  null);
+    myEqClasses.set(c2Index, null);
     myStateSize--;
 
-    for (int i = 0; i < c2Array.length; i++) {
-      long l = c2Array[i];
+    for (long l : c2Array) {
       myDistinctClasses.add(createPair(c1Index, low(l) == c2Index ? high(l) : low(l)));
     }
 
@@ -329,11 +330,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private static int low(long l) {
-    return (int) (l & 0xFFFFFFFF);
+    return (int)(l & 0xFFFFFFFF);
   }
 
   private static int high(long l) {
-    return (int) ((l & 0xFFFFFFFF00000000L) >> 32);
+    return (int)((l & 0xFFFFFFFF00000000L) >> 32);
   }
 
   private static long createPair(int i1, int i2) {
@@ -342,7 +343,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       l <<= 32;
       l += i2;
       return l;
-    } else {
+    }
+    else {
       long l = i2;
       l <<= 32;
       l += i1;
@@ -355,6 +357,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public boolean isNull(DfaValue dfaValue) {
+    if (dfaValue instanceof DfaNotNullValue) return false;
+
     if (dfaValue instanceof DfaVariableValue || dfaValue instanceof DfaConstValue) {
       DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
       int c1Index = getOrCreateEqClassIndex(dfaValue);
@@ -372,8 +376,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     int c2Index = getOrCreateEqClassIndex(dfaNull);
 
     long[] pairs = myDistinctClasses.toArray();
-    for (int i = 0; i < pairs.length; i++) {
-      long pair = pairs[i];
+    for (long pair : pairs) {
       if (low(pair) == c1Index && high(pair) == c2Index ||
           high(pair) == c1Index && low(pair) == c2Index) {
         return true;
@@ -384,18 +387,20 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public boolean applyInstanceofOrNull(DfaRelationValue dfaCond) {
-    DfaVariableValue dfaVar = (DfaVariableValue) dfaCond.getLeftOperand();
-    DfaTypeValue dfaType = (DfaTypeValue) dfaCond.getRightOperand();
+    DfaVariableValue dfaVar = (DfaVariableValue)dfaCond.getLeftOperand();
+    DfaTypeValue dfaType = (DfaTypeValue)dfaCond.getRightOperand();
 
+    final DfaVariableState varState = getVariableState(dfaVar);
+    varState.setNullable(dfaType.isNullable());
     if (!isNotNull(dfaVar)) return true;
-    return getVariableState(dfaVar).setInstanceofValue(dfaType);
+    return varState.setInstanceofValue(dfaType);
   }
 
   public boolean applyCondition(DfaValue dfaCond) {
     if (dfaCond instanceof DfaUnknownValue) return true;
     if (dfaCond instanceof DfaVariableValue) {
-      DfaVariableValue dfaVar = (DfaVariableValue) dfaCond;
-      DfaVariableValue dfaNormalVar = dfaVar.isNegated() ? (DfaVariableValue) dfaVar.createNegated() : dfaVar;
+      DfaVariableValue dfaVar = (DfaVariableValue)dfaCond;
+      DfaVariableValue dfaNormalVar = dfaVar.isNegated() ? (DfaVariableValue)dfaVar.createNegated() : dfaVar;
       DfaConstValue dfaTrue = myFactory.getConstFactory().getTrue();
       DfaRelationValue dfaEqualsTrue = myFactory.getRelationFactory().create(dfaNormalVar, dfaTrue, "==", dfaVar.isNegated());
       return applyCondition(dfaEqualsTrue);
@@ -411,22 +416,22 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
-    DfaRelationValue dfaRelation = (DfaRelationValue) dfaCond;
+    DfaRelationValue dfaRelation = (DfaRelationValue)dfaCond;
     DfaValue dfaLeft = dfaRelation.getLeftOperand();
     DfaValue dfaRight = dfaRelation.getRightOperand();
 
     if (dfaRight instanceof DfaTypeValue) {
       if (dfaLeft instanceof DfaVariableValue) {
-        DfaVariableState varState = getVariableState((DfaVariableValue) dfaLeft);
-        DfaVariableValue dfaVar = (DfaVariableValue) dfaLeft;
+        DfaVariableState varState = getVariableState((DfaVariableValue)dfaLeft);
+        DfaVariableValue dfaVar = (DfaVariableValue)dfaLeft;
         if (dfaRelation.isNegated()) {
-          return varState.addNotInstanceofValue((DfaTypeValue) dfaRight)
+          return varState.addNotInstanceofValue((DfaTypeValue)dfaRight)
                  ? true
                  : applyCondition(compareToNull(dfaVar, false));
         }
 
         return applyCondition(compareToNull(dfaVar, true))
-               ? varState.setInstanceofValue((DfaTypeValue) dfaRight)
+               ? varState.setInstanceofValue((DfaTypeValue)dfaRight)
                : false;
 
       }
@@ -445,7 +450,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!dfaRelation.isNegated()) { //Equals
       if (c1Index == c2Index) return true;
       if (!unitClasses(c1Index, c2Index)) return false;
-    } else { // Not Equals
+    }
+    else { // Not Equals
       if (c1Index == c2Index) return false;
       makeClassesDistinct(c1Index, c2Index);
     }
@@ -453,18 +459,31 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  private DfaRelationValue compareToNull(DfaVariableValue dfaVar, boolean negated) {
+  public boolean applyNotNull(DfaValue value) {
+    if (value == myFactory.getConstFactory().getNull()) return false;
+    if (value instanceof DfaTypeValue && ((DfaTypeValue)value).isNullable()) return false;
+    if (value instanceof DfaVariableValue && isNotNull((DfaVariableValue)value)) return true;
+
+    if (value instanceof DfaVariableValue) {
+      final DfaVariableState varState = getVariableState((DfaVariableValue)value);
+      if (varState.isNullable()) return false;
+    }
+
+    return applyCondition(compareToNull(value, true));
+  }
+
+  private DfaRelationValue compareToNull(DfaValue dfaVar, boolean negated) {
     DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
     DfaRelationValue myDfaNotNull = myFactory.getRelationFactory().create(dfaVar, dfaNull, "==", negated);
     return myDfaNotNull;
   }
 
   private DfaVariableState getVariableState(DfaVariableValue dfaVar) {
-    DfaVariableState state = (DfaVariableState) myVariableStates.get(dfaVar);
+    DfaVariableState state = (DfaVariableState)myVariableStates.get(dfaVar);
 
     if (state == null) {
       state = new DfaVariableState();
-      myVariableStates.put(dfaVar,  state);
+      myVariableStates.put(dfaVar, state);
       final PsiVariable psiVariable = dfaVar.getPsiVariable();
       if (psiVariable != null) {
         state.setInstanceofValue(myFactory.getTypeFactory().create(psiVariable.getType()));
@@ -476,8 +495,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   public void flushFields(DataFlowRunner runner) {
     DfaVariableValue[] fields = runner.getFields();
-    for (int i = 0; i < fields.length; i++) {
-      DfaVariableValue field = fields[i];
+    for (DfaVariableValue field : fields) {
       flushVariable(field);
     }
   }
@@ -492,9 +510,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         myEqClasses.set(varClassIndex, null);
         myStateSize--;
         long[] pairs = myDistinctClasses.toArray();
-        for (int i = 0; i < pairs.length; i++) {
-          long pair = pairs[i];
-          if (low(pair)== varClassIndex || high(pair) == varClassIndex) {
+        for (long pair : pairs) {
+          if (low(pair) == varClassIndex || high(pair) == varClassIndex) {
             myDistinctClasses.remove(pair);
           }
         }

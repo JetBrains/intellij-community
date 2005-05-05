@@ -24,6 +24,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="Annotations" exported="" />
     <orderEntryProperties />
   </component>
 </module>

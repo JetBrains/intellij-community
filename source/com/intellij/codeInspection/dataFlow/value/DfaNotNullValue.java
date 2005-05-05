@@ -13,16 +13,16 @@ import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
 
-public class DfaNewValue extends DfaValue {
+public class DfaNotNullValue extends DfaValue {
   public static class Factory {
-    private final DfaNewValue mySharedInstance;
-    private final HashMap<String,ArrayList<DfaNewValue>> myStringToObject;
+    private final DfaNotNullValue mySharedInstance;
+    private final HashMap<String,ArrayList<DfaNotNullValue>> myStringToObject;
     private final DfaValueFactory myFactory;
 
     Factory(DfaValueFactory factory) {
       myFactory = factory;
-      mySharedInstance = new DfaNewValue(factory);
-      myStringToObject = new HashMap<String, ArrayList<DfaNewValue>>();
+      mySharedInstance = new DfaNotNullValue(factory);
+      myStringToObject = new HashMap<String, ArrayList<DfaNotNullValue>>();
     }
 
     public DfaValue create(PsiType type) {
@@ -30,18 +30,18 @@ public class DfaNewValue extends DfaValue {
       mySharedInstance.myType = type;
 
       String id = mySharedInstance.toString();
-      ArrayList<DfaNewValue> conditions = myStringToObject.get(id);
+      ArrayList<DfaNotNullValue> conditions = myStringToObject.get(id);
       if (conditions == null) {
-        conditions = new ArrayList<DfaNewValue>();
+        conditions = new ArrayList<DfaNotNullValue>();
         myStringToObject.put(id, conditions);
       } else {
         for (int i = 0; i < conditions.size(); i++) {
-          DfaNewValue aNew = conditions.get(i);
-          if (aNew.hardEquals(mySharedInstance)) return aNew;
+          DfaNotNullValue aNotNull = conditions.get(i);
+          if (aNotNull.hardEquals(mySharedInstance)) return aNotNull;
         }
       }
 
-      DfaNewValue result = new DfaNewValue(type, myFactory);
+      DfaNotNullValue result = new DfaNotNullValue(type, myFactory);
       conditions.add(result);
       return result;
     }
@@ -49,24 +49,24 @@ public class DfaNewValue extends DfaValue {
 
   private PsiType myType;
 
-  private DfaNewValue(PsiType myType, DfaValueFactory factory) {
+  private DfaNotNullValue(PsiType myType, DfaValueFactory factory) {
     super(factory);
     this.myType = myType;
   }
 
-  private DfaNewValue(DfaValueFactory factory) {
+  private DfaNotNullValue(DfaValueFactory factory) {
     super(factory);
   }
 
   public String toString() {
-    return "new " + myType.getCanonicalText();
+    return "@notnull " + myType.getCanonicalText();
   }
 
   public PsiType getType() {
     return myType;
   }
 
-  private boolean hardEquals(DfaNewValue aNew) {
-    return aNew.myType == myType;
+  private boolean hardEquals(DfaNotNullValue aNotNull) {
+    return aNotNull.myType == myType;
   }
 }

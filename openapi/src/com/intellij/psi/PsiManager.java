@@ -16,9 +16,10 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.NotNull;
 
 public abstract class PsiManager implements UserDataHolder {
-  public static PsiManager getInstance(Project project) {
+  public static PsiManager getInstance(@NotNull Project project) {
     return project.getComponent(PsiManager.class);
   }
 
@@ -29,7 +30,7 @@ public abstract class PsiManager implements UserDataHolder {
    */
   public abstract PsiDirectory[] getRootDirectories(int rootType);
 
-  public abstract PsiFile findFile(VirtualFile file);
+  public abstract PsiFile findFile(@NotNull VirtualFile file);
 
   public abstract PsiDirectory findDirectory(VirtualFile file);
 

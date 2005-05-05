@@ -26,7 +26,7 @@ public class DfaValueFactory {
 
     myVarFactory = new DfaVariableValue.Factory(this);
     myConstFactory = new DfaConstValue.Factory(this);
-    myNewFactory = new DfaNewValue.Factory(this);
+    myNotNullFactory = new DfaNotNullValue.Factory(this);
     myTypeFactory = new DfaTypeValue.Factory(this);
     myRelationFactory = new DfaRelationValue.Factory(this);
   }
@@ -67,7 +67,7 @@ public class DfaValueFactory {
       result = getConstFactory().create((PsiLiteralExpression)psiExpression);
     }
     else if (psiExpression instanceof PsiNewExpression) {
-      result = getNewFactory().create(psiExpression.getType());
+      result = getNotNullFactory().create(psiExpression.getType());
     }
     else {
       final Object value = ConstantExpressionEvaluator.computeConstantExpression(psiExpression, new THashSet<PsiVariable>(), false);
@@ -96,7 +96,7 @@ public class DfaValueFactory {
 
   private final DfaVariableValue.Factory myVarFactory;
   private final DfaConstValue.Factory myConstFactory;
-  private final DfaNewValue.Factory myNewFactory;
+  private final DfaNotNullValue.Factory myNotNullFactory;
   private final DfaTypeValue.Factory myTypeFactory;
   private final DfaRelationValue.Factory myRelationFactory;
 
@@ -109,8 +109,8 @@ public class DfaValueFactory {
     return myConstFactory;
   }
 
-  public DfaNewValue.Factory getNewFactory() {
-    return myNewFactory;
+  public DfaNotNullValue.Factory getNotNullFactory() {
+    return myNotNullFactory;
   }
 
   public DfaTypeValue.Factory getTypeFactory() {

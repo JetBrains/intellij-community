@@ -6,6 +6,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.Nullable;
 
 public interface PsiReference {
   PsiReference[] EMPTY_ARRAY = new PsiReference[0];
@@ -18,7 +19,7 @@ public interface PsiReference {
    */
   TextRange getRangeInElement();
 
-  PsiElement resolve();
+  @Nullable PsiElement resolve();
   String getCanonicalText();
 
   PsiElement handleElementRename(String newElementName) throws IncorrectOperationException;

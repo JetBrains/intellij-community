@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiExpression;
 
 import java.util.ArrayList;
 import java.util.EmptyStackException;
@@ -28,9 +29,10 @@ public class DataFlowRunner {
   private static final long ourTimeLimit = 10000;
 
   private Instruction[] myInstructions;
-  private final HashSet myNPEInstructions;
+  private final HashSet<Instruction> myNPEInstructions;
   private DfaVariableValue[] myFields;
-  private final HashSet myCCEInstructions;
+  private final HashSet<Instruction> myCCEInstructions;
+  private final HashSet<PsiExpression> myNullableExpressions;
   private DfaValueFactory myValueFactory;
 
   public Instruction getInstruction(int index) {
@@ -38,8 +40,9 @@ public class DataFlowRunner {
   }
 
   public DataFlowRunner() {
-    myNPEInstructions = new HashSet();
-    myCCEInstructions = new HashSet();
+    myNPEInstructions = new HashSet<Instruction>();
+    myCCEInstructions = new HashSet<Instruction>();
+    myNullableExpressions = new HashSet<PsiExpression>();
     myValueFactory = new DfaValueFactory();
   }
 
@@ -70,7 +73,7 @@ public class DataFlowRunner {
 
       if (branchCount > 80) return false; // Do not even try. Definetly will out of time.
 
-      final ArrayList queue = new ArrayList();
+      final ArrayList<DfaInstructionState> queue = new ArrayList<DfaInstructionState>();
       queue.add(new DfaInstructionState(myInstructions[0], DfaMemoryStateImpl.createEmpty(myValueFactory)));
 
       final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
@@ -79,7 +82,7 @@ public class DataFlowRunner {
         if (!unitTestMode && System.currentTimeMillis() - before > ourTimeLimit) return false;
         ProgressManager.getInstance().checkCanceled();
 
-        DfaInstructionState instructionState = (DfaInstructionState)queue.remove(0);
+        DfaInstructionState instructionState = queue.remove(0);
         if (LOG.isDebugEnabled()) {
           LOG.debug(instructionState.toString());
         }
@@ -120,16 +123,16 @@ public class DataFlowRunner {
     myCCEInstructions.add(instruction);
   }
 
-  public Set getCCEInstructions() {
+  public Set<Instruction> getCCEInstructions() {
     return myCCEInstructions;
   }
 
-  public Set getNPEInstructions() {
+  public Set<Instruction> getNPEInstructions() {
     return myNPEInstructions;
   }
 
-  public Set getRedundantInstanceofs() {
-    HashSet result = new HashSet(1);
+  public Set<Instruction> getRedundantInstanceofs() {
+    HashSet<Instruction> result = new HashSet<Instruction>(1);
     for (int i = 0; i < myInstructions.length; i++) {
       Instruction instruction = myInstructions[i];
       if (instruction instanceof BinopInstruction) {
@@ -142,13 +145,17 @@ public class DataFlowRunner {
     return result;
   }
 
+  public Set<PsiExpression> getNullableExpressions() {
+    return myNullableExpressions;
+  }
+
   public DfaVariableValue[] getFields() {
     return myFields;
   }
 
-  public HashSet[] getConstConditionalExpressions() {
-    HashSet trueSet = new HashSet();
-    HashSet falseSet = new HashSet();
+  public HashSet<BranchingInstruction>[] getConstConditionalExpressions() {
+    HashSet<BranchingInstruction> trueSet = new HashSet<BranchingInstruction>();
+    HashSet<BranchingInstruction> falseSet = new HashSet<BranchingInstruction>();
 
     for (int i = 0; i < myInstructions.length; i++) {
       Instruction instruction = myInstructions[i];
@@ -180,5 +187,9 @@ public class DataFlowRunner {
     }
 
     return new HashSet[]{trueSet, falseSet};
+  }
+
+  public void onPassingNullParameter(PsiExpression expr) {
+    myNullableExpressions.add(expr);
   }
 }

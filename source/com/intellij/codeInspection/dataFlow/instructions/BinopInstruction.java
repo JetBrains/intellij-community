@@ -86,11 +86,11 @@ public class BinopInstruction extends BranchingInstruction {
       }
       else {
         if ("instanceof".equals(myOperationSign) &&
-            (dfaLeft instanceof DfaTypeValue || dfaLeft instanceof DfaNewValue) &&
+            (dfaLeft instanceof DfaTypeValue || dfaLeft instanceof DfaNotNullValue) &&
             dfaRight instanceof DfaTypeValue) {
           final PsiType leftType;
-          if (dfaLeft instanceof DfaNewValue) {
-            leftType = ((DfaNewValue)dfaLeft).getType();
+          if (dfaLeft instanceof DfaNotNullValue) {
+            leftType = ((DfaNotNullValue)dfaLeft).getType();
           }
           else {
             leftType = ((DfaTypeValue)dfaLeft).getType();

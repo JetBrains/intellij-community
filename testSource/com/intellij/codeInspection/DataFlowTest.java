@@ -16,6 +16,11 @@ public class DataFlowTest extends InspectionTestCase {
            getManager().getCurrentProfile().getInspectionTool(DataFlowInspection.SHORT_NAME));
   }
 
+  private void doTest15() throws Exception {
+    doTest("dataFlow/" + getTestName(false),
+           getManager().getCurrentProfile().getInspectionTool(DataFlowInspection.SHORT_NAME), "java 1.5");
+  }
+
   public void testnpe1() throws Exception {
     doTest();
   }
@@ -113,4 +118,24 @@ public class DataFlowTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testNotNullable() throws Exception {
+    doTest15();
+  }
+
+  public void testNotNullableParameter() throws Exception {
+    doTest15();
+  }
+  
+  public void testNullable() throws Exception {
+    doTest15();
+  }
+  public void testNullableThroughCast() throws Exception {
+    doTest15();
+  }
+  public void testNullableThroughVariable() throws Exception {
+    doTest15();
+  }
+  public void testNullableThroughVariableShouldNotBeReported() throws Exception {
+    doTest15();
+  }
 }

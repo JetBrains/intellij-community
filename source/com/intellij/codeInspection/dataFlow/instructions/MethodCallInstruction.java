@@ -11,38 +11,60 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiVariable;
+import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
+import com.intellij.psi.*;
+import org.jetbrains.NotNull;
 
 
 public class MethodCallInstruction extends Instruction {
   private final PsiMethodCallExpression myCall;
-  private DfaRelationValue myDfaNotNull;
+  private DfaValueFactory myFactory;
+  private boolean myIsNullable;
+  private boolean myIsNotNull;
+  private boolean[] myParametersNotNull;
+  private int myArgsCount;
+  private PsiType myType;
 
   public MethodCallInstruction(PsiMethodCallExpression call, DfaValueFactory factory) {
     myCall = call;
-    myDfaNotNull = null;
-    PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
-    if (qualifierExpression instanceof PsiReferenceExpression) {
-      PsiReferenceExpression expression = (PsiReferenceExpression)qualifierExpression;
-      PsiVariable psiVariable = DfaValueFactory.resolveVariable(expression);
-      if (psiVariable != null) {
-        DfaVariableValue dfaVariable = factory.getVarFactory().create(psiVariable, false);
-        DfaConstValue dfaNull = factory.getConstFactory().getNull();
-        myDfaNotNull = factory.getRelationFactory().create(dfaVariable, dfaNull, "==", true);
+    myFactory = factory;
+    final PsiMethod callee = call.resolveMethod();
+    final PsiExpression[] args = myCall.getArgumentList().getExpressions();
+    myArgsCount = args.length;
+
+    if (callee != null) {
+      final PsiModifierList modifierList = callee.getModifierList();
+      myIsNullable = modifierList.findAnnotation("org.jetbrains.Nullable") != null;
+      myIsNotNull = modifierList.findAnnotation("org.jetbrains.NotNull") != null;
+      final PsiParameter[] params = callee.getParameterList().getParameters();
+      myParametersNotNull = new boolean[params.length];
+      for (int i = 0; i < params.length; i++) {
+        PsiParameter param = params[i];
+        final PsiModifierList modList = param.getModifierList();
+        myParametersNotNull[i] = modList != null && modList.findAnnotation("org.jetbrains.NotNull") != null;
       }
     }
+    else {
+      myParametersNotNull = new boolean[0];
+    }
+    myType = myCall.getType();
   }
 
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
+    final @NotNull DfaValue qualifier = memState.pop();
+
+    for (int i = 0; i < myArgsCount; i++) {
+      final DfaValue arg = memState.pop();
+      if (i < myParametersNotNull.length && myParametersNotNull[i] && !memState.applyNotNull(arg)) {
+        runner.onPassingNullParameter(myCall.getArgumentList().getExpressions()[i]);
+        return new DfaInstructionState[0];
+      }
+    }
+
     try {
-      if (myDfaNotNull != null && !memState.applyCondition(myDfaNotNull)) {
+      if (!memState.applyNotNull(qualifier)) {
         runner.onInstructionProducesNPE(this);
         return new DfaInstructionState[0];
       }
@@ -50,8 +72,22 @@ public class MethodCallInstruction extends Instruction {
       return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState)};
     }
     finally {
+      pushResult(memState);
       memState.flushFields(runner);
     }
+
+  }
+
+  private void pushResult(DfaMemoryState state) {
+    final DfaValue dfaValue;
+    if (myType != null && myType instanceof PsiClassType) {
+      dfaValue = myIsNotNull ? myFactory.getNotNullFactory().create(myType) : myFactory.getTypeFactory().create(myType, myIsNullable);
+    }
+    else {
+      dfaValue = DfaUnknownValue.getInstance();
+    }
+
+    state.push(dfaValue);
   }
 
   public PsiMethodCallExpression getCallExpression() {

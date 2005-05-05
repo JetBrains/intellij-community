@@ -10,12 +10,13 @@ package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 
 public class PushInstruction extends Instruction {
   private final DfaValue myValue;
 
-  public PushInstruction(DfaValue myValue) {
-    this.myValue = myValue;
+  public PushInstruction(DfaValue value) {
+    this.myValue = value != null ? value : DfaUnknownValue.getInstance();
   }
 
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {

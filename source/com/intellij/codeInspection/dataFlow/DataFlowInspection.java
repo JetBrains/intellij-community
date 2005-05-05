@@ -60,7 +60,9 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
           constConditions[1].size() > 0 ||
           dfaRunner.getNPEInstructions().size() > 0 ||
           dfaRunner.getCCEInstructions().size() > 0 ||
-          dfaRunner.getRedundantInstanceofs().size() > 0) {
+          dfaRunner.getRedundantInstanceofs().size() > 0 ||
+          dfaRunner.getNullableExpressions().size() > 0
+        ) {
         return createDescription(dfaRunner, manager);
       }
     }
@@ -86,36 +88,31 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   }
 
   private static ProblemDescriptor[] createDescription(DataFlowRunner runner, InspectionManager manager) {
-    HashSet[] constConditions = runner.getConstConditionalExpressions();
-    HashSet trueSet = constConditions[0];
-    HashSet falseSet = constConditions[1];
-    Set npeSet = runner.getNPEInstructions();
-    Set cceSet = runner.getCCEInstructions();
-    Set redundantInstanceofs = runner.getRedundantInstanceofs();
+    HashSet<BranchingInstruction>[] constConditions = runner.getConstConditionalExpressions();
+    HashSet<BranchingInstruction> trueSet = constConditions[0];
+    HashSet<BranchingInstruction> falseSet = constConditions[1];
+    Set<Instruction> npeSet = runner.getNPEInstructions();
+    Set<Instruction> cceSet = runner.getCCEInstructions();
+    Set<Instruction> redundantInstanceofs = runner.getRedundantInstanceofs();
 
     ArrayList<Instruction> allProblems = new ArrayList<Instruction>();
-    for (Iterator iterator = trueSet.iterator(); iterator.hasNext();) {
-      Instruction branchingInstruction = (Instruction)iterator.next();
-      allProblems.add(branchingInstruction);
+    for (BranchingInstruction instr : trueSet) {
+      allProblems.add((Instruction)instr);
     }
 
-    for (Iterator iterator = falseSet.iterator(); iterator.hasNext();) {
-      Instruction branchingInstruction = (Instruction)iterator.next();
-      allProblems.add(branchingInstruction);
+    for (BranchingInstruction instr : falseSet) {
+      allProblems.add(instr);
     }
 
-    for (Iterator iterator = npeSet.iterator(); iterator.hasNext();) {
-      Instruction methodCallInstruction = (Instruction)iterator.next();
+    for (Instruction methodCallInstruction : npeSet) {
       allProblems.add(methodCallInstruction);
     }
 
-    for (Iterator iterator = cceSet.iterator(); iterator.hasNext();) {
-      Instruction typeCastInstruction = (Instruction)iterator.next();
+    for (Instruction typeCastInstruction : cceSet) {
       allProblems.add(typeCastInstruction);
     }
 
-    for (Iterator iterator = redundantInstanceofs.iterator(); iterator.hasNext();) {
-      Instruction instruction = (Instruction)iterator.next();
+    for (Instruction instruction : redundantInstanceofs) {
       allProblems.add(instruction);
     }
 
@@ -205,6 +202,12 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
           }
         }
       }
+    }
+
+    final Set<PsiExpression> exprs = runner.getNullableExpressions();
+    for (PsiExpression expr : exprs) {
+      descriptions.add(manager.createProblemDescriptor(expr, "Argument <code>#ref</code> #loc is probably null", null,
+                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
     }
 
     return descriptions.toArray(new ProblemDescriptor[descriptions.size()]);
