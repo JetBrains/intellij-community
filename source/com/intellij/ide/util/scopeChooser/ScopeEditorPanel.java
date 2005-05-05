@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
+import com.intellij.util.Icons;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.Tree;
 
@@ -394,7 +395,7 @@ public class ScopeEditorPanel {
 
   private final class FlattenPackagesAction extends ToggleAction {
     FlattenPackagesAction() {
-      super("Flatten Packages", "Flatten Packages", IconLoader.getIcon("/objectBrowser/flattenPackages.png"));
+      super("Flatten Packages", "Flatten Packages", Icons.FLATTEN_PACKAGES_ICON);
     }
 
     public boolean isSelected(AnActionEvent event) {

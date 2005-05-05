@@ -32,18 +32,16 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Icons;
 
 import javax.swing.*;
 
 public class GuiFormFileType implements FileType {
-  private static final Icon ICON = IconLoader.getIcon("/fileTypes/uiForm.png");
 
   public String getName() {
     return "GUI_DESIGNER_FORM";
@@ -58,7 +56,7 @@ public class GuiFormFileType implements FileType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return Icons.UI_FORM_ICON;
   }
 
   public boolean isBinary() {
@@ -85,7 +83,4 @@ public class GuiFormFileType implements FileType {
     return null;
   }
 
-  public Language getLanguage() {
-    return null;
-  }
 }

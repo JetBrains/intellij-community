@@ -1,16 +1,14 @@
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
+import com.intellij.util.Icons;
 
 import javax.swing.*;
 import java.util.Set;
 
 public class PackageNode extends PackageDependenciesNode {
-  private static final Icon PACKAGE_OPEN_ICON = IconLoader.getIcon("/nodes/packageOpen.png");
-  private static final Icon PACKAGE_CLOSED_ICON = IconLoader.getIcon("/nodes/packageClosed.png");
 
   private String myPackageName;
   private String myPackageQName;
@@ -83,10 +81,10 @@ public class PackageNode extends PackageDependenciesNode {
   }
 
   public Icon getOpenIcon() {
-    return PACKAGE_OPEN_ICON;
+    return Icons.PACKAGE_OPEN_ICON;
   }
 
   public Icon getClosedIcon() {
-    return PACKAGE_CLOSED_ICON;
+    return Icons.PACKAGE_ICON;
   }
 }

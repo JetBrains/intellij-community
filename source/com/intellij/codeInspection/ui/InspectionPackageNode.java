@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.ui;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.Icons;
 
 import javax.swing.*;
 
@@ -8,8 +8,6 @@ import javax.swing.*;
  * @author max
  */
 public class InspectionPackageNode extends InspectionTreeNode {
-  private static final Icon packageOpenIcon = IconLoader.getIcon("/nodes/packageOpen.png");
-  private static final Icon packageClosedIcon = IconLoader.getIcon("/nodes/packageClosed.png");
 
   public InspectionPackageNode(String packageName) {
     super(packageName);
@@ -20,6 +18,6 @@ public class InspectionPackageNode extends InspectionTreeNode {
   }
 
   public Icon getIcon(boolean expanded) {
-    return expanded ? packageOpenIcon : packageClosedIcon;
+    return expanded ? Icons.PACKAGE_OPEN_ICON : Icons.PACKAGE_ICON;
   }
 }

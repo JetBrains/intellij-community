@@ -42,7 +42,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -52,11 +51,8 @@ import javax.swing.*;
 import java.util.*;
 
 public class PackageUtil {
-  protected static final Icon PACKAGE_OPEN_ICON = IconLoader.getIcon("/nodes/packageOpen.png");
-  protected static final Icon PACKAGE_CLOSED_ICON = IconLoader.getIcon("/nodes/packageClosed.png");
   protected static final Icon TREE_CLOSED_ICON = Icons.DIRECTORY_CLOSED_ICON;
   protected static final Icon TREE_OPEN_ICON = Icons.DIRECTORY_OPEN_ICON;
-  private static final Icon LOCKED_ICON = IconLoader.getIcon("/nodes/locked.png");
   static private final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode");
 
   public static PsiPackage[] getSubpackages(PsiPackage aPackage,
@@ -313,8 +309,8 @@ public class PackageUtil {
     data.setLocationString(packagePrefix);
 
     if (isPackage(psiDirectory)) {
-      data.setOpenIcon(addReadMark(PACKAGE_OPEN_ICON, isWritable));
-      data.setClosedIcon(addReadMark(PACKAGE_CLOSED_ICON, isWritable));
+      data.setOpenIcon(addReadMark(Icons.PACKAGE_OPEN_ICON, isWritable));
+      data.setClosedIcon(addReadMark(Icons.PACKAGE_ICON, isWritable));
     }
     else {
       data.setOpenIcon(addReadMark(TREE_OPEN_ICON, isWritable));
@@ -342,7 +338,7 @@ public class PackageUtil {
       return originalIcon;
     }
     else {
-      return IconUtilEx.createLayeredIcon(originalIcon, LOCKED_ICON);
+      return IconUtilEx.createLayeredIcon(originalIcon, Icons.LOCKED_ICON);
     }
   }
 

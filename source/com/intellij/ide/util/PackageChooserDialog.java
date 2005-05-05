@@ -21,9 +21,9 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.util.ui.Tree;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.Tree;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -44,8 +44,6 @@ public class PackageChooserDialog extends DialogWrapper {
   private PsiPackage mySelectedPackage = null;
   private Project myProject;
   private String myTitle;
-  private static final Icon PACKAGE_OPEN_ICON = IconLoader.getIcon("/nodes/packageOpen.png");
-  private static final Icon PACKAGE_CLOSED_ICON = IconLoader.getIcon("/nodes/packageClosed.png");
 
   public PackageChooserDialog(String title, Project project) {
     super(project, true);
@@ -75,7 +73,7 @@ public class PackageChooserDialog extends DialogWrapper {
           boolean hasFocus
         ){
           super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-          setIcon(expanded ? PACKAGE_OPEN_ICON : PACKAGE_CLOSED_ICON);
+          setIcon(expanded ? Icons.PACKAGE_OPEN_ICON : Icons.PACKAGE_ICON);
 
           if (value instanceof DefaultMutableTreeNode) {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;

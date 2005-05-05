@@ -33,6 +33,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -424,7 +425,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   private JComponent createActionsToolbar() {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.removeAll();
-    group.add(new ToggleAction("Flatten Packages", "Flatten Packages", IconLoader.getIcon("/objectBrowser/flattenPackages.png")) {
+    group.add(new ToggleAction("Flatten Packages", "Flatten Packages", Icons.FLATTEN_PACKAGES_ICON) {
       public boolean isSelected(AnActionEvent e) {
         return myFavoritesConfiguration.IS_FLATTEN_PACKAGES;
       }

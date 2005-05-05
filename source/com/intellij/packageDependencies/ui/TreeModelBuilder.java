@@ -10,13 +10,13 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.Icons;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -60,8 +60,6 @@ public class TreeModelBuilder {
 
   private static final Icon LIB_ICON_OPEN = IconLoader.getIcon("/nodes/ppLibOpen.png");
   private static final Icon LIB_ICON_CLOSED = IconLoader.getIcon("/nodes/ppLibClosed.png");
-  private static final Icon PACKAGE_CLOSED = IconLoader.getIcon("/nodes/packageClosed.png");
-  private static final Icon PACKAGE_OPEN = IconLoader.getIcon("/nodes/packageOpen.png");
   private static final Icon TEST_ICON = IconLoader.getIcon("/nodes/testSourceFolder.png");
   public static final String PRODUCTION_NAME = "Production Classes";
   public static final String TEST_NAME = "Test Classes";
@@ -85,7 +83,7 @@ public class TreeModelBuilder {
     createMaps(ScopeType.TEST);
 
     if (myGroupByScopeType) {
-      mySourceRoot = new GeneralGroupNode(PRODUCTION_NAME, PACKAGE_OPEN, PACKAGE_CLOSED);
+      mySourceRoot = new GeneralGroupNode(PRODUCTION_NAME, Icons.PACKAGE_OPEN_ICON, Icons.PACKAGE_ICON);
       myTestRoot = new GeneralGroupNode(TEST_NAME, TEST_ICON, TEST_ICON);
       myLibsRoot = new GeneralGroupNode(LIBRARY_NAME, LIB_ICON_OPEN, LIB_ICON_CLOSED);
       myRoot.add(mySourceRoot);

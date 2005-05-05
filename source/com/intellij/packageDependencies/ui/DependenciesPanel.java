@@ -335,7 +335,7 @@ public class DependenciesPanel extends JPanel {
 
   private final class FlattenPackagesAction extends ToggleAction {
     FlattenPackagesAction() {
-      super("Flatten Packages", "Flatten Packages", IconLoader.getIcon("/objectBrowser/flattenPackages.png"));
+      super("Flatten Packages", "Flatten Packages", Icons.FLATTEN_PACKAGES_ICON);
     }
 
     public boolean isSelected(AnActionEvent event) {

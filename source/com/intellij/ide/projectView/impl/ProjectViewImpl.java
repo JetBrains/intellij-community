@@ -48,6 +48,7 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.Icons;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
@@ -303,7 +304,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   private void createToolbarActions() {
     myActionGroup.removeAll();
-    myActionGroup.add(new PaneOptionAction(myFlattenPackages, "Flatten Packages", "Flatten Packages", IconLoader.getIcon("/objectBrowser/flattenPackages.png"), ourFlattenPackagesDefaults) {
+    myActionGroup.add(new PaneOptionAction(myFlattenPackages, "Flatten Packages", "Flatten Packages", Icons.FLATTEN_PACKAGES_ICON, ourFlattenPackagesDefaults) {
       public void setSelected(AnActionEvent event, boolean flag) {
         final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
         final SelectionInfo selectionInfo = SelectionInfo.create(viewPane);

@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.Icons;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;
@@ -78,7 +79,7 @@ public class ImportTree extends NodeRenderer {
   }
 
   public AnAction createExcludeAction() {
-    return new AnAction("Exclude from Import", null, IconLoader.getIcon("/actions/exclude.png")) {
+    return new AnAction("Exclude from Import", null, Icons.DELETE_ICON) {
       public void update(AnActionEvent e) {
         VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         Presentation presentation = e.getPresentation();
@@ -106,7 +107,7 @@ public class ImportTree extends NodeRenderer {
   }
 
   public AnAction createIncludeAction() {
-    return new AnAction("Include to Import", null, IconLoader.getIcon("/actions/include.png")) {
+    return new AnAction("Include to Import", null, Icons.ADD_ICON) {
       public void update(AnActionEvent e) {
         VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
         Presentation presentation = e.getPresentation();

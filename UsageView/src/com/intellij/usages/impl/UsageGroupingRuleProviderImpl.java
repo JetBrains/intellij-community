@@ -7,6 +7,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.rules.*;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
+import com.intellij.util.Icons;
 import org.jdom.Element;
 
 import java.util.ArrayList;
@@ -94,7 +95,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
 
   private class GroupByPackageAction extends RuleAction {
     public GroupByPackageAction(UsageViewImpl view) {
-      super(view, "Group by package", IconLoader.getIcon("/toolbar/folders.png"));
+      super(view, "Group by package", Icons.GROUP_BY_PACKAGES);
     }
     protected boolean getOptionValue() {
       return GROUP_BY_PACKAGE;

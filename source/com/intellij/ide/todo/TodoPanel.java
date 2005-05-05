@@ -31,6 +31,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.Content;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -464,7 +465,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
 
   private final class MyShowPackagesAction extends ToggleAction {
     public MyShowPackagesAction() {
-      super("Group By Packages", null, IconLoader.getIcon("/toolbar/folders.png"));
+      super("Group By Packages", null, Icons.GROUP_BY_PACKAGES);
     }
 
     public boolean isSelected(AnActionEvent e) {
@@ -479,7 +480,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
 
   private final class MyFlattenPackagesAction extends ToggleAction {
     public MyFlattenPackagesAction() {
-      super("Flatten Packages", null, IconLoader.getIcon("/objectBrowser/flattenPackages.png"));
+      super("Flatten Packages", null, Icons.FLATTEN_PACKAGES_ICON);
     }
 
     public void update(AnActionEvent e) {

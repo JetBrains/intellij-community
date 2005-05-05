@@ -25,12 +25,12 @@ public abstract class BaseOccurenceManager implements OccurenceManager {
       myOccurences = findOccurences();
 
       if(myFilter != null) {
-        ArrayList result = new ArrayList();
+        ArrayList<PsiExpression> result = new ArrayList<PsiExpression>();
         for (PsiExpression occurence : myOccurences) {
           if (myFilter.isOK(occurence)) result.add(occurence);
         }
         if(result.size() > 0) {
-          myOccurences = (PsiExpression[]) result.toArray(new PsiExpression[result.size()]);
+          myOccurences = result.toArray(new PsiExpression[result.size()]);
         } else {
           myOccurences = defaultOccurences();
         }

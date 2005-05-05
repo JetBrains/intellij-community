@@ -39,22 +39,18 @@ import com.intellij.ide.util.treeView.TreeViewUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.Icons;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class PackageElementNode extends ProjectViewNode<PackageElement> {
-  protected static final Icon PACKAGE_OPEN_ICON = IconLoader.getIcon("/nodes/packageOpen.png");
-  protected static final Icon PACKAGE_CLOSED_ICON = IconLoader.getIcon("/nodes/packageClosed.png");
-
   public PackageElementNode(final Project project,
                           final PackageElement value,
                           final ViewSettings viewSettings) {
@@ -162,8 +158,8 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
       }
     }
 
-    presentation.setOpenIcon(PackageUtil.PACKAGE_OPEN_ICON);
-    presentation.setClosedIcon(PackageUtil.PACKAGE_CLOSED_ICON);
+    presentation.setOpenIcon(Icons.PACKAGE_OPEN_ICON);
+    presentation.setClosedIcon(Icons.PACKAGE_ICON);
   }
 
   private boolean showFwName(final PsiPackage aPackage) {
