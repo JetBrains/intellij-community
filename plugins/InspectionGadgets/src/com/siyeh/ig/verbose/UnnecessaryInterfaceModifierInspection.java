@@ -189,11 +189,10 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
             }
             final PsiModifierList modifiers = method.getModifierList();
             // Methods may have annotations attched so it's incorrect to check for precense of modifiers only to check their redundancy.
-            if (modifiers.hasModifierProperty(PsiModifier.PUBLIC) ||
-                modifiers.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            if (modifiers.hasExplicitModifier(PsiModifier.PUBLIC) ||
+                modifiers.hasExplicitModifier(PsiModifier.ABSTRACT)) {
                 registerError(modifiers);
             }
         }
-
     }
 }
