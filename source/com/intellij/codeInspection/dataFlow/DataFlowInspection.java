@@ -137,12 +137,14 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
       if (instruction instanceof MethodCallInstruction) {
         MethodCallInstruction mcInstruction = (MethodCallInstruction)instruction;
-        PsiMethodCallExpression callExpression = mcInstruction.getCallExpression();
-        LocalQuickFix fix = createAssertNotNullFix(callExpression.getMethodExpression().getQualifierExpression());
+        if (mcInstruction.getCallExpression() instanceof PsiMethodCallExpression) {
+          PsiMethodCallExpression callExpression = (PsiMethodCallExpression)mcInstruction.getCallExpression();
+          LocalQuickFix fix = createAssertNotNullFix(callExpression.getMethodExpression().getQualifierExpression());
 
-        descriptions.add(manager.createProblemDescriptor(mcInstruction.getCallExpression(),
-                                                         "Method invocation <code>#ref</code> #loc may produce <code>java.lang.NullPointerException</code>.",
-                                                         fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+          descriptions.add(manager.createProblemDescriptor(mcInstruction.getCallExpression(),
+                                                           "Method invocation <code>#ref</code> #loc may produce <code>java.lang.NullPointerException</code>.",
+                                                           fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+        }
       }
       else if (instruction instanceof FieldReferenceInstruction) {
         FieldReferenceInstruction frInstruction = (FieldReferenceInstruction)instruction;

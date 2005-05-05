@@ -5,12 +5,13 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
 public interface PsiCall extends PsiElement {
-  PsiExpressionList getArgumentList();
+  @NotNull  PsiExpressionList getArgumentList();
   @Nullable PsiMethod resolveMethod();
   ResolveResult resolveMethodGenerics();
 }

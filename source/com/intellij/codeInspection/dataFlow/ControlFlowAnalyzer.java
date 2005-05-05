@@ -926,15 +926,14 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       startElement(expression);
 
       PsiReferenceExpression methodExpression = expression.getMethodExpression();
-
       PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+
       if (qualifierExpression != null) {
         final String text = qualifierExpression.getText();
         if ("System".equals(text)) {
-          PsiElement resolved = methodExpression.getReference().resolve();
-          if (resolved != null && resolved instanceof PsiMethod) {
-            PsiMethod method = (PsiMethod)resolved;
-            if ("exit".equals(method.getName())) {
+          PsiMethod resolved = expression.resolveMethod();
+          if (resolved != null) {
+            if ("exit".equals(resolved.getName())) {
               addInstruction(new ReturnInstruction());
               return;
             }
@@ -943,10 +942,9 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
         else if ("LOG".equals(text)) {
           final PsiType qualifierType = qualifierExpression.getType();
           if (qualifierType != null && qualifierType.equalsToText("com.intellij.openapi.diagnostic.Logger")) {
-            PsiElement resolved = methodExpression.getReference().resolve();
-            if (resolved != null && resolved instanceof PsiMethod) {
-              PsiMethod method = (PsiMethod)resolved;
-              final String methodName = method.getName();
+            PsiMethod resolved = expression.resolveMethod();
+            if (resolved != null) {
+              final String methodName = resolved.getName();
               if ("error".equals(methodName)) {
                 PsiExpression[] params = expression.getArgumentList().getExpressions();
                 for (PsiExpression param : params) {
@@ -988,7 +986,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
       addInstruction(new MethodCallInstruction(expression, myFactory));
 
       if (myCatchStack.size() > 0) {
-        addMethodThrows((PsiMethod)methodExpression.getReference().resolve());
+        addMethodThrows(expression.resolveMethod());
       }
     }
     finally {
@@ -1013,19 +1011,17 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
   public void visitNewExpression(PsiNewExpression expression) {
     startElement(expression);
 
-    PsiExpressionList expressionList = expression.getArgumentList();
-    if (expressionList != null) {
-      PsiExpression[] parameterExpressions = expressionList.getExpressions();
-      for (PsiExpression parameterExpression : parameterExpressions) {
-        parameterExpression.accept(this);
-        addInstruction(new PopInstruction());
-      }
+    PsiExpression[] params = expression.getArgumentList().getExpressions();
+    for (PsiExpression param : params) {
+      param.accept(this);
     }
+
+    pushUnknown();
+    addInstruction(new MethodCallInstruction(expression, myFactory));
 
     if (myCatchStack.size() > 0) {
       addMethodThrows(expression.resolveConstructor());
     }
-    addInstruction(new PushInstruction(myFactory.create(expression)));
 
     finishElement(expression);
   }

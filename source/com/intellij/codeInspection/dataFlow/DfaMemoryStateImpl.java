@@ -487,6 +487,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       final PsiVariable psiVariable = dfaVar.getPsiVariable();
       if (psiVariable != null) {
         state.setInstanceofValue(myFactory.getTypeFactory().create(psiVariable.getType()));
+        state.setNullable(psiVariable.getModifierList().findAnnotation(DataFlowRunner.NULLABLE) != null);
       }
     }
 

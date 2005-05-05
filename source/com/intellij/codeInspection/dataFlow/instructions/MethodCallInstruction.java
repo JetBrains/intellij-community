@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class MethodCallInstruction extends Instruction {
-  private final PsiMethodCallExpression myCall;
+  private final PsiCallExpression myCall;
   private DfaValueFactory myFactory;
   private boolean myIsNullable;
   private boolean myIsNotNull;
@@ -27,7 +27,7 @@ public class MethodCallInstruction extends Instruction {
   private int myArgsCount;
   private PsiType myType;
 
-  public MethodCallInstruction(PsiMethodCallExpression call, DfaValueFactory factory) {
+  public MethodCallInstruction(PsiCallExpression call, DfaValueFactory factory) {
     myCall = call;
     myFactory = factory;
     final PsiMethod callee = call.resolveMethod();
@@ -50,6 +50,11 @@ public class MethodCallInstruction extends Instruction {
       myParametersNotNull = new boolean[0];
     }
     myType = myCall.getType();
+
+    if (call instanceof PsiNewExpression) {
+      myIsNullable = false;
+      myIsNotNull = true;
+    }
   }
 
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
@@ -90,7 +95,7 @@ public class MethodCallInstruction extends Instruction {
     state.push(dfaValue);
   }
 
-  public PsiMethodCallExpression getCallExpression() {
+  public PsiCallExpression getCallExpression() {
     return myCall;
   }
 
