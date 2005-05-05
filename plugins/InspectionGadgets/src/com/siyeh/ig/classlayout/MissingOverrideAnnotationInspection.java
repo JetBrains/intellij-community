@@ -128,11 +128,9 @@ public class MissingOverrideAnnotationInspection extends MethodInspection{
     private  static boolean isOverridden(PsiMethod method){
         final PsiMethod[] superMethods = method.findSuperMethods();
         for(PsiMethod superMethod : superMethods){
-            if(!superMethod.hasModifierProperty(PsiModifier.ABSTRACT)){
-                final PsiClass containingClass = superMethod.getContainingClass();
-                if(containingClass == null || !containingClass.isInterface()){
-                    return true;
-                }
+            final PsiClass containingClass = superMethod.getContainingClass();
+            if(containingClass == null || !containingClass.isInterface()){
+                return true;
             }
         }
         return false;
