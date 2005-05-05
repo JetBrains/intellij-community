@@ -48,11 +48,13 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane {
   protected JScrollPane myComponent;
+  private MouseListener myTreePopupHandler;
 
   protected AbstractProjectViewPSIPane(Project project) {
     super(project);
@@ -67,7 +69,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     myTree.setSelectionPath(new TreePath(myTree.getModel().getRoot()));
 
     ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_PROJECT_VIEW_POPUP);
-    PopupHandler.installPopupHandler(myTree, group, ActionPlaces.PROJECT_VIEW_POPUP, ActionManager.getInstance());
+    myTreePopupHandler = PopupHandler.installPopupHandler(myTree, group, ActionPlaces.PROJECT_VIEW_POPUP, ActionManager.getInstance());
 
     EditSourceOnDoubleClickHandler.install(myTree);
 
@@ -179,6 +181,12 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
   public final void installAutoScrollToSourceHandler(AutoScrollToSourceHandler autoScrollToSourceHandler) {
     autoScrollToSourceHandler.install(myTree);
+  }
+
+  public void updateTreePopupHandler() {
+    myTree.removeMouseListener(myTreePopupHandler);
+    ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_PROJECT_VIEW_POPUP);
+    myTreePopupHandler = PopupHandler.installPopupHandler(myTree, group, ActionPlaces.PROJECT_VIEW_POPUP, ActionManager.getInstance());
   }
 
   public void initTree() {

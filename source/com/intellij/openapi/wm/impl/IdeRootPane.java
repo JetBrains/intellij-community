@@ -126,7 +126,7 @@ public class IdeRootPane extends JRootPane{
   }
 
   private JComponent createToolbar() {
-    ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getActiveSchema().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
+    ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
     final ActionToolbarEx toolBar=(ActionToolbarEx)myActionManager.createActionToolbar(
       ActionPlaces.MAIN_TOOLBAR,
       group,

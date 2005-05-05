@@ -43,10 +43,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -63,6 +60,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   private MyStructureViewWrapper myStructureViewWrapper;
   */
   private CopyPasteManagerEx.CopyPasteDelegator myCopyPasteDelegator;
+  private MouseListener myTreePopupHandler;
 
   public void removeFromFavorites(final AbstractTreeNode element) {
     myFavoritesTreeStructure.removeFromFavorites(element);
@@ -184,8 +182,10 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       }
     });
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    PopupHandler.installPopupHandler(myTree, (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_FAVORITES_VIEW_POPUP),
-                                     ActionPlaces.FAVORITES_VIEW_POPUP, ActionManager.getInstance());
+    myTreePopupHandler = PopupHandler.installPopupHandler(myTree,
+                                                          (ActionGroup)CustomizableActionsSchemas.getInstance()
+                                                            .getCorrectedAction(IdeActions.GROUP_FAVORITES_VIEW_POPUP),
+                                                          ActionPlaces.FAVORITES_VIEW_POPUP, ActionManager.getInstance());
     /* mySplitter = new Splitter(true);
      mySplitter.setHonorComponentsMinimumSize(true);
      mySplitter.setFirstComponent(myCenterPanel);
@@ -234,6 +234,12 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     new DropTarget(myTree, new MyDropTargetListener());
 
     //DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
+  }
+
+  public void updateTreePopoupHandler(){
+    myTree.removeMouseListener(myTreePopupHandler);
+    ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_FAVORITES_VIEW_POPUP);
+    myTreePopupHandler = PopupHandler.installPopupHandler(myTree, group, ActionPlaces.FAVORITES_VIEW_POPUP, ActionManager.getInstance());
   }
 
   public void selectElement(final Object selector, final VirtualFile file) {

@@ -39,7 +39,6 @@ public class CustomActionsSchema implements JDOMExternalizable {
     myIdToName.put(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.FAVORITES_POPUP);
     myIdToName.put(IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionsTreeUtil.PROJECT_VIEW_POPUP);
     myIdToName.put(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.COMMANDER_POPUP);
-    myIdToName.put(IdeActions.GROUP_STRUCTURE_VIEW_POPUP, ActionsTreeUtil.STRUCTURE_VIEW_POPUP);
     myIdToName.put(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.J2EE_POPUP);
   }
 

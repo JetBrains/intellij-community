@@ -1,10 +1,17 @@
 package com.intellij.ide.ui.customization;
 
+import com.intellij.ide.favoritesTreeView.FavoritesViewImpl;
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.projectView.impl.PackageViewPane;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.j2ee.module.view.J2EEProjectViewPane;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -12,7 +19,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.ui.*;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -390,6 +396,20 @@ public class CustomizableActionsPanel {
       final IdeFrame frame = WindowManagerEx.getInstanceEx().getFrame(project);
       frame.updateToolbar();
       frame.updateMenuBar();
+      final ProjectView projectView = ProjectView.getInstance(project);
+      projectView.getProjectViewPaneById(ProjectViewPane.ID).updateTreePopupHandler();
+      projectView.getProjectViewPaneById(PackageViewPane.ID).updateTreePopupHandler();
+      final AbstractProjectViewPane pane = projectView.getProjectViewPaneById(J2EEProjectViewPane.ID);
+      if (pane != null){
+        pane.updateTreePopupHandler();
+      }
+
+      final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(project);
+      final String[] availableFavoritesLists = favoritesView.getAvailableFavoritesLists();
+      for (int j = 0; j < availableFavoritesLists.length; j++) {
+        String favoritesList = availableFavoritesLists[j];
+        favoritesView.getFavoritesTreeViewPanel(favoritesList).updateTreePopoupHandler();
+      }
     }
     final IdeFrame frame = WindowManagerEx.getInstanceEx().getFrame(null);
     if (frame != null){

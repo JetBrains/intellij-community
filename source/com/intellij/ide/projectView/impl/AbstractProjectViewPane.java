@@ -76,6 +76,8 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   public void addToolbarActions(DefaultActionGroup actionGroup) {
   }
 
+  public abstract void updateTreePopupHandler();
+
   private List<AbstractTreeNode> getSelectedNodes(){
     final ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
 
