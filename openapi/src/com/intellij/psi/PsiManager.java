@@ -17,73 +17,74 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.NotNull;
+import org.jetbrains.Nullable;
 
 public abstract class PsiManager implements UserDataHolder {
-  public static PsiManager getInstance(@NotNull Project project) {
+  public static @NotNull PsiManager getInstance(@NotNull Project project) {
     return project.getComponent(PsiManager.class);
   }
 
-  public abstract Project getProject();
+  public abstract @NotNull Project getProject();
 
   /**
    * @deprecated
    */
-  public abstract PsiDirectory[] getRootDirectories(int rootType);
+  public abstract @NotNull PsiDirectory[] getRootDirectories(int rootType);
 
-  public abstract PsiFile findFile(@NotNull VirtualFile file);
+  public abstract @Nullable PsiFile findFile(@NotNull VirtualFile file);
 
-  public abstract PsiDirectory findDirectory(VirtualFile file);
+  public abstract @Nullable PsiDirectory findDirectory(@NotNull VirtualFile file);
 
   /**
    * @deprecated use {@link #findClass(String, GlobalSearchScope)}
    */
-  public abstract PsiClass findClass(String qualifiedName);
+  public abstract @Nullable PsiClass findClass(@NotNull String qualifiedName);
 
-  public abstract PsiClass findClass(String qualifiedName, GlobalSearchScope scope);
-  public abstract PsiClass[] findClasses(String qualifiedName, GlobalSearchScope scope);
+  public abstract @Nullable PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
+  public abstract @NotNull PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
 
-  public abstract PsiPackage findPackage(String qualifiedName);
+  public abstract @Nullable PsiPackage findPackage(@NotNull String qualifiedName);
 
-  public abstract boolean areElementsEquivalent(PsiElement element1, PsiElement element2);
+  public abstract boolean areElementsEquivalent(@Nullable PsiElement element1, @Nullable PsiElement element2);
 
   //todo move to FileDocumentManager
-  public abstract void reloadFromDisk(PsiFile file);
+  public abstract void reloadFromDisk(@NotNull PsiFile file);
 
-  public abstract void addPsiTreeChangeListener(PsiTreeChangeListener listener);
+  public abstract void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener);
 
-  public abstract void removePsiTreeChangeListener(PsiTreeChangeListener listener);
+  public abstract void removePsiTreeChangeListener(@NotNull PsiTreeChangeListener listener);
 
-  public abstract CodeStyleManager getCodeStyleManager();
+  public abstract @NotNull CodeStyleManager getCodeStyleManager();
 
-  public abstract PsiElementFactory getElementFactory();
+  public abstract @NotNull PsiElementFactory getElementFactory();
 
-  public abstract PsiSearchHelper getSearchHelper();
+  public abstract @NotNull PsiSearchHelper getSearchHelper();
 
-  public abstract PsiResolveHelper getResolveHelper();
+  public abstract @NotNull PsiResolveHelper getResolveHelper();
 
-  public abstract PsiShortNamesCache getShortNamesCache();
+  public abstract @NotNull PsiShortNamesCache getShortNamesCache();
 
-  public abstract void registerShortNamesCache(PsiShortNamesCache cache);
+  public abstract void registerShortNamesCache(@NotNull PsiShortNamesCache cache);
 
-  public abstract PsiMigration startMigration();
+  public abstract @NotNull PsiMigration startMigration();
 
-  public abstract JavadocManager getJavadocManager();
+  public abstract @NotNull JavadocManager getJavadocManager();
 
-  public abstract PsiNameHelper getNameHelper();
+  public abstract @NotNull PsiNameHelper getNameHelper();
 
-  public abstract PsiConstantEvaluationHelper getConstantEvaluationHelper();
+  public abstract @NotNull PsiConstantEvaluationHelper getConstantEvaluationHelper();
 
-  public abstract PsiModificationTracker getModificationTracker();
+  public abstract @NotNull PsiModificationTracker getModificationTracker();
 
-  public abstract PsiAspectManager getAspectManager();
+  public abstract @NotNull PsiAspectManager getAspectManager();
 
-  public abstract CachedValuesManager getCachedValuesManager();
+  public abstract @NotNull CachedValuesManager getCachedValuesManager();
 
-  public abstract void moveFile(PsiFile file, PsiDirectory newParentDir) throws IncorrectOperationException;
+  public abstract void moveFile(@NotNull PsiFile file, @NotNull PsiDirectory newParentDir) throws IncorrectOperationException;
 
-  public abstract void moveDirectory(PsiDirectory dir, PsiDirectory newParentDir) throws IncorrectOperationException;
+  public abstract void moveDirectory(@NotNull PsiDirectory dir, @NotNull PsiDirectory newParentDir) throws IncorrectOperationException;
 
-  public abstract void checkMove(PsiElement element, PsiElement newContainer) throws IncorrectOperationException;
+  public abstract void checkMove(@NotNull PsiElement element, @NotNull PsiElement newContainer) throws IncorrectOperationException;
 
   public abstract void startBatchFilesProcessingMode();
 
@@ -91,22 +92,20 @@ public abstract class PsiManager implements UserDataHolder {
 
   public abstract boolean isDisposed();
 
-  public abstract LanguageLevel getEffectiveLanguageLevel();
+  public abstract @NotNull LanguageLevel getEffectiveLanguageLevel();
 
   public abstract boolean isPartOfPackagePrefix(String packageName);
 
   /**
    * For tests only
    */
-  public abstract void setEffectiveLanguageLevel(LanguageLevel languageLevel);
-
-
+  public abstract void setEffectiveLanguageLevel(@NotNull LanguageLevel languageLevel);
 
   public abstract void dropResolveCaches();
 
-  public abstract boolean isInPackage(PsiElement element, PsiPackage aPackage);
+  public abstract boolean isInPackage(@NotNull PsiElement element, @NotNull PsiPackage aPackage);
 
-  public abstract boolean arePackagesTheSame(PsiElement element1, PsiElement element2);
+  public abstract boolean arePackagesTheSame(@NotNull PsiElement element1, @NotNull PsiElement element2);
 
-  public abstract boolean isInProject(PsiElement element);
+  public abstract boolean isInProject(@NotNull PsiElement element);
 }
