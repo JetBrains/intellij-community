@@ -6,7 +6,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public interface PsiReference {
   PsiReference[] EMPTY_ARRAY = new PsiReference[0];

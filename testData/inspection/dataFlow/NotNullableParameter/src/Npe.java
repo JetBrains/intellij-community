@@ -1,4 +1,4 @@
-import org.jetbrains.NotNull;
+import org.jetbrains.annotations.NotNull;
 
 public class Npe {
    Object foo(@NotNull Object o) {

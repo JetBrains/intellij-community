@@ -1,5 +1,5 @@
-import org.jetbrains.NotNull;
-import org.jetbrains.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class Npe {
    Object foo(@NotNull Object o) {

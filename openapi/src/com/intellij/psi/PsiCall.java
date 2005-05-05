@@ -4,7 +4,7 @@
  */
 package com.intellij.psi;
 
-import org.jetbrains.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven

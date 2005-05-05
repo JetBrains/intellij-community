@@ -16,8 +16,8 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.NotNull;
-import org.jetbrains.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class PsiManager implements UserDataHolder {
   public static @NotNull PsiManager getInstance(@NotNull Project project) {
