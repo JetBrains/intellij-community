@@ -44,6 +44,7 @@ public class SingleClassImportInspection extends ClassInspection {
             final PsiImportStatement[] importStatements = importList.getImportStatements();
             for(final PsiImportStatement importStatement : importStatements){
                 if(!importStatement.isOnDemand()){
+                    registerError(importStatement);
                     final PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
                     if(reference != null){
                         registerError(reference);

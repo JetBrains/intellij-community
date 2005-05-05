@@ -51,7 +51,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             "C:/My Open Source Projects/InspectionGadgetsSVN/src/inspectionDescriptions/";
     private final InspectionGadgetsTelemetry telemetry = new InspectionGadgetsTelemetry();
     private static final boolean TELEMETRY_ENABLED = true;
-
+        
     public static void main(String[] args){
         final InspectionGadgetsPlugin plugin = new InspectionGadgetsPlugin();
         final PrintStream out;
@@ -215,7 +215,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         registerConfusingInspections();
         registerAbstractionInspections();
         registerClassLayoutInspections();
-        registerImportInspections();
+        //registerImportInspections();
         registerEncapsulationInspections();
         registerVisibilityInspections();
         registerInitializerInspections();
@@ -241,6 +241,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
 
     private void registerResourceManagementInspections(){
         final List<Class> inspectionClasses = m_inspectionClasses;
+        inspectionClasses.add(HibernateResourceInspection.class);
         inspectionClasses.add(JNDIResourceInspection.class);
         inspectionClasses.add(SocketResourceInspection.class);
         inspectionClasses.add(IOResourceInspection.class);
@@ -328,6 +329,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(CastToIncompatibleInterfaceInspection.class);
         inspectionClasses.add(CollectionAddedToSelfInspection.class);
         inspectionClasses.add(InstanceofIncompatibleInterfaceInspection.class);
+        inspectionClasses.add(InstantiationOfUtilityClassInspection.class);
         inspectionClasses.add(BigDecimalEqualsInspection.class);
         inspectionClasses.add(CovariantCompareToInspection.class);
         inspectionClasses.add(CovariantEqualsInspection.class);

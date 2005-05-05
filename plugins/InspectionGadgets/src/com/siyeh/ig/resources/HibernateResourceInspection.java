@@ -1,4 +1,4 @@
-package com.siyeh.ig.j2me;
+package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
@@ -7,18 +7,19 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.psiutils.TypeUtils;
 
-public class RecordStoreResourceInspection extends ExpressionInspection{
+public class HibernateResourceInspection extends ExpressionInspection{
     public String getID(){
-        return "RecordStoreOpenedButNotSafelyClosed";
+        return "HibernateResourceOpenedButNotSafelyClosed";
     }
 
     public String getDisplayName(){
-        return "RecordStore opened but not safely closed";
+        return "Hibernate resource opened but not safely closed";
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.J2ME_GROUP_NAME;
+        return GroupNames.RESOURCE_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location){
@@ -31,11 +32,11 @@ public class RecordStoreResourceInspection extends ExpressionInspection{
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
                                                boolean onTheFly){
-        return new RecordStoreResourceVisitor(this, inspectionManager, onTheFly);
+        return new HibernateResourceVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class RecordStoreResourceVisitor extends BaseInspectionVisitor{
-        private RecordStoreResourceVisitor(BaseInspection inspection,
+    private static class HibernateResourceVisitor extends BaseInspectionVisitor{
+        private HibernateResourceVisitor(BaseInspection inspection,
                                   InspectionManager inspectionManager,
                                   boolean isOnTheFly){
             super(inspection, inspectionManager, isOnTheFly);
@@ -43,7 +44,7 @@ public class RecordStoreResourceInspection extends ExpressionInspection{
 
         public void visitMethodCallExpression(PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            if(!isRecordStoreFactoryMethod(expression)) {
+            if(!isHibernateFactoryMethod(expression)) {
                 return;
             }
             final PsiElement parent = expression.getParent();
@@ -67,9 +68,10 @@ public class RecordStoreResourceInspection extends ExpressionInspection{
             PsiElement currentContext = expression;
             while(true){
                 final PsiTryStatement tryStatement =
-                        PsiTreeUtil.getParentOfType(currentContext, PsiTryStatement.class);
-                if(tryStatement == null){
-                registerError(expression);
+                        PsiTreeUtil.getParentOfType(currentContext,
+                                                                      PsiTryStatement.class);
+                if(tryStatement == null) {
+                    registerError(expression);
                     return;
                 }
                 if(resourceIsOpenedInTryAndClosedInFinally(tryStatement,
@@ -110,11 +112,11 @@ public class RecordStoreResourceInspection extends ExpressionInspection{
 
     private static class CloseVisitor extends PsiRecursiveElementVisitor{
         private boolean containsClose = false;
-        private PsiVariable objectToClose;
+        private PsiVariable elementToClose;
 
-        private CloseVisitor(PsiVariable objectToClose){
+        private CloseVisitor(PsiVariable elementToClose){
             super();
-            this.objectToClose = objectToClose;
+            this.elementToClose = elementToClose;
         }
 
         public void visitElement(PsiElement element){
@@ -134,7 +136,7 @@ public class RecordStoreResourceInspection extends ExpressionInspection{
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if(!"closeRecordStore".equals(methodName)){
+            if(!"close".equals(methodName)){
                 return;
             }
             final PsiExpression qualifier =
@@ -148,7 +150,7 @@ public class RecordStoreResourceInspection extends ExpressionInspection{
             {
                 return;
             }
-            if(referent.equals(objectToClose)){
+            if(referent.equals(elementToClose)){
                 containsClose = true;
             }
         }
@@ -158,27 +160,23 @@ public class RecordStoreResourceInspection extends ExpressionInspection{
         }
     }
 
-    private static boolean isRecordStoreFactoryMethod(PsiMethodCallExpression expression){
+    private static boolean isHibernateFactoryMethod(PsiMethodCallExpression expression){
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        if(methodExpression == null) {
+        if(methodExpression == null)
+        {
             return false;
         }
         final String methodName = methodExpression.getReferenceName();
-        if(!"openRecordStore".equals(methodName)) {
-            return false;
-        }
-        final PsiMethod method = expression.resolveMethod();
-        if(method == null)
+        if(!"openSession".equals(methodName))
         {
             return false;
         }
-        final PsiClass containingClass = method.getContainingClass();
-        if(containingClass == null)
+        final PsiExpression qualifier = methodExpression.getQualifierExpression();
+        if(qualifier == null)
         {
             return false;
         }
-        final String className = containingClass.getQualifiedName();
-        return "javax.microedition.rms.RecordStore".equals(className);
+        return TypeUtils.expressionHasTypeOrSubtype("org.hibernate.SessionFactory",
+                                                    qualifier);
     }
-
 }

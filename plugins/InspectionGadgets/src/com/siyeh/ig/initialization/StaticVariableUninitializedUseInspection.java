@@ -86,9 +86,8 @@ public class StaticVariableUninitializedUseInspection extends FieldInspection {
             }
 
             final List<PsiExpression> badReads = iru.getUninitializedReads();
-            for (int i = 0; i < badReads.size(); i++) {
-                final PsiElement element = (PsiElement) badReads.get(i);
-                registerError(element);
+            for(PsiExpression badRead : badReads){
+                registerError(badRead);
             }
         }
 

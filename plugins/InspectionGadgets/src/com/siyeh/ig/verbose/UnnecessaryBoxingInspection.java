@@ -58,10 +58,27 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
         public void applyFix(Project project, ProblemDescriptor descriptor) {
             if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
             final PsiNewExpression expression = (PsiNewExpression) descriptor.getPsiElement();
+            final PsiType boxedType = expression.getType();
             final PsiExpressionList argList = expression.getArgumentList();
             final PsiExpression[] args = argList.getExpressions();
+            final PsiType argType = args[0].getType();
+            final String cast = getCastString(argType, boxedType);
             final String newExpression = args[0].getText();
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(project, expression, cast + newExpression);
+        }
+
+        private String getCastString(PsiType fromType, PsiType toType){
+            final String toTypeText = toType.getCanonicalText();
+            final String fromTypeText = fromType.getCanonicalText();
+            final String unboxedType = s_boxingArgs.get(toTypeText);
+            if(fromTypeText.equals(unboxedType))
+            {
+                return "";
+            }
+            else
+            {
+                return '(' + unboxedType + ')';
+            }
         }
     }
 

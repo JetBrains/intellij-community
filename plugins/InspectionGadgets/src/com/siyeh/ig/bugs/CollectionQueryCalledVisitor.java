@@ -33,6 +33,10 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
         queryNames.add("lastElement");
         queryNames.add("firstElement");
         queryNames.add("clone");
+        queryNames.add("getFirst");
+        queryNames.add("getLast");
+        queryNames.add("peek");
+        queryNames.add("poll");
     }
 
     private boolean queried = false;

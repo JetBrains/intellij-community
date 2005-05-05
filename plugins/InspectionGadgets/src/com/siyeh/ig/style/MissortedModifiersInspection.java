@@ -58,7 +58,9 @@ public class MissortedModifiersInspection extends ClassInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+                return;
+            }
             final PsiModifierList modifierList = (PsiModifierList) descriptor.getPsiElement();
             final List<String> simpleModifiers = new ArrayList<String>();
             final PsiElement[] children = modifierList.getChildren();
@@ -72,14 +74,16 @@ public class MissortedModifiersInspection extends ClassInspection {
             Collections.sort(simpleModifiers, new ModifierComparator());
             clearModifiers(simpleModifiers, modifierList);
             addModifiersInOrder(simpleModifiers, modifierList);
-
         }
 
         private static void addModifiersInOrder(List<String> modifiers,
                                                 PsiModifierList modifierList) {
-            for(Object modifier1 : modifiers){
-                final String modifier = (String) modifier1;
+            final PsiManager psiManager = modifierList.getManager();
+            final PsiElementFactory factory = psiManager.getElementFactory();
+            for(String modifier : modifiers){
                 try{
+                    final PsiKeyword keyword = factory.createKeyword(modifier);
+                  //  modifierList.getParent().addAfter(keyword, modifierList);
                     modifierList.setModifierProperty(modifier, true);
                 } catch(IncorrectOperationException e){
                     s_logger.error(e);
@@ -89,8 +93,7 @@ public class MissortedModifiersInspection extends ClassInspection {
 
         private static void clearModifiers(List<String> modifiers,
                                            PsiModifierList modifierList) {
-            for(Object modifier1 : modifiers){
-                final String modifier = (String) modifier1;
+            for(final String modifier : modifiers){
                 try{
                     modifierList.setModifierProperty(modifier, false);
                 } catch(IncorrectOperationException e){

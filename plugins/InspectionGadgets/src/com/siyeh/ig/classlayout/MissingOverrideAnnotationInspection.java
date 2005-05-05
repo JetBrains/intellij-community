@@ -44,7 +44,7 @@ public class MissingOverrideAnnotationInspection extends MethodInspection{
             try{
                 final PsiManager psiManager = parent.getManager();
                 final PsiElementFactory factory = psiManager
-                                .getElementFactory();
+                        .getElementFactory();
                 final PsiAnnotation annotation = factory
                         .createAnnotationFromText("@java.lang.Override",
                                                   parent);
@@ -79,14 +79,14 @@ public class MissingOverrideAnnotationInspection extends MethodInspection{
                 return;
             }
             if(method.hasModifierProperty(PsiModifier.PRIVATE) ||
-                       method.hasModifierProperty(PsiModifier.STATIC)){
+                    method.hasModifierProperty(PsiModifier.STATIC)){
                 return;
             }
             final PsiManager manager = method.getManager();
             final LanguageLevel languageLevel =
                     manager.getEffectiveLanguageLevel();
             if(languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                       languageLevel.equals(LanguageLevel.JDK_1_4)){
+                    languageLevel.equals(LanguageLevel.JDK_1_4)){
                 return;
             }
             if(!isOverridden(method)){
@@ -126,6 +126,15 @@ public class MissingOverrideAnnotationInspection extends MethodInspection{
     }
 
     private  static boolean isOverridden(PsiMethod method){
-        return method.findSuperMethods().length != 0;
+        final PsiMethod[] superMethods = method.findSuperMethods();
+        for(PsiMethod superMethod : superMethods){
+            if(!superMethod.hasModifierProperty(PsiModifier.ABSTRACT)){
+                final PsiClass containingClass = superMethod.getContainingClass();
+                if(containingClass == null || !containingClass.isInterface()){
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

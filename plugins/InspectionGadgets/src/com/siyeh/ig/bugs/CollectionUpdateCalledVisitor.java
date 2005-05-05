@@ -29,6 +29,12 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
         updateNames.add("insertElementAt");
         updateNames.add("setElementAt");
         updateNames.add("removeRange");
+        updateNames.add("addFirst");
+        updateNames.add("addLast");
+        updateNames.add("addBefore");
+        updateNames.add("removeFirst");
+        updateNames.add("removeLast");
+        updateNames.add("offer");
     }
 
     private boolean updated = false;

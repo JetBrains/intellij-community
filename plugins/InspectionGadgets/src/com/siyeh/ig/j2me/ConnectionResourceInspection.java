@@ -18,7 +18,7 @@ public class ConnectionResourceInspection extends ExpressionInspection{
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.RESOURCE_GROUP_NAME;
+        return GroupNames.J2ME_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location){

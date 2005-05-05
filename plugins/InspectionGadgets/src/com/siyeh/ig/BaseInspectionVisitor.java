@@ -12,7 +12,7 @@ import java.util.List;
 public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
     private final BaseInspection m_inspection;
     private final InspectionManager m_inspectionManager;
-    protected final boolean m_onTheFly;
+    private final boolean m_onTheFly;
     private List<ProblemDescriptor> m_errors = null;
 
     protected BaseInspectionVisitor(BaseInspection inspection,
