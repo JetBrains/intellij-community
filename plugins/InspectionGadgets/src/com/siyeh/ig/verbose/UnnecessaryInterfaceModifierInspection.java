@@ -150,7 +150,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
                 for(final PsiElement child : children){
                     final String text = child.getText();
                     if(PsiModifier.PUBLIC.equals(text) ||
-                            PsiModifier.STATIC.equals(text)){
+                       PsiModifier.STATIC.equals(text)){
                         registerError(child);
                     }
                 }
@@ -170,10 +170,10 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
             if (modifiers == null) {
                 return;
             }
-            // the only modifiers an interface field can have (public static final)
-            // are unnecessary.
-            final int modifiersLength = modifiers.getTextLength();
-            if (modifiersLength != 0) {
+            // Fields may have annotations attched so it's incorrect to check for precense of modifiers only to check their redundancy.
+            if (modifiers.hasModifierProperty(PsiModifier.PUBLIC) ||
+                modifiers.hasModifierProperty(PsiModifier.FINAL) ||
+                modifiers.hasModifierProperty(PsiModifier.STATIC)) {
                 registerError(modifiers);
             }
         }
@@ -188,10 +188,9 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
                 return;
             }
             final PsiModifierList modifiers = method.getModifierList();
-            // the only modifiers an interface field can have (public static final)
-            // are unnecessary.
-            final int modifiersLength = modifiers.getTextLength();
-            if (modifiersLength != 0) {
+            // Methods may have annotations attched so it's incorrect to check for precense of modifiers only to check their redundancy.
+            if (modifiers.hasModifierProperty(PsiModifier.PUBLIC) ||
+                modifiers.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 registerError(modifiers);
             }
         }
