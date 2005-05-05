@@ -21,5 +21,5 @@ public interface JspFile extends PsiFile{
   boolean isSessionPage();
 
   XmlTag[] getDirectiveTags(JspDirectiveKind directiveKind);
-  XmlTag createDirective(ASTNode context, JspDirectiveKind page);
+  XmlTag createDirective(XmlTag context, JspDirectiveKind page);
 }
