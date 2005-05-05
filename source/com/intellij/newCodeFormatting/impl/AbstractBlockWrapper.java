@@ -21,7 +21,7 @@ public class AbstractBlockWrapper {
   protected final WhiteSpace myWhiteSpace;
   protected final AbstractBlockWrapper myParent;
   protected TextRange myTextRange;
-  private boolean myCanUseFirstChildIndentAsBlockIndent = true;
+  protected boolean myCanUseFirstChildIndentAsBlockIndent = true;
 
   public AbstractBlockWrapper(final Block block, final WhiteSpace whiteSpace, final AbstractBlockWrapper parent, final TextRange textRange) {
     myBlock = block;
