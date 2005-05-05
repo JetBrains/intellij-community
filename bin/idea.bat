@@ -29,7 +29,7 @@ IF NOT "%IDEA_PROPERTIES%" == "" set IDEA_PROPERTIES_PROPERTY=-Didea.properties.
 :: You may specify your own JVM arguments in idea.exe.vmoptions file. Put one option per line there.
 :: ---------------------------------------------------------------------
 SET ACC=
-FOR /F "delims=" %%i in (%IDEA_HOME%\bin\idea.exe.vmoptions) DO call %IDEA_HOME%\bin\append.bat "%%i"
+FOR /F "delims=" %%i in (%IDEA_HOME%\bin\idea.exe.vmoptions) DO call %IDEA_HOME%\bin\append.bat %%i
 
 set REQUIRED_IDEA_JVM_ARGS=-Xbootclasspath/p:%IDEA_HOME%/lib/boot.jar %IDEA_PROPERTIES_PROPERTY%
 SET JVM_ARGS=%ACC% %REQUIRED_IDEA_JVM_ARGS%
