@@ -230,7 +230,7 @@ public final class Javac2 extends Javac{
       field.set(null, SyntheticRepository.getInstance()); // initialize with the default value
     }
     catch (Exception e) {
-      throw new RuntimeException(e.getMessage());
+      throw new RuntimeException("Error while disposing BCEL: " +  e.getClass() + " : " + e.getMessage());
     }
   }
 }
