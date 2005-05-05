@@ -138,4 +138,7 @@ public class DataFlowTest extends InspectionTestCase {
   public void testNullableThroughVariableShouldNotBeReported() throws Exception {
     doTest15();
   }
+  public void testNullableAssignment() throws Exception {
+    doTest15();
+  }
 }

@@ -39,8 +39,8 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
     List<ProblemDescriptor> allProblems = null;
     final PsiClassInitializer[] initializers = aClass.getInitializers();
-    for (int i = 0; i < initializers.length; i++) {
-      final ProblemDescriptor[] problems = analyzeCodeBlock(initializers[i].getBody(), manager);
+    for (PsiClassInitializer initializer : initializers) {
+      final ProblemDescriptor[] problems = analyzeCodeBlock(initializer.getBody(), manager);
       if (problems != null) {
         if (allProblems == null) {
           allProblems = new ArrayList<ProblemDescriptor>(1);
@@ -61,7 +61,8 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
           dfaRunner.getNPEInstructions().size() > 0 ||
           dfaRunner.getCCEInstructions().size() > 0 ||
           dfaRunner.getRedundantInstanceofs().size() > 0 ||
-          dfaRunner.getNullableExpressions().size() > 0
+          dfaRunner.getNullableArguments().size() > 0 ||
+          dfaRunner.getNullableAssignments().size() > 0
         ) {
         return createDescription(dfaRunner, manager);
       }
@@ -88,19 +89,19 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   }
 
   private static ProblemDescriptor[] createDescription(DataFlowRunner runner, InspectionManager manager) {
-    HashSet<BranchingInstruction>[] constConditions = runner.getConstConditionalExpressions();
-    HashSet<BranchingInstruction> trueSet = constConditions[0];
-    HashSet<BranchingInstruction> falseSet = constConditions[1];
+    HashSet<Instruction>[] constConditions = runner.getConstConditionalExpressions();
+    HashSet<Instruction> trueSet = constConditions[0];
+    HashSet<Instruction> falseSet = constConditions[1];
     Set<Instruction> npeSet = runner.getNPEInstructions();
     Set<Instruction> cceSet = runner.getCCEInstructions();
     Set<Instruction> redundantInstanceofs = runner.getRedundantInstanceofs();
 
     ArrayList<Instruction> allProblems = new ArrayList<Instruction>();
-    for (BranchingInstruction instr : trueSet) {
+    for (Instruction instr : trueSet) {
       allProblems.add((Instruction)instr);
     }
 
-    for (BranchingInstruction instr : falseSet) {
+    for (Instruction instr : falseSet) {
       allProblems.add(instr);
     }
 
@@ -204,9 +205,18 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       }
     }
 
-    final Set<PsiExpression> exprs = runner.getNullableExpressions();
+    Set<PsiExpression> exprs = runner.getNullableArguments();
     for (PsiExpression expr : exprs) {
       descriptions.add(manager.createProblemDescriptor(expr, "Argument <code>#ref</code> #loc is probably null", null,
+                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+    }
+
+    exprs = runner.getNullableAssignments();
+    for (PsiExpression expr : exprs) {
+      descriptions.add(manager.createProblemDescriptor(expr,
+                                                       "Expression <code>#ref</code> probably evaluates to null and is being assigned " +
+                                                       "to a variable that is annotated with @NotNull",
+                                                       null,
                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
     }
 

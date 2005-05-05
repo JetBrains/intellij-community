@@ -16,7 +16,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 
 public class MethodCallInstruction extends Instruction {
@@ -27,8 +26,6 @@ public class MethodCallInstruction extends Instruction {
   private boolean[] myParametersNotNull;
   private int myArgsCount;
   private PsiType myType;
-  private static final String NULLABLE = "org.jetbrains.annotations.Nullable";
-  private static final String NOT_NULL = "org.jetbrains.annotations.NotNull";
 
   public MethodCallInstruction(PsiMethodCallExpression call, DfaValueFactory factory) {
     myCall = call;
@@ -39,14 +36,14 @@ public class MethodCallInstruction extends Instruction {
 
     if (callee != null) {
       final PsiModifierList modifierList = callee.getModifierList();
-      myIsNullable = modifierList.findAnnotation(NULLABLE) != null;
-      myIsNotNull = modifierList.findAnnotation(NOT_NULL) != null;
+      myIsNullable = modifierList.findAnnotation(DataFlowRunner.NULLABLE) != null;
+      myIsNotNull = modifierList.findAnnotation(DataFlowRunner.NOT_NULL) != null;
       final PsiParameter[] params = callee.getParameterList().getParameters();
       myParametersNotNull = new boolean[params.length];
       for (int i = 0; i < params.length; i++) {
         PsiParameter param = params[i];
         final PsiModifierList modList = param.getModifierList();
-        myParametersNotNull[i] = modList != null && modList.findAnnotation(NOT_NULL) != null;
+        myParametersNotNull[i] = modList != null && modList.findAnnotation(DataFlowRunner.NOT_NULL) != null;
       }
     }
     else {

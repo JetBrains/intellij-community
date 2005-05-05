@@ -32,8 +32,11 @@ public class DataFlowRunner {
   private final HashSet<Instruction> myNPEInstructions;
   private DfaVariableValue[] myFields;
   private final HashSet<Instruction> myCCEInstructions;
-  private final HashSet<PsiExpression> myNullableExpressions;
+  private final HashSet<PsiExpression> myNullableArguments;
+  private final HashSet<PsiExpression> myNullableAssignments;
   private DfaValueFactory myValueFactory;
+  public static final String NULLABLE = "org.jetbrains.annotations.Nullable";
+  public static final String NOT_NULL = "org.jetbrains.annotations.NotNull";
 
   public Instruction getInstruction(int index) {
     return myInstructions[index];
@@ -42,7 +45,8 @@ public class DataFlowRunner {
   public DataFlowRunner() {
     myNPEInstructions = new HashSet<Instruction>();
     myCCEInstructions = new HashSet<Instruction>();
-    myNullableExpressions = new HashSet<PsiExpression>();
+    myNullableArguments = new HashSet<PsiExpression>();
+    myNullableAssignments = new HashSet<PsiExpression>();
     myValueFactory = new DfaValueFactory();
   }
 
@@ -145,15 +149,19 @@ public class DataFlowRunner {
     return result;
   }
 
-  public Set<PsiExpression> getNullableExpressions() {
-    return myNullableExpressions;
+  public Set<PsiExpression> getNullableArguments() {
+    return myNullableArguments;
+  }
+
+  public HashSet<PsiExpression> getNullableAssignments() {
+    return myNullableAssignments;
   }
 
   public DfaVariableValue[] getFields() {
     return myFields;
   }
 
-  public HashSet<BranchingInstruction>[] getConstConditionalExpressions() {
+  public HashSet<Instruction>[] getConstConditionalExpressions() {
     HashSet<BranchingInstruction> trueSet = new HashSet<BranchingInstruction>();
     HashSet<BranchingInstruction> falseSet = new HashSet<BranchingInstruction>();
 
@@ -190,6 +198,10 @@ public class DataFlowRunner {
   }
 
   public void onPassingNullParameter(PsiExpression expr) {
-    myNullableExpressions.add(expr);
+    myNullableArguments.add(expr);
+  }
+
+  public void onAssigningToNotNullableVariable(final PsiExpression expr) {
+    myNullableAssignments.add(expr);
   }
 }

@@ -147,19 +147,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
         generateDefaultBinop(lExpr, rExpr);
       }
 
-      if (lExpr instanceof PsiReferenceExpression) {
-        PsiReferenceExpression psiDestReference = (PsiReferenceExpression)lExpr;
-        PsiVariable psiDestVariable = DfaValueFactory.resolveVariable(psiDestReference);
-        if (psiDestVariable != null) {
-          addInstruction(new AssignInstruction());
-          lExpr.accept(this);
-          return;
-        }
-      }
-
-      addInstruction(new PopInstruction());
-      addInstruction(new PopInstruction());
-      lExpr.accept(this);
+      addInstruction(new AssignInstruction(rExpr));
     }
     finally {
       finishElement(expression);
@@ -211,7 +199,8 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     DfaVariableValue dfaVariable = myFactory.getVarFactory().create(variable, false);
     addInstruction(new PushInstruction(dfaVariable));
     initializer.accept(this);
-    addInstruction(new AssignInstruction());
+    addInstruction(new AssignInstruction(initializer));
+    addInstruction(new PopInstruction());
   }
 
   public void visitCodeBlock(PsiCodeBlock block) {
@@ -605,7 +594,8 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
   private void addGotoCatch(CatchDescriptor cd) {
     addInstruction(new PushInstruction(myFactory.getVarFactory().create(cd.getParameter(), false)));
     addInstruction(new SwapInstruction());
-    addInstruction(new AssignInstruction());
+    addInstruction(new AssignInstruction(null));
+    addInstruction(new PopInstruction());
     addInstruction(new GotoInstruction(cd.getJumpOffset()));
   }
 
