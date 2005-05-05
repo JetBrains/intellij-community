@@ -2,6 +2,7 @@ package com.intellij.psi.formatter.newXmlFormatter.xml;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 
 public interface XmlFormattingPolicy {
@@ -38,4 +39,6 @@ public interface XmlFormattingPolicy {
   int getKeepBlankLines();
 
   boolean getShouldKeepLineBreaks();
+
+  CodeStyleSettings getSettings();
 }

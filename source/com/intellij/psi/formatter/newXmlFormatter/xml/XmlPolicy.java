@@ -8,9 +8,16 @@ import com.intellij.psi.impl.source.tree.ElementType;
 
 public class XmlPolicy implements XmlFormattingPolicy{
   private final CodeStyleSettings mySettings;
+  private final IElementType myXmlTag;
 
   public XmlPolicy(final CodeStyleSettings settings) {
     mySettings = settings;
+    myXmlTag = ElementType.XML_TAG;
+  }
+
+  public XmlPolicy(final CodeStyleSettings settings, final IElementType xmlTag) {
+    mySettings = settings;
+    myXmlTag = xmlTag;
   }
 
   public boolean indentChildrenOf(final XmlTag parentTag) {
@@ -77,7 +84,11 @@ public class XmlPolicy implements XmlFormattingPolicy{
     return mySettings.XML_KEEP_LINE_BREAKS;
   }
 
+  public CodeStyleSettings getSettings() {
+    return mySettings;
+  }
+
   public IElementType getTagType() {
-    return ElementType.XML_TAG;
+    return myXmlTag;
   }
 }

@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,16 +10,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlText;
@@ -573,15 +572,13 @@ public class Helper {
         String newSpace = fillIndent(newIndent);
 
         ASTNode leaf = element.findLeafElementAt(offset);
-        if (leaf.getElementType() != ElementType.WHITE_SPACE
-            && leaf.getElementType() != ElementType.C_STYLE_COMMENT
+        if (!isComment(leaf)
+            && leaf.getElementType() != ElementType.WHITE_SPACE
             && leaf.getElementType() != ElementType.JSP_TEMPLATE_DATA
             && leaf.getElementType() != ElementType.JSP_DIRECTIVE_WHITE_SPACE
             && leaf.getElementType() != ElementType.JSP_ACTION_WHITE_SPACE
-            && leaf.getElementType() != ElementType.DOC_COMMENT_DATA
             && leaf.getElementType() != ElementType.XML_DATA_CHARACTERS
-            && leaf.getElementType() != ElementType.XML_ATTRIBUTE_VALUE_TOKEN
-            && leaf.getElementType() != ElementType.XML_COMMENT_CHARACTERS) {
+            && leaf.getElementType() != ElementType.XML_ATTRIBUTE_VALUE_TOKEN) {
           LOG.error("Error",
                     new String[]{
                       leaf.getElementType().toString(),
@@ -591,7 +588,10 @@ public class Helper {
 
         if (offset1 < text.length()) {
           ASTNode next = element.findLeafElementAt(offset1);
-          if ((next.getElementType() == ElementType.END_OF_LINE_COMMENT || next.getElementType() == ElementType.C_STYLE_COMMENT) &&
+          if ((next.getElementType() == ElementType.END_OF_LINE_COMMENT 
+               || next.getElementType() == ElementType.C_STYLE_COMMENT
+               || next.getElementType() == ElementType.JSP_COMMENT
+          ) &&
               next != element) {
             if (mySettings.KEEP_FIRST_COLUMN_COMMENT) {
               int commentIndent = getIndent(next, true);
@@ -648,6 +648,16 @@ public class Helper {
       }
     }
     return element;
+  }
+
+  private boolean isComment(final ASTNode node) {
+    final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(node);
+    if (psiElement instanceof PsiComment) return true;
+    final ParserDefinition parserDefinition = psiElement.getLanguage().getParserDefinition();
+    if (parserDefinition == null) return false;
+    final TokenSet commentTokens = parserDefinition.getCommentTokens();
+    if (commentTokens == null) return false;
+    return commentTokens.isInSet(node.getElementType());   
   }
 
   public boolean isSpaceAtStartOfLine(ASTNode parent, ASTNode child1, ASTNode child2) {

@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class XmlBlock extends AbstractXmlBlock {
-
   public XmlBlock(final ASTNode node,
                   final Wrap wrap,
                   final Alignment alignment,
@@ -44,7 +43,7 @@ public class XmlBlock extends AbstractXmlBlock {
       ChameleonTransforming.transformChildren(myNode);
       ASTNode child = myNode.getFirstChildNode();
       while (child != null) {
-        if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+        if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
           result.add(createChildBlock(child, null, null));
         }
         child = child.getTreeNext();
@@ -58,14 +57,16 @@ public class XmlBlock extends AbstractXmlBlock {
     final IElementType type1 = ((AbstractBlock)child1).myNode.getElementType();
     final IElementType type2 = ((AbstractBlock)child2).myNode.getElementType();
 
-    if ((type2 == getTagType() || type2 == ElementType.XML_END_TAG_START || type2 == ElementType.XML_TEXT) && myXmlFormattingPolicy.getShouldKeepWhiteSpaces()) {
+    if ((type2 == getTagType() || type2 == ElementType.XML_END_TAG_START || type2 == ElementType.XML_TEXT) && myXmlFormattingPolicy
+      .getShouldKeepWhiteSpaces()) {
       return getFormatter().getReadOnlySpace();
     }
 
     if (elementType == ElementType.XML_TEXT) {
       return getSpacesInsideText(type1, type2);
 
-    } else if (elementType == ElementType.XML_ATTRIBUTE) {
+    }
+    else if (elementType == ElementType.XML_ATTRIBUTE) {
       return getSpacesInsideAttribute(type1, type2);
     }
 
@@ -79,27 +80,38 @@ public class XmlBlock extends AbstractXmlBlock {
   private SpaceProperty getSpacesInsideAttribute(final IElementType type1, final IElementType type2) {
     if (type1 == ElementType.XML_EQ || type2 == ElementType.XML_EQ) {
       int spaces = myXmlFormattingPolicy.getShouldAddSpaceAroundEqualityInAttribute() ? 1 : 0;
-      return getFormatter().createSpaceProperty(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
-    } else {
+      return getFormatter().createSpaceProperty(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+                                                myXmlFormattingPolicy.getKeepBlankLines());
+    }
+    else {
       return createDefaultSpace(false);
     }
   }
 
   private SpaceProperty getSpacesInsideText(final IElementType type1, final IElementType type2) {
     if (type1 == ElementType.XML_DATA_CHARACTERS && type2 == ElementType.XML_DATA_CHARACTERS) {
-      return getFormatter().createSpaceProperty(1, 1, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
-    } else {
+      return getFormatter().createSpaceProperty(1, 1, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+                                                myXmlFormattingPolicy.getKeepBlankLines());
+    }
+    else {
       return createDefaultSpace(false);
     }
   }
 
   public Indent getIndent() {
+    if (myNode.getElementType() == ElementType.JSP_SCRIPTLET || myNode.getElementType() == ElementType.JSP_DECLARATION_NEW) {
+      return getFormatter().getNoneIndent();
+    }
+    if (myNode.getElementType() == ElementType.JSP_XML_TEXT) {
+      return getFormatter().createNormalIndent();
+    }
     if (myNode.getElementType() == ElementType.XML_TEXT) {
       return null;
-    } else if (myNode.getElementType() == ElementType.XML_PROLOG
-        || SourceTreeToPsiMap.treeElementToPsi(myNode) instanceof XmlDocument) {
+    }
+    else if (myNode.getElementType() == ElementType.XML_PROLOG || SourceTreeToPsiMap.treeElementToPsi(myNode) instanceof XmlDocument) {
       return getFormatter().getNoneIndent();
-    } else if (myNode.getElementType() == ElementType.XML_COMMENT && myNode.textContains('\n')){
+    }
+    else if (myNode.getElementType() == ElementType.XML_COMMENT && myNode.textContains('\n')) {
       return getFormatter().createAbsoluteNoneIndent();
     }
     else {
@@ -117,6 +129,15 @@ public class XmlBlock extends AbstractXmlBlock {
 
   public boolean isTextElement() {
     return myNode.getElementType() == ElementType.XML_TEXT || myNode.getElementType() == ElementType.XML_DATA_CHARACTERS;
+  }
+
+  public ChildAttributes getChildAttributes(final int newChildIndex) {
+    if (myNode.getElementType() == ElementType.JSP_DECLARATION_NEW || myNode.getElementType() == ElementType.JSP_SCRIPTLET) {
+      return new ChildAttributes(Formatter.getInstance().createNormalIndent(), null);
+    }
+    else {
+      return super.getChildAttributes(newChildIndex);
+    }
   }
 
 }

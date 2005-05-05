@@ -5,14 +5,15 @@ import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.jsp.NewJspLanguage;
 import com.intellij.lang.jspx.JSPXLanguage;
-import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.newCodeFormatting.Block;
 import com.intellij.newCodeFormatting.Formatter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -26,7 +27,6 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.java.JavaCodeFormatter;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
-import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.xml.XmlFile;
@@ -133,18 +133,30 @@ public class CodeFormatterFacade implements Constants {
     return element;
   }
 
+  public static boolean useBlockFormatter(final Language elementLanguage) {
+    if (elementLanguage instanceof NewJspLanguage) return true;
+    
+    return (elementLanguage instanceof JavaLanguage
+    || elementLanguage instanceof XMLLanguage);
+  }
+  
   public static boolean useBlockFormatter(final PsiFile file) {
+    if (file.getLanguage() instanceof JSPXLanguage) return false;
+    if (file.getLanguage() instanceof NewJspLanguage) return true;
     return
       (file instanceof XmlFile
     || file instanceof PsiJavaFile
-    || file instanceof DummyHolder) &&
-      !(file instanceof JspxFileImpl);
+    || file instanceof DummyHolder);
   }
 
   public static Block createBlock(final PsiFile element, final CodeStyleSettings settings) {
-    if (element instanceof PsiJavaFile || element.getLanguage() instanceof JavaLanguage) {
+    if (element.getFileType() == StdFileTypes.JSP) {
+      return AbstractXmlBlock.creareJspRoot(element, settings); 
+    }
+    else if (element instanceof PsiJavaFile || element.getLanguage() instanceof JavaLanguage) {
       return AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element), settings);
-    } else {
+    } 
+    else {
       return AbstractXmlBlock.creareRoot(element, settings);
     }
   }
@@ -162,6 +174,9 @@ public class CodeFormatterFacade implements Constants {
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
+        }
+        finally {
+          model.dispose();
         }
       }
 
@@ -301,12 +316,6 @@ public class CodeFormatterFacade implements Constants {
       }
     }
     return child2;
-  }
-
-  public static boolean useBlockFormatter(final Language elementLanguage) {
-    return (elementLanguage instanceof JavaLanguage
-    || elementLanguage instanceof XMLLanguage)
-           && ! ((elementLanguage instanceof JSPXLanguage));
   }
 }
 

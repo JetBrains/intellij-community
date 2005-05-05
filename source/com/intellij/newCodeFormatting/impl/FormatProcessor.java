@@ -159,8 +159,14 @@ class FormatProcessor {
         if (whiteSpace.equals(newWhiteSpace)) continue;
         final TextRange textRange = whiteSpace.getTextRange();
         final TextRange wsRange = new TextRange(textRange.getStartOffset() + shift, textRange.getEndOffset() + shift);
-        myModel.replaceWhiteSpace(wsRange, newWhiteSpace);
-        shift += (newWhiteSpace.length() - (textRange.getLength())) + (block.getBlock().getTextRange().getLength() - oldTextRangeLength);
+        final TextRange newBlockRange = myModel.replaceWhiteSpace(wsRange, newWhiteSpace, block.getBlock().getTextRange());
+        shift += (newWhiteSpace.length() - (textRange.getLength())) + 
+                 (newBlockRange.getLength() - oldTextRangeLength);
+        /*
+        shift += (newWhiteSpace.length() - (textRange.getLength())) + 
+                 (block.getTextRange().getLength() - oldTextRangeLength);
+        */
+        
       }
       prev = whiteSpace;
     }

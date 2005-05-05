@@ -209,16 +209,16 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     if (element == null) return offset;
     if (CodeFormatterFacade.useBlockFormatter(file)
         && CodeFormatterFacade.useBlockFormatter(element.getLanguage())) {
-      final long start = System.currentTimeMillis();
       final CodeStyleSettings settings = getSettings();
       final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
-      int result = Formatter.getInstance().adjustLineIndent(new PsiBasedFormattingModel(file, settings),
+      final PsiBasedFormattingModel model = new PsiBasedFormattingModel(file, settings);
+      int result = Formatter.getInstance().adjustLineIndent(model,
                                                                   CodeFormatterFacade.createBlock(file, settings),
                                                                   settings,
                                                                   indentOptions,
                                                                   offset,
                                                                   getSignificantRange(file, offset));
-      //System.out.println(System.currentTimeMillis() - start);
+      model.dispose();
       return result;
 
     } else {

@@ -494,10 +494,16 @@ public class CodeEditUtil {
     Language elementLanguage = file.findElementAt(tokenStartOffset).getLanguage();
     if (CodeFormatterFacade.useBlockFormatter(elementLanguage) && CodeFormatterFacade.useBlockFormatter(file)) {
       final TextRange textRange = file.findElementAt(tokenStartOffset).getTextRange();
-      return Formatter.getInstance().getWhiteSpaceBefore(new PsiBasedFormattingModel(file, settings),
-                                            CodeFormatterFacade.createBlock(file, settings),
-                                            settings, settings.getIndentOptions(file.getFileType()), textRange,
-                                            mayChangeLineFeeds);
+      final PsiBasedFormattingModel psiBasedFormattingModel = new PsiBasedFormattingModel(file, settings);
+      try {
+        return Formatter.getInstance().getWhiteSpaceBefore(psiBasedFormattingModel,
+                                              CodeFormatterFacade.createBlock(file, settings),
+                                              settings, settings.getIndentOptions(file.getFileType()), textRange,
+                                              mayChangeLineFeeds);
+      }
+      finally {
+        psiBasedFormattingModel.dispose();
+      }
     } else {
       final PseudoTextBuilder pseudoTextBuilder = language.getFormatter();
       LOG.assertTrue(pseudoTextBuilder != null);

@@ -14,10 +14,12 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
+import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -27,23 +29,31 @@ import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.StringReader;
 
-public class PsiBasedFormattingModel implements FormattingModel{
+public class PsiBasedFormattingModel implements FormattingModel {
   private final Document myDocument;
   private final ASTNode myASTNode;
   private final Project myProject;
   private final CodeStyleSettings mySettings;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.PsiBasedFormattingModel");
+  private final boolean myWasPhysical;
+  private final PsiFile myFile;
 
   public PsiBasedFormattingModel(final PsiFile file, CodeStyleSettings settings) {
     mySettings = settings;
-    myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
-    myProject = file.getProject();
-    final Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
-    if (document != null && document.getText().equals(file.getText())) {
+    myFile = file;
+    myASTNode = SourceTreeToPsiMap.psiElementToTree(myFile);
+    myProject = myFile.getProject();
+    myWasPhysical = myFile.isPhysical();
+    if (!myWasPhysical) {
+      //((PsiFileImpl)myFile).setIsPhysicalExplicitly(true);
+    }
+    final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myFile);
+    if (document != null && document.getText().equals(myFile.getText())) {
       myDocument = document;
-    } else {
-      myDocument = new DocumentImpl(file.getText());
+    }
+    else {
+      myDocument = new DocumentImpl(myFile.getText());
 
     }
   }
@@ -64,7 +74,7 @@ public class PsiBasedFormattingModel implements FormattingModel{
     final TreeAspect aspect = model.getModelAspect(TreeAspect.class);
     try {
       model.runTransaction(new PomTransactionBase(SourceTreeToPsiMap.treeElementToPsi(myASTNode)) {
-        public PomModelEvent runInner(){
+        public PomModelEvent runInner() {
           final FileElement fileElement = getFileElement(myASTNode);
           action.run();
           TreeUtil.clearCaches(fileElement);
@@ -85,18 +95,29 @@ public class PsiBasedFormattingModel implements FormattingModel{
     return myDocument.getTextLength();
   }
 
-  public void replaceWhiteSpace(final TextRange textRange, final String whiteSpace) throws IncorrectOperationException {
-    final ASTNode leafElement = myASTNode.findLeafElementAt(textRange.getEndOffset());
+  public TextRange replaceWhiteSpace(final TextRange textRange, final String whiteSpace, final TextRange oldBlockTextRange)
+                                                                                                                            throws IncorrectOperationException {
+    //final RangeMarker rangeMarker = myDocument.createRangeMarker(oldBlockTextRange.getStartOffset(), oldBlockTextRange.getEndOffset());
+    final int offset = textRange.getEndOffset();
+    final ASTNode leafElement = findElementAt(offset);
+    int length = oldBlockTextRange.getLength();
+    final int oldElementLength = leafElement.getTextRange().getLength();
     if (leafElement.getTextRange().getStartOffset() < textRange.getStartOffset()) {
-      new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, whiteSpace.length());
-    } else {
-      FormatterUtil.replaceWhiteSpace(whiteSpace,
-                                                     leafElement,
-                                                     ElementType.WHITE_SPACE);
-      if (leafElement.textContains('\n') && whiteSpace.indexOf('\n') >= 0) {
+      final int newElementLength = new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, getSpaceCount(whiteSpace))
+        .getTextRange().getLength();
+      length = length - oldElementLength + newElementLength;
+    }
+    else {
+      FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, ElementType.WHITE_SPACE);
+      if (leafElement.textContains('\n') 
+        /*&& whiteSpace.indexOf('\n') >= 0*/
+        ) {
         try {
-          int lastLineIndent = getLastLineIndent(leafElement.getText());
-          new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, whiteSpace.length() - lastLineIndent);
+          Indent lastLineIndent = getLastLineIndent(leafElement.getText());
+          Indent whiteSpaceIndent = createIndentOn(getLastLine(whiteSpace));
+          final int shift = calcShift(lastLineIndent, whiteSpaceIndent);
+          final int newElementLength = new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, shift).getTextRange().getLength();
+          length = length - oldElementLength + newElementLength;
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -104,17 +125,107 @@ public class PsiBasedFormattingModel implements FormattingModel{
       }
     }
 
+    return new TextRange(oldBlockTextRange.getStartOffset(), oldBlockTextRange.getStartOffset() + length);
   }
 
-  private int getLastLineIndent(final String text) throws IOException {
+  private int calcShift(final Indent lastLineIndent, final Indent whiteSpaceIndent) {
     final CodeStyleSettings.IndentOptions options = mySettings.JAVA_INDENT_OPTIONS;
-    String lastLine = getLastLine(text);
-    if (lastLine == null) return 0;
-    int result = 0;
-    for (int i = 0; i < lastLine.length(); i++) {
-      if (lastLine.charAt(i) == ' ') result += 1;
-      if (lastLine.charAt(i) == '\t') result += options.TAB_SIZE;
+    if (lastLineIndent.equals(whiteSpaceIndent)) return 0;
+    if (options.USE_TAB_CHARACTER) {
+      if (lastLineIndent.whiteSpaces > 0) {
+        return whiteSpaceIndent.getSpacesCount(options); 
+      }
+      else {
+        return whiteSpaceIndent.tabs - lastLineIndent.tabs;
+      }
+    }
+    else {
+      if (lastLineIndent.tabs > 0) {
+        return whiteSpaceIndent.getTabsCount(options);
+      }
+      else {
+        return whiteSpaceIndent.whiteSpaces - lastLineIndent.whiteSpaces;
+      }
+    }
+  }
+
+  private int getSpaceCount(final String whiteSpace) throws IncorrectOperationException {
+    try {
+      final String lastLine = getLastLine(whiteSpace);
+      if (lastLine != null) {
+        return lastLine.length();
+      }
+      else {
+        return 0;
+      }
+    }
+    catch (IOException e) {
+      throw new IncorrectOperationException(e.getLocalizedMessage());
+    }
+  }
+
+  private ASTNode findElementAt(final int offset) {
+    if (myASTNode.getElementType() == ElementType.JSPX_FILE) {
+      final PsiFile[] psiRoots = ((JspxFileImpl)SourceTreeToPsiMap.treeElementToPsi(myASTNode)).getPsiRoots();
+      for (int i = 0; i < psiRoots.length; i++) {
+        PsiFile psiRoot = psiRoots[i];
+        final PsiElement found = psiRoot.findElementAt(offset);
+        if (found != null && found.getTextRange().getStartOffset() == offset) return SourceTreeToPsiMap.psiElementToTree(found);
+      }
+    }
+    return myASTNode.findLeafElementAt(offset);
+  }
+
+  public void dispose() {
+    if (!myWasPhysical) {
+      //((PsiFileImpl)myFile).setIsPhysicalExplicitly(false);
+    }
+  }
+
+  private class Indent {
+    public int whiteSpaces = 0;
+    public int tabs = 0;
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final Indent indent = (Indent)o;
+
+      if (tabs != indent.tabs) return false;
+      if (whiteSpaces != indent.whiteSpaces) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      int result;
+      result = whiteSpaces;
+      result = 29 * result + tabs;
       return result;
+    }
+
+    public int getTabsCount(final CodeStyleSettings.IndentOptions options) {
+      final int tabsFromSpaces = whiteSpaces / options.TAB_SIZE;
+      return tabs + tabsFromSpaces;
+    }
+
+    public int getSpacesCount(final CodeStyleSettings.IndentOptions options) {
+      return whiteSpaces + tabs*options.TAB_SIZE; 
+    }
+  }
+
+  private Indent getLastLineIndent(final String text) throws IOException {
+    String lastLine = getLastLine(text);
+    if (lastLine == null) return new Indent();
+    return createIndentOn(lastLine);
+  }
+
+  private Indent createIndentOn(final String lastLine) {
+    final Indent result = new Indent();
+    for (int i = 0; i < lastLine.length(); i++) {
+      if (lastLine.charAt(i) == ' ') result.whiteSpaces += 1;
+      if (lastLine.charAt(i) == '\t') result.tabs += 1;
     }
     return result;
   }

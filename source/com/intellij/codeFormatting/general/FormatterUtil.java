@@ -37,7 +37,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.CharTable;
 
 public class FormatterUtil {
@@ -115,7 +117,10 @@ public class FormatterUtil {
                                                                     whiteSpace.toCharArray(), 0, whiteSpace.length(),
                                                                     charTable, SharedImplUtil.getManagerByTree(leafElement));
 
-    ASTNode treePrev = getWsCandidate(leafElement);
+    ASTNode treePrev = findPreviousWhiteSpace(leafElement);
+    if (treePrev == null) {
+      treePrev = getWsCandidate(leafElement);      
+    }
     if (treePrev == null) {
       if (whiteSpace.length() > 0) {
         final ASTNode treeParent = leafElement.getTreeParent();
@@ -133,6 +138,16 @@ public class FormatterUtil {
     }
 
     return getWhiteSpaceBefore(leafElement);
+  }
+
+  private static ASTNode findPreviousWhiteSpace(final ASTNode leafElement) {
+    final int offset = leafElement.getTextRange().getStartOffset() - 1;
+    if (offset < 0) return null;
+    final PsiElement found = SourceTreeToPsiMap.treeElementToPsi(leafElement).getContainingFile().findElementAt(offset);
+    if (found == null) return null;
+    final ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(found);
+    if (treeElement.getElementType() == ElementType.WHITE_SPACE) return treeElement;
+    return null;
   }
 
   public static ASTNode shiftTokenIndent(final Project project,

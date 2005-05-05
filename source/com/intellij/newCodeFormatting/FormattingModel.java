@@ -7,7 +7,15 @@ public interface FormattingModel {
   int getLineNumber(int offset);
   int getLineStartOffset(int line);
 
-  void replaceWhiteSpace(TextRange textRange, String whiteSpace) throws IncorrectOperationException;
+  /**
+   * 
+   * @param textRange
+   * @return new text range for block after the white space
+   * @throws IncorrectOperationException
+   * @param whiteSpace
+   * @param oldBlockTextRange
+   */ 
+  TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace, final TextRange oldBlockTextRange) throws IncorrectOperationException;
 
   CharSequence getText(final TextRange textRange);
 

@@ -45,6 +45,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
         } else if (child.getElementType() == ElementType.XML_EMPTY_ELEMENT_END) {
           localResult.add(createChildBlock(child, wrap, alignment));
           result.add(createTagDescriptionNode(localResult));
+          localResult = new ArrayList<Block>();
         } else if (child.getElementType() == ElementType.XML_TEXT) {
           createXmlTextBlocks(localResult, child, wrap, alignment);
         }
@@ -54,6 +55,11 @@ public class XmlTagBlock extends AbstractXmlBlock{
       }
       child = child.getTreeNext();
     }
+    
+    if (!localResult.isEmpty()) {
+      result.add(createTagContentNode(localResult));
+    }
+    
     return result;
 
   }

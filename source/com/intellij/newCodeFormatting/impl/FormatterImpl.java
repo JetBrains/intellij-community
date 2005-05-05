@@ -108,7 +108,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
       indent = processor.getIndentAt(offset);
     }
     Pair<String, Integer> newWS = whiteSpace.generateWhiteSpace(indentOptions, offset, indent);
-    model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS.getFirst());
+    model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS.getFirst(), block.getTextRange());
     return newWS.getSecond().intValue();
   }
 

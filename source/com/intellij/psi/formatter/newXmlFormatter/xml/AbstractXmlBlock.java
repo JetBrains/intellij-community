@@ -86,6 +86,9 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected Block createChildBlock(final ASTNode child, final Wrap wrap, final Alignment alignment) {
+    if (child.getElementType() == ElementType.JSP_XML_TEXT) {
+      return new JspTextBlock(child, null, null, myXmlFormattingPolicy.getSettings());
+    }
     if (child.getElementType() == getTagType()) {
       return new XmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy);
     } else {
@@ -117,6 +120,15 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       return new XmlBlock(rootNode, null, null, new XmlPolicy(settings));
     } else {
       return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.HTML_TAG));
+    }
+  }
+
+  public static Block creareJspRoot(final PsiFile element, final CodeStyleSettings settings) {
+    final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(element);
+    if (settings.JSPX_USE_HTML_FORMATTER) {
+      return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.HTML_TAG));      
+    } else {
+      return new XmlBlock(rootNode, null, null, new XmlPolicy(settings, ElementType.HTML_TAG));
     }
   }
 }
