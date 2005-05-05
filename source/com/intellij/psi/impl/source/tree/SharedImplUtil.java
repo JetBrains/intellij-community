@@ -95,10 +95,10 @@ public class SharedImplUtil {
     ASTNode parent = null;
     for (ASTNode element = SourceTreeToPsiMap.psiElementToTree(first); element != next; element = element.getTreeNext()) {
       TreeElement elementCopy = ChangeUtil.copyElement((TreeElement)element, table);
-      if (element == first) {
+      if (element == first.getNode()) {
         copyFirst = elementCopy;
       }
-      if (element == last) {
+      if (element == last.getNode()) {
         copyLast = elementCopy;
       }
       if (parent == null) {

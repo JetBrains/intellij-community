@@ -50,14 +50,15 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
 
     Editor editor = (Editor) dataContext.getData(DataConstants.EDITOR);
+    PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
     if (editor != null) {
       PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
       if (element == null) {
         final int offset = editor.getCaretModel().getOffset();
-        PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
         if (file != null) element = file.findElementAt(offset);
       }
-      if (element == null || element.getLanguage() == null || !isAvailableForLanguage(element.getLanguage())) {
+      if (element == null || file == null || element.getLanguage() == null ||
+          !isAvailableForLanguage(element.getLanguage()) || !isAvailableForFile(file)) {
         presentation.setEnabled(false);
       } else {
         presentation.setEnabled(true);
@@ -82,6 +83,10 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   protected boolean isAvailableForLanguage(Language language) {
     return language.equals(StdFileTypes.JAVA.getLanguage());
+  }
+
+  protected boolean isAvailableForFile(PsiFile file) {
+    return true;
   }
 
   public static PsiElement[] getPsiElementArray(DataContext dataContext) {

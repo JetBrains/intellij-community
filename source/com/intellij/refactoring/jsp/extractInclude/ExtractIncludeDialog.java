@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -28,6 +29,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
   private TextFieldWithBrowseButton myTargetDirectoryField;
   private JTextField myNameField;
   private final PsiDirectory myCurrentDirectory;
+  private final LanguageFileType myFileType;
 
   public PsiDirectory getTargetDirectory() {
     return myTargetDirectory;
@@ -36,12 +38,13 @@ public class ExtractIncludeDialog extends DialogWrapper {
   private PsiDirectory myTargetDirectory;
 
   public String getTargetFileName () {
-    return myNameField.getText().trim();
+    return myNameField.getText().trim() + "." + myFileType.getDefaultExtension();
   }
 
-  protected ExtractIncludeDialog(final PsiDirectory currentDirectory) {
+  public ExtractIncludeDialog(final PsiDirectory currentDirectory, final LanguageFileType fileType) {
     super(false);
     myCurrentDirectory = currentDirectory;
+    myFileType = fileType;
     setTitle("Extract Include File");
     init();
   }
@@ -106,7 +109,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
               PsiDirectory targetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(project), directoryName);
               String targetFileName = getTargetFileName();
               targetDirectory.checkCreateFile(targetFileName);
-              final String webPath = ExtractIncludeFileHandler.getWebPath(targetDirectory);
+              final String webPath = ExtractJspIncludeFileHandler.getWebPath(targetDirectory);
               myTargetDirectory = webPath == null ? null : targetDirectory;
             }
             catch (IncorrectOperationException e) {

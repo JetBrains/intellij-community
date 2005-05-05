@@ -8,6 +8,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -132,11 +133,11 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
 
   //Q: get rid of these methods?
   public boolean textMatches(CharSequence text) {
-    throw new UnsupportedOperationException();
+    return Comparing.equal(getText(), text, false);
   }
 
   public boolean textMatches(PsiElement element) {
-    throw new UnsupportedOperationException();
+    return getText().equals(element.getText());
   }
 
   public boolean textContains(char c) {
