@@ -135,13 +135,13 @@ public class CodeFormatterFacade implements Constants {
 
   public static boolean useBlockFormatter(final Language elementLanguage) {
     if (elementLanguage instanceof NewJspLanguage) return true;
+    if (elementLanguage instanceof JSPXLanguage) return true;
     
     return (elementLanguage instanceof JavaLanguage
     || elementLanguage instanceof XMLLanguage);
   }
   
   public static boolean useBlockFormatter(final PsiFile file) {
-    if (file.getLanguage() instanceof JSPXLanguage) return false;
     if (file.getLanguage() instanceof NewJspLanguage) return true;
     return
       (file instanceof XmlFile
@@ -150,9 +150,12 @@ public class CodeFormatterFacade implements Constants {
   }
 
   public static Block createBlock(final PsiFile element, final CodeStyleSettings settings) {
-    if (element.getFileType() == StdFileTypes.JSP) {
+    if (element.getFileType() == StdFileTypes.JSP ) {
       return AbstractXmlBlock.creareJspRoot(element, settings); 
     }
+    else if (element.getFileType() == StdFileTypes.JSPX) {
+      return AbstractXmlBlock.creareJspxRoot(element, settings); 
+    }    
     else if (element instanceof PsiJavaFile || element.getLanguage() instanceof JavaLanguage) {
       return AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element), settings);
     } 

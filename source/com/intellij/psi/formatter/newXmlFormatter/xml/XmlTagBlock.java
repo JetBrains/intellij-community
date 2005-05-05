@@ -46,7 +46,11 @@ public class XmlTagBlock extends AbstractXmlBlock{
           localResult.add(createChildBlock(child, wrap, alignment));
           result.add(createTagDescriptionNode(localResult));
           localResult = new ArrayList<Block>();
-        } else if (child.getElementType() == ElementType.XML_TEXT) {
+        }
+        else if (isJspxScriptlet(child)) {
+          localResult.add(new JspTextBlock(child, null, null, myXmlFormattingPolicy));      
+        }                
+        else if (child.getElementType() == ElementType.XML_TEXT) {
           createXmlTextBlocks(localResult, child, wrap, alignment);
         }
         else {
@@ -76,8 +80,16 @@ public class XmlTagBlock extends AbstractXmlBlock{
   }
 
   private Block createTagContentNode(final ArrayList<Block> localResult) {
-    return AbstractSynteticBlock.createSynteticBlock(localResult, this, myXmlFormattingPolicy.indentChildrenOf(getTag()) ?
-           getFormatter().createNormalIndent() : getFormatter().getNoneIndent(), myXmlFormattingPolicy);
+    final Indent indent;
+    
+    if (localResult.size() == 1 && localResult.get(0) instanceof JspTextBlock) {
+      indent = Formatter.getInstance().getNoneIndent();     
+    } else {
+      indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
+                          ? getFormatter().createNormalIndent()
+                          : getFormatter().getNoneIndent();
+    }
+    return AbstractSynteticBlock.createSynteticBlock(localResult, this, indent, myXmlFormattingPolicy);
   }
 
   private Block createTagDescriptionNode(final ArrayList<Block> localResult) {
@@ -104,6 +116,10 @@ public class XmlTagBlock extends AbstractXmlBlock{
       return getFormatter().createSpaceProperty(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     } else if (synteticBlock2.startsWithText()) { //>text
       return getFormatter().createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
+    } else if (synteticBlock1.isTagDescription() && synteticBlock2.startsWithTag()) {
+      return getFormatter().createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
+    } else if (synteticBlock1.endsWithTag() && synteticBlock2.isTagDescription()) {
+      return getFormatter().createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());      
     }
     else {
       return createDefaultSpace(true);

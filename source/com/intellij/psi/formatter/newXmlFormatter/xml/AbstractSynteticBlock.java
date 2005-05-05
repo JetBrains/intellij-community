@@ -129,4 +129,12 @@ public abstract class AbstractSynteticBlock implements Block{
   public boolean isIncopleted() {
     return getSubBlocks().get(getSubBlocks().size() - 1).isIncopleted();
   }
+
+  public boolean startsWithTag() {
+    return myStartTreeNode.getElementType() == getTagType();
+  }
+
+  public boolean endsWithTag() {
+    return myEndTreeNode.getElementType() == getTagType();
+  }
 }

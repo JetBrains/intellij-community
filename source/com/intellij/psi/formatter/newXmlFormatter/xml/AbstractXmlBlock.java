@@ -1,6 +1,7 @@
 package com.intellij.psi.formatter.newXmlFormatter.xml;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.jspx.JSPXLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.psi.PsiElement;
@@ -10,6 +11,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.openapi.util.Comparing;
 
 
 public abstract class AbstractXmlBlock extends AbstractBlock {
@@ -87,13 +89,24 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   protected Block createChildBlock(final ASTNode child, final Wrap wrap, final Alignment alignment) {
     if (child.getElementType() == ElementType.JSP_XML_TEXT) {
-      return new JspTextBlock(child, null, null, myXmlFormattingPolicy.getSettings());
+      return new JspTextBlock(child, null, null, myXmlFormattingPolicy);
     }
     if (child.getElementType() == getTagType()) {
       return new XmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy);
     } else {
       return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy);
     }
+  }
+
+  protected boolean isJspxScriptlet(final ASTNode child) {
+    if (child.getElementType() != ElementType.XML_TEXT) return false;
+    final ASTNode treeParent = child.getTreeParent();
+    if (treeParent == null) return false;
+    if (treeParent.getElementType() != ElementType.XML_TAG) return false;
+    final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(treeParent);
+    //if (!(psiElement.getLanguage() instanceof JSPXLanguage)) return false;
+    final String name = ((XmlTag)psiElement).getName();
+    return Comparing.equal(name, "jsp:scriptlet") || Comparing.equal(name, "jsp:declaration"); 
   }
 
   public ASTNode getTreeNode() {
@@ -131,4 +144,14 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       return new XmlBlock(rootNode, null, null, new XmlPolicy(settings, ElementType.HTML_TAG));
     }
   }
+  
+  public static Block creareJspxRoot(final PsiFile element, final CodeStyleSettings settings) {
+    final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(element);
+    if (settings.JSPX_USE_HTML_FORMATTER) {
+      return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.XML_TAG));      
+    } else {
+      return new XmlBlock(rootNode, null, null, new XmlPolicy(settings, ElementType.XML_TAG));
+    }
+  }
+  
 }
