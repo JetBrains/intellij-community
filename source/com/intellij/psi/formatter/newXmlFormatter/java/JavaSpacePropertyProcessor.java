@@ -456,7 +456,10 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
   }
 
   public void visitParameterList(PsiParameterList list) {
-    if (myRole2 == ChildRole.RPARENTH) {
+    if (myRole1 == ChildRole.LPARENTH && myRole2 == ChildRole.RPARENTH) {
+      createParenSpace(mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE, false);      
+    }
+    else if (myRole2 == ChildRole.RPARENTH) {
       createParenSpace(mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
     }
     else if (myRole1 == ChildRole.LPARENTH) {
@@ -484,7 +487,10 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
   }
 
   public void visitExpressionList(PsiExpressionList list) {
-    if (myRole2 == ChildRole.RPARENTH) {
+    if (myRole1 == ChildRole.LPARENTH && myRole2 == ChildRole.RPARENTH) {
+      createParenSpace(mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE, false);      
+    }
+    else if (myRole2 == ChildRole.RPARENTH) {
       createParenSpace(mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE, myRole1 == ChildRole.COMMA
                                                                        || mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES);
     } else if (myRole1 == ChildRole.LPARENTH) {
