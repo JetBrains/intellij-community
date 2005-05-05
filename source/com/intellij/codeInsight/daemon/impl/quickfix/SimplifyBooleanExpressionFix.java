@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 
@@ -36,7 +37,10 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    return mySubExpression.isValid() && mySubExpression.getManager().isInProject(mySubExpression);
+    return mySubExpression.isValid()
+           && mySubExpression.getManager().isInProject(mySubExpression)
+           && !PsiUtil.isAccessedForWriting(mySubExpression)
+      ;
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

@@ -170,9 +170,8 @@ public class HighlightClassUtil {
     if (dupFileName == null) return null;
     String message = MessageFormat.format("Duplicate class found in the file ''{0}''", new Object[]{dupFileName});
     TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
-    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
 
-    return highlightInfo;
+    return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
   }
 
   //@top
@@ -549,8 +548,7 @@ public class HighlightClassUtil {
           // it is an error if base ctr throws exceptions
           String description = checkDefaultConstructorThrowsException(constructor, handledExceptions);
           if (description != null) {
-            HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
-            return info;
+            return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
           }
           if (refCountHolder != null) {
             refCountHolder.registerReference(aClass, new MethodCandidateInfo(constructor, PsiSubstitutor.EMPTY));
@@ -632,10 +630,7 @@ public class HighlightClassUtil {
     if (dupCount > 1) {
       String description = MessageFormat.format(DUPLICATE_CLASS,
                                                 new Object[]{HighlightUtil.formatClass(aClass)});
-      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                                            element,
-                                                                            description);
-      return highlightInfo;
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, description);
     }
     return null;
   }
@@ -715,11 +710,12 @@ public class HighlightClassUtil {
    * @param resolved  extendRef resolved
    */
   public static HighlightInfo checkClassExtendsForeignInnerClass(PsiJavaCodeReferenceElement extendRef, PsiElement resolved) {
-    if (!(extendRef.getParent() instanceof PsiReferenceList)) {
+    PsiElement parent = extendRef.getParent();
+    if (!(parent instanceof PsiReferenceList)) {
       return null;
     }
-    if (!(extendRef.getParent().getParent() instanceof PsiClass &&
-          ((PsiClass)extendRef.getParent().getParent()).getExtendsList() == extendRef.getParent())) {
+    if (!(parent.getParent() instanceof PsiClass &&
+          ((PsiClass)parent.getParent()).getExtendsList() == parent)) {
       return null;
     }
     if (!(resolved instanceof PsiClass)) {
@@ -728,15 +724,41 @@ public class HighlightClassUtil {
     PsiClass base = (PsiClass)resolved;
     // must be inner class
     if (!PsiUtil.isInnerClass(base)) return null;
-    PsiClass baseOuter = (PsiClass)base.getParent();
+    PsiClass baseClass = (PsiClass)base.getParent();
 
-    if (!hasEnclosingInstanceInScope(baseOuter, extendRef)) {
+    PsiClass aClass = (PsiClass)parent.getParent();
+    if (!hasEnclosingInstanceInScope(baseClass, extendRef) && !qualifiedNewCalledInConstructors(aClass, baseClass)) {
       String description = MessageFormat.format("No enclosing instance of type ''{0}'' is in scope",
-                                                new Object[]{HighlightUtil.formatClass(baseOuter)});
+                                                new Object[]{HighlightUtil.formatClass(baseClass)});
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, extendRef, description);
     }
 
     return null;
+  }
+
+  private static boolean qualifiedNewCalledInConstructors(final PsiClass aClass, final PsiClass baseClass) {
+    PsiMethod[] constructors = aClass.getConstructors();
+    if (constructors.length == 0) return false;
+    for (PsiMethod constructor : constructors) {
+      PsiCodeBlock body = constructor.getBody();
+      if (body == null) return false;
+      PsiStatement[] statements = body.getStatements();
+      if (statements.length == 0) return false;
+      PsiStatement firstStatement = statements[0];
+      if (!(firstStatement instanceof PsiExpressionStatement)) return false;
+      PsiExpression expression = ((PsiExpressionStatement)firstStatement).getExpression();
+      if (!HighlightUtil.isSuperOrThisMethodCall(expression)) return false;
+      PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      if (PsiKeyword.THIS.equals(methodCallExpression.getMethodExpression().getReferenceName())) continue;
+      PsiReferenceExpression referenceExpression = methodCallExpression.getMethodExpression();
+      PsiExpression qualifierExpression = referenceExpression.getQualifierExpression();
+      if (!(qualifierExpression instanceof PsiReferenceExpression)) return false;
+      PsiType type = qualifierExpression.getType();
+      if (!(type instanceof PsiClassType)) return false;
+      PsiClass resolved = ((PsiClassType)type).resolve();
+      if (resolved != baseClass) return false;
+    }
+    return true;
   }
 
   //@top

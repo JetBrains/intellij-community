@@ -125,19 +125,6 @@ public class PsiMatcherImpl implements PsiMatcher {
     };
   }
 
-  public static PsiMatcherExpression isFirstStatement(final boolean shouldBe) {
-    return new PsiMatcherExpression() {
-      public Boolean match(PsiElement element) {
-        if (!(element instanceof PsiStatement)) return Boolean.FALSE;
-        while (element != null) {
-          element = element.getPrevSibling();
-          if (element instanceof PsiStatement) return Boolean.valueOf(!shouldBe);
-        }
-        return shouldBe ? Boolean.TRUE : Boolean.FALSE;
-      }
-    };
-  }
-
   public static PsiMatcherExpression isConstructor(final boolean shouldBe) {
     return new PsiMatcherExpression() {
       public Boolean match(PsiElement element) {

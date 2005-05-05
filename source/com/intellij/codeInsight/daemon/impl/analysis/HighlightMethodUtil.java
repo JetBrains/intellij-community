@@ -152,7 +152,9 @@ public class HighlightMethodUtil {
             substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) {
       if (returnType.equals(TypeConversionUtil.erasure(superReturnType))) return null;
       if (LanguageLevel.JDK_1_5.compareTo(method.getManager().getEffectiveLanguageLevel()) <= 0 &&
-          TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType)) return null;
+          TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType)) {
+        return null;
+      }
     }
 
     return createIncompatibleReturnTypeMessage(methodToHighlight, method, superMethod, includeRealPositionInfo,
@@ -202,7 +204,7 @@ public class HighlightMethodUtil {
     return null;
   }
 
-  //used by Fabrique 
+  //used by Fabrique
   //@top
   public static HighlightInfo checkMethodIncompatibleThrows(MethodSignatureBackedByPsiMethod methodSignature,
                                                      List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
@@ -366,12 +368,6 @@ public class HighlightMethodUtil {
     boolean isThisOrSuper = referenceToMethod.getReferenceNameElement() instanceof PsiKeyword;
     if (isThisOrSuper) {
       // super(..) or this(..)
-      PsiMember constructor = PsiUtil.findEnclosingConstructorOrInitializer(methodCall);
-      if (!(constructor instanceof PsiMethod)) {
-        String description = MessageFormat.format("Call to ''{0}()'' allowed in constructor only",
-                                                        new Object[]{referenceToMethod.getReferenceName()});
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, methodCall, description);
-      }
       if (list.getExpressions().length == 0) { // implicit ctr call
         CandidateInfo[] candidates = resolveHelper.getReferencedMethodCandidates(methodCall, true);
         if (candidates.length == 1 && !candidates[0].getElement().isPhysical()) {
@@ -802,23 +798,21 @@ public class HighlightMethodUtil {
   //@top
   static HighlightInfo checkConstructorCallMustBeFirstStatement(PsiReferenceExpression expression) {
     String text = expression.getText();
-    if (!PsiKeyword.THIS.equals(text) && !PsiKeyword.SUPER.equals(text)) return null;
-    PsiElement codeBlock = PsiUtil.getTopLevelEnclosingCodeBlock(expression, null);
-    if (new PsiMatcherImpl(expression)
-      .parent(PsiMatcherImpl.hasClass(PsiMethodCallExpression.class))
-      .parent(PsiMatcherImpl.hasClass(PsiStatement.class))
-      .dot(PsiMatcherImpl.isFirstStatement(true))
-      .parent(PsiMatcherImpl.hasClass(PsiCodeBlock.class))
-      .parent(PsiMatcherImpl.hasClass(PsiMethod.class))
-      .getElement() == null
-        && codeBlock != null
+    PsiElement methodCall = expression.getParent();
+    if (!HighlightUtil.isSuperOrThisMethodCall(methodCall)) return null;
+    PsiElement codeBlock = methodCall.getParent().getParent();
+    if (codeBlock instanceof PsiCodeBlock
         && codeBlock.getParent() instanceof PsiMethod
-        && ((PsiMethod)codeBlock.getParent()).isConstructor()
-    ) {
-      String message = MessageFormat.format("Call to ''{0}'' must be first statement in constructor", new Object[]{text + "()"});
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression.getParent(), message);
+        && ((PsiMethod)codeBlock.getParent()).isConstructor()) {
+      PsiElement prevSibling = methodCall.getParent().getPrevSibling();
+      while (true) {
+        if (prevSibling == null) return null;
+        if (prevSibling instanceof PsiStatement) break;
+        prevSibling = prevSibling.getPrevSibling();
+      }
     }
-    return null;
+    String message = MessageFormat.format("Call to ''{0}'' must be first statement in constructor body", new Object[]{text + "()"});
+    return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression.getParent(), message);
   }
 
   //@top

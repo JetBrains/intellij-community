@@ -1,11 +1,11 @@
 package com.intellij.codeInspection.duplicateStringLiteral;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -22,8 +22,8 @@ import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.util.occurences.BaseOccurenceManager;
 import com.intellij.refactoring.util.occurences.OccurenceFilter;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -96,12 +96,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       String word = words.get(i);
       if (word.length() >= MIN_STRING_LENGTH) {
         final Set<PsiFile> files = new THashSet<PsiFile>();
-        searchHelper.processAllFilesWithWordInLiterals(word, scope, new Processor<PsiFile>() {
-          public boolean process(PsiFile file) {
-            files.add(file);
-            return true;
-          }
-        });
+        searchHelper.processAllFilesWithWordInLiterals(word, scope, new CommonProcessors.CollectProcessor<PsiFile>(files));
         final boolean firstTime = i == 0;
         if (firstTime) {
           resultFiles = files;
@@ -143,8 +138,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     if (classes.size() == 0) return;
     String msg = "<html><body>Duplicate string literal found in ";
     int i = 0;
-    for (Iterator<PsiClass> iterator = classes.iterator(); iterator.hasNext(); i++) {
-      final PsiClass aClass = iterator.next();
+    for (final PsiClass aClass : classes) {
       if (i > 10) {
         msg += "<br>... (" + (classes.size() - i) + " more)";
         break;
@@ -153,6 +147,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       if (aClass.getContainingFile() == originalExpression.getContainingFile()) {
         msg += " (in this file)";
       }
+      i++;
     }
     msg += "</body></html>";
 
@@ -217,17 +212,19 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         }
       }
     }
-    for (Iterator<PsiField> iterator = constants.iterator(); iterator.hasNext();) {
-      final PsiField constant = iterator.next();
+    for (final PsiField constant : constants) {
       final PsiClass containingClass = constant.getContainingClass();
       if (containingClass == null) continue;
-      boolean isAccessible = PsiManager.getInstance(constant.getProject()).getResolveHelper() .isAccessible(constant, originalExpression, containingClass);
+      boolean isAccessible = PsiManager.getInstance(constant.getProject()).getResolveHelper() .isAccessible(constant, originalExpression,
+                                                                                                            containingClass);
       if (!isAccessible && containingClass.getQualifiedName() == null) {
         continue;
       }
       final LocalQuickFix replaceQuickFix = new LocalQuickFix() {
         public String getName() {
-          return "Replace with '"+PsiFormatUtil.formatVariable(constant, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_FQ_NAME | PsiFormatUtil.SHOW_NAME,PsiSubstitutor.EMPTY)+"'";
+          return "Replace with '" + PsiFormatUtil
+            .formatVariable(constant, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_FQ_NAME | PsiFormatUtil.SHOW_NAME,
+                            PsiSubstitutor.EMPTY) + "'";
         }
 
         public void applyFix(final Project project, ProblemDescriptor descriptor) {
@@ -242,7 +239,8 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         }
       };
       String msg = "Duplicate constant found";
-      ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(originalExpression, msg, replaceQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(originalExpression, msg, replaceQuickFix,
+                                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       allProblems.add(problemDescriptor);
     }
   }

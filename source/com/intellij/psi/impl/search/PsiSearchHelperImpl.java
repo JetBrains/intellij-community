@@ -229,8 +229,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       PsiMethod method = (PsiMethod)refElement;
       if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) && method.getParameterList().getParameters().length == 0) {
         PsiReference[] references = findReferences(method.getContainingClass(), originalScope, ignoreAccessScope);
-        for (int i = 0; i < references.length; i++) {
-          PsiReference reference = references[i];
+        for (PsiReference reference : references) {
           if (reference instanceof PsiJavaCodeReferenceElement) {
             PsiJavaCodeReferenceElement javaReference = (PsiJavaCodeReferenceElement)reference;
             if (javaReference.getParent() instanceof PsiAnnotation) {
@@ -256,8 +255,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final SearchScope searchScope = antElement.getSearchScope().intersectWith(originalScope);
       if (searchScope instanceof LocalSearchScope) {
         final PsiElement[] scopes = ((LocalSearchScope)searchScope).getScope();
-        for (int i = 0; i < scopes.length; i++) {
-          final PsiElement scope = scopes[i];
+        for (final PsiElement scope : scopes) {
           if (!processAntElementScopeRoot(scope, refElement, antElement, processor)) return false;
         }
       }
@@ -322,17 +320,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                       UsageSearchContext.IN_COMMENTS;
     }
 
-    List<String> words = StringUtil.getWordsIn(text);
-    String longestWord = null;
-    for (String word : words) {
-      if (longestWord == null || word.length() > longestWord.length()) {
-        longestWord = word;
-      }
-    }
+    String bestWord = getBestWordToSearch(text, searchContext, searchScope, myManager);
     if (!processElementsWithWord(
       processor1,
       searchScope,
-      longestWord,
+      bestWord,
       searchContext,
       false
     )) {
@@ -378,8 +370,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         };
 
         PsiFile[] files = JspUtil.findIncludingFiles(refElement.getContainingFile(), searchScope);
-        for (int i = 0; i < files.length; i++) {
-          if (!processIdentifiers(processor2, text, new LocalSearchScope(files[i]), UsageSearchContext.IN_CODE)) return false;
+        for (PsiFile file : files) {
+          if (!processIdentifiers(processor2, text, new LocalSearchScope(file), UsageSearchContext.IN_CODE)) return false;
         }
       }
     }
@@ -397,13 +389,35 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return true;
   }
 
+  private static String getBestWordToSearch(final String text,
+                                            final short searchContext,
+                                            final SearchScope searchScope,
+                                            PsiManagerImpl manager) {
+    List<String> words = StringUtil.getWordsIn(text);
+    String bestWord = null;
+    int nFiles = Integer.MAX_VALUE;
+    for (String word : words) {
+      boolean isBetter;
+      if (searchScope instanceof GlobalSearchScope) {
+        PsiFile[] files = manager.getCacheManager().getFilesWithWord(word, searchContext, (GlobalSearchScope)searchScope);
+        isBetter = files.length < nFiles;
+      }
+      else {
+        isBetter = bestWord == null || word.length() > bestWord.length();
+      }
+      if (isBetter) {
+        bestWord = word;
+      }
+    }
+    return bestWord;
+  }
+
   private static boolean processAntElementScopeRoot(final PsiElement scope,
                                              final PsiElement refElement,
                                              final PsiAntElement antElement,
                                              final PsiReferenceProcessor processor) {
     final PsiReference[] references = findReferencesInNonJavaFile(scope.getContainingFile(), refElement, antElement.getName());
-    for (int i = 0; i < references.length; i++) {
-      PsiReference reference = references[i];
+    for (PsiReference reference : references) {
       if (!processor.execute(reference)) return false;
     }
     return true;
@@ -421,8 +435,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     if (aClass.isEnum()) {
       PsiField[] fields = aClass.getFields();
-      for (int i = 0; i < fields.length; i++) {
-        PsiField field = fields[i];
+      for (PsiField field : fields) {
         if (field instanceof PsiEnumConstant) {
           PsiReference reference = field.getReference();
           if (reference != null && reference.isReferenceTo(constructor)) {
@@ -461,8 +474,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     // search usages like "this(..)"
     PsiMethod[] methods = aClass.getMethods();
-    for (int i = 0; i < methods.length; i++) {
-      PsiMethod method = methods[i];
+    for (PsiMethod method : methods) {
       if (method.isConstructor()) {
         PsiCodeBlock body = method.getBody();
         if (body != null) {
@@ -501,8 +513,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     // search usages like "super(..)"
     PsiElementProcessor<PsiClass> processor2 = new PsiElementProcessor<PsiClass>() {
-      public boolean execute(PsiClass element) {
-        PsiClass inheritor = element;
+      public boolean execute(PsiClass inheritor) {
         PsiMethod[] methods = inheritor.getMethods();
         for (int j = 0; j < methods.length; j++) {
           PsiMethod method = methods[j];
@@ -574,8 +585,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     PsiElementProcessor<PsiClass> inheritorsProcessor = new PsiElementProcessor<PsiClass>() {
-      public boolean execute(PsiClass element) {
-        PsiClass inheritor = element;
+      public boolean execute(PsiClass inheritor) {
         PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(parentClass, inheritor,
                                                                                  PsiSubstitutor.EMPTY);
         MethodSignature signature = method.getSignature(substitutor);
@@ -593,8 +603,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final EjbMethodRole ejbRole = J2EERolesUtil.getEjbRole(method);
     if (ejbRole instanceof EjbDeclMethodRole) {
       final PsiMethod[] implementations = ((EjbDeclMethodRole)ejbRole).findImplementations();
-      for (int i = 0; i < implementations.length; i++) {
-        PsiMethod implementation = implementations[i];
+      for (PsiMethod implementation : implementations) {
         // same signature methods were processed already
         if (implementation.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(PsiSubstitutor.EMPTY))) continue;
         if (!processor.execute(implementation)) return false;
@@ -682,8 +691,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final PsiMethod[] methods = isStrictSignatureSearch ? new PsiMethod[]{method} : getOverloadsMayBeOverriden(method);
 
     SearchScope accessScope = methods[0].getUseScope();
-    for (int i = 0; i < methods.length; i++) {
-      SearchScope someScope = PsiSearchScopeUtil.scopesUnion(accessScope, methods[i].getUseScope());
+    for (PsiMethod method1 : methods) {
+      SearchScope someScope = PsiSearchScopeUtil.scopesUnion(accessScope, method1.getUseScope());
       accessScope = someScope == null ? accessScope : someScope;
     }
 
@@ -821,8 +830,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (aClass instanceof PsiAspect) {
       PsiAspectManager aspectManager = aClass.getManager().getAspectManager();
       PsiAspect[] aspects = aspectManager.getAspects();
-      for (int i = 0; i < aspects.length; i++) {
-        if (!processInheritorCandidate(processor, aspects[i], aClass, searchScope, checkDeep, processed,
+      for (PsiAspect aspect : aspects) {
+        if (!processInheritorCandidate(processor, aspect, aClass, searchScope, checkDeep, processed,
                                        checkInheritance)) {
           return false;
         }
@@ -841,8 +850,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       rootFilter = null;
     }
     long[] candidateIds = repositoryIndex.getNameOccurrencesInExtendsLists(name, rootFilter);
-    for (int i = 0; i < candidateIds.length; i++) {
-      long id = candidateIds[i];
+    for (long id : candidateIds) {
       PsiClass candidate = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(id);
       LOG.assertTrue(candidate.isValid());
       if (!processInheritorCandidate(processor, candidate, aClass, searchScope, checkDeep, processed,
@@ -854,8 +862,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final EjbClassRole classRole = J2EERolesUtil.getEjbRole(aClass);
     if (classRole != null && classRole.isDeclarationRole()) {
       final PsiClass[] implementations = classRole.findImplementations();
-      for (int i = 0; i < implementations.length; i++) {
-        PsiClass candidate = implementations[i];
+      for (PsiClass candidate : implementations) {
         if (!processInheritorCandidate(processor, candidate, aClass, searchScope, checkDeep, processed,
                                        checkInheritance)) {
           return false;
@@ -983,11 +990,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           commentTokens = XML_COMMENT_BIT_SET;
         }
         else {
-          if (lang != null) {
-            final ParserDefinition parserDefinition = lang.getParserDefinition();
-            if (parserDefinition != null) {
-              commentTokens = parserDefinition.getCommentTokens();
-            }
+          final ParserDefinition parserDefinition = lang.getParserDefinition();
+          if (parserDefinition != null) {
+            commentTokens = parserDefinition.getCommentTokens();
           }
         }
 
@@ -1017,8 +1022,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       int commentEnd = commentEnds.get(i);
 
       TodoPattern[] patterns = TodoConfiguration.getInstance().getTodoPatterns();
-      for (int j = 0; j < patterns.length; j++) {
-        TodoPattern toDoPattern = patterns[j];
+      for (TodoPattern toDoPattern : patterns) {
         Pattern pattern = toDoPattern.getPattern();
         if (pattern != null) {
           ProgressManager.getInstance().checkCanceled();
@@ -1060,8 +1064,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (count != -1) return count;
     TodoItem[] items = findTodoItems(file);
     count = 0;
-    for (int i = 0; i < items.length; i++) {
-      TodoItem item = items[i];
+    for (TodoItem item : items) {
       if (item.getPattern().equals(pattern)) count++;
     }
     return count;
@@ -1137,8 +1140,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     PsiElement[] scopeRoots = ((LocalSearchScope)searchScope).getScope();
-    for (int i = 0; i < scopeRoots.length; i++) {
-      final PsiElement scopeRoot = scopeRoots[i];
+    for (final PsiElement scopeRoot : scopeRoots) {
       if (!processScopeRootForAllClasses(scopeRoot, processor)) return false;
     }
     return true;
@@ -1170,16 +1172,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     LinkedList<PsiDirectory> queue = new LinkedList<PsiDirectory>();
     PsiDirectory[] roots = myManager.getRootDirectories(PsiRootPackageType.SOURCE_PATH);
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
-    for (int i = 0; i < roots.length; i++) {
-      final PsiDirectory root = roots[i];
+    for (final PsiDirectory root : roots) {
       if (fileIndex.isInContent(root.getVirtualFile())) {
         queue.addFirst(root);
       }
     }
 
     roots = myManager.getRootDirectories(PsiRootPackageType.CLASS_PATH);
-    for (int i = 0; i < roots.length; i++) {
-      queue.addFirst(roots[i]);
+    for (PsiDirectory root1 : roots) {
+      queue.addFirst(root1);
     }
 
     while (!queue.isEmpty()) {
@@ -1188,21 +1189,20 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       if (!(module != null ? searchScope.isSearchInModuleContent(module) : searchScope.isSearchInLibraries())) continue;
 
       PsiDirectory[] subdirectories = dir.getSubdirectories();
-      for (int i = 0; i < subdirectories.length; i++) {
-        queue.addFirst(subdirectories[i]);
+      for (PsiDirectory subdirectory : subdirectories) {
+        queue.addFirst(subdirectory);
       }
 
       PsiFile[] files = dir.getFiles();
-      for (int i = 0; i < files.length; i++) {
-        PsiFile file = files[i];
+      for (PsiFile file : files) {
         if (!searchScope.contains(file.getVirtualFile())) continue;
         if (!(file instanceof PsiJavaFile)) continue;
 
         long fileId = myManager.getRepositoryManager().getFileId(file.getVirtualFile());
         if (fileId >= 0) {
           long[] allClasses = myManager.getRepositoryManager().getFileView().getAllClasses(fileId);
-          for (int j = 0; j < allClasses.length; j++) {
-            PsiClass psiClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(allClasses[j]);
+          for (long allClass : allClasses) {
+            PsiClass psiClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(allClass);
             if (!processor.execute(psiClass)) return false;
           }
         }
@@ -1231,8 +1231,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   public SearchDescriptor prepareBundleReferenceSearch(PsiElement[] refElements) {
     SearchDescriptor descriptor = new SearchDescriptor();
-    for (int i = 0; i < refElements.length; i++) {
-      PsiElement refElement = refElements[i];
+    for (PsiElement refElement : refElements) {
       if (refElement instanceof PsiNamedElement) {
         String name = ((PsiNamedElement)refElement).getName();
         if (name != null) {
@@ -1249,12 +1248,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return descriptor;
   }
 
-  public boolean processReferencesToElementsInLocalScope(final PsiReferenceProcessor processor,
+  public static boolean processReferencesToElementsInLocalScope(final PsiReferenceProcessor processor,
                                                          final SearchDescriptor bundleSearchDescriptor,
                                                          LocalSearchScope scope) {
     PsiElement[] scopeElements = scope.getScope();
-    for (int i = 0; i < scopeElements.length; i++) {
-      final PsiElement scopeElement = scopeElements[i];
+    for (final PsiElement scopeElement : scopeElements) {
       if (!processReferencesToElementInScopeElement(scopeElement, bundleSearchDescriptor, processor)) {
         return false;
       }
@@ -1324,8 +1322,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       LocalSearchScope _scope = (LocalSearchScope)searchScope;
       PsiElement[] scopeElements = _scope.getScope();
 
-      for (int i = 0; i < scopeElements.length; i++) {
-        final PsiElement scopeElement = scopeElements[i];
+      for (final PsiElement scopeElement : scopeElements) {
         if (!processElementsWithWordInScopeElement(scopeElement, processor, word, caseSensitive, searchContext)) return false;
       }
       return true;
@@ -1375,8 +1372,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
         PsiFile file = files[i];
         PsiFile[] psiRoots = file.getPsiRoots();
-        for (int j = 0; j < psiRoots.length; j++) {
-          PsiFile psiRoot = psiRoots[j];
+        for (PsiFile psiRoot : psiRoots) {
           if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, progress, searchContext)) {
             return false;
           }
@@ -1488,8 +1484,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     PsiFile[] files = myManager.getCacheManager().getFilesWithWord(className, UsageSearchContext.IN_FOREIGN_LANGUAGES,
                                                                    projectScope);
     List<PsiFile> boundForms = new ArrayList<PsiFile>(files.length);
-    for (int i = 0; i < files.length; i++) {
-      PsiFile psiFile = files[i];
+    for (PsiFile psiFile : files) {
       if (psiFile.getFileType() != StdFileTypes.GUI_DESIGNER_FORM) continue;
 
       String text = psiFile.getText();
@@ -1509,11 +1504,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     PsiClass aClass = field.getContainingClass();
     if (aClass != null && aClass.getQualifiedName() != null) {
       PsiFile[] formFiles = findFormsBoundToClass(aClass.getQualifiedName());
-      for (int i = 0; i < formFiles.length; i++) {
-        PsiFile file = formFiles[i];
+      for (PsiFile file : formFiles) {
         final PsiReference[] references = file.getReferences();
-        for (int j = 0; j < references.length; j++) {
-          final PsiReference reference = references[j];
+        for (final PsiReference reference : references) {
           if (reference.isReferenceTo(field)) return true;
         }
       }
@@ -1525,24 +1518,24 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public void processAllFilesWithWord(String word, GlobalSearchScope scope, Processor<PsiFile> processor) {
     PsiFile[] files = myManager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_CODE, scope);
 
-    for (int i = 0; i < files.length; i++) {
-      if (!processor.process(files[i])) return;
+    for (PsiFile file : files) {
+      if (!processor.process(file)) return;
     }
   }
 
   public void processAllFilesWithWordInComments(String word, GlobalSearchScope scope, Processor<PsiFile> processor) {
     PsiFile[] files = myManager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_COMMENTS, scope);
 
-    for (int i = 0; i < files.length; i++) {
-      if (!processor.process(files[i])) return;
+    for (PsiFile file : files) {
+      if (!processor.process(file)) return;
     }
   }
 
   public void processAllFilesWithWordInLiterals(String word, GlobalSearchScope scope, Processor<PsiFile> processor) {
     PsiFile[] files = myManager.getCacheManager().getFilesWithWord(word, UsageSearchContext.IN_STRINGS, scope);
 
-    for (int i = 0; i < files.length; i++) {
-      if (!processor.process(files[i])) return;
+    for (PsiFile file : files) {
+      if (!processor.process(file)) return;
     }
   }
 
@@ -1551,8 +1544,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (aClass == null) return new PsiMethod[]{method};
     PsiMethod[] methods = aClass.findMethodsByName(method.getName(), false);
     List<PsiMethod> result = new ArrayList<PsiMethod>();
-    for (int i = 0; i < methods.length; i++) {
-      PsiMethod psiMethod = methods[i];
+    for (PsiMethod psiMethod : methods) {
       PsiModifierList modList = psiMethod.getModifierList();
       if (!modList.hasModifierProperty(PsiModifier.STATIC) &&
           !modList.hasModifierProperty(PsiModifier.FINAL)) {

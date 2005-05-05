@@ -1460,12 +1460,12 @@ public class HighlightUtil {
     return null;
   }
 
-  private static boolean isSuperOrThisMethodCall(PsiElement element) {
+  static boolean isSuperOrThisMethodCall(PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression)) return false;
     PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)element).getMethodExpression();
     if (methodExpression == null) return false;
-    String text = methodExpression.getText();
-    return PsiKeyword.SUPER.equals(text) || PsiKeyword.THIS.equals(text);
+    String name = methodExpression.getReferenceName();
+    return PsiKeyword.SUPER.equals(name) || PsiKeyword.THIS.equals(name);
   }
 
   private static boolean thisOrSuperReference(PsiExpression qualifierExpression, PsiClass aClass) {
@@ -1537,7 +1537,7 @@ public class HighlightUtil {
     if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.SILLY_ASSIGNMENT)) {
       return null;
     }
-    InspectionManagerEx iManager = ((InspectionManagerEx)InspectionManager.getInstance(assignment.getProject()));
+    InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(assignment.getProject());
     if (iManager.inspectionResultSuppressed(assignment, HighlightDisplayKey.SILLY_ASSIGNMENT.toString())) return null;
 
     if (assignment.getOperationSign().getTokenType() != JavaTokenType.EQ) return null;
@@ -1753,7 +1753,7 @@ public class HighlightUtil {
     if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE)) {
       return null;
     }
-    InspectionManagerEx manager = ((InspectionManagerEx)InspectionManager.getInstance(expr.getProject()));
+    InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(expr.getProject());
     if (manager.inspectionResultSuppressed(expr, HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE.toString())) return null;
 
     if (!(resolved instanceof PsiMember)) return null;
@@ -2027,7 +2027,7 @@ public class HighlightUtil {
     if (!(refElement instanceof PsiDocCommentOwner)) return null;
     if (!((PsiDocCommentOwner)refElement).isDeprecated()) return null;
 
-    InspectionManagerEx manager = ((InspectionManagerEx)InspectionManager.getInstance(elementToHighlight.getProject()));
+    InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(elementToHighlight.getProject());
     if (manager.inspectionResultSuppressed(elementToHighlight, HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
 
     String description = MessageFormat.format("''{0}'' is deprecated", new Object[]{
