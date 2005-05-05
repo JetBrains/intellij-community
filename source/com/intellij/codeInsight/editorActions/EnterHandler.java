@@ -3,6 +3,8 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.properties.PropertiesTokenTypes;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.StringLiteralLexer;
@@ -95,6 +97,10 @@ public class EnterHandler extends EditorWriteActionHandler {
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiElement psiAtOffset = file.findElementAt(caretOffset);
+    if (file instanceof PropertiesFile) {
+      handleEnterInPropertiesFile(editor, document, psiAtOffset, caretOffset);
+      return;
+    }
     if (psiAtOffset instanceof PsiJavaToken && psiAtOffset.getTextOffset() < caretOffset) {
       PsiJavaToken token = (PsiJavaToken)psiAtOffset;
       if (token.getTokenType() == JavaTokenType.STRING_LITERAL) {
@@ -189,8 +195,9 @@ public class EnterHandler extends EditorWriteActionHandler {
     boolean isFirstColumn = caretOffset == 0 || text.charAt(caretOffset - 1) == '\n';
     final boolean insertSpace = !isFirstColumn
                                 &&
-                                !(caretOffset >= document.getTextLength() || text.charAt(caretOffset) == ' ' ||
-                                  text.charAt(caretOffset) == '\t');
+                                !(caretOffset >= document.getTextLength()
+                                  || text.charAt(caretOffset) == ' '
+                                  || text.charAt(caretOffset) == '\t');
     // to prevent keeping some elements (e.g. comments) at first column
     if (settings.SMART_INDENT_ON_ENTER || forceIndent) {
       String toInsert = insertSpace && CodeStyleSettingsManager.getSettings(project).INSERT_FIRST_SPACE_IN_LINE ? "\n " : "\n";
@@ -215,7 +222,29 @@ public class EnterHandler extends EditorWriteActionHandler {
     action.run();
   }
 
-  private boolean isAfterUnmatchedScriplet(Editor editor, int offset) {
+  private static void handleEnterInPropertiesFile(final Editor editor,
+                                           final Document document,
+                                           final PsiElement psiAtOffset,
+                                           int caretOffset) {
+    final IElementType elementType = psiAtOffset == null ? null : psiAtOffset.getNode().getElementType();
+    final String toInsert;
+    if (elementType == PropertiesTokenTypes.VALUE_CHARACTERS) {
+      toInsert = "\\\n  ";
+    }
+    else if (elementType == PropertiesTokenTypes.END_OF_LINE_COMMENT) {
+      toInsert = "\n#";
+    }
+    else {
+      toInsert = "\n";
+    }
+    document.insertString(caretOffset, toInsert);
+    caretOffset+=toInsert.length();
+    editor.getCaretModel().moveToOffset(caretOffset);
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    editor.getSelectionModel().removeSelection();
+  }
+
+  private static boolean isAfterUnmatchedScriplet(Editor editor, int offset) {
     CharSequence chars = editor.getDocument().getCharsSequence();
 
     if (!(offset >= 3 && chars.charAt(offset - 1) == '!' && chars.charAt(offset - 2) == '%' && chars.charAt(offset - 3) == '<') &&
@@ -246,7 +275,7 @@ public class EnterHandler extends EditorWriteActionHandler {
     return true;
   }
 
-  private boolean isDocCommentComplete(PsiDocComment comment) {
+  private static boolean isDocCommentComplete(PsiDocComment comment) {
     String commentText = comment.getText();
     if (!commentText.endsWith("*/")) return false;
 
@@ -262,7 +291,7 @@ public class EnterHandler extends EditorWriteActionHandler {
         if (text.endsWith("*/")) return true;
       }
       if (lexer.getTokenEnd() == commentText.length()) {
-        return (lexer.getTokenEnd() - lexer.getTokenStart() == 1);
+        return lexer.getTokenEnd() - lexer.getTokenStart() == 1;
       }
       if (tokenType == JavaDocElementType.DOC_COMMENT || tokenType == JavaTokenType.C_STYLE_COMMENT) {
         return false;
@@ -302,16 +331,16 @@ public class EnterHandler extends EditorWriteActionHandler {
     return balance > 0;
   }
 
-  private boolean isBetweenXmlTags(Editor editor, int offset) {
+  private static boolean isBetweenXmlTags(Editor editor, int offset) {
     return isBetweenTags(editor,offset,XmlTokenType.XML_TAG_END,XmlTokenType.XML_END_TAG_START);
   }
 
-  private boolean isBetweenJspTags(Editor editor, int offset) {
+  private static boolean isBetweenJspTags(Editor editor, int offset) {
     return isBetweenTags(editor,offset,JspTokenType.JSP_ACTION_END,JspTokenType.JSP_ACTION_END_TAG_START) ||
            isBetweenXmlTags(editor,offset);
   }
 
-  private boolean isBetweenTags(Editor editor, int offset, IElementType first, IElementType second) {
+  private static boolean isBetweenTags(Editor editor, int offset, IElementType first, IElementType second) {
     if (offset == 0) return false;
     CharSequence chars = editor.getDocument().getCharsSequence();
     if (chars.charAt(offset - 1) != '>') return false;
@@ -323,7 +352,7 @@ public class EnterHandler extends EditorWriteActionHandler {
     return !iterator.atEnd() && iterator.getTokenType() == second;
   }
 
-  private class DoEnterAction implements Runnable {
+  private static class DoEnterAction implements Runnable {
     private PsiFile myFile;
     private int myOffset;
     private Document myDocument;
@@ -496,7 +525,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myFile.getProject());
       comment = (PsiDocComment)codeStyleManager.reformat(comment);
       PsiElement next = comment.getNextSibling();
-      if (!(next instanceof PsiWhiteSpace) || -1 == (((PsiWhiteSpace)next).getText().indexOf(lineSeparator))) {
+      if (!(next instanceof PsiWhiteSpace) || -1 == next.getText().indexOf(lineSeparator)) {
         int lineBreakOffset = comment.getTextRange().getEndOffset();
         myDocument.insertString(lineBreakOffset, lineSeparator);
         PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -516,7 +545,7 @@ public class EnterHandler extends EditorWriteActionHandler {
     private boolean insertDocAsterisk(int lineStart, boolean docAsterisk) {
       PsiElement element = myFile.findElementAt(lineStart);
 
-      if ((element.getText().equals("*") || element.getText().equals("/**"))) {
+      if (element.getText().equals("*") || element.getText().equals("/**")) {
         PsiDocComment comment = null;
         if (element.getParent() instanceof PsiDocComment) {
           comment = (PsiDocComment)element.getParent();
