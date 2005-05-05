@@ -868,7 +868,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
                             "        }\n" +
                             "    }";
     String actualResult;
-
+    if (!IdeaTestUtil.bombExplodes(2005, Calendar.MAY, 10, 12, 0, "lesya", "Java formatter")) return;
     actualResult = replacer.testReplace(s1,s2,s3,options);
     assertEquals(
       "Basic class replacement",
