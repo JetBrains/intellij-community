@@ -12,7 +12,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 public class RefactoringMessageUtil {
@@ -70,8 +69,7 @@ public class RefactoringMessageUtil {
       final PsiDirectory[] directories = ((PsiPackage) element).getDirectories();
       final List<VirtualFile> readonlyList = new ArrayList<VirtualFile>();
       final List<VirtualFile> failedDirs = new ArrayList<VirtualFile>();
-      for (int i = 0; i < directories.length; i++) {
-        PsiDirectory directory = directories[i];
+      for (PsiDirectory directory : directories) {
         VirtualFile virtualFile = directory.getVirtualFile();
         if (recursively) {
           if (virtualFile.getFileSystem() instanceof JarFileSystem) {
@@ -97,8 +95,7 @@ public class RefactoringMessageUtil {
       if (failedDirs.size() > 0) {
         StringBuffer message = new StringBuffer(messagePrefix);
         message.append('\n');
-        for (Iterator<VirtualFile> iterator = failedDirs.iterator(); iterator.hasNext();) {
-          VirtualFile virtualFile = iterator.next();
+        for (VirtualFile virtualFile : failedDirs) {
           final String presentableUrl = virtualFile.getPresentableUrl();
           final String subj = virtualFile.isDirectory() ? "Directory " : "File ";
           if (virtualFile.getFileSystem() instanceof JarFileSystem) {
@@ -157,8 +154,8 @@ public class RefactoringMessageUtil {
     }
     final VirtualFile[] children = vFile.getChildren();
     if (children != null) {
-      for (int i = 0; i < children.length; i++) {
-        addVirtualFiles(children[i], list);
+      for (VirtualFile virtualFile : children) {
+        addVirtualFiles(virtualFile, list);
       }
     }
   }
@@ -318,10 +315,10 @@ public class RefactoringMessageUtil {
   public static String checkCanCreateClass(PsiDirectory destinationDirectory, String className) {
     PsiClass[] classes = destinationDirectory.getClasses();
     VirtualFile file = destinationDirectory.getVirtualFile();
-    for (int idx = 0; idx < classes.length; idx++) {
-      PsiClass aClass = classes[idx];
+    for (PsiClass aClass : classes) {
       if (className.equals(aClass.getName())) {
-        return "Directory " + file.getPresentableUrl() + "\nalready contains " + (aClass.isInterface()? "an interface" : "a class") + " named '" + className + "'";
+        return "Directory " + file.getPresentableUrl() + "\nalready contains " + (aClass.isInterface() ? "an interface" : "a class") +
+               " named '" + className + "'";
       }
     }
     String fileName = className+".java";

@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
@@ -111,16 +110,14 @@ public class ExtractIncludeDialog extends DialogWrapper {
               myTargetDirectory = webPath == null ? null : targetDirectory;
             }
             catch (IncorrectOperationException e) {
+              RefactoringMessageUtil.showErrorMessage("Extract Include File", e.getMessage(), null, project);
             }
           }
         };
         ApplicationManager.getApplication().runWriteAction(action);
       }
     }, "Create directory", null);
-    if (myTargetDirectory == null){
-      RefactoringMessageUtil.showErrorMessage(getTitle(), "Cannot create directory", HelpID.EXTRACT_INCLUDE, project);
-      return;
-    }
+    if (myTargetDirectory == null) return;
     super.doOKAction();
   }
 }
