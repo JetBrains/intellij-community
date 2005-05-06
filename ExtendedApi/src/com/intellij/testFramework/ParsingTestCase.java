@@ -6,6 +6,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 
@@ -33,6 +35,11 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     String name = getTestName(false);
     String text = loadFile(name + "." + myFileExt);
     myFile = createFile(name + "." + myFileExt, text);
+    myFile.accept(new PsiRecursiveElementVisitor() {
+      public void visitElement(PsiElement element) {super.visitElement(element);}
+      public void visitReferenceExpression(PsiReferenceExpression expression) {}
+    });
+    assertEquals(text, myFile.getText());
     if (checkResult){
       checkResult(name + ".txt", myFile);
     }

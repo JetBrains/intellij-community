@@ -149,10 +149,10 @@ public class ASTWrapperPsiElement extends ElementBase implements PsiElement, Nav
   }
 
   public void acceptChildren(PsiElementVisitor visitor) {
-    ASTNode child = myNode.getFirstChildNode();
-    while (child != null) {
-      SourceTreeToPsiMap.treeElementToPsi(child).accept(visitor);
-      child = child.getTreeNext();
+    PsiElement child = getFirstChild();
+    while(child != null) {
+      child.accept(visitor);
+      child = child.getNextSibling();
     }
   }
 
