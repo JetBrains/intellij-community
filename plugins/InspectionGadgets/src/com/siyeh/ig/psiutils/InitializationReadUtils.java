@@ -397,10 +397,10 @@ public class InitializationReadUtils{
         final PsiExpressionList argList = callExpression.getArgumentList();
         if(argList != null){
             final PsiExpression[] args = argList.getExpressions();
-        }
-        for(final PsiExpression arg : args){
-            if(expressionMustAssignVariable(field, arg, checkedMethods)){
-                return true;
+            for(final PsiExpression arg : args){
+                if(expressionMustAssignVariable(field, arg, checkedMethods)){
+                    return true;
+                }
             }
         }
         final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
