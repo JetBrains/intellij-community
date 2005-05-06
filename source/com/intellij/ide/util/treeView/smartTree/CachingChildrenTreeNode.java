@@ -5,6 +5,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.Navigatable;
+import gnu.trove.THashMap;
 
 import java.util.*;
 
@@ -38,25 +39,23 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
 
   public void setChildren(Collection<AbstractTreeNode> children) {
     clearChildren();
-    for (Iterator<AbstractTreeNode> iterator = children.iterator(); iterator.hasNext();) {
-      AbstractTreeNode node = iterator.next();
+    for (AbstractTreeNode node : children) {
       myChildren.add((CachingChildrenTreeNode)node);
       node.setParent(this);
     }
   }
 
-  private static class CompositeComparator implements Comparator<AbstractTreeNode> {
+  private static class CompositeComparator implements Comparator<CachingChildrenTreeNode> {
     private final Sorter[] mySorters;
 
     public CompositeComparator(final Sorter[] sorters) {
       mySorters = sorters;
     }
 
-    public int compare(final AbstractTreeNode o1, final AbstractTreeNode o2) {
+    public int compare(final CachingChildrenTreeNode o1, final CachingChildrenTreeNode o2) {
       final Object value1 = o1.getValue();
       final Object value2 = o2.getValue();
-      for (int i = 0; i < mySorters.length; i++) {
-        Sorter sorter = mySorters[i];
+      for (Sorter sorter : mySorters) {
         final int result = sorter.getComparator().compare(value1, value2);
         if (result != 0) return result;
       }
@@ -67,8 +66,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   public void sortChildren(Sorter[] sorters) {
     Collections.sort(myChildren, new CompositeComparator(sorters));
 
-    for (Iterator<CachingChildrenTreeNode> iterator = myChildren.iterator(); iterator.hasNext();) {
-      CachingChildrenTreeNode child = iterator.next();
+    for (CachingChildrenTreeNode child : myChildren) {
       if (child instanceof GroupWrapper) {
         child.sortChildren(sorters);
       }
@@ -77,9 +75,8 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   }
 
   public void filterChildren(Filter[] filters) {
-    Collection children = getChildren();
-    for (int i = 0; i < filters.length; i++) {
-      Filter filter = filters[i];
+    Collection<AbstractTreeNode> children = getChildren();
+    for (Filter filter : filters) {
       for (Iterator<AbstractTreeNode> eachNode = children.iterator(); eachNode.hasNext();) {
         TreeElementWrapper eachChild = (TreeElementWrapper)eachNode.next();
         if (!filter.isVisible(eachChild.getValue())) {
@@ -91,20 +88,20 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   }
 
   public void groupChildren(Grouper[] groupers) {
-    for (int i = 0; i < groupers.length; i++) {
-      Grouper grouper = groupers[i];
+    for (Grouper grouper : groupers) {
       groupElements(grouper);
     }
   }
 
   private void groupElements(Grouper grouper) {
-    ArrayList<AbstractTreeNode> ungrouped = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode<TreeElement>> ungrouped = new ArrayList<AbstractTreeNode<TreeElement>>();
     Collection<AbstractTreeNode> children = getChildren();
-    for (Iterator<AbstractTreeNode> iterator = children.iterator(); iterator.hasNext();) {
-      CachingChildrenTreeNode node = (CachingChildrenTreeNode)iterator.next();      
+    for (final AbstractTreeNode aChildren : children) {
+      CachingChildrenTreeNode<TreeElement> node = (CachingChildrenTreeNode<TreeElement>)aChildren;
       if (node instanceof TreeElementWrapper) {
         ungrouped.add(node);
-      } else {
+      }
+      else {
         node.groupElements(grouper);
       }
     }
@@ -114,29 +111,28 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     }
 
     Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-    for (Iterator<AbstractTreeNode> iterator = children.iterator(); iterator.hasNext();) {
-      AbstractTreeNode child = iterator.next();
+    for (AbstractTreeNode child : children) {
       AbstractTreeNode parent = child.getParent();
-      if (parent != this){
+      if (parent != this) {
         if (!result.contains(parent)) result.add(parent);
-      } else {
+      }
+      else {
         result.add(child);
       }
     }
     setChildren(result);
   }
 
-  private void processUngrouped(ArrayList<AbstractTreeNode> ungrouped, Grouper grouper) {
+  private void processUngrouped(List<AbstractTreeNode<TreeElement>> ungrouped, Grouper grouper) {
     Collection<TreeElement> ungroupedObjects = collectValues(ungrouped);
     Collection<Group> groups = grouper.group(ungroupedObjects);
 
     Map<Group, GroupWrapper> groupNodes = createGroupNodes(groups);
 
-    for (Iterator<Group> eachGroup = groups.iterator(); eachGroup.hasNext();) {
-      Group group = eachGroup.next();
-      for (Iterator<AbstractTreeNode> eachUngrNode = ungrouped.iterator(); eachUngrNode.hasNext();) {
-        AbstractTreeNode node = eachUngrNode.next();
-        if (group.contains((TreeElement)node.getValue())) {
+    for (Group group : groups) {
+      for (Iterator<AbstractTreeNode<TreeElement>> eachUngrNode = ungrouped.iterator(); eachUngrNode.hasNext();) {
+        AbstractTreeNode<TreeElement> node = eachUngrNode.next();
+        if (group.contains(node.getValue())) {
           GroupWrapper groupWrapper = groupNodes.get(group);
           groupWrapper.addSubElement((CachingChildrenTreeNode)node);
           node.setParent(groupWrapper);
@@ -146,18 +142,17 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     }
   }
 
-  private Collection<TreeElement> collectValues(ArrayList<AbstractTreeNode> ungrouped) {
+  private Collection<TreeElement> collectValues(List<AbstractTreeNode<TreeElement>> ungrouped) {
     ArrayList<TreeElement> objects = new ArrayList<TreeElement>();
-    for (Iterator<AbstractTreeNode> iterator = ungrouped.iterator(); iterator.hasNext();) {
-      objects.add((TreeElement)iterator.next().getValue());
+    for (final AbstractTreeNode<TreeElement> aUngrouped : ungrouped) {
+      objects.add(aUngrouped.getValue());
     }
     return objects;
   }
 
   private Map<Group, GroupWrapper> createGroupNodes(Collection<Group> groups) {
-    com.intellij.util.containers.HashMap<Group, GroupWrapper> result = new com.intellij.util.containers.HashMap<Group, GroupWrapper>();
-    for (Iterator<Group> iterator = groups.iterator(); iterator.hasNext();) {
-      Group group = iterator.next();
+    Map<Group, GroupWrapper> result = new THashMap<Group, GroupWrapper>();
+    for (Group group : groups) {
       result.put(group, new GroupWrapper(getProject(), group, myTreeModel));
     }
     return result;
@@ -174,8 +169,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
 
   protected void synchronizeChildren() {
     if (myOldChildren != null && myChildren != null) {
-      for (Iterator<CachingChildrenTreeNode> iterator = myOldChildren.iterator(); iterator.hasNext();) {
-        CachingChildrenTreeNode oldInstance = iterator.next();
+      for (CachingChildrenTreeNode oldInstance : myOldChildren) {
         final int newIndex = getIndexOfPointerToTheSameValue(oldInstance);
         if (newIndex >= 0) {
           final CachingChildrenTreeNode newInstance = myChildren.get(newIndex);
@@ -192,9 +186,9 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
       CachingChildrenTreeNode newInstance = myChildren.get(i);
 
       if (newInstance instanceof TreeElementWrapper) {
-        final StructureViewTreeElement newElement = ((StructureViewTreeElement)newInstance.getValue());
+        final StructureViewTreeElement newElement = (StructureViewTreeElement)newInstance.getValue();
         if (oldInstance instanceof TreeElementWrapper) {
-          final StructureViewTreeElement oldElement = ((StructureViewTreeElement)oldInstance.getValue());
+          final StructureViewTreeElement oldElement = (StructureViewTreeElement)oldInstance.getValue();
           if (newElement.getValue() != null) {
             if (Comparing.equal(newElement.getValue(), oldElement.getValue())) return i;
           }
@@ -235,8 +229,8 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   public void rebuildChildren() {
     if (myChildren != null) {
       myOldChildren = myChildren;
-      for (Iterator<CachingChildrenTreeNode> iterator = myChildren.iterator(); iterator.hasNext();) {
-        iterator.next().rebuildChildren();
+      for (final CachingChildrenTreeNode node : myChildren) {
+        node.rebuildChildren();
       }
       myChildren = null;
     }

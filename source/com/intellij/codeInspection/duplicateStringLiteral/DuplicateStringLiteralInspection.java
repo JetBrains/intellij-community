@@ -92,13 +92,11 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     });
 
     Set<PsiFile> resultFiles = null;
-    for (int i = 0; i < words.size(); i++) {
-      String word = words.get(i);
+    for (String word : words) {
       if (word.length() >= MIN_STRING_LENGTH) {
         final Set<PsiFile> files = new THashSet<PsiFile>();
         searchHelper.processAllFilesWithWordInLiterals(word, scope, new CommonProcessors.CollectProcessor<PsiFile>(files));
-        final boolean firstTime = i == 0;
-        if (firstTime) {
+        if (resultFiles == null) {
           resultFiles = files;
         }
         else {
@@ -126,14 +124,14 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     }
     if (foundExpr.size() == 0) return;
     Set<PsiClass> classes = new THashSet<PsiClass>();
-    for (int i = 0; i < foundExpr.size(); i++) {
-      PsiElement aClass = foundExpr.get(i);
+    for (PsiElement aClass : foundExpr) {
       do {
         aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
       }
       while (aClass instanceof PsiAnonymousClass || (aClass != null && ((PsiClass)aClass).getQualifiedName() == null));
-      if (aClass == null) continue;
-      classes.add((PsiClass)aClass);
+      if (aClass != null) {
+        classes.add((PsiClass)aClass);
+      }
     }
     if (classes.size() == 0) return;
     String msg = "<html><body>Duplicate string literal found in ";
