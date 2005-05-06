@@ -260,6 +260,9 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
                 expression.getMethodExpression();
 
         final PsiMethod method = (PsiMethod) methodExpression.resolve();
+        if(method == null){
+            return false;
+        }
         final PsiParameterList paramList = method.getParameterList();
         if(paramList == null){
             return false;
@@ -300,6 +303,9 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
                 expression.getMethodExpression();
 
         final PsiMethod method = (PsiMethod) methodExpression.resolve();
+        if(method == null){
+            return false;
+        }
         final PsiParameterList paramList = method.getParameterList();
         if(paramList == null){
             return false;
@@ -339,6 +345,9 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
                 expression.getMethodExpression();
 
         final PsiMethod method = (PsiMethod) methodExpression.resolve();
+        if(method == null){
+            return false;
+        }
         final PsiParameterList paramList = method.getParameterList();
         if(paramList == null){
             return false;
@@ -378,6 +387,9 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
                 expression.getMethodExpression();
 
         final PsiMethod method = (PsiMethod) methodExpression.resolve();
+        if(method == null){
+            return false;
+        }
         final PsiParameterList paramList = method.getParameterList();
         if(paramList == null){
             return false;
@@ -495,7 +507,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
                        ClassUtils.isSubclass(targetClass,
                                              "junit.framework.Assert");
     }
-    
+
     private static boolean isAssertFalse(PsiMethodCallExpression expression){
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();

@@ -73,6 +73,10 @@ public class RedundantImplementsInspection extends ClassInspection{
 
         private void checkInterface(PsiClass aClass){
             final PsiReferenceList extendsList = aClass.getExtendsList();
+            if(extendsList == null)
+            {
+                return;
+            }
             final PsiJavaCodeReferenceElement[] extendsElements =
                     extendsList.getReferenceElements();
             for(final PsiJavaCodeReferenceElement implementsElement : extendsElements){

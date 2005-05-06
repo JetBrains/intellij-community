@@ -17,9 +17,7 @@
     Use of non-final static field during class initialization
     Incorrect lazy initialization of static field
     clone() final, for security
-    Condition.wait()
     lock not acquired in try block and freed in finally block
-    Thread.sleep() while holding locks
 
     Move stuff to "J2ME" or "Memory" categories
 

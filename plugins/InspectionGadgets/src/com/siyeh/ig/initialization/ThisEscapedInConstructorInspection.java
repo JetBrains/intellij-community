@@ -122,7 +122,10 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
                 return;
             }
             final PsiField field = (PsiField) leftExpression.resolve();
-
+            if(field == null)
+            {
+                return;
+            }
             if(field.getContainingFile()
                     .equals(assignment.getContainingFile())){
                 return;

@@ -86,6 +86,9 @@ public class MisorderedAssertEqualsParametersInspection extends ExpressionInspec
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
 
             final PsiMethod method = (PsiMethod) methodExpression.resolve();
+            if(method == null){
+                return;
+            }
             final PsiParameterList paramList = method.getParameterList();
             if (paramList == null) {
                 return;

@@ -535,8 +535,15 @@ public class EquivalenceChecker{
             return false;
         }
         final PsiExpressionList argumentList1 = methodExp1.getArgumentList();
-        final PsiExpression[] args1 = argumentList1.getExpressions();
+        if(argumentList1 == null)
+        {
+            return false;
+        }
+            final PsiExpression[] args1 = argumentList1.getExpressions();
         final PsiExpressionList argumentList2 = methodExp2.getArgumentList();
+        if(argumentList2 == null){
+            return false;
+        }
         final PsiExpression[] args2 = argumentList2.getExpressions();
         return expressionListsAreEquivalent(args1, args2);
     }

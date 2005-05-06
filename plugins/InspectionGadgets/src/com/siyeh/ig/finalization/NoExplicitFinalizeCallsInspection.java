@@ -48,6 +48,10 @@ public class NoExplicitFinalizeCallsInspection extends ExpressionInspection {
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
+            if(argumentList == null)
+            {
+                return;
+            }
             if (argumentList.getExpressions().length != 0) {
                 return;
             }

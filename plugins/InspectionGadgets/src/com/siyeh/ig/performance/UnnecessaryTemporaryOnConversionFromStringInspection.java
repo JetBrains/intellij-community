@@ -120,6 +120,10 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends Expres
             }
             final PsiNewExpression newExp = (PsiNewExpression) qualifier;
             final PsiExpressionList argList = newExp.getArgumentList();
+            if(argList== null)
+            {
+                return;
+            }
             final PsiExpression[] args = argList.getExpressions();
             if(args.length != 1){
                 return;

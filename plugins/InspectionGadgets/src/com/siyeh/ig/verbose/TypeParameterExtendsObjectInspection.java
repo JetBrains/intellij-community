@@ -70,15 +70,16 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection{
             super.visitTypeParameter(parameter);
             final PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
             final PsiReferenceList extendsList = parameter.getExtendsList();
-            if(extendsList != null){
-                final PsiJavaCodeReferenceElement[] elements =
-                        extendsList.getReferenceElements();
-                for(final PsiJavaCodeReferenceElement element : elements){
-                    final String text = element.getText();
-                    if("Object".equals(text) ||
-                            "java.lang.Object".equals(text)){
-                        registerError(nameIdentifier);
-                    }
+            if(extendsList == null){
+                return;
+            }
+            final PsiJavaCodeReferenceElement[] elements =
+                    extendsList.getReferenceElements();
+            for(final PsiJavaCodeReferenceElement element : elements){
+                final String text = element.getText();
+                if("Object".equals(text) ||
+                        "java.lang.Object".equals(text)){
+                    registerError(nameIdentifier);
                 }
             }
         }

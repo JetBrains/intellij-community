@@ -301,6 +301,9 @@ public class InitializationUtils {
         final PsiMethodCallExpression callExpression =
                 (PsiMethodCallExpression) expression;
         final PsiExpressionList argList = callExpression.getArgumentList();
+        if(argList == null){
+            return false;
+        }
         final PsiExpression[] args = argList.getExpressions();
         for(final PsiExpression arg : args){
             if(expressionMustAssignVariableOrFail(field, arg, checkedMethods)){

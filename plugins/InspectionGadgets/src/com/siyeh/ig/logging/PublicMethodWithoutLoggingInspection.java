@@ -148,6 +148,9 @@ public class PublicMethodWithoutLoggingInspection extends MethodInspection{
             }
             final String containingClassName =
                     containingClass.getQualifiedName();
+            if(containingClassName == null){
+                return;
+            }
             if(containingClassName.equals(loggerClassName)){
                 containsLoggingCall = true;
             }

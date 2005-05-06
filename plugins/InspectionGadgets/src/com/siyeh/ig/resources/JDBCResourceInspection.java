@@ -215,6 +215,10 @@ public class JDBCResourceInspection extends ExpressionInspection{
                     return false;
                 }
                 final String className = containingClass.getQualifiedName();
+                if(className == null)
+                {
+                    return false;
+                }
                 if(className.equals(creationMethodClassName[i])){
                     return true;
                 }

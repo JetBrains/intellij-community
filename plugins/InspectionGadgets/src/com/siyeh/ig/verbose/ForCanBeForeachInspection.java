@@ -765,9 +765,6 @@ public class ForCanBeForeachInspection extends StatementInspection{
         if(!(qualifier instanceof PsiReferenceExpression)){
             return false;
         }
-        if(qualifier == null){
-            return false;
-        }
         final PsiType type = qualifier.getType();
         if(type == null){
             return false;
