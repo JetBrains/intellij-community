@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.lang.html.ExtractScriptIncludeHandler;
+import com.intellij.refactoring.lang.html.ExtractIncludeFromHTMLHandler;
 import com.intellij.refactoring.lang.jsp.extractInclude.ExtractJspIncludeFileHandler;
 
 /**
@@ -37,7 +37,7 @@ public class ExtractIncludeAction extends BaseRefactoringAction {
     if (file instanceof JspFile) {
       return new ExtractJspIncludeFileHandler(file);
     } else if (Language.findInstance(HTMLLanguage.class).equals(file.getLanguage())) {
-      return new ExtractScriptIncludeHandler(file);
+      return new ExtractIncludeFromHTMLHandler(file);
     }
     return null;
   }
