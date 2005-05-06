@@ -14,5 +14,7 @@ public interface PsiCall extends PsiElement {
   @Nullable PsiExpressionList getArgumentList();
 
   @Nullable PsiMethod resolveMethod();
+
+  @NotNull(documentation = "Returns ResolveResult.EMPTY if unresolved")
   ResolveResult resolveMethodGenerics();
 }
