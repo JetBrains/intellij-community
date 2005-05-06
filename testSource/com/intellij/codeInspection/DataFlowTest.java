@@ -141,4 +141,8 @@ public class DataFlowTest extends InspectionTestCase {
   public void testNullableAssignment() throws Exception {
     doTest15();
   }
+  
+  public void testNullableLocalVariable() throws Exception {
+    doTest15();
+  }
 }
