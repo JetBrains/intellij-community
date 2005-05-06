@@ -110,11 +110,23 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
     Helper helper = new Helper(fileType, myProject);
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), helper);
-    final PsiElement startElement = element.getContainingFile().findElementAt(startOffset);
-    final PsiElement endElement = element.getContainingFile().findElementAt(endOffset);
+    final PsiElement start = element.getContainingFile().findElementAt(startOffset);
+    final PsiElement end = element.getContainingFile().findElementAt(endOffset);
+    
+    final SmartPsiElementPointer startPointer = start == null ? null : SmartPointerManager.getInstance(getProject())
+      .createSmartPsiElementPointer(start);
+    
+    final SmartPsiElementPointer endPointer = end == null ? null : SmartPointerManager.getInstance(getProject())
+      .createSmartPsiElementPointer(end);
+    
     final PsiElement formatted = SourceTreeToPsiMap.treeElementToPsi(codeFormatter.processRange(treeElement, startOffset, endOffset));
-    if (!canChangeWhiteSpacesOnly && startElement != null && endElement != null && startElement.isValid() && endElement.isValid()) {
-      return new BraceEnforcer(getSettings()).process(formatted, startElement.getTextRange().getStartOffset(), endElement.getTextRange().getEndOffset());
+    final PsiElement startElement = startPointer == null ? null : startPointer.getElement();
+    final PsiElement endElement = endPointer == null ? null : endPointer.getElement();
+    
+    if (!canChangeWhiteSpacesOnly && startElement != null && endElement != null) {
+      return new BraceEnforcer(getSettings()).process(formatted, 
+                                                      startElement.getTextRange().getStartOffset(), 
+                                                      endElement.getTextRange().getEndOffset());
     } else {
       return formatted;
     }
@@ -219,6 +231,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
                                                                   offset,
                                                                   getSignificantRange(file, offset));
       model.dispose();
+      //System.out.println(file.getText());
       return result;
 
     } else {
@@ -712,18 +725,24 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       if (type instanceof PsiPrimitiveType) {
         return type.getPresentableText();
       }
-      else if (type instanceof PsiWildcardType) {
-        return getTypeName(((PsiWildcardType)type).getExtendsBound());
-      }
-      else if (type instanceof PsiIntersectionType) {
-        return getTypeName(((PsiIntersectionType)type).getRepresentative());
-      }
-      else if (type instanceof PsiCapturedWildcardType) {
-        return getTypeName(((PsiCapturedWildcardType)type).getWildcard());
-      }
       else {
-        LOG.error("Unknown type:" + type);
-        return null;
+        if (type instanceof PsiWildcardType) {
+          return getTypeName(((PsiWildcardType)type).getExtendsBound());
+        }
+        else {
+          if (type instanceof PsiIntersectionType) {
+            return getTypeName(((PsiIntersectionType)type).getRepresentative());
+          }
+          else {
+            if (type instanceof PsiCapturedWildcardType) {
+              return getTypeName(((PsiCapturedWildcardType)type).getWildcard());
+            }
+            else {
+              LOG.error("Unknown type:" + type);
+              return null;
+            }
+          }
+        }
       }
     }
   }
@@ -747,30 +766,36 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         if (type instanceof PsiPrimitiveType) {
           return type.getPresentableText();
         }
-        else if (type instanceof PsiWildcardType) {
-          final PsiType bound = ((PsiWildcardType)type).getBound();
-          if (bound != null) {
-            return getLongTypeName(bound);
-          }
-          else {
-            return "java.lang.Object";
-          }
-        }
-        else if (type instanceof PsiCapturedWildcardType) {
-          final PsiType bound = ((PsiCapturedWildcardType)type).getWildcard().getBound();
-          if (bound != null) {
-            return getLongTypeName(bound);
-          }
-          else {
-            return "java.lang.Object";
-          }
-        }
-        else if (type instanceof PsiIntersectionType) {
-          return getLongTypeName(((PsiIntersectionType)type).getRepresentative());
-        }
         else {
-          LOG.error("Unknown type:" + type);
-          return null;
+          if (type instanceof PsiWildcardType) {
+            final PsiType bound = ((PsiWildcardType)type).getBound();
+            if (bound != null) {
+              return getLongTypeName(bound);
+            }
+            else {
+              return "java.lang.Object";
+            }
+          }
+          else {
+            if (type instanceof PsiCapturedWildcardType) {
+              final PsiType bound = ((PsiCapturedWildcardType)type).getWildcard().getBound();
+              if (bound != null) {
+                return getLongTypeName(bound);
+              }
+              else {
+                return "java.lang.Object";
+              }
+            }
+            else {
+              if (type instanceof PsiIntersectionType) {
+                return getLongTypeName(((PsiIntersectionType)type).getRepresentative());
+              }
+              else {
+                LOG.error("Unknown type:" + type);
+                return null;
+              }
+            }
+          }
         }
       }
     }

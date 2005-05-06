@@ -170,6 +170,7 @@ class FormatProcessor {
       }
       prev = whiteSpace;
     }
+    myModel.commitChanges();
   }
 
   private AbstractBlockWrapper getBlockInfo(final Block rootBlock) {

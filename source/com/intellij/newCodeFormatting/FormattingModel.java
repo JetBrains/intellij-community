@@ -22,4 +22,6 @@ public interface FormattingModel {
   void runModificationTransaction(Runnable action) throws IncorrectOperationException;
 
   int getTextLength();
+  
+  void commitChanges();
 }

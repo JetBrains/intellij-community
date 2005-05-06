@@ -36,24 +36,20 @@ public class PsiBasedFormattingModel implements FormattingModel {
   private final CodeStyleSettings mySettings;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.PsiBasedFormattingModel");
-  private final boolean myWasPhysical;
-  private final PsiFile myFile;
+  private final boolean myCanUseDocument;
 
   public PsiBasedFormattingModel(final PsiFile file, CodeStyleSettings settings) {
     mySettings = settings;
-    myFile = file;
-    myASTNode = SourceTreeToPsiMap.psiElementToTree(myFile);
-    myProject = myFile.getProject();
-    myWasPhysical = myFile.isPhysical();
-    if (!myWasPhysical) {
-      //((PsiFileImpl)myFile).setIsPhysicalExplicitly(true);
-    }
-    final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myFile);
-    if (document != null && document.getText().equals(myFile.getText())) {
+    myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
+    myProject = file.getProject();
+    final Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+    if (document != null && document.getText().equals(file.getText())) {
+      myCanUseDocument = true;
       myDocument = document;
     }
     else {
-      myDocument = new DocumentImpl(myFile.getText());
+      myCanUseDocument = false;
+      myDocument = new DocumentImpl(file.getText());
 
     }
   }
@@ -95,9 +91,35 @@ public class PsiBasedFormattingModel implements FormattingModel {
     return myDocument.getTextLength();
   }
 
+  public void commitChanges() {
+    if (myCanUseDocument) {
+      PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
+    }    
+  }
+
   public TextRange replaceWhiteSpace(final TextRange textRange, final String whiteSpace, final TextRange oldBlockTextRange)
                                                                                                                             throws IncorrectOperationException {
+    if (!myCanUseDocument) {
+      return replaceWithPSI(textRange, oldBlockTextRange, whiteSpace);
+    }
+    else {
+      return replaceWithDocument(textRange, oldBlockTextRange, whiteSpace);
+    }
+
+  }
+
+  private TextRange replaceWithDocument(final TextRange textRange, final TextRange oldBlockTextRange, final String whiteSpace) {
     //final RangeMarker rangeMarker = myDocument.createRangeMarker(oldBlockTextRange.getStartOffset(), oldBlockTextRange.getEndOffset());
+    
+    myDocument.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), whiteSpace);
+    
+    return oldBlockTextRange;//new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+
+  }
+
+  private TextRange replaceWithPSI(final TextRange textRange, final TextRange oldBlockTextRange, final String whiteSpace)
+                                                                                                                          throws IncorrectOperationException {
+//final RangeMarker rangeMarker = myDocument.createRangeMarker(oldBlockTextRange.getStartOffset(), oldBlockTextRange.getEndOffset());
     final int offset = textRange.getEndOffset();
     final ASTNode leafElement = findElementAt(offset);
     int length = oldBlockTextRange.getLength();
@@ -109,14 +131,14 @@ public class PsiBasedFormattingModel implements FormattingModel {
     }
     else {
       FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, ElementType.WHITE_SPACE);
-      if (leafElement.textContains('\n') 
-        /*&& whiteSpace.indexOf('\n') >= 0*/
-        ) {
+      if (leafElement.textContains('\n')
+        /*&& whiteSpace.indexOf('\n') >= 0*/) {
         try {
           Indent lastLineIndent = getLastLineIndent(leafElement.getText());
           Indent whiteSpaceIndent = createIndentOn(getLastLine(whiteSpace));
           final int shift = calcShift(lastLineIndent, whiteSpaceIndent);
-          final int newElementLength = new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, shift).getTextRange().getLength();
+          final int newElementLength = new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, shift).getTextRange()
+            .getLength();
           length = length - oldElementLength + newElementLength;
         }
         catch (IOException e) {
@@ -133,7 +155,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
     if (lastLineIndent.equals(whiteSpaceIndent)) return 0;
     if (options.USE_TAB_CHARACTER) {
       if (lastLineIndent.whiteSpaces > 0) {
-        return whiteSpaceIndent.getSpacesCount(options); 
+        return whiteSpaceIndent.getSpacesCount(options);
       }
       else {
         return whiteSpaceIndent.tabs - lastLineIndent.tabs;
@@ -177,9 +199,6 @@ public class PsiBasedFormattingModel implements FormattingModel {
   }
 
   public void dispose() {
-    if (!myWasPhysical) {
-      //((PsiFileImpl)myFile).setIsPhysicalExplicitly(false);
-    }
   }
 
   private class Indent {
@@ -211,7 +230,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
     }
 
     public int getSpacesCount(final CodeStyleSettings.IndentOptions options) {
-      return whiteSpaces + tabs*options.TAB_SIZE; 
+      return whiteSpaces + tabs * options.TAB_SIZE;
     }
   }
 

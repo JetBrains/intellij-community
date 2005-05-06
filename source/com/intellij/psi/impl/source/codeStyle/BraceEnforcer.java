@@ -25,7 +25,9 @@ public class BraceEnforcer extends PsiRecursiveElementVisitor {
   }
 
   public void visitIfStatement(PsiIfStatement statement) {
+    final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(statement.getProject()).createSmartPsiElementPointer(statement);
     super.visitIfStatement(statement);
+    statement = (PsiIfStatement)pointer.getElement();
     processStatement(statement, statement.getThenBranch(), mySettings.IF_BRACE_FORCE);
     final PsiStatement elseBranch = statement.getElseBranch();
     if (!(elseBranch instanceof PsiIfStatement) || !mySettings.SPECIAL_ELSE_IF_TREATMENT) {
@@ -62,7 +64,14 @@ public class BraceEnforcer extends PsiRecursiveElementVisitor {
   }
 
   private static void replaceWithBlock(PsiStatement statement, PsiStatement blockCandidate) {
-    final PsiElementFactory factory = statement.getManager().getElementFactory();
+    LOG.assertTrue(statement != null);
+    if (!statement.isValid()) {
+      LOG.assertTrue(false);
+    }
+    final PsiManager manager = statement.getManager();
+    LOG.assertTrue(manager != null);
+    final PsiElementFactory factory = manager.getElementFactory();
+    
     String oldText = blockCandidate.getText();
     StringBuffer buf = new StringBuffer(oldText.length() + 3);
     buf.append('{');
@@ -83,6 +92,7 @@ public class BraceEnforcer extends PsiRecursiveElementVisitor {
   }
 
   public PsiElement process(PsiElement formatted) {
+    LOG.assertTrue(formatted.isValid());
     formatted.accept(this);
     return formatted;
   }

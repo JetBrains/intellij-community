@@ -16,8 +16,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.newXmlFormatter.java.AbstractJavaBlock;
@@ -81,11 +80,7 @@ public class CodeFormatterFacade implements Constants {
 
     if (useBlockFormatter(SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile())) {
       TextRange range = element.getTextRange();
-      int startOffset = range.getStartOffset();
-      int endOffset = range.getEndOffset();
-
-      processRange(element, startOffset, endOffset);
-      return element;
+      return processRange(element, range.getStartOffset(), range.getEndOffset());
     }
 
     if (useNewFormatter(myHelper.getFileType())) {
@@ -167,9 +162,11 @@ public class CodeFormatterFacade implements Constants {
   public ASTNode processRange(final ASTNode element, final int startOffset, final int endOffset) {
     final FileType fileType = myHelper.getFileType();
 
-    if (useBlockFormatter(SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile())) {
+    final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(element);
+    if (useBlockFormatter(psiElement.getContainingFile())) {
       TextRange range = formatComments(element, startOffset, endOffset);
-      final PsiFile containingFile = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile();
+      final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
+      final PsiFile containingFile = psiElement.getContainingFile();
       final PsiBasedFormattingModel model = new PsiBasedFormattingModel(containingFile, mySettings);
       if (containingFile.getTextLength() > 0) {
         try {
@@ -184,7 +181,7 @@ public class CodeFormatterFacade implements Constants {
       }
 
 
-      return element;
+      return SourceTreeToPsiMap.psiElementToTree(pointer.getElement());
 
     }
 
@@ -196,7 +193,7 @@ public class CodeFormatterFacade implements Constants {
       else {
         try {
           final PseudoText pseudoText =
-            pseudoTextBuilder.build(myHelper.getProject(), mySettings, SourceTreeToPsiMap.treeElementToPsi(element));
+            pseudoTextBuilder.build(myHelper.getProject(), mySettings, psiElement);
           GeneralCodeFormatter.createSimpleInstance(pseudoText, mySettings, fileType, startOffset, endOffset, null).format();
         }
         catch (ProcessCanceledException processCanceledException) {
