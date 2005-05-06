@@ -10,37 +10,28 @@ import com.intellij.psi.meta.PsiMetaOwner;
 
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
 
 public interface PsiClass extends PsiElement, PsiNamedElement, PsiModifierListOwner, PsiDocCommentOwner, PsiMetaOwner, PsiTypeParameterListOwner, PsiMember {
   PsiClass[] EMPTY_ARRAY  = new PsiClass[0];
 
-  /**
-   * @MaybeNull(description = "return null for anonymous and local classes, and for type parameters")
-   */
+  @Nullable(documentation = "return null for anonymous and local classes, and for type parameters")
   String getQualifiedName();
 
   boolean isInterface();
   boolean isAnnotationType();
   boolean isEnum();
 
-  /**
-   *
-   * @MaybeNull(description = "return null for anonymous classes, enums and annotation types")
-   */
+  @Nullable(documentation = "return null for anonymous classes, enums and annotation types")
   PsiReferenceList getExtendsList();
 
-  /**
-   *
-   * @MaybeNull(description = "return null for anonymous classes")
-   */
+  @Nullable(documentation = "return null for anonymous classes")
   PsiReferenceList getImplementsList();
 
   PsiClassType[] getExtendsListTypes();
   PsiClassType[] getImplementsListTypes();
 
-  /**
-   * @MaybeNull(description = "May return null when jdk is not configured, so no java.lang.Object is found, or for java.lang.Object itself")
-   */
+  @Nullable(documentation = "May return null when jdk is not configured, so no java.lang.Object is found, or for java.lang.Object itself")
   PsiClass getSuperClass();
 
   PsiClass[] getInterfaces();
@@ -79,10 +70,7 @@ public interface PsiClass extends PsiElement, PsiNamedElement, PsiModifierListOw
   PsiJavaToken getLBrace();
   PsiJavaToken getRBrace();
 
-  /**
-   *
-   * @MaybeNull(description = "parser understands classes without name identifiers")
-   */
+  @Nullable(documentation = "parser understands classes without name identifiers")
   PsiIdentifier getNameIdentifier();
 
   // very special method!

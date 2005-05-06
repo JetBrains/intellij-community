@@ -11,7 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public interface PsiCall extends PsiElement {
-  @NotNull  PsiExpressionList getArgumentList();
+  @Nullable PsiExpressionList getArgumentList();
+
   @Nullable PsiMethod resolveMethod();
   ResolveResult resolveMethodGenerics();
 }

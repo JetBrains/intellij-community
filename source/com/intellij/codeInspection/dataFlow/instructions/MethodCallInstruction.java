@@ -31,7 +31,8 @@ public class MethodCallInstruction extends Instruction {
     myCall = call;
     myFactory = factory;
     final PsiMethod callee = call.resolveMethod();
-    final PsiExpression[] args = myCall.getArgumentList().getExpressions();
+    final PsiExpressionList argList = myCall.getArgumentList();
+    final PsiExpression[] args = argList != null ? argList.getExpressions() : null;
     myArgsCount = args.length;
 
     if (callee != null) {

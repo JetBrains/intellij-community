@@ -1011,9 +1011,12 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
   public void visitNewExpression(PsiNewExpression expression) {
     startElement(expression);
 
-    PsiExpression[] params = expression.getArgumentList().getExpressions();
-    for (PsiExpression param : params) {
-      param.accept(this);
+    final PsiExpressionList args = expression.getArgumentList();
+    if (args != null) {
+      PsiExpression[] params = args.getExpressions();
+      for (PsiExpression param : params) {
+        param.accept(this);
+      }
     }
 
     pushUnknown();
