@@ -24,7 +24,7 @@ import com.intellij.psi.tree.TokenSet;
  * To change this template use File | Settings | File Templates.
  */
 public class PropertiesParserDefinition implements ParserDefinition {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.javascript.JavascriptParserDefinition");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.PropertiesParserDefinition");
 
   public Lexer createLexer(Project project) {
     return new PropertiesLexer();
@@ -60,7 +60,7 @@ public class PropertiesParserDefinition implements ParserDefinition {
       return new PropertyImpl(node);
     }
 
-    LOG.error("Alien element type [" + type + "]. Can't create JavaScript PsiElement for that.");
+    LOG.error("Alien element type [" + type + "]. Can't create Property PsiElement for that.");
 
     return new ASTWrapperPsiElement(node);
   }
