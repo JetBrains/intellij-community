@@ -42,7 +42,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
 
       public void visitField(PsiField field) {
         super.visitField(field);
-        if (getManager().isToCheckMember(field, myTool.getID())) {
+        if (InspectionManagerEx.isToCheckMember(field, myTool.getID())) {
           ProblemDescriptor[] problemDescriptions = myTool.checkField(field, getManager(), false);
           if (problemDescriptions != null) {
             problemDescriptions = filterUnsuppressedProblemDescriptions(problemDescriptions);
@@ -59,7 +59,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
         Set<ProblemDescriptor> set = null;
         for (int i = 0; i < problemDescriptions.length; i++) {
           ProblemDescriptor description = problemDescriptions[i];
-          if (getManager().inspectionResultSuppressed(description.getPsiElement(), myTool.getID())) {
+          if (InspectionManagerEx.inspectionResultSuppressed(description.getPsiElement(), myTool.getID())) {
             if (set == null) set = new LinkedHashSet<ProblemDescriptor>(Arrays.asList(problemDescriptions));
             set.remove(description);
           }
@@ -69,7 +69,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
 
       public void visitClass(PsiClass aClass) {
         super.visitClass(aClass);
-        if (getManager().isToCheckMember(aClass, myTool.getID()) && !(aClass instanceof PsiTypeParameter)) {
+        if (InspectionManagerEx.isToCheckMember(aClass, myTool.getID()) && !(aClass instanceof PsiTypeParameter)) {
           ProblemDescriptor[] problemDescriptions = myTool.checkClass(aClass, getManager(), false);
           if (problemDescriptions != null) {
             problemDescriptions = filterUnsuppressedProblemDescriptions(problemDescriptions);
@@ -85,7 +85,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
 
       public void visitMethod(PsiMethod method) {
         super.visitMethod(method);
-        if (getManager().isToCheckMember(method, myTool.getID())) {
+        if (InspectionManagerEx.isToCheckMember(method, myTool.getID())) {
           ProblemDescriptor[] problemDescriptions = myTool.checkMethod(method, getManager(), false);
           if (problemDescriptions != null) {
             problemDescriptions = filterUnsuppressedProblemDescriptions(problemDescriptions);

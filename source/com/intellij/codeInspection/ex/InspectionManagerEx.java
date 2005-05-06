@@ -239,7 +239,8 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);
     }
     while (container instanceof PsiTypeParameter);
-    return container != null && !isToCheckMember((PsiDocCommentOwner)container, id);
+    PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class, true);
+    return container != null && !isToCheckMember((PsiDocCommentOwner)container, id) || (classContainer != null && !isToCheckMember(classContainer, id));
   }
 
   public UIOptions getUIOptions() {
