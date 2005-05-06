@@ -51,8 +51,7 @@ public class ToggleLineBreakpointAction extends AnAction {
       final Document document = editor.getDocument();
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (file != null) {
-        FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-        FileType fileType = fileTypeManager.getFileTypeByFile(file.getVirtualFile());
+        FileType fileType = file.getFileType();
         if (StdFileTypes.JAVA == fileType || StdFileTypes.JSP  == fileType || StdFileTypes.JSPX == fileType) {
           final Editor editor1 = editor;
           return new PlaceInDocument() {
