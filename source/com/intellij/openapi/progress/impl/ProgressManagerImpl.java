@@ -15,7 +15,6 @@ import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class ProgressManagerImpl extends ProgressManager implements ApplicationComponent {
@@ -108,8 +107,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
 
   public boolean hasModalProgressIndicator() {
     synchronized (this) {
-      for (Iterator<ProgressIndicator> i = myThreadToIndicatorMap.values().iterator(); i.hasNext();) {
-        ProgressIndicator indicator = i.next();
+      for (ProgressIndicator indicator : myThreadToIndicatorMap.values()) {
         if (indicator.isModal()) {
           return true;
         }
