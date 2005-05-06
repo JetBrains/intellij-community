@@ -1,4 +1,4 @@
-package com.intellij.refactoring.jsp.extractInclude;
+package com.intellij.refactoring.lang;
 
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.lang.jsp.extractInclude.ExtractJspIncludeFileHandler;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.IncorrectOperationException;
@@ -57,7 +58,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
     JPanel panel = new JPanel(new VerticalFlowLayout());
     panel.setBorder(IdeBorderFactory.createBorder());
 
-    JLabel nameLabel = new JLabel("Name for extracted include file:");
+    JLabel nameLabel = new JLabel("Name for extracted include file (without extension):");
     nameLabel.setDisplayedMnemonic('n');
     panel.add(nameLabel);
 

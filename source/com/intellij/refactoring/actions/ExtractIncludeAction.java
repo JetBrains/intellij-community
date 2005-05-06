@@ -9,8 +9,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.html.ExtractScriptIncludeHandler;
-import com.intellij.refactoring.jsp.extractInclude.ExtractJspIncludeFileHandler;
+import com.intellij.refactoring.lang.html.ExtractScriptIncludeHandler;
+import com.intellij.refactoring.lang.jsp.extractInclude.ExtractJspIncludeFileHandler;
 
 /**
  *

@@ -128,15 +128,15 @@ public class FileReferenceSet {
 
       if (context instanceof WebDirectoryElement) {
         WebDirectoryElement[] children = ((WebDirectoryElement)context).getChildren();
-        for (int i = 0; i < children.length; i++) {
-          PsiFileSystemItem item = children[i].isDirectory() ? (PsiFileSystemItem)children[i] : children[i].getOriginalFile();
+        for (WebDirectoryElement child : children) {
+          PsiFileSystemItem item = child.isDirectory() ? (PsiFileSystemItem)child : child.getOriginalFile();
           if (!processor.execute(item, PsiSubstitutor.EMPTY)) return;
         }
       } else if (context instanceof PsiDirectory) {
         final PsiElement[] children = context.getChildren();
 
-        for (int i = 0; i < children.length; i++) {
-          PsiFileSystemItem item = (PsiFileSystemItem) children[i];
+        for (PsiElement child : children) {
+          PsiFileSystemItem item = (PsiFileSystemItem)child;
           if (!processor.execute(item, PsiSubstitutor.EMPTY)) return;
         }
       }
@@ -150,8 +150,7 @@ public class FileReferenceSet {
         if ("..".equals(myText)) return ((WebDirectoryElement)context).getParentDirectory();
         WebDirectoryElement[] children = ((WebDirectoryElement)context).getChildren();
 
-        for (int i = 0; i < children.length; i++) {
-          WebDirectoryElement child = children[i];
+        for (WebDirectoryElement child : children) {
           if (myText.equals(child.getName())) {
             return child.isDirectory() ? (PsiFileSystemItem)child : child.getOriginalFile();
           }
@@ -161,8 +160,8 @@ public class FileReferenceSet {
         if ("..".equals(myText)) return ((PsiDirectory)context).getParentDirectory();
         PsiElement[] children = context.getChildren();
 
-        for (int i = 0; i < children.length; i++) {
-          PsiFileSystemItem child = (PsiFileSystemItem)children[i];
+        for (PsiElement element : children) {
+          PsiFileSystemItem child = (PsiFileSystemItem)element;
 
           if (myText.equals(child.getName())) {
             return child;

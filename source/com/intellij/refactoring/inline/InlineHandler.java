@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.jsp.inlineInclude.InlineIncludeFileHandler;
+import com.intellij.refactoring.lang.jsp.inlineInclude.InlineIncludeFileHandler;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ide.DataManager;
 

@@ -28,7 +28,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.jsp.extractInclude.ExtractIncludeDialog;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.IncorrectOperationException;
