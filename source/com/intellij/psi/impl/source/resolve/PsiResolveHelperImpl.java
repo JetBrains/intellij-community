@@ -117,8 +117,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
         if (currentSubstitution == null) {
           substitution = null;
           break;
-        } else if (currentSubstitution instanceof PsiWildcardType) {
-          if (substitution instanceof PsiWildcardType) return PsiType.NULL;
+        } else if (currentSubstitution instanceof PsiCapturedWildcardType) {
+          if (substitution instanceof PsiCapturedWildcardType) return PsiType.NULL;
         } else if (currentSubstitution == PsiType.NULL) continue;
 
         if (substitution == PsiType.NULL) {
@@ -126,9 +126,14 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
           continue;
         }
         if (!substitution.equals(currentSubstitution) && !substitution.isAssignableFrom(currentSubstitution)) {
-          substitution = GenericsUtil.getLeastUpperBound(substitution, currentSubstitution, typeParameter.getManager());
-          if (substitution == null) {
-            break;
+          if (!currentSubstitution.isAssignableFrom(substitution)) {
+            substitution = GenericsUtil.getLeastUpperBound(substitution, currentSubstitution, typeParameter.getManager());
+            if (substitution == null) {
+              break;
+            }
+          }
+          else {
+            substitution = currentSubstitution;
           }
         }
       }
@@ -237,7 +242,15 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
         if (res != PsiType.NULL) return res;
       }
       else if (patternType.equals(paramBound)) {
-        return processArgType(arg, captureWildcard);
+        if (!(arg instanceof PsiWildcardType) || ((PsiWildcardType)arg).isExtends() == wildcardParam.isExtends()) {
+          if (wildcardParam.isExtends()) {
+            return processArgType(arg, captureWildcard);
+          }
+          else {
+            if (arg instanceof PsiWildcardType) arg = ((PsiWildcardType)arg).getBound();
+            if (arg != null) return PsiWildcardType.createExtends(wildcardParam.getManager(), arg);
+          }
+        }
       }
       else if (paramBound instanceof PsiClassType && arg instanceof PsiClassType) {
         final PsiClassType.ClassResolveResult boundResult = ((PsiClassType)paramBound).resolveGenerics();
