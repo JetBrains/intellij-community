@@ -483,7 +483,8 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
 
-  private synchronized void addBreakpoint(Breakpoint breakpoint) {
+  //used in Fabrique
+  public synchronized void addBreakpoint(Breakpoint breakpoint) {
     myBreakpoints.add(breakpoint);
     myBreakpointsListForIteration = null;
     if(breakpoint instanceof BreakpointWithHighlighter) {
