@@ -28,6 +28,7 @@ class DeclarationMover extends LineMover {
       range.lastElement = lastMember;
     }
     else {
+      if (firstMember == null || lastMember == null) return null;
       final PsiElement parent = PsiTreeUtil.findCommonParent(firstMember, lastMember);
       if (parent == null) return null;
 
