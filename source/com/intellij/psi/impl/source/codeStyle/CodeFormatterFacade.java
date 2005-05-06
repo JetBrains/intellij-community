@@ -167,16 +167,13 @@ public class CodeFormatterFacade implements Constants {
       TextRange range = formatComments(element, startOffset, endOffset);
       final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
       final PsiFile containingFile = psiElement.getContainingFile();
-      final PsiBasedFormattingModel model = new PsiBasedFormattingModel(containingFile, mySettings);
+      final PsiBasedFormattingModel model = new PsiBasedFormattingModel(containingFile, mySettings, range);
       if (containingFile.getTextLength() > 0) {
         try {
           Formatter.getInstance().format(model, createBlock(containingFile, mySettings), mySettings, mySettings.getIndentOptions(fileType), range);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
-        }
-        finally {
-          model.dispose();
         }
       }
 

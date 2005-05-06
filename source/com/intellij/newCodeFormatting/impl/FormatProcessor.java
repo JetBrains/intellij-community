@@ -3,6 +3,9 @@ package com.intellij.newCodeFormatting.impl;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.IndentInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -31,10 +34,10 @@ class FormatProcessor {
   private boolean myAlignAgain = false;
 
   public FormatProcessor(FormattingModel model,
-                       Block rootBlock,
-                       CodeStyleSettings settings,
-                       CodeStyleSettings.IndentOptions indentOptions,
-                       TextRange affectedRange) {
+                         Block rootBlock,
+                         CodeStyleSettings settings,
+                         CodeStyleSettings.IndentOptions indentOptions,
+                         TextRange affectedRange) {
     myModel = model;
     myIndentOption = indentOptions;
     mySettings = settings;
@@ -55,7 +58,7 @@ class FormatProcessor {
     return result;
   }
 
-  public Element saveToXml(Block root){
+  public Element saveToXml(Block root) {
     final Element result = new Element("Block");
     final TextRange textRange = root.getTextRange();
     result.setAttribute("start", String.valueOf(textRange.getStartOffset()));
@@ -122,7 +125,28 @@ class FormatProcessor {
 
   public void format() throws IncorrectOperationException {
     formatWithoutRealModifications();
-    performModifications();
+    final IncorrectOperationException ex[] = new IncorrectOperationException[1];
+    final Project project = myModel.getProject();
+    if (project != null) {
+      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+        public void run() {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                try {
+                  performModifications();
+                }
+                catch (IncorrectOperationException e) {
+                  ex[0] = e;
+                }
+              }
+            });
+        }
+      }, "Formatting", null);
+      if (ex[0] != null) throw ex[0];
+    }
+    else {
+      performModifications();
+    }
   }
 
   public void formatWithoutRealModifications() {
@@ -158,19 +182,22 @@ class FormatProcessor {
         if (prev == whiteSpace || whiteSpace.isReadOnly()) continue;
         if (whiteSpace.equals(newWhiteSpace)) continue;
         final TextRange textRange = whiteSpace.getTextRange();
-        final TextRange wsRange = new TextRange(textRange.getStartOffset() + shift, textRange.getEndOffset() + shift);
-        final TextRange newBlockRange = myModel.replaceWhiteSpace(wsRange, newWhiteSpace, block.getBlock().getTextRange());
-        shift += (newWhiteSpace.length() - (textRange.getLength())) + 
-                 (newBlockRange.getLength() - oldTextRangeLength);
+        final TextRange wsRange = shiftRange(textRange, shift);
+        final TextRange newBlockRange = myModel.replaceWhiteSpace(wsRange, newWhiteSpace, shiftRange(block.getTextRange(), shift), true);
+        shift += (newWhiteSpace.length() - (textRange.getLength())) + (newBlockRange.getLength() - oldTextRangeLength);
         /*
         shift += (newWhiteSpace.length() - (textRange.getLength())) + 
                  (block.getTextRange().getLength() - oldTextRangeLength);
         */
-        
+
       }
       prev = whiteSpace;
     }
     myModel.commitChanges();
+  }
+
+  private TextRange shiftRange(final TextRange textRange, final int shift) {
+    return new TextRange(textRange.getStartOffset() + shift, textRange.getEndOffset() + shift);
   }
 
   private AbstractBlockWrapper getBlockInfo(final Block rootBlock) {
@@ -190,7 +217,7 @@ class FormatProcessor {
     }
 
     try {
-      if (processWrap(spaceProperty)){
+      if (processWrap(spaceProperty)) {
         return;
       }
     }
@@ -203,7 +230,8 @@ class FormatProcessor {
     final Block block = myCurrentBlock.getBlock();
     if (whiteSpace.containsLineFeeds()) {
       adjustLineIndent();
-    } else {
+    }
+    else {
       whiteSpace.arrangeSpaces(spaceProperty);
     }
 
@@ -241,7 +269,8 @@ class FormatProcessor {
 
   private void saveDependancy(final SpacePropertyImpl spaceProperty) {
     final TextRange dependancy = ((DependantSpacePropertyImpl)spaceProperty).getDependancy();
-    myPreviousDependancies.put(dependancy, new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, new Boolean(containsLineFeeds(dependancy))));
+    myPreviousDependancies.put(dependancy,
+                               new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, new Boolean(containsLineFeeds(dependancy))));
   }
 
   private boolean shouldSaveDependancy(final SpacePropertyImpl spaceProperty, WhiteSpace whiteSpace) {
@@ -275,19 +304,25 @@ class FormatProcessor {
         myCurrentBlock = myWrapCandidate;
         return true;
       }
-      else if (wrap != null && wrap.getFirstEntry() != null) {
-        myCurrentBlock = wrap.getFirstEntry();
-        wrap.markAsUsed();
-        return true;
-      } else if (wrap != null && wrapCanBeUsedInTheFuture(wrap)) {
-        wrap.markAsUsed();
+      else {
+        if (wrap != null && wrap.getFirstEntry() != null) {
+          myCurrentBlock = wrap.getFirstEntry();
+          wrap.markAsUsed();
+          return true;
+        }
+        else {
+          if (wrap != null && wrapCanBeUsedInTheFuture(wrap)) {
+            wrap.markAsUsed();
+          }
+        }
       }
       whiteSpace.ensureLineFeed();
       myWrapCandidate = null;
-    } else {
+    }
+    else {
       for (int i = 0; i < wraps.length; i++) {
         WrapImpl wrap1 = wraps[i];
-        if (isCandidateToBeWrapped(wrap1) && canReplaceWrapCandidate(wrap1)){
+        if (isCandidateToBeWrapped(wrap1) && canReplaceWrapCandidate(wrap1)) {
           myWrapCandidate = myCurrentBlock;
         }
         if (wrapCanBeUsedInTheFuture(wrap1)) {
@@ -308,14 +343,14 @@ class FormatProcessor {
   private boolean canReplaceWrapCandidate(WrapImpl wrap) {
     if (myWrapCandidate == null) return true;
     final WrapImpl currentWrap = myWrapCandidate.getWrap();
-    if(wrap == currentWrap) return true;
+    if (wrap == currentWrap) return true;
     return !wrap.isChildOf(currentWrap);
   }
 
   private boolean isCandidateToBeWrapped(final WrapImpl wrap) {
     return isSuitableInTheCurrentPosition(wrap) &&
-           (wrap.getType() == WrapImpl.Type.WRAP_AS_NEEDED || wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED)
-          && !myCurrentBlock.getWhiteSpace().isReadOnly();
+           (wrap.getType() == WrapImpl.Type.WRAP_AS_NEEDED || wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED) &&
+           !myCurrentBlock.getWhiteSpace().isReadOnly();
   }
 
   private void onCurrentLineChanged() {
@@ -329,16 +364,19 @@ class FormatProcessor {
       final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
       final IndentData offset = myCurrentBlock.calculateOffset(myIndentOption);
       whiteSpace.setSpaces(offset.getSpaces(), offset.getIndentSpaces());
-    } else {
+    }
+    else {
       final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
       AbstractBlockWrapper previousIndentedBlock = getPreviousIndentedBlock();
       if (previousIndentedBlock == null) {
         whiteSpace.setSpaces(alignOffset, 0);
-      } else {
+      }
+      else {
         int indentOffset = previousIndentedBlock.getWhiteSpace().getIndentOffset();
         if (indentOffset > alignOffset) {
           whiteSpace.setSpaces(alignOffset, 0);
-        } else {
+        }
+        else {
           whiteSpace.setSpaces(alignOffset - indentOffset, indentOffset);
         }
 
@@ -356,8 +394,7 @@ class FormatProcessor {
   }
 
   private boolean wrapCanBeUsedInTheFuture(final WrapImpl wrap) {
-    return wrap != null && wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED &&
-           (isSuitableInTheCurrentPosition(wrap));
+    return wrap != null && wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED && (isSuitableInTheCurrentPosition(wrap));
   }
 
   private boolean isSuitableInTheCurrentPosition(final WrapImpl wrap) {
@@ -394,7 +431,7 @@ class FormatProcessor {
     while (true) {
       final WhiteSpace whiteSpace = info.getWhiteSpace();
       result += whiteSpace.getTotalSpaces();
-      if (whiteSpace.containsLineFeeds()){
+      if (whiteSpace.containsLineFeeds()) {
         return result;
       }
       info = info.getPreviousBlock();
@@ -423,7 +460,7 @@ class FormatProcessor {
     AbstractBlockWrapper current = myCurrentBlock;
     while (true) {
       final AlignmentImpl alignment = (AlignmentImpl)current.getBlock().getAlignment();
-      if (alignment != null && alignment.getCurrentOffset() >= 0){
+      if (alignment != null && alignment.getCurrentOffset() >= 0) {
         return alignment.getCurrentOffset();
       }
       else {
@@ -479,15 +516,18 @@ class FormatProcessor {
     int alignOffset = getAlignOffset(childAttributes.getAlignment());
     if (alignOffset == -1) {
       return parent.calculateChildOffset(myIndentOption, childAttributes, index).createIndentInfo();
-    } else {
+    }
+    else {
       AbstractBlockWrapper previousIndentedBlock = getPreviousIndentedBlock();
       if (previousIndentedBlock == null) {
         return new IndentInfo(0, 0, alignOffset);
-      } else {
+      }
+      else {
         int indentOffset = previousIndentedBlock.getWhiteSpace().getIndentOffset();
         if (indentOffset > alignOffset) {
           return new IndentInfo(0, 0, alignOffset);
-        } else {
+        }
+        else {
           return new IndentInfo(0, indentOffset, alignOffset - indentOffset);
         }
       }
@@ -524,7 +564,8 @@ class FormatProcessor {
     Block previous = getPreviousIncompletedBlock(block, offset);
     if (previous != null) {
       return myInfos.get(previous);
-    } else {
+    }
+    else {
       return getParentFor(offset, ((AbstractBlockWrapper)block));
     }
   }
@@ -532,7 +573,7 @@ class FormatProcessor {
   private Block getPreviousIncompletedBlock(final LeafBlockWrapper block, final int offset) {
     AbstractBlockWrapper current = block;
     while (current.getParent() != null && current.getParent().getStartOffset() > offset) {
-      current =  current.getParent();
+      current = current.getParent();
     }
     if (current.getParent() == null) return null;
 
@@ -553,7 +594,7 @@ class FormatProcessor {
 
   private Block getLastChildOf(final Block currentResult) {
     final List<Block> subBlocks = currentResult.getSubBlocks();
-    if(subBlocks.isEmpty()) return null;
+    if (subBlocks.isEmpty()) return null;
     return subBlocks.get(subBlocks.size() - 1);
   }
 

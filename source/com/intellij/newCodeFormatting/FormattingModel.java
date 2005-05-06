@@ -1,6 +1,7 @@
 package com.intellij.newCodeFormatting;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.IncorrectOperationException;
 
 public interface FormattingModel {
@@ -9,13 +10,14 @@ public interface FormattingModel {
 
   /**
    * 
-   * @param textRange
    * @return new text range for block after the white space
    * @throws IncorrectOperationException
+   * @param textRange
    * @param whiteSpace
    * @param oldBlockTextRange
+   * @param blockIsWritable
    */ 
-  TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace, final TextRange oldBlockTextRange) throws IncorrectOperationException;
+  TextRange replaceWhiteSpace(TextRange textRange, String whiteSpace, final TextRange oldBlockTextRange, final boolean blockIsWritable) throws IncorrectOperationException;
 
   CharSequence getText(final TextRange textRange);
 
@@ -23,5 +25,7 @@ public interface FormattingModel {
 
   int getTextLength();
   
-  void commitChanges();
+  void commitChanges() throws IncorrectOperationException;
+
+  Project getProject();
 }

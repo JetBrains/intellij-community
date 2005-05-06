@@ -8,6 +8,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.IncorrectOperationException;
 
 public class FormatterImpl extends Formatter implements ApplicationComponent {
@@ -92,7 +94,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
                               final int offset,
                               final TextRange affectedRange) throws IncorrectOperationException {
     final FormatProcessor processor = new FormatProcessor(model, block, settings, indentOptions, affectedRange);
-    WhiteSpace whiteSpace = processor.getWhiteSpaceBefore(offset);
+    final WhiteSpace whiteSpace = processor.getWhiteSpaceBefore(offset);
     processor.setAllWhiteSpacesAreReadOnly();
     if (whiteSpace == null) {
       return offset;
@@ -107,9 +109,29 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     else {
       indent = processor.getIndentAt(offset);
     }
-    Pair<String, Integer> newWS = whiteSpace.generateWhiteSpace(indentOptions, offset, indent);
-    model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS.getFirst(), block.getTextRange());
-    model.commitChanges();
+    final Pair<String, Integer> newWS = whiteSpace.generateWhiteSpace(indentOptions, offset, indent);
+    final IncorrectOperationException ex[] = new IncorrectOperationException[1];
+    CommandProcessor.getInstance().executeCommand(model.getProject(),
+                                                  new Runnable() {
+                                                    public void run() {
+                                                      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                                                        public void run() {
+                                                          try {
+                                                            model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS.getFirst(), block.getTextRange(), false);
+                                                            model.commitChanges();
+                                                          }
+                                                          catch (IncorrectOperationException e) {
+                                                            ex[0] = e;
+                                                          }
+                                                        }
+                                                      });
+                                                    }
+                                                  }, 
+                                                  "Formatting",
+                                                  null);
+    if (ex[0] != null) throw ex[0];
+    
+    
     return newWS.getSecond().intValue();
   }
 
