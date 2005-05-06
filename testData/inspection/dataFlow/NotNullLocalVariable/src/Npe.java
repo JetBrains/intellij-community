@@ -3,11 +3,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class Npe {
    void bar() {
-     final @Nullable Object o = foo();
-     o.hashCode(); // NPE
+     final @NotNull Object o = call();
+     if (o == null) {}
    }
-
-   Object foo() {
-     return null;
-   }
+   Object call() {return new Object();}
 }

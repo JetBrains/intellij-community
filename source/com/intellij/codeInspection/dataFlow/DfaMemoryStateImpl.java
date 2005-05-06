@@ -232,10 +232,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaNotNullValue) {
       DfaTypeValue dfaType = myFactory.getTypeFactory().create(((DfaNotNullValue)value).getType());
       DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().create(var, dfaType, "instanceof", false);
-      DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
-      DfaRelationValue dfaNotNull = myFactory.getRelationFactory().create(var, dfaNull, "==", true);
       applyCondition(dfaInstanceof);
-      applyCondition(dfaNotNull);
+      applyCondition(compareToNull(var, true));
     }
     else if (value instanceof DfaTypeValue) {
       DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().create(var, value, "instanceof", false);
@@ -254,6 +252,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           LOG.error(e);
         }
       }
+    }
+
+    if (getVariableState(var).isNotNull()) {
+      applyCondition(compareToNull(var, true));
     }
   }
 
@@ -391,7 +393,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaTypeValue dfaType = (DfaTypeValue)dfaCond.getRightOperand();
 
     final DfaVariableState varState = getVariableState(dfaVar);
-    varState.setNullable(dfaType.isNullable());
+    varState.setNullable(varState.isNullable() || dfaType.isNullable());
     if (!isNotNull(dfaVar)) return true;
     return varState.setInstanceofValue(dfaType);
   }
@@ -462,9 +464,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public boolean applyNotNull(DfaValue value) {
     if (value == myFactory.getConstFactory().getNull()) return false;
     if (value instanceof DfaTypeValue && ((DfaTypeValue)value).isNullable()) return false;
-    if (value instanceof DfaVariableValue && isNotNull((DfaVariableValue)value)) return true;
 
     if (value instanceof DfaVariableValue) {
+      if (isNotNull((DfaVariableValue)value)) return true;
       final DfaVariableState varState = getVariableState((DfaVariableValue)value);
       if (varState.isNullable()) return false;
     }
@@ -482,12 +484,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaVariableState state = (DfaVariableState)myVariableStates.get(dfaVar);
 
     if (state == null) {
-      state = new DfaVariableState();
-      myVariableStates.put(dfaVar, state);
       final PsiVariable psiVariable = dfaVar.getPsiVariable();
+      state = new DfaVariableState(psiVariable);
+      myVariableStates.put(dfaVar, state);
       if (psiVariable != null) {
         state.setInstanceofValue(myFactory.getTypeFactory().create(psiVariable.getType()));
-        state.setNullable(psiVariable.getModifierList().findAnnotation(DataFlowRunner.NULLABLE) != null);
       }
     }
 

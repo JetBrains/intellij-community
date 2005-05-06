@@ -10,18 +10,26 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiVariable;
 
 import java.util.HashSet;
 import java.util.Iterator;
+
+import org.jetbrains.annotations.Nullable;
 
 public class DfaVariableState implements Cloneable {
   private HashSet<DfaTypeValue> myInstanceofValues;
   private HashSet<DfaTypeValue> myNotInstanceofValues;
   private boolean myNullable = false;
+  private final boolean myVariableIsDeclaredNotNull;
+  private PsiVariable myVar;
 
-  public DfaVariableState() {
+  public DfaVariableState(@Nullable PsiVariable var) {
+    myVar = var;
     myInstanceofValues = new HashSet<DfaTypeValue>();
     myNotInstanceofValues = new HashSet<DfaTypeValue>();
+    myNullable = var != null && var.getModifierList().findAnnotation(DataFlowRunner.NULLABLE) != null;
+    myVariableIsDeclaredNotNull = var != null && var.getModifierList().findAnnotation(DataFlowRunner.NOT_NULL) != null;
   }
 
   public boolean isNullable() {
@@ -43,7 +51,7 @@ public class DfaVariableState implements Cloneable {
   }
 
   public boolean setInstanceofValue(DfaTypeValue dfaType) {
-    myNullable = dfaType.isNullable();
+    myNullable |= dfaType.isNullable();
 
     if (dfaType.getType() instanceof PsiPrimitiveType) return true;
 
@@ -80,7 +88,7 @@ public class DfaVariableState implements Cloneable {
   }
 
   protected Object clone() throws CloneNotSupportedException {
-    DfaVariableState newState = new DfaVariableState();
+    DfaVariableState newState = new DfaVariableState(myVar);
 
     newState.myInstanceofValues = (HashSet<DfaTypeValue>) myInstanceofValues.clone();
     newState.myNotInstanceofValues = (HashSet<DfaTypeValue>) myNotInstanceofValues.clone();
@@ -109,6 +117,10 @@ public class DfaVariableState implements Cloneable {
     buf.append("}");
     buf.append(", nullable=" + myNullable);
     return buf.toString();
+  }
+
+  public boolean isNotNull() {
+    return myVariableIsDeclaredNotNull;
   }
 
   public void setNullable(final boolean nullable) {
