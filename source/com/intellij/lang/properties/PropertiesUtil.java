@@ -21,7 +21,7 @@ import java.util.List;
 public class PropertiesUtil {
   private static final GlobalSearchScope PROP_FILES_SCOPE = new GlobalSearchScope() {
     public boolean contains(VirtualFile file) {
-      return FileTypeManager.getInstance().getFileTypeByFile(file) == PropertiesSupportLoader.FILE_TYPE;
+      return FileTypeManager.getInstance().getFileTypeByFile(file) == PropertiesFileType.FILE_TYPE;
     }
 
     public int compare(VirtualFile file1, VirtualFile file2) {

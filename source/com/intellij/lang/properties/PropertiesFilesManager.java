@@ -46,7 +46,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
 
   void addNewFile(final VirtualFile file) {
     FileType fileType = myFileTypeManager.getFileTypeByFile(file);
-    if (fileType == PropertiesSupportLoader.FILE_TYPE) {
+    if (fileType == PropertiesFileType.FILE_TYPE) {
       myPropertiesFiles.add(file);
     }
   }
@@ -89,7 +89,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
           VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
           if (virtualFile == null) continue;
           FileType fileType = myFileTypeManager.getFileTypeByFile(virtualFile);
-          if (fileType == PropertiesSupportLoader.FILE_TYPE) {
+          if (fileType == PropertiesFileType.FILE_TYPE) {
             virtualFile.getFileSystem().forceRefreshFile(virtualFile);
           }
         }

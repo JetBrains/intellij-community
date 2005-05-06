@@ -11,7 +11,7 @@ import com.intellij.psi.tree.IElementType;
  */
 public class PropertiesElementType extends IElementType {
   public PropertiesElementType(String debugName) {
-    super(debugName, PropertiesSupportLoader.FILE_TYPE.getLanguage());
+    super(debugName, PropertiesFileType.FILE_TYPE.getLanguage());
   }
 
   public String toString() {

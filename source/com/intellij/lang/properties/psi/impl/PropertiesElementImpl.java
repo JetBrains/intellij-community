@@ -3,7 +3,7 @@ package com.intellij.lang.properties.psi.impl;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.properties.PropertiesSupportLoader;
+import com.intellij.lang.properties.PropertiesFileType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,7 +18,7 @@ public class PropertiesElementImpl extends ASTWrapperPsiElement  {
   }
 
   public Language getLanguage() {
-    return PropertiesSupportLoader.FILE_TYPE.getLanguage();
+    return PropertiesFileType.FILE_TYPE.getLanguage();
   }
 
 }
