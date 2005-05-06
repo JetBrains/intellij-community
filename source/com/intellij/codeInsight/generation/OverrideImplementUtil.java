@@ -188,7 +188,7 @@ public class OverrideImplementUtil {
         }
       }
 
-      if (insertAtOverride &&!method.isConstructor()) {
+      if (insertAtOverride && !method.isConstructor()) {
         PsiModifierList modifierList = result.getModifierList();
         if (modifierList.findAnnotation("java.lang.Override") == null) {
           PsiAnnotation annotation = factory.createAnnotationFromText("@java.lang.Override", null);
