@@ -63,25 +63,26 @@ public class OverrideImplementUtil {
 
     PsiMethod[] allMethods = aClass.getAllMethods();
     PsiResolveHelper resolveHelper = aClass.getManager().getResolveHelper();
-    for (int i = 0; i < allMethods.length; i++) {
-      PsiMethod method = allMethods[i];
-
+    for (PsiMethod method : allMethods) {
       if (method.hasModifierProperty(PsiModifier.STATIC) || !resolveHelper.isAccessible(method, aClass, aClass)) continue;
       PsiClass hisClass = method.getContainingClass();
       //Filter non-immediate super constructors
-      if (method.isConstructor() && (!aClass.isInheritor(hisClass, false) || aClass instanceof PsiAnonymousClass || aClass.isEnum())) continue;
+      if (method.isConstructor() && (!aClass.isInheritor(hisClass, false) || aClass instanceof PsiAnonymousClass || aClass.isEnum())) {
+        continue;
+      }
 
       PsiSubstitutor substitutor;
       if ((substitutor = substitutors.get(hisClass)) == null) {
         substitutor = aClass.isInheritor(hisClass, true) ?
-        TypeConversionUtil.getSuperClassSubstitutor(hisClass, aClass, PsiSubstitutor.EMPTY) : PsiSubstitutor.EMPTY;
+                      TypeConversionUtil.getSuperClassSubstitutor(hisClass, aClass, PsiSubstitutor.EMPTY) : PsiSubstitutor.EMPTY;
         substitutors.put(hisClass, substitutor);
       }
 
       String name = method.isConstructor() ? aClass.getName() : method.getName();
       substitutor = GenerateMembersUtil.correctSubstitutor(method, substitutor);
 
-      MethodSignature signature = MethodSignatureUtil.createMethodSignature(name, method.getParameterList(), method.getTypeParameterList(), substitutor);
+      MethodSignature signature = MethodSignatureUtil.createMethodSignature(name, method.getParameterList(), method.getTypeParameterList(),
+                                                                            substitutor);
       if (MethodSignatureUtil.findMethodBySignature(aClass, signature, false) != null) continue;
 
       if (method.hasModifierProperty(PsiModifier.FINAL)) {
@@ -89,7 +90,9 @@ public class OverrideImplementUtil {
         continue;
       }
 
-      Map<MethodSignature, PsiMethod> map = hisClass.isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT) ? abstracts : concretes;
+      Map<MethodSignature, PsiMethod> map = hisClass.isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT)
+                                            ? abstracts
+                                            : concretes;
       PsiMethod other = map.get(signature);
       if (other == null || PsiUtil.getAccessLevel(method.getModifierList()) > PsiUtil.getAccessLevel(other.getModifierList())) {
         map.put(signature, method);
@@ -98,16 +101,19 @@ public class OverrideImplementUtil {
 
     Map<MethodSignature, CandidateInfo> result = new LinkedHashMap<MethodSignature,CandidateInfo>();
     if (toImplement) {
-      for (Iterator<Map.Entry<MethodSignature,PsiMethod>> it = abstracts.entrySet().iterator(); it.hasNext();) {
-        Map.Entry<MethodSignature,PsiMethod> entry = it.next();
+      for (Map.Entry<MethodSignature, PsiMethod> entry : abstracts.entrySet()) {
         MethodSignature signature = entry.getKey();
         PsiMethod abstractOne = entry.getValue();
         PsiMethod concrete = concretes.get(signature);
-        if (concrete == null || PsiUtil.getAccessLevel(concrete.getModifierList()) < PsiUtil.getAccessLevel(abstractOne.getModifierList()) ||
-            (!abstractOne.getContainingClass().isInterface() &&
-             abstractOne.getContainingClass().isInheritor(concrete.getContainingClass(), true))) {
+        if (concrete == null ||
+                                PsiUtil.getAccessLevel(concrete.getModifierList()) < PsiUtil
+                                  .getAccessLevel(abstractOne.getModifierList()) ||
+                                                                                 (!abstractOne.getContainingClass().isInterface() &&
+                                                                                  abstractOne.getContainingClass()
+                                                                                    .isInheritor(concrete.getContainingClass(), true))) {
           if (finals.get(signature) == null) {
-            PsiSubstitutor substitutor = GenerateMembersUtil.correctSubstitutor(abstractOne, substitutors.get(abstractOne.getContainingClass()));
+            PsiSubstitutor substitutor = GenerateMembersUtil.correctSubstitutor(abstractOne,
+                                                                                substitutors.get(abstractOne.getContainingClass()));
             CandidateInfo info = new CandidateInfo(abstractOne, substitutor);
             result.put(signature, info);
           }
@@ -115,15 +121,14 @@ public class OverrideImplementUtil {
       }
 
       PsiMethod[] ejbMethods = EjbUtil.getEjbMethodsToImplement(aClass);
-      for (int i = 0; i < ejbMethods.length; i++) {
-        PsiMethod method = ejbMethods[i];
-        MethodSignature signature = MethodSignatureUtil.createMethodSignature(method.getName(), method.getParameterList(), method.getTypeParameterList(), PsiSubstitutor.EMPTY);
+      for (PsiMethod method : ejbMethods) {
+        MethodSignature signature = MethodSignatureUtil.createMethodSignature(method.getName(), method.getParameterList(),
+                                                                              method.getTypeParameterList(), PsiSubstitutor.EMPTY);
         CandidateInfo info = new CandidateInfo(method, PsiSubstitutor.EMPTY);
         result.put(signature, info);
       }
     } else {
-      for (Iterator<Map.Entry<MethodSignature,PsiMethod>> it = concretes.entrySet().iterator(); it.hasNext();) {
-        Map.Entry<MethodSignature,PsiMethod> entry = it.next();
+      for (Map.Entry<MethodSignature, PsiMethod> entry : concretes.entrySet()) {
         MethodSignature signature = entry.getKey();
         PsiMethod concrete = entry.getValue();
         if (finals.get(signature) == null) {
@@ -183,7 +188,7 @@ public class OverrideImplementUtil {
         }
       }
 
-      if (insertAtOverride) {
+      if (insertAtOverride &&!method.isConstructor()) {
         PsiModifierList modifierList = result.getModifierList();
         if (modifierList.findAnnotation("java.lang.Override") == null) {
           PsiAnnotation annotation = factory.createAnnotationFromText("@java.lang.Override", null);
@@ -204,8 +209,7 @@ public class OverrideImplementUtil {
 
     List<PsiMethod> list = new ArrayList<PsiMethod>();
 
-    for(int i = 0; i < results.length; i++){
-      PsiMethod result = results[i];
+    for (PsiMethod result : results) {
       EjbUtil.tuneMethodForEjb(J2EERolesUtil.getEjbRole(aClass), method, result);
 
       setupBody(result, method, aClass);
@@ -219,7 +223,7 @@ public class OverrideImplementUtil {
       result = (PsiMethod)codeStyleManager.reformat(result);
       settings.KEEP_LINE_BREAKS = keepBreaks;
 
-      if (aClass.findMethodBySignature(result, false) == null){
+      if (aClass.findMethodBySignature(result, false) == null) {
         list.add(result);
       }
     }
@@ -239,8 +243,9 @@ public class OverrideImplementUtil {
                                                        boolean toCopyJavaDoc,
                                                        boolean toInsertAtOverride) throws IncorrectOperationException {
     List<PsiMethod> result = new ArrayList<PsiMethod>();
-    for(int i = 0; i < candidates.length; i++){
-      result.addAll(Arrays.asList(overrideOrImplementMethod(aClass, (PsiMethod) candidates[i].getElement(), candidates[i].getSubstitutor(), toCopyJavaDoc, toInsertAtOverride)));
+    for (CandidateInfo candidateInfo : candidates) {
+      result.addAll(Arrays.asList(overrideOrImplementMethod(aClass, (PsiMethod)candidateInfo.getElement(), candidateInfo.getSubstitutor(),
+                                                            toCopyJavaDoc, toInsertAtOverride)));
     }
     return result.toArray(new PsiMethod[result.size()]);
   }
@@ -363,17 +368,17 @@ public class OverrideImplementUtil {
       int lbraceOffset = aClass.getLBrace().getTextOffset();
       if (offset <= lbraceOffset || aClass.isEnum()){
         ArrayList<PsiElement> list = new ArrayList<PsiElement>();
-        for(int i = 0; i < candidates.length; i++){
-          CandidateInfo candidate = candidates[i];
-          PsiMethod[] prototypes = overrideOrImplementMethod(aClass, (PsiMethod) candidate.getElement(), candidate.getSubstitutor(), copyJavadoc, insertAtOverride);
-          for(int j = 0; j < prototypes.length; j++){
-            PsiMethod prototype = prototypes[j];
-            PsiElement anchor = getDefaultAnchorToOverrideOrImplement(aClass, (PsiMethod) candidate.getElement(), candidate.getSubstitutor());
+        for (CandidateInfo candidate : candidates) {
+          PsiMethod[] prototypes = overrideOrImplementMethod(aClass, (PsiMethod)candidate.getElement(), candidate.getSubstitutor(),
+                                                             copyJavadoc, insertAtOverride);
+          for (PsiMethod prototype : prototypes) {
+            PsiElement anchor = getDefaultAnchorToOverrideOrImplement(aClass, (PsiMethod)candidate.getElement(),
+                                                                      candidate.getSubstitutor());
             PsiElement result;
-            if (anchor != null){
+            if (anchor != null) {
               result = aClass.addBefore(prototype, anchor);
             }
-            else{
+            else {
               result = aClass.add(prototype);
             }
             list.add(result);
