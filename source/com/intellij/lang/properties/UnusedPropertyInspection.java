@@ -2,11 +2,13 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInspection.*;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.ASTNode;
 import com.intellij.util.SmartList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.project.Project;
@@ -47,7 +49,9 @@ public class UnusedPropertyInspection extends LocalInspectionTool {
       PsiReferenceProcessor.FindElement processor = new PsiReferenceProcessor.FindElement();
       searchHelper.processReferences(processor, property, searchScope, false);
       if (!processor.isFound()) {
-        ProblemDescriptor descriptor = manager.createProblemDescriptor(property, "Unused property", QUICK_FIX, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+        ASTNode[] nodes = property.getNode().getChildren(null);
+        PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
+        ProblemDescriptor descriptor = manager.createProblemDescriptor(key, "Unused property", QUICK_FIX, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
         descriptors.add(descriptor);
       }
     }
