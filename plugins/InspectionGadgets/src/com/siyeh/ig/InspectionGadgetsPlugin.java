@@ -51,7 +51,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             "C:/My Open Source Projects/InspectionGadgetsSVN/src/inspectionDescriptions/";
     private final InspectionGadgetsTelemetry telemetry = new InspectionGadgetsTelemetry();
     private static final boolean TELEMETRY_ENABLED = true;
-        
+
     public static void main(String[] args){
         final InspectionGadgetsPlugin plugin = new InspectionGadgetsPlugin();
         final PrintStream out;
@@ -637,6 +637,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         final List<Class> inspectionClasses = m_inspectionClasses;
         inspectionClasses.add(DoubleCheckedLockingInspection.class);
         inspectionClasses.add(BusyWaitInspection.class);
+        inspectionClasses.add(SleepWhileHoldingLockInspection.class);
         inspectionClasses.add(ArithmeticOnVolatileFieldInspection.class);
         inspectionClasses.add(CallToNativeMethodWhileLockedInspection.class);
         inspectionClasses.add(ObjectNotifyInspection.class);
@@ -648,6 +649,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(ThreadStopSuspendResumeInspection.class);
         inspectionClasses.add(WhileLoopSpinsOnFieldInspection.class);
         inspectionClasses.add(WaitNotInLoopInspection.class);
+        inspectionClasses.add(WaitCalledOnConditionInspection.class);
         inspectionClasses.add(VolatileLongOrDoubleFieldInspection.class);
         inspectionClasses.add(VolatileArrayFieldInspection.class);
         inspectionClasses.add(WaitNotInSynchronizedContextInspection.class);
