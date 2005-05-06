@@ -1279,6 +1279,9 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       if (o1 instanceof PsiDirectoryNode != o2 instanceof PsiDirectoryNode) {
         return o1 instanceof PsiDirectoryNode ? -1 : 1;
       }
+      if (o1 instanceof PackageElementNode != o2 instanceof PackageElementNode) {
+        return o1 instanceof PackageElementNode ? -1 : 1;
+      }
       if (isSortByType() && o1 instanceof ClassTreeNode != o2 instanceof ClassTreeNode) {
         return o1 instanceof ClassTreeNode ? -1 : 1;
       }
