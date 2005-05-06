@@ -16,6 +16,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public class MethodCallInstruction extends Instruction {
@@ -24,16 +25,15 @@ public class MethodCallInstruction extends Instruction {
   private boolean myIsNullable;
   private boolean myIsNotNull;
   private boolean[] myParametersNotNull;
-  private int myArgsCount;
-  private PsiType myType;
+  private @Nullable PsiType myType;
+  private @NotNull PsiExpression[] myArgs;
 
   public MethodCallInstruction(PsiCallExpression call, DfaValueFactory factory) {
     myCall = call;
     myFactory = factory;
     final PsiMethod callee = call.resolveMethod();
     final PsiExpressionList argList = myCall.getArgumentList();
-    final PsiExpression[] args = argList != null ? argList.getExpressions() : null;
-    myArgsCount = args.length;
+    myArgs = argList != null ? argList.getExpressions() : new PsiExpression[0];
 
     if (callee != null) {
       final PsiModifierList modifierList = callee.getModifierList();
@@ -61,10 +61,10 @@ public class MethodCallInstruction extends Instruction {
   public DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState memState) {
     final @NotNull DfaValue qualifier = memState.pop();
 
-    for (int i = 0; i < myArgsCount; i++) {
+    for (int i = 0; i < myArgs.length; i++) {
       final DfaValue arg = memState.pop();
       if (i < myParametersNotNull.length && myParametersNotNull[i] && !memState.applyNotNull(arg)) {
-        runner.onPassingNullParameter(myCall.getArgumentList().getExpressions()[i]);
+        runner.onPassingNullParameter(myArgs[i]);
         return new DfaInstructionState[0];
       }
     }
