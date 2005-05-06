@@ -215,7 +215,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         registerConfusingInspections();
         registerAbstractionInspections();
         registerClassLayoutInspections();
-        //registerImportInspections();
+        registerImportInspections();
         registerEncapsulationInspections();
         registerVisibilityInspections();
         registerInitializerInspections();

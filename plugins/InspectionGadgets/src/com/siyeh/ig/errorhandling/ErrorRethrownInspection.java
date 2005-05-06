@@ -83,6 +83,5 @@ public class ErrorRethrownInspection extends StatementInspection {
             }
             registerError(typeElement);
         }
-
     }
 }
