@@ -383,8 +383,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   void updateAllBuilders() {
     final Collection<AbstractProjectViewPane> panes = myId2Pane.values();
-    for (Iterator<AbstractProjectViewPane> iterator = panes.iterator(); iterator.hasNext();) {
-      AbstractProjectViewPane projectViewPane = iterator.next();
+    for (AbstractProjectViewPane projectViewPane : panes) {
       projectViewPane.updateFromRoot(false);
     }
   }
@@ -565,8 +564,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     final List<ViewWrapper> views = new ArrayList<ViewWrapper>();
     final Collection<AbstractProjectViewPane> panes = myId2Pane.values();
     ViewWrapper viewToSelect = null;
-    for (Iterator<AbstractProjectViewPane> iterator = panes.iterator(); iterator.hasNext();) {
-      final AbstractProjectViewPane pane = iterator.next();
+    for (final AbstractProjectViewPane pane : panes) {
       final ViewWrapper wrapper = new ViewWrapper(pane);
       if (viewToSelect == null) {
         if (!pane.getId().equals(getCurrentViewId())) {
@@ -621,9 +619,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     public void deleteElement(DataContext dataContext) {
       List<PsiElement> allElements = Arrays.asList(getElementsToDelete());
       List<PsiElement> validElements = new ArrayList<PsiElement>();
-      for (Iterator<PsiElement> iterator = allElements.iterator(); iterator.hasNext();) {
-        PsiElement psiElement = iterator.next();
-        if (psiElement != null &&  psiElement.isValid()) validElements.add(psiElement);
+      for (PsiElement psiElement : allElements) {
+        if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
       }
       final PsiElement[] elements = validElements.toArray(new PsiElement[validElements.size()]);
  
@@ -792,8 +789,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       if (viewPane == null) return null;
       final Object[] elements = viewPane.getSelectedElements();
       ArrayList<Module> result = new ArrayList<Module>();
-      for (int i = 0; i < elements.length; i++) {
-        Object element = elements[i];
+      for (Object element : elements) {
         if (element instanceof Module) {
           result.add((Module)element);
         }
@@ -811,19 +807,18 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
   }
 
-  private <T>List<T> getSelectedElements(Class<T> klass){
+  private <T>List<T> getSelectedElements(Class<T> klass) {
     final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-     if (viewPane == null) return null;
-      final Object[] elements = viewPane.getSelectedElements();
-      ArrayList<T> result = new ArrayList<T>();
-      for (int i = 0; i < elements.length; i++) {
-        Object element = elements[i];
-        //element still valid
-        if (element != null && klass.isAssignableFrom(element.getClass())) {
-          result.add((T)element);
-        }
+    if (viewPane == null) return null;
+    final Object[] elements = viewPane.getSelectedElements();
+    ArrayList<T> result = new ArrayList<T>();
+    for (Object element : elements) {
+      //element still valid
+      if (element != null && klass.isAssignableFrom(element.getClass())) {
+        result.add((T)element);
       }
-     return result;
+    }
+    return result;
   }
 
   private final class MyIdeView implements IdeView {
@@ -872,8 +867,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         final VirtualFile[] sourceRoots = moduleRootManager.getSourceRoots();
         List<PsiDirectory> dirs = new ArrayList<PsiDirectory>(sourceRoots.length);
         final PsiManager psiManager = PsiManager.getInstance(myProject);
-        for (int idx = 0; idx < sourceRoots.length; idx++) {
-          final VirtualFile sourceRoot = sourceRoots[idx];
+        for (final VirtualFile sourceRoot : sourceRoots) {
           final PsiDirectory directory = psiManager.findDirectory(sourceRoot);
           if (directory != null) {
             dirs.add(directory);
@@ -908,16 +902,15 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private static void readOption(Element node, Map<String, Boolean> options) {
     if (node == null) return;
     List attributes = node.getAttributes();
-    for (Iterator iterator1 = attributes.iterator(); iterator1.hasNext();) {
-      Attribute attribute = (Attribute)iterator1.next();
+    for (final Object attribute1 : attributes) {
+      Attribute attribute = (Attribute)attribute1;
       options.put(attribute.getName(), "true".equals(attribute.getValue()) ? Boolean.TRUE : Boolean.FALSE);
     }
   }
 
   private static void writeOption(Element parentNode, Map<String, Boolean> optionsForPanes, String optionName) {
     Element e = new Element(optionName);
-    for (Iterator<Map.Entry<String, Boolean>> iterator = optionsForPanes.entrySet().iterator(); iterator.hasNext();) {
-      Map.Entry<String, Boolean> entry = iterator.next();
+    for (Map.Entry<String, Boolean> entry : optionsForPanes.entrySet()) {
       e.setAttribute(entry.getKey(), entry.getValue().booleanValue() ? "true" : "false");
     }
 
@@ -1111,8 +1104,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       final ProjectViewTree tree = viewPane.myTree;
       final DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
       final List<TreePath> paths = new ArrayList<TreePath>(myElements.length);
-      for (int idx = 0; idx < myElements.length; idx++) {
-        final Object element = myElements[idx];
+      for (final Object element : myElements) {
         DefaultMutableTreeNode node = treeBuilder.getNodeForElement(element);
         if (node == null) {
           treeBuilder.buildNodeForElement(element);
@@ -1133,8 +1125,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         final TreePath[] selectionPaths = viewPane.getSelectionPaths();
         if (selectionPaths != null) {
           selectedElements = new ArrayList<Object>();
-          for (int idx = 0; idx < selectionPaths.length; idx++) {
-            TreePath path = selectionPaths[idx];
+          for (TreePath path : selectionPaths) {
             final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
             final NodeDescriptor descriptor = (NodeDescriptor)node.getUserObject();
             selectedElements.add(descriptor.getElement());
@@ -1188,8 +1179,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       final MySelectInContext selectInContext = new MySelectInContext(file, editor);
 
       final SelectInTarget[] targets = SelectInManager.getInstance(myProject).getTargets();
-      for (int i = 0; i < targets.length; i++) {
-        SelectInTarget target = targets[i];
+      for (SelectInTarget target : targets) {
         if (!ToolWindowId.PROJECT_VIEW.equals(target.getToolWindowId())) continue;
         String compatiblePaneViewId = target.getMinorViewId();
         if (!Comparing.strEqual(compatiblePaneViewId, getCurrentViewId())) continue;
