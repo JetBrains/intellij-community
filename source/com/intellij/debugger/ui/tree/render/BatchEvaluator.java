@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerManager;
+import com.intellij.debugger.jdi.ObjectReferenceCachingProxy;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessAdapter;
 import com.intellij.debugger.engine.SuspendContext;
@@ -88,11 +89,11 @@ public class BatchEvaluator {
         }
       }
     }
-
     return myBatchEvaluatorMethod != null;
+    //return false;
   }
 
-  public void invoke(ToStringCommand command) {
+        public void invoke(ToStringCommand command) {
     LOG.assertTrue(DebuggerManager.getInstance(myDebugProcess.getProject()).isDebuggerManagerThread());
 
     final EvaluationContext evaluationContext = command.getEvaluationContext();
@@ -150,7 +151,8 @@ public class BatchEvaluator {
       List<Value> values = new ArrayList<Value>();
       for (Iterator<ToStringCommand> iterator = requests.iterator(); iterator.hasNext();) {
         ToStringCommand toStringCommand = iterator.next();
-        values.add(toStringCommand.getValue());
+        final Value value = toStringCommand.getValue();
+        values.add(value instanceof ObjectReference? ObjectReferenceCachingProxy.unwrap(((ObjectReference)value)) : value);
       }
 
       ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(
@@ -168,17 +170,21 @@ public class BatchEvaluator {
       Value value = debugProcess.invokeMethod(evaluationContext, myBatchEvaluatorObject,
                                               myBatchEvaluatorMethod, argList);
       if (value instanceof ArrayReference) {
-        ArrayReference strings = (ArrayReference)value;
+        final ArrayReference strings = (ArrayReference)value;
+        final List<Value> allValuesArray = strings.getValues();
+        final Value[] allValues = allValuesArray.toArray(new Value[allValuesArray.size()]);
         int idx = 0;
         for (Iterator<ToStringCommand> iterator = requests.iterator(); iterator.hasNext(); idx++) {
           ToStringCommand request = iterator.next();
-          final Value strValue = strings.getValue(idx);
+          final Value strValue = allValues[idx];
           if(strValue == null || strValue instanceof StringReference){
             String str = (strValue == null)? null : ((StringReference)strValue).value();
             request.evaluationResult(str);
-          } else if(strValue instanceof ObjectReference){
+          } 
+          else if(strValue instanceof ObjectReference){
             request.evaluationError(EvaluateExceptionUtil.createEvaluateException(new InvocationException((ObjectReference)strValue)).getMessage());
-          } else {
+          } 
+          else {
             LOG.assertTrue(false);
           }
           request.setEvaluated();

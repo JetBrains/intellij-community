@@ -237,9 +237,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public StringReference mirrorOf(String s) {
-    final StringReference mirror = myVirtualMachine.mirrorOf(s);
-    mirror.disableCollection();
-    return mirror;
+    return myVirtualMachine.mirrorOf(s);
   }
 
   public Process process() {

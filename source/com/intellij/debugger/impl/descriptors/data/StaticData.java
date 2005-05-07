@@ -1,12 +1,10 @@
 package com.intellij.debugger.impl.descriptors.data;
 
 import com.sun.jdi.ReferenceType;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.debugger.ui.impl.watch.StaticDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.

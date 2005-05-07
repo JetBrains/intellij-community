@@ -9,7 +9,6 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 
 class LiteralEvaluator implements Evaluator {
   private Object myValue;
@@ -39,7 +38,7 @@ class LiteralEvaluator implements Evaluator {
       return DebuggerUtilsEx.createValue(vm, myExpectedType, ((Number)myValue).doubleValue());
     }
     if (myValue instanceof String) {
-      return DebuggerUtilsEx.createValue(vm, (String)myValue);
+      return vm.mirrorOf((String)myValue);
     }
     throw EvaluateExceptionUtil.UNKNOWN_TYPE(myExpectedType);
   }

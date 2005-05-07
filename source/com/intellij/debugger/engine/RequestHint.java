@@ -134,7 +134,7 @@ class RequestHint {
               PsiMethod psiMethod = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class);
               if(psiMethod == null) return Boolean.FALSE;
 
-              return new Boolean(PropertyUtil.isSimplePropertyGetter(psiMethod));
+              return PropertyUtil.isSimplePropertyGetter(psiMethod)? Boolean.TRUE : Boolean.FALSE;
             }
           }).booleanValue();
 

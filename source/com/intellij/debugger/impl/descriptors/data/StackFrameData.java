@@ -2,8 +2,6 @@ package com.intellij.debugger.impl.descriptors.data;
 
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 

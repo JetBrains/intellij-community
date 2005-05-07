@@ -63,8 +63,8 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     super(null, project);
     setScrollsOnExpand(false);
     myDescriptorManager = new NodeManagerImpl(project, this);
-    TreeBuilder model = new TreeBuilder(this) {
-      protected void buildChildren(TreeBuilderNode node) {
+    final TreeBuilder model = new TreeBuilder(this) {
+      public void buildChildren(TreeBuilderNode node) {
         final DebuggerTreeNodeImpl debuggerTreeNode = (DebuggerTreeNodeImpl)node;
         if (debuggerTreeNode.getDescriptor() instanceof DefaultNodeDescriptor) {
           return;
@@ -72,7 +72,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         buildNode(debuggerTreeNode);
       }
 
-      protected boolean isExpandable(TreeBuilderNode builderNode) {
+      public boolean isExpandable(TreeBuilderNode builderNode) {
         return DebuggerTree.this.isExpandable((DebuggerTreeNodeImpl)builderNode);
       }
     };

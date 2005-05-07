@@ -4,8 +4,10 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.jdi.ObjectReferenceCachingProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Value;
+import com.sun.jdi.ObjectReference;
 
 /**
  * Created by IntelliJ IDEA.
@@ -50,7 +52,7 @@ class ExpressionEvaluatorImpl implements ExpressionEvaluator {
       }
 
       myValue = (Value) value;
-      return (Value) value;
+      return myValue;
     }
     catch (Throwable/*IncompatibleThreadStateException*/ e) {
       if (LOG.isDebugEnabled()) {

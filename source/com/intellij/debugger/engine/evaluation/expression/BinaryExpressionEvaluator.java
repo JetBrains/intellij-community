@@ -68,7 +68,7 @@ class BinaryExpressionEvaluator implements Evaluator {
       if (leftResult instanceof StringReference || rightResult instanceof StringReference) {
         String v1 = DebuggerUtilsEx.getValueAsString(context, leftResult);
         String v2 = DebuggerUtilsEx.getValueAsString(context, rightResult);
-        return DebuggerUtilsEx.createValue(vm, v1 + v2);
+        return vm.mirrorOf(v1 + v2);
       }
       throw EvaluateExceptionUtil.createEvaluateException("Incompatible types in '+' operation");
     }

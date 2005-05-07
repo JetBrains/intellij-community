@@ -28,7 +28,8 @@ public abstract class ToStringCommand implements SuspendContextCommand {
     try {
       final String valueAsString = DebuggerUtils.getValueAsString(myEvaluationContext, myValue);
       evaluationResult(valueAsString);
-    } catch(final EvaluateException ex) {
+    } 
+    catch(final EvaluateException ex) {
       evaluationError(ex.getMessage());
     }
   }

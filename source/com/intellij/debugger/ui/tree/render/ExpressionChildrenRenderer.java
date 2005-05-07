@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.jdi.ObjectReferenceCachingProxy;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -19,6 +20,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.BooleanValue;
 import com.sun.jdi.Value;
+import com.sun.jdi.ObjectReference;
 import org.jdom.Element;
 
 import java.util.ArrayList;

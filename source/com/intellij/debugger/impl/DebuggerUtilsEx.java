@@ -505,10 +505,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return null;
   }
 
-  public static Value createValue(VirtualMachineProxyImpl vm, String value) {
-    return vm.mirrorOf(value);
-  }
-
   public static String truncateString(final String str) {
     if (str.length() > MAX_LABEL_SIZE) {
       return str.substring(0, MAX_LABEL_SIZE) + "...";

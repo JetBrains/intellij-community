@@ -12,10 +12,12 @@ import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.ui.*;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
+import com.intellij.debugger.ui.impl.tree.TreeBuilder;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.ValueLabelRenderer;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.debugger.ui.tree.render.HexRenderer;
+import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
@@ -23,13 +25,17 @@ import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.sun.jdi.*;
 
 import javax.swing.*;
+import javax.swing.event.TreeModelListener;
+import javax.swing.event.TreeModelEvent;
 
 /*
  * Class SetValueAction
@@ -58,14 +64,20 @@ public class SetValueAction extends DebuggerAction {
     //node.setState(context);
   }
 
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(final AnActionEvent event) {
     final DebuggerTreeNodeImpl node = getSelectedNode(event.getDataContext());
-    if (node == null) return;
-    NodeDescriptorImpl descriptor = node.getDescriptor();
-    if (!(descriptor instanceof ValueDescriptorImpl)) return;
-    if(!((ValueDescriptorImpl)descriptor).canSetValue()) return;
+    if (node == null) {
+      return;
+    }
+    final NodeDescriptorImpl descriptor = node.getDescriptor();
+    if (!(descriptor instanceof ValueDescriptorImpl)) {
+      return;
+    }
+    if(!((ValueDescriptorImpl)descriptor).canSetValue()) {
+      return;
+    }
 
-    DebuggerTree tree = getTree(event.getDataContext());
+    final DebuggerTree tree = getTree(event.getDataContext());
     final DebuggerContextImpl debuggerContext = getDebuggerContext(event.getDataContext());
     tree.saveState(node);
 
@@ -142,6 +154,12 @@ public class SetValueAction extends DebuggerAction {
       final ArrayElementDescriptorImpl elementDescriptor = (ArrayElementDescriptorImpl)descriptor;
       final ArrayReference array = elementDescriptor.getArray();
       if (array != null) {
+        if (array.isCollected()) {
+          // will only be the case if debugger does not use ObjectReference.disableCollection() because of Patches.IBM_JDK_DISABLE_COLLECTION_BUG
+          Messages.showWarningDialog(tree, "The array object has been garbage-collected in the debugge VM.\nThe value will be recalculated", "Object Collected");
+          node.getParent().calcValue();
+          return;
+        }
         final ArrayType arrType = (ArrayType)array.referenceType();
         askAndSet(node, debuggerContext, new SetValueRunnable() {
           public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
@@ -199,11 +217,11 @@ public class SetValueAction extends DebuggerAction {
   }
 
   private static interface SetValueRunnable {
-    void          setValue   (EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
+    void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
                                                                                           InvalidTypeException,
                                                                                           EvaluateException,
                                                                                           IncompatibleThreadStateException;
-    ReferenceType loadClass  (EvaluationContextImpl evaluationContext, String className) throws EvaluateException,
+    ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws EvaluateException,
                                                                                             InvocationException,
                                                                                             ClassNotLoadedException,
                                                                                             IncompatibleThreadStateException,
@@ -374,6 +392,7 @@ public class SetValueAction extends DebuggerAction {
                                                                                                IncompatibleThreadStateException {
                 if(!getProgressWindow().isCanceled()) {
                   setValueRunnable.setValue(evaluationContext, newValue);
+                  node.calcValue();
                 }
               }
 

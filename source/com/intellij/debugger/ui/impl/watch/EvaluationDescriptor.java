@@ -10,11 +10,13 @@ import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionCodeFragment;
 import com.sun.jdi.Value;
+import com.sun.jdi.ObjectReference;
 
 /**
  * Created by IntelliJ IDEA.
@@ -39,7 +41,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
   }
 
   protected abstract EvaluationContextImpl getEvaluationContext (EvaluationContextImpl evaluationContext);
-  protected abstract PsiCodeFragment       getEvaluationCode    (StackFrameContext context) throws EvaluateException;
+  protected abstract PsiCodeFragment getEvaluationCode(StackFrameContext context) throws EvaluateException;
 
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     try {
@@ -56,12 +58,16 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
       StackFrameProxyImpl frameProxy = thisEvaluationContext.getFrameProxy();
       if (frameProxy == null) throw EvaluateExceptionUtil.NULL_STACK_FRAME;
 
-      evaluator.evaluate(thisEvaluationContext);
-
-      setLvalue(evaluator.getModifier() != null);
+      final Value value = evaluator.evaluate(thisEvaluationContext);
+      if (value instanceof ObjectReference) {
+        thisEvaluationContext.getSuspendContext().keep(((ObjectReference)value));
+      }
       myModifier = evaluator.getModifier();
-      return evaluator.getValue();
-    } catch (final EvaluateException ex) {
+      setLvalue(myModifier != null);
+      
+      return value;
+    } 
+    catch (final EvaluateException ex) {
       throw new EvaluateException(ex.getMessage() + " Failed to evaluate expression", ex);
     }
   }

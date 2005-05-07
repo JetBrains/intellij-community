@@ -26,8 +26,8 @@ public abstract class TreeBuilder implements TreeModel {
     return userObject;
   }
 
-  protected abstract void buildChildren(TreeBuilderNode node);
-  protected abstract boolean isExpandable (TreeBuilderNode node);
+  public abstract void buildChildren(TreeBuilderNode node);
+  public abstract boolean isExpandable (TreeBuilderNode node);
 
   public void setRoot(TreeBuilderNode root) {
     myRoot = root;

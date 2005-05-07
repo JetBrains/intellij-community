@@ -11,6 +11,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashSet;
+import com.intellij.Patches;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
@@ -68,11 +69,13 @@ public abstract class SuspendContextImpl implements SuspendContext {
   protected void resume(){
     assertNotResumed();
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    for (Iterator<ObjectReference> iterator = myKeptReferences.iterator(); iterator.hasNext();) {
-      ObjectReference objectReference = iterator.next();
-      objectReference.enableCollection();
+    if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
+      for (Iterator<ObjectReference> iterator = myKeptReferences.iterator(); iterator.hasNext();) {
+        ObjectReference objectReference = iterator.next();
+        objectReference.enableCollection();
+      }
+      myKeptReferences.clear();
     }
-    myKeptReferences.clear();
     resumeImpl();
     myIsResumed = true;
   }
@@ -163,9 +166,11 @@ public abstract class SuspendContextImpl implements SuspendContext {
   }
 
   public void keep(ObjectReference reference) {
-    if(!myKeptReferences.contains(reference)) {
-      reference.disableCollection();
-      myKeptReferences.add(reference);
+    if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
+      if(!myKeptReferences.contains(reference)) {
+        reference.disableCollection();
+        myKeptReferences.add(reference);
+      }
     }
   }
 }

@@ -117,6 +117,9 @@ public class Patches {
    * resiming VM in this case caused com.sun.jdi.InternalException #13
    */
   public static final boolean MAC_RESUME_VM_HACK = SystemInfo.isMac;
+  
+  // IBM java machine 1.4.2 craches if debugger uses ObjectReference.disableCollection() and ObjectReference.enableCollection()
+  public static final boolean IBM_JDK_DISABLE_COLLECTION_BUG = "false".equalsIgnoreCase(System.getProperty("idea.debugger.keep.temp.objects"));
 
   public static final boolean MAC_HIDE_QUIT_HACK = /*SystemInfo.isMac &&*/ "false".equals(System.getProperty("idea.smooth.progress"));
 

@@ -3,7 +3,6 @@ package com.intellij.debugger.impl.descriptors.data;
 import com.intellij.debugger.ui.impl.watch.ThisDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.sun.jdi.Value;
 

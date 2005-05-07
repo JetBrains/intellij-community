@@ -1,9 +1,11 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.jdi.ObjectReferenceCachingProxy;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -13,10 +15,13 @@ import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiExpression;
+import com.intellij.util.concurrency.Semaphore;
 import com.sun.jdi.*;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl");
   protected final Project myProject;
 
   NodeRenderer myRenderer = null;
@@ -25,6 +30,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   private Value             myValue;
   private EvaluateException myValueException;
+  protected EvaluationContextImpl myStoredEvaluationContext = null;
 
   private String            myValueLabel;
 
@@ -42,19 +48,52 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     myProject = project;
   }
 
-  public boolean isArray               () { return getValue() instanceof ArrayReference; }
-  public boolean isDirty               () { return myIsDirty; }
-  public boolean isLvalue              () { return myIsLvalue; }
-  public boolean isNull                () { return getValue() == null; }
-  public boolean isPrimitive           () { return getValue() instanceof PrimitiveValue; }
-  public boolean isIsNew               () { return myIsNew; }
+  public boolean isArray() { 
+    return myValue instanceof ArrayReference; 
+  }
+  
+  public boolean isDirty() { 
+    return myIsDirty; 
+  }
+  
+  public boolean isLvalue() { 
+    return myIsLvalue; 
+  }
+  
+  public boolean isNull() { 
+    return myValue == null; 
+  }
+  
+  public boolean isPrimitive() { 
+    return myValue instanceof PrimitiveValue; 
+  }
+  
+  public boolean isIsNew() { 
+    return myIsNew; 
+  }
 
   public boolean isValueValid() {
     return myValueException == null;
   }
 
-  public Value  getValue        () { return myValue; }
-
+  public Value getValue() { 
+    if (myValue instanceof ObjectReference && ((ObjectReference)myValue).isCollected()) {
+      if (myStoredEvaluationContext != null) {
+        // re-setting the context will cause value recalculation
+        final Semaphore semaphore = new Semaphore();
+        semaphore.down();
+        myStoredEvaluationContext.getDebugProcess().getManagerThread().invoke(new SuspendContextCommandImpl(myStoredEvaluationContext.getSuspendContext()) {
+          public void contextAction() throws Exception {
+            setContext(myStoredEvaluationContext);
+            semaphore.up();
+          }
+        });
+        semaphore.waitFor();
+      }
+    }
+    return myValue; 
+  }
+  
   public boolean isExpandable() {
     return myIsExpandable;
   }
@@ -63,19 +102,26 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public final void setContext(EvaluationContextImpl evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    myStoredEvaluationContext = evaluationContext;
     Value value = null;
     try {
       value = calcValue(evaluationContext);
 
       if(!myIsNew) {
-        myIsDirty = (value == null)? myValue != null : !value.equals(myValue);
-        if(myValue instanceof DoubleValue && Double.isNaN(((DoubleValue) myValue).doubleValue())){
-          myIsDirty = !(value instanceof DoubleValue && Double.isNaN(((DoubleValue) myValue).doubleValue()));
-        } else if(myValue instanceof FloatValue && Float.isNaN(((FloatValue) myValue).floatValue())){
-          myIsDirty = !(value instanceof FloatValue && Float.isNaN(((FloatValue) myValue).floatValue()));
+        if (myValue instanceof ObjectReference && ((ObjectReference)myValue).isCollected()) {
+          myIsDirty = true;
+        }
+        else if (myValue instanceof DoubleValue && Double.isNaN(((DoubleValue)myValue).doubleValue())) {
+          myIsDirty = !(value instanceof DoubleValue);
+        }
+        else if (myValue instanceof FloatValue && Float.isNaN(((FloatValue)myValue).floatValue())) {
+          myIsDirty = !(value instanceof FloatValue);
+        }
+        else {
+          myIsDirty = (value == null) ? myValue != null : !value.equals(myValue);
         }
       }
-      myValue = value;
+      myValue = (value instanceof ObjectReference)? ObjectReferenceCachingProxy.wrap((ObjectReference)value) : value;
       myValueException = null;
     }
     catch (EvaluateException e) {
@@ -134,10 +180,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   private String makeIdLabel(ObjectReference ref) {
-    if(ref != null) {
+    if (ref != null) {
       return getIdLabel(ref);
-    } else
+    }
+    else {
       return "";
+    }
   }
 
 

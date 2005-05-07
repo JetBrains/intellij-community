@@ -32,7 +32,7 @@ public class HotSwapUI implements ProjectComponent{
         Collection<DebuggerSession> debuggerSessions = (DebuggerManagerEx.getInstanceEx(myProject)).getSessions();
         for (Iterator iterator = debuggerSessions.iterator(); iterator.hasNext();) {
           DebuggerSession debuggerSession = (DebuggerSession)iterator.next();
-          if(debuggerSession.isAttached()) {
+          if(debuggerSession.isAttached() && debuggerSession.getProcess().canRedefineClasses()) {
             sessions.add(debuggerSession);
           }
         }

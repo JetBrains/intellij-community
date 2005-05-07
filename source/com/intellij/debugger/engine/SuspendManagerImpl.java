@@ -1,6 +1,5 @@
 package com.intellij.debugger.engine;
 
-import com.intellij.Patches;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.InternalException;
@@ -49,21 +48,26 @@ public class SuspendManagerImpl implements SuspendManager {
         myDebugProcess.logThreads();
         switch(getSuspendPolicy()) {
           case EventRequest.SUSPEND_ALL:
-            try {
-              myDebugProcess.getVirtualMachineProxy().resume();
-            }
-            catch (InternalException e) {
-              //InternalException 13 means that there are running threads that we are trying to resume
-              //On MacOS it happened that native thread didn't stop while some java thread reached breakpoint
-
-              //Its funny, but second resume solves the problem
-              if (Patches.MAC_RESUME_VM_HACK && e.errorCode() == 13) {
+            int resumeAttempts = 5;
+            while (--resumeAttempts > 0) {
+              try {
                 myDebugProcess.getVirtualMachineProxy().resume();
+                break;
               }
-              else {
-                LOG.error(e);
+              catch (InternalException e) {
+                //InternalException 13 means that there are running threads that we are trying to resume
+                //On MacOS it happened that native thread didn't stop while some java thread reached breakpoint
+                if (/*Patches.MAC_RESUME_VM_HACK && */e.errorCode() == 13) {
+                  //Its funny, but second resume solves the problem
+                  continue;
+                }
+                else {
+                  LOG.error(e);
+                  break;
+                }
               }
             }
+            
             if (LOG.isDebugEnabled()) {
               LOG.debug("VM resumed ");
             }
@@ -99,18 +103,23 @@ public class SuspendManagerImpl implements SuspendManager {
         myDebugProcess.logThreads();
         final ThreadReferenceProxyImpl thread = getThread();
         LOG.assertTrue(thread != null ? thread.isSuspended() : true);
-        try {
-          set.resume();
-        }
-        catch (InternalException e) {
-          //InternalException 13 means that there are running threads that we are trying to resume
-          //On MacOS it happened that native thread didn't stop while some java thread reached breakpoint
-          if (Patches.MAC_RESUME_VM_HACK && e.errorCode() == 13 && set.suspendPolicy() == EventRequest.SUSPEND_ALL) {
-            //Its funny, but second resume solves the problem
+        int attempts = 5;
+        while (--attempts > 0) {
+          try {
             set.resume();
+            break;
           }
-          else {
-            LOG.error(e);
+          catch (InternalException e) {
+            //InternalException 13 means that there are running threads that we are trying to resume
+            //On MacOS it happened that native thread didn't stop while some java thread reached breakpoint
+            if (/*Patches.MAC_RESUME_VM_HACK && */e.errorCode() == 13 && set.suspendPolicy() == EventRequest.SUSPEND_ALL) {
+              //Its funny, but second resume solves the problem
+              continue;
+            }
+            else {
+              LOG.error(e);
+              break;
+            }
           }
         }
         if (LOG.isDebugEnabled()) {

@@ -10,10 +10,7 @@ import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.*;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.StackFrameProxyImpl");
@@ -27,6 +24,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   private Location myLocation;
   private ClassLoaderReference myClassLoader;
   private Boolean myIsObsolete = null;
+  private Map<LocalVariable,Value> myAllValues;
 
   public StackFrameProxyImpl(ThreadReferenceProxyImpl threadProxy, StackFrame frame, int fromBottomIndex /* 1-based */) {
     super(threadProxy.getVirtualMachine());
@@ -42,6 +40,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     if (myIsObsolete == null) {
       try {
         boolean isObsolete = (getVirtualMachine().canRedefineClasses() && location().method().isObsolete());
+        //boolean isObsolete = (getVirtualMachine().versionHigher("1.4") && location().method().isObsolete());
         myIsObsolete = isObsolete? Boolean.TRUE : Boolean.FALSE;
       }
       catch (InvalidStackFrameException e) {
@@ -64,6 +63,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     myLocation      = null;
     myThisReference = null;
     myClassLoader = null;
+    myAllValues = null;
   }
 
   /**
@@ -151,7 +151,8 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     checkValid();
     try {
       if(myThisReference == null) {
-        myThisReference = !isObsolete() ? getStackFrame().thisObject() : null;
+        final ObjectReference thisObject = !isObsolete() ? getStackFrame().thisObject() : null;
+        myThisReference = thisObject != null? ObjectReferenceCachingProxy.wrap(thisObject) : null;
       }
     }
     catch (InvalidStackFrameException e) {
@@ -162,7 +163,8 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
       if(e.errorCode() == 35) {
         LOG.debug(e); //bug in JDK 1.5 beta
         throw EvaluateExceptionUtil.createEvaluateException(e);
-      } else {
+      } 
+      else {
         throw e;
       }
     }
@@ -222,11 +224,8 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   public Value getValue(LocalVariableProxyImpl localVariable) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
-      return getStackFrame().getValue(localVariable.getVariable());
-    }
-    catch (InconsistentDebugInfoException e) {
-      clearCaches();
-      throw EvaluateExceptionUtil.INCONSISTEND_DEBUG_INFO;
+      final Map<LocalVariable, Value> allValues = getAllValues();
+      return allValues.get(localVariable.getVariable());
     }
     catch (InvalidStackFrameException e) {
       clearCaches();
@@ -234,15 +233,29 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     }
   }
 
-  public Map getValues(List list) throws EvaluateException{
+  private Map<LocalVariable, Value> getAllValues() throws EvaluateException{
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    try {
-      return getStackFrame().getValues(list);
+    checkValid();
+    if (myAllValues == null) {
+      try {
+        final StackFrame stackFrame = getStackFrame();
+        final Map<LocalVariable, Value> values = stackFrame.getValues(stackFrame.visibleVariables());
+        myAllValues = new HashMap<LocalVariable, Value>(values.size());
+        for (Iterator<LocalVariable> it = values.keySet().iterator(); it.hasNext();) {
+          final LocalVariable variable = it.next();
+          final Value value = values.get(variable);
+          myAllValues.put(variable, (value instanceof ObjectReference)? ObjectReferenceCachingProxy.wrap((ObjectReference)value) : value);
+        }
+      }
+      catch (InconsistentDebugInfoException e) {
+        clearCaches();
+        throw EvaluateExceptionUtil.INCONSISTEND_DEBUG_INFO;
+      }
+      catch (AbsentInformationException e) {
+        throw EvaluateExceptionUtil.createEvaluateException(e);
+      }
     }
-    catch (InvalidStackFrameException e) {
-      clearCaches();
-      return getValues(list);
-    }
+    return myAllValues;
   }
 
   public void setValue(LocalVariableProxyImpl localVariable, Value value) throws EvaluateException,
@@ -250,7 +263,14 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
                                                                              InvalidTypeException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
-      getStackFrame().setValue(localVariable.getVariable(), value);
+      final LocalVariable variable = localVariable.getVariable();
+      final StackFrame stackFrame = getStackFrame();
+      stackFrame.setValue(variable, (value instanceof ObjectReference)? ObjectReferenceCachingProxy.unwrap(((ObjectReference)value)) : value);
+      if (myAllValues != null) {
+        // update cached data if any
+        // re-read the value just set from the stackframe to be 100% sure
+        myAllValues.put(variable, stackFrame.getValue(variable));
+      }
     }
     catch (InvalidStackFrameException e) {
       clearCaches();

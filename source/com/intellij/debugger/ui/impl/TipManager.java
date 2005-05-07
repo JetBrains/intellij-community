@@ -52,10 +52,11 @@ public class TipManager {
     public void mouseExited(MouseEvent e) {
       myAlarm.cancelAllRequests();
       if (isOverTip(e)) {
-        ListenerUtil.addMouseListener(myCurrentTooltip, new MouseAdapter() {
+        final JComponent currentTooltipComponent = myCurrentTooltip;
+        ListenerUtil.addMouseListener(currentTooltipComponent, new MouseAdapter() {
           public void mouseExited(MouseEvent e) {
             if(!isOverTip(e)) {
-              ListenerUtil.removeMouseListener(myCurrentTooltip, this);
+              ListenerUtil.removeMouseListener(currentTooltipComponent, this);
               if (myCurrentTooltip != null) {
                 hideTooltip();
               }

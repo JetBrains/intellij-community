@@ -50,7 +50,8 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     if (!VirtualMachineProxyImpl.isCollected(myArray)) {
       return myArray.getValue(myIndex);
-    } else {
+    } 
+    else {
       throw EvaluateExceptionUtil.ARRAY_WAS_COLLECTED;
     }
   }

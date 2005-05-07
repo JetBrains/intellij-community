@@ -913,16 +913,14 @@ public abstract class DebugProcessImpl implements DebugProcess {
           ThreadReferenceProxyImpl thread = context.getThread();
           try {
             try {
+              final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
               if (LOG.isDebugEnabled()) {
-                getVirtualMachineProxy().logThreads();
+                virtualMachineProxy.logThreads();
                 LOG.debug("Invoke in " + thread.name());
                 LOG.assertTrue(thread.isSuspended(), thread.toString());
                 LOG.assertTrue(context.isEvaluating());
               }
               result[0] = invokeMethod(invokePolicy);
-              if(result[0] instanceof ObjectReference) {
-                context.keep(((ObjectReference)result[0]));
-              }
             }
             finally {
               LOG.assertTrue(thread.isSuspended(), thread.toString());
@@ -1174,7 +1172,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     qName = reformatArrayName(qName);
     ReferenceType refType = null;
-    VirtualMachine virtualMachine = getVirtualMachineProxy().getVirtualMachine();
+    VirtualMachineProxyImpl virtualMachine = getVirtualMachineProxy();
     final List classClasses = virtualMachine.classesByName("java.lang.Class");
     if (classClasses.size() > 0) {
       ClassType classClassType = (ClassType)classClasses.get(0);
@@ -1187,7 +1185,6 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
       final List args = new ArrayList(); // do not use unmodifiable lists because the list is modified by JPDA
       final StringReference qNameMirror = virtualMachine.mirrorOf(qName);
-      qNameMirror.disableCollection();
       args.add(qNameMirror);
       if (classLoader != null) {
         args.add(virtualMachine.mirrorOf(true));
@@ -1261,11 +1258,15 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
     protected void action() throws Exception {
       if (isAttached()) {
+        final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
         if (myIsTerminateTargetVM) {
-          getVirtualMachineProxy().exit(-1);
+          virtualMachineProxy.exit(-1);
         }
         else {
-          getVirtualMachineProxy().dispose();
+          // some VM's (like IBM VM 1.4.2 bundled with WebSpere) does not 
+          // resume threads on dispose() like it should 
+          virtualMachineProxy.resume();
+          virtualMachineProxy.dispose();
         }
       }
       else {
