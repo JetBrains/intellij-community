@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Npe.java</file>
+    <line>10</line>
+    <description>Argument 'null' is probably null</description>
+  </problem>
+</problems>
+

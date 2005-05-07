@@ -64,7 +64,7 @@ public class MethodCallInstruction extends Instruction {
     for (int i = 0; i < myArgs.length; i++) {
       final DfaValue arg = memState.pop();
       if (i < myParametersNotNull.length && myParametersNotNull[i] && !memState.applyNotNull(arg)) {
-        runner.onPassingNullParameter(myArgs[i]);
+        runner.onPassingNullParameter(myArgs[myArgs.length - i - 1]); // Parameters on stack are reverted.
         return new DfaInstructionState[0];
       }
     }
