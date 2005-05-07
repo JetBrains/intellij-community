@@ -2,6 +2,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -117,9 +118,19 @@ public abstract class ChooseByNameBase{
       if (dataId.equals(DataConstants.PSI_ELEMENT)) {
         Object element = getChosenElement();
 
-        if (element != null && element instanceof PsiElement) {
+        if (element instanceof PsiElement) {
           return element;
         }
+      }
+      else if (dataId.equals(DataConstantsEx.PSI_ELEMENT_ARRAY)) {
+        List<PsiElement> result = new ArrayList<PsiElement>();
+        final Object[] chosenElements = getChosenElements();
+        for (Object element : chosenElements) {
+          if (element instanceof PsiElement) {
+            result.add((PsiElement)element);
+          }
+        }
+        return result.toArray(new PsiElement[result.size()]);
       }
       return null;
     }
@@ -591,8 +602,7 @@ public abstract class ChooseByNameBase{
 
     private KeyStroke getShortcut(String actionCodeCompletion) {
       final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionCodeCompletion);
-      for (int i = 0; i < shortcuts.length; i++) {
-        final Shortcut shortcut = shortcuts[i];
+      for (final Shortcut shortcut : shortcuts) {
         if (shortcut instanceof KeyboardShortcut) {
           return ((KeyboardShortcut)shortcut).getFirstKeyStroke();
         }
@@ -774,8 +784,7 @@ public abstract class ChooseByNameBase{
         }
         final String name = namesList.get(i);
         final Object[] elements = myModel.getElementsByName(name, myCheckboxState);
-        for (int j = 0; j < elements.length; j++) {
-          final Object element = elements[j];
+        for (final Object element : elements) {
           elementsArray.add(element);
           if (elementsArray.size() >= myMaximumListSizeLimit) {
             overflow = true;
@@ -812,11 +821,11 @@ public abstract class ChooseByNameBase{
     try {
       final Pattern compiledPattern = Pattern.compile(regex);
       final Matcher matcher = compiledPattern.matcher("");
-      for (int i = 0; i < names.length; i++) {
+      for (String s : names) {
         if (cancelled != null && cancelled[0]) {
           throw new ProcessCanceledException();
         }
-        final String name = names[i];
+        final String name = s;
         if (matcher.reset(name).matches()) {
           list.add(name);
         }
