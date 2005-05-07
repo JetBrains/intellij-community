@@ -171,6 +171,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static final int FLAGS_JUNIT_TEST = 0x2000;
 
   public static final int getClassKind(PsiClass aClass) {
+    if (!aClass.isValid()) return CLASS_KIND_CLASS; // TODO[cdr] review.
+
     final EjbClassRole role = J2EERolesUtil.getEjbRole(aClass);
     if (role != null) return role.getType();
     if (aClass instanceof PsiAspect) {
