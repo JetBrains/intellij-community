@@ -76,8 +76,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
       final Object[] chosenElements = getChosenElements();
       if (chosenElements != null) {
-        for (int i = 0; i < chosenElements.length; i++) {
-          myActionListener.elementChosen(chosenElements[i]);
+        for (Object element : chosenElements) {
+          myActionListener.elementChosen(element);
         }
       } else {
         return;
@@ -89,8 +89,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
           FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.wildcards");
         }
         else {
-          for (int i = 0; i < chosenElements.length; i++) {
-            final String choosenElementText = myModel.getElementName(chosenElements[i]).toLowerCase();
+          for (Object element : chosenElements) {
+            final String choosenElementText = myModel.getElementName(element).toLowerCase();
             if (!choosenElementText.startsWith(enteredText)) {
               FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.camelprefix");
               break;

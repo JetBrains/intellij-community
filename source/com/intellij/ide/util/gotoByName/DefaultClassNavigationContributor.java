@@ -34,13 +34,11 @@ package com.intellij.ide.util.gotoByName;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class DefaultClassNavigationContributor implements ChooseByNameContributor {
   public DefaultClassNavigationContributor() {
@@ -57,11 +55,10 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
 
   private static NavigationItem[] filterUnshowable(PsiClass[] items) {
     ArrayList<NavigationItem> list = new ArrayList<NavigationItem>(items.length);
-    for (int i = 0; i < items.length; i++) {
-      PsiClass item = items[i];
+    for (PsiClass item : items) {
       if (item.getContainingFile().getVirtualFile() == null) continue;
       list.add(item);
     }
-    return (NavigationItem[])list.toArray(new NavigationItem[list.size()]);
+    return list.toArray(new NavigationItem[list.size()]);
   }
 }
