@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
@@ -25,6 +26,12 @@ public class ProblemDescriptorImpl implements ProblemDescriptor {
   public ProblemDescriptorImpl(PsiElement psiElement, String descriptionTemplate, LocalQuickFix fix, ProblemHighlightType highlightType) {
     LOG.assertTrue(psiElement.isValid());
     LOG.assertTrue(psiElement.isPhysical());
+
+    TextRange range = psiElement.getTextRange();
+    if (range.getStartOffset() == range.getEndOffset()) {
+      LOG.error("Empty PSI elements should not be passed to createDescriptor");
+    }
+    
     myFix = fix;
     myHighlightType = highlightType;
     final Project project = psiElement.getProject();
