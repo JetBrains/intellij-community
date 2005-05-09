@@ -53,8 +53,9 @@ public class ClassWithoutNoArgConstructorInspection extends ClassInspection{
                     aClass.isAnnotationType()){
                 return;
             }
-            if(aClass.getNameIdentifier() == null){
-                return; //a very hacky test for anonymous classes
+            if(aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiAnonymousClass){
+                return;
             }
             if(m_ignoreClassesWithNoConstructors &&
                     !classHasConstructor(aClass)){

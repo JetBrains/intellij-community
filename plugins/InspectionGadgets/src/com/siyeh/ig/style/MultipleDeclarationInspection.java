@@ -61,15 +61,8 @@ public class MultipleDeclarationInspection extends VariableInspection {
             if (childrenContainTypeElement(field)) {
                 return;
             }
-            final PsiClass containingClass = field.getContainingClass();
-            if (containingClass != null && containingClass.isEnum()) {
-                final PsiType type = field.getType();
-                if (type != null) {
-                    final String className = containingClass.getQualifiedName();
-                    if (type.equalsToText(className)) {
-                        return;
-                    }
-                }
+            if (field instanceof PsiEnumConstant) {
+                return;
             }
             registerFieldError(field);
         }

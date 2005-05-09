@@ -114,10 +114,10 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
 
         public void visitClass(PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
+            if(aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()){
                 return;
             }
-            if (aClass.isEnum() || aClass.isAnnotationType()) {
+            if(aClass instanceof PsiTypeParameter || aClass instanceof PsiAnonymousClass){
                 return;
             }
             if (!mayBeInterface(aClass)) {

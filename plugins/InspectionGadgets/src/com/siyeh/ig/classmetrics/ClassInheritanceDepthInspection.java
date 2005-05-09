@@ -3,6 +3,8 @@ package com.siyeh.ig.classmetrics;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiAnonymousClass;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
@@ -52,7 +54,10 @@ public class ClassInheritanceDepthInspection
             if (aClass.isEnum()) {
                 return;
             }
-
+            if(aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiAnonymousClass){
+                return;
+            }
             // note: no call to super
 
             final int inheritanceDepth = getInheritanceDepth(aClass, new HashSet<PsiClass>());
@@ -73,8 +78,12 @@ public class ClassInheritanceDepthInspection
             return 0;
         }
         int maxAncestorDepth = 0;
-        for(PsiClass aSupers : supers){
-            final int ancestorDepth = getInheritanceDepth(aSupers, visited);
+        for(PsiClass aSuper : supers){
+            if(aSuper == null)
+            {
+                continue;
+            }
+           final int ancestorDepth = getInheritanceDepth(aSuper, visited);
             if(ancestorDepth > maxAncestorDepth){
                 maxAncestorDepth = ancestorDepth;
             }

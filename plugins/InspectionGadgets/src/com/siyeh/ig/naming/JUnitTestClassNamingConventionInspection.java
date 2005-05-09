@@ -2,9 +2,7 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
@@ -76,6 +74,10 @@ public class JUnitTestClassNamingConventionInspection extends ConventionInspecti
 
         public void visitClass(PsiClass aClass) {
             if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
+                return;
+            }
+            if(aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiAnonymousClass){
                 return;
             }
             if(aClass.hasModifierProperty(PsiModifier.ABSTRACT))

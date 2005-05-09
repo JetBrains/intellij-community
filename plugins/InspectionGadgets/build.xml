@@ -3,7 +3,7 @@
 <project name="InspectionGadgets" default="compile">
     <taskdef name="javac2" classname="com.intellij.uiDesigner.ant.Javac2" classpathref="project.class.path"/>
     <property name="src.dir" value="src"/>
-    <property name="idea.dir" value="c:/IntelliJ-IDEA-3290"/>
+    <property name="idea.dir" value="c:/IntelliJ-IDEA-3326"/>
     <property name="idea.plugin.dir" value="C:\Documents and Settings\dgriffith\.IntelliJIdea\config\plugins"/>
     <property name="debug" value="true"/>
     <property name="optimize" value="off"/>

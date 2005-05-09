@@ -46,6 +46,10 @@ public class UnconstructableTestCaseInspection extends ClassInspection{
                        aClass.hasModifierProperty(PsiModifier.ABSTRACT)){
                 return;
             }
+            if(aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiAnonymousClass){
+                return;
+            }
             if(!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")){
                 return;
             }

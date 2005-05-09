@@ -1,9 +1,7 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
+import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
@@ -54,6 +52,10 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
             // no call to super, so it doesn't drill down
 
             if (aClass.isInterface() || aClass.isAnnotationType()|| aClass.isEnum()) {
+                return;
+            }
+            if(aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiAnonymousClass){
                 return;
             }
             final PsiField[] fields = aClass.getFields();

@@ -85,11 +85,13 @@ public class ClassWithoutConstructorInspection extends ClassInspection {
 
         public void visitClass(PsiClass aClass) {
             // no call to super, so it doesn't drill down
-            if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
+            if (aClass.isInterface() || aClass.isEnum() ||
+                    aClass.isAnnotationType()) {
                 return;
             }
-            if (aClass.getNameIdentifier() == null) {
-                return; //a very hacky test for anonymous classes
+            if(aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiAnonymousClass){
+                return;
             }
             if (classHasConstructor(aClass)) {
                 return;

@@ -96,6 +96,10 @@ public class NonStaticFinalLoggerInspection extends ClassInspection {
             if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
                 return;
             }
+            if(aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiAnonymousClass){
+                return;
+            }
             if (aClass.getContainingClass() != null) {
                 return;
             }

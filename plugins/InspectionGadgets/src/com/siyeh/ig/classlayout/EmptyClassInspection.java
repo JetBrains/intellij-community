@@ -1,10 +1,7 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
@@ -36,6 +33,10 @@ public class EmptyClassInspection extends ClassInspection {
         public void visitClass(PsiClass aClass) {
             //don't call super, to prevent drilldown
             if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
+                return;
+            }
+            if(aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiAnonymousClass){
                 return;
             }
             final PsiMethod[] constructors = aClass.getConstructors();

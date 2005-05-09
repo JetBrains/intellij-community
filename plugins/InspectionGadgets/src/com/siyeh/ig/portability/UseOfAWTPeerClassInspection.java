@@ -57,6 +57,10 @@ public class UseOfAWTPeerClassInspection extends VariableInspection {
             {
                 return;
             }
+            if(resolveClass instanceof PsiTypeParameter ||
+                    resolveClass instanceof PsiAnonymousClass){
+                return;
+            }
             if(!ClassUtils.isSubclass(resolveClass, "java.awt.peer.ComponentPeer"))
             {
                 return;
@@ -82,6 +86,11 @@ public class UseOfAWTPeerClassInspection extends VariableInspection {
             }
             if(resolveClass.isEnum() || resolveClass.isInterface() ||
                     resolveClass.isAnnotationType()) {
+                return;
+            }
+            if(resolveClass instanceof PsiTypeParameter ||
+                    resolveClass instanceof PsiAnonymousClass)
+            {
                 return;
             }
             if(!ClassUtils.isSubclass(resolveClass, "java.awt.peer.ComponentPeer")) {

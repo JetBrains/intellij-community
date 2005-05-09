@@ -3,6 +3,8 @@ package com.siyeh.ig.serialization;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiAnonymousClass;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
@@ -56,6 +58,10 @@ public class SerializableHasSerializationMethodsInspection extends ClassInspecti
             // no call to super, so it doesn't drill down
             if (aClass.isInterface() || aClass.isAnnotationType() ||
                         aClass.isEnum()) {
+                return;
+            }
+            if(aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiAnonymousClass){
                 return;
             }
             if (m_ignoreSerializableDueToInheritance) {

@@ -16,6 +16,7 @@ public class JDBCResourceInspection extends ExpressionInspection{
             new String[]{
                             "java.sql.Driver",
                             "java.sql.DriverManager",
+                            "java.sql.DataSource",
                             "java.sql.Connection",
                             "java.sql.Connection",
                             "java.sql.Connection",
@@ -25,6 +26,7 @@ public class JDBCResourceInspection extends ExpressionInspection{
     private static final String[] creationMethodName =
             new String[]{
                             "connect",
+                            "getConnection",
                             "getConnection",
                             "createStatement",
                             "prepareStatement",
@@ -40,8 +42,8 @@ public class JDBCResourceInspection extends ExpressionInspection{
 
     static
     {
-        for(String aCreationMethodClassName : creationMethodClassName){
-            creationMethodNameSet.add(aCreationMethodClassName);
+        for(String aCreationMethodName : creationMethodName   ){
+            creationMethodNameSet.add(aCreationMethodName);
         }
     }
 

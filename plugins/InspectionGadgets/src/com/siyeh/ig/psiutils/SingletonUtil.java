@@ -11,6 +11,10 @@ public class SingletonUtil {
         if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
             return false;
         }
+        if(aClass instanceof PsiTypeParameter ||
+                aClass instanceof PsiAnonymousClass){
+            return false;
+        }
         if (!hasConstructor(aClass)) {
             return false;
         }

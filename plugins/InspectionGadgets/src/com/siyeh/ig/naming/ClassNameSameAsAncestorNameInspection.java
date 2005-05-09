@@ -9,43 +9,49 @@ import com.siyeh.ig.fixes.RenameFix;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ClassNameSameAsAncestorNameInspection extends ClassInspection {
+public class ClassNameSameAsAncestorNameInspection extends ClassInspection{
     private final RenameFix fix = new RenameFix();
 
-    public String getDisplayName() {
+    public String getDisplayName(){
         return "Class name same as ancestor name";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "Class name '#ref' is the same as one of its superclass' names #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ClassNameSameAsAncestorNameVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
+                                               boolean onTheFly){
+        return new ClassNameSameAsAncestorNameVisitor(this, inspectionManager,
+                                                      onTheFly);
     }
 
-    private static class ClassNameSameAsAncestorNameVisitor extends BaseInspectionVisitor {
-        private ClassNameSameAsAncestorNameVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class ClassNameSameAsAncestorNameVisitor
+                                                            extends BaseInspectionVisitor{
+        private ClassNameSameAsAncestorNameVisitor(BaseInspection inspection,
+                                                   InspectionManager inspectionManager,
+                                                   boolean isOnTheFly){
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(PsiClass aClass){
             // no call to super, so it doesn't drill down into inner classes
-
             final String className = aClass.getName();
-
+            if(className == null){
+                return;
+            }
             final Set<PsiClass> alreadyVisited = new HashSet<PsiClass>(8);
             final PsiClass[] supers = aClass.getSupers();
             for(final PsiClass aSuper : supers){
@@ -55,15 +61,18 @@ public class ClassNameSameAsAncestorNameInspection extends ClassInspection {
             }
         }
 
-
-        private static boolean hasMatchingName(PsiClass aSuper, String className,
-                                               Set<PsiClass> alreadyVisited) {
-            if (alreadyVisited.contains(aSuper)) {
+        private static boolean hasMatchingName(PsiClass aSuper,
+                                               String className,
+                                               Set<PsiClass> alreadyVisited){
+            if(aSuper == null){
+                return false;
+            }
+            if(alreadyVisited.contains(aSuper)){
                 return false;
             }
             alreadyVisited.add(aSuper);
             final String superName = aSuper.getName();
-            if (superName.equals(className)) {
+            if(className.equals(superName)){
                 return true;
             }
             final PsiClass[] supers = aSuper.getSupers();
@@ -74,7 +83,5 @@ public class ClassNameSameAsAncestorNameInspection extends ClassInspection {
             }
             return false;
         }
-
     }
-
 }

@@ -6,34 +6,37 @@ import com.intellij.psi.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CloneUtils {
-    private CloneUtils() {
+public class CloneUtils{
+    private CloneUtils(){
         super();
     }
 
-    public static boolean isCloneable(PsiClass aClass) {
+    public static boolean isCloneable(PsiClass aClass){
         return isCloneable(aClass, new HashSet<String>());
     }
 
-    private static boolean isCloneable(PsiClass aClass, Set<String> alreadyChecked) {
+    private static boolean isCloneable(PsiClass aClass,
+                                       Set<String> alreadyChecked){
         final String qualifiedName = aClass.getQualifiedName();
-        if (alreadyChecked.contains(qualifiedName)) {
+        if(alreadyChecked.contains(qualifiedName)){
             return false;
         }
         alreadyChecked.add(qualifiedName);
         final PsiClass[] supers = aClass.getSupers();
         for(final PsiClass aSuper : supers){
-            if("java.lang.Cloneable".equals(aSuper.getQualifiedName())){
-                return true;
-            }
-            if(isCloneable(aSuper, alreadyChecked)){
-                return true;
+            if(aSuper != null){
+                if("java.lang.Cloneable".equals(aSuper.getQualifiedName())){
+                    return true;
+                }
+                if(isCloneable(aSuper, alreadyChecked)){
+                    return true;
+                }
             }
         }
         return false;
     }
 
-    public static boolean isDirectlyCloneable(PsiClass aClass) {
+    public static boolean isDirectlyCloneable(PsiClass aClass){
         final PsiClass[] interfaces = aClass.getInterfaces();
         for(PsiClass aInterfaces : interfaces){
             final String qualifiedName = aInterfaces.getQualifiedName();
@@ -44,26 +47,26 @@ public class CloneUtils {
         return false;
     }
 
-    public static boolean isClone(PsiMethod method) {
+    public static boolean isClone(PsiMethod method){
         final String methodName = method.getName();
-        if (!"clone".equals(methodName)) {
+        if(!"clone".equals(methodName)){
             return false;
         }
         final PsiParameterList parameterList = method.getParameterList();
         final PsiParameter[] parameters = parameterList.getParameters();
-        if (parameters.length != 0) {
+        if(parameters.length != 0){
             return false;
         }
         final PsiManager manager = method.getManager();
         final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
-        if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                languageLevel.equals(LanguageLevel.JDK_1_4)) {    //for 1.5 and after, clone may be covariant
+        if(languageLevel.equals(LanguageLevel.JDK_1_3) ||
+                languageLevel.equals(LanguageLevel.JDK_1_4)){
+            //for 1.5 and after, clone may be covariant
             final PsiType returnType = method.getReturnType();
-            if (!TypeUtils.isJavaLangObject(returnType)) {
+            if(!TypeUtils.isJavaLangObject(returnType)){
                 return false;
             }
         }
         return true;
     }
-
 }

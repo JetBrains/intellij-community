@@ -1,9 +1,7 @@
 package com.siyeh.ig.cloneable;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
@@ -50,6 +48,10 @@ public class CloneableImplementsCloneInspection extends ClassInspection {
             // no call to super, so it doesn't drill down
             if (aClass.isInterface()  || aClass.isAnnotationType()
                     || aClass.isEnum()) {
+                return;
+            }
+            if(aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiAnonymousClass){
                 return;
             }
             if (m_ignoreCloneableDueToInheritance) {

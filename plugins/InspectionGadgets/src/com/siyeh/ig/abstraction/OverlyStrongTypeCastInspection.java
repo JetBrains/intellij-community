@@ -94,7 +94,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
                 {
                     return;
                 }
-                if(aClass.getContext() instanceof PsiTypeParameterList)
+                if(aClass instanceof PsiTypeParameter)
                 {
                     return;
                 }

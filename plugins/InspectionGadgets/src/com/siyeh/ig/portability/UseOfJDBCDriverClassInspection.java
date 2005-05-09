@@ -57,6 +57,10 @@ public class UseOfJDBCDriverClassInspection extends VariableInspection {
             {
                 return;
             }
+            if(resolveClass instanceof PsiTypeParameter ||
+                    resolveClass instanceof PsiAnonymousClass){
+                return;
+            }
             if(!ClassUtils.isSubclass(resolveClass, "java.sql.Driver"))
             {
                 return;
@@ -82,6 +86,10 @@ public class UseOfJDBCDriverClassInspection extends VariableInspection {
             }
             if(resolveClass.isEnum() || resolveClass.isInterface() ||
                     resolveClass.isAnnotationType()) {
+                return;
+            }
+            if(resolveClass instanceof PsiTypeParameter ||
+                    resolveClass instanceof PsiAnonymousClass){
                 return;
             }
             if(!ClassUtils.isSubclass(resolveClass, "java.sql.Driver")) {

@@ -42,6 +42,10 @@ public class TestCaseWithNoTestMethodsInspection extends ClassInspection {
                     || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 return;
             }
+            if(aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiAnonymousClass){
+                return;
+            }
             final PsiMethod[] methods = aClass.getMethods();
             for(final PsiMethod method : methods){
                 if(isTest(method)){

@@ -3,6 +3,8 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiAnonymousClass;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.MoveClassFix;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -80,6 +82,10 @@ public class InnerClassOnInterfaceInspection extends ClassInspection{
                 return;
             }
             if(innerClass.isAnnotationType()) {
+                return;
+            }
+            if(innerClass instanceof PsiTypeParameter ||
+                    innerClass instanceof PsiAnonymousClass){
                 return;
             }
             if(innerClass.isInterface() && m_ignoreInnerInterfaces) {

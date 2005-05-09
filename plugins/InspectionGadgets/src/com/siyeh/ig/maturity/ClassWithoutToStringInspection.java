@@ -36,6 +36,10 @@ public class ClassWithoutToStringInspection extends ClassInspection {
             if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
                 return;
             }
+            if(aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiAnonymousClass){
+                return;
+            }
             if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 return;
             }

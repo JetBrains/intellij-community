@@ -4,6 +4,8 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiAnonymousClass;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
@@ -74,6 +76,10 @@ public class ClassNamingConventionInspection extends ConventionInspection {
 
         public void visitClass(PsiClass aClass) {
             if (aClass.isInterface() || aClass.isAnnotationType()|| aClass.isEnum()) {
+                return;
+            }
+            if(aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiAnonymousClass){
                 return;
             }
             final String name = aClass.getName();

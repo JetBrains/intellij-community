@@ -9,14 +9,12 @@
     Constant month outside range of 0..11
     JDBC close order
     JDBC connection createStatement()
-    Use Datasource rather than DriverManager to get JDBC connection
     Look for ArrayIndexOutOfBounds errors statically
     Non-final field of exception class
     Static initializer which creates an instance before all static variables are initialized
     Initializing a static final field with a static non-final field
     Use of non-final static field during class initialization
     Incorrect lazy initialization of static field
-    clone() final, for security
     lock not acquired in try block and freed in finally block
 
     Move stuff to "J2ME" or "Memory" categories

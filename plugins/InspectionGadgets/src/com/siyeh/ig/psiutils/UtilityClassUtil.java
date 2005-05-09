@@ -11,6 +11,10 @@ public class UtilityClassUtil {
         if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
             return false;
         }
+        if(aClass instanceof PsiTypeParameter ||
+                aClass instanceof PsiAnonymousClass){
+            return false;
+        }
         final PsiReferenceList extendsList = aClass.getExtendsList();
         if (extendsList != null
                 && extendsList.getReferenceElements().length > 0) {

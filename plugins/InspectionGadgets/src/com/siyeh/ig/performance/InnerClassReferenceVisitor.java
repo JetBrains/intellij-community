@@ -25,7 +25,7 @@ class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
             return true;
         }
         PsiClass classScope = aClass;
-        final PsiClass outerClass = (PsiClass) innerClass.getContext();
+        final PsiClass outerClass = PsiTreeUtil.getParentOfType(innerClass, PsiClass.class);
         while (classScope != null) {
             if (InheritanceUtil.isInheritorOrSelf(outerClass, classScope, true)) {
                 return false;

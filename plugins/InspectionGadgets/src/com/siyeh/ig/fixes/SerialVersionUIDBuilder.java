@@ -34,12 +34,12 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor
     private boolean classObjectAccessExpression = false;
     private Map<PsiElement,String> memberMap = new HashMap<PsiElement, String>();
 
-    private static final Comparator INTERFACE_COMPARATOR = new Comparator()
+    private static final Comparator<PsiClass> INTERFACE_COMPARATOR = new Comparator<PsiClass>()
     {
-        public int compare(Object object1, Object object2)
+        public int compare(PsiClass object1, PsiClass object2)
         {
-            final String name1 = ((PsiClass)object1).getQualifiedName();
-            final String name2 = ((PsiClass)object2).getQualifiedName();
+            final String name1 = object1.getQualifiedName();
+            final String name2 = object2.getQualifiedName();
             return name1.compareTo(name2);
         }
     };
@@ -63,7 +63,7 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor
         final PsiField[] fields = clazz.getFields();
         for(final PsiField field : fields){
             if(!field.hasModifierProperty(PsiModifier.PRIVATE) ||
-                    !(field.hasModifierProperty(PsiModifier.STATIC) |
+                    !(field.hasModifierProperty(PsiModifier.STATIC) ||
                             field.hasModifierProperty(PsiModifier.TRANSIENT))){
                 final MemberSignature fieldSignature =
                         new MemberSignature(field);
@@ -312,7 +312,8 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor
         if (field.hasModifierProperty(PsiModifier.STATIC))
         {
             final PsiManager manager = field.getManager();
-            final GlobalSearchScope scope = GlobalSearchScope.allScope(manager.getProject());
+            final Project project = manager.getProject();
+            final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
             final PsiExpression initializer = field.getInitializer();
             if (initializer == null)
             {

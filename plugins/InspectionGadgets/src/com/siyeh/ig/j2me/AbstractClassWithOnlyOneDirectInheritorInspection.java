@@ -1,10 +1,7 @@
 package com.siyeh.ig.j2me;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.siyeh.ig.BaseInspection;
@@ -40,6 +37,10 @@ public class AbstractClassWithOnlyOneDirectInheritorInspection extends ClassInsp
             // no call to super, so that it doesn't drill down to inner classes
             if (aClass.isInterface() || aClass.isAnnotationType()
                     || aClass.isEnum()) {
+                return;
+            }
+            if(aClass instanceof PsiTypeParameter ||
+                    aClass instanceof PsiAnonymousClass){
                 return;
             }
             if(!aClass.hasModifierProperty(PsiModifier.ABSTRACT))

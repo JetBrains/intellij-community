@@ -247,6 +247,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(IOResourceInspection.class);
         inspectionClasses.add(JDBCResourceInspection.class);
         inspectionClasses.add(ChannelResourceInspection.class);
+        inspectionClasses.add(DriverManagerGetConnectionInspection.class);
     }
 
     private void registerLoggingInspections(){
@@ -261,6 +262,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(DeserializableClassInSecureContextInspection.class);
         inspectionClasses.add(SerializableClassInSecureContextInspection.class);
         inspectionClasses.add(CloneableClassInSecureContextInspection.class);
+        inspectionClasses.add(NonFinalCloneInspection.class);
         inspectionClasses.add(NonStaticInnerClassInSecureContextInspection.class);
         inspectionClasses.add(RuntimeExecWithNonConstantStringInspection.class);
         inspectionClasses.add(LoadLibraryWithNonConstantStringInspection.class);
@@ -292,6 +294,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(ClassNamingConventionInspection.class);
         inspectionClasses.add(EnumeratedClassNamingConventionInspection.class);
         inspectionClasses.add(EnumeratedConstantNamingConventionInspection.class);
+        inspectionClasses.add(TypeParameterNamingConventionInspection.class);
         inspectionClasses.add(AnnotationNamingConventionInspection.class);
         inspectionClasses.add(InterfaceNamingConventionInspection.class);
         inspectionClasses.add(InstanceVariableNamingConventionInspection.class);

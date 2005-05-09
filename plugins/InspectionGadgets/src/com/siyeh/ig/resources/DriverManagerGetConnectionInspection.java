@@ -1,4 +1,4 @@
-package com.siyeh.ig.threading;
+package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
@@ -7,29 +7,30 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 
-public class ThreadYieldInspection extends ExpressionInspection {
+public class DriverManagerGetConnectionInspection extends ExpressionInspection {
     public String getID(){
-        return "CallToThreadYield";
+        return "CallToDriverManagerGetConnection";
     }
+
     public String getDisplayName() {
-        return "Call to 'Thread.yield()'";
+        return "Use of DriverManager to get JDBC connection";
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.THREADING_GROUP_NAME;
+        return GroupNames.RESOURCE_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {
 
-        return "Call to Thread.#ref() #loc";
+        return "Call to DriverManager.#ref() #loc";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ThreadYieldVisitor(this, inspectionManager, onTheFly);
+        return new DriverManagerGetConnectionVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class ThreadYieldVisitor extends BaseInspectionVisitor {
-        private ThreadYieldVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class DriverManagerGetConnectionVisitor extends BaseInspectionVisitor {
+        private DriverManagerGetConnectionVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
@@ -40,17 +41,17 @@ public class ThreadYieldInspection extends ExpressionInspection {
             if (methodExpression == null) {
                 return;
             }
-            if (!isThreadYield(expression)) {
+            if (!isDriverManagerGetConnection(expression)) {
                 return;
             }
             registerMethodCallError(expression);
         }
 
-        private static boolean isThreadYield(PsiMethodCallExpression expression) {
+        private static boolean isDriverManagerGetConnection(PsiMethodCallExpression expression) {
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
 
             final String methodName = methodExpression.getReferenceName();
-            if (!"yield".equals(methodName) ) {
+            if (!"getConnection".equals(methodName) ) {
                 return false;
             }
             final PsiMethod method = expression.resolveMethod();
@@ -65,7 +66,7 @@ public class ThreadYieldInspection extends ExpressionInspection {
             if (className == null) {
                 return false;
             }
-            return "java.lang.Thread".equals(className);
+            return "java.sql.DriverManager".equals(className);
         }
     }
 
