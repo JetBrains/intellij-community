@@ -54,8 +54,13 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       return;
 
     myPsiDocumentManager.setProcessDocumentEvents(false);
-    syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event);
-    myPsiDocumentManager.setProcessDocumentEvents(true);
+    try {
+      syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event);
+    }
+    finally {
+      myPsiDocumentManager.setProcessDocumentEvents(true);
+    }
+    
 
     final boolean insideTransaction = myTransactionsMap.containsKey(document);
     if(!insideTransaction){
