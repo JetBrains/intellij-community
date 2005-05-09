@@ -5,9 +5,9 @@ import com.intellij.psi.PsiStatement;
 import java.util.*;
 
 class IfStatementBranch{
-    private Set m_topLevelVariables = new HashSet(3);
-    private Set m_innerVariables = new HashSet(3);
-    private final List m_conditions = new ArrayList(3);
+    private Set<String> m_topLevelVariables = new HashSet<String>(3);
+    private Set<String> m_innerVariables = new HashSet<String>(3);
+    private final List<String> m_conditions = new ArrayList<String>(3);
     private PsiStatement m_statement = null;
     private boolean m_else = false;
 
@@ -27,7 +27,7 @@ class IfStatementBranch{
         return m_statement;
     }
 
-    public List getConditions(){
+    public List<String> getConditions(){
         return Collections.unmodifiableList(m_conditions);
     }
 
@@ -39,33 +39,32 @@ class IfStatementBranch{
         m_else = true;
     }
 
-    public void setTopLevelVariables(Set topLevelVariables){
-        m_topLevelVariables = new HashSet(topLevelVariables);
+    public void setTopLevelVariables(Set<String> topLevelVariables){
+        m_topLevelVariables = new HashSet<String>(topLevelVariables);
     }
 
-    public void setInnerVariables(Set innerVariables){
-        m_innerVariables = new HashSet(innerVariables);
+    public void setInnerVariables(Set<String> innerVariables){
+        m_innerVariables = new HashSet<String>(innerVariables);
     }
 
-    private Set getTopLevelVariables(){
+    private Set<String> getTopLevelVariables(){
         return Collections.unmodifiableSet(m_topLevelVariables);
     }
 
-    private Set getInnerVariables(){
+    private Set<String> getInnerVariables(){
         return Collections.unmodifiableSet(m_innerVariables);
     }
 
     public boolean topLevelDeclarationsConfictWith(IfStatementBranch testBranch){
-        final Set innerVariables = testBranch.getInnerVariables();
-        final Set topLevel = testBranch.getTopLevelVariables();
+        final Set<String> innerVariables = testBranch.getInnerVariables();
+        final Set<String> topLevel = testBranch.getTopLevelVariables();
         return hasNonEmptyIntersection(m_topLevelVariables, topLevel) ||
                        hasNonEmptyIntersection(m_topLevelVariables,
                                                innerVariables);
     }
 
-    private static boolean hasNonEmptyIntersection(Set set1, Set set2){
-        for(Iterator iterator = set1.iterator(); iterator.hasNext();){
-            final Object set1Element = iterator.next();
+    private static boolean hasNonEmptyIntersection(Set<String> set1, Set<String> set2){
+        for(final String set1Element : set1){
             if(set2.contains(set1Element)){
                 return true;
             }

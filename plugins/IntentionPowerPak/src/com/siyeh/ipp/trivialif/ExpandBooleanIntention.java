@@ -30,8 +30,7 @@ public class ExpandBooleanIntention extends Intention{
         final PsiJavaToken token =
                 (PsiJavaToken) findMatchingElement(file, editor);
         final PsiStatement containingStatement =
-                (PsiStatement) PsiTreeUtil.getParentOfType(token,
-                                                           PsiStatement.class);
+                PsiTreeUtil.getParentOfType(token, PsiStatement.class);
 
         if(ExpandBooleanPredicate.isBooleanAssignment(containingStatement)){
             final PsiExpressionStatement assignmentStatement =

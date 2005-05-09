@@ -22,11 +22,9 @@ class ConstantExpressionPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiElement parent = element.getParent();
-        if(parent instanceof PsiExpression &&
-                        PsiUtil.isConstantExpression((PsiExpression) parent))
-        {
-            return false;
+        if(!(parent instanceof PsiExpression)){
+            return true;
         }
-        return true;
+        return !PsiUtil.isConstantExpression((PsiExpression) parent);
     }
 }

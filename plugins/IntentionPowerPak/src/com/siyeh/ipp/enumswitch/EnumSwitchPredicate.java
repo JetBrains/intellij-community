@@ -37,21 +37,17 @@ class EnumSwitchPredicate implements PsiElementPredicate{
         }
         final PsiField[] fields = enumClass.getFields();
         final Set enumElements = new HashSet(fields.length);
-        for(int i = 0; i < fields.length; i++){
-            final PsiField field = fields[i];
+        for(final PsiField field : fields){
             if(field.getType().equals(type)){
                 enumElements.add(field.getName());
             }
         }
         final PsiStatement[] statements = body.getStatements();
-        for(int i = 0; i < statements.length; i++){
-            PsiStatement statement = statements[i];
-            if(statement instanceof PsiSwitchLabelStatement)
-            {
+        for(PsiStatement statement : statements){
+            if(statement instanceof PsiSwitchLabelStatement){
                 final PsiSwitchLabelStatement labelStatement = (PsiSwitchLabelStatement) statement;
                 final PsiExpression value = labelStatement.getCaseValue();
-                if(value!=null)
-                {
+                if(value != null){
                     enumElements.remove(value.getText());
                 }
             }

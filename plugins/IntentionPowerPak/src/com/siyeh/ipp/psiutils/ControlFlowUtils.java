@@ -79,9 +79,8 @@ public class ControlFlowUtils{
                 return true;
             }
             final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-            for(int i = 0; i < catchBlocks.length; i++){
-                final PsiCodeBlock catchBlock = catchBlocks[i];
-                if(codeBlockMayCompleteNormally(catchBlock)) {
+            for(final PsiCodeBlock catchBlock : catchBlocks){
+                if(codeBlockMayCompleteNormally(catchBlock)){
                     return true;
                 }
             }
@@ -119,9 +118,8 @@ public class ControlFlowUtils{
 
     private static boolean codeBlockMayCompleteNormally(PsiCodeBlock block){
         final PsiStatement[] statements = block.getStatements();
-        for(int i = 0; i < statements.length; i++){
-            final PsiStatement statement = statements[i];
-            if(!statementMayCompleteNormally(statement)) {
+        for(final PsiStatement statement : statements){
+            if(!statementMayCompleteNormally(statement)){
                 return false;
             }
         }
@@ -133,8 +131,8 @@ public class ControlFlowUtils{
             return false;
         }
         final boolean value =
-                ((Boolean) ConstantExpressionUtil.computeCastTo(test,
-                                                                PsiType.BOOLEAN)).booleanValue();
+                (Boolean) ConstantExpressionUtil.computeCastTo(test,
+                                                               PsiType.BOOLEAN);
         return value == val;
     }
 

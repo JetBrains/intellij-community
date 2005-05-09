@@ -37,25 +37,23 @@ public class CreateEnumSwitchBranchesIntention extends Intention{
         final PsiClassType switchType = (PsiClassType) switchExpression.getType();
         final PsiClass enumClass = switchType.resolve();
         final PsiField[] fields = enumClass.getFields();
-        final Set missingEnumElements = new HashSet(fields.length);
-        for(int i = 0; i < fields.length; i++){
-            final PsiField field = fields[i];
+        final Set<String> missingEnumElements = new HashSet<String>(fields.length);
+        for(final PsiField field : fields){
             if(field instanceof PsiEnumConstant){
                 missingEnumElements.add(field.getName());
             }
         }
         final PsiStatement[] statements = body.getStatements();
-        for(int i = 0; i < statements.length; i++){
-            final PsiStatement statement = statements[i];
+        for(final PsiStatement statement : statements){
             if(statement instanceof PsiSwitchLabelStatement){
                 final PsiSwitchLabelStatement labelStatement =
                         (PsiSwitchLabelStatement) statement;
                 final PsiExpression value = labelStatement.getCaseValue();
                 if(value instanceof PsiReferenceExpression){
-                  final PsiElement resolved = ((PsiReferenceExpression)value).resolve();
-                  if (resolved instanceof PsiEnumConstant) {
-                    missingEnumElements.remove(((PsiEnumConstant)resolved).getName());
-                  }
+                    final PsiElement resolved = ((PsiReference) value).resolve();
+                    if(resolved instanceof PsiEnumConstant){
+                        missingEnumElements.remove(((PsiEnumConstant) resolved).getName());
+                    }
                 }
             }
         }
@@ -68,12 +66,12 @@ public class CreateEnumSwitchBranchesIntention extends Intention{
         for(int i = 1; i < children.length -1; i++){
             buffer.append(children[i].getText());
         }
-        final String[] missingElementsArray = (String[]) missingEnumElements.toArray(new String[missingEnumElements.size()]);
+        final String[] missingElementsArray = missingEnumElements.toArray(new String[missingEnumElements.size()]);
         Arrays.sort(missingElementsArray);
 
-        for(int i = 0; i < missingElementsArray.length; i++){
+        for(String aMissingElementsArray : missingElementsArray){
             buffer.append("case ");
-            buffer.append(missingElementsArray[i]);
+            buffer.append(aMissingElementsArray);
             buffer.append(": break;");
         }
         buffer.append('}');

@@ -32,11 +32,7 @@ class SwitchPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiCodeBlock body = switchStatement.getBody();
-        if(body == null)
-        {
-            return false;
-        }
-        return true;
+        return body != null;
     }
 
 }

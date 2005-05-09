@@ -54,10 +54,7 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
             return true;
         }
 
-        if(isSimplifiableImplicitAssignmentNegated(ifStatement)){
-            return true;
-        }
-        return false;
+        return isSimplifiableImplicitAssignmentNegated(ifStatement);
     }
 
     public static boolean isSimplifiableImplicitReturn(PsiIfStatement ifStatement){
@@ -70,11 +67,8 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
             return false;
         }
         final PsiStatement elseBranch = (PsiStatement) nextStatement;
-        if(ConditionalUtils.isReturn(thenBranch, "true")
-                   && ConditionalUtils.isReturn(elseBranch, "false")){
-            return true;
-        }
-        return false;
+        return ConditionalUtils.isReturn(thenBranch, "true")
+                && ConditionalUtils.isReturn(elseBranch, "false");
     }
 
     public static boolean isSimplifiableImplicitReturnNegated(PsiIfStatement ifStatement){
@@ -88,11 +82,8 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
             return false;
         }
         final PsiStatement elseBranch = (PsiStatement) nextStatement;
-        if(ConditionalUtils.isReturn(thenBranch, "false")
-                   && ConditionalUtils.isReturn(elseBranch, "true")){
-            return true;
-        }
-        return false;
+        return ConditionalUtils.isReturn(thenBranch, "false")
+                && ConditionalUtils.isReturn(elseBranch, "true");
     }
 
     public static boolean isSimplifiableReturn(PsiIfStatement ifStatement){
@@ -100,11 +91,8 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         PsiStatement elseBranch = ifStatement.getElseBranch();
         elseBranch = ConditionalUtils.stripBraces(elseBranch);
-        if(ConditionalUtils.isReturn(thenBranch, "true")
-                   && ConditionalUtils.isReturn(elseBranch, "false")){
-            return true;
-        }
-        return false;
+        return ConditionalUtils.isReturn(thenBranch, "true")
+                && ConditionalUtils.isReturn(elseBranch, "false");
     }
 
     public static boolean isSimplifiableReturnNegated(PsiIfStatement ifStatement){
@@ -112,11 +100,8 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         PsiStatement elseBranch = ifStatement.getElseBranch();
         elseBranch = ConditionalUtils.stripBraces(elseBranch);
-        if(ConditionalUtils.isReturn(thenBranch, "false")
-                   && ConditionalUtils.isReturn(elseBranch, "true")){
-            return true;
-        }
-        return false;
+        return ConditionalUtils.isReturn(thenBranch, "false")
+                && ConditionalUtils.isReturn(elseBranch, "true");
     }
 
     public static boolean isSimplifiableAssignment(PsiIfStatement ifStatement){

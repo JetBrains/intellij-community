@@ -9,7 +9,6 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
@@ -86,14 +85,14 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
             }
         }
 
-        for(Iterator iterator = argsList.iterator(); iterator.hasNext();){
-            final String arg = (String) iterator.next();
+        for(Object aArgsList : argsList){
+            final String arg = (String) aArgsList;
             final String append;
             append = targetText + ".append" + arg + ';';
             final PsiStatement newCall =
                     factory.createStatementFromText(append, null);
             final PsiElement insertedElement = statement.getParent()
-                            .addAfter(newCall, statement);
+                    .addAfter(newCall, statement);
             codeStyleManager.reformat(insertedElement);
         }
         if(firstStatement!=null)

@@ -47,12 +47,9 @@ class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
         final PsiConditionalExpression condition =
                 (PsiConditionalExpression) initializer;
 
-        if(condition.getCondition() == null ||
-                   condition.getThenExpression() == null ||
-                   condition.getElseExpression() == null){
-            return false;
-        }
-        return true;
+        return condition.getCondition() != null &&
+                condition.getThenExpression() != null &&
+                condition.getElseExpression() != null;
     }
 
     private static boolean isAssignmentToConditional(PsiExpressionStatement expressionStatement){

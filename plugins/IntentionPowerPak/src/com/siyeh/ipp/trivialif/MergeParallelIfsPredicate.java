@@ -7,9 +7,8 @@ import com.siyeh.ipp.psiutils.ControlFlowUtils;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
-import java.util.Set;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Set;
 
 class MergeParallelIfsPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -68,24 +67,24 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
         if(!ControlFlowUtils.statementMayCompleteNormally(statement1)){
             return false;
         }
-        final Set statement1Declarations = calculateTopLevelDeclarations(statement1);
+        final Set<String> statement1Declarations = calculateTopLevelDeclarations(statement1);
         if(containsConflictingDeclarations(statement1Declarations, statement2))
         {
             return false;
         }
-        final Set statement2Declarations = calculateTopLevelDeclarations(statement2);
+        final Set<String> statement2Declarations = calculateTopLevelDeclarations(statement2);
         return !containsConflictingDeclarations(statement2Declarations, statement1);
     }
 
-    private static boolean containsConflictingDeclarations(Set declarations,
+    private static boolean containsConflictingDeclarations(Set<String> declarations,
                                                            PsiStatement statement){
         final DeclarationVisitor visitor = new DeclarationVisitor(declarations);
         statement.accept(visitor);
         return visitor.hasConflict();
     }
 
-    private static Set calculateTopLevelDeclarations(PsiStatement statement){
-        final Set out = new HashSet();
+    private static Set<String> calculateTopLevelDeclarations(PsiStatement statement){
+        final Set<String> out = new HashSet<String>();
         if(statement instanceof PsiDeclarationStatement)
         {
             addDeclarations((PsiDeclarationStatement)statement, out);
@@ -95,10 +94,9 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
             final PsiBlockStatement blockStatement = (PsiBlockStatement) statement;
             final PsiCodeBlock block = blockStatement.getCodeBlock();
             final PsiStatement[] statements = block.getStatements();
-            for(int i = 0; i < statements.length; i++){
-                if( statements[i] instanceof PsiDeclarationStatement)
-                {
-                    addDeclarations((PsiDeclarationStatement) statements[i], out);
+            for(PsiStatement statement1 : statements){
+                if(statement1 instanceof PsiDeclarationStatement){
+                    addDeclarations((PsiDeclarationStatement) statement1, out);
                 }
             }
         }
@@ -106,12 +104,10 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
     }
 
     private static void addDeclarations(PsiDeclarationStatement statement,
-                                        Set declaredVars){
+                                        Set<String> declaredVars){
         final PsiElement[] elements = statement.getDeclaredElements();
-        for(int i = 0; i < elements.length; i++){
-            final PsiElement element = elements[i];
-            if(element instanceof PsiVariable)
-            {
+        for(final PsiElement element : elements){
+            if(element instanceof PsiVariable){
                 final PsiVariable variable = (PsiVariable) element;
                 final String name = variable.getName();
                 declaredVars.add(name);
@@ -120,22 +116,20 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
     }
 
     private static class DeclarationVisitor extends PsiRecursiveElementVisitor{
-        private Set declarations;
+        private Set<String> declarations;
         private boolean hasConflict = false;
 
-        DeclarationVisitor(Set declarations){
+        DeclarationVisitor(Set<String> declarations){
             super();
-            this.declarations = new HashSet(declarations);
+            this.declarations = new HashSet<String>(declarations);
         }
 
         public void visitVariable(PsiVariable variable){
             super.visitVariable(variable);
             final String name = variable.getName();
-            for(Iterator iterator = declarations.iterator();
-                iterator.hasNext();){
-                final String testName = (String) iterator.next();
-                if(testName.equals(name))
-                {
+            for(Object declaration : declarations){
+                final String testName = (String) declaration;
+                if(testName.equals(name)){
                     hasConflict = true;
                 }
             }

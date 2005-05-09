@@ -11,7 +11,10 @@ import com.siyeh.ipp.psiutils.ControlFlowUtils;
 import com.siyeh.ipp.psiutils.DeclarationUtils;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ReplaceIfWithSwitchIntention extends Intention{
     public String getText(){
@@ -42,9 +45,9 @@ public class ReplaceIfWithSwitchIntention extends Intention{
             PsiElement ancestor = ifStatement.getParent();
             while(ancestor != null){
                 if(ancestor instanceof PsiForStatement ||
-                                        ancestor instanceof PsiDoWhileStatement ||
-                                        ancestor instanceof PsiWhileStatement ||
-                                        ancestor instanceof PsiSwitchStatement){
+                        ancestor instanceof PsiDoWhileStatement ||
+                        ancestor instanceof PsiWhileStatement ||
+                        ancestor instanceof PsiSwitchStatement){
                     breakTarget = (PsiStatement) ancestor;
                     break;
                 }
@@ -62,10 +65,10 @@ public class ReplaceIfWithSwitchIntention extends Intention{
         switchStatementBuffer.append("switch(" + caseExpression.getText() +
                 ')');
         switchStatementBuffer.append('{');
-        final List branches = new ArrayList(20);
+        final List<IfStatementBranch> branches = new ArrayList<IfStatementBranch>(20);
         while(true){
-            final Set topLevelVariables = new HashSet(5);
-            final Set innerVariables = new HashSet(5);
+            final Set<String> topLevelVariables = new HashSet<String>(5);
+            final Set<String> innerVariables = new HashSet<String>(5);
             final PsiExpression condition = ifStatement.getCondition();
             final PsiExpression[] labels =
                     getValuesFromCondition(condition, caseExpression);
@@ -78,10 +81,22 @@ public class ReplaceIfWithSwitchIntention extends Intention{
             ifBranch.setInnerVariables(innerVariables);
             ifBranch.setTopLevelVariables(topLevelVariables);
             ifBranch.setStatement(thenBranch);
-            for(int i = 0; i < labels.length; i++){
-                final PsiExpression label = labels[i];
-                final String labelText = label.getText();
-                ifBranch.addCondition(labelText);
+            for(final PsiExpression label : labels){
+                if(label instanceof PsiReferenceExpression){
+                    final PsiReferenceExpression reference = (PsiReferenceExpression) label;
+                    final PsiElement referent = reference.resolve();
+                    if(referent instanceof PsiEnumConstant){
+                        final PsiEnumConstant constant = (PsiEnumConstant) referent;
+                        final String constantName = constant.getName();
+                        ifBranch.addCondition(constantName);
+                    } else{
+                        final String labelText = label.getText();
+                        ifBranch.addCondition(labelText);
+                    }
+                } else{
+                    final String labelText = label.getText();
+                    ifBranch.addCondition(labelText);
+                }
             }
             branches.add(ifBranch);
             final PsiStatement elseBranch = ifStatement.getElseBranch();
@@ -91,8 +106,8 @@ public class ReplaceIfWithSwitchIntention extends Intention{
             } else if(elseBranch == null){
                 break;
             } else{
-                final Set elseTopLevelVariables = new HashSet(5);
-                final Set elseInnerVariables = new HashSet(5);
+                final Set<String> elseTopLevelVariables = new HashSet<String>(5);
+                final Set<String> elseInnerVariables = new HashSet<String>(5);
                 DeclarationUtils.calculateVariablesDeclared(elseBranch,
                                                             elseTopLevelVariables,
                                                             elseInnerVariables,
@@ -107,14 +122,11 @@ public class ReplaceIfWithSwitchIntention extends Intention{
             }
         }
 
-        for(Iterator iterator = branches.iterator(); iterator.hasNext();){
-            final IfStatementBranch branch =
-                    (IfStatementBranch) iterator.next();
+        for(IfStatementBranch branch : branches){
             boolean hasConflicts = false;
-            for(Iterator innerIterator = branches.iterator();
-                innerIterator.hasNext();){
+            for(Object branche1 : branches){
                 final IfStatementBranch testBranch =
-                        (IfStatementBranch) innerIterator.next();
+                        (IfStatementBranch) branche1;
                 if(branch.topLevelDeclarationsConfictWith(testBranch)){
                     hasConflicts = true;
                 }
@@ -126,7 +138,7 @@ public class ReplaceIfWithSwitchIntention extends Intention{
                                   hasConflicts,
                                   breaksNeedRelabeled, labelString);
             } else{
-                final List conditions = branch.getConditions();
+                final List<String> conditions = branch.getConditions();
                 dumpBranch(switchStatementBuffer, conditions, branchStatement,
                            hasConflicts, breaksNeedRelabeled, labelString);
             }
@@ -152,10 +164,9 @@ public class ReplaceIfWithSwitchIntention extends Intention{
         if(target.equals(replace)){
             out.append(stringToReplaceWith);
         } else if(target.getChildren() != null &&
-                          target.getChildren().length != 0){
+                target.getChildren().length != 0){
             final PsiElement[] children = target.getChildren();
-            for(int i = 0; i < children.length; i++){
-                final PsiElement child = children[i];
+            for(final PsiElement child : children){
                 termReplace(out, child, replace, stringToReplaceWith);
             }
         } else{
@@ -166,15 +177,15 @@ public class ReplaceIfWithSwitchIntention extends Intention{
 
     private PsiExpression[] getValuesFromCondition(PsiExpression condition,
                                                    PsiExpression caseExpression){
-        final List values = new ArrayList(10);
+        final List<PsiExpression> values = new ArrayList<PsiExpression>(10);
         final PsiBinaryExpression binaryCond = (PsiBinaryExpression) condition;
         getValuesFromExpression(binaryCond, caseExpression, values);
-        return (PsiExpression[]) values.toArray(new PsiExpression[values.size()]);
+        return values.toArray(new PsiExpression[values.size()]);
     }
 
     private void getValuesFromExpression(PsiBinaryExpression binaryCond,
                                          PsiExpression caseExpression,
-                                         List values){
+                                         List<PsiExpression> values){
         final PsiExpression lhs = binaryCond.getLOperand();
         final PsiExpression rhs = binaryCond.getROperand();
         final PsiJavaToken sign = binaryCond.getOperationSign();
@@ -195,7 +206,8 @@ public class ReplaceIfWithSwitchIntention extends Intention{
     }
 
     private static void dumpBranch(StringBuffer switchStatementString,
-                                   List labels, PsiStatement body, boolean wrap,
+                                   List<String> labels, PsiStatement body,
+                                   boolean wrap,
                                    boolean renameBreaks, String breakLabelName){
         dumpLabels(switchStatementString, labels);
         dumpBody(switchStatementString, body, wrap, renameBreaks,
@@ -212,11 +224,10 @@ public class ReplaceIfWithSwitchIntention extends Intention{
     }
 
     private static void dumpLabels(StringBuffer switchStatementString,
-                                   List labels){
-        for(Iterator iterator = labels.iterator(); iterator.hasNext();){
-            final String exp = (String) iterator.next();
+                                   List<String> labels){
+        for(String label : labels){
             switchStatementString.append("case ");
-            switchStatementString.append(exp);
+            switchStatementString.append(label);
             switchStatementString.append(": ");
         }
     }
@@ -277,11 +288,10 @@ public class ReplaceIfWithSwitchIntention extends Intention{
                 }
             }
         } else if(element instanceof PsiBlockStatement ||
-                                element instanceof PsiCodeBlock ||
-                                element instanceof PsiIfStatement){
+                element instanceof PsiCodeBlock ||
+                element instanceof PsiIfStatement){
             final PsiElement[] children = element.getChildren();
-            for(int i = 0; i < children.length; i++){
-                final PsiElement child = children[i];
+            for(final PsiElement child : children){
                 appendElement(switchStatementString, child, renameBreakElements,
                               breakLabelString);
             }

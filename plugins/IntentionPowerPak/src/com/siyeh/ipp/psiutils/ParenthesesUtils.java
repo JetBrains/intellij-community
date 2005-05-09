@@ -28,33 +28,33 @@ public class ParenthesesUtils{
     public static final int CONDITIONAL_EXPRESSION_EXPRESSION = 15;
     private static final int ASSIGNMENT_EXPRESSION_PRECEDENCE = 16;
 
-    private static final Map s_binaryOperatorPrecedence = new HashMap(16);
+    private static final Map<String,Integer> s_binaryOperatorPrecedence = new HashMap<String, Integer>(16);
 
     static{
-        s_binaryOperatorPrecedence.put("+", new Integer(ADDITIVE_PRECEDENCE));
-        s_binaryOperatorPrecedence.put("-", new Integer(ADDITIVE_PRECEDENCE));
+        s_binaryOperatorPrecedence.put("+", ADDITIVE_PRECEDENCE);
+        s_binaryOperatorPrecedence.put("-", ADDITIVE_PRECEDENCE);
         s_binaryOperatorPrecedence.put("*",
-                                       new Integer(MULTIPLICATIVE_PRECEDENCE));
+                                       MULTIPLICATIVE_PRECEDENCE);
         s_binaryOperatorPrecedence.put("/",
-                                       new Integer(MULTIPLICATIVE_PRECEDENCE));
+                                       MULTIPLICATIVE_PRECEDENCE);
         s_binaryOperatorPrecedence.put("%",
-                                       new Integer(MULTIPLICATIVE_PRECEDENCE));
-        s_binaryOperatorPrecedence.put("&&", new Integer(AND_PRECEDENCE));
-        s_binaryOperatorPrecedence.put("||", new Integer(OR_PRECEDENCE));
-        s_binaryOperatorPrecedence.put("&", new Integer(BINARY_AND_PRECEDENCE));
-        s_binaryOperatorPrecedence.put("|", new Integer(BINARY_OR_PRECEDENCE));
-        s_binaryOperatorPrecedence.put("^", new Integer(BINARY_XOR_PRECEDENCE));
-        s_binaryOperatorPrecedence.put("<<", new Integer(SHIFT_PRECEDENCE));
-        s_binaryOperatorPrecedence.put(">>", new Integer(SHIFT_PRECEDENCE));
-        s_binaryOperatorPrecedence.put(">>>", new Integer(SHIFT_PRECEDENCE));
-        s_binaryOperatorPrecedence.put(">", new Integer(RELATIONAL_PRECEDENCE));
+                                       MULTIPLICATIVE_PRECEDENCE);
+        s_binaryOperatorPrecedence.put("&&", AND_PRECEDENCE);
+        s_binaryOperatorPrecedence.put("||", OR_PRECEDENCE);
+        s_binaryOperatorPrecedence.put("&", BINARY_AND_PRECEDENCE);
+        s_binaryOperatorPrecedence.put("|", BINARY_OR_PRECEDENCE);
+        s_binaryOperatorPrecedence.put("^", BINARY_XOR_PRECEDENCE);
+        s_binaryOperatorPrecedence.put("<<", SHIFT_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(">>", SHIFT_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(">>>", SHIFT_PRECEDENCE);
+        s_binaryOperatorPrecedence.put(">", RELATIONAL_PRECEDENCE);
         s_binaryOperatorPrecedence.put(">=",
-                                       new Integer(RELATIONAL_PRECEDENCE));
-        s_binaryOperatorPrecedence.put("<", new Integer(RELATIONAL_PRECEDENCE));
+                                       RELATIONAL_PRECEDENCE);
+        s_binaryOperatorPrecedence.put("<", RELATIONAL_PRECEDENCE);
         s_binaryOperatorPrecedence.put("<=",
-                                       new Integer(RELATIONAL_PRECEDENCE));
-        s_binaryOperatorPrecedence.put("==", new Integer(EQUALITY_PRECEDENCE));
-        s_binaryOperatorPrecedence.put("!=", new Integer(EQUALITY_PRECEDENCE));
+                                       RELATIONAL_PRECEDENCE);
+        s_binaryOperatorPrecedence.put("==", EQUALITY_PRECEDENCE);
+        s_binaryOperatorPrecedence.put("!=", EQUALITY_PRECEDENCE);
     }
 
     private ParenthesesUtils(){
@@ -117,8 +117,8 @@ public class ParenthesesUtils{
     private static int precedenceForBinaryOperator(PsiJavaToken sign){
         final String operator = sign.getText();
         final Integer precedence =
-                (Integer) s_binaryOperatorPrecedence.get(operator);
-        return precedence.intValue();
+                s_binaryOperatorPrecedence.get(operator);
+        return precedence;
     }
 
     public static String removeParentheses(PsiExpression exp){

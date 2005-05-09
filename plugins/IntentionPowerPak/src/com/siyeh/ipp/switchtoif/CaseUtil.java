@@ -7,7 +7,6 @@ import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.SideEffectChecker;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 class CaseUtil{
@@ -18,6 +17,12 @@ class CaseUtil{
     private static boolean canBeCaseLabel(PsiExpression expression){
         if(expression == null){
             return false;
+        }
+        if(expression instanceof PsiReferenceExpression)
+        {
+            final PsiElement referent = ((PsiReferenceExpression) expression).resolve();
+            if(referent instanceof PsiEnumConstant)
+            return true;
         }
         final PsiType type = expression.getType();
         if(type == null){
@@ -42,8 +47,7 @@ class CaseUtil{
             final PsiCodeBlock codeBlock =
                     ((PsiBlockStatement) statement).getCodeBlock();
             final PsiStatement[] statements = codeBlock.getStatements();
-            for(int i = 0; i < statements.length; i++){
-                final PsiStatement childStatement = statements[i];
+            for(final PsiStatement childStatement : statements){
                 if(containsHiddenBreak(childStatement, false)){
                     return true;
                 }
@@ -70,10 +74,9 @@ class CaseUtil{
     }
 
     public static boolean isUsedByStatementList(PsiLocalVariable var,
-                                                List statements){
-        for(Iterator iterator = statements.iterator(); iterator.hasNext();){
-            final PsiElement statement = (PsiElement) iterator.next();
-            if(isUsedByStatement(var, statement)){
+                                                List<PsiElement> elements){
+        for(PsiElement element: elements){
+            if(isUsedByStatement(var, element)){
                 return true;
             }
         }
@@ -120,14 +123,13 @@ class CaseUtil{
 
     public static PsiExpression getCaseExpression(PsiIfStatement statement){
         final PsiExpression condition = statement.getCondition();
-        final List possibleCaseExpressions =
+        final List<PsiExpression> possibleCaseExpressions =
                 determinePossibleCaseExpressions(condition);
         if(possibleCaseExpressions == null){
             return null;
         }
-        for(Iterator iterator = possibleCaseExpressions.iterator();
-            iterator.hasNext();){
-            final PsiExpression caseExp = (PsiExpression) iterator.next();
+        for(Object possibleCaseExpression : possibleCaseExpressions){
+            final PsiExpression caseExp = (PsiExpression) possibleCaseExpression;
             if(!SideEffectChecker.mayHaveSideEffects(caseExp)){
                 PsiIfStatement statementToCheck = statement;
                 while(true){
@@ -137,7 +139,7 @@ class CaseUtil{
                         final PsiStatement elseBranch =
                                 statementToCheck.getElseBranch();
                         if(elseBranch == null ||
-                                   !(elseBranch instanceof PsiIfStatement)){
+                                !(elseBranch instanceof PsiIfStatement)){
                             return caseExp;
                         }
                         statementToCheck = (PsiIfStatement) elseBranch;
@@ -150,8 +152,8 @@ class CaseUtil{
         return null;
     }
 
-    private static List determinePossibleCaseExpressions(PsiExpression exp){
-        final List out = new ArrayList(10);
+    private static List<PsiExpression> determinePossibleCaseExpressions(PsiExpression exp){
+        final List<PsiExpression> out = new ArrayList<PsiExpression>(10);
         PsiExpression expToCheck = exp;
         while(expToCheck instanceof PsiParenthesizedExpression){
             expToCheck = ((PsiParenthesizedExpression) exp).getExpression();

@@ -51,23 +51,21 @@ public class DetailExceptionsIntention extends Intention{
         final HeirarchicalTypeComparator comparator =
                 new HeirarchicalTypeComparator();
         final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
-        for(int i = 0; i < catchSections.length; i++){
-            final PsiParameter param = catchSections[i].getParameter();
-            final PsiCodeBlock block = catchSections[i].getCatchBlock();
+        for(PsiCatchSection catchSection : catchSections){
+            final PsiParameter param = catchSection.getParameter();
+            final PsiCodeBlock block = catchSection.getCatchBlock();
             if(param != null && block != null){
                 final PsiType caughtType = param.getType();
                 final List exceptionsToExpand = new ArrayList(10);
-                for(Iterator iterator = exceptionsThrown.iterator();
-                    iterator.hasNext();){
-                    final PsiType thrownType = (PsiType) iterator.next();
+                for(Object aExceptionsThrown : exceptionsThrown){
+                    final PsiType thrownType = (PsiType) aExceptionsThrown;
                     if(caughtType.isAssignableFrom(thrownType)){
                         exceptionsToExpand.add(thrownType);
                     }
                 }
                 Collections.sort(exceptionsToExpand, comparator);
-                for(Iterator iterator = exceptionsToExpand.iterator();
-                    iterator.hasNext();){
-                    final PsiType thrownType = (PsiType) iterator.next();
+                for(Object aExceptionsToExpand : exceptionsToExpand){
+                    final PsiType thrownType = (PsiType) aExceptionsToExpand;
                     newTryStatement.append("catch(");
                     final String exceptionType =
                             thrownType.getPresentableText();

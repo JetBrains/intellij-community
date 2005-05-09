@@ -71,9 +71,6 @@ class ShiftUtils{
         if(!(value instanceof Number)){
             return false;
         }
-        if(value instanceof Double || value instanceof Float){
-            return false;
-        }
-        return true;
+        return !(value instanceof Double) && !(value instanceof Float);
     }
 }

@@ -33,10 +33,7 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
         if(isReplaceableReturn(ifStatement)){
             return true;
         }
-        if(isReplaceableImplicitReturn(ifStatement)){
-            return true;
-        }
-        return false;
+        return isReplaceableImplicitReturn(ifStatement);
     }
 
     public static boolean isReplaceableImplicitReturn(PsiIfStatement ifStatement){
@@ -72,11 +69,8 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
             return false;
         }
 
-        if(!(thenType.isAssignableFrom(elseType) ||
-                elseType.isAssignableFrom(thenType))){
-            return false;
-        }
-        return true;
+        return thenType.isAssignableFrom(elseType) ||
+                elseType.isAssignableFrom(thenType);
     }
 
     public static boolean isReplaceableReturn(PsiIfStatement ifStatement){
@@ -103,11 +97,8 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
         if(thenType == null || elseType == null){
             return false;
         }
-        if(!(thenType.isAssignableFrom(elseType) ||
-                elseType.isAssignableFrom(thenType))){
-            return false;
-        }
-        return true;
+        return thenType.isAssignableFrom(elseType) ||
+                elseType.isAssignableFrom(thenType);
     }
 
     public static boolean isReplaceableAssignment(PsiIfStatement ifStatement){
@@ -160,9 +151,6 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiExpression elseLhs = elseExpression.getLExpression();
-        if(!EquivalenceChecker.expressionsAreEquivalent(thenLhs, elseLhs)){
-            return false;
-        }
-        return true;
+        return EquivalenceChecker.expressionsAreEquivalent(thenLhs, elseLhs);
     }
 }

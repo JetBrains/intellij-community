@@ -41,13 +41,11 @@ class DetailExceptionsPredicate implements PsiElementPredicate{
                                                              factory);
         final Set exceptionsCaught =
                 ExceptionUtils.getExceptionTypesHandled(tryStatement);
-        for(Iterator iterator = exceptionsThrown.iterator();
-            iterator.hasNext();){
-            final PsiType typeThrown = (PsiType) iterator.next();
+        for(Object aExceptionsThrown : exceptionsThrown){
+            final PsiType typeThrown = (PsiType) aExceptionsThrown;
             if(!exceptionsCaught.contains(typeThrown)){
-                for(Iterator caught = exceptionsCaught.iterator();
-                    caught.hasNext();){
-                    final PsiType typeCaught = (PsiType) caught.next();
+                for(Object aExceptionsCaught : exceptionsCaught){
+                    final PsiType typeCaught = (PsiType) aExceptionsCaught;
                     if(typeCaught.isAssignableFrom(typeThrown)){
                         return true;
                     }

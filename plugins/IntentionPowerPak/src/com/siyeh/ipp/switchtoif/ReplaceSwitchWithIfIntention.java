@@ -34,8 +34,8 @@ public class ReplaceSwitchWithIfIntention extends Intention{
                 (PsiJavaToken) findMatchingElement(file, editor);
         final PsiSwitchStatement switchStatement =
                 (PsiSwitchStatement) switchToken.getParent();
-        final List allBranches = new ArrayList(10);
-        final List openBranches = new ArrayList(10);
+        final List<SwitchStatementBranch> allBranches = new ArrayList<SwitchStatementBranch>(10);
+        final List<SwitchStatementBranch> openBranches = new ArrayList<SwitchStatementBranch>(10);
         SwitchStatementBranch currentBranch = null;
 
         final StringBuffer ifStatementBuffer = new StringBuffer(1024);
@@ -75,7 +75,7 @@ public class ReplaceSwitchWithIfIntention extends Intention{
             }
         }
 
-        final Set declaredVars = new HashSet(5);
+        final Set<PsiLocalVariable> declaredVars = new HashSet<PsiLocalVariable>(5);
         String breakLabel = null;
         if(renameBreaks){
             breakLabel = CaseUtil.findUniqueLabel(switchStatement, "Label");
@@ -116,26 +116,24 @@ public class ReplaceSwitchWithIfIntention extends Intention{
                                 (PsiDeclarationStatement) statement;
                         final PsiElement[] elements =
                                 decl.getDeclaredElements();
-                        for(int j = 0; j < elements.length; j++){
+                        for(PsiElement element : elements){
                             final PsiLocalVariable var =
-                                    (PsiLocalVariable) elements[j];
+                                    (PsiLocalVariable) element;
                             declaredVars.add(var);
                         }
                     }
-                    for(Iterator iterator = openBranches.iterator();
-                        iterator.hasNext();){
+                    for(Object openBranche : openBranches){
                         final SwitchStatementBranch branch =
-                                (SwitchStatementBranch) iterator.next();
+                                (SwitchStatementBranch) openBranche;
                         branch.addStatement(statement);
                     }
                     if(!ControlFlowUtils.statementMayCompleteNormally((PsiStatement) statement)){
                         currentBranch = null;
                     }
                 } else{
-                    for(Iterator iterator = openBranches.iterator();
-                        iterator.hasNext();){
+                    for(Object openBranche : openBranches){
                         final SwitchStatementBranch branch =
-                                (SwitchStatementBranch) iterator.next();
+                                (SwitchStatementBranch) openBranche;
                         if(statement instanceof PsiWhiteSpace){
                             branch.addWhiteSpace(statement);
                         } else{
@@ -148,15 +146,13 @@ public class ReplaceSwitchWithIfIntention extends Intention{
         boolean firstBranch = true;
         SwitchStatementBranch defaultBranch = null;
 
-        for(Iterator iterator = allBranches.iterator(); iterator.hasNext();){
-            final SwitchStatementBranch branch =
-                    (SwitchStatementBranch) iterator.next();
+        for(SwitchStatementBranch branch : allBranches){
             if(branch.isDefault()){
                 defaultBranch = branch;
             } else{
-                final List labels = branch.getLabels();
-                final List bodyElements = branch.getBodyElements();
-                final Set pendingVariableDeclarations =
+                final List<String> labels = branch.getLabels();
+                final List<PsiElement> bodyElements = branch.getBodyElements();
+                final Set<PsiLocalVariable> pendingVariableDeclarations =
                         branch.getPendingVariableDeclarations();
                 dumpBranch(ifStatementBuffer, expressionText,
                            labels, bodyElements, firstBranch,
@@ -166,8 +162,8 @@ public class ReplaceSwitchWithIfIntention extends Intention{
             }
         }
         if(defaultBranch != null){
-            final List bodyElements = defaultBranch.getBodyElements();
-            final Set pendingVariableDeclarations =
+            final List<PsiElement> bodyElements = defaultBranch.getBodyElements();
+            final Set<PsiLocalVariable> pendingVariableDeclarations =
                     defaultBranch.getPendingVariableDeclarations();
             dumpDefaultBranch(ifStatementBuffer, bodyElements,
                               firstBranch, renameBreaks, breakLabel,
@@ -198,11 +194,11 @@ public class ReplaceSwitchWithIfIntention extends Intention{
     }
 
     private static void dumpBranch(StringBuffer ifStatementString,
-                                   String expressionText, List labels,
-                                   List bodyStatements, boolean firstBranch,
+                                   String expressionText, List<String> labels,
+                                   List<PsiElement> bodyStatements, boolean firstBranch,
                                    boolean renameBreaks,
                                    String breakLabel,
-                                   Set variableDecls){
+                                   Set<PsiLocalVariable> variableDecls){
         if(!firstBranch){
             ifStatementString.append("else ");
         }
@@ -212,11 +208,11 @@ public class ReplaceSwitchWithIfIntention extends Intention{
     }
 
     private static void dumpDefaultBranch(StringBuffer ifStatementString,
-                                          List bodyStatements,
+                                          List<PsiElement> bodyStatements,
                                           boolean firstBranch,
                                           boolean renameBreaks,
                                           String breakLabel,
-                                          Set variableDecls){
+                                          Set<PsiLocalVariable> variableDecls){
         if(!firstBranch){
             ifStatementString.append("else ");
         }
@@ -225,15 +221,15 @@ public class ReplaceSwitchWithIfIntention extends Intention{
     }
 
     private static void dumpLabels(StringBuffer ifStatementString,
-                                   String expressionText, List labels){
+                                   String expressionText, List<String> labels){
         ifStatementString.append("if(");
         boolean firstLabel = true;
-        for(Iterator iterator = labels.iterator(); iterator.hasNext();){
+        for(Object label : labels){
             if(!firstLabel){
                 ifStatementString.append("||");
             }
             firstLabel = false;
-            final String valueText = (String) iterator.next();
+            final String valueText = (String) label;
             ifStatementString.append(expressionText);
             ifStatementString.append("==");
             ifStatementString.append(valueText);
@@ -242,12 +238,12 @@ public class ReplaceSwitchWithIfIntention extends Intention{
     }
 
     private static void dumpBody(StringBuffer ifStatementString,
-                                 List bodyStatements, boolean renameBreaks,
-                                 String breakLabel, Set variableDecls){
+                                 List<PsiElement> bodyStatements, boolean renameBreaks,
+                                 String breakLabel, Set<PsiLocalVariable> variableDecls){
 
         ifStatementString.append('{');
-        for(Iterator iterator = variableDecls.iterator(); iterator.hasNext();){
-            final PsiLocalVariable var = (PsiLocalVariable) iterator.next();
+        for(Object variableDecl : variableDecls){
+            final PsiLocalVariable var = (PsiLocalVariable) variableDecl;
             if(CaseUtil.isUsedByStatementList(var, bodyStatements)){
                 final PsiType varType = var.getType();
                 ifStatementString.append(varType.getPresentableText() + ' ' +
@@ -255,8 +251,8 @@ public class ReplaceSwitchWithIfIntention extends Intention{
             }
         }
 
-        for(Iterator iterator = bodyStatements.iterator(); iterator.hasNext();){
-            final PsiElement bodyStatement = (PsiElement) iterator.next();
+        for(Object bodyStatement1 : bodyStatements){
+            final PsiElement bodyStatement = (PsiElement) bodyStatement1;
             final String text = bodyStatement.getText();
             if(!"break;".equals(text)){
                 appendElement(ifStatementString, bodyStatement, renameBreaks,
@@ -286,8 +282,7 @@ public class ReplaceSwitchWithIfIntention extends Intention{
                                 element instanceof PsiCodeBlock ||
                                 element instanceof PsiIfStatement){
             final PsiElement[] children = element.getChildren();
-            for(int i = 0; i < children.length; i++){
-                final PsiElement child = children[i];
+            for(final PsiElement child : children){
                 appendElement(ifStatementString, child, renameBreakElements,
                               breakLabelString);
             }

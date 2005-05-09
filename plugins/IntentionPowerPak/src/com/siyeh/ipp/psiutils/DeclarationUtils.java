@@ -10,8 +10,8 @@ public class DeclarationUtils{
     }
 
     public static void calculateVariablesDeclared(PsiStatement statement,
-                                                  Set variablesDeclaredAtTopLevel,
-                                                  Set variablesDeclaredAtLowerLevels,
+                                                  Set<String> variablesDeclaredAtTopLevel,
+                                                  Set<String> variablesDeclaredAtLowerLevels,
                                                   boolean isTopLevel){
         if(statement == null){
             return;
@@ -27,8 +27,8 @@ public class DeclarationUtils{
             final PsiDeclarationStatement declStatement =
                     (PsiDeclarationStatement) statement;
             final PsiElement[] elements = declStatement.getDeclaredElements();
-            for(int i = 0; i < elements.length; i++){
-                final PsiVariable var = (PsiVariable) elements[i];
+            for(PsiElement element : elements){
+                final PsiVariable var = (PsiVariable) element;
                 final String varName = var.getName();
                 if(isTopLevel){
                     variablesDeclaredAtTopLevel.add(varName);
@@ -111,8 +111,8 @@ public class DeclarationUtils{
             }
 
             final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
-            for(int i = 0; i < catchBlocks.length; i++){
-                calculateVariablesDeclaredInCodeBlock(catchBlocks[i],
+            for(PsiCodeBlock catchBlock : catchBlocks){
+                calculateVariablesDeclaredInCodeBlock(catchBlock,
                                                       variablesDeclaredAtTopLevel,
                                                       variablesDeclaredAtLowerLevels,
                                                       false);
@@ -136,8 +136,8 @@ public class DeclarationUtils{
             return;
         }
         final PsiStatement[] statements = block.getStatements();
-        for(int i = 0; i < statements.length; i++){
-            calculateVariablesDeclared(statements[i],
+        for(PsiStatement statement : statements){
+            calculateVariablesDeclared(statement,
                                        variablesDeclaredAtTopLevel,
                                        variablesDeclaredAtLowerLevels,
                                        isTopLevel);

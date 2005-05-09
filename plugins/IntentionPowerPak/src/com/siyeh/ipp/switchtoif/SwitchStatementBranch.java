@@ -1,14 +1,15 @@
 package com.siyeh.ipp.switchtoif;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLocalVariable;
 
 import java.util.*;
 
 class SwitchStatementBranch{
-    private final Set m_pendingVariableDeclarations = new HashSet(5);
-    private final List m_labels = new ArrayList(2);
-    private final List m_bodyElements = new ArrayList(5);
-    private final List m_pendingWhiteSpace = new ArrayList(2);
+    private final Set<PsiLocalVariable> m_pendingVariableDeclarations = new HashSet<PsiLocalVariable>(5);
+    private final List<String> m_labels = new ArrayList<String>(2);
+    private final List<PsiElement> m_bodyElements = new ArrayList<PsiElement>(5);
+    private final List<PsiElement> m_pendingWhiteSpace = new ArrayList<PsiElement>(2);
     private boolean m_default = false;
     private boolean m_hasStatements = false;
 
@@ -41,11 +42,11 @@ class SwitchStatementBranch{
         }
     }
 
-    public List getLabels(){
+    public List<String> getLabels(){
         return Collections.unmodifiableList(m_labels);
     }
 
-    public List getBodyElements(){
+    public List<PsiElement> getBodyElements(){
         return Collections.unmodifiableList(m_bodyElements);
     }
 
@@ -61,11 +62,11 @@ class SwitchStatementBranch{
         return m_hasStatements;
     }
 
-    public void addPendingVariableDeclarations(Set vars){
+    public void addPendingVariableDeclarations(Set<PsiLocalVariable> vars){
         m_pendingVariableDeclarations.addAll(vars);
     }
 
-    public Set getPendingVariableDeclarations(){
+    public Set<PsiLocalVariable> getPendingVariableDeclarations(){
         return Collections.unmodifiableSet(m_pendingVariableDeclarations);
     }
 }

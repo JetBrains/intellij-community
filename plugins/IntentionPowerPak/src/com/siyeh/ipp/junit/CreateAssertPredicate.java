@@ -31,14 +31,14 @@ class CreateAssertPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiClass containingClass =
-                (PsiClass) PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+                PsiTreeUtil.getParentOfType(expression, PsiClass.class);
         if(!isTest(containingClass))
         {
             return false;
         }
 
         final PsiMethod containingMethod =
-                (PsiMethod) PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+                PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
         return isTestMethod(containingMethod);
 
     }
