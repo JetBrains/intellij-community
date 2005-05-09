@@ -98,11 +98,12 @@ public class LineTokenizer {
 
   public void advance() {
     int i = myOffset + myLength + myLineSeparatorLength;
-    if (i >= myText.length()){
+    final int textLength = myText.length();
+    if (i >= textLength){
       atEnd = true;
       return;
     }
-    while(i < myText.length()){
+    while(i < textLength){
       char c = myText.charAt(i);
       if (c == '\r' || c == '\n') break;
       i++;
@@ -112,16 +113,19 @@ public class LineTokenizer {
     myLength = i - myOffset;
 
     myLineSeparatorLength = 0;
-    if (i == myText.length())
-      return;
+    if (i == textLength) return;
+
     char first = myText.charAt(i);
-    if (first == '\r' || first == '\n')
+    if (first == '\r' || first == '\n') {
       myLineSeparatorLength = 1;
+    }
+
     i++;
-    if (i == myText.length())
-      return;
+    if (i == textLength) return;
+
     char second = myText.charAt(i);
-    if (first == '\r' && second == '\n')
+    if (first == '\r' && second == '\n') {
       myLineSeparatorLength = 2;
+    }
   }
 }
