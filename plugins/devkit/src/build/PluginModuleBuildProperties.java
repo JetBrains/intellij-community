@@ -4,39 +4,31 @@
  */
 package org.jetbrains.idea.devkit.build;
 
-import com.intellij.j2ee.make.ModuleBuildProperties;
-import com.intellij.j2ee.j2eeDom.J2EEDeploymentItem;
 import com.intellij.j2ee.j2eeDom.DeploymentDescriptorFactory;
+import com.intellij.j2ee.j2eeDom.J2EEDeploymentItem;
+import com.intellij.j2ee.make.ModuleBuildProperties;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
-import org.jetbrains.idea.devkit.projectRoots.Sandbox;
-import org.jetbrains.idea.devkit.module.PluginDescriptorMetaData;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
+import org.jetbrains.idea.devkit.module.PluginDescriptorMetaData;
 
 import java.io.File;
 
 public class PluginModuleBuildProperties extends ModuleBuildProperties implements ModuleComponent, JDOMExternalizable {
   private Module myModule;
   private J2EEDeploymentItem myPluginXML;
-  public boolean myJarPlugin = false;
-  public String myPluginXMLPath;
+  private VirtualFilePointer myVirtualFilePointer;
   public PluginModuleBuildProperties(Module module) {
     myModule = module;
-    myPluginXMLPath = FileUtil.toSystemIndependentName(new File(myModule.getModuleFilePath()).getParent());
-    myPluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(myModule, new PluginDescriptorMetaData());
-    myPluginXML.setUrl(createPluginXMLURL(myPluginXMLPath));
-    myPluginXML.createIfNotExists();
   }
 
   public String getArchiveExtension() {
@@ -44,19 +36,11 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   }
 
   public String getJarPath() {
-    return PluginBuildUtil.getPluginExPath(myModule) != null ? PluginBuildUtil.getPluginExPath(myModule) + "/lib/" + myModule.getName() + ".jar" : null;
+    return null;
   }
 
   public String getExplodedPath() {
     return PluginBuildUtil.getPluginExPath(myModule);
-  }
-
-  public boolean isJarPlugin() {
-    return myJarPlugin;
-  }
-
-  public void setJarPlugin(boolean jarPlugin) {
-    myJarPlugin = jarPlugin;
   }
 
   public Module getModule() {
@@ -64,15 +48,14 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   }
 
   public boolean isJarEnabled() {
-    return myJarPlugin;
+    return false;
   }
 
   public boolean isExplodedEnabled() {
-    return !myJarPlugin;
+    return true;
   }
 
   public boolean isBuildOnFrameDeactivation() {
-    //TODO
     return false;
   }
 
@@ -95,29 +78,47 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
   public void disposeComponent() {}
 
   public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
+    String url = element.getAttributeValue("url");
+    if (url != null) {
+      setPluginXMLUrl(VfsUtil.urlToPath(url));
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    element.setAttribute("url", getVirtualFilePointer().getUrl());
   }
 
   public J2EEDeploymentItem getPluginXML() {
+    if (myPluginXML == null) {
+      myPluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(myModule, new PluginDescriptorMetaData());
+      myPluginXML.setUrl(getVirtualFilePointer().getUrl());
+      myPluginXML.createIfNotExists();
+    }
     return myPluginXML;
   }
 
-  public String getPluginXMLPath() {
-    return FileUtil.toSystemDependentName(myPluginXMLPath);
+  public VirtualFilePointer getVirtualFilePointer() {
+    if (myVirtualFilePointer == null) {
+      final String defaultPluginXMLLocation = new File(myModule.getModuleFilePath()).getParent() + File.separator + "META-INF" + File.separator + "plugin.xml";
+      setPluginXMLUrl(defaultPluginXMLLocation);
+    }
+    return myVirtualFilePointer;
   }
 
-  public void setPluginXMLPath(String pluginXMLPath) {
-    myPluginXMLPath = FileUtil.toSystemIndependentName(pluginXMLPath);
+  public String getPluginXmlPath() {
+    return FileUtil.toSystemDependentName(getVirtualFilePointer().getFile().getPath());
+  }
+
+  public void setPluginXMLUrl(final String pluginXMLUrl) {
     myPluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(myModule, new PluginDescriptorMetaData());
-    myPluginXML.setUrl(createPluginXMLURL(myPluginXMLPath));
+    myPluginXML.setUrl(VfsUtil.pathToUrl(pluginXMLUrl.replace(File.separatorChar, '/')));
     myPluginXML.createIfNotExists();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        myVirtualFilePointer = VirtualFilePointerManager.getInstance().create(LocalFileSystem.getInstance().refreshAndFindFileByPath(pluginXMLUrl.replace(File.separatorChar, '/')),
+                                                                              null);
+      }
+    });
   }
 
-  private String createPluginXMLURL(String path){
-    return VirtualFileManager.constructUrl("file", StringUtil.replace(path + "/META-INF/plugin.xml", File.separator, "/"));
-  }
 }

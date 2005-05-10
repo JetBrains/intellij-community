@@ -43,4 +43,10 @@
       <option name="type" value="PLUGIN_MODULE"/>
     </component>  
   </module-components>
+  <actions>
+    <group>
+      <action class="org.jetbrains.idea.devkit.build.PrepareToDeployAction" text="Prepare To Deploy" id="MakeJarAction" />
+      <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="Compile"/>
+    </group>
+  </actions>
 </idea-plugin>
