@@ -19,20 +19,21 @@ public class EmptyStatementBodyInspection extends StatementInspection {
         return "Statement with empty body";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.BUGS_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault(){
         return true;
     }
-    public String buildErrorString(PsiElement location) {
+
+    public String buildErrorString(PsiElement location){
         return "#ref statement has empty body #loc";
     }
 
-    public JComponent createOptionsPanel() {
+    public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel("Include statement bodies that are empty code blocks",
-                this, "m_reportEmptyBlocks");
+                                              this, "m_reportEmptyBlocks");
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {

@@ -131,6 +131,12 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
             if (!boxableConstructorType.equals(argumentTypeText)) {
                 return;
             }
+            final PsiElement parent = expression.getParent();
+            if(parent instanceof PsiExpressionStatement ||
+                    parent instanceof PsiReferenceExpression)
+            {
+                return;
+            }
             registerError(expression);
         }
     }

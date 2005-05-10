@@ -4,9 +4,11 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 
+import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,6 +22,9 @@ public class MagicNumberInspection extends ExpressionInspection {
             };
     /** @noinspection StaticCollection*/
     private static final Set<String> s_specialCaseLiterals = new HashSet<String>(NUM_SPECIAL_CASE_LITERALS);
+
+    public boolean m_ignoreInHashCode = true;
+
     private final IntroduceConstantFix fix = new IntroduceConstantFix();
 
     static {
@@ -40,6 +45,11 @@ public class MagicNumberInspection extends ExpressionInspection {
         return "Magic number '#ref' #loc";
     }
 
+    public JComponent createOptionsPanel(){
+        return new SingleCheckboxOptionsPanel("Ignore constants in hashCode() methods",
+                                              this, "m_ignoreInHashCode");
+    }
+
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
         return true;
     }
@@ -52,7 +62,7 @@ public class MagicNumberInspection extends ExpressionInspection {
         return new MagicNumberVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class MagicNumberVisitor extends BaseInspectionVisitor {
+    private  class MagicNumberVisitor extends BaseInspectionVisitor {
         private MagicNumberVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }
@@ -76,14 +86,30 @@ public class MagicNumberInspection extends ExpressionInspection {
             if (isDeclaredConstant(expression)) {
                 return;
             }
+            if(m_ignoreInHashCode){
+                final PsiMethod containingMethod =
+                        PsiTreeUtil.getParentOfType(expression,
+                                                    PsiMethod.class);
+                if(containingMethod != null && "hashCode"
+                        .equals(containingMethod.getName())){
+                    final PsiParameterList parameterList =
+                            containingMethod.getParameterList();
+                    if(parameterList != null){
+                        final PsiParameter[] parameters = parameterList.getParameters();
+                        if(parameters != null && parameters.length == 0){
+                            return;
+                        }
+                    }
+                }
+            }
             registerError(expression);
         }
 
-        private static boolean isSpecialCase(String text) {
+        private  boolean isSpecialCase(String text) {
             return s_specialCaseLiterals.contains(text);
         }
 
-        private static boolean isDeclaredConstant(PsiLiteralExpression expression) {
+        private  boolean isDeclaredConstant(PsiLiteralExpression expression) {
             final PsiField field =
                     PsiTreeUtil.getParentOfType(expression, PsiField.class);
             if (field == null) {

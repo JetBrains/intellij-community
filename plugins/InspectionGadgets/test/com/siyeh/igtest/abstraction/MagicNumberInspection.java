@@ -17,4 +17,22 @@ public class MagicNumberInspection
         set.toString();
     }
 
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final MagicNumberInspection magicNumberInspection = (MagicNumberInspection) o;
+
+        if (m_foo != magicNumberInspection.m_foo) return false;
+        if (m_foo2 != magicNumberInspection.m_foo2) return false;
+
+        return true;
+    }
+
+    public int hashCode() {
+        int result;
+        result = m_foo;
+        result = 29 * result + m_foo2;
+        return result;
+    }
 }
