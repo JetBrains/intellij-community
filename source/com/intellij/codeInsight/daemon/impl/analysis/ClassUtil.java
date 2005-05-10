@@ -10,7 +10,6 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class ClassUtil {
@@ -76,11 +75,10 @@ public class ClassUtil {
 
   public static PsiMethod getAnyMethodToImplement(PsiClass aClass, MethodSignatureUtil.MethodSignatureToMethods allMethodsCollection) {
     for (List<MethodSignatureBackedByPsiMethod> methodSignatureBackedByPsiMethods : allMethodsCollection.values()) {
-      List<MethodSignatureBackedByPsiMethod> sameSignatureMethods = new ArrayList<MethodSignatureBackedByPsiMethod>(methodSignatureBackedByPsiMethods);
-      PsiSuperMethodUtil.removeOverriddenMethods(sameSignatureMethods, aClass, aClass);
-      if (sameSignatureMethods.size() != 0) {
-        MethodSignatureBackedByPsiMethod methodSignature = sameSignatureMethods.get(0);
-        PsiMethod method = methodSignature.getMethod();
+      List<MethodSignatureBackedByPsiMethod> overrideEquivalentSignatures = new ArrayList<MethodSignatureBackedByPsiMethod>(methodSignatureBackedByPsiMethods);
+      PsiSuperMethodUtil.removeOverriddenMethods(overrideEquivalentSignatures, aClass, aClass);
+      for (MethodSignatureBackedByPsiMethod signature : overrideEquivalentSignatures) {
+        PsiMethod method = signature.getMethod();
         PsiClass containingClass = method.getContainingClass();
         if (containingClass == null || aClass.equals(containingClass)) {
           continue;

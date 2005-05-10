@@ -10,7 +10,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
@@ -303,8 +302,7 @@ public class HighlightMethodUtil {
     if (!(referenceList.getParent() instanceof PsiMethod)) return null;
     PsiMethod method = (PsiMethod)referenceList.getParent();
     if (referenceList != method.getThrowsList()) return null;
-    InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(method.getProject());
-    if (!iManager.isToCheckMember(method, HighlightDisplayKey.UNUSED_THROWS_DECL.toString())) return null;
+    if (!InspectionManagerEx.isToCheckMember(method, HighlightDisplayKey.UNUSED_THROWS_DECL.toString())) return null;
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
 
@@ -740,15 +738,16 @@ public class HighlightMethodUtil {
   static HighlightInfo checkDuplicateMethod(PsiClass aClass, PsiMethod method) {
     if (aClass == null) return null;
 
-    MethodSignatureUtil.MethodSignatureToMethods allMethods = MethodSignatureUtil.getSameSignatureMethods(aClass);
+    MethodSignatureUtil.MethodSignatureToMethods allMethods = MethodSignatureUtil.getOverrideEquivalentMethods(aClass);
     MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
-    List<MethodSignatureBackedByPsiMethod> sameSignatureMethods = allMethods.get(methodSignature);
+    List<MethodSignatureBackedByPsiMethod> overrideEquivalentMethods = allMethods.get(methodSignature);
     int methodCount = 0;
-    if (sameSignatureMethods != null) {
-      for (int i = 0; i < sameSignatureMethods.size(); i++) {
-        MethodSignatureBackedByPsiMethod methodBackedMethodSignature = sameSignatureMethods.get(i);
-        PsiMethod psiMethod = methodBackedMethodSignature.getMethod();
-        if (aClass.getManager().areElementsEquivalent(aClass, psiMethod.getContainingClass())) {
+    if (overrideEquivalentMethods != null) {
+      for (int i = 0; i < overrideEquivalentMethods.size(); i++) {
+        MethodSignatureBackedByPsiMethod otherSignature = overrideEquivalentMethods.get(i);
+        PsiMethod psiMethod = otherSignature.getMethod();
+        if (aClass.getManager().areElementsEquivalent(aClass, psiMethod.getContainingClass()) &&
+          otherSignature.equals(methodSignature)) {
           if (psiMethod.isConstructor() == method.isConstructor()) {
             methodCount++;
             if (methodCount > 1) break;
@@ -965,14 +964,14 @@ public class HighlightMethodUtil {
   // JLS 9.4.1, 8.4.6.4: compile-time error occurs if, for any two inherited methods with the same signature ,
   //  either they have different return types or one has a return type and the other is void, with
   // corrections about covariant return types in JLS3
-  public static HighlightInfo checkInheritedMethodsWithSameSignature(PsiClass aClass) {
+  public static HighlightInfo checkOverrideEquivalentInheritedMethods(PsiClass aClass) {
     PsiClass[] superClasses = aClass.getSupers();
     // conflicts possible only if there are at least two super classes
     if (superClasses.length <= 1) return null;
 
     PsiManager manager = aClass.getManager();
     PsiClass objectClass = manager.findClass("java.lang.Object", aClass.getResolveScope());
-    MethodSignatureUtil.MethodSignatureToMethods allMethods = MethodSignatureUtil.getSameSignatureMethods(aClass);
+    MethodSignatureUtil.MethodSignatureToMethods allMethods = MethodSignatureUtil.getOverrideEquivalentMethods(aClass);
 
     for (List<MethodSignatureBackedByPsiMethod> methodSignatureBackedByPsiMethods : allMethods.values()) {
       ProgressManager.getInstance().checkCanceled();
@@ -1136,8 +1135,7 @@ public class HighlightMethodUtil {
                                                       List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
                                                       DaemonCodeAnalyzerSettings settings) {
     if (!settings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.DEPRECATED_SYMBOL)) return null;
-    InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(methodSignature.getMethod().getProject());
-    if (!manager.isToCheckMember(methodSignature.getMethod(), HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
+    if (!InspectionManagerEx.isToCheckMember(methodSignature.getMethod(), HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
     PsiMethod method = methodSignature.getMethod();
     PsiElement methodName = method.getNameIdentifier();
     for (int i = 0; i < superMethodSignatures.size(); i++) {

@@ -77,7 +77,7 @@ public class PsiSuperMethodImplUtil {
   private static List<MethodSignatureBackedByPsiMethod> findSuperMethodSignatures(PsiMethod method,
                                                                                   PsiClass parentClass, boolean allowStaticMethod) {
     final boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-    final MethodSignatureUtil.MethodSignatureToMethods allMethodsCollection = MethodSignatureUtil.getSameSignatureMethods(parentClass);
+    final MethodSignatureUtil.MethodSignatureToMethods allMethodsCollection = MethodSignatureUtil.getOverrideEquivalentMethods(parentClass);
     final MethodSignature originalMethodSignature = method.getSignature(PsiSubstitutor.EMPTY);
     final List<MethodSignatureBackedByPsiMethod> methods = allMethodsCollection.get(originalMethodSignature);
     List<MethodSignatureBackedByPsiMethod> sameSignatureMethods = new ArrayList<MethodSignatureBackedByPsiMethod>();

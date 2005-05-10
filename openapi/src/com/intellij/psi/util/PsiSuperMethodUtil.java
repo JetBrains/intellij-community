@@ -100,8 +100,7 @@ public class PsiSuperMethodUtil {
   private static void getMethodHierarchy(PsiMethod method, PsiClass aClass, Map<PsiMethod, List<PsiMethod>> map, List<PsiMethod> allMethods) {
     final PsiClass[] superTypes = aClass.getSupers();
     final int startMethodIndex = allMethods.size();
-    for (int i = 0; i < superTypes.length; i++) {
-      PsiClass superType = superTypes[i];
+    for (PsiClass superType : superTypes) {
       final PsiMethod superMethod;
       superMethod = MethodSignatureUtil.findMethodBySignature(superType, method, false);
       if (superMethod == null) {
@@ -137,22 +136,24 @@ public class PsiSuperMethodUtil {
       for (int j = 0; j < sameSignatureMethods.size(); j++) {
         if (i==j) continue;
         final MethodSignatureBackedByPsiMethod methodBackedMethodSignature2 = sameSignatureMethods.get(j);
-        PsiMethod method2 = methodBackedMethodSignature2.getMethod();
-        final PsiClass class2 = method2.getContainingClass();
-        if (InheritanceUtil.isInheritorOrSelf(class2, class1, true)
-            // method from interface cannot override method from Object
-            && !(!place.isInterface() && "java.lang.Object".equals(class1.getQualifiedName()) && class2.isInterface())
-            && !(method1.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && !method1.getManager().arePackagesTheSame(class1, class2))) {
-          overridden = true;
-          break;
-        }
-        // check for sibling override: class Context extends Implementations implements Declarations {}
-        // see JLS 8.4.6.4
-        if (!method2.hasModifierProperty(PsiModifier.ABSTRACT)
-            && PsiUtil.isAccessible(method1, contextClass, contextClass)
-            && PsiUtil.isAccessible(method2, contextClass, contextClass)) {
-          overridden = true;
-          break;
+        if (MethodSignatureUtil.isSubsignature(methodBackedMethodSignature1, methodBackedMethodSignature2)) {
+          PsiMethod method2 = methodBackedMethodSignature2.getMethod();
+          final PsiClass class2 = method2.getContainingClass();
+          if (InheritanceUtil.isInheritorOrSelf(class2, class1, true)
+              // method from interface cannot override method from Object
+              && !(!place.isInterface() && "java.lang.Object".equals(class1.getQualifiedName()) && class2.isInterface())
+              && !(method1.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && !method1.getManager().arePackagesTheSame(class1, class2))) {
+            overridden = true;
+            break;
+          }
+          // check for sibling override: class Context extends Implementations implements Declarations {}
+          // see JLS 8.4.6.4
+          if (!method2.hasModifierProperty(PsiModifier.ABSTRACT)
+              && PsiUtil.isAccessible(method1, contextClass, contextClass)
+              && PsiUtil.isAccessible(method2, contextClass, contextClass)) {
+            overridden = true;
+            break;
+          }
         }
       }
       if (overridden) {

@@ -24,11 +24,14 @@ public class MethodSignatureHandMade extends MethodSignatureBase {
   }
 
   public boolean isRaw() {
-    for (int i = 0; i < myTypeParameters.length; i++) {
-      final PsiTypeParameter typeParameter = myTypeParameters[i];
+    for (final PsiTypeParameter typeParameter : myTypeParameters) {
       if (getSubstitutor().substitute(typeParameter) == null) return true;
     }
     return false;
+  }
+
+  public boolean isInGenericContext() {
+    return !isRaw();
   }
 
 }

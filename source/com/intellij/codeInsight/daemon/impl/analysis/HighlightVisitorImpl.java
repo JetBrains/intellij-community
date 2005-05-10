@@ -490,7 +490,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkConstructorHandleSuperClassExceptions(method));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodSameNameAsConstructor(method));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkRecursiveConstructorInvocation(method));
-    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkSameErasureSuperMethods(method));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkSameErasureMethods(method));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkOverrideAnnotation(method));
     if (!myHolder.hasErrorResults() && method.isConstructor()) {
@@ -587,7 +586,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       if (!myHolder.hasErrorResults()) {
         myHolder.add(HighlightClassUtil.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass, myRefCountHolder));
       }
-      if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkInheritedMethodsWithSameSignature(aClass));
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkOverrideEquivalentInheritedMethods(aClass));
+      if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkOverrideEquivalentInheritedMethods(aClass));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkCyclicInheritance(aClass));
     }
     else if (parent instanceof PsiPointcutDef) {

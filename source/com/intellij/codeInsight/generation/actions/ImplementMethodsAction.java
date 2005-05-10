@@ -29,7 +29,7 @@ public class ImplementMethodsAction extends BaseCodeInsightAction {
     if (aClass == null) {
       return false;
     }
-    final MethodSignatureUtil.MethodSignatureToMethods allMethods = MethodSignatureUtil.getSameSignatureMethods(aClass);
+    final MethodSignatureUtil.MethodSignatureToMethods allMethods = MethodSignatureUtil.getOverrideEquivalentMethods(aClass);
     return ClassUtil.getAnyMethodToImplement(aClass, allMethods) != null;
   }
 }

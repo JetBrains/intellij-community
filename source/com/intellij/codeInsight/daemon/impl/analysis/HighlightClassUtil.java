@@ -64,7 +64,7 @@ public class HighlightClassUtil {
   }
 
   public static HighlightInfo checkClassWithAbstractMethods(PsiClass aClass, PsiElement highlightElement) {
-    MethodSignatureUtil.MethodSignatureToMethods allMethods = MethodSignatureUtil.getSameSignatureMethods(aClass);
+    MethodSignatureUtil.MethodSignatureToMethods allMethods = MethodSignatureUtil.getOverrideEquivalentMethods(aClass);
     PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass, allMethods);
 
     if (abstractMethod != null && abstractMethod.getContainingClass() != null) {
@@ -92,7 +92,7 @@ public class HighlightClassUtil {
       String baseClassName = aClass.getName();
       String message = MessageFormat.format("''{0}'' is abstract; cannot be instantiated", new Object[]{baseClassName});
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, highlighElement, message);
-      if (!aClass.isInterface() && ClassUtil.getAnyAbstractMethod(aClass, MethodSignatureUtil.getSameSignatureMethods(aClass)) == null) {
+      if (!aClass.isInterface() && ClassUtil.getAnyAbstractMethod(aClass, MethodSignatureUtil.getOverrideEquivalentMethods(aClass)) == null) {
         // suggest to make not abstract only if possible
         QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(aClass, PsiModifier.ABSTRACT, false));
       }
@@ -108,7 +108,7 @@ public class HighlightClassUtil {
       return null;
     }
     HighlightInfo errorResult = null;
-    MethodSignatureUtil.MethodSignatureToMethods allMethods = MethodSignatureUtil.getSameSignatureMethods(aClass);
+    MethodSignatureUtil.MethodSignatureToMethods allMethods = MethodSignatureUtil.getOverrideEquivalentMethods(aClass);
     PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass, allMethods);
     if (abstractMethod != null) {
       String message = MessageFormat.format(CLASS_MUST_BE_ABSTRACT,

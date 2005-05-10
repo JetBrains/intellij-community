@@ -158,9 +158,9 @@ public class TypeConversionUtil {
       else {
         //In jls2 check for method in both interfaces with the same signature but different return types.
         if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
-          Collection<List<MethodSignatureBackedByPsiMethod>> fromClassAllMethods = MethodSignatureUtil.getSameSignatureMethods(fromClass)
+          Collection<List<MethodSignatureBackedByPsiMethod>> fromClassAllMethods = MethodSignatureUtil.getOverrideEquivalentMethods(fromClass)
             .values();
-          final MethodSignatureUtil.MethodSignatureToMethods toClassAllMethods = MethodSignatureUtil.getSameSignatureMethods(toClass);
+          final MethodSignatureUtil.MethodSignatureToMethods toClassAllMethods = MethodSignatureUtil.getOverrideEquivalentMethods(toClass);
 
           for (Iterator<List<MethodSignatureBackedByPsiMethod>> iterator = fromClassAllMethods.iterator(); iterator.hasNext();) {
             List<MethodSignatureBackedByPsiMethod> sameSignatureMethods = iterator.next();

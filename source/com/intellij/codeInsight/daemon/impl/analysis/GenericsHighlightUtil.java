@@ -4,7 +4,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -18,10 +17,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import gnu.trove.THashMap;
 
 /**
  * @author cdr
@@ -35,13 +33,12 @@ public abstract class GenericsHighlightUtil {
                                                          PsiMethodCallExpression call,
                                                          PsiSubstitutor substitutor) {
     PsiTypeParameter[] typeParameters = genericMethod.getTypeParameterList().getTypeParameters();
-    for (int i = 0; i < typeParameters.length; i++) {
-      PsiTypeParameter typeParameter = typeParameters[i];
+    for (PsiTypeParameter typeParameter : typeParameters) {
       PsiType substituted = substitutor.substitute(typeParameter);
       if (substituted == null) return null;
       PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
-      for (int j = 0; j < extendsTypes.length; j++) {
-        PsiType extendsType = substitutor.substituteAndFullCapture(extendsTypes[j]);
+      for (PsiClassType type : extendsTypes) {
+        PsiType extendsType = substitutor.substituteAndFullCapture(type);
         if (!TypeConversionUtil.isAssignable(extendsType, substituted)) {
           PsiClass boundClass = extendsType instanceof PsiClassType ? ((PsiClassType)extendsType).resolve() : null;
           String description = MessageFormat.format(
@@ -123,8 +120,8 @@ public abstract class GenericsHighlightUtil {
         if (!(type instanceof PsiClassType)) continue;
         final PsiClass referenceClass = ((PsiClassType)type).resolve();
         final PsiClassType[] bounds = classParameter.getSuperTypes();
-        for (int j = 0; j < bounds.length; j++) {
-          PsiType bound = substitutor.substitute(bounds[j]);
+        for (PsiClassType type1 : bounds) {
+          PsiType bound = substitutor.substitute(type1);
           if (!bound.equalsToText("java.lang.Object") && !TypeConversionUtil.isAssignable(bound, type)) {
             PsiClass boundClass = bound instanceof PsiClassType ? ((PsiClassType)bound).resolve() : null;
             String description = MessageFormat.format("Type parameter ''{0}'' is not within its bound; should {1} ''{2}''",
@@ -205,9 +202,8 @@ public abstract class GenericsHighlightUtil {
                                                                  PsiSubstitutor parentSubstitutor,
                                                                  Map<PsiClass, PsiSubstitutor> inheritedClasses,
                                                                  TextRange textRange) {
-    final PsiClassType[] types = aClass.getSuperTypes();
-    for (int i = 0; i < types.length; i++) {
-      PsiClassType superType = types[i];
+    final PsiClassType[] superTypes = aClass.getSuperTypes();
+    for (PsiClassType superType : superTypes) {
       final PsiClassType.ClassResolveResult result = superType.resolveGenerics();
       final PsiClass superClass = result.getElement();
       if (superClass == null) continue;
@@ -217,15 +213,14 @@ public abstract class GenericsHighlightUtil {
       final PsiSubstitutor inheritedSubstitutor = inheritedClasses.get(superClass);
       if (inheritedSubstitutor != null) {
         final PsiTypeParameter[] typeParameters = superClass.getTypeParameterList().getTypeParameters();
-        for (int j = 0; j < typeParameters.length; j++) {
-          PsiTypeParameter typeParameter = typeParameters[j];
+        for (PsiTypeParameter typeParameter : typeParameters) {
           PsiType type1 = inheritedSubstitutor.substitute(typeParameter);
           PsiType type2 = superTypeSubstitutor.substitute(typeParameter);
 
           if (!Comparing.equal(type1, type2)) {
             String description = MessageFormat.format("''{0}'' cannot be inherited with different type arguments: ''{1}'' and ''{2}''",
                                                       new Object[]{HighlightUtil.formatClass(superClass), HighlightUtil.formatType(type1),
-                                                                   HighlightUtil.formatType(type2)});
+                                                        HighlightUtil.formatType(type2)});
             return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
           }
         }
@@ -241,69 +236,55 @@ public abstract class GenericsHighlightUtil {
   public static HighlightInfo checkSameErasureMethods(PsiMethod method) {
     final PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
-    final List<MethodSignatureBackedByPsiMethod> sameNameMethodSignatures = MethodSignatureUtil.findMethodSignaturesByName(aClass,
-                                                                                                                           method.getName(),
-                                                                                                                           false);
-    for (int i = 0; i < sameNameMethodSignatures.size(); i++) {
-      final MethodSignatureBackedByPsiMethod methodSignature = sameNameMethodSignatures.get(i);
-      PsiMethod otherMethod = methodSignature.getMethod();
-      if (otherMethod == method || method.isConstructor() != otherMethod.isConstructor()) continue;
-      if (MethodSignatureUtil.areParametersErasureEqual(otherMethod, method)) {
-        String description = MessageFormat.format("{0}; both methods have same erasure.",
-                                     new Object[]{HighlightMethodUtil.createClashMethodMessage(method,otherMethod, false)});
-        TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(method);
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
-      }
-    }
-    return null;
-  }
-
-  public static HighlightInfo checkSameErasureSuperMethods(PsiMethod method) {
-    if (method.isConstructor()) return null;
-    final PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return null;
-    /**
-     * It is a compile time error if a type declaration T has a member method m1 and there exists a method
-     * m2 declared in T or a supertype of T such that all of the following conditions hold:
-     * - m1 and m2 have the same name.
-     * - m2 is accessible from T.
-     * - m1 and m2 have different signatures.
-     * - m1 or some method m1 overrides (directly or indirectly) has the same erasure as m2 or some
-     *    method m2 overrides (directly or indirectly).
-     */
-    final List<MethodSignatureBackedByPsiMethod> sameNameMethodSignatures = MethodSignatureUtil.findMethodSignaturesByName(aClass,
-                                                                                                                           method.getName(),
-                                                                                                                           true);
-    final MethodSignatureUtil.MethodSignatureToMethods sameSignatureMethods = MethodSignatureUtil.getSameSignatureMethods(aClass);
+    final MethodSignatureUtil.MethodSignatureToMethods sameSignatureMethods = MethodSignatureUtil.getOverrideEquivalentMethods(aClass);
     MethodSignature originalMethodSignature = method.getSignature(PsiSubstitutor.EMPTY);
-    final List<MethodSignatureBackedByPsiMethod> sameSignatureMethodList1 = sameSignatureMethods.get(originalMethodSignature);
-    if (sameSignatureMethodList1 == null) return null;
-    // find among sameNameMethods method m2 such that it has different signature and there is(are) supermethod(s) with the same erasure
-    for (int i = 0; i < sameNameMethodSignatures.size(); i++) {
-      final MethodSignatureBackedByPsiMethod methodSignature = sameNameMethodSignatures.get(i);
+    final List<MethodSignatureBackedByPsiMethod> overrideEquivalentList = sameSignatureMethods.get(originalMethodSignature);
+    if (overrideEquivalentList == null) return null;
+    for (MethodSignatureBackedByPsiMethod superSignature : overrideEquivalentList) {
+      PsiMethod superMethod = superSignature.getMethod();
+      final boolean sameClass = method.getManager().areElementsEquivalent(method.getContainingClass(), superMethod.getContainingClass());
+      if (superMethod == method || (method.isConstructor() && !sameClass)) continue;
+      if (!MethodSignatureUtil.isSubsignature(superSignature, originalMethodSignature)) {
+        final String pattern = sameClass ?
+                               "{0}; both methods have same erasure." :
+                               "{0}; both methods have same erasure, yet neither overrides the other";
+        String description = MessageFormat.format(pattern,
+                                                                             new Object[]{HighlightMethodUtil.createClashMethodMessage(method, superMethod, !sameClass)});
+                                   TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(method);
+                                   return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
+      }
+    }
 
-      if (methodSignature.equals(originalMethodSignature)) continue;
-      final List<MethodSignatureBackedByPsiMethod> sameSignatureMethodList2 = sameSignatureMethods.get(methodSignature);
-      // if there are methods in sameSignatureMethodList1 and sameSignatureMethodList2 with the same erasure
-      for (int j = 0; j < sameSignatureMethodList1.size(); j++) {
-        final MethodSignatureBackedByPsiMethod methodSignature1 = sameSignatureMethodList1.get(j);
-        if (methodSignature1 == null) continue;
-        PsiMethod method1 = methodSignature1.getMethod();
-        for (int k = 0; k < sameSignatureMethodList2.size(); k++) {
-          final MethodSignatureBackedByPsiMethod methodSignature2 = sameSignatureMethodList2.get(k);
-          if (methodSignature2 == null) continue;
-          PsiMethod method2 = methodSignature2.getMethod();
-          if (method1 != method2 && MethodSignatureUtil.areParametersErasureEqual(method1, method2)) {
-            String description = MessageFormat.format("{0}; both methods have same erasure, yet neither overrides the other",
-                                                      new Object[]{HighlightMethodUtil.createClashMethodMessage(method1, method2, true)});
-            TextRange textRange = HighlightUtil.getMethodDeclarationTextRange(method);
-            return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
-          }
+    return null;
+  }
+
+  public static HighlightInfo checkOverrideEquivalentInheritedMethods(final PsiClass aClass) {
+    final MethodSignatureUtil.MethodSignatureToMethods methods = MethodSignatureUtil.getOverrideEquivalentMethods(aClass);
+    final Collection<List<MethodSignatureBackedByPsiMethod>> lists = methods.values();
+    Map<MethodSignature, List<MethodSignatureBackedByPsiMethod>> components = new THashMap<MethodSignature, List<MethodSignatureBackedByPsiMethod>>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+    Map<List<MethodSignatureBackedByPsiMethod>, PsiMethod> inverse = new HashMap<List<MethodSignatureBackedByPsiMethod>, PsiMethod>();
+    PsiManager manager = aClass.getManager();
+    for (List<MethodSignatureBackedByPsiMethod> overrideEquivalents : lists) {
+      for (MethodSignatureBackedByPsiMethod signature : overrideEquivalents) {
+        final PsiMethod method = signature.getMethod();
+        if (!manager.getResolveHelper().isAccessible(method, aClass, null)) continue;
+        final MethodSignature originalSignature = method.getSignature(PsiSubstitutor.EMPTY);
+        final List<MethodSignatureBackedByPsiMethod> component = components.get(originalSignature);
+        if (component != null && component != overrideEquivalents) {
+          final String pattern = "{0}; both methods have same erasure, yet neither overrides the other";
+          String description = MessageFormat.format(pattern, new Object[]{
+            HighlightMethodUtil.createClashMethodMessage(method, inverse.get(component), true)});
+          TextRange textRange = ClassUtil.getClassDeclarationTextRange(aClass);
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
         }
+
+        components.put(originalSignature, overrideEquivalents);
+        inverse.put(overrideEquivalents, method);
       }
     }
     return null;
   }
+
 
   public static HighlightInfo checkTypeParameterInstantiation(PsiNewExpression expression) {
     PsiJavaCodeReferenceElement classReference = expression.getClassReference();
@@ -387,8 +368,7 @@ public abstract class GenericsHighlightUtil {
     if (!isGenericToRaw(lType, rType)) return null;
     String description = MessageFormat.format("Unchecked assignment: ''{0}'' to ''{1}''",
                                               new Object[]{HighlightUtil.formatType(rType), HighlightUtil.formatType(lType)});
-    final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(elementToHighlight.getProject());
-    if (iManager.inspectionResultSuppressed(elementToHighlight, HighlightDisplayKey.UNCHECKED_WARNING.toString())) return null;
+    if (InspectionManagerEx.inspectionResultSuppressed(elementToHighlight, HighlightDisplayKey.UNCHECKED_WARNING.toString())) return null;
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
                                                                       elementToHighlight,
                                                                       description);
@@ -420,8 +400,7 @@ public abstract class GenericsHighlightUtil {
     if (isUncheckedTypeCast(castType, exprType)) {
       String description = MessageFormat.format("Unchecked cast: ''{0}'' to ''{1}''",
                                                 new Object[]{HighlightUtil.formatType(exprType), HighlightUtil.formatType(castType)});
-      final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(expression.getProject());
-      if (iManager.inspectionResultSuppressed(expression, HighlightDisplayKey.UNCHECKED_WARNING.toString())) return null;
+      if (InspectionManagerEx.inspectionResultSuppressed(expression, HighlightDisplayKey.UNCHECKED_WARNING.toString())) return null;
 
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
                                                                       typeCast,
@@ -445,8 +424,8 @@ public abstract class GenericsHighlightUtil {
 
     if (exprType instanceof PsiIntersectionType) {
       final PsiType[] conjuncts = ((PsiIntersectionType)exprType).getConjuncts();
-      for (int i = 0; i < conjuncts.length; i++) {
-        if (isUncheckedTypeCast(castType, conjuncts[i])) return true;
+      for (PsiType type : conjuncts) {
+        if (isUncheckedTypeCast(castType, type)) return true;
       }
       return false;
     }
@@ -512,8 +491,7 @@ public abstract class GenericsHighlightUtil {
     final PsiMethod method = (PsiMethod)resolveResult.getElement();
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
+    for (final PsiParameter parameter : parameters) {
       final PsiType parameterType = parameter.getType();
       if (parameterType == null) continue;
       if (parameterType.accept(new PsiTypeVisitor<Boolean>() {
@@ -552,9 +530,10 @@ public abstract class GenericsHighlightUtil {
         PsiType type = elementFactory.createType(method.getContainingClass(), substitutor);
         String description = MessageFormat.format("Unchecked call to ''{0}'' as a member of raw type ''{1}''",
                                                   new Object[]{HighlightUtil.formatMethod(method), HighlightUtil.formatType(type)});
-        PsiElement element = call instanceof PsiMethodCallExpression ? (PsiElement)((PsiMethodCallExpression)call).getMethodExpression() : call;
-        final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(call.getProject());
-        if (iManager.inspectionResultSuppressed(call, HighlightDisplayKey.UNCHECKED_WARNING.toString())) return null;
+        PsiElement element = call instanceof PsiMethodCallExpression
+                             ? (PsiElement)((PsiMethodCallExpression)call).getMethodExpression()
+                             : call;
+        if (InspectionManagerEx.inspectionResultSuppressed(call, HighlightDisplayKey.UNCHECKED_WARNING.toString())) return null;
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, element, description);
         QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(element.getContainingFile()));
         QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
@@ -655,8 +634,7 @@ public abstract class GenericsHighlightUtil {
       PsiType componentType = type.getDeepComponentType();
       if (componentType instanceof PsiClassType) {
         PsiType[] parameters = ((PsiClassType)componentType).getParameters();
-        for (int i = 0; i < parameters.length; i++) {
-          PsiType parameter = parameters[i];
+        for (PsiType parameter : parameters) {
           if (!(parameter instanceof PsiWildcardType) || ((PsiWildcardType)parameter).getBound() != null) {
             return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                      element,
@@ -772,8 +750,7 @@ public abstract class GenericsHighlightUtil {
       PsiClass superClass = method.getContainingClass().getSuperClass();
       if (superClass != null) {
         PsiMethod[] superMethods = method.findSuperMethods();
-        for (int i = 0; i < superMethods.length; i++) {
-          PsiMethod superMethod = superMethods[i];
+        for (PsiMethod superMethod : superMethods) {
           if (InheritanceUtil.isInheritorOrSelf(superClass, superMethod.getContainingClass(), true)) return null;
         }
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, overrideAnnotation,
@@ -822,12 +799,12 @@ public abstract class GenericsHighlightUtil {
   public static List<HighlightInfo> checkEnumConstantModifierList(PsiModifierList modifierList) {
     List<HighlightInfo> list = null;
     PsiElement[] children = modifierList.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      if (children[i] instanceof PsiKeyword) {
+    for (PsiElement child : children) {
+      if (child instanceof PsiKeyword) {
         if (list == null) {
           list = new ArrayList<HighlightInfo>();
         }
-        list.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, children[i], "No modifiers allowed for enum constants"));
+        list.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, child, "No modifiers allowed for enum constants"));
       }
     }
     return list;
@@ -882,8 +859,7 @@ public abstract class GenericsHighlightUtil {
   public static HighlightInfo checkUncheckedOverriding (PsiMethod overrider, final List<MethodSignatureBackedByPsiMethod> superMethodSignatures) {
     if (overrider.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
     if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
-    for (Iterator<MethodSignatureBackedByPsiMethod> iterator = superMethodSignatures.iterator(); iterator.hasNext();) {
-      MethodSignatureBackedByPsiMethod signature = iterator.next();
+    for (MethodSignatureBackedByPsiMethod signature : superMethodSignatures) {
       PsiMethod baseMethod = signature.getMethod();
       PsiSubstitutor substitutor = signature.getSubstitutor();
       if (PsiUtil.isRawSubstitutor(baseMethod, substitutor)) continue;
@@ -893,10 +869,13 @@ public abstract class GenericsHighlightUtil {
       if (isGenericToRaw(baseReturnType, overriderReturnType)) {
         final String message = MessageFormat.format("Unchecked overriding: return type requires unchecked conversion. Found ''{0}'', required ''{1}''",
                                                     new Object[]{HighlightUtil.formatType(overriderReturnType),
-                                                        HighlightUtil.formatType(baseReturnType)});
+                                                      HighlightUtil.formatType(baseReturnType)});
 
-        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, overrider.getReturnTypeElement(), message);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, overrider.getReturnTypeElement()));
+        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
+                                                                              overrider.getReturnTypeElement(), message);
+        QuickFixAction.registerQuickFixAction(highlightInfo,
+                                              new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING,
+                                                                              overrider.getReturnTypeElement()));
         QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
         return highlightInfo;
       }

@@ -10,8 +10,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.util.containers.HashSet;
-import gnu.trove.Equality;
+import gnu.trove.THashMap;
+import gnu.trove.TObjectHashingStrategy;
 
 import java.util.*;
 
@@ -39,7 +39,7 @@ public class MethodSignatureUtil {
     return new MethodSignatureHandMade(name, parameterTypes, typeParameterList, substitutor);
   }
 
-  private static final Equality<MethodSignature> METHOD_PARAMETERS_ERASURE_EQUALITY = new MethodParametersErasureEquality();
+  public static final TObjectHashingStrategy<MethodSignature> METHOD_PARAMETERS_ERASURE_EQUALITY = new MethodParametersErasureEquality();
 
   /**
    * @deprecated use areSignaturesEqual() which takes correct substitutors
@@ -81,8 +81,6 @@ public class MethodSignatureUtil {
     final PsiType[] parameterTypes2 = sig2.getParameterTypes();
     if (parameterTypes1.length != parameterTypes2.length) return true;
 
-    if (sig1.getTypeParameters().length != sig2.getTypeParameters().length) return true;
-
     // optimization: check for really different types in method parameters
     for (int i = 0; i < parameterTypes1.length; i++) {
       PsiType type1 = parameterTypes1[i];
@@ -120,14 +118,9 @@ public class MethodSignatureUtil {
   }
 
   /**
-   * @return Map: PsiMethod method -> List sameSignatureMethods list of methods with the same signatures declared in aClass ancestors including self
+   * @return Map: PsiMethod method -> List overrideEquivalentMethods list of override candidates methods declared in aClass ancestors including self
    */
-  public static MethodSignatureToMethods getSameSignatureMethods(PsiClass aClass) {
-    return getSameSignatureMethods(aClass, new HashSet<PsiClass>());
-  }
-
-  private static MethodSignatureToMethods getSameSignatureMethods(PsiClass aClass,
-                                                                  Set<PsiClass> visitedClasses) {
+  public static MethodSignatureToMethods getOverrideEquivalentMethods(PsiClass aClass) {
     CachedValue<MethodSignatureToMethods> cachedValue = aClass.getUserData(METHOD_SIGNATURES_COLLECTION_KEY);
     if (cachedValue == null) {
       MethodSignaturesProvider methodSignaturesProvider = new MethodSignaturesProvider(aClass);
@@ -137,7 +130,7 @@ public class MethodSignatureUtil {
 
     MethodSignatureToMethods map = cachedValue.getValue();
     if (map == null) {
-      LOG.error("Return null for '" + PsiFormatUtil.formatClass(aClass, PsiFormatUtil.SHOW_FQ_NAME) + ", " + visitedClasses);
+      LOG.error("Return null for '" + PsiFormatUtil.formatClass(aClass, PsiFormatUtil.SHOW_FQ_NAME));
     }
     return map;
   }
@@ -146,7 +139,7 @@ public class MethodSignatureUtil {
     private Map<MethodSignature, List<MethodSignatureBackedByPsiMethod>> myMap;
 
     public MethodSignatureToMethods() {
-      myMap = new HashMap<MethodSignature, List<MethodSignatureBackedByPsiMethod>>();
+      myMap = new THashMap<MethodSignature, List<MethodSignatureBackedByPsiMethod>>(METHOD_PARAMETERS_ERASURE_EQUALITY);
     }
 
     public List<MethodSignatureBackedByPsiMethod> get(MethodSignature sig) {
@@ -157,8 +150,8 @@ public class MethodSignatureUtil {
       return myMap.values();
     }
 
-    public void put(MethodSignature methodSignature, List<MethodSignatureBackedByPsiMethod> sameSignatureMethodList) {
-      myMap.put(methodSignature, sameSignatureMethodList);
+    public void put(MethodSignature methodSignature, List<MethodSignatureBackedByPsiMethod> overrideEquivalentsList) {
+      myMap.put(methodSignature, overrideEquivalentsList);
     }
   }
 
@@ -192,8 +185,7 @@ public class MethodSignatureUtil {
 
     private static void computeMap(MethodSignatureToMethods sameSignatureMethodsMap, final PsiClass aClass) {
       List<Pair<PsiMethod, PsiSubstitutor>> allMethodsList = aClass.getAllMethodsAndTheirSubstitutors();
-      for (Iterator<Pair<PsiMethod, PsiSubstitutor>> iterator = allMethodsList.iterator(); iterator.hasNext();) {
-        Pair<PsiMethod, PsiSubstitutor> pair = iterator.next();
+      for (Pair<PsiMethod, PsiSubstitutor> pair : allMethodsList) {
         PsiMethod method = pair.getFirst();
         PsiSubstitutor substitutor = pair.getSecond();
         final MethodSignature methodSignature = method.getSignature(substitutor);
@@ -205,17 +197,6 @@ public class MethodSignatureUtil {
         sameSignatureMethodList.add((MethodSignatureBackedByPsiMethod)methodSignature);
       }
     }
-  }
-
-  public static List<MethodSignatureBackedByPsiMethod> findMethodSignaturesByName(final PsiClass aClass, String name, boolean checkBases) {
-    List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(name, checkBases);
-    if (pairs.size() == 0) return Collections.EMPTY_LIST;
-    final List<MethodSignatureBackedByPsiMethod> result = new ArrayList<MethodSignatureBackedByPsiMethod>(pairs.size());
-    for (int i = 0; i < pairs.size(); i++) {
-      Pair<PsiMethod, PsiSubstitutor> pair = pairs.get(i);
-      result.add(MethodSignatureBackedByPsiMethod.create(pair.first, pair.second));
-    }
-    return result;
   }
 
   public static PsiMethod findMethodBySignature(final PsiClass aClass, PsiMethod pattenMethod, boolean checkBases) {
@@ -289,8 +270,7 @@ public class MethodSignatureUtil {
   public static PsiSubstitutor combineSubstitutors(PsiSubstitutor substitutor, PsiSubstitutor parentSubstitutor) {
     if (substitutor == PsiSubstitutor.EMPTY) return parentSubstitutor;
     final PsiTypeParameter[] typeParameters = substitutor.getSubstitutionMap().keySet().toArray(PsiTypeParameter.EMPTY_ARRAY);
-    for (int i = 0; i < typeParameters.length; i++) {
-      PsiTypeParameter typeParameter = typeParameters[i];
+    for (PsiTypeParameter typeParameter : typeParameters) {
       final PsiType type = substitutor.substitute(typeParameter);
       substitutor = substitutor.put(typeParameter, promoteType(type, parentSubstitutor));
     }
@@ -317,8 +297,13 @@ public class MethodSignatureUtil {
     return parentSubstitutor.substitute(type);
   }
 
-  private static class MethodParametersErasureEquality implements Equality<MethodSignature> {
+  private static class MethodParametersErasureEquality implements TObjectHashingStrategy<MethodSignature> {
+    public int computeHashCode(final MethodSignature signature) {
+      return signature.getName().hashCode() * 5 + signature.getParameterTypes().length * 7; // Q: more precise hashing needed
+    }
+
     public boolean equals(MethodSignature method1, MethodSignature method2) {
+      if (!method1.getName().equals(method2.getName())) return false;
       final PsiType[] parameterTypes1 = method1.getParameterTypes();
       final PsiType[] parameterTypes2 = method2.getParameterTypes();
       if (parameterTypes1.length != parameterTypes2.length) return false;
@@ -339,4 +324,30 @@ public class MethodSignatureUtil {
     }
     return methods;
   }
+
+  public static boolean isSubsignature(MethodSignature superSignature, MethodSignature subSignature) {
+    if (subSignature == superSignature) return true;
+    if (checkDifferentSignaturesLightweight(superSignature, subSignature)) return false;
+    PsiSubstitutor unifyingSubstitutor = getSuperMethodSignatureSubstitutor(superSignature, subSignature);
+    if (!checkSignaturesEqualInner(superSignature, subSignature, unifyingSubstitutor)) {
+      if (!superSignature.isInGenericContext()) {
+        if (subSignature.getTypeParameters().length > 0) return false;
+        final PsiType[] subParameterTypes = subSignature.getParameterTypes();
+        final PsiType[] superParameterTypes = superSignature.getParameterTypes();
+        for (int i = 0; i < subParameterTypes.length; i++) {
+          PsiType type1 = subParameterTypes[i];
+          PsiType type2 = TypeConversionUtil.erasure(superParameterTypes[i]);
+          if (!Comparing.equal(type1, type2)) {
+            return false;
+          }
+        }
+
+        return true;
+      }
+      return false;
+    }
+
+    return true;
+  }
+
 }
