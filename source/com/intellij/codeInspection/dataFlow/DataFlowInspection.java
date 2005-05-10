@@ -309,6 +309,8 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       if (psiElement instanceof PsiExpression) {
         PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
         PsiMethod superMethod = SuperMethodWarningUtil.checkSuperMethod(method, "annotate");
+        if (superMethod == null) return;
+
         if (superMethod != method) {
           annotateMethod(superMethod);
         }
