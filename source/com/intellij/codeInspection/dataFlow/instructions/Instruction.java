@@ -16,17 +16,17 @@ import java.util.ArrayList;
 
 public abstract class Instruction {
   private int myIndex;
-  private final ArrayList myProcessedStates;
+  private final ArrayList<DfaMemoryState> myProcessedStates;
 
   protected Instruction() {
-    myProcessedStates = new ArrayList();
+    myProcessedStates = new ArrayList<DfaMemoryState>();
   }
 
   public abstract DfaInstructionState[] apply(DataFlowRunner runner, DfaMemoryState dfaBeforeMemoryState);
 
   public boolean isMemoryStateProcessed(DfaMemoryState dfaMemState) {
     for (int i = 0; i < myProcessedStates.size(); i++) {
-      DfaMemoryState state = (DfaMemoryState) myProcessedStates.get(i);
+      DfaMemoryState state = myProcessedStates.get(i);
       if (dfaMemState.equals(state)) return true;
     }
 

@@ -1,14 +1,14 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -34,6 +34,12 @@ public class PsiAnnotationImpl extends CompositePsiElement implements PsiModifie
 
   public PsiAnnotationParameterList getParameterList() {
     return (PsiAnnotationParameterList)findChildByRoleAsPsiElement(ChildRole.PARAMETER_LIST);
+  }
+
+  @Nullable public String getQualifiedName() {
+    final PsiJavaCodeReferenceElement nameRef = getNameReferenceElement();
+    if (nameRef == null) return null;
+    return nameRef.getCanonicalText();
   }
 
   public int getChildRole(ASTNode child) {

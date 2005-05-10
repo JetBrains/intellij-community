@@ -436,7 +436,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     PsiExpression returnValue = statement.getReturnValue();
     if (returnValue != null) {
       returnValue.accept(this);
-      addInstruction(new PopInstruction());
+      addInstruction(new CheckReturnValueInstruction(statement));
     }
 
     int finallyOffset = getFinallyOffset();

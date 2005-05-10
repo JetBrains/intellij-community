@@ -8,14 +8,14 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiVariable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Iterator;
-
-import org.jetbrains.annotations.Nullable;
 
 public class DfaVariableState implements Cloneable {
   private HashSet<DfaTypeValue> myInstanceofValues;
@@ -28,8 +28,8 @@ public class DfaVariableState implements Cloneable {
     myVar = var;
     myInstanceofValues = new HashSet<DfaTypeValue>();
     myNotInstanceofValues = new HashSet<DfaTypeValue>();
-    myNullable = var != null && var.getModifierList().findAnnotation(DataFlowRunner.NULLABLE) != null;
-    myVariableIsDeclaredNotNull = var != null && var.getModifierList().findAnnotation(DataFlowRunner.NOT_NULL) != null;
+    myNullable = var != null && AnnotationUtil.isNullable(var);
+    myVariableIsDeclaredNotNull = var != null && AnnotationUtil.isNotNull(var);
   }
 
   public boolean isNullable() {
@@ -101,16 +101,16 @@ public class DfaVariableState implements Cloneable {
     StringBuffer buf = new StringBuffer();
 
     buf.append("instanceof {");
-    for (Iterator iterator = myInstanceofValues.iterator(); iterator.hasNext();) {
-      DfaTypeValue dfaTypeValue = (DfaTypeValue) iterator.next();
+    for (Iterator<DfaTypeValue> iterator = myInstanceofValues.iterator(); iterator.hasNext();) {
+      DfaTypeValue dfaTypeValue = iterator.next();
       buf.append(dfaTypeValue);
       if (iterator.hasNext()) buf.append(", ");
     }
     buf.append("} ");
 
     buf.append("not instanceof {");
-    for (Iterator iterator = myNotInstanceofValues.iterator(); iterator.hasNext();) {
-      DfaTypeValue dfaTypeValue = (DfaTypeValue) iterator.next();
+    for (Iterator<DfaTypeValue> iterator = myNotInstanceofValues.iterator(); iterator.hasNext();) {
+      DfaTypeValue dfaTypeValue = iterator.next();
       buf.append(dfaTypeValue);
       if (iterator.hasNext()) buf.append(", ");
     }

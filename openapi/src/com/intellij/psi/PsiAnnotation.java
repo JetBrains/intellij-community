@@ -4,6 +4,8 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author ven
  */
@@ -13,6 +15,9 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue {
   String DEFAULT_REFERENCED_METHOD_NAME = "value";
 
   PsiAnnotationParameterList getParameterList();
+
+  @Nullable (documentation = "May return null if unresolved")
+  String getQualifiedName();
 
   PsiJavaCodeReferenceElement getNameReferenceElement ();
 

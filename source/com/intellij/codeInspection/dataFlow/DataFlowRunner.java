@@ -8,6 +8,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.instructions.BinopInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
@@ -18,6 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReturnStatement;
 
 import java.util.ArrayList;
 import java.util.EmptyStackException;
@@ -34,19 +37,25 @@ public class DataFlowRunner {
   private final HashSet<Instruction> myCCEInstructions;
   private final HashSet<PsiExpression> myNullableArguments;
   private final HashSet<PsiExpression> myNullableAssignments;
+  private final HashSet<PsiReturnStatement> myNullableReturns;
   private DfaValueFactory myValueFactory;
-  public static final String NULLABLE = "org.jetbrains.annotations.Nullable";
-  public static final String NOT_NULL = "org.jetbrains.annotations.NotNull";
+
+  private final boolean mySuggestNullableAnnotations;
+  private boolean myInNullableMethod = false;
+  private boolean myInNotNullMethod = false;
+  private boolean myIsInMethod = false;
 
   public Instruction getInstruction(int index) {
     return myInstructions[index];
   }
 
-  public DataFlowRunner() {
+  public DataFlowRunner(boolean suggestNullableAnnotations) {
+    mySuggestNullableAnnotations = suggestNullableAnnotations;
     myNPEInstructions = new HashSet<Instruction>();
     myCCEInstructions = new HashSet<Instruction>();
     myNullableArguments = new HashSet<PsiExpression>();
     myNullableAssignments = new HashSet<PsiExpression>();
+    myNullableReturns = new HashSet<PsiReturnStatement>();
     myValueFactory = new DfaValueFactory();
   }
 
@@ -55,6 +64,14 @@ public class DataFlowRunner {
   }
 
   public boolean analyzeMethod(PsiCodeBlock psiBlock) {
+    myIsInMethod = psiBlock.getParent() instanceof PsiMethod;
+
+    if (myIsInMethod) {
+      PsiMethod method = (PsiMethod)psiBlock.getParent();
+      myInNullableMethod = AnnotationUtil.isNullable(method);
+      myInNotNullMethod = AnnotationUtil.isNotNull(method);
+    }
+
     try {
       ControlFlow flow = new ControlFlowAnalyzer(myValueFactory).buildControlFlow(psiBlock);
       if (flow == null) return false;
@@ -70,8 +87,7 @@ public class DataFlowRunner {
       }
 
       int branchCount = 0;
-      for (int i = 0; i < myInstructions.length; i++) {
-        Instruction instruction = myInstructions[i];
+      for (Instruction instruction : myInstructions) {
         if (instruction instanceof BranchingInstruction) branchCount++;
       }
 
@@ -100,8 +116,7 @@ public class DataFlowRunner {
 
         DfaInstructionState[] after = instruction.apply(DataFlowRunner.this, instructionState.getMemoryState());
         if (after != null) {
-          for (int i = 0; i < after.length; i++) {
-            DfaInstructionState state = after[i];
+          for (DfaInstructionState state : after) {
             Instruction nextInstruction = state.getInstruction();
             if (!(nextInstruction instanceof BranchingInstruction) ||
                 !nextInstruction.isMemoryStateProcessed(state.getMemoryState())) {
@@ -137,8 +152,7 @@ public class DataFlowRunner {
 
   public Set<Instruction> getRedundantInstanceofs() {
     HashSet<Instruction> result = new HashSet<Instruction>(1);
-    for (int i = 0; i < myInstructions.length; i++) {
-      Instruction instruction = myInstructions[i];
+    for (Instruction instruction : myInstructions) {
       if (instruction instanceof BinopInstruction) {
         if (((BinopInstruction)instruction).isInstanceofRedundant()) {
           result.add(instruction);
@@ -147,6 +161,18 @@ public class DataFlowRunner {
     }
 
     return result;
+  }
+
+  public HashSet<PsiReturnStatement> getNullableReturns() {
+    return myNullableReturns;
+  }
+
+  public boolean isInNullableMethod() {
+    return myInNullableMethod;
+  }
+
+  public boolean isInNotNullMethod() {
+    return myInNotNullMethod;
   }
 
   public Set<PsiExpression> getNullableArguments() {
@@ -165,8 +191,7 @@ public class DataFlowRunner {
     HashSet<BranchingInstruction> trueSet = new HashSet<BranchingInstruction>();
     HashSet<BranchingInstruction> falseSet = new HashSet<BranchingInstruction>();
 
-    for (int i = 0; i < myInstructions.length; i++) {
-      Instruction instruction = myInstructions[i];
+    for (Instruction instruction : myInstructions) {
       if (instruction instanceof BranchingInstruction) {
         BranchingInstruction branchingInstruction = (BranchingInstruction)instruction;
         if (branchingInstruction.getPsiAnchor() != null && branchingInstruction.isConditionConst()) {
@@ -181,8 +206,7 @@ public class DataFlowRunner {
       }
     }
 
-    for (int i = 0; i < myInstructions.length; i++) {
-      Instruction instruction = myInstructions[i];
+    for (Instruction instruction : myInstructions) {
       if (instruction instanceof BranchingInstruction) {
         BranchingInstruction branchingInstruction = (BranchingInstruction)instruction;
         if (branchingInstruction.isTrueReachable()) {
@@ -203,5 +227,24 @@ public class DataFlowRunner {
 
   public void onAssigningToNotNullableVariable(final PsiExpression expr) {
     myNullableAssignments.add(expr);
+  }
+
+  public void onNullableReturn(final PsiReturnStatement statement) {
+    if (myInNullableMethod || !myIsInMethod) return;
+    if (myInNotNullMethod || mySuggestNullableAnnotations) {
+      myNullableReturns.add(statement);
+    }
+  }
+
+  public boolean problemsDetected() {
+    final HashSet[] constConditions = getConstConditionalExpressions();
+    return constConditions[0].size() > 0 ||
+        constConditions[1].size() > 0 ||
+        myNPEInstructions.size() > 0 ||
+        myCCEInstructions.size() > 0 ||
+        getRedundantInstanceofs().size() > 0 ||
+        myNullableArguments.size() > 0 ||
+        myNullableAssignments.size() > 0 ||
+        myNullableReturns.size() > 0;
   }
 }

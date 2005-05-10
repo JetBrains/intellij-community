@@ -8,6 +8,8 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -15,13 +17,20 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.ex.AddAssertStatementFix;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class DataFlowInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInspection");
@@ -29,7 +38,13 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   private static final String DISPLAY_NAME = "Constant conditions & exceptions";
   public static final String SHORT_NAME = "ConstantConditions";
 
+  public boolean SUGGEST_NULLABLE_ANNOTATIONS = false;
+
   public DataFlowInspection() {
+  }
+
+  public JComponent createOptionsPanel() {
+    return new OptionsPanel();
   }
 
   public ProblemDescriptor[] checkMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {
@@ -51,19 +66,11 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     return allProblems == null ? null : allProblems.toArray(new ProblemDescriptor[allProblems.size()]);
   }
 
-  private static ProblemDescriptor[] analyzeCodeBlock(final PsiCodeBlock body, InspectionManager manager) {
+  private ProblemDescriptor[] analyzeCodeBlock(final PsiCodeBlock body, InspectionManager manager) {
     if (body == null) return null;
-    DataFlowRunner dfaRunner = new DataFlowRunner();
+    DataFlowRunner dfaRunner = new DataFlowRunner(SUGGEST_NULLABLE_ANNOTATIONS);
     if (dfaRunner.analyzeMethod(body)) {
-      HashSet[] constConditions = dfaRunner.getConstConditionalExpressions();
-      if (constConditions[0].size() > 0 ||
-          constConditions[1].size() > 0 ||
-          dfaRunner.getNPEInstructions().size() > 0 ||
-          dfaRunner.getCCEInstructions().size() > 0 ||
-          dfaRunner.getRedundantInstanceofs().size() > 0 ||
-          dfaRunner.getNullableArguments().size() > 0 ||
-          dfaRunner.getNullableAssignments().size() > 0
-        ) {
+      if (dfaRunner.problemsDetected()) {
         return createDescription(dfaRunner, manager);
       }
     }
@@ -200,7 +207,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
             descriptions.add(manager.createProblemDescriptor(psiAnchor, "Condition <code>#ref</code> #loc is always <code>" +
                                                                         (trueSet.contains(instruction) ? "true" : "false") +
                                                                         "</code>.", localQuickFix,
-                                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             reportedAnchors.add(psiAnchor);
           }
         }
@@ -220,6 +227,25 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
                                                        "to a variable that is annotated with @NotNull",
                                                        null,
                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+    }
+
+    final HashSet<PsiReturnStatement> statements = runner.getNullableReturns();
+    for (PsiReturnStatement statement : statements) {
+      if (runner.isInNotNullMethod()) {
+        descriptions.add(manager.createProblemDescriptor(statement.getReturnValue(),
+                                                         "Expression <code>#ref</code> probably evaluates to null and is being " +
+                                                         "returned by the method declared as @NotNull",
+                                                         null,
+                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+      }
+      else if (AnnotationUtil.isAnnotatingApplicable(statement)) {
+        descriptions.add(manager.createProblemDescriptor(statement.getReturnValue(),
+                                                         "Expression <code>#ref</code> probably evaluates to null and is being " +
+                                                         "returned by the method which isn't declared as @Nullable",
+                                                         new AnnotateAsNullableFix(),
+                                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+
+      }
     }
 
     return descriptions.toArray(new ProblemDescriptor[descriptions.size()]);
@@ -273,6 +299,38 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     }
   }
 
+  private static class AnnotateAsNullableFix implements LocalQuickFix {
+    public String getName() {
+      return "Annotate method as @Nullable";
+    }
+
+    public void applyFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement psiElement = descriptor.getPsiElement();
+      if (psiElement instanceof PsiExpression) {
+        PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
+        PsiMethod superMethod = SuperMethodWarningUtil.checkSuperMethod(method, "annotate");
+        if (superMethod != method) {
+          annotateMethod(superMethod);
+        }
+
+        annotateMethod(method);
+      }
+    }
+
+    private void annotateMethod(final PsiMethod method) {
+      if (method.getModifierList().findAnnotation(AnnotationUtil.NULLABLE) != null) return;
+
+      try {
+        method.getModifierList().add(method.getManager().getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NULLABLE,
+                                                                                                      method));
+        CodeStyleManager.getInstance(method.getProject()).shortenClassReferences(method.getModifierList());
+      }
+      catch (IncorrectOperationException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
 
   public String getDisplayName() {
     return DISPLAY_NAME;
@@ -284,5 +342,30 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
   public String getShortName() {
     return SHORT_NAME;
+  }
+
+  private class OptionsPanel extends JPanel {
+    private final JCheckBox mySuggestNullables;
+
+    private OptionsPanel() {
+      super(new GridBagLayout());
+
+      GridBagConstraints gc = new GridBagConstraints();
+      gc.weighty = 0;
+      gc.weightx = 1;
+      gc.fill = GridBagConstraints.HORIZONTAL;
+      gc.anchor = GridBagConstraints.NORTHWEST;
+
+      mySuggestNullables = new JCheckBox("Suggest @Nullable annotation for method possibly return null. Requires JDK5.0 and annotations.jar from IDEA distribution");
+      mySuggestNullables.setSelected(SUGGEST_NULLABLE_ANNOTATIONS);
+      mySuggestNullables.getModel().addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent e) {
+          SUGGEST_NULLABLE_ANNOTATIONS = mySuggestNullables.isSelected();
+        }
+      });
+      gc.insets = new Insets(0, 0, 15, 0);
+      gc.gridy = 0;
+      add(mySuggestNullables, gc);
+    }
   }
 }

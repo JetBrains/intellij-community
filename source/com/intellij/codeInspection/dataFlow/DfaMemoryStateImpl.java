@@ -461,7 +461,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  public boolean applyNotNull(DfaValue value) {
+  public boolean checkNotNullable(DfaValue value) {
     if (value == myFactory.getConstFactory().getNull()) return false;
     if (value instanceof DfaTypeValue && ((DfaTypeValue)value).isNullable()) return false;
 
@@ -470,14 +470,17 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       final DfaVariableState varState = getVariableState((DfaVariableValue)value);
       if (varState.isNullable()) return false;
     }
+    return true;
+  }
 
+  public boolean applyNotNull(DfaValue value) {
+    if (!checkNotNullable(value)) return false;
     return applyCondition(compareToNull(value, true));
   }
 
   private DfaRelationValue compareToNull(DfaValue dfaVar, boolean negated) {
     DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
-    DfaRelationValue myDfaNotNull = myFactory.getRelationFactory().create(dfaVar, dfaNull, "==", negated);
-    return myDfaNotNull;
+    return myFactory.getRelationFactory().create(dfaVar, dfaNull, "==", negated);
   }
 
   private DfaVariableState getVariableState(DfaVariableValue dfaVar) {

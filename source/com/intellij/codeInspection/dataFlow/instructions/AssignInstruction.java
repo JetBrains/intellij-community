@@ -8,12 +8,15 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.psi.PsiVariable;
-import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiVariable;
 
 public class AssignInstruction extends Instruction {
   private PsiExpression myRExpression;
@@ -32,7 +35,7 @@ public class AssignInstruction extends Instruction {
       DfaVariableValue var = (DfaVariableValue) dfaDest;
       final PsiVariable psiVariable = var.getPsiVariable();
       final PsiModifierList modList = psiVariable.getModifierList();
-      if (modList != null && modList.findAnnotation(DataFlowRunner.NOT_NULL) != null) {
+      if (modList != null && modList.findAnnotation(AnnotationUtil.NOT_NULL) != null) {
         if (!memState.applyNotNull(dfaSource)) {
           runner.onAssigningToNotNullableVariable(myRExpression);
         }

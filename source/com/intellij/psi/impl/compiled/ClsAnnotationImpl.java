@@ -2,9 +2,10 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.PsiImplUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -70,6 +71,11 @@ public class ClsAnnotationImpl extends ClsElementImpl implements PsiAnnotation {
 
   public PsiAnnotationParameterList getParameterList() {
     return myParameterList;
+  }
+
+  @Nullable public String getQualifiedName() {
+    if (myReferenceElement == null) return null;
+    return myReferenceElement.getCanonicalText();
   }
 
   public PsiJavaCodeReferenceElement getNameReferenceElement() {

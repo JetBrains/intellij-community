@@ -21,10 +21,10 @@ import java.util.ArrayList;
 import java.util.Stack;
 
 public class ControlFlow {
-  private final ArrayList myInstructions = new ArrayList();
-  private final HashMap myElementToStartOffsetMap = new HashMap();
-  private final HashMap myElementToEndOffsetMap = new HashMap();
-  private final Stack myElementStack = new Stack();
+  private final ArrayList<Instruction> myInstructions = new ArrayList<Instruction>();
+  private final HashMap<PsiElement,Integer> myElementToStartOffsetMap = new HashMap<PsiElement, Integer>();
+  private final HashMap<PsiElement,Integer> myElementToEndOffsetMap = new HashMap<PsiElement, Integer>();
+  private final Stack<PsiElement> myElementStack = new Stack<PsiElement>();
   private DfaVariableValue[] myFields;
   private DfaValueFactory myFactory;
 
@@ -61,13 +61,13 @@ public class ControlFlow {
   }
 
   public int getStartOffset(PsiElement element){
-    Integer value = (Integer)myElementToStartOffsetMap.get(element);
+    Integer value = myElementToStartOffsetMap.get(element);
     if (value == null) return -1;
     return value.intValue();
   }
 
   public int getEndOffset(PsiElement element){
-    Integer value = (Integer)myElementToEndOffsetMap.get(element);
+    Integer value = myElementToEndOffsetMap.get(element);
     if (value == null) return -1;
     return value.intValue();
   }

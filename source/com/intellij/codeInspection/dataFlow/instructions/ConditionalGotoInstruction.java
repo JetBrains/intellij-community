@@ -51,7 +51,7 @@ public class ConditionalGotoInstruction extends BranchingInstruction {
       return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(getIndex() + 1), memState)};
     }
 
-    ArrayList result = new ArrayList();
+    ArrayList<DfaInstructionState> result = new ArrayList<DfaInstructionState>();
 
     DfaMemoryState thenState = memState.createCopy();
     DfaMemoryState elseState = memState.createCopy();
@@ -66,7 +66,7 @@ public class ConditionalGotoInstruction extends BranchingInstruction {
       markBranchReachable(false);
     }
 
-    return (DfaInstructionState[]) result.toArray(new DfaInstructionState[result.size()]);
+    return result.toArray(new DfaInstructionState[result.size()]);
   }
 
   private void markBranchReachable(boolean isTrueBranch) {

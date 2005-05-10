@@ -7,12 +7,15 @@ package com.intellij.psi;
 import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner {
   PsiMethod[] EMPTY_ARRAY = new PsiMethod[0];
 
+  @Nullable(documentation = "Can return null for constructors or it's impossible to resolve return type")
   PsiType getReturnType();
 
   PsiTypeElement getReturnTypeElement();
@@ -31,7 +34,7 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
 
   PsiIdentifier getNameIdentifier();
 
-  PsiMethod[] findSuperMethods();
+  @NotNull PsiMethod[] findSuperMethods();
 
   PsiMethod[] findSuperMethods(boolean checkAccess);
 

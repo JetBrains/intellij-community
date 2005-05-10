@@ -35,4 +35,6 @@ public interface DfaMemoryState {
   void flushVariable(DfaVariableValue variable);
 
   boolean isNull(DfaValue dfaVar);
+
+  boolean checkNotNullable(DfaValue value);
 }

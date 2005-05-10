@@ -20,8 +20,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -37,8 +35,7 @@ public class PsiImplUtil {
   public static PsiMethod[] getConstructors(PsiClass aClass) {
     final List<PsiMethod> constructorsList = new ArrayList<PsiMethod>();
     final PsiMethod[] methods = aClass.getMethods();
-    for (int i = 0; i < methods.length; i++) {
-      final PsiMethod method = methods[i];
+    for (final PsiMethod method : methods) {
       if (method.isConstructor()) constructorsList.add(method);
     }
     return constructorsList.toArray(PsiMethod.EMPTY_ARRAY);
@@ -143,9 +140,9 @@ public class PsiImplUtil {
                                                           boolean checkBases) {
     if (!checkBases) {
       PsiPointcutDef[] pointcuts = psiAspect.getPointcutDefs();
-      for (int i = 0; i < pointcuts.length; i++) {
-        if (MethodSignatureUtil.areSignaturesEqual(pointcuts[i], patternPointcut)) {
-          return pointcuts[i];
+      for (PsiPointcutDef pointcut : pointcuts) {
+        if (MethodSignatureUtil.areSignaturesEqual(pointcut, patternPointcut)) {
+          return pointcut;
         }
       }
       return null;
@@ -160,16 +157,14 @@ public class PsiImplUtil {
 
   public static PsiAnnotationMemberValue findAttributeValue(PsiAnnotation annotation, String attributeName) {
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-    for (int i = 0; i < attributes.length; i++) {
-      PsiNameValuePair attribute = attributes[i];
+    for (PsiNameValuePair attribute : attributes) {
       if (attributeName.equals(attribute.getName())) return attribute.getValue();
     }
 
     PsiElement resolved = annotation.getNameReferenceElement().resolve();
     if (resolved != null) {
       PsiMethod[] methods = ((PsiClass)resolved).getMethods();
-      for (int i = 0; i < methods.length; i++) {
-        PsiMethod method = methods[i];
+      for (PsiMethod method : methods) {
         if (method instanceof PsiAnnotationMethod && attributeName.equals(method.getName())) {
           return ((PsiAnnotationMethod)method).getDefaultValue();
         }
@@ -248,7 +243,7 @@ public class PsiImplUtil {
     return -1;
   }
 
-  public static final Object[] getReferenceVariantsByFilter(PsiJavaCodeReferenceElement reference,
+  public static Object[] getReferenceVariantsByFilter(PsiJavaCodeReferenceElement reference,
                                                             ElementFilter filter) {
     FilterScopeProcessor processor = new FilterScopeProcessor(filter, reference);
     PsiScopesUtil.resolveAndWalk(processor, reference, null, true);
@@ -265,8 +260,8 @@ public class PsiImplUtil {
     }
     if (lastParent instanceof PsiCodeBlock) {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
-      for (int i = 0; i < parameters.length; i++) {
-        if (!processor.execute(parameters[i], substitutor)) return false;
+      for (PsiParameter parameter : parameters) {
+        if (!processor.execute(parameter, substitutor)) return false;
       }
     }
 
@@ -323,10 +318,8 @@ public class PsiImplUtil {
 
   public static PsiAnnotation findAnnotation(PsiModifierList modifierList, String qualifiedName) {
     PsiAnnotation[] annotations = modifierList.getAnnotations();
-    for (int i = 0; i < annotations.length; i++) {
-      PsiAnnotation annotation = annotations[i];
-      final PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
-      if (nameRef != null && qualifiedName.equals(nameRef.getCanonicalText())) return annotation;
+    for (PsiAnnotation annotation : annotations) {
+      if (qualifiedName.equals(annotation.getQualifiedName())) return annotation;
     }
 
     return null;

@@ -8,12 +8,13 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,15 +37,14 @@ public class MethodCallInstruction extends Instruction {
     myArgs = argList != null ? argList.getExpressions() : new PsiExpression[0];
 
     if (callee != null) {
-      final PsiModifierList modifierList = callee.getModifierList();
-      myIsNullable = modifierList.findAnnotation(DataFlowRunner.NULLABLE) != null;
-      myIsNotNull = modifierList.findAnnotation(DataFlowRunner.NOT_NULL) != null;
+      myIsNullable = AnnotationUtil.isNullable(callee);
+      myIsNotNull = AnnotationUtil.isNotNull(callee);
       final PsiParameter[] params = callee.getParameterList().getParameters();
       myParametersNotNull = new boolean[params.length];
       for (int i = 0; i < params.length; i++) {
         PsiParameter param = params[i];
         final PsiModifierList modList = param.getModifierList();
-        myParametersNotNull[i] = modList != null && modList.findAnnotation(DataFlowRunner.NOT_NULL) != null;
+        myParametersNotNull[i] = modList != null && modList.findAnnotation(AnnotationUtil.NOT_NULL) != null;
       }
     }
     else {
