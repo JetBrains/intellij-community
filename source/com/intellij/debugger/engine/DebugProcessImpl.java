@@ -881,6 +881,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
       catch (ObjectCollectedException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
+      catch (UnsupportedOperationException e) {
+        throw EvaluateExceptionUtil.createEvaluateException(e);
+      }
       finally {
         suspendContext.setIsEvaluating(null);
         SuspendManagerUtil.restoreAfterResume(suspendContext, resumeData);
