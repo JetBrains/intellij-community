@@ -110,27 +110,8 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
       indent = processor.getIndentAt(offset);
     }
     final Pair<String, Integer> newWS = whiteSpace.generateWhiteSpace(indentOptions, offset, indent);
-    final IncorrectOperationException ex[] = new IncorrectOperationException[1];
-    CommandProcessor.getInstance().executeCommand(model.getProject(),
-                                                  new Runnable() {
-                                                    public void run() {
-                                                      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                                                        public void run() {
-                                                          try {
-                                                            model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS.getFirst(), block.getTextRange(), false);
-                                                            model.commitChanges();
-                                                          }
-                                                          catch (IncorrectOperationException e) {
-                                                            ex[0] = e;
-                                                          }
-                                                        }
-                                                      });
-                                                    }
-                                                  }, 
-                                                  "Formatting",
-                                                  null);
-    if (ex[0] != null) throw ex[0];
-    
+    model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS.getFirst(), block.getTextRange(), false);
+    model.commitChanges();
     
     return newWS.getSecond().intValue();
   }

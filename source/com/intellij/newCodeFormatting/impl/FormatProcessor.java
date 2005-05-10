@@ -128,20 +128,7 @@ class FormatProcessor {
     final IncorrectOperationException ex[] = new IncorrectOperationException[1];
     final Project project = myModel.getProject();
     if (project != null) {
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                try {
-                  performModifications();
-                }
-                catch (IncorrectOperationException e) {
-                  ex[0] = e;
-                }
-              }
-            });
-        }
-      }, "Formatting", null);
+      performModifications();
       if (ex[0] != null) throw ex[0];
     }
     else {
