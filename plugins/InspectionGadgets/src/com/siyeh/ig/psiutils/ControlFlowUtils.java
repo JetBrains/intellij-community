@@ -300,6 +300,9 @@ public class ControlFlowUtils{
                                                       PsiStatement statement){
         PsiElement statementToCheck = statement;
         while(true){
+            if(statementToCheck == null){
+                return false;
+            }
             final PsiElement container =
                     getContainingStatementOrBlock(statementToCheck);
             if(container == null){
