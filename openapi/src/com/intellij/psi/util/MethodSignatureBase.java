@@ -67,18 +67,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
   }
 
   public int hashCode() {
-    int result = getName().hashCode();
-
-    PsiType[] parameterTypes = getParameterTypes();
-    result += 37 * parameterTypes.length;
-    PsiType firstParamType = parameterTypes.length != 0 ? parameterTypes[0] : null;
-    if (firstParamType != null) {
-      if (getTypeParameters().length > 0) {
-        firstParamType = TypeConversionUtil.erasure(firstParamType);
-      }
-      result += firstParamType.hashCode();
-    }
-    return result;
+    return MethodSignatureUtil.computeHashCode(this);
   }
 
   public String toString() {
@@ -86,8 +75,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
     final PsiTypeParameter[] typeParameters = getTypeParameters();
     if (typeParameters.length != 0) {
       String sep = "<";
-      for (int i = 0; i < typeParameters.length; i++) {
-        PsiTypeParameter typeParameter = typeParameters[i];
+      for (PsiTypeParameter typeParameter : typeParameters) {
         s += sep + typeParameter.getName();
         sep = ", ";
       }

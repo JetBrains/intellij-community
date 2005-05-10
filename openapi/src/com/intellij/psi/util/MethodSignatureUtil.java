@@ -135,6 +135,19 @@ public class MethodSignatureUtil {
     return map;
   }
 
+  public static int computeHashCode(final MethodSignature methodSignature) {
+    int result = methodSignature.getName().hashCode();
+
+    PsiType[] parameterTypes = methodSignature.getParameterTypes();
+    result += 37 * parameterTypes.length;
+    PsiType firstParamType = parameterTypes.length != 0 ? parameterTypes[0] : null;
+    if (firstParamType != null) {
+      firstParamType = TypeConversionUtil.erasure(firstParamType);
+      result += firstParamType.hashCode();
+    }
+    return result;
+  }
+
   public static class MethodSignatureToMethods {
     private Map<MethodSignature, List<MethodSignatureBackedByPsiMethod>> myMap;
 
@@ -299,7 +312,7 @@ public class MethodSignatureUtil {
 
   private static class MethodParametersErasureEquality implements TObjectHashingStrategy<MethodSignature> {
     public int computeHashCode(final MethodSignature signature) {
-      return signature.getName().hashCode() * 5 + signature.getParameterTypes().length * 7; // Q: more precise hashing needed
+      return MethodSignatureUtil.computeHashCode(signature);
     }
 
     public boolean equals(MethodSignature method1, MethodSignature method2) {

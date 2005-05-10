@@ -633,13 +633,20 @@ public abstract class GenericsHighlightUtil {
     if (type instanceof PsiArrayType) {
       PsiType componentType = type.getDeepComponentType();
       if (componentType instanceof PsiClassType) {
-        PsiType[] parameters = ((PsiClassType)componentType).getParameters();
+        final PsiClassType classType = ((PsiClassType)componentType);
+        PsiType[] parameters = classType.getParameters();
         for (PsiType parameter : parameters) {
           if (!(parameter instanceof PsiWildcardType) || ((PsiWildcardType)parameter).getBound() != null) {
             return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                      element,
                                                      "Generic array creation");
           }
+        }
+        final PsiClass resolved = ((PsiClassType)PsiUtil.convertAnonymousToBaseType(classType)).resolve();
+        if (resolved instanceof PsiTypeParameter) {
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                     element,
+                                                     "Generic array creation");
         }
       }
     }
