@@ -5,11 +5,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.FormattingModel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
@@ -17,14 +16,12 @@ import com.intellij.pom.tree.TreeAspect;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -39,57 +36,20 @@ public class PsiBasedFormattingModel implements FormattingModel {
   private final CodeStyleSettings mySettings;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.PsiBasedFormattingModel");
-  private final PsiElement myElementToReformat;
-  private final PsiElement myWhiteSpaceToReformat;
-  private final PsiFile myPseudoPhysicalCopy;
-  private final RangeMarker myRangeMarker;
-  private boolean myModified = false;
+  private final boolean myCanUseDocument;
 
-  public PsiBasedFormattingModel(final PsiFile file, CodeStyleSettings settings, TextRange rangeToReformat) {
+  public PsiBasedFormattingModel(final PsiFile file, CodeStyleSettings settings, final TextRange textRange) {
     mySettings = settings;
     myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
     myProject = file.getProject();
-    myElementToReformat = findElementToReformat(file, rangeToReformat);
-    myPseudoPhysicalCopy = file.createPseudoPhysicalCopy();
-    myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myPseudoPhysicalCopy);
-    
-    if (myElementToReformat != null) {
-      myWhiteSpaceToReformat = findWhiteSpaceBeforeRange(file, rangeToReformat);
-      myRangeMarker = myDocument.createRangeMarker(rangeToReformat.getStartOffset(), rangeToReformat.getEndOffset());
-      myRangeMarker.setGreedyToLeft(true);
-      myRangeMarker.setGreedyToRight(true);
+    final Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+    myCanUseDocument = false;
+    if (document != null && document.getText().equals(file.getText())) {      
+      myDocument = document;
     }
     else {
-      myWhiteSpaceToReformat = findWhiteSpaceBeforeRange(file, rangeToReformat);
-      myRangeMarker = null;
+      myDocument = new DocumentImpl(file.getText());
     }
-  }
-
-  private PsiElement findWhiteSpaceBeforeRange(final PsiFile file, final TextRange rangeToReformat) {
-    final int startOffset = rangeToReformat.getStartOffset();
-    if (startOffset == 0) return null;
-    final PsiElement element = file.findElementAt(startOffset - 1);
-    if (element instanceof PsiWhiteSpace) {
-      return element;
-    }
-    else {
-      return null;
-    }
-  }
-
-  private PsiElement findElementToReformat(final PsiFile file, final TextRange rangeToReformat) {
-    PsiElement element = file.findElementAt(rangeToReformat.getStartOffset());
-    if (element == null) return null;
-    while (!(element.getTextRange().getStartOffset() <= rangeToReformat.getStartOffset() &&
-                                                                                            element
-                                                                                              .getTextRange()
-                                                                                              .getEndOffset() >=
-                                                                                                              rangeToReformat
-                                                                                                                .getEndOffset())) {
-      if (element.getParent() == null) return element;
-      element = element.getParent();
-    }
-    return element;
   }
 
   public int getLineNumber(int offset) {
@@ -129,144 +89,30 @@ public class PsiBasedFormattingModel implements FormattingModel {
     return myDocument.getTextLength();
   }
 
-  public void commitChanges() throws IncorrectOperationException {
-    /*
-    if (myModified && myElementToReformat != null) {
+  public void commitChanges() {
+    if (myCanUseDocument) {
       PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-      final TextRange newRange = new TextRange(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset());
-      replaceChildren(findElementToReformat(myPseudoPhysicalCopy, newRange));
-      final PsiElement newWhiteSpace = findWhiteSpaceBeforeRange(myPseudoPhysicalCopy, newRange);
-      if (myWhiteSpaceToReformat != null && newWhiteSpace != null && !myWhiteSpaceToReformat.getText().equals(newWhiteSpace.getText())) {
-        myWhiteSpaceToReformat.replace(newWhiteSpace);
-      }
-    }
-    */
+    }    
+  }
+
+  public TextRange replaceWhiteSpace(TextRange textRange,
+                                     String whiteSpace,
+                                     final TextRange oldBlockTextRange,
+                                     final boolean blockIsWritable) throws IncorrectOperationException {
+    return replaceWithPSI(textRange, oldBlockTextRange, whiteSpace);
   }
 
   public Project getProject() {
     return myProject;
   }
 
-  private void replaceChildren(final PsiElement elementToReformat) throws IncorrectOperationException {
-    final ASTNode node = SourceTreeToPsiMap.psiElementToTree(myElementToReformat);
-    if (node instanceof LeafElement) {
-      myElementToReformat.replace(elementToReformat);
-    } else {
-        node.replaceAllChildrenToChildrenOf(SourceTreeToPsiMap.psiElementToTree(elementToReformat));
-      } 
-    }
-
-  public TextRange replaceWhiteSpace(final TextRange textRange,
-                                     final String whiteSpace,
-                                     final TextRange oldBlockTextRange,
-                                     final boolean blockIsWritable)
-                                                                                                                            throws IncorrectOperationException {
-    /*
-    try {
-      return replaceWithDocument(textRange, oldBlockTextRange, whiteSpace, blockIsWritable);
-    }
-    finally {
-      myModified = true;
-    }
-    */
-    return replaceWithPSI(textRange, oldBlockTextRange, whiteSpace);
-  }
-
-  private TextRange replaceWithDocument(final TextRange textRange,
-                                        final TextRange oldBlockTextRange,
-                                        final String whiteSpace,
-                                        final boolean blockIsWritable) {
+  private TextRange replaceWithDocument(final TextRange textRange, final TextRange oldBlockTextRange, final String whiteSpace) {
+    //final RangeMarker rangeMarker = myDocument.createRangeMarker(oldBlockTextRange.getStartOffset(), oldBlockTextRange.getEndOffset());
+    
     myDocument.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), whiteSpace);
-    int shift = whiteSpace.length() - textRange.getLength();
-    TextRange newBlockRange = new TextRange(oldBlockTextRange.getStartOffset() + shift, oldBlockTextRange.getEndOffset() + shift);
-    int delta = 0;
-    final String elementText = myDocument.getCharsSequence().subSequence(newBlockRange.getStartOffset(), newBlockRange.getEndOffset())
-      .toString();
-    if (blockIsWritable && elementText.indexOf("\n") > 0 && whiteSpace.indexOf('\n') >= 0) {
-      try {
-        Indent lastLineIndent = getLastLineIndent(elementText);
-        Indent whiteSpaceIndent = createIndentOn(getLastLine(whiteSpace));
-        delta = shiftIndentInside(newBlockRange, calcShiftInDocument(lastLineIndent, whiteSpaceIndent));
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
+    
+    return oldBlockTextRange;//new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
 
-
-    return new TextRange(oldBlockTextRange.getStartOffset(), oldBlockTextRange.getEndOffset() + delta);
-
-  }
-
-  private int shiftIndentInside(final TextRange elementRange, final int shift) {
-    final StringBuffer buffer = new StringBuffer();
-    StringBuffer afterWhiteSpace = new StringBuffer();
-    int whiteSpaceLength = 0;
-    boolean insideWhiteSpace = true;
-    int line = 0;
-    for (int i = elementRange.getStartOffset(); i < elementRange.getEndOffset(); i++) {
-      final char c = myDocument.getCharsSequence().charAt(i);
-      switch (c) {
-        case '\n':
-          if (line > 0) {
-            createWhiteSpace(whiteSpaceLength + shift, buffer);
-          }
-          buffer.append(afterWhiteSpace.toString());
-          insideWhiteSpace = true;
-          whiteSpaceLength = 0;
-          afterWhiteSpace = new StringBuffer();
-          buffer.append(c);
-          line++;
-          break;
-        case ' ':
-          if (insideWhiteSpace) {
-            whiteSpaceLength += 1;
-          }
-          else {
-            afterWhiteSpace.append(c);
-          }
-          break;
-        case '\t':
-          if (insideWhiteSpace) {
-            whiteSpaceLength += getIndentOptions().TAB_SIZE;
-          }
-          else {
-            afterWhiteSpace.append(c);
-          }
-
-          break;
-        default:
-          insideWhiteSpace = false;
-          afterWhiteSpace.append(c);
-      }
-    }
-    if (line > 0) {
-      createWhiteSpace(whiteSpaceLength + shift, buffer);
-    }
-    buffer.append(afterWhiteSpace.toString());
-    myDocument.replaceString(elementRange.getStartOffset(), elementRange.getEndOffset(), buffer.toString());
-    return buffer.length() - elementRange.getLength();
-  }
-
-  private void createWhiteSpace(final int whiteSpaceLength, StringBuffer buffer) {
-    final CodeStyleSettings.IndentOptions indentOptions = getIndentOptions();
-    if (indentOptions.USE_TAB_CHARACTER) {
-      int tabs = whiteSpaceLength / indentOptions.TAB_SIZE;
-      int spaces = whiteSpaceLength - tabs * indentOptions.TAB_SIZE;
-      StringUtil.repeatSymbol(buffer, '\t', tabs);
-      StringUtil.repeatSymbol(buffer, ' ', spaces);
-    }
-    else {
-      StringUtil.repeatSymbol(buffer, ' ', whiteSpaceLength);
-    }
-  }
-
-  private int calcShiftInDocument(final Indent lastLineIndent, final Indent whiteSpaceIndent) {
-    return whiteSpaceIndent.getTotalCount(getIndentOptions()) - lastLineIndent.getTotalCount(getIndentOptions());
-  }
-
-  private CodeStyleSettings.IndentOptions getIndentOptions() {
-    return mySettings.JAVA_INDENT_OPTIONS;
   }
 
   private TextRange replaceWithPSI(final TextRange textRange, final TextRange oldBlockTextRange, final String whiteSpace)
@@ -303,7 +149,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
   }
 
   private int calcShift(final Indent lastLineIndent, final Indent whiteSpaceIndent) {
-    final CodeStyleSettings.IndentOptions options = getIndentOptions();
+    final CodeStyleSettings.IndentOptions options = mySettings.JAVA_INDENT_OPTIONS;
     if (lastLineIndent.equals(whiteSpaceIndent)) return 0;
     if (options.USE_TAB_CHARACTER) {
       if (lastLineIndent.whiteSpaces > 0) {
@@ -350,6 +196,9 @@ public class PsiBasedFormattingModel implements FormattingModel {
     return myASTNode.findLeafElementAt(offset);
   }
 
+  public void dispose() {
+  }
+
   private class Indent {
     public int whiteSpaces = 0;
     public int tabs = 0;
@@ -380,10 +229,6 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
     public int getSpacesCount(final CodeStyleSettings.IndentOptions options) {
       return whiteSpaces + tabs * options.TAB_SIZE;
-    }
-
-    public int getTotalCount(final CodeStyleSettings.IndentOptions options) {
-      return getSpacesCount(options);
     }
   }
 
