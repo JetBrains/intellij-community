@@ -17,10 +17,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.*;
 
 import java.util.ArrayList;
 import java.util.EmptyStackException;
@@ -94,7 +91,19 @@ public class DataFlowRunner {
       if (branchCount > 80) return false; // Do not even try. Definetly will out of time.
 
       final ArrayList<DfaInstructionState> queue = new ArrayList<DfaInstructionState>();
-      queue.add(new DfaInstructionState(myInstructions[0], DfaMemoryStateImpl.createEmpty(myValueFactory)));
+      final DfaMemoryState initialState = DfaMemoryStateImpl.createEmpty(myValueFactory);
+
+      if (myIsInMethod) {
+        PsiMethod method = (PsiMethod)psiBlock.getParent();
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        for (PsiParameter parameter : parameters) {
+          if (AnnotationUtil.isNotNull(parameter)) {
+            initialState.applyNotNull(myValueFactory.getVarFactory().create(parameter, false));
+          }
+        }
+      }
+
+      queue.add(new DfaInstructionState(myInstructions[0], initialState));
 
       final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
       final long before = System.currentTimeMillis();
