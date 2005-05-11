@@ -1,7 +1,9 @@
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.lang.Language;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 
@@ -20,11 +22,5 @@ public class PsiCommentImpl extends LeafPsiElement implements PsiComment, JavaTo
 
   public String toString(){
     return "PsiComment(" + getElementType().toString() + ")";
-  }
-
-  public Language getLanguage() {
-    PsiElement master = getNextSibling();
-    if (master == null) master = getParent();
-    return master.getLanguage();
   }
 }
