@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -225,7 +224,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
       PsiTypeParameter parameter = it.next();
       if (parameter.getName().equals(myQualifiedName)) return parameter;
     }
-    return getManager().findClass(myQualifiedName, GlobalSearchScope.allScope(getProject()));
+    return getManager().findClass(myQualifiedName, getResolveScope());
   }
 
   public void processVariants(PsiScopeProcessor processor) {
