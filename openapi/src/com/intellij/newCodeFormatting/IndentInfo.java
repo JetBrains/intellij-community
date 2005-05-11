@@ -1,4 +1,4 @@
-package com.intellij.psi.impl.source.codeStyle;
+package com.intellij.newCodeFormatting;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;

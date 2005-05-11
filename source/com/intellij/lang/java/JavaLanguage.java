@@ -13,7 +13,14 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
+import com.intellij.psi.formatter.newXmlFormatter.java.AbstractJavaBlock;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.java.JavaAdapter;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.newCodeFormatting.FormattingModelBuilder;
+import com.intellij.newCodeFormatting.FormattingModel;
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,8 +30,16 @@ import com.intellij.psi.impl.source.codeStyle.java.JavaAdapter;
  * To change this template use File | Settings | File Templates.
  */
 public class JavaLanguage extends Language {
+  private final FormattingModelBuilder myFormattingModelBuilder;
+
   public JavaLanguage() {
     super("JAVA");
+    myFormattingModelBuilder = new FormattingModelBuilder() {
+      public FormattingModel createModel(final PsiFile element, final CodeStyleSettings settings) {
+        return new PsiBasedFormattingModel(element, settings, AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element), 
+                                                                                                settings));
+      }
+    };
   }
 
   public SyntaxHighlighter getSyntaxHighlighter(Project project) {
@@ -54,5 +69,9 @@ public class JavaLanguage extends Language {
 
   public RefactoringSupportProvider getRefactoringSupportProvider() {
     return new JavaRefactoringSupportProvier();
+  }
+
+  public FormattingModelBuilder getFormattingModelBuilder() {
+    return myFormattingModelBuilder;
   }
 }

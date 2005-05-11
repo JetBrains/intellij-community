@@ -3,32 +3,25 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.codeFormatting.PseudoText;
 import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.jsp.NewJspLanguage;
-import com.intellij.lang.jspx.JSPXLanguage;
-import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.newCodeFormatting.Block;
 import com.intellij.newCodeFormatting.Formatter;
+import com.intellij.newCodeFormatting.FormattingModel;
+import com.intellij.newCodeFormatting.FormattingModelBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.formatter.PsiBasedFormattingModel;
-import com.intellij.psi.formatter.newXmlFormatter.java.AbstractJavaBlock;
-import com.intellij.psi.formatter.newXmlFormatter.xml.AbstractXmlBlock;
 import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.java.JavaCodeFormatter;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -77,8 +70,9 @@ public class CodeFormatterFacade implements Constants {
   }
 
   public ASTNode process(ASTNode element, int parent_indent) {
-
-    if (useBlockFormatter(SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile())) {
+    final FormattingModelBuilder builder = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile().getLanguage()
+      .getFormattingModelBuilder();
+    if (builder != null) {
       TextRange range = element.getTextRange();
       return processRange(element, range.getStartOffset(), range.getEndOffset());
     }
@@ -128,49 +122,22 @@ public class CodeFormatterFacade implements Constants {
     return element;
   }
 
-  public static boolean useBlockFormatter(final Language elementLanguage) {
-    if (elementLanguage instanceof NewJspLanguage) return true;
-    if (elementLanguage instanceof JSPXLanguage) return true;
-    
-    return (elementLanguage instanceof JavaLanguage
-    || elementLanguage instanceof XMLLanguage);
-  }
-  
-  public static boolean useBlockFormatter(final PsiFile file) {
-    if (file.getLanguage() instanceof NewJspLanguage) return true;
-    return
-      (file instanceof XmlFile
-    || file instanceof PsiJavaFile
-    || file instanceof DummyHolder);
-  }
-
-  public static Block createBlock(final PsiFile element, final CodeStyleSettings settings) {
-    if (element.getFileType() == StdFileTypes.JSP ) {
-      return AbstractXmlBlock.creareJspRoot(element, settings); 
-    }
-    else if (element.getFileType() == StdFileTypes.JSPX) {
-      return AbstractXmlBlock.creareJspxRoot(element, settings); 
-    }    
-    else if (element instanceof PsiJavaFile || element.getLanguage() instanceof JavaLanguage) {
-      return AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element), settings);
-    } 
-    else {
-      return AbstractXmlBlock.creareRoot(element, settings);
-    }
-  }
-
   public ASTNode processRange(final ASTNode element, final int startOffset, final int endOffset) {
     final FileType fileType = myHelper.getFileType();
 
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(element);
-    if (useBlockFormatter(psiElement.getContainingFile())) {
+    final FormattingModelBuilder builder = SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile().getLanguage()
+      .getFormattingModelBuilder();
+    
+    if (builder != null) {
       TextRange range = formatComments(element, startOffset, endOffset);
       final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
       final PsiFile containingFile = psiElement.getContainingFile();
-      final PsiBasedFormattingModel model = new PsiBasedFormattingModel(containingFile, mySettings, range);
+      final FormattingModel model = builder.createModel(containingFile, mySettings);
       if (containingFile.getTextLength() > 0) {
         try {
-          Formatter.getInstance().format(model, createBlock(containingFile, mySettings), mySettings, mySettings.getIndentOptions(fileType), range);
+          Formatter.getInstance().format(model, mySettings, 
+                                         mySettings.getIndentOptions(fileType), range);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

@@ -1,9 +1,8 @@
 package com.intellij.psi.formatter.newXmlFormatter.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.jspx.JSPXLanguage;
-import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.newCodeFormatting.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -11,7 +10,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.openapi.util.Comparing;
 
 
 public abstract class AbstractXmlBlock extends AbstractBlock {
@@ -123,18 +121,6 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   public abstract boolean isTextElement();
-
-  public static Block creareRoot(final PsiFile element, final CodeStyleSettings settings) {
-    final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(element);
-    if (element.getLanguage() instanceof XHTMLLanguage) {
-      return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.XML_TAG));
-    }
-    else if (rootNode.getElementType() == ElementType.XML_FILE) {
-      return new XmlBlock(rootNode, null, null, new XmlPolicy(settings));
-    } else {
-      return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.HTML_TAG));
-    }
-  }
 
   public static Block creareJspRoot(final PsiFile element, final CodeStyleSettings settings) {
     final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(element);

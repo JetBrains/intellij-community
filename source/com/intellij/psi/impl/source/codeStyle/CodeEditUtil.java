@@ -5,6 +5,9 @@ import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.newCodeFormatting.Formatter;
+import com.intellij.newCodeFormatting.FormattingModel;
+import com.intellij.newCodeFormatting.FormattingModelBuilder;
+import com.intellij.newCodeFormatting.IndentInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -15,7 +18,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
@@ -491,12 +493,12 @@ public class CodeEditUtil {
                                                     final Project project,
                                                     final CodeStyleSettings settings,
                                                     final boolean mayChangeLineFeeds) {
-    Language elementLanguage = file.findElementAt(tokenStartOffset).getLanguage();
-    if (CodeFormatterFacade.useBlockFormatter(elementLanguage) && CodeFormatterFacade.useBlockFormatter(file)) {
+    final FormattingModelBuilder builder = language.getFormattingModelBuilder();
+    if (builder != null) {
       final TextRange textRange = file.findElementAt(tokenStartOffset).getTextRange();
-      final PsiBasedFormattingModel psiBasedFormattingModel = new PsiBasedFormattingModel(file, settings, file.getTextRange());
-      return Formatter.getInstance().getWhiteSpaceBefore(psiBasedFormattingModel,
-                                            CodeFormatterFacade.createBlock(file, settings),
+      final FormattingModel model = builder.createModel(file, settings);
+      return Formatter.getInstance().getWhiteSpaceBefore(model.getDocumentModel(), 
+                                            model.getRootBlock(), 
                                             settings, settings.getIndentOptions(file.getFileType()), textRange,
                                             mayChangeLineFeeds);
     } else {

@@ -5,8 +5,17 @@ import com.intellij.codeFormatting.xml.html.HtmlPseudoTextBuilder;
 import com.intellij.ide.highlighter.HtmlFileHighlighter;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.newCodeFormatting.FormattingModel;
+import com.intellij.newCodeFormatting.FormattingModelBuilder;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
+import com.intellij.psi.formatter.newXmlFormatter.xml.HtmlPolicy;
+import com.intellij.psi.formatter.newXmlFormatter.xml.XmlBlock;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 
 /**
@@ -17,8 +26,17 @@ import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
  * To change this template use File | Settings | File Templates.
  */
 public class HTMLLanguage extends XMLLanguage {
+  private final FormattingModelBuilder myFormattingModelBuilder;
   public HTMLLanguage() {
     super("HTML");
+    myFormattingModelBuilder = new FormattingModelBuilder() {
+      public FormattingModel createModel(final PsiFile element, final CodeStyleSettings settings) {
+        return new PsiBasedFormattingModel(element, settings, 
+                                           new XmlBlock(SourceTreeToPsiMap.psiElementToTree(element), 
+                                                        null, null, new HtmlPolicy(settings, ElementType.HTML_TAG)));
+      }
+    };
+    
   }
 
   public SyntaxHighlighter getSyntaxHighlighter(Project project) {
@@ -35,5 +53,9 @@ public class HTMLLanguage extends XMLLanguage {
 
   public ParserDefinition getParserDefinition() {
     return new HTMLParserDefinition();
+  }
+
+  public FormattingModelBuilder getFormattingModelBuilder() {
+    return myFormattingModelBuilder;
   }
 }

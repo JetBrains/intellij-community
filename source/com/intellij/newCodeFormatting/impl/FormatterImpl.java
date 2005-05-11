@@ -1,15 +1,11 @@
 package com.intellij.newCodeFormatting.impl;
 
 import com.intellij.newCodeFormatting.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.source.codeStyle.IndentInfo;
-import com.intellij.psi.formatter.PsiBasedFormattingModel;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 
 public class FormatterImpl extends Formatter implements ApplicationComponent {
@@ -54,15 +50,13 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     return new DependantSpacePropertyImpl(minOffset, maxOffset, dependence, keepLineBreaks, keepBlankLines);
   }
 
-  public void format(FormattingModel model,
-                     Block rootBlock,
-                     CodeStyleSettings settings,
+  public void format(FormattingModel model, CodeStyleSettings settings,
                      CodeStyleSettings.IndentOptions indentOptions,
                      TextRange affectedRange) throws IncorrectOperationException {
-    new FormatProcessor(model, rootBlock, settings, indentOptions, affectedRange).format();
+    new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRange).format(model);
   }
 
-  public void formatWithoutModifications(FormattingModel model,
+  public void formatWithoutModifications(FormattingDocumentModel model,
                                          Block rootBlock,
                                          CodeStyleSettings settings,
                                          CodeStyleSettings.IndentOptions indentOptions,
@@ -70,7 +64,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     new FormatProcessor(model, rootBlock, settings, indentOptions, affectedRange).formatWithoutRealModifications();
   }
 
-  public IndentInfo getWhiteSpaceBefore(final PsiBasedFormattingModel model,
+  public IndentInfo getWhiteSpaceBefore(final FormattingDocumentModel model,
                                         final Block block,
                                         final CodeStyleSettings settings,
                                         final CodeStyleSettings.IndentOptions indentOptions,
@@ -87,13 +81,14 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     return new IndentInfo(whiteSpace.getLineFeeds(), whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
   }
 
-  public int adjustLineIndent(final PsiBasedFormattingModel model,
-                              final Block block,
+  public int adjustLineIndent(final FormattingModel model,
                               final CodeStyleSettings settings,
                               final CodeStyleSettings.IndentOptions indentOptions,
                               final int offset,
                               final TextRange affectedRange) throws IncorrectOperationException {
-    final FormatProcessor processor = new FormatProcessor(model, block, settings, indentOptions, affectedRange);
+    final FormattingDocumentModel docModel = model.getDocumentModel();
+    final Block block = model.getRootBlock();
+    final FormatProcessor processor = new FormatProcessor(docModel, block, settings, indentOptions, affectedRange);
     final WhiteSpace whiteSpace = processor.getWhiteSpaceBefore(offset);
     processor.setAllWhiteSpacesAreReadOnly();
     if (whiteSpace == null) {
@@ -102,7 +97,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     whiteSpace.setReadOnly(false);
     whiteSpace.setLineFeedsAreReadOnly(true);
     final IndentInfo indent;
-    if (model.getLineNumber(offset) == model.getLineNumber(whiteSpace.getTextRange().getEndOffset())) {
+    if (docModel.getLineNumber(offset) == docModel.getLineNumber(whiteSpace.getTextRange().getEndOffset())) {
       processor.formatWithoutRealModifications();
       indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
     }
@@ -110,65 +105,12 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
       indent = processor.getIndentAt(offset);
     }
     final Pair<String, Integer> newWS = whiteSpace.generateWhiteSpace(indentOptions, offset, indent);
-    model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS.getFirst(), block.getTextRange(), false);
-    model.commitChanges();
+    model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS.getFirst(), block.getTextRange().getLength());
     
     return newWS.getSecond().intValue();
   }
 
   
-/*  
-  public int adjustLineIndent(final PsiBasedFormattingModel model,
-                                   final Block block,
-                                   final CodeStyleSettings settings,
-                                   final CodeStyleSettings.IndentOptions indentOptions,
-                                   final int offset,
-                                   final TextRange affectedRange) throws IncorrectOperationException {
-  final FormatProcessor processor = new FormatProcessor(model, block, settings, indentOptions, affectedRange);
-  WhiteSpace whiteSpace = processor.getWhiteSpaceBefore(offset);
-  processor.setAllWhiteSpacesAreReadOnly();
-  if (whiteSpace == null) {
-    return offset;
-  }
-  whiteSpace.setReadOnly(false);
-  whiteSpace.setLineFeedsAreReadOnly(true);
-  final IndentInfo indent;
-  if (model.getLineNumber(offset) == model.getLineNumber(whiteSpace.getTextRange().getEndOffset())) {
-    final int lineFeeds = getLineFeedsToModified(model, offset, whiteSpace.getTextRange().getStartOffset());
-    processor.formatWithoutRealModifications();
-    final String newWS = whiteSpace.generateWhiteSpace(indentOptions);
-    model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
-    indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
-    int delta = offset - whiteSpace.getTextRange().getEndOffset();
-
-    if (delta >= 0) {
-      return whiteSpace.getTextRange().getStartOffset() + newWS.length() + delta;
-    }
-
-    int result = whiteSpace.getTextRange().getStartOffset();
-
-    result += (lineFeeds - 1) + (1 + indent.getTotalSpaces());
-    return result;
-
-  } else {
-    final int lineFeeds = getLineFeedsToModified(model, offset, whiteSpace.getTextRange().getStartOffset());
-    indent = processor.getIndentAt(offset);
-    String newWS = whiteSpace.generateWhiteSpace(indentOptions, offset, indent, model);
-    model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS);
-
-    int delta = offset - whiteSpace.getTextRange().getEndOffset();
-
-    if (delta >= 0) {
-      return whiteSpace.getTextRange().getStartOffset() + newWS.length() + delta + 1;
-    }
-    int result = whiteSpace.getTextRange().getStartOffset();
-
-    result += lineFeeds * (1 + indent.getTotalSpaces());
-    return result;
-  }
-
-}
-*/  
   public Indent createSpaceIndent(final int spaces) {
     return new IndentImpl(IndentImpl.Type.SPACES, false, spaces);
   }
@@ -221,7 +163,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     return new IndentImpl(IndentImpl.Type.CONTINUATION_WITHOUT_FIRST, false);
   }
 
-  public static int getLineFeedsToModified(final PsiBasedFormattingModel model, final int offset, final int startOffset) {
+  public static int getLineFeedsToModified(final FormattingDocumentModel model, final int offset, final int startOffset) {
     return model.getLineNumber(offset) - model.getLineNumber(startOffset);
   }
 }

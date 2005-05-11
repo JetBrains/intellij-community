@@ -3,21 +3,16 @@ package com.intellij.newCodeFormatting.impl;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.source.codeStyle.IndentInfo;
+import com.intellij.newCodeFormatting.IndentInfo;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.TIntObjectHashMap;
 import org.jdom.Element;
 import org.jdom.Text;
 
 import java.util.*;
 
-import gnu.trove.TIntObjectHashMap;
-
 class FormatProcessor {
-  private FormattingModel myModel;
   private LeafBlockWrapper myCurrentBlock;
 
   private final Map<Block, AbstractBlockWrapper> myInfos;
@@ -32,20 +27,23 @@ class FormatProcessor {
 
   private Map<TextRange, Pair<AbstractBlockWrapper, Boolean>> myPreviousDependancies = new HashMap<TextRange, Pair<AbstractBlockWrapper, Boolean>>();
   private boolean myAlignAgain = false;
+  private final int myMaxEndOffset;
 
-  public FormatProcessor(FormattingModel model,
-                         Block rootBlock,
+  public FormatProcessor(final FormattingDocumentModel docModel, Block rootBlock,
                          CodeStyleSettings settings,
                          CodeStyleSettings.IndentOptions indentOptions,
                          TextRange affectedRange) {
-    myModel = model;
     myIndentOption = indentOptions;
     mySettings = settings;
-    final InitialInfoBuilder builder = InitialInfoBuilder.buildBlocks(rootBlock, model, affectedRange, indentOptions);
+    final InitialInfoBuilder builder = InitialInfoBuilder.buildBlocks(rootBlock, 
+                                                                      docModel, 
+                                                                      affectedRange, 
+                                                                      indentOptions);
     myInfos = builder.getBlockToInfoMap();
     myFirstTokenBlock = builder.getFirstTokenBlock();
     myCurrentBlock = myFirstTokenBlock;
     myTextRangeToWrapper = buildTextRangeToInfoMap(myFirstTokenBlock);
+    myMaxEndOffset = rootBlock.getTextRange().getEndOffset();
   }
 
   private TIntObjectHashMap<LeafBlockWrapper> buildTextRangeToInfoMap(final LeafBlockWrapper first) {
@@ -123,17 +121,9 @@ class FormatProcessor {
     return result;
   }
 
-  public void format() throws IncorrectOperationException {
+  public void format(FormattingModel model) throws IncorrectOperationException {
     formatWithoutRealModifications();
-    final IncorrectOperationException ex[] = new IncorrectOperationException[1];
-    final Project project = myModel.getProject();
-    if (project != null) {
-      performModifications();
-      if (ex[0] != null) throw ex[0];
-    }
-    else {
-      performModifications();
-    }
+    performModifications(model);
   }
 
   public void formatWithoutRealModifications() {
@@ -158,7 +148,7 @@ class FormatProcessor {
     }
   }
 
-  public void performModifications() throws IncorrectOperationException {
+  public void performModifications(FormattingModel model) throws IncorrectOperationException {
     int shift = 0;
     WhiteSpace prev = null;
     for (LeafBlockWrapper block = myFirstTokenBlock; block != null; block = block.getNextBlock()) {
@@ -170,17 +160,13 @@ class FormatProcessor {
         if (whiteSpace.equals(newWhiteSpace)) continue;
         final TextRange textRange = whiteSpace.getTextRange();
         final TextRange wsRange = shiftRange(textRange, shift);
-        final TextRange newBlockRange = myModel.replaceWhiteSpace(wsRange, newWhiteSpace, shiftRange(block.getTextRange(), shift), true);
-        shift += (newWhiteSpace.length() - (textRange.getLength())) + (newBlockRange.getLength() - oldTextRangeLength);
-        /*
-        shift += (newWhiteSpace.length() - (textRange.getLength())) + 
-                 (block.getTextRange().getLength() - oldTextRangeLength);
-        */
-
+        final int newBlockLength = model.replaceWhiteSpace(wsRange, 
+                                                             newWhiteSpace, 
+                                                             block.getTextRange().getLength());
+        shift += (newWhiteSpace.length() - (textRange.getLength())) + (newBlockLength - oldTextRangeLength);
       }
       prev = whiteSpace;
     }
-    myModel.commitChanges();
   }
 
   private TextRange shiftRange(final TextRange textRange, final int shift) {
@@ -472,7 +458,7 @@ class FormatProcessor {
 
   public WhiteSpace getWhiteSpaceBefore(final int startOffset) {
     int current = startOffset;
-    while (current < myModel.getTextLength()) {
+    while (current < myMaxEndOffset) {
       final LeafBlockWrapper currentValue = myTextRangeToWrapper.get(current);
       if (currentValue != null) return currentValue.getWhiteSpace();
       current++;

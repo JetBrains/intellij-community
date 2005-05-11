@@ -3,17 +3,11 @@ package com.intellij.psi.formatter;
 import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.FormattingModel;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.newCodeFormatting.FormattingDocumentModel;
+import com.intellij.newCodeFormatting.Block;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.PomModel;
-import com.intellij.pom.event.PomModelEvent;
-import com.intellij.pom.impl.PomTransactionBase;
-import com.intellij.pom.tree.TreeAspect;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -21,8 +15,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.io.IOException;
@@ -30,114 +22,50 @@ import java.io.LineNumberReader;
 import java.io.StringReader;
 
 public class PsiBasedFormattingModel implements FormattingModel {
-  private final Document myDocument;
+  
   private final ASTNode myASTNode;
   private final Project myProject;
   private final CodeStyleSettings mySettings;
+  private final FormattingDocumentModelImpl myDocumentModel;
+  private final Block myRootBlock;
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.PsiBasedFormattingModel");
-  private final boolean myCanUseDocument;
-
-  public PsiBasedFormattingModel(final PsiFile file, CodeStyleSettings settings, final TextRange textRange) {
+  public PsiBasedFormattingModel(final PsiFile file,
+                                 CodeStyleSettings settings, 
+                                 final Block rootBlock) {
     mySettings = settings;
     myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
     myProject = file.getProject();
-    final Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
-    myCanUseDocument = false;
-    if (document != null && document.getText().equals(file.getText())) {      
-      myDocument = document;
-    }
-    else {
-      myDocument = new DocumentImpl(file.getText());
-    }
+    myDocumentModel = FormattingDocumentModelImpl.createOn(file);
+    myRootBlock = rootBlock;
   }
 
-  public int getLineNumber(int offset) {
-    if (offset > myDocument.getTextLength()) {
-      LOG.assertTrue(false);
-    }
-    return myDocument.getLineNumber(offset);
+  public int replaceWhiteSpace(TextRange textRange,
+                               String whiteSpace,
+                               final int blockLength) throws IncorrectOperationException {
+    return replaceWithPSI(textRange, blockLength, whiteSpace);
   }
 
-  public int getLineStartOffset(int line) {
-    return myDocument.getLineStartOffset(line);
-  }
-
-  public void runModificationTransaction(final Runnable action) throws IncorrectOperationException {
-    final PomModel model = myProject.getModel();
-    final TreeAspect aspect = model.getModelAspect(TreeAspect.class);
-    try {
-      model.runTransaction(new PomTransactionBase(SourceTreeToPsiMap.treeElementToPsi(myASTNode)) {
-        public PomModelEvent runInner() {
-          final FileElement fileElement = getFileElement(myASTNode);
-          action.run();
-          TreeUtil.clearCaches(fileElement);
-          return null;
-        }
-
-        private FileElement getFileElement(final ASTNode element) {
-          return (FileElement)SourceTreeToPsiMap.psiElementToTree(SourceTreeToPsiMap.treeElementToPsi(element).getContainingFile());
-        }
-      }, aspect);
-    }
-    catch (IncorrectOperationException e) {
-      throw e;
-    }
-  }
-
-  public int getTextLength() {
-    return myDocument.getTextLength();
-  }
-
-  public void commitChanges() {
-    if (myCanUseDocument) {
-      PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-    }    
-  }
-
-  public TextRange replaceWhiteSpace(TextRange textRange,
-                                     String whiteSpace,
-                                     final TextRange oldBlockTextRange,
-                                     final boolean blockIsWritable) throws IncorrectOperationException {
-    return replaceWithPSI(textRange, oldBlockTextRange, whiteSpace);
-  }
-
-  public Project getProject() {
-    return myProject;
-  }
-
-  private TextRange replaceWithDocument(final TextRange textRange, final TextRange oldBlockTextRange, final String whiteSpace) {
-    //final RangeMarker rangeMarker = myDocument.createRangeMarker(oldBlockTextRange.getStartOffset(), oldBlockTextRange.getEndOffset());
-    
-    myDocument.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), whiteSpace);
-    
-    return oldBlockTextRange;//new TextRange(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
-
-  }
-
-  private TextRange replaceWithPSI(final TextRange textRange, final TextRange oldBlockTextRange, final String whiteSpace)
-                                                                                                                          throws IncorrectOperationException {
-//final RangeMarker rangeMarker = myDocument.createRangeMarker(oldBlockTextRange.getStartOffset(), oldBlockTextRange.getEndOffset());
+  private int replaceWithPSI(final TextRange textRange, int blockLength, final String whiteSpace)
+    throws IncorrectOperationException {
     final int offset = textRange.getEndOffset();
     final ASTNode leafElement = findElementAt(offset);
-    int length = oldBlockTextRange.getLength();
     final int oldElementLength = leafElement.getTextRange().getLength();
     if (leafElement.getTextRange().getStartOffset() < textRange.getStartOffset()) {
       final int newElementLength = new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, getSpaceCount(whiteSpace))
         .getTextRange().getLength();
-      length = length - oldElementLength + newElementLength;
+      blockLength = blockLength - oldElementLength + newElementLength;
     }
     else {
-      FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, ElementType.WHITE_SPACE);
+      changeWhiteSpaceBeforeLeaf(whiteSpace, leafElement);
       if (leafElement.textContains('\n')
-        /*&& whiteSpace.indexOf('\n') >= 0*/) {
+        && whiteSpace.indexOf('\n') >= 0) {
         try {
           Indent lastLineIndent = getLastLineIndent(leafElement.getText());
           Indent whiteSpaceIndent = createIndentOn(getLastLine(whiteSpace));
           final int shift = calcShift(lastLineIndent, whiteSpaceIndent);
           final int newElementLength = new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, shift).getTextRange()
             .getLength();
-          length = length - oldElementLength + newElementLength;
+          blockLength = blockLength - oldElementLength + newElementLength;
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -145,7 +73,11 @@ public class PsiBasedFormattingModel implements FormattingModel {
       }
     }
 
-    return new TextRange(oldBlockTextRange.getStartOffset(), oldBlockTextRange.getStartOffset() + length);
+    return blockLength;
+  }
+
+  protected void changeWhiteSpaceBeforeLeaf(final String whiteSpace, final ASTNode leafElement) {
+    FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, ElementType.WHITE_SPACE);
   }
 
   private int calcShift(final Indent lastLineIndent, final Indent whiteSpaceIndent) {
@@ -257,7 +189,11 @@ public class PsiBasedFormattingModel implements FormattingModel {
     return result;
   }
 
-  public CharSequence getText(final TextRange textRange) {
-    return myDocument.getCharsSequence().subSequence(textRange.getStartOffset(), textRange.getEndOffset());
+  public FormattingDocumentModel getDocumentModel() {
+    return myDocumentModel;
+  }
+
+  public Block getRootBlock() {
+    return myRootBlock;
   }
 }

@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.newCodeFormatting.FormattingModelBuilder;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -77,6 +78,10 @@ public abstract class Language {
     return null;
   }
 
+  public FormattingModelBuilder getFormattingModelBuilder(){
+    return null;
+  }
+  
   public ParserDefinition getParserDefinition() {
     return null;
   }

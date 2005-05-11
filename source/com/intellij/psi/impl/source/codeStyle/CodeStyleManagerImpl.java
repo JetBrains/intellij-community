@@ -2,6 +2,8 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.Formatter;
+import com.intellij.newCodeFormatting.FormattingModel;
+import com.intellij.newCodeFormatting.FormattingModelBuilder;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -11,7 +13,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -219,19 +220,18 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   public int adjustLineIndent(PsiFile file, int offset) throws IncorrectOperationException {
     final PsiElement element = file.findElementAt(offset);
     if (element == null) return offset;
-    if (CodeFormatterFacade.useBlockFormatter(file)
-        && CodeFormatterFacade.useBlockFormatter(element.getLanguage())) {
+    final FormattingModelBuilder builder = file.getLanguage().getFormattingModelBuilder();
+    if (builder != null) {
       final CodeStyleSettings settings = getSettings();
       final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
       final TextRange significantRange = getSignificantRange(file, offset);
-      final PsiBasedFormattingModel model = new PsiBasedFormattingModel(file, settings, SourceTreeToPsiMap.psiElementToTree(file.findElementAt(offset)).getTextRange());
+      final FormattingModel model = builder.createModel(file, settings);
       
       int result = Formatter.getInstance().adjustLineIndent(model,
-                                                                  CodeFormatterFacade.createBlock(file, settings),
-                                                                  settings,
-                                                                  indentOptions,
-                                                                  offset,
-                                                                  significantRange);
+                                                            settings,
+                                                            indentOptions,
+                                                            offset,
+                                                            significantRange);
       //System.out.println(file.getText());
       return result;
 

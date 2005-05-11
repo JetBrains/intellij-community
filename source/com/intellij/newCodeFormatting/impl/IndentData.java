@@ -1,6 +1,6 @@
 package com.intellij.newCodeFormatting.impl;
 
-import com.intellij.psi.impl.source.codeStyle.IndentInfo;
+import com.intellij.newCodeFormatting.IndentInfo;
 
 public class IndentData {
   private int myIndentSpaces = 0;
