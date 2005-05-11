@@ -221,7 +221,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     final PsiElement element = file.findElementAt(offset);
     if (element == null) return offset;
     final FormattingModelBuilder builder = file.getLanguage().getFormattingModelBuilder();
-    if (builder != null) {
+    final FormattingModelBuilder elementBuilder = element.getLanguage().getFormattingModelBuilder();
+    if (builder != null && elementBuilder != null) {
       final CodeStyleSettings settings = getSettings();
       final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
       final TextRange significantRange = getSignificantRange(file, offset);

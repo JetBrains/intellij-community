@@ -347,6 +347,6 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   public Language getLanguage() {
     final FileType fileType = getFileType();
-    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
+    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : Language.ANY;    
   }
 }

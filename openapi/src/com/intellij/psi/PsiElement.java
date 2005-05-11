@@ -15,13 +15,14 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public interface PsiElement extends UserDataHolder, Iconable {
   PsiElement[] EMPTY_ARRAY = new PsiElement[0];
 
   Project getProject();
 
-  Language getLanguage();
+  @NotNull Language getLanguage();
 
   PsiManager getManager();
 
