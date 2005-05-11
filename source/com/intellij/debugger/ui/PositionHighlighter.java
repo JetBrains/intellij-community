@@ -27,8 +27,6 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
@@ -154,29 +152,24 @@ public class PositionHighlighter {
       }
     }
 
-  private void showSelection(final PsiFile psiFile, int lineIndex) {
-    if(lineIndex < 0) {
-      lineIndex = 0;
-    }
-    Editor editor = getEditor(psiFile, lineIndex);
+  private void showSelection(SourcePosition position) {
+    Editor editor = getEditor(position);
     if(editor == null) {
       return;
     }
     if (mySelectionDescription != null) {
       mySelectionDescription.remove();
     }
-    mySelectionDescription = SelectionDescription.createSelection(editor, lineIndex);
+    mySelectionDescription = SelectionDescription.createSelection(editor, position.getLine());
     mySelectionDescription.select();
   }
 
-  private void showExecutionPoint(final PsiFile psiFile, int lineIndex, List<Pair<Breakpoint, Event>> events) {
+  private void showExecutionPoint(final SourcePosition position, List<Pair<Breakpoint, Event>> events) {
     if (myExecutionPointDescription != null) {
       myExecutionPointDescription.remove();
     }
-    if(lineIndex < 0) {
-      lineIndex = 0;
-    }
-    Editor editor = getEditor(psiFile, lineIndex);
+    int lineIndex = position.getLine();
+    Editor editor = getEditor(position);
     if(editor == null) {
       return;
     }
@@ -244,17 +237,18 @@ public class PositionHighlighter {
     }
   }
 
-  private Editor getEditor(final PsiFile psiFile, final int lineIndex) {
+  private Editor getEditor(SourcePosition position) {
+    final PsiFile psiFile = position.getFile();
     Document doc = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
     if (!psiFile.isValid()) {
       return null;
     }
+    final int lineIndex = position.getLine();
     if (lineIndex < 0 || lineIndex > doc.getLineCount()) {
       //LOG.assertTrue(false, "Incorrect lineIndex " + lineIndex + " in file " + psiFile.getName());
       return null;
     }
-    FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-    return editorManager.openTextEditor(new OpenFileDescriptor(myProject, psiFile.getVirtualFile(), lineIndex, 0), false);
+    return position.openEditor(false);
   }
 
   private void clearSelections() {
@@ -319,18 +313,13 @@ public class PositionHighlighter {
         DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
             public void run() {
               SourcePosition position2 = updatePositionFromBreakpoint(events, position1);
-              showExecutionPoint(
-                position2.getFile(),
-                position2.getLine(),
-                events);
+              showExecutionPoint(position2, events);
             }
           });
       } else {
         DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
             public void run() {
-              showSelection(
-                position1.getFile(),
-                position1.getLine());
+              showSelection(position1);
             }
           });
       }

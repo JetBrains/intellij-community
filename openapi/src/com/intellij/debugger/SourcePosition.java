@@ -4,18 +4,18 @@
  */
 package com.intellij.debugger;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.pom.Navigatable;
 
 /**
  * User: lex
@@ -33,6 +33,8 @@ public abstract class SourcePosition implements Navigatable{
   public abstract int getLine();
 
   public abstract int getOffset();
+
+  public abstract Editor openEditor(boolean requestFocus);
 
   private abstract static class SourcePositionCache extends SourcePosition {
     private final PsiFile myFile;
@@ -65,14 +67,18 @@ public abstract class SourcePosition implements Navigatable{
           if (!canNavigate()) {
             return;
           }
-          final PsiFile psiFile = getFile();
-          final Project project = psiFile.getProject();
-          if (project.isDisposed()) {
-            return;
-          }
-          FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, psiFile.getVirtualFile(), getOffset()), requestFocus);
+          openEditor(requestFocus);
         }
       });
+    }
+
+    public Editor openEditor(final boolean requestFocus) {
+      final PsiFile psiFile = getFile();
+      final Project project = psiFile.getProject();
+      if (project.isDisposed()) {
+        return null;
+      }
+      return FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, psiFile.getVirtualFile(), getOffset()), requestFocus);
     }
 
     private boolean checkRecalculate() {
