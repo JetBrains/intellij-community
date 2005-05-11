@@ -36,8 +36,7 @@ public class AnnotationUtil {
     final PsiModifierList list = listOwner.getModifierList();
     final PsiAnnotation[] allAnnotations = list.getAnnotations();
     for (PsiAnnotation annotation : allAnnotations) {
-      final PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
-      if (nameRef != null && annotationNames.contains(nameRef.getCanonicalText())) {
+      if (annotationNames.contains(annotation.getQualifiedName())) {
         return annotation;
       }
     }
@@ -63,7 +62,7 @@ public class AnnotationUtil {
 
   public static boolean isAnnotatingApplicable(PsiElement elt) {
     final PsiManager manager = elt.getManager();
-    if (manager.getEffectiveLanguageLevel() != LanguageLevel.JDK_1_5) return false;
+    if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return false;
     return manager.findClass(NULLABLE, elt.getResolveScope()) != null;
   }
 }
