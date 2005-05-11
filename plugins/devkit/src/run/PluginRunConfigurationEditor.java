@@ -32,6 +32,7 @@
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -50,6 +51,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -63,6 +65,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   private JCheckBox myShowLogs = new JCheckBox("Show idea.log");
 
   private PluginRunConfiguration myPRC;
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.devkit.ru.PluginRunConfigurationEditor");
 
   public PluginRunConfigurationEditor(final PluginRunConfiguration prc) {
     myPRC = prc;
@@ -78,7 +81,16 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
           prc.removeAllLogFiles();
           final ProjectJdk jdk = ModuleRootManager.getInstance((Module)myModules.getSelectedItem()).getJdk();
           if (jdk != null && jdk.getSdkType() instanceof IdeaJdk){
-            prc.addLogFile(((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome() + File.separator + "system" + File.separator + "log" + File.separator + "idea.log", myShowLogs.isSelected());
+            final String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
+            if (sandboxHome == null){
+              return;
+            }
+            try {
+              prc.addLogFile(new File(sandboxHome).getCanonicalPath() + File.separator + "system" + File.separator + "log" + File.separator + "idea.log", myShowLogs.isSelected());
+            }
+            catch (IOException e1) {
+              LOG.error(e1);
+            }
           }
         }
       }

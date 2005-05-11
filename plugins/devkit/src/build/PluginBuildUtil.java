@@ -1,22 +1,24 @@
 package org.jetbrains.idea.devkit.build;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
-import java.util.Set;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * User: anna
@@ -24,12 +26,19 @@ import java.util.ArrayList;
  */
 public class PluginBuildUtil {
 
-  public static String getPluginExPath(Module module) {
+  @Nullable public static String getPluginExPath(Module module) {
     final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
     if (jdk == null || !(jdk.getSdkType() instanceof IdeaJdk)) {
       return null;
     }
-    return ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome() + "/plugins/" + module.getName();
+    String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
+    try {
+      sandboxHome = new File(sandboxHome).getCanonicalPath();
+    }
+    catch (IOException e) {
+      return null;
+    }
+    return sandboxHome + File.separator + "plugins" + File.separator + module.getName();
   }
 
   public static void getDependencies(Module module, Set<Module> modules) {

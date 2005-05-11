@@ -9,6 +9,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -35,52 +37,47 @@ import java.util.zip.ZipOutputStream;
 public class PrepareToDeployAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final Module module = (Module)e.getDataContext().getData(DataConstants.MODULE);
-    try {
-      final String defaultZipPath = new File(module.getModuleFilePath()).getParent() + File.separator + module.getName() + ".zip";
-      final File file = new File(defaultZipPath);
-      if (file.exists() || file.createNewFile()) {
-        final ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(file));
-        File jarFile = FileUtil.createTempFile("temp", "jar");
-        jarFile.deleteOnExit();
-        final Manifest manifest = new Manifest();
-        Attributes mainAttributes = manifest.getMainAttributes();
-        ManifestBuilder.setGlobalAttributes(mainAttributes);
-        ZipOutputStream jarPlugin = new JarOutputStream(new FileOutputStream(jarFile), manifest);
-        HashSet<Module> modules = new HashSet<Module>();
-        PluginBuildUtil.getDependencies(module, modules);
-        modules.add(module);
-        final HashSet<String> writtenItemRelativePaths = new HashSet<String>();
-        for (Module module1 : modules) {
-          ZipUtil.addDirToZipRecursively(jarPlugin, jarFile, new File(ModuleRootManager.getInstance(module1).getCompilerOutputPath().getPath()), "", new FileFilter() {
-            public boolean accept(File pathname) {
-              return true;
-            }
-          }, writtenItemRelativePaths);
-        }
-        final String pluginXmlPath = ((PluginModuleBuildProperties)ModuleBuildProperties.getInstance(module)).getPluginXmlPath();
-        ZipUtil.addFileToZip(jarPlugin,
-                             new File(pluginXmlPath),
-                             "/META-INF/plugin.xml",
-                             writtenItemRelativePaths,
-                             new FileFilter() {
-                              public boolean accept(File pathname) {
-                                return true;
-                              }
-                             });
-        jarPlugin.close();
 
+    try {
+
+      HashSet<Module> modules = new HashSet<Module>();
+      PluginBuildUtil.getDependencies(module, modules);
+      modules.add(module);
+
+      File jarFile = preparePluginsJar(module, modules);
+
+      HashSet<Library> libs = new HashSet<Library>();
+      PluginBuildUtil.getLibraries(module, libs);
+      for (Iterator<Module> iterator = modules.iterator(); iterator.hasNext();) {
+        Module module1 = iterator.next();
+        PluginBuildUtil.getLibraries(module1, libs);
+      }
+
+      final String defaultPath = new File(module.getModuleFilePath()).getParent() + File.separator + module.getName();
+      final String zipPath = defaultPath + ".zip";
+      final File zipFile = new File(zipPath);
+      if (libs.size() == 0){
+        if (new File(zipPath).exists()){
+          if (Messages.showYesNoDialog(module.getProject(), "Do you want to delete \'" + zipPath + "\'?", "Info", Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE){
+            FileUtil.delete(zipFile);
+          }
+        }
+        FileUtil.copy(jarFile, new File(defaultPath + ".jar"));
+        return;
+      }
+
+      if (zipFile.exists() || zipFile.createNewFile()) {
+        if (new File(defaultPath + ".jar").exists()){
+          if (Messages.showYesNoDialog(module.getProject(), "Do you want to delete \'" + defaultPath + ".jar\'?", "Info", Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE){
+            FileUtil.delete(new File(defaultPath + ".jar"));
+          }
+        }
+        final ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile));
         ZipUtil.addFileToZip(zos, jarFile, "/lib/" + module.getName() + ".jar", new HashSet<String>(), new FileFilter() {
           public boolean accept(File pathname) {
             return true;
           }
         });
-
-        HashSet<Library> libs = new HashSet<Library>();
-        PluginBuildUtil.getLibraries(module, libs);
-        for (Iterator<Module> iterator = modules.iterator(); iterator.hasNext();) {
-          Module module1 = iterator.next();
-          PluginBuildUtil.getLibraries(module1, libs);
-        }
         Set<String> names = new HashSet<String>();
         for (Library library : libs) {
           String libraryName = null;
@@ -137,7 +134,36 @@ public class PrepareToDeployAction extends AnAction {
     }
     catch (IOException e1) {
     }
+  }
 
+  private File preparePluginsJar(Module module, final HashSet<Module> modules) throws IOException {
+        File jarFile = FileUtil.createTempFile("temp", "jar");
+        jarFile.deleteOnExit();
+        final Manifest manifest = new Manifest();
+        Attributes mainAttributes = manifest.getMainAttributes();
+        ManifestBuilder.setGlobalAttributes(mainAttributes);
+        ZipOutputStream jarPlugin = new JarOutputStream(new FileOutputStream(jarFile), manifest);
+
+        final HashSet<String> writtenItemRelativePaths = new HashSet<String>();
+        for (Module module1 : modules) {
+          ZipUtil.addDirToZipRecursively(jarPlugin, jarFile, new File(ModuleRootManager.getInstance(module1).getCompilerOutputPath().getPath()), "", new FileFilter() {
+            public boolean accept(File pathname) {
+              return true;
+            }
+          }, writtenItemRelativePaths);
+        }
+        final String pluginXmlPath = ((PluginModuleBuildProperties)ModuleBuildProperties.getInstance(module)).getPluginXmlPath();
+        ZipUtil.addFileToZip(jarPlugin,
+                             new File(pluginXmlPath),
+                             "/META-INF/plugin.xml",
+                             writtenItemRelativePaths,
+                             new FileFilter() {
+                              public boolean accept(File pathname) {
+                                return true;
+                              }
+                             });
+        jarPlugin.close();
+        return jarFile;
   }
 
   public void update(AnActionEvent e) {

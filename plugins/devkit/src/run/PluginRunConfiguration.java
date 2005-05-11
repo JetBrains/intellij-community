@@ -52,6 +52,7 @@ import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -91,7 +92,19 @@ public class PluginRunConfiguration extends RunConfigurationBase {
     if (!(jdk.getSdkType() instanceof IdeaJdk)) {
       throw new ExecutionException("Wrong jdk type for plugin module");
     }
-    final String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
+    String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
+
+    if (sandboxHome == null){
+      throw new ExecutionException("No sandbox specified for idea jdk");
+    }
+
+    try {
+      sandboxHome = new File(sandboxHome).getCanonicalPath();
+    }
+    catch (IOException e) {
+      throw new ExecutionException("No sandbox specified for idea jdk");
+    }
+    final String canonicalSandbox = sandboxHome;
 
     //copy license from running instance of idea
     IdeaLicenseHelper.copyIDEALicencse(sandboxHome, jdk);
@@ -113,9 +126,9 @@ public class PluginRunConfiguration extends RunConfigurationBase {
         String libPath = jdk.getHomePath() + File.separator + "lib";
         vm.add("-Xbootclasspath/p:" + libPath + File.separator + "boot.jar");
 
-        vm.defineProperty("idea.config.path", sandboxHome + File.separator + "config");
-        vm.defineProperty("idea.system.path", sandboxHome + File.separator + "system");
-        vm.defineProperty("idea.plugins.path", sandboxHome + File.separator + "plugins");
+        vm.defineProperty("idea.config.path", canonicalSandbox + File.separator + "config");
+        vm.defineProperty("idea.system.path", canonicalSandbox + File.separator + "system");
+        vm.defineProperty("idea.plugins.path", canonicalSandbox + File.separator + "plugins");
 
         if (SystemInfo.isMac) {
           vm.defineProperty("idea.smooth.progress", "false");
