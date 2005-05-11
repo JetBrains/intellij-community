@@ -494,8 +494,11 @@ public class CodeEditUtil {
                                                     final CodeStyleSettings settings,
                                                     final boolean mayChangeLineFeeds) {
     final FormattingModelBuilder builder = language.getFormattingModelBuilder();
-    if (builder != null) {
-      final TextRange textRange = file.findElementAt(tokenStartOffset).getTextRange();
+    final PsiElement element = file.findElementAt(tokenStartOffset);
+    
+    if (builder != null && element.getLanguage().getFormattingModelBuilder() != null) {
+      
+      final TextRange textRange = element.getTextRange();
       final FormattingModel model = builder.createModel(file, settings);
       return Formatter.getInstance().getWhiteSpaceBefore(model.getDocumentModel(), 
                                             model.getRootBlock(), 

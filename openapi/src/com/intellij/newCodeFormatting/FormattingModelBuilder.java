@@ -1,9 +1,9 @@
 package com.intellij.newCodeFormatting;
 
-import com.intellij.newCodeFormatting.FormattingModel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 
 public interface FormattingModelBuilder {
-  FormattingModel createModel(final PsiFile element, final CodeStyleSettings settings);
+  @NotNull FormattingModel createModel(final PsiFile element, final CodeStyleSettings settings);
 }

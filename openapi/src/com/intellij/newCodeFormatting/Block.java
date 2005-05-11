@@ -4,20 +4,23 @@ import com.intellij.openapi.util.TextRange;
 
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 public interface Block {
-  TextRange getTextRange();
+  @NotNull TextRange getTextRange();
 
-  List<Block> getSubBlocks();
+  @NotNull List<Block> getSubBlocks();
 
-  Wrap getWrap();
+  @Nullable Wrap getWrap();
 
-  Indent getIndent();
+  @Nullable Indent getIndent();
 
-  Alignment getAlignment();
+  @Nullable Alignment getAlignment();
 
-  SpaceProperty getSpaceProperty(Block child1, Block child2);
+  @Nullable SpaceProperty getSpaceProperty(Block child1, Block child2);
 
-  ChildAttributes getChildAttributes(final int newChildIndex);
+  @NotNull ChildAttributes getChildAttributes(final int newChildIndex);
 
   boolean isIncopleted();
 }

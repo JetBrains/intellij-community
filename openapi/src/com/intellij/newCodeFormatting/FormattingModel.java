@@ -2,11 +2,12 @@ package com.intellij.newCodeFormatting;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public interface FormattingModel {
   
-  Block getRootBlock();
-  FormattingDocumentModel getDocumentModel();
+  @NotNull Block getRootBlock();
+  @NotNull FormattingDocumentModel getDocumentModel();
   /**
    * @return new text range length for block after the white space
    * @throws IncorrectOperationException
