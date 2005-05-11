@@ -73,6 +73,10 @@ public class XmlBlock extends AbstractXmlBlock {
     if (type1 == ElementType.XML_PROLOG) {
       return createDefaultSpace(true);
     }
+    
+    if (elementType == ElementType.XML_DOCTYPE) {
+      return createDefaultSpace(true);      
+    }
 
     return createDefaultSpace(false);
   }
