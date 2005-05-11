@@ -276,7 +276,7 @@ public class WelcomeScreen {
         }
       }
     };
-    addButtonToDocs(docsPanel, defaultKeymap, "Default Keymap", "Open PDF file with the default keymap reference card (27 Kb).");
+    addButtonToDocs(docsPanel, defaultKeymap, "Default Keymap", "Open PDF file with the default keymap reference card.");
 
 // TODO[pti]: before adding Quick Start and Documentation panes to the main panel, check for plugins with welcome actions and add them to the appropriate panes
 
