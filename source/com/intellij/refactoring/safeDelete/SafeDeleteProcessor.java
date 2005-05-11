@@ -405,7 +405,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
             }
           }
         }
-        usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(parent, psiClass, parent instanceof PsiImportStatement));
+        LOG.assertTrue(element.getTextRange() != null);
+        usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(element, psiClass, parent instanceof PsiImportStatement));
       }
     }
 
