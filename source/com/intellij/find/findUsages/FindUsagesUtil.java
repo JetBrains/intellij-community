@@ -163,7 +163,7 @@ public class FindUsagesUtil {
     return results.toArray(new UsageInfo[results.size()]);
   }
 
-  public static String getStringToSearch(PsiElement element) {
+  private static String getStringToSearch(PsiElement element) {
     if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
       element = ((PsiDirectory)element).getPackage();
     }
@@ -206,8 +206,8 @@ public class FindUsagesUtil {
         addConstructorUsages(method, helper, searchScope, result, options);
       } else {
         PsiMethod[] constructors = method.getContainingClass().getConstructors();
-        for (int i = 0; i < constructors.length; i++) {
-          addConstructorUsages(constructors[i], helper, searchScope, result, options);
+        for (PsiMethod constructor : constructors) {
+          addConstructorUsages(constructor, helper, searchScope, result, options);
         }
       }
     }
@@ -296,10 +296,10 @@ public class FindUsagesUtil {
     PsiReference[] refs = helper.findReferences(aPackage, options.searchScope, false);
     HashSet<PsiFile> filesSet = new HashSet<PsiFile>();
     ArrayList<PsiFile> files = new ArrayList<PsiFile>();
-    for(int i = 0; i < refs.length; i++){
-      PsiElement ref = refs[i].getElement();
+    for (PsiReference psiReference : refs) {
+      PsiElement ref = psiReference.getElement();
       PsiFile file = ref.getContainingFile();
-      if (filesSet.add(file)){
+      if (filesSet.add(file)) {
         files.add(file);
       }
     }
@@ -334,8 +334,8 @@ public class FindUsagesUtil {
   }
 
   private static void addResults(Processor<UsageInfo> results, PsiReference[] refs, FindUsagesOptions options, PsiElement element) {
-    for(int i = 0; i < refs.length; i++){
-      final boolean shouldContinue = addResult(results, refs[i], options, element);
+    for (PsiReference psiReference : refs) {
+      final boolean shouldContinue = addResult(results, psiReference, options, element);
       if (!shouldContinue) {
         break;
       }
@@ -344,21 +344,20 @@ public class FindUsagesUtil {
 
   private static void addClassesInPackage(PsiPackage aPackage, boolean includeSubpackages, ArrayList<PsiClass> array) {
     PsiDirectory[] dirs = aPackage.getDirectories();
-    for(int i = 0; i < dirs.length; i++){
-      PsiDirectory dir = dirs[i];
+    for (PsiDirectory dir : dirs) {
       addClassesInDirectory(dir, includeSubpackages, array);
     }
   }
 
   private static void addClassesInDirectory(PsiDirectory dir, boolean includeSubdirs, ArrayList<PsiClass> array) {
     PsiClass[] classes = dir.getClasses();
-    for(int i = 0; i < classes.length; i++){
-      array.add(classes[i]);
+    for (PsiClass aClass : classes) {
+      array.add(aClass);
     }
     if (includeSubdirs){
       PsiDirectory[] dirs = dir.getSubdirectories();
-      for(int i = 0; i < dirs.length; i++){
-        addClassesInDirectory(dirs[i], includeSubdirs, array);
+      for (PsiDirectory directory : dirs) {
+        addClassesInDirectory(directory, includeSubdirs, array);
       }
     }
   }
@@ -366,8 +365,8 @@ public class FindUsagesUtil {
   private static void addMethodsUsages(final PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
     if (!options.isIncludeInherited){
       PsiMethod[] methods = aClass.getMethods();
-      for(int i = 0; i < methods.length; i++){
-        addMethodUsages(methods[i], results, options, options.searchScope);
+      for (PsiMethod method : methods) {
+        addMethodUsages(method, results, options, options.searchScope);
       }
     }
     else{
@@ -408,8 +407,8 @@ public class FindUsagesUtil {
   private static void addFieldsUsages(final PsiClass aClass, final Processor<UsageInfo> results, final FindUsagesOptions options) {
     if (!options.isIncludeInherited){
       PsiField[] fields = aClass.getFields();
-      for(int i = 0; i < fields.length; i++){
-        addElementUsages(fields[i], results, options);
+      for (PsiField field : fields) {
+        addElementUsages(field, results, options);
       }
     }
     else{
@@ -510,8 +509,8 @@ public class FindUsagesUtil {
   }
 
   private static void addResults(Processor<UsageInfo> total, PsiElement[] part, FindUsagesOptions options, PsiElement refElement) {
-    for(int i = 0; i < part.length; i++){
-      addResult(total, part[i], options, refElement);
+    for (PsiElement element : part) {
+      addResult(total, element, options, refElement);
     }
   }
 
