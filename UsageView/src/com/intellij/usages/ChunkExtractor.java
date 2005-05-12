@@ -40,18 +40,29 @@ public class ChunkExtractor {
   private final EditorColorsScheme myColorsScheme;
 
   public ChunkExtractor(final PsiElement element,
-                      final List<RangeMarker> rangeMarkers,
-                      final int startOffset) {
+                        final List<RangeMarker> rangeMarkers) {
 
     myElement = element;
     myRangeMarkers = rangeMarkers;
     myColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
 
+    final int startOffset = getStartOffset(myRangeMarkers);
     final int absoluteStartOffset = myElement.getTextRange().getStartOffset() + startOffset;
 
     myDocument = PsiDocumentManager.getInstance(myElement.getProject()).getDocument(myElement.getContainingFile());
     myLineNumber = myDocument.getLineNumber(absoluteStartOffset);
     myColumnNumber = absoluteStartOffset - myDocument.getLineStartOffset(myLineNumber);
+  }
+
+  private int getStartOffset(final List<RangeMarker> rangeMarkers) {
+    LOG.assertTrue(rangeMarkers.size() > 0);
+    int minStart = Integer.MAX_VALUE;
+    for (RangeMarker rangeMarker : rangeMarkers) {
+      final int startOffset = rangeMarker.getStartOffset();
+      if (startOffset < minStart) minStart = startOffset;
+    }
+
+    return minStart;
   }
 
   public TextChunk[] extractChunks() {
@@ -156,8 +167,7 @@ public class ChunkExtractor {
   private TextAttributes convertAttributes(TextAttributesKey[] keys) {
     TextAttributes attrs = myColorsScheme.getAttributes(HighlighterColors.TEXT);
 
-    for (int i = 0; i < keys.length; i++) {
-      TextAttributesKey key = keys[i];
+    for (TextAttributesKey key : keys) {
       TextAttributes attrs2 = myColorsScheme.getAttributes(key);
       if (attrs2 != null) {
         attrs = TextAttributes.merge(attrs, attrs2);
