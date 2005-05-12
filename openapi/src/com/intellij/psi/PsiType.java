@@ -6,6 +6,7 @@ package com.intellij.psi;
 
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Representation of Java type.
@@ -102,10 +103,8 @@ public abstract class PsiType {
     return type;
   }
 
-  /**
-   * @MaybeNull(description = "null for primitives and arrays of primitives") 
-   */
-    public abstract GlobalSearchScope getResolveScope();
+  @Nullable(documentation = "for primitives and arrays of primitives")
+  public abstract GlobalSearchScope getResolveScope();
 
   public String toString() {
     return "PsiType:" + getPresentableText();
