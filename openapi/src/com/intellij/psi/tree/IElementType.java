@@ -38,6 +38,8 @@ import gnu.trove.TIntObjectHashMap;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class IElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.tree.IElementType");
 
@@ -51,8 +53,8 @@ public class IElementType {
     }
   };
   public static final IElementType[] EMPTY_ARRAY = new IElementType[0];
-  private String myDebugName;
-  private Language myLanguage;
+  private final String myDebugName;
+  private final @NotNull Language myLanguage;
 
   public static IElementType[] enumerate(Predicate p) {
     List matches = new ArrayList();
@@ -72,7 +74,7 @@ public class IElementType {
 
   protected IElementType(String debugName, Language language, final boolean register) {
     myDebugName = debugName;
-    myLanguage = language;
+    myLanguage = language == null ? Language.ANY : language;
     if (register) {
       myIndex = (short) ourCounter++;
       LOG.assertTrue(ourCounter < Short.MAX_VALUE, "Too many element types registered. Out of (short) range.");
@@ -83,7 +85,7 @@ public class IElementType {
     }
   }
 
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return myLanguage;
   }
 

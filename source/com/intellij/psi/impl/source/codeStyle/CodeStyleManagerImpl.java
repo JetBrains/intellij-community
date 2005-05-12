@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.newCodeFormatting.Formatter;
 import com.intellij.newCodeFormatting.FormattingModel;
 import com.intellij.newCodeFormatting.FormattingModelBuilder;
@@ -220,8 +221,12 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   public int adjustLineIndent(PsiFile file, int offset) throws IncorrectOperationException {
     final PsiElement element = file.findElementAt(offset);
     if (element == null) return offset;
-    final FormattingModelBuilder builder = file.getLanguage().getFormattingModelBuilder();
-    final FormattingModelBuilder elementBuilder = element.getLanguage().getFormattingModelBuilder();
+    final Language fileLanguage = file.getLanguage();
+    LOG.assertTrue(fileLanguage != null, file.getClass().getName());
+    final FormattingModelBuilder builder = fileLanguage.getFormattingModelBuilder();
+    final Language elementLanguage = element.getLanguage();
+    LOG.assertTrue(elementLanguage != null, element.getClass().getName());
+    final FormattingModelBuilder elementBuilder = elementLanguage.getFormattingModelBuilder();
     if (builder != null && elementBuilder != null) {
       final CodeStyleSettings settings = getSettings();
       final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
