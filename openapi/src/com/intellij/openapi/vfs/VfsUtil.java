@@ -35,6 +35,9 @@ public class VfsUtil {
    * @return <code>true</code> if <code>ancestor</code> is parent of <code>file</code>; <code>false</code> otherwise
    */
   public static boolean isAncestor(VirtualFile ancestor, VirtualFile file, boolean strict) {
+    assert ancestor != null;
+    assert file != null;
+
     if (!file.getFileSystem().equals(ancestor.getFileSystem())) return false;
     VirtualFile parent = strict ? file.getParent() : file;
     while (true) {

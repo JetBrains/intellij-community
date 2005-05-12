@@ -136,6 +136,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   }
 
   public SourceFolder addSourceFolder(VirtualFile file, boolean isTestSource) {
+    assert file != null;
     return addSourceFolder(file, isTestSource, SourceFolderImpl.DEFAULT_PACKAGE_PREFIX);
   }
 
