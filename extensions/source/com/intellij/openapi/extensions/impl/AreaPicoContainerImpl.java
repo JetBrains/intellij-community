@@ -52,6 +52,10 @@ public class AreaPicoContainerImpl extends AbstractDelegatingMutablePicoContaine
 
   public List getComponentInstances() {
     final List result = new ArrayList();
+    if (getParent() != null) {
+      List parentInstances = getParent().getComponentInstances();
+      result.addAll(parentInstances);
+    }
     accept(new EmptyPicoVisitor() {
       public void visitContainer(PicoContainer pico) {
         result.addAll(pico.getComponentInstances());
@@ -62,21 +66,16 @@ public class AreaPicoContainerImpl extends AbstractDelegatingMutablePicoContaine
 
   public List getComponentInstancesOfType(final Class type) {
     final List result = new ArrayList();
+    if (getParent() != null) {
+      List parentInstances = getParent().getComponentInstancesOfType(type);
+      result.addAll(parentInstances);
+    }
     accept(new EmptyPicoVisitor() {
       public void visitContainer(PicoContainer pico) {
         result.addAll(pico.getComponentInstancesOfType(type));
       }
     });
-    if (result.size() != 0) {
-      return result;
-    }
-    if (getParent() != null) {
-      List parentInstances = getParent().getComponentInstancesOfType(type);
-      if (parentInstances.size() != 0) {
-        return parentInstances;
-      }
-    }
-    return Collections.EMPTY_LIST;
+    return result;
   }
 
   public Object getComponentInstanceOfType(Class componentType) {

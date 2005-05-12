@@ -10,6 +10,7 @@ import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author AKireyev
@@ -173,6 +174,17 @@ public class ExtensionsImplTest extends TestCase {
 
     assertSame(runnable, parentArea.getPicoContainer().getComponentInstanceOfType(Runnable.class));
     assertSame(runnable, childArea.getPicoContainer().getComponentInstanceOfType(Runnable.class));
+
+    final Runnable childRunnable = new Runnable() {
+      public void run() {
+        throw new UnsupportedOperationException("This method is not yet implemented");
+      }
+    };
+    childArea.getPicoContainer().registerComponentInstance(childRunnable);
+    assertEquals(2, childArea.getPicoContainer().getComponentInstancesOfType(Runnable.class).size());
+    final List componentInstances = childArea.getPicoContainer().getComponentInstances();
+    assertTrue("parent instance found", componentInstances.contains(runnable));
+    assertTrue("child instance found", componentInstances.contains(childRunnable));
   }
 
   public void testTryPicoContainer() {
