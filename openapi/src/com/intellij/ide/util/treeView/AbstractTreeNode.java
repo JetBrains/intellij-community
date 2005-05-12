@@ -130,7 +130,7 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
   }
 
   public ItemPresentation getPresentation() {
-    return getUpdatedData();
+    return new PresentationData(myName, myLocationString, myOpenIcon, myClosedIcon);
   }
 
   public FileStatus getFileStatus() {

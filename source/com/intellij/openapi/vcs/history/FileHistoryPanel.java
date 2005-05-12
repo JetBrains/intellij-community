@@ -925,10 +925,10 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
     public int compare(Object o1, Object o2) {
       int result = compareObjects(getDataOf(o1), getDataOf(o2));
       if (myIsReverse) {
-        return result * -1;
+        return result ;
       }
       else {
-        return result;
+        return result * -1;
       }
     }
 
