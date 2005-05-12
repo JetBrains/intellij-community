@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PlainFileManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator;
+import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTokenManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassListReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspxIncludePathReferenceProvider;
@@ -53,6 +54,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     // Manipulators mapping
     registerManipulator(XmlAttributeValue.class, new XmlAttributeValueManipulator());
     registerManipulator(PsiPlainTextFile.class, new PlainFileManipulator());
+    registerManipulator(XmlToken.class, new XmlTokenManipulator());
     // Binding declarations
     registerReferenceProvider(
       new ScopeFilter(
@@ -230,7 +232,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     return null;
   }
 
-  public void registerManipulator(Class elementClass, ElementManipulator manipulator) {
+  public void registerManipulator(Class<? extends PsiElement> elementClass, ElementManipulator manipulator) {
     myManipulators.add(new Object[]{elementClass, manipulator});
   }
 
