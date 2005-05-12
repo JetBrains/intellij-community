@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
+import com.intellij.util.containers.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -53,7 +54,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
   private ModalityState MODALITY_STATE_NONE;
 
-  private ArrayList<ApplicationListener> myListeners = new ArrayList<ApplicationListener>();
+  private final ArrayList<ApplicationListener> myListeners = new ArrayList<ApplicationListener>();
   private ApplicationListener[] myCachedListeners;
 
   private boolean myTestModeFlag = false;
@@ -66,7 +67,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private String myName;
 
   private ReentrantWriterPreferenceReadWriteLock myActionsLock = new ReentrantWriterPreferenceReadWriteLock();
-  private Stack<Runnable> myWriteActionsStack = new Stack<Runnable>();
+  private final Stack<Runnable> myWriteActionsStack = new Stack<Runnable>();
 
   private Thread myExceptionalThreadWithReadAccess = null;
 
@@ -134,8 +135,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     if (PluginManager.shouldLoadPlugins()) {
       final PluginDescriptor[] plugins = PluginManager.getPlugins();
-      for (int i = 0; i < plugins.length; i++) {
-        PluginDescriptor plugin = plugins[i];
+      for (PluginDescriptor plugin : plugins) {
         if (!PluginManager.shouldLoadPlugin(plugin)) continue;
         final Element appComponents = plugin.getAppComponents();
         if (appComponents != null) {
@@ -197,10 +197,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     Class[] componentClasses = getComponentInterfaces();
 
-    com.intellij.util.containers.HashMap<String,Element> fileNameToRootElementMap = new com.intellij.util.containers.HashMap<String, Element>();
+    HashMap<String, Element> fileNameToRootElementMap = new HashMap<String, Element>();
 
-    for (int i = 0; i < componentClasses.length; i++) {
-      Class componentClass = componentClasses[i];
+    for (Class componentClass : componentClasses) {
       Object component = getComponent(componentClass);
 
       String fileName;
@@ -223,12 +222,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }
     }
 
-    for (Iterator<String> iterator = fileNameToRootElementMap.keySet().iterator(); iterator.hasNext();) {
-      String fileName = iterator.next();
+    for (String fileName : fileNameToRootElementMap.keySet()) {
       Element root = fileNameToRootElementMap.get(fileName);
 
       try {
-        JDOMUtil.writeDocument(new Document(root), path + File.separatorChar + fileName, CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+        JDOMUtil.writeDocument(new Document(root), path + File.separatorChar + fileName,
+                               CodeStyleSettingsManager.getSettings(null).getLineSeparator());
       }
       catch (IOException e) {
         LOG.error(e);
@@ -240,8 +239,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private static void backupFiles(String path) throws IOException {
     String[] list = new File(path).list();
-    for (int i = 0; i < list.length; i++) {
-      String name = list[i];
+    for (String name : list) {
       if (name.toLowerCase().endsWith(".xml")) {
         File file = new File(path + File.separatorChar + name);
         File newFile = new File(path + File.separatorChar + name + "~");
@@ -252,7 +250,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  private static Element getRootElement(Map<String,Element> fileNameToRootElementMap, String fileName) {
+  private static Element getRootElement(Map<String, Element> fileNameToRootElementMap, String fileName) {
     Element root = fileNameToRootElementMap.get(fileName);
     if (root == null) {
       root = new Element("application");
@@ -263,8 +261,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private static void deleteBackupFiles(String path) throws IOException {
     String[] list = new File(path).list();
-    for (int i = 0; i < list.length; i++) {
-      String name = list[i];
+    for (String name : list) {
       if (StringUtil.endsWithChar(name.toLowerCase(), '~')) {
         File file = new File(path + File.separatorChar + name);
         if (!file.delete()) {
@@ -301,8 +298,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }
     }
 
-    for (Iterator<String> i = names.iterator(); i.hasNext();) {
-      String name = i.next();
+    for (String name : names) {
       if (!name.endsWith(".xml") && !name.endsWith(".xml~")) continue; // see SCR #12791
       final String filePath = path + File.separatorChar + name;
       File file = new File(filePath);
@@ -331,8 +327,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     final List<String> additionalFiles = new ArrayList<String>();
     synchronized (this) {
       List children = root.getChildren("component");
-      for (Iterator iterator = children.iterator(); iterator.hasNext();) {
-        Element element = (Element)iterator.next();
+      for (final Object aChildren : children) {
+        Element element = (Element)aChildren;
 
         String name = element.getAttributeValue("name");
         if (name == null || name.length() == 0) {
@@ -349,8 +345,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }
     }
 
-    for (Iterator<String> iterator = additionalFiles.iterator(); iterator.hasNext();) {
-      String additionalPath = iterator.next();
+    for (String additionalPath : additionalFiles) {
       loadFile(additionalPath);
     }
   }
@@ -367,9 +362,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public void dispose() {
     Project[] openProjects = ProjectManagerEx.getInstanceEx().getOpenProjects();
-    final boolean[] canClose = new boolean[] { true };
-    for (int i = 0; i < openProjects.length; i++) {
-      final Project project = openProjects[i];
+    final boolean[] canClose = new boolean[]{true};
+    for (final Project project : openProjects) {
       CommandProcessor commandProcessor = CommandProcessor.getInstance();
       commandProcessor.executeCommand(project, new Runnable() {
         public void run() {
@@ -418,7 +412,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
                                                ? new SmoothProgressAdapter(progressWindow, project)
                                                : (BlockingProgressIndicator)progressWindow;
 
-    class MyThread extends Thread{
+    class MyThread extends Thread {
       private final Runnable myProcess;
 
       public MyThread() {
@@ -428,10 +422,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
       public void run() {
         if (myExceptionalThreadWithReadAccess != this) {
-          if (myExceptionalThreadWithReadAccess == null){
+          if (myExceptionalThreadWithReadAccess == null) {
             LOG.error("myExceptionalThreadWithReadAccess = null!");
           }
-          else{
+          else {
             LOG.error("myExceptionalThreadWithReadAccess != thread, process = " + ((MyThread)myExceptionalThreadWithReadAccess).myProcess);
           }
         }
@@ -447,15 +441,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     try {
       myExceptionalThreadWithReadAccess = thread;
 
-      final boolean[] threadStarted = new boolean[] { false };
+      final boolean[] threadStarted = new boolean[]{false};
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           if (myExceptionalThreadWithReadAccess != thread) {
-            if (myExceptionalThreadWithReadAccess == null){
+            if (myExceptionalThreadWithReadAccess == null) {
               LOG.error("myExceptionalThreadWithReadAccess = null!");
             }
-            else{
-              LOG.error("myExceptionalThreadWithReadAccess != thread, process = " + ((MyThread)myExceptionalThreadWithReadAccess).myProcess);
+            else {
+              LOG.error("myExceptionalThreadWithReadAccess != thread, process = " + ((MyThread)myExceptionalThreadWithReadAccess)
+                .myProcess);
             }
           }
 
@@ -537,7 +532,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public ModalityState getNoneModalityState() {
     if (MODALITY_STATE_NONE == null) {
-       MODALITY_STATE_NONE = new ModalityStateEx(ArrayUtil.EMPTY_OBJECT_ARRAY);
+      MODALITY_STATE_NONE = new ModalityStateEx(ArrayUtil.EMPTY_OBJECT_ARRAY);
     }
     return MODALITY_STATE_NONE;
   }
@@ -583,15 +578,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private boolean canExit() {
     ApplicationListener[] listeners = getListeners();
 
-    for (int i = 0; i < listeners.length; i++) {
-      ApplicationListener applicationListener = listeners[i];
+    for (ApplicationListener applicationListener : listeners) {
       if (!applicationListener.canExitApplication()) return false;
     }
 
     ProjectManagerEx projectManager = (ProjectManagerEx)ProjectManager.getInstance();
     Project[] projects = projectManager.getOpenProjects();
-    for (int i = 0; i < projects.length; i++) {
-      Project project = projects[i];
+    for (Project project : projects) {
       if (!projectManager.canClose(project)) return false;
     }
 
@@ -625,7 +618,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public boolean isExceptionalThreadWithReadAccess(final Thread thread) {
     return myExceptionalThreadWithReadAccess != null &&
-                                  thread == myExceptionalThreadWithReadAccess;
+           thread == myExceptionalThreadWithReadAccess;
   }
 
   public <T> T runReadAction(final Computable<T> computation) {
@@ -674,7 +667,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       fireWriteActionFinished(action);
       myActionsLock.writeLock().release();
     }
-    
+
   }
 
   public <T> T runWriteAction(final Computable<T> computation) {
@@ -700,7 +693,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public void assertReadAccessAllowed() {
     if (!isReadAccessAllowed()) {
       LOG.error("Read access is allowed from event dispatch thread or inside read-action only (see com.intellij.openapi.application.Application.runReadAction())",
-                new String[]{"Current thread: "+Thread.currentThread()});
+                new String[]{"Current thread: " + Thread.currentThread()});
     }
   }
 
@@ -719,9 +712,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       if (myExceptionalThreadWithReadAccess == currentThread) return true;
       if (myActionsLock.isReadLockAcquired(currentThread)) return true;
       if (myActionsLock.isWriteLockAcquired(currentThread)) return true;
-      if (isDispatchThread(currentThread)) return true;
-
-      return false;
+      return isDispatchThread(currentThread);
     }
 
     return true;
@@ -759,7 +750,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   public void assertIsDispatchThread() {
     if (!isDispatchThread() && !EventQueue.isDispatchThread()) { // Last one to be completely sure.
-      LOG.error("Access is allowed from event dispatch thread only. Current thread=" + Thread.currentThread() + ", ourDispatch=" + ourDispatchThread);
+      LOG.error("Access is allowed from event dispatch thread only. Current thread=" + Thread.currentThread() + ", ourDispatch=" +
+                ourDispatchThread);
     }
   }
 
@@ -797,8 +789,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private void fireApplicationExiting() {
     ApplicationListener[] listeners = myListeners.toArray(new ApplicationListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      ApplicationListener applicationListener = listeners[i];
+    for (ApplicationListener applicationListener : listeners) {
       applicationListener.applicationExiting();
     }
   }
@@ -806,24 +797,24 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private void fireBeforeWriteActionStart(Object action) {
     ApplicationListener[] listeners = getListeners();
 
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].beforeWriteActionStart(action);
+    for (ApplicationListener listener : listeners) {
+      listener.beforeWriteActionStart(action);
     }
   }
 
   private void fireWriteActionStarted(Object action) {
     ApplicationListener[] listeners = getListeners();
 
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].writeActionStarted(action);
+    for (ApplicationListener listener : listeners) {
+      listener.writeActionStarted(action);
     }
   }
 
   private void fireWriteActionFinished(Object action) {
     ApplicationListener[] listeners = getListeners();
 
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].writeActionFinished(action);
+    for (ApplicationListener listener : listeners) {
+      listener.writeActionFinished(action);
     }
   }
 
@@ -891,7 +882,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           ex.printStackTrace();
           invokeLater(new Runnable() {
             public void run() {
-              Messages.showMessageDialog("Could not save application settings: " + ex.getLocalizedMessage(), "Error", Messages.getErrorIcon());
+              Messages.showMessageDialog("Could not save application settings: " + ex.getLocalizedMessage(), "Error",
+                                         Messages.getErrorIcon());
             }
           });
         }
@@ -913,8 +905,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     FileDocumentManager.getInstance().saveAllDocuments();
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    for (int i = 0; i < openProjects.length; i++) {
-      ProjectEx project = (ProjectEx)openProjects[i];
+    for (Project openProject : openProjects) {
+      ProjectEx project = (ProjectEx)openProject;
       project.save();
     }
 
