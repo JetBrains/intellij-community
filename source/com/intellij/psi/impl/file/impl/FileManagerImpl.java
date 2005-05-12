@@ -291,7 +291,7 @@ public class FileManagerImpl implements FileManager {
       OrderEntry[] orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
       if (orderEntries.length == 0) return GlobalSearchScope.allScope(myManager.getProject());
       Module ownerModule = orderEntries[0].getOwnerModule();
-      return GlobalSearchScope.moduleWithLibrariesScope(ownerModule);
+      return GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(ownerModule);
     }
   }
 
