@@ -68,6 +68,7 @@ public class IdeEventQueue extends EventQueue {
   private boolean myIsInInputEvent = false;
   private AWTEvent myCurrentEvent = null;
   private long myLastActiveTime;
+  private WindowManagerEx myWindowManager;
 
   public static IdeEventQueue getInstance() {
     if (ourInstance == null) {
@@ -120,6 +121,10 @@ public class IdeEventQueue extends EventQueue {
         }
       }
     );
+  }
+
+  public void setWindowManager(final WindowManagerEx windowManager) {
+    myWindowManager = windowManager;
   }
 
   private void addIdleTimeCounterRequest() {
@@ -326,8 +331,8 @@ public class IdeEventQueue extends EventQueue {
       }
     }
 
-    if (e instanceof ComponentEvent) {
-      WindowManagerEx.getInstanceEx().dispatchComponentEvent((ComponentEvent)e);
+    if (e instanceof ComponentEvent && myWindowManager != null) {
+      myWindowManager.dispatchComponentEvent((ComponentEvent)e);
     }
 
     if (e instanceof KeyEvent) {

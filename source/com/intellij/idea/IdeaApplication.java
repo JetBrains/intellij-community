@@ -43,8 +43,7 @@ public class IdeaApplication {
     ourInstance = this;
     myArgs = args;
     boolean isInternal = "true".equals(System.getProperty("idea.is.internal"));
-    ApplicationManagerEx.createApplication("componentSets/IdeaComponents", isInternal, false, "idea");
-    Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
+    ApplicationManagerEx.createApplication("componentSets/IdeaComponents", isInternal, false, "idea");    
 
     myStarter = getStarter();
     myStarter.premain(args);

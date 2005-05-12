@@ -2,6 +2,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.Patches;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -141,6 +142,7 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
   }
 
   public void showFrame() {
+    IdeEventQueue.getInstance().setWindowManager(this);
     final IdeFrame frame = new IdeFrame(myApplicationInfoEx, myActionManager, myUiSettings, myDataManager, myKeymapManager);
     myProject2Frame.put(null, frame);
     if (myFrameBounds != null) {

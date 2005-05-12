@@ -78,11 +78,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private boolean myIsWaitingForWriteAction = false;
 
   public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, String appName) {
-    getPicoContainer().registerComponentInstance(ApplicationEx.class, this);
-
     myStartTime = System.currentTimeMillis();
     myName = appName;
     ApplicationManagerEx.setApplication(this);
+
+    Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
+    getPicoContainer().registerComponentInstance(ApplicationEx.class, this);    
+
     myComponentsDescriptor = componentsDescriptor;
     myIsInternal = isInternal;
     myTestModeFlag = isUnitTestMode;
