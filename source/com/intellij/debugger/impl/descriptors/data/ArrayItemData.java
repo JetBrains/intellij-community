@@ -37,7 +37,7 @@ public final class ArrayItemData extends DescriptorData<ArrayElementDescriptorIm
 
   public boolean equals(Object object) {
     if(!(object instanceof ArrayItemData)) return false;
-    return ((ArrayItemData)object).myArray == myArray &&
+    return myArray.equals(((ArrayItemData)object).myArray) &&
            ((ArrayItemData)object).myIndex == myIndex;
   }
 
