@@ -86,7 +86,11 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
               return;
             }
             try {
-              prc.addLogFile(new File(sandboxHome).getCanonicalPath() + File.separator + "system" + File.separator + "log" + File.separator + "idea.log", myShowLogs.isSelected());
+              final String file = new File(sandboxHome).getCanonicalPath() + File.separator + "system" + File.separator + "log" + File.separator +
+                                  "idea.log";
+              if (new File(file).exists()){
+                prc.addLogFile(file, myShowLogs.isSelected());
+              }
             }
             catch (IOException e1) {
               LOG.error(e1);
