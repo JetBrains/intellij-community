@@ -159,6 +159,22 @@ public class ExtensionsImplTest extends TestCase {
     assertEquals(0, MyListener.regcount);
   }
 
+  public void testPicoContainerDirectRegistration() throws Exception {
+    ExtensionsAreaImpl parentArea = new ExtensionsAreaImpl(new DefaultPicoContainer(), new Extensions.SimpleLogProvider());
+    ExtensionsAreaImpl childArea = new ExtensionsAreaImpl(parentArea.getPicoContainer(), new Extensions.SimpleLogProvider());
+
+
+    Runnable runnable = new Runnable() {
+      public void run() {
+        throw new UnsupportedOperationException("run is not implemented in : " + getClass());
+      }
+    };
+    parentArea.getPicoContainer().registerComponentInstance(runnable);
+
+    assertSame(runnable, parentArea.getPicoContainer().getComponentInstanceOfType(Runnable.class));
+    assertSame(runnable, childArea.getPicoContainer().getComponentInstanceOfType(Runnable.class));
+  }
+
   public void testTryPicoContainer() {
     DefaultPicoContainer rootContainer = new DefaultPicoContainer();
     rootContainer.registerComponentInstance("plugin1", new DefaultPicoContainer(rootContainer));

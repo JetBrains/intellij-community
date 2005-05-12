@@ -67,7 +67,16 @@ public class AreaPicoContainerImpl extends AbstractDelegatingMutablePicoContaine
         result.addAll(pico.getComponentInstancesOfType(type));
       }
     });
-    return result;
+    if (result.size() != 0) {
+      return result;
+    }
+    if (getParent() != null) {
+      List parentInstances = getParent().getComponentInstancesOfType(type);
+      if (parentInstances.size() != 0) {
+        return parentInstances;
+      }
+    }
+    return Collections.EMPTY_LIST;
   }
 
   public Object getComponentInstanceOfType(Class componentType) {
