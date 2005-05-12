@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -231,8 +232,7 @@ public class RepositoryHelper {
     connection.disconnect();
 
     File newFile = new File (file.getParentFile(), fileName);
-    file.renameTo(newFile);
-
+    FileUtil.rename(file, newFile);
     return newFile;
   }
 }

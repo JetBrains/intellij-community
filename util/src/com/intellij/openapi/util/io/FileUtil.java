@@ -359,6 +359,11 @@ public class FileUtil {
     return true;
   }
 
+  public static void rename(final File source, final File target) throws IOException {
+    copy(source, target);
+    delete(source);
+  }
+
   public static interface FileVisitor {
     int PROCEED = 0;
     int STOP = 1;

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -79,9 +80,14 @@ public class GenerateAntBuildAction extends CompileActionBase {
     final String extension = path.substring(extensionIndex, path.length());
     final String backupPath = path.substring(0, extensionIndex) + "_" + new Date(file.lastModified()).toString().replaceAll("\\s+", "_").replaceAll(":", "-") + extension;
     final File backupFile = new File(backupPath);
-    final boolean ok = file.renameTo(backupFile);
-    if (!ok) {
+    boolean ok;
+    try {
+      FileUtil.rename(file, backupFile);
+      ok = true;
+    }
+    catch (IOException e) {
       Messages.showErrorDialog(project, "Failed to backup file " + path, "Backup Error");
+      ok = false;
     }
     filesToRefresh.add(backupFile);
     return ok;

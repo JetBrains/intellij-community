@@ -31,6 +31,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.convertors.Convertor34;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
@@ -245,9 +246,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       if (name.toLowerCase().endsWith(".xml")) {
         File file = new File(path + File.separatorChar + name);
         File newFile = new File(path + File.separatorChar + name + "~");
-        if (!file.renameTo(newFile)) {
-          throw new IOException("Cannot rename file " + file.getPath() + " to " + newFile.getPath());
-        }
+        FileUtil.rename(file, newFile);
       }
     }
   }
