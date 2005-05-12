@@ -553,7 +553,7 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
 
     if (reformat) {
       statement = (PsiDeclarationStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
-    }
+    } 
     return statement;
     
   }

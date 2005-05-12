@@ -275,7 +275,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
     }
 
     final PsiElementFactory factory = psiManager.getElementFactory();
-    final PsiExpression initializerExpression;
+    PsiExpression initializerExpression;
     final IElementType originalOpSign = assignment.getOperationSign().getTokenType();
     if (originalOpSign == JavaTokenType.EQ) {
       initializerExpression = assignment.getRExpression();
@@ -319,6 +319,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
 
       try {
         initializerExpression = factory.createExpressionFromText(var.getInitializer().getText() + opSign + assignment.getRExpression().getText(), var);
+        initializerExpression = (PsiExpression)CodeStyleManager.getInstance(psiManager).reformat(initializerExpression);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -339,6 +340,14 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
         newVar.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
       }
       newVar.getModifierList().replace(var.getModifierList());
+      PsiVariable variable = (PsiVariable)newDecl.getDeclaredElements()[0];
+      final int offsetBeforeEQ = variable.getNameIdentifier().getTextRange().getEndOffset();
+      final int offsetAfterEQ = variable.getInitializer().getTextRange().getStartOffset() + 1;
+      newDecl = (PsiDeclarationStatement)CodeStyleManager.getInstance(psiManager).reformatRange(newDecl,
+                                                                                                              offsetBeforeEQ, 
+                                                                                                              offsetAfterEQ);     
+      
+      
       decl.replace(newDecl);
       statement.delete();
       return startOffset + newDecl.getTextRange().getEndOffset() - newDecl.getTextRange().getStartOffset();
