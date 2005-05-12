@@ -22,7 +22,6 @@ import com.intellij.Patches;
 import com.sun.jdi.*;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl");
   protected final Project myProject;
 
   NodeRenderer myRenderer = null;
