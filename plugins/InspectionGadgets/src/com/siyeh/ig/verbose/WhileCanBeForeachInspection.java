@@ -25,7 +25,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
     }
 
     public String getDisplayName(){
-        return "'while' loop replacable by 'for each' (J2SDK 5.0 only)";
+        return "'while' loop replaceable by 'for each' (J2SDK 5.0 only)";
     }
 
     public String getGroupDisplayName(){
@@ -37,7 +37,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "'#ref' loop replacable by 'for each'";
+        return "'#ref' loop replaceable by 'for each'";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,

@@ -36,7 +36,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "'#ref' loop replacable by 'for each'";
+        return "'#ref' loop replaceable by 'for each'";
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
