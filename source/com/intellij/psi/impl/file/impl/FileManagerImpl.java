@@ -278,7 +278,7 @@ public class FileManagerImpl implements FileManager {
       return GlobalSearchScope.allScope(myManager.getProject());
     }
 
-    final ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
+    ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     Module module = projectFileIndex.getModuleForFile(vFile);
     if (module != null) {
       boolean includeTests = projectFileIndex.isInTestSourceContent(vFile) ||
@@ -286,39 +286,12 @@ public class FileManagerImpl implements FileManager {
       return GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, includeTests);
     }
     else {
-      // resolve references in libraries first in current library, then in project scope
-      final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myManager.getProject());
-      final VirtualFile classRoot = projectFileIndex.getClassRootForFile(vFile);
-      final GlobalSearchScope scope = new GlobalSearchScope() {
-        public int compare(VirtualFile file1, VirtualFile file2) {
-          final VirtualFile classRootForFile1 = projectFileIndex.getClassRootForFile(file1);
-          final VirtualFile classRootForFile2 = projectFileIndex.getClassRootForFile(file2);
-          if (classRootForFile1 != classRootForFile2) {
-            if (classRootForFile1 == classRoot) return 1;
-            if (classRootForFile2 == classRoot) return -1;
-          }
-          return projectScope.compare(file1, file2);
-        }
-
-        public boolean contains(VirtualFile file) {
-          return projectScope.contains(file);
-        }
-
-        public boolean isSearchInLibraries() {
-          return true;
-        }
-
-        public boolean isSearchInModuleContent(Module aModule) {
-          return false;
-        }
-      };
-      return scope;
-      /*
+      // resolve references in libraries in any module which contain it
+      //TODO: exclude project content
       OrderEntry[] orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
       if (orderEntries.length == 0) return GlobalSearchScope.allScope(myManager.getProject());
       Module ownerModule = orderEntries[0].getOwnerModule();
-      return GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(ownerModule);
-      */
+      return GlobalSearchScope.moduleWithLibrariesScope(ownerModule);
     }
   }
 
