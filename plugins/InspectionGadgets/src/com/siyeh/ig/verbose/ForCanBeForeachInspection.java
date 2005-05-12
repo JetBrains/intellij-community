@@ -98,15 +98,8 @@ public class ForCanBeForeachInspection extends StatementInspection{
                 final PsiType parameterType = parameters[0];
                 if(parameterType instanceof PsiWildcardType){
                     final PsiWildcardType wildcardType = (PsiWildcardType) parameterType;
-                    final PsiType bound = wildcardType.getBound();
-                    if(bound == null)
-                    {
-                        contentTypeString = "Object";
-                    }
-                    else
-                    {
-                        contentTypeString = bound.getPresentableText();
-                    }
+                    final PsiType bound = wildcardType.getExtendsBound();
+                    contentTypeString = bound.getPresentableText();
                 } else{
                     contentTypeString = parameterType.getPresentableText();
                 }
