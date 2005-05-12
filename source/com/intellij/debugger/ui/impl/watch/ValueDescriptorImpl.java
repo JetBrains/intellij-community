@@ -18,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.Patches;
 import com.sun.jdi.*;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor{
@@ -76,21 +77,24 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return myValueException == null;
   }
 
-  public Value getValue() { 
-    if (myValue instanceof ObjectReference && ((ObjectReference)myValue).isCollected()) {
-      if (myStoredEvaluationContext != null) {
-        // re-setting the context will cause value recalculation
-        final Semaphore semaphore = new Semaphore();
-        semaphore.down();
-        myStoredEvaluationContext.getDebugProcess().getManagerThread().invoke(new SuspendContextCommandImpl(myStoredEvaluationContext.getSuspendContext()) {
-          public void contextAction() throws Exception {
-            setContext(myStoredEvaluationContext);
-            semaphore.up();
-          }
-        });
-        semaphore.waitFor();
-      }
+  public Value getValue() {
+    // the following code makes sence only if we do not use ObjectReference.enableCollection() / disableCollection()
+    // to keep temporary objects
+    if (Patches.IBM_JDK_DISABLE_COLLECTION_BUG && myStoredEvaluationContext != null && !myStoredEvaluationContext.getSuspendContext().isResumed() &&
+        myValue instanceof ObjectReference && ((ObjectReference)myValue).isCollected()) {
+      
+      final Semaphore semaphore = new Semaphore();
+      semaphore.down();
+      myStoredEvaluationContext.getDebugProcess().getManagerThread().invoke(new SuspendContextCommandImpl(myStoredEvaluationContext.getSuspendContext()) {
+        public void contextAction() throws Exception {
+          // re-setting the context will cause value recalculation
+          setContext(myStoredEvaluationContext);
+          semaphore.up();
+        }
+      });
+      semaphore.waitFor();
     }
+    
     return myValue; 
   }
   
