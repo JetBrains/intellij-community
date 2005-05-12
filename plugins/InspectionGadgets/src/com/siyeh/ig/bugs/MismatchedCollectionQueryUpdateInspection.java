@@ -112,13 +112,16 @@ public class MismatchedCollectionQueryUpdateInspection
         if(initializer != null && !isEmptyCollectionInitializer(initializer)){
             return true;
         }
-        if(variableIsAssigned(variable, context)){
+        if(VariableAccessUtils.variableIsAssigned(variable, context)){
             return true;
         }
-        if(variableIsAssignedFrom(variable, context)){
+        if(VariableAccessUtils.variableIsAssignedFrom(variable, context)){
             return true;
         }
-        return variableIsPassedAsMethodArgument(variable, context);
+        if(VariableAccessUtils.variableIsReturned(variable, context)){
+            return true;
+        }
+        return VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context);
     }
 
     private static boolean collectionContentsAreQueried(PsiVariable variable,
@@ -130,48 +133,16 @@ public class MismatchedCollectionQueryUpdateInspection
         if(initializer != null && !isEmptyCollectionInitializer(initializer)){
             return true;
         }
-        if(variableIsAssigned(variable, context)){
+        if(VariableAccessUtils.variableIsAssigned(variable, context)){
             return true;
         }
-        if(variableIsAssignedFrom(variable, context)){
+        if(VariableAccessUtils.variableIsAssignedFrom(variable, context)){
             return true;
         }
-        if(variableIsReturned(variable, context)){
+        if(VariableAccessUtils.variableIsReturned(variable, context)){
             return true;
         }
-        return variableIsPassedAsMethodArgument(variable, context);
-    }
-
-    private static boolean variableIsAssignedFrom(PsiVariable variable,
-                                                  PsiElement context){
-        final VariableAssignedFromVisitor visitor =
-                new VariableAssignedFromVisitor(variable);
-        context.accept(visitor);
-        return visitor.isAssignedFrom();
-    }
-
-    private static boolean variableIsPassedAsMethodArgument(PsiVariable variable,
-                                                            PsiElement context){
-        final VariablePassedAsArgumentVisitor visitor =
-                new VariablePassedAsArgumentVisitor(variable);
-        context.accept(visitor);
-        return visitor.isPassed();
-    }
-
-    private static boolean variableIsAssigned(PsiVariable variable,
-                                              PsiElement context){
-        final VariableAssignedVisitor visitor =
-                new VariableAssignedVisitor(variable);
-        context.accept(visitor);
-        return visitor.isAssigned();
-    }
-
-    private static boolean variableIsReturned(PsiVariable variable,
-                                              PsiElement context){
-        final VariableReturnedVisitor visitor =
-                new VariableReturnedVisitor(variable);
-        context.accept(visitor);
-        return visitor.isReturned();
+        return VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context);
     }
 
     private static boolean collectionQueryCalled(PsiVariable variable,
