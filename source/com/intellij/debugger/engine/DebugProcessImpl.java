@@ -18,6 +18,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.jdi.ObjectReferenceCachingProxy;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.DebuggerSmoothManager;
@@ -819,7 +820,22 @@ public abstract class DebugProcessImpl implements DebugProcess {
   }
 
   private abstract class InvokeCommand <E extends Value> {
-    protected abstract E invokeMethod(int invokePolicy) throws InvocationException,
+    private final List myArgs;
+
+    protected InvokeCommand(List args) {
+      myArgs = args.size() > 0? new ArrayList(args.size()) : args;
+      for (Iterator it = args.iterator(); it.hasNext();) {
+        final Object arg = (Object)it.next();
+        if (arg instanceof ObjectReference) {
+          myArgs.add(ObjectReferenceCachingProxy.unwrap((ObjectReference)arg));
+        }
+        else {
+          myArgs.add(arg);
+        }
+      }
+    }
+
+    protected abstract E invokeMethod(int invokePolicy, final List args) throws InvocationException,
                                                                ClassNotLoadedException,
                                                                IncompatibleThreadStateException,
                                                                InvalidTypeException;
@@ -923,7 +939,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
                 LOG.assertTrue(thread.isSuspended(), thread.toString());
                 LOG.assertTrue(context.isEvaluating());
               }
-              result[0] = invokeMethod(invokePolicy);
+              result[0] = invokeMethod(invokePolicy, myArgs);
             }
             finally {
               LOG.assertTrue(thread.isSuspended(), thread.toString());
@@ -966,8 +982,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
                             final List args) throws EvaluateException {
 
     final ThreadReference thread = getEvaluationThread(evaluationContext);
-    InvokeCommand<Value> invokeCommand = new InvokeCommand<Value>() {
-      protected Value invokeMethod(int invokePolicy) throws InvocationException,
+    InvokeCommand<Value> invokeCommand = new InvokeCommand<Value>(args) {
+      protected Value invokeMethod(int invokePolicy, final List args) throws InvocationException,
                                                             ClassNotLoadedException,
                                                             IncompatibleThreadStateException,
                                                             InvalidTypeException {
@@ -991,8 +1007,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
                             final List args) throws EvaluateException {
 
     final ThreadReference thread = getEvaluationThread(evaluationContext);
-    InvokeCommand<Value> invokeCommand = new InvokeCommand<Value>() {
-      protected Value invokeMethod(int invokePolicy) throws InvocationException,
+    InvokeCommand<Value> invokeCommand = new InvokeCommand<Value>(args) {
+      protected Value invokeMethod(int invokePolicy, final List args) throws InvocationException,
                                                             ClassNotLoadedException,
                                                             IncompatibleThreadStateException,
                                                             InvalidTypeException {
@@ -1015,8 +1031,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
                                      final Method method,
                                      final List args) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
-    InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<ObjectReference>() {
-      protected ObjectReference invokeMethod(int invokePolicy) throws InvocationException,
+    InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<ObjectReference>(args) {
+      protected ObjectReference invokeMethod(int invokePolicy, final List args) throws InvocationException,
                                                                       ClassNotLoadedException,
                                                                       IncompatibleThreadStateException,
                                                                       InvalidTypeException {
