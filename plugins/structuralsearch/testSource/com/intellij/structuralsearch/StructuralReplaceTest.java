@@ -862,13 +862,11 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s1 = "class A { public void b() {} }";
     String s2 = "class 'a { 'Other* }";
     String s3 = "class $a$New { Logger LOG; $Other$ }";
-    String expectedResult = "        class ANew {\n" +
-                            "            Logger LOG;\n" +
-                            "\n" +
-                            "            public void b() {\n" +
-                            "            }\n" +
+    String expectedResult = "    class ANew {\n" +
+                            "        Logger LOG;\n\n" +
+                            "        public void b() {\n" +
                             "        }\n" +
-                            "   ";
+                            "    }";
     String actualResult;
     if (!IdeaTestUtil.bombExplodes(2005, Calendar.MAY, 10, 12, 0, "lesya", "Java formatter")) return;
     actualResult = replacer.testReplace(s1,s2,s3,options);
@@ -881,18 +879,14 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s4 = "class A { class C {} public void b() {} int f; }";
     String s5 = "class 'a { 'Other* }";
     String s6 = "class $a$ { Logger LOG; $Other$ }";
-    String expectedResult2 = "        class A {\n" +
-                             "            Logger LOG;\n" +
-                             "\n" +
-                             "            class C {\n" +
-                             "            }\n" +
-                             "\n" +
-                             "            public void b() {\n" +
-                             "            }\n" +
-                             "\n" +
-                             "            int f;\n" +
-                             "        }\n" +
-                             "   ";
+    String expectedResult2 = "    class A {\n" +
+                             "        Logger LOG;\n\n" +
+                             "        class C {\n" +
+                             "        }\n\n" +
+                             "        public void b() {\n" +
+                             "        }\n\n" +
+                             "        int f;\n" +
+                             "    }";
 
     actualResult = replacer.testReplace(s4,s5,s6,options);
     assertEquals(
@@ -904,17 +898,14 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s7 = "class A extends B { int c; void b() {} { a = 1; } }";
     String s8 = "class 'A extends B { 'Other* }";
     String s9 = "class $A$ extends B2 { $Other$ }";
-    String expectedResult3 = "        class A extends B2 {\n" +
-                             "            int c;\n" +
-                             "\n" +
-                             "            void b() {\n" +
-                             "            }\n" +
-                             "\n" +
-                             "            {\n" +
-                             "                a = 1;\n" +
-                             "            }\n" +
-                             "        }\n" +
-                             "   ";
+    String expectedResult3 = "    class A extends B2 {\n" +
+                              "        int c;\n\n" +
+                              "        void b() {\n" +
+                              "        }\n\n" +
+                              "        {\n" +
+                              "            a = 1;\n" +
+                              "        }\n" +
+                              "    }";
 
     actualResult = replacer.testReplace(s7,s8,s9,options);
     assertEquals("Unsupported pattern exception",actualResult,expectedResult3);
