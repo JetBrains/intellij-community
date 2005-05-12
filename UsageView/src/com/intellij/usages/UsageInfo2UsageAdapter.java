@@ -146,10 +146,6 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     return getElement().getProject();
   }
 
-  public static int compareTo(Usage usage) {
-    return 0;
-  }
-
   public String toString() {
     TextChunk[] textChunks = getPresentation().getText();
     StringBuffer result = new StringBuffer();
@@ -185,8 +181,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
 
     if (psiFile instanceof PsiCompiledElement || fileIndex.isInLibrarySource(virtualFile)) {
       OrderEntry[] orders = fileIndex.getOrderEntriesForFile(psiFile.getVirtualFile());
-      for (int i = 0; i < orders.length; i++) {
-        OrderEntry order = orders[i];
+      for (OrderEntry order : orders) {
         if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
           return order;
         }
@@ -262,5 +257,14 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     public Icon getIcon() {
       return myIcon;
     }
+  }
+
+  public static UsageInfo2UsageAdapter[] convert(UsageInfo[] usageInfos) {
+    UsageInfo2UsageAdapter[] result = new UsageInfo2UsageAdapter[usageInfos.length];
+    for (int i = 0; i < result.length; i++) {
+      result[i] = new UsageInfo2UsageAdapter(usageInfos[i]);
+    }
+
+    return result;
   }
 }

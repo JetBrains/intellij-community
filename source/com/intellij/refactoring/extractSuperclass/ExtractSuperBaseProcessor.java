@@ -47,11 +47,10 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
   }
 
   protected boolean doesAnyExtractedInterfaceExtends(PsiClass aClass) {
-    for (int i = 0; i < myMemberInfos.length; i++) {
-      final MemberInfo memberInfo = myMemberInfos[i];
+    for (final MemberInfo memberInfo : myMemberInfos) {
       final PsiElement member = memberInfo.getMember();
       if (member instanceof PsiClass && memberInfo.getOverrides() != null) {
-        if (InheritanceUtil.isInheritorOrSelf((PsiClass) member, aClass, true)) {
+        if (InheritanceUtil.isInheritorOrSelf((PsiClass)member, aClass, true)) {
           return true;
         }
       }
@@ -60,10 +59,9 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
   }
 
   protected boolean doMemberInfosContain(PsiMethod method) {
-    for (int i = 0; i < myMemberInfos.length; i++) {
-      final MemberInfo info = myMemberInfos[i];
+    for (final MemberInfo info : myMemberInfos) {
       if (info.getMember() instanceof PsiMethod) {
-        if (MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod) info.getMember())) return true;
+        if (MethodSignatureUtil.areSignaturesEqual(method, (PsiMethod)info.getMember())) return true;
       }
       else if (info.getMember() instanceof PsiClass && info.getOverrides() != null) {
         final PsiMethod methodBySignature = ((PsiClass)info.getMember()).findMethodBySignature(method, true);
@@ -76,8 +74,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
   }
 
   protected boolean doMemberInfosContain(final PsiField field) {
-    for (int i = 0; i < myMemberInfos.length; i++) {
-      final MemberInfo info = myMemberInfos[i];
+    for (final MemberInfo info : myMemberInfos) {
       if (myManager.areElementsEquivalent(field, info.getMember())) return true;
     }
     return false;
@@ -91,8 +88,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
     if (Comparing.equal(myTargetDirectory.getPackage(), originalPackage)) {
       result.clear();
     }
-    for (int i = 0; i < refs.length; i++) {
-      final PsiReference ref = refs[i];
+    for (final PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
       if (!canTurnToSuper(element)) {
         result.add(new BindToOldUsageInfo(element, ref, myClass));
@@ -108,8 +104,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
       final String oldQualifiedName = myClass.getQualifiedName();
       myClass.setName(myNewClassName);
       PsiClass superClass = extractSuper(superClassName);
-      for (int i = 0; i < usages.length; i++) {
-        final UsageInfo usage = usages[i];
+      for (final UsageInfo usage : usages) {
         if (usage instanceof BindToOldUsageInfo) {
           final PsiReference reference = ((BindToOldUsageInfo)usage).reference;
           if (reference.getElement().isValid()) {

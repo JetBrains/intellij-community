@@ -3,6 +3,8 @@ package com.intellij.usages;
 
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,10 +18,13 @@ public abstract class UsageViewManager {
     return project.getComponent(UsageViewManager.class);
   }
 
+  @NotNull
   public abstract UsageView createUsageView(UsageTarget[] targets, Usage[] usages, UsageViewPresentation presentation);
 
+  @NotNull
   public abstract UsageView showUsages(UsageTarget[] searchedFor, Usage[] foundUsages, UsageViewPresentation presentation);
 
+  @Nullable (documentation = "in case no usages found or usage view not shown for one usage")
   public abstract UsageView searchAndShowUsages(UsageTarget[] searchFor,
                                 Factory<UsageSearcher> searcherFactory,
                                 boolean showPanelIfOnlyOneUsage,

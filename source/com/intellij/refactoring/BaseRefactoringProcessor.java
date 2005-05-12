@@ -182,13 +182,36 @@ public abstract class BaseRefactoringProcessor {
     );
   }
 
-  private static UsageViewPresentation createPresentation(UsageViewDescriptor descriptor) {
+  private static UsageViewPresentation createPresentation(UsageViewDescriptor descriptor, final Usage[] usages) {
     UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setTabText("Refactoring preview");
     presentation.setTargetsNodeText(descriptor.getProcessedElementsHeader());
     presentation.setShowReadOnlyStatusAsRed(true);
     presentation.setShowCancelButton(true);
     presentation.setUsagesString("usages");
+    int codeUsageCount = 0;
+    int nonCodeUsageCount = 0;
+    Set<PsiFile> codeFiles = new HashSet<PsiFile>();
+    Set<PsiFile> nonCodeFiles = new HashSet<PsiFile>();
+
+    for (Usage usage : usages) {
+      if (usage instanceof PsiElementUsage) {
+        final PsiElementUsage elementUsage = ((PsiElementUsage)usage);
+        if (elementUsage.isNonCodeUsage()) {
+          nonCodeUsageCount++;
+          nonCodeFiles.add(elementUsage.getElement().getContainingFile());
+        }
+        else {
+          codeUsageCount++;
+          codeFiles.add(elementUsage.getElement().getContainingFile());
+        }
+      }
+    }
+    codeFiles.remove(null);
+    nonCodeFiles.remove(null);
+
+    presentation.setCodeUsagesString(descriptor.getCodeReferencesText(codeUsageCount, codeFiles.size()));
+    presentation.setNonCodeUsagesString(descriptor.getCommentReferencesText(nonCodeUsageCount, nonCodeFiles.size()));
     return presentation;
   }
 
@@ -197,85 +220,11 @@ public abstract class BaseRefactoringProcessor {
 
     final PsiElement[] initialElements = viewDescriptor.getElements();
     final UsageTarget[] targets = PsiElement2UsageTargetAdapter.convert(initialElements);
+    final Usage[] usages = UsageInfo2UsageAdapter.convert(viewDescriptor.getUsages());
 
-    Factory<UsageSearcher> searcherFactory = new Factory<UsageSearcher>() {
-      boolean myRequireRefresh = false;
+    final UsageViewPresentation presentation = createPresentation(viewDescriptor, usages);
 
-      public UsageSearcher create() {
-        UsageSearcher usageSearcher = new UsageSearcher() {
-          public void generate(Processor<Usage> processor) {
-            final PsiElement[] currentElements;
-            if (myRequireRefresh) {
-              List<PsiElement> elements = new ArrayList<PsiElement>();
-              for (int i = 0; i < targets.length; i++) {
-                UsageTarget target = targets[i];
-                if (target.isValid()) {
-                  elements.add(((PsiElement2UsageTargetAdapter)target).getElement());
-                }
-              }
-              currentElements = elements.toArray(new PsiElement[elements.size()]);
-              viewDescriptor.refresh(currentElements);
-            }
-            else {
-              currentElements = initialElements;
-              myRequireRefresh = true;
-            }
-
-            UsageInfo[] usageInfos = viewDescriptor.getUsages();
-            final Usage[] usages = UsageInfoToUsageConverter.convert(new UsageInfoToUsageConverter.TargetElementsDescriptor(currentElements), usageInfos);
-
-            for (int i = 0; i < usages.length; i++) {
-              Usage usage = usages[i];
-              if (!processor.process(usage)) return;
-            }
-
-            if (usages.length > 0) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() { // some people call processors in write action
-                   public void run() {
-                     RefactoringUtil.showInfoDialog(getInfo(), myProject);
-                   }
-                 }, ModalityState.NON_MMODAL);
-            }
-          }
-        };
-
-        return usageSearcher;
-      }
-    };
-
-    final UsageViewPresentation presentation = createPresentation(viewDescriptor);
-
-    final UsageView usageView = viewManager.searchAndShowUsages(targets, searcherFactory, true, false, presentation,
-                                                                new UsageViewManager.UsageViewStateListener() {
-        public void usageViewCreated(UsageView usageView) {}
-
-        public void findingUsagesFinished(final UsageView usageView) {
-          if (usageView == null) return;
-          final Set<Usage> usages = usageView.getUsages();
-          int codeUsageCount = 0;
-          int nonCodeUsageCount = 0;
-          Set<PsiFile> codeFiles = new HashSet<PsiFile>();
-          Set<PsiFile> nonCodeFiles = new HashSet<PsiFile>();
-          for (Iterator<Usage> iterator = usages.iterator(); iterator.hasNext();) {
-            Usage usage = iterator.next();
-            if (usage instanceof PsiElementUsage) {
-              final PsiElementUsage elementUsage = ((PsiElementUsage)usage);
-              if (elementUsage.isNonCodeUsage()) {
-                nonCodeUsageCount++;
-                nonCodeFiles.add(elementUsage.getElement().getContainingFile());
-              } else {
-                codeUsageCount++;
-                codeFiles.add(elementUsage.getElement().getContainingFile());
-              }
-            }
-          }
-          codeFiles.remove(null);
-          nonCodeFiles.remove(null);
-
-          presentation.setCodeUsagesString(viewDescriptor.getCodeReferencesText(codeUsageCount, codeFiles.size()));
-          presentation.setNonCodeUsagesString(viewDescriptor.getCommentReferencesText(nonCodeUsageCount, nonCodeFiles.size()));
-        }
-      });
+    final UsageView usageView = viewManager.showUsages(targets, usages, presentation);
 
     final Runnable refactoringRunnable = new Runnable() {
       public void run() {

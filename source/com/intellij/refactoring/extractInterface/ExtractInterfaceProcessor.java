@@ -22,8 +22,7 @@ public class ExtractInterfaceProcessor extends ExtractSuperBaseProcessor {
   }
 
   protected PsiClass extractSuper(String superClassName) throws IncorrectOperationException {
-    final PsiClass anInterface = ExtractInterfaceHandler.extractInterface(myTargetDirectory, myClass, superClassName, myMemberInfos, myJavaDocPolicy);
-    return anInterface;
+    return ExtractInterfaceHandler.extractInterface(myTargetDirectory, myClass, superClassName, myMemberInfos, myJavaDocPolicy);
   }
 
   protected boolean isSuperInheritor(PsiClass aClass) {
