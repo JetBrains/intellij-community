@@ -75,7 +75,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private long myStartTime = 0;
   private boolean myDoNotSave = false;
   private boolean myIsWaitingForWriteAction = false;
-  private boolean myDispatchThreadAssertionsValid = false;
 
   public ApplicationImpl(String componentsDescriptor, boolean isInternal, boolean isUnitTestMode, String appName) {
     getPicoContainer().registerComponentInstance(ApplicationEx.class, this);
@@ -178,8 +177,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
    * @fabrique
    */
   protected boolean isDispatchThread(Thread currentThread) {
-    if (!myDispatchThreadAssertionsValid) return EventQueue.isDispatchThread();
-
     if (ourDispatchThread == null && EventQueue.isDispatchThread()) {
       ourDispatchThread = Thread.currentThread();
     }
@@ -192,11 +189,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
 
     return false;
-  }
-
-  public void setupIdeQueue(EventQueue queue) {
-    Toolkit.getDefaultToolkit().getSystemEventQueue().push(queue);
-    myDispatchThreadAssertionsValid = true;
   }
 
   private void save(String path) throws IOException {
@@ -766,7 +758,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void assertIsDispatchThread() {
-    if (myDispatchThreadAssertionsValid && !isDispatchThread() && !EventQueue.isDispatchThread()) { // Last one to be completely sure.
+    if (!isDispatchThread() && !EventQueue.isDispatchThread()) { // Last one to be completely sure.
       LOG.error("Access is allowed from event dispatch thread only. Current thread=" + Thread.currentThread() + ", ourDispatch=" + ourDispatchThread);
     }
   }

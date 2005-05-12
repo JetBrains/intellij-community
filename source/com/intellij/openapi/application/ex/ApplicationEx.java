@@ -41,8 +41,6 @@ public interface ApplicationEx extends Application {
                                                      Project project,
                                                      boolean smoothProgress);
 
-  void setupIdeQueue(EventQueue queue);
-
   //used in Fabrique 
   boolean isExceptionalThreadWithReadAccess(Thread thread);
 }

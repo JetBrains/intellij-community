@@ -27,6 +27,7 @@ import org.jdom.Element;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.awt.*;
 
 
 public class IdeaApplication {
@@ -43,6 +44,7 @@ public class IdeaApplication {
     myArgs = args;
     boolean isInternal = "true".equals(System.getProperty("idea.is.internal"));
     ApplicationManagerEx.createApplication("componentSets/IdeaComponents", isInternal, false, "idea");
+    Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
 
     myStarter = getStarter();
     myStarter.premain(args);
@@ -111,7 +113,7 @@ public class IdeaApplication {
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
       // application components. So it is proper to perform replacement only here.
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      app.setupIdeQueue(IdeEventQueue.getInstance());
+      // app.setupIdeQueue(IdeEventQueue.getInstance());
       ((WindowManagerImpl)WindowManager.getInstance()).showFrame();
 
       app.invokeLater(new Runnable() {
