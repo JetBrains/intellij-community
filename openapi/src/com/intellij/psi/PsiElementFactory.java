@@ -73,6 +73,9 @@ public interface PsiElementFactory {
   PsiDeclarationStatement createVariableDeclarationStatement(String name, PsiType type, PsiExpression initializer)
     throws IncorrectOperationException;
 
+  PsiDeclarationStatement createVariableDeclarationStatement(String name, PsiType type, PsiExpression initializer, boolean reformat)
+    throws IncorrectOperationException;
+  
   PsiDocTag createParamTag(String parameterName, String description) throws IncorrectOperationException;
   PsiDocTag createDocTagFromText(String docTagText, PsiElement context) throws IncorrectOperationException;
   PsiDocComment createDocCommentFromText(String docCommentText, PsiElement context) throws IncorrectOperationException;

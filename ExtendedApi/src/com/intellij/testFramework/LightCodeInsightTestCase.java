@@ -146,6 +146,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     myFile = getPsiManager().findFile(myVFile);
     assertNotNull("Can't create PsiFile for '" + fileName + "'. Unknown file type most probably.", myFile);
     ((PsiFileImpl) myFile).setIsPhysicalExplicitly(true);
+    System.out.println(myFile.getText());
     myEditor = createEditor(myVFile);
   }
 

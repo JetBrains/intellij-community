@@ -527,11 +527,8 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return (PsiImportStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
   }
 
-  public PsiDeclarationStatement createVariableDeclarationStatement(String name,
-                                                                    PsiType type,
-                                                                    PsiExpression initializer)
+  public PsiDeclarationStatement createVariableDeclarationStatement(String name, PsiType type, PsiExpression initializer, boolean reformat)
     throws IncorrectOperationException {
-
     if (!myManager.getNameHelper().isIdentifier(name)) {
       throw new IncorrectOperationException("\"" + name + "\" is not an identifier.");
     }
@@ -554,8 +551,18 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
       variable.getInitializer().replace(initializer);
     }
 
-    statement = (PsiDeclarationStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
+    if (reformat) {
+      statement = (PsiDeclarationStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
+    }
     return statement;
+    
+  }
+
+  public PsiDeclarationStatement createVariableDeclarationStatement(String name,
+                                                                    PsiType type,
+                                                                    PsiExpression initializer)
+    throws IncorrectOperationException {
+    return createVariableDeclarationStatement(name, type, initializer, true);
   }
 
   public PsiDocTag createParamTag(String parameterName, String description) throws IncorrectOperationException {
