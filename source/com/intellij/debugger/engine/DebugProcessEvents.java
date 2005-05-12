@@ -284,6 +284,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
     setIsAttached();
 
+    DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().setInitialBreakpointsState();
     myDebugProcessDispatcher.getMulticaster().processAttached(this);
 
     showStatusText("Connected");
@@ -384,6 +385,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
           //suspendContext.voteResume();
           suspendManager.voteSuspend(suspendContext);
           showStatusText(DebugProcessEvents.this, event);
+          if (requestor instanceof Breakpoint) {
+            DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().processBreakpointHit((Breakpoint)requestor);
+          }
         }
       }
     });

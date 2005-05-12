@@ -234,8 +234,10 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   }
 
   public String getDisplayName() {
-    if(!isValid()) return "invalid field watchpoint";
-    return "Field watchpoint, " + getClassName() + "." + myFieldName;
+    if(!isValid()) {
+      return "INVALID";
+    }
+    return getClassName() + "." + myFieldName;
   }
 
   public static FieldBreakpoint create(Project project, Document document, int lineIndex, String fieldName) {

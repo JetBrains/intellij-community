@@ -265,5 +265,8 @@ public class BreakpointPanel {
     return ((BreakpointTableModel)myTable.getModel()).isBreakpointEnabled(idx);
   }
 
+  public void dispose() {
+    myPropertiesPanel.dispose();
+  }
 
 }

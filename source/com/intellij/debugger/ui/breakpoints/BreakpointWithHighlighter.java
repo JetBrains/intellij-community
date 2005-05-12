@@ -365,7 +365,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
         return new AnAction() {
           public void actionPerformed(AnActionEvent e) {
             ENABLED = !ENABLED;
-            DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().breakpointChanged(BreakpointWithHighlighter.this);
+            DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().fireBreakpointChanged(BreakpointWithHighlighter.this);
             updateUI();
           }
         };
@@ -419,7 +419,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
     document.getMarkupModel(myProject).removeHighlighter(oldHighlighter);
 
-    DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().breakpointChanged(this);
+    DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().fireBreakpointChanged(this);
     updateUI();
 
     return true;
@@ -463,6 +463,10 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   public void readExternal(Element breakpointNode) throws InvalidDataException {
     super.readExternal(breakpointNode);
     final String url = breakpointNode.getAttributeValue("url");
+    final String className = breakpointNode.getAttributeValue("class");
+    if (className != null) {
+      myClassName = className;
+    }
 
     VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
     if (vFile == null) throw new InvalidDataException("File number is invalid for breakpoint");
@@ -493,6 +497,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     String url = psiFile.getVirtualFile().getUrl();
     parentNode.setAttribute("url", url);
     parentNode.setAttribute("line", Integer.toString(getSourcePosition().getLine()));
+    parentNode.setAttribute("class", myClassName);
   }
 
   private ActionGroup createMenuActions() {
@@ -531,7 +536,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
       public void actionPerformed(AnActionEvent e) {
         myBreakpoint.ENABLED = myNewValue;
-        breakpointManager.breakpointChanged(myBreakpoint);
+        breakpointManager.fireBreakpointChanged(myBreakpoint);
         myBreakpoint.updateUI();
       }
     }

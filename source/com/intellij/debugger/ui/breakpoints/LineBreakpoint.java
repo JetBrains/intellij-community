@@ -169,17 +169,18 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   public String getDisplayName() {
     StringBuffer buffer = new StringBuffer();
+    final int lineNumber = (getHighlighter().getDocument().getLineNumber(getHighlighter().getStartOffset()) + 1);
     if(isValid()) {
-      buffer.append("Line breakpoint, ");
-      buffer.append(getClassName());
+      buffer.append("Line ").append(lineNumber).append(", in ").append(getClassName());
       if(myMethodName != null) {
         buffer.append(".");
         buffer.append(myMethodName);
       }
-    } else {
-      buffer.append("invalid line breakpoint");
+    } 
+    else {
+      buffer.append("INVALID");
     }
-    return buffer.toString() + ", at line " + (getHighlighter().getDocument().getLineNumber(getHighlighter().getStartOffset()) + 1);
+    return buffer.toString();
   }
 
   private static String findMethodName(final PsiFile file, final int offset) {

@@ -23,9 +23,8 @@ public class ToggleBreakpointEnabledAction extends AnAction {
     DataContext dataContext = e.getDataContext();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     Breakpoint breakpoint = findBreakpoint(dataContext);
-    breakpoint.ENABLED = !breakpoint.ENABLED;
-    DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().breakpointChanged(breakpoint);
-    breakpoint.updateUI();
+    final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
+    breakpointManager.setBreakpointEnabled(breakpoint, !breakpoint.ENABLED);
   }
 
   private Breakpoint findBreakpoint(DataContext dataContext) {

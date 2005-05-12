@@ -31,15 +31,18 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
 import gnu.trove.TIntHashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
@@ -48,9 +51,11 @@ import java.util.*;
 public class BreakpointManager implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.BreakpointManager");
 
+  private static final String RULES_GROUP_NAME = "breakpoint_rules";
   private final Project myProject;
   private AnyExceptionBreakpoint myAnyExceptionBreakpoint;
   private List<Breakpoint> myBreakpoints = new ArrayList<Breakpoint>(); // breakpoints storage, access should be synchronized
+  private List<EnableBreakpointRule> myBreakpointRules = new ArrayList<EnableBreakpointRule>(); // breakpoint rules
   private List<Breakpoint> myBreakpointsListForIteration = null; // another list for breakpoints iteration, unsynchronized access ok
   private Map<Document, List<BreakpointWithHighlighter>> myDocumentBreakpoints = new HashMap<Document, List<BreakpointWithHighlighter>>();
 
@@ -85,6 +90,8 @@ public class BreakpointManager implements JDOMExternalizable {
       }
     }
   };
+  private static final String MASTER_BREAKPOINT_TAGNAME = "master_breakpoint";
+  private static final String SLAVE_BREAKPOINT_TAGNAME = "slave_breakpoint";
 
   private void update(List<BreakpointWithHighlighter> breakpoints) {
     final TIntHashSet intHash = new TIntHashSet();
@@ -96,7 +103,7 @@ public class BreakpointManager implements JDOMExternalizable {
 
       if(breakpoint.isValid()) {
         if(breakpoint.getSourcePosition().getLine() != sourcePosition.getLine()) {
-          breakpointChanged(breakpoint);
+          fireBreakpointChanged(breakpoint);
         }
 
         if(intHash.contains(breakpoint.getLineIndex())) {
@@ -424,6 +431,7 @@ public class BreakpointManager implements JDOMExternalizable {
       public void run() {
         PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Runnable() {
           public void run() {
+            final Map<String, Breakpoint> nameToBreakpointMap = new java.util.HashMap<String, Breakpoint>();
             try {
               final List groups = parentNode.getChildren();
               for (Iterator it = groups.iterator(); it.hasNext();) {
@@ -440,6 +448,7 @@ public class BreakpointManager implements JDOMExternalizable {
                       Breakpoint breakpoint = factory.createBreakpoint(myProject);
                       breakpoint.readExternal(breakpointNode);
                       addBreakpoint(breakpoint);
+                      nameToBreakpointMap.put(breakpoint.getDisplayName(), breakpoint);
                     }
                   }
                 }
@@ -453,9 +462,35 @@ public class BreakpointManager implements JDOMExternalizable {
                     myAnyExceptionBreakpoint.readExternal(breakpointElement);
                   }
                 }
+                
               }
             }
             catch (InvalidDataException e) {
+            }
+
+            final Element rulesGroup = parentNode.getChild(RULES_GROUP_NAME);
+            if (rulesGroup != null) {
+              final List rules = rulesGroup.getChildren("rule");
+              for (Iterator it = rules.iterator(); it.hasNext();) {
+                final Element rule = (Element)it.next();
+                final Element master = rule.getChild(MASTER_BREAKPOINT_TAGNAME);
+                if (master == null) {
+                  continue;
+                }
+                final Element slave = rule.getChild(SLAVE_BREAKPOINT_TAGNAME);
+                if (slave == null) {
+                  continue;
+                }
+                final Breakpoint masterBreakpoint = nameToBreakpointMap.get(master.getAttributeValue("name"));
+                if (masterBreakpoint == null) {
+                  continue;
+                }
+                final Breakpoint slaveBreakpoint = nameToBreakpointMap.get(slave.getAttributeValue("name"));
+                if (slaveBreakpoint == null) {
+                  continue;
+                }
+                addBreakpointRule(new EnableBreakpointRule(BreakpointManager.this, masterBreakpoint, slaveBreakpoint));
+              }
             }
 
             DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
@@ -468,19 +503,6 @@ public class BreakpointManager implements JDOMExternalizable {
       }
     });
 
-  }
-
-  private void readBreakpoints(final Element group) throws InvalidDataException {
-    final String category = group.getName();
-    final BreakpointFactory factory = BreakpointFactory.getInstance(category);
-    if (factory != null) {
-      for (Iterator i = group.getChildren("breakpoint").iterator(); i.hasNext();) {
-        Element breakpointNode = (Element)i.next();
-        Breakpoint breakpoint = factory.createBreakpoint(myProject);
-        breakpoint.readExternal(breakpointNode);
-        addBreakpoint(breakpoint);
-      }
-    }
   }
 
   //used in Fabrique
@@ -510,6 +532,7 @@ public class BreakpointManager implements JDOMExternalizable {
     }
 
     if (myBreakpoints.remove(breakpoint)) {
+      updateBreakpointRules(breakpoint);
       myBreakpointsListForIteration = null;
       if(breakpoint instanceof BreakpointWithHighlighter) {
         //breakpoint.saveToString() may be invalid
@@ -534,10 +557,8 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   public void writeExternal(final Element parentNode) throws WriteExternalException {
-    final WriteExternalException[] exception = new WriteExternalException[1];
-
-    PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Runnable() {
-      public void run() {
+    WriteExternalException ex = PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Computable<WriteExternalException>() {
+      public WriteExternalException compute() {
         try {
           removeInvalidBreakpoints();
           final Map<String, Element> categoryToElementMap = new java.util.HashMap<String, Element>();
@@ -551,13 +572,36 @@ public class BreakpointManager implements JDOMExternalizable {
           }
           final Element group = getCategoryGroupElement(categoryToElementMap, myAnyExceptionBreakpoint.getCategory(), parentNode);
           writeBreakpoint(group, myAnyExceptionBreakpoint);
+          
+          final Element rules = new Element(RULES_GROUP_NAME);
+          parentNode.addContent(rules);
+          for (Iterator<EnableBreakpointRule> it = myBreakpointRules.iterator(); it.hasNext();) {
+            writeRule(it.next(), rules);
+          }
+          
+          return null;
         }
         catch (WriteExternalException e) {
-          exception[0] = e;
+          return e;
         }
       }
     });
-    if (exception[0] != null) throw exception[0];
+    if (ex != null) {
+      throw ex;
+    }
+  }
+
+  private static void writeRule(final EnableBreakpointRule enableBreakpointRule, Element element) {
+    Element rule = new Element("rule");
+    element.addContent(rule);
+    writeRuleBreakpoint(rule, MASTER_BREAKPOINT_TAGNAME, enableBreakpointRule.getMasterBreakpoint());
+    writeRuleBreakpoint(rule, SLAVE_BREAKPOINT_TAGNAME, enableBreakpointRule.getSlaveBreakpoint());
+  }
+
+  private static void writeRuleBreakpoint(final Element element, final String tagName, final Breakpoint breakpoint) {
+    Element master = new Element(tagName);
+    element.addContent(master);
+    master.setAttribute("name", breakpoint.getDisplayName());
   }
 
   private void writeBreakpoint(final Element group, final Breakpoint breakpoint) throws WriteExternalException {
@@ -612,22 +656,6 @@ public class BreakpointManager implements JDOMExternalizable {
     return breakpoints.toArray(new Breakpoint[breakpoints.size()]);
   }
 
-  private Class getBreakpointClass(String category) {
-    if (LineBreakpoint.CATEGORY.equals(category)) {
-      return LineBreakpoint.class;
-    }
-    if (ExceptionBreakpoint.CATEGORY.equals(category)) {
-      return ExceptionBreakpoint.class;
-    }
-    if (FieldBreakpoint.CATEGORY.equals(category)) {
-      return FieldBreakpoint.class;
-    }
-    if (MethodBreakpoint.CATEGORY.equals(category)) {
-      return MethodBreakpoint.class;
-    }
-    return null;
-  }
-
   public synchronized List<Breakpoint> getBreakpoints() {
     if (myBreakpointsListForIteration == null) {
       myBreakpointsListForIteration = new ArrayList<Breakpoint>(myBreakpoints);
@@ -674,7 +702,7 @@ public class BreakpointManager implements JDOMExternalizable {
 
       public void actionPerformed(AnActionEvent e) {
         myBreakpoint.ENABLED = myNewValue;
-        breakpointChanged(myBreakpoint);
+        fireBreakpointChanged(myBreakpoint);
         myBreakpoint.updateUI();
       }
     }
@@ -722,7 +750,7 @@ public class BreakpointManager implements JDOMExternalizable {
     List<Breakpoint> breakpoints = getBreakpoints();
     for (Iterator<Breakpoint> iterator = breakpoints.iterator(); iterator.hasNext();) {
       Breakpoint breakpoint = iterator.next();
-      breakpointChanged(breakpoint);
+      fireBreakpointChanged(breakpoint);
     }
   }
 
@@ -751,8 +779,86 @@ public class BreakpointManager implements JDOMExternalizable {
     myDispatcher.removeListener(listener);
   }
 
-  public void breakpointChanged(Breakpoint breakpoint) {
+  
+  private boolean myAllowMulticasting = true;
+  public void fireBreakpointChanged(Breakpoint breakpoint) {
     RequestManagerImpl.updateRequests(breakpoint);
-    myDispatcher.getMulticaster().breakpointsChanged();
+    if (myAllowMulticasting) {
+      // can be invoked from non-AWT thread
+      IJSwingUtilities.invoke(new Runnable() {
+        public void run() {
+          myDispatcher.getMulticaster().breakpointsChanged();
+        }
+      });
+    }
   }
+
+  public void setBreakpointEnabled(final Breakpoint breakpoint, final boolean enabled) {
+    if (breakpoint.ENABLED != enabled) {
+      breakpoint.ENABLED = enabled;
+      fireBreakpointChanged(breakpoint);
+      breakpoint.updateUI();
+    }
+  }
+  
+  public void addBreakpointRule(EnableBreakpointRule rule) {
+    myBreakpointRules.add(rule);
+  }
+  
+  public boolean removeBreakpointRule(EnableBreakpointRule rule) {
+    return myBreakpointRules.remove(rule);
+  }
+  
+  public boolean removeBreakpointRule(@NotNull Breakpoint dependentBreakpoint) {
+    for (Iterator<EnableBreakpointRule> it = myBreakpointRules.iterator(); it.hasNext();) {
+      final EnableBreakpointRule rule = it.next();
+      if (dependentBreakpoint.equals(rule.getSlaveBreakpoint())) {
+        it.remove();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void updateBreakpointRules(@NotNull Breakpoint removedBreakpoint) {
+    for (Iterator<EnableBreakpointRule> it = myBreakpointRules.iterator(); it.hasNext();) {
+      final EnableBreakpointRule rule = it.next();
+      if (removedBreakpoint.equals(rule.getMasterBreakpoint()) || removedBreakpoint.equals(rule.getSlaveBreakpoint())) {
+        it.remove();
+      }
+    }
+  }
+
+  public void processBreakpointHit(@NotNull final Breakpoint breakpoint) {
+    for (Iterator<EnableBreakpointRule> it = myBreakpointRules.iterator(); it.hasNext();) {
+      final EnableBreakpointRule rule = it.next();
+      rule.processBreakpointHit(breakpoint);
+    }
+  }
+
+  public void setInitialBreakpointsState() {
+    myAllowMulticasting = false;
+    for (Iterator<EnableBreakpointRule> it = myBreakpointRules.iterator(); it.hasNext();) {
+      it.next().init();
+    }
+    myAllowMulticasting = true;
+    if (myBreakpointRules.size() > 0) {
+      IJSwingUtilities.invoke(new Runnable() {
+        public void run() {
+          myDispatcher.getMulticaster().breakpointsChanged();
+        }
+      });
+    }
+  }
+  
+  public Breakpoint findBaseBreakpoint(@NotNull Breakpoint dependentBreakpoint) {
+    for (Iterator<EnableBreakpointRule> it = myBreakpointRules.iterator(); it.hasNext();) {
+      final EnableBreakpointRule rule = it.next();
+      if (dependentBreakpoint.equals(rule.getSlaveBreakpoint())) {
+        return rule.getMasterBreakpoint();
+      }
+    }
+    return null;
+  }
+  
 }
