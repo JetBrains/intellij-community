@@ -33,7 +33,7 @@ final class MethodHierarchyUtil {
             substitutors.put(baseMethod.getContainingClass(), substitutor);
           }
           if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
-          if (MethodSignatureUtil.findMethodBySignature(derivedClass, baseMethod.getSignature(substitutor), false) == derivedMethod) return baseMethod;
+          if (MethodSignatureUtil.findMethodBySuperSignature(derivedClass, baseMethod.getSignature(substitutor)) == derivedMethod) return baseMethod;
         }
       }
 

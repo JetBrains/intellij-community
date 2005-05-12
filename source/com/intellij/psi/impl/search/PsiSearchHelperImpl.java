@@ -589,7 +589,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(parentClass, inheritor,
                                                                                  PsiSubstitutor.EMPTY);
         MethodSignature signature = method.getSignature(substitutor);
-        PsiMethod method1 = MethodSignatureUtil.findMethodBySignature(inheritor, signature, false);
+        PsiMethod method1 = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature);
         if (method1 == null ||
             method1.hasModifierProperty(PsiModifier.STATIC) ||
             (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&

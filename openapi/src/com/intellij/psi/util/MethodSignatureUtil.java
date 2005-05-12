@@ -228,6 +228,18 @@ public class MethodSignatureUtil {
     return null;
   }
 
+  public static PsiMethod findMethodBySuperSignature(final PsiClass aClass, MethodSignature methodSignature) {
+    List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(methodSignature.getName(), false);
+    for (int i = 0; i < pairs.size(); i++) {
+      Pair<PsiMethod, PsiSubstitutor> pair = pairs.get(i);
+      PsiMethod method = pair.first;
+      PsiSubstitutor substitutor = pair.second;
+      MethodSignature foundMethodSignature = method.getSignature(substitutor);
+      if (isSubsignature(methodSignature, foundMethodSignature)) return method;
+    }
+    return null;
+  }
+
   public static boolean hasOverloads(PsiMethod method) {
     return getOverloads(method).length > 1;
   }
