@@ -413,11 +413,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       }
       if (!added && enclosingConstructor == null) {
         PsiElementFactory factory = field.getManager().getElementFactory();
-        PsiMethod constructor = factory.createConstructor();
+        PsiMethod constructor = (PsiMethod)aClass.add(factory.createConstructor());
         final PsiCodeBlock body = constructor.getBody();
         PsiStatement assignment = createAssignment(field, initializerExpression, body.getLastChild());
         body.add(assignment);
-        aClass.add(constructor);
       }
     }
     catch (IncorrectOperationException e) {
