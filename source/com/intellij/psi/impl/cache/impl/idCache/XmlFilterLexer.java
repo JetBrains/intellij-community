@@ -26,7 +26,7 @@ public class XmlFilterLexer extends BaseFilterLexer {
       IdTableBuilding.scanWords(myTable, buffer, tokenStart, tokenEnd,
                                 UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES);
       IdCacheUtil.processPossibleComplexFileName(buffer, tokenStart, tokenEnd, myTable);
-    } else if (tokenType == ElementType.XML_NAME) {
+    } else if (tokenType == ElementType.XML_NAME || tokenType == ElementType.XML_DATA_CHARACTERS) {
       IdTableBuilding.scanWords(myTable, buffer, tokenStart, tokenEnd,
                                 UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES);
     } else {

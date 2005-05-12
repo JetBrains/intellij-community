@@ -46,7 +46,8 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
 
   public boolean mayHaveReferences(IElementType token, short searchContext) {
     if((searchContext & UsageSearchContext.IN_FOREIGN_LANGUAGES) != 0 &&
-       (token == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN || token == XmlTokenType.XML_NAME)) return true;
+       (token == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN || token == XmlTokenType.XML_NAME
+        || token == XmlTokenType.XML_DATA_CHARACTERS)) return true;
     if((searchContext & UsageSearchContext.IN_COMMENTS) != 0 && token == ElementType.XML_COMMENT_CHARACTERS) return true;
     if((searchContext & UsageSearchContext.IN_PLAIN_TEXT) != 0) return true;
     return false;
