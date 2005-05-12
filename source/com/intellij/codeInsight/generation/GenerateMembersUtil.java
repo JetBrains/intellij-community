@@ -13,6 +13,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -148,9 +149,9 @@ public class GenerateMembersUtil {
 
     boolean before = true;
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(aClass.getProject());
-    for (int i = 0; i < memberPrototypes.length; i++) {
-      if (memberPrototypes[i] instanceof PsiElement) {
-        PsiElement prototype = (PsiElement) memberPrototypes[i];
+    for (Object memberPrototype : memberPrototypes) {
+      if (memberPrototype instanceof PsiElement) {
+        PsiElement prototype = (PsiElement)memberPrototype;
 
         PsiElement newMember = insert(aClass, prototype, anchor, before);
         newMember = codeStyleManager.shortenClassReferences(newMember);
@@ -159,8 +160,8 @@ public class GenerateMembersUtil {
         anchor = newMember;
         before = false;
       }
-      else if (memberPrototypes[i] instanceof TemplateGenerationInfo) {
-        TemplateGenerationInfo info = (TemplateGenerationInfo) memberPrototypes[i];
+      else if (memberPrototype instanceof TemplateGenerationInfo) {
+        TemplateGenerationInfo info = (TemplateGenerationInfo)memberPrototype;
         info.element = insert(aClass, info.element, anchor, before);
         newMembersList.add(info);
         anchor = info.element;
@@ -254,12 +255,12 @@ public class GenerateMembersUtil {
         if (((PsiClass)parent).isEnum()) {
           PsiElement lastChild = null;
           PsiElement[] children = parent.getChildren();
-          for (int i = 0; i < children.length; i++) {
-            PsiElement child = children[i];
+          for (PsiElement child : children) {
             if (child instanceof PsiJavaToken && ";".equals(child.getText())) {
               lastChild = child;
               break;
-            } else if ((child instanceof PsiJavaToken && ",".equals(child.getText())) || child instanceof PsiEnumConstant) {
+            }
+            else if ((child instanceof PsiJavaToken && ",".equals(child.getText())) || child instanceof PsiEnumConstant) {
               lastChild = child;
               continue;
             }
@@ -280,6 +281,7 @@ public class GenerateMembersUtil {
     Project project = method.getProject();
     PsiElementFactory factory = method.getManager().getElementFactory();
     PsiMethod newMethod;
+    boolean isRaw = PsiUtil.isRawSubstitutor(method, substitutor);
 
     PsiTypeParameter[] typeParams = method.getTypeParameterList().getTypeParameters();
     try {
@@ -290,7 +292,7 @@ public class GenerateMembersUtil {
         newMethod.getNameIdentifier().replace(factory.createIdentifier(method.getName()));
       }
       else {
-        newMethod = factory.createMethod(method.getName(), substitutor.substitute(returnType));
+        newMethod = factory.createMethod(method.getName(), substituteType(substitutor, returnType, isRaw));
       }
 
       RefactoringUtil.setVisibility(newMethod.getModifierList(), VisibilityUtil.getVisibilityModifier(method.getModifierList()));
@@ -305,7 +307,7 @@ public class GenerateMembersUtil {
       Map<PsiType,Pair<String,Integer>> m = new HashMap<PsiType, Pair<String,Integer>>();
       for (int i = 0; i < parameters.length; i++) {
         PsiParameter parameter = parameters[i];
-        PsiType paramType = substitutor.substitute(parameter.getType());
+        PsiType paramType = substituteType(substitutor, parameter.getType(), isRaw);
         String paramName = parameter.getName();
         if (paramName == null) {
           Pair<String, Integer> pair = m.get(paramType);
@@ -330,14 +332,13 @@ public class GenerateMembersUtil {
       }
 
 
-      for (int i = 0; i < typeParams.length; i++) {
-        if (substitutor.substitute(typeParams[i]) != null) newMethod.getTypeParameterList().add(typeParams[i]);
+      for (PsiTypeParameter typeParam : typeParams) {
+        if (substitutor.substitute(typeParam) != null) newMethod.getTypeParameterList().add(typeParam);
       }
 
       PsiClassType[] thrownTypes = method.getThrowsList().getReferencedTypes();
-      for (int i = 0; i < thrownTypes.length; i++) {
-        PsiType thrownType = substitutor.substitute(thrownTypes[i]);
-        newMethod.getThrowsList().add(factory.createReferenceElementByType((PsiClassType) thrownType));
+      for (PsiClassType thrownType : thrownTypes) {
+        newMethod.getThrowsList().add(factory.createReferenceElementByType((PsiClassType)substituteType(substitutor, thrownType, isRaw)));
       }
       return newMethod;
     }
@@ -347,13 +348,17 @@ public class GenerateMembersUtil {
     return method;
   }
 
+  private static PsiType substituteType(final PsiSubstitutor substitutor, final PsiType type, final boolean isRaw) {
+    return isRaw ? TypeConversionUtil.erasure(type) : substitutor.substitute(type);
+  }
+
   public static PsiSubstitutor correctSubstitutor(PsiMethod method, PsiSubstitutor substitutor) {
     PsiClass hisClass = method.getContainingClass();
     PsiTypeParameter[] typeParameters = method.getTypeParameterList().getTypeParameters();
     if (typeParameters.length > 0) {
       if (PsiUtil.isRawSubstitutor(hisClass, substitutor)) {
-        for (int j = 0; j < typeParameters.length; j++) {
-          substitutor = substitutor.put(typeParameters[j], null);
+        for (PsiTypeParameter typeParameter : typeParameters) {
+          substitutor = substitutor.put(typeParameter, null);
         }
       }
     }
