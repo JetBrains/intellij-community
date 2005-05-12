@@ -19,6 +19,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
+import com.intellij.util.ui.FilePathSplittingPolicy;
 
 import javax.swing.*;
 import java.awt.*;
@@ -65,6 +66,7 @@ public abstract class BreakpointPropertiesPanel {
   ButtonGroup mySuspendPolicyGroup;
   public static final String CONTROL_LOG_MESSAGE = "logMessage";
   private BreakpointComboboxHandler myBreakpointComboboxHandler;
+  private static final int MAX_COMBO_WIDTH = 300;
 
   public JComponent getControl(String control) {
     if(CONTROL_LOG_MESSAGE.equals(control)) {
@@ -119,7 +121,6 @@ public abstract class BreakpointPropertiesPanel {
 
     myConditionCombo = new DebuggerExpressionComboBox(project, "LineBreakpoint condition");
     myLogExpressionCombo = new DebuggerExpressionComboBox(project, "LineBreakpoint logMessage");
-    myLogExpressionCombo.setPreferredSize(new Dimension(30, myLogExpressionCombo.getPreferredSize().height));
     
     myBaseBreakpointCombo = new JComboBox();
     myBreakpointComboboxHandler = new BreakpointComboboxHandler(myProject, myBaseBreakpointCombo);
@@ -598,8 +599,10 @@ public abstract class BreakpointPropertiesPanel {
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      setPreferredSize(new Dimension(MAX_COMBO_WIDTH, getPreferredSize().height));
       Breakpoint breakpoint = ((ComboboxItem)value).getBreakpoint();
-      setText(breakpoint != null? breakpoint.getDisplayName() : "<None>");
+      final String text = breakpoint != null ? breakpoint.getDisplayName() : "<None>";
+      setText(text);
       final Icon icon;
       if (breakpoint != null) {
         icon = (breakpoint instanceof BreakpointWithHighlighter)?
@@ -612,6 +615,10 @@ public abstract class BreakpointPropertiesPanel {
       setIcon(icon);
       setDisabledIcon(icon);
       return this;
+    }
+
+    private String truncateText(final String text) {
+      return text;
     }
   }
 }
