@@ -83,7 +83,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myName = appName;
     ApplicationManagerEx.setApplication(this);
 
-    Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
+    if (!isUnitTestMode) {
+      Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
+    }
     getPicoContainer().registerComponentInstance(ApplicationEx.class, this);    
 
     myComponentsDescriptor = componentsDescriptor;
