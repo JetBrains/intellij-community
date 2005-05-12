@@ -47,7 +47,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
           result.add(createTagDescriptionNode(localResult));
           localResult = new ArrayList<Block>();
         }
-        else if (isJspxScriptlet(child)) {
+        else if (isJspxJavaContainingNode(child)) {
           localResult.add(new JspTextBlock(child, null, null, myXmlFormattingPolicy));      
         }                
         else if (child.getElementType() == ElementType.XML_TEXT) {

@@ -14,6 +14,8 @@ import com.intellij.psi.xml.XmlTag;
 
 public abstract class AbstractXmlBlock extends AbstractBlock {
   protected final XmlFormattingPolicy myXmlFormattingPolicy;
+  public static final String JSPX_DECLARATION_TAG_NAME = "jsp:declaration";
+  public static final String JSPX_SCRIPTLET_TAG_NAME = "jsp:scriptlet";
 
   public AbstractXmlBlock(final ASTNode node,
                           final Wrap wrap,
@@ -96,15 +98,14 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     }
   }
 
-  protected boolean isJspxScriptlet(final ASTNode child) {
+  protected boolean isJspxJavaContainingNode(final ASTNode child) {
     if (child.getElementType() != ElementType.XML_TEXT) return false;
     final ASTNode treeParent = child.getTreeParent();
     if (treeParent == null) return false;
     if (treeParent.getElementType() != ElementType.XML_TAG) return false;
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(treeParent);
-    //if (!(psiElement.getLanguage() instanceof JSPXLanguage)) return false;
     final String name = ((XmlTag)psiElement).getName();
-    return Comparing.equal(name, "jsp:scriptlet") || Comparing.equal(name, "jsp:declaration"); 
+    return Comparing.equal(name, JSPX_SCRIPTLET_TAG_NAME) || Comparing.equal(name, JSPX_DECLARATION_TAG_NAME); 
   }
 
   public ASTNode getTreeNode() {
