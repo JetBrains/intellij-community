@@ -46,8 +46,7 @@ public class ChunkExtractor {
     myRangeMarkers = rangeMarkers;
     myColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
 
-    final int startOffset = getStartOffset(myRangeMarkers);
-    final int absoluteStartOffset = myElement.getTextRange().getStartOffset() + startOffset;
+    final int absoluteStartOffset =  getStartOffset(myRangeMarkers);
 
     myDocument = PsiDocumentManager.getInstance(myElement.getProject()).getDocument(myElement.getContainingFile());
     myLineNumber = myDocument.getLineNumber(absoluteStartOffset);
