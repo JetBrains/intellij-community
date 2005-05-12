@@ -107,8 +107,15 @@ public class UnscrambleDialog extends DialogWrapper{
         }
       }
     }
-    myUnscrambleChooser.setSelectedIndex(index);
-    myUseUnscrambler.setSelected(selectedUnscrambler != null);
+    if (count > 0) {
+      myUseUnscrambler.setEnabled(true);
+      myUnscrambleChooser.setSelectedIndex(index);
+      myUseUnscrambler.setSelected(selectedUnscrambler != null);
+    }
+    else {
+      myUseUnscrambler.setEnabled(false);
+    }
+    
     useUnscramblerChanged();
     pasteTextFromClipboard();
   }
