@@ -32,6 +32,8 @@ import com.intellij.util.text.CharArrayUtil;
 import java.beans.Introspector;
 import java.util.*;
 
+import org.jetbrains.annotations.Nullable;
+
 public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl");
 
@@ -221,6 +223,9 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   public int adjustLineIndent(PsiFile file, int offset) throws IncorrectOperationException {
     final PsiElement element = file.findElementAt(offset);
     if (element == null) return offset;
+    if (!(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
+      return offset + 1;
+    }
     final Language fileLanguage = file.getLanguage();
     LOG.assertTrue(fileLanguage != null, file.getClass().getName());
     final FormattingModelBuilder builder = fileLanguage.getFormattingModelBuilder();
@@ -244,6 +249,11 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     } else {
       return adjustLineIndent(file, offset, true);
     }
+  }
+
+  private boolean insideElement(final PsiElement element, final int offset) {
+    final TextRange textRange = element.getTextRange();
+    return textRange.getStartOffset() < offset && textRange.getEndOffset() >= offset;
   }
 
   private TextRange getSignificantRange(final PsiFile file, final int offset) {
@@ -637,7 +647,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     String longTypeName = getLongTypeName(type);
     CodeStyleSettings.TypeToNameMap map = getMapByVariableKind(variableKind);
     if (map != null && longTypeName != null) {
-      if (longTypeName.equals(PsiType.NULL)) {
+      if (type.equals(PsiType.NULL)) {
         longTypeName = "java.lang.Object";
       }
       String name = map.nameByType(longTypeName);
@@ -754,7 +764,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
-  private String getLongTypeName(PsiType type) {
+  private @Nullable String getLongTypeName(PsiType type) {
     if (type instanceof PsiClassType) {
       PsiClass aClass = ((PsiClassType)type).resolve();
       if (aClass == null) return null;
