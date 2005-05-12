@@ -35,7 +35,7 @@ public class UserExpressionData extends DescriptorData<UserExpressionDescriptorI
   public boolean equals(Object object) {
     if(!(object instanceof UserExpressionData)) return false;
 
-    return ((UserExpressionData)object).myName == myName;
+    return myName.equals(((UserExpressionData)object).myName);
   }
 
   public int hashCode() {
