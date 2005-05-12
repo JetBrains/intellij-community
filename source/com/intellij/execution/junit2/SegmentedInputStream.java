@@ -53,8 +53,11 @@ public class SegmentedInputStream extends InputStream implements SegmentedStream
   }
 
   private boolean readControlSequence() throws IOException {
-    if (readNext() == SPECIAL_SYMBOL)
-      return false;
+    for (int idx = 1; idx < MARKER_PREFIX.length(); idx++) {
+      if (readNext() != MARKER_PREFIX.charAt(idx)) {
+        return false;
+      }
+    }
     final char[] marker = readMarker();
     if(myEventsDispatcher != null) myEventsDispatcher.processPacket(decode(marker));
     return true;
@@ -67,7 +70,7 @@ public class SegmentedInputStream extends InputStream implements SegmentedStream
   private char[] readMarker() throws IOException {
     int nextRead = '0';
     final StringBuffer buffer = new StringBuffer();
-    while (nextRead != ' ' && nextRead != SPECIAL_SYMBOL) {
+    while (nextRead != ' ') {
       buffer.append((char)nextRead);
       nextRead = readNext();
     }
