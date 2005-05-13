@@ -103,6 +103,15 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
+  //public void visitXmlText(XmlText text) {
+  //  final String textString = text.getText();
+  //  int ampInd = textString.indexOf('&');
+  //  if (ampInd!=-1) {
+  //
+  //  }
+  //  super.visitXmlText(text);
+  //}
+
   public void visitXmlDocument(XmlDocument document) {
     XmlTag rootTag = document.getRootTag();
     XmlNSDescriptor nsDescriptor = rootTag == null ? null : rootTag.getNSDescriptor(rootTag.getNamespace(), false);
@@ -218,14 +227,19 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     if (tag.getParent() instanceof XmlTag) {
       XmlTag parentTag = (XmlTag)tag.getParent();
       elementDescriptor = parentTag.getDescriptor();
-      if (elementDescriptor == null) { return; }
+      boolean nullParentDescriptor = false;
 
-      elementDescriptor = elementDescriptor.getElementDescriptor(tag);
-      
-      if (elementDescriptor instanceof AnyXmlElementDescriptor) {
+      if (elementDescriptor != null) {
+        elementDescriptor = elementDescriptor.getElementDescriptor(tag);
+      } else {
+        nullParentDescriptor = true;
+      }
+
+      if (elementDescriptor instanceof AnyXmlElementDescriptor || nullParentDescriptor) {
         elementDescriptor = tag.getDescriptor();
       }
       if (elementDescriptor == null) {
+        if (nullParentDescriptor) return;
         addElementsForTag(
           tag,
           "Element " + name + " is not allowed here",
@@ -365,7 +379,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   private static HighlightInfoType getTagProblemInfoType(XmlTag tag) {
-    return (tag instanceof HtmlTag)?HighlightInfoType.WARNING:HighlightInfoType.WRONG_REF;
+    return (tag instanceof HtmlTag && tag.getNamespace().equals(XmlUtil.HTML_URI))?
+           HighlightInfoType.WARNING:HighlightInfoType.WRONG_REF;
   }
 
   private void checkRootTag(XmlTag tag) {

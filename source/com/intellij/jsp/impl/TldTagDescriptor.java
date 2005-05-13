@@ -128,12 +128,12 @@ public class TldTagDescriptor extends CustomTagDescriptorBase implements Validat
   }
 
   public TagExtraInfo getExtraInfo(WebModuleProperties moduleProperties) {
-    if (getName().equals("useBean") &&
-        getNSDescriptor() instanceof TldDescriptor &&
-        getNSDescriptor().getDescriptorFile().getVirtualFile().getName().equals("jsp12.tld")
-       ) {
-      return new UseBeanTEI(); // HACK for old JSP to work
-    }
+    //if (getName().equals("useBean") &&
+    //    getNSDescriptor() instanceof TldDescriptor &&
+    //    getNSDescriptor().getDescriptorFile().getVirtualFile().getName().equals("jsp12.tld")
+    //   ) {
+    //  return new UseBeanTEI(); // HACK for old JSP to work
+    //}
 
     Object tei;
     TagExtraInfo castedTei = null;
