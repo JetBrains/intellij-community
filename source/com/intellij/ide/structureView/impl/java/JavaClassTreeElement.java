@@ -5,7 +5,10 @@ import com.intellij.ide.structureView.impl.AddAllMembersProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
   public JavaClassTreeElement(PsiClass aClass, boolean inherited) {
@@ -20,8 +23,11 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
   private Collection<StructureViewTreeElement> getClassChildren() {
     ArrayList<StructureViewTreeElement> array = new ArrayList<StructureViewTreeElement>();
 
+    if (getElement() == null || !getElement().isValid()) return array;
+    
     List<PsiElement> ownChildren = Arrays.asList(getElement().getChildren());
     List<PsiElement> inherited = new ArrayList<PsiElement>(ownChildren);
+    
     PsiScopesUtil.processScope(getElement(), new AddAllMembersProcessor(inherited, getElement()), PsiSubstitutor.UNKNOWN, null, getElement());
 
     for (int i = 0; i < inherited.size(); i++) {

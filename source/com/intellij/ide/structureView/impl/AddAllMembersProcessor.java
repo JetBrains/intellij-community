@@ -60,7 +60,17 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
   private boolean isObjectMember(PsiElement element) {
     if (!(element instanceof PsiMethod))
       return false;
-    return ((PsiMethod) element).getContainingClass().getQualifiedName().equals(Object.class.getName());
+    final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+    if (containingClass == null) {
+      return false;
+    } else {
+      final String qualifiedName = containingClass.getQualifiedName();
+      if (qualifiedName == null) {
+        return false;
+      } else {
+        return qualifiedName.equals(Object.class.getName());
+      }
+    }
   }
 
   private void mapMethodBySignature(PsiMethod psiMethod) {
