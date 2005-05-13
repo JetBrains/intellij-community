@@ -253,7 +253,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
       String[] groupPath = getModuleGroupPath(module);
       if (groupPath != null) {
-        final String groupPathString = StringUtil.concatenate(groupPath, MODULE_GROUP_SEPARATOR);
+        final String groupPathString = StringUtil.join(groupPath, MODULE_GROUP_SEPARATOR);
         moduleElement.setAttribute("group", groupPathString);
       }
 

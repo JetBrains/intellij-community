@@ -69,14 +69,14 @@ public abstract class BaseRefactoringAction extends AnAction {
         return;
       }
       final PsiElement[] elements = getPsiElementArray(dataContext);
-      if (elements != null && elements.length != 0) {
-        presentation.setEnabled(isEnabledOnElements(elements));
-      } else if (isEnabledOnDataContext(dataContext)) {
+      if (isEnabledOnDataContext(dataContext)) {
         presentation.setEnabled(true);
-        return;
-      } else {
+      }
+      else if (elements != null && elements.length != 0) {
+        presentation.setEnabled(isEnabledOnElements(elements));
+      }
+      else {
         presentation.setEnabled(false);
-        return;
       }
     }
   }

@@ -1,27 +1,32 @@
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.util.treeView.smartTree.*;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
+import gnu.trove.THashMap;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Collections;
 
 public class PropertiesGrouper implements Grouper{
   public static final String ID = "SHOW_PROPERTIES";
 
-  public Collection<Group> group(Collection<TreeElement> children) {
-    Map<Group,Group> result = new HashMap<Group, Group>();
-    for (Iterator<TreeElement> iterator = children.iterator(); iterator.hasNext();) {
-      Object o = iterator.next();
-      if (o instanceof JavaClassTreeElementBase){
+  public Collection<Group> group(final AbstractTreeNode parent, Collection<TreeElement> children) {
+    if (parent.getValue() instanceof PropertyGroup) return Collections.EMPTY_LIST;
+    Map<Group,Group> result = new THashMap<Group, Group>();
+    for (TreeElement o : children) {
+      if (o instanceof JavaClassTreeElementBase) {
         PsiElement element = ((JavaClassTreeElementBase)o).getElement();
-        PropertyGroup group = PropertyGroup.createOn(element);
+        PropertyGroup group = PropertyGroup.createOn(element, o);
         if (group != null) {
           PropertyGroup existing = (PropertyGroup)result.get(group);
-          if (existing != null){
+          if (existing != null) {
             existing.copyAccessorsFrom(group);
-          } else {
+          }
+          else {
             result.put(group, group);
           }
         }

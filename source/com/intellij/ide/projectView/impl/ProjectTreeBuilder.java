@@ -13,9 +13,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.lang.properties.PropertiesFilesManager;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -29,6 +28,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
   private final MyFileStatusListener myFileStatusListener;
 
   private final MyCopyPasteListener myCopyPasteListener;
+  private final ProjectTreeBuilder.PropertiesFileListener myPropertiesFileListener;
 
   public ProjectTreeBuilder(final Project project, JTree tree, DefaultTreeModel treeModel, Comparator<NodeDescriptor> comparator, ProjectAbstractTreeStructureBase treeStructure) {
     super(project, tree, treeModel, treeStructure, comparator);
@@ -58,6 +58,9 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
     myCopyPasteListener = new MyCopyPasteListener();
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
+
+    myPropertiesFileListener = new PropertiesFileListener();
+    PropertiesFilesManager.getInstance().addPropertiesFileListener(myPropertiesFileListener);
     initRootNode();
   }
 
@@ -67,6 +70,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     ProjectRootManager.getInstance(myProject).removeModuleRootListener(myModuleRootListener);
     FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
     CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
+    PropertiesFilesManager.getInstance().removePropertiesFileListener(myPropertiesFileListener);
   }
 
   private final class MyFileStatusListener implements FileStatusListener {
@@ -98,8 +102,23 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
     private void updateByTransferable(final Transferable t) {
       final PsiElement[] psiElements = CopyPasteUtil.getElementsInTransferable(t);
-      for (int i = 0; i < psiElements.length; i++) {
-        myUpdater.addSubtreeToUpdateByElement(psiElements[i]);
+      for (PsiElement psiElement : psiElements) {
+        myUpdater.addSubtreeToUpdateByElement(psiElement);
+      }
+    }
+  }
+
+  private class PropertiesFileListener implements PropertiesFilesManager.PropertiesFileListener {
+    public void fileAdded(VirtualFile propertiesFile) {
+    }
+
+    public void fileRemoved(VirtualFile propertiesFile) {
+    }
+
+    public void fileChanged(VirtualFile propertiesFile) {
+      if (!myProject.isDisposed()) {
+        PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(propertiesFile.getParent());
+        myUpdater.addSubtreeToUpdateByElement(dir);
       }
     }
   }

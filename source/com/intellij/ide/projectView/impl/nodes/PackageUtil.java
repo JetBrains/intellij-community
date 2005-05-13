@@ -360,14 +360,13 @@ public class PackageUtil {
         addAllSubpackages(children, psiDirectory, moduleFileIndex, settings);
       }
       PsiDirectory[] subdirs = psiDirectory.getSubdirectories();
-      for (int i = 0; i < subdirs.length; i++) {
-        PsiDirectory subdir = subdirs[i];
+      for (PsiDirectory subdir : subdirs) {
         if (subdir.getPackage() != null) {
-        continue;
+          continue;
         }
         if (moduleFileIndex != null) {
           if (!moduleFileIndex.isInContent(subdir.getVirtualFile())) {
-          continue;
+            continue;
           }
         }
         if (withSubDirectories) {
@@ -388,8 +387,7 @@ public class PackageUtil {
                                                   ModuleFileIndex moduleFileIndex,
                                                   ViewSettings viewSettings,
                                                   boolean withSubDirectories) {
-    for (int idx = 0; idx < children.length; idx++) {
-      PsiElement child = children[idx];
+    for (PsiElement child : children) {
       LOG.assertTrue(child.isValid());
 
       final VirtualFile vFile;
@@ -405,7 +403,7 @@ public class PackageUtil {
             if (viewSettings.isHideEmptyMiddlePackages() && dir.getPackage() != null && TreeViewUtil.isEmptyMiddlePackage(dir, true)) {
               processPsiDirectoryChildren(dir, dir.getChildren(), container, projectFileIndex, moduleFileIndex, viewSettings,
                                           withSubDirectories); // expand it recursively
-            continue;
+              continue;
             }
           }
           addNode(moduleFileIndex, projectFileIndex, psiDir, vFile, container, PsiDirectoryNode.class, child, viewSettings);
@@ -413,7 +411,7 @@ public class PackageUtil {
       }
       else {
         LOG.assertTrue(false, "Either PsiFile or PsiDirectory expected as a child of " + child.getParent() + ", but was " + child);
-      continue;
+        continue;
       }
     }
   }

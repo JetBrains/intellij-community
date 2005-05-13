@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
@@ -24,15 +23,13 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     LOG.assertTrue(element instanceof AbstractTreeNode, element.getClass().getName());
     AbstractTreeNode treeNode = (AbstractTreeNode)element;
     Collection<AbstractTreeNode> elements = treeNode.getChildren();
-    List providers = getProviders();
+    List<TreeStructureProvider> providers = getProviders();
     ArrayList<AbstractTreeNode> modified = elements != null ? new ArrayList<AbstractTreeNode>(elements) : new ArrayList<AbstractTreeNode>();
-    for (Iterator iterator = providers.iterator(); iterator.hasNext();) {
-      TreeStructureProvider provider = (TreeStructureProvider)iterator.next();
+    for (TreeStructureProvider provider : providers) {
       modified = new ArrayList<AbstractTreeNode>(provider.modify(treeNode, modified, ViewSettings.DEFAULT));
     }
     elements = modified;
-    for (Iterator<AbstractTreeNode> iterator = elements.iterator(); iterator.hasNext();) {
-      AbstractTreeNode node = iterator.next();
+    for (AbstractTreeNode node : elements) {
       node.setParent(treeNode);
     }
     return modified.toArray(new Object[modified.size()]);

@@ -10,6 +10,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -109,17 +110,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
   }
 
   private String toString(final Collection<String> activeActions) {
-    final StringBuffer result = new StringBuffer();
-    for (Iterator<String> iterator = activeActions.iterator(); iterator.hasNext();) {
-      final String actionName = iterator.next();
-      if (actionName.trim().length() > 0) {
-        result.append(actionName);
-        if (iterator.hasNext()) {
-          result.append(",");
-        }
-      }
-    }
-    return result.toString();
+    return StringUtil.join(activeActions, ",");
   }
 
   private Collection<String> collectActiveActions() {

@@ -11,6 +11,7 @@
     <component>
       <implementation-class>com.intellij.ide.ui.customization.CustomizationConfigurable</implementation-class>
     </component>
+
   </application-components>
   <project-components>
     <component>

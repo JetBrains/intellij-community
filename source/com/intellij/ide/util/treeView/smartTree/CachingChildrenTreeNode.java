@@ -10,7 +10,7 @@ import gnu.trove.THashMap;
 import java.util.*;
 
 public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<Value> {
-  protected List<CachingChildrenTreeNode> myChildren;
+  private List<CachingChildrenTreeNode> myChildren;
   protected List<CachingChildrenTreeNode> myOldChildren = null;
   protected final TreeModel myTreeModel;
 
@@ -20,8 +20,8 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   }
 
   public Collection<AbstractTreeNode> getChildren() {
-      ensureChildrenAreInitialized();
-      return new ArrayList<AbstractTreeNode>(myChildren);
+    ensureChildrenAreInitialized();
+    return new ArrayList<AbstractTreeNode>(myChildren);
   }
 
   private void ensureChildrenAreInitialized() {
@@ -71,7 +71,6 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
         child.sortChildren(sorters);
       }
     }
-
   }
 
   public void filterChildren(Filter[] filters) {
@@ -91,13 +90,19 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     for (Grouper grouper : groupers) {
       groupElements(grouper);
     }
+    Collection<AbstractTreeNode> children = getChildren();
+    for (AbstractTreeNode child : children) {
+      if (child instanceof GroupWrapper) {
+        ((GroupWrapper)child).groupChildren(groupers);
+      }
+    }
   }
 
   private void groupElements(Grouper grouper) {
     ArrayList<AbstractTreeNode<TreeElement>> ungrouped = new ArrayList<AbstractTreeNode<TreeElement>>();
     Collection<AbstractTreeNode> children = getChildren();
-    for (final AbstractTreeNode aChildren : children) {
-      CachingChildrenTreeNode<TreeElement> node = (CachingChildrenTreeNode<TreeElement>)aChildren;
+    for (final AbstractTreeNode child : children) {
+      CachingChildrenTreeNode<TreeElement> node = (CachingChildrenTreeNode<TreeElement>)child;
       if (node instanceof TreeElementWrapper) {
         ungrouped.add(node);
       }
@@ -124,28 +129,27 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   }
 
   private void processUngrouped(List<AbstractTreeNode<TreeElement>> ungrouped, Grouper grouper) {
-    Collection<TreeElement> ungroupedObjects = collectValues(ungrouped);
-    Collection<Group> groups = grouper.group(ungroupedObjects);
+    Map<TreeElement,AbstractTreeNode> ungroupedObjects = collectValues(ungrouped);
+    Collection<Group> groups = grouper.group(this, ungroupedObjects.keySet());
 
     Map<Group, GroupWrapper> groupNodes = createGroupNodes(groups);
 
     for (Group group : groups) {
-      for (Iterator<AbstractTreeNode<TreeElement>> eachUngrNode = ungrouped.iterator(); eachUngrNode.hasNext();) {
-        AbstractTreeNode<TreeElement> node = eachUngrNode.next();
-        if (group.contains(node.getValue())) {
-          GroupWrapper groupWrapper = groupNodes.get(group);
-          groupWrapper.addSubElement((CachingChildrenTreeNode)node);
-          node.setParent(groupWrapper);
-          eachUngrNode.remove();
-        }
+      GroupWrapper groupWrapper = groupNodes.get(group);
+      Collection<TreeElement> children = group.getChildren();
+      for (TreeElement node : children) {
+        CachingChildrenTreeNode child = new TreeElementWrapper(getProject(), node, myTreeModel);
+        groupWrapper.addSubElement(child);
+        AbstractTreeNode abstractTreeNode = ungroupedObjects.get(node);
+        abstractTreeNode.setParent(groupWrapper);
       }
     }
   }
 
-  private Collection<TreeElement> collectValues(List<AbstractTreeNode<TreeElement>> ungrouped) {
-    ArrayList<TreeElement> objects = new ArrayList<TreeElement>();
-    for (final AbstractTreeNode<TreeElement> aUngrouped : ungrouped) {
-      objects.add(aUngrouped.getValue());
+  private Map<TreeElement, AbstractTreeNode> collectValues(List<AbstractTreeNode<TreeElement>> ungrouped) {
+    Map<TreeElement, AbstractTreeNode> objects = new LinkedHashMap<TreeElement, AbstractTreeNode>();
+    for (final AbstractTreeNode<TreeElement> node : ungrouped) {
+      objects.put(node.getValue(), node);
     }
     return objects;
   }

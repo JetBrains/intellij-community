@@ -2,7 +2,9 @@ package com.intellij.ide.util.treeView.smartTree;
 
 import com.intellij.navigation.ItemPresentation;
 
+import java.util.Collection;
+
 public interface Group {
   ItemPresentation getPresentation();
-  boolean contains(TreeElement object);
+  Collection<TreeElement> getChildren();
 }

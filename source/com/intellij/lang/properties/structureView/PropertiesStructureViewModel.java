@@ -29,7 +29,7 @@ public class PropertiesStructureViewModel extends TextEditorBasedStructureViewMo
   }
 
   public Grouper[] getGroupers() {
-    return new Grouper[]{/*new GroupByWordPrefixes()*/};
+    return new Grouper[]{new GroupByWordPrefixes()};
   }
 
   public Sorter[] getSorters() {

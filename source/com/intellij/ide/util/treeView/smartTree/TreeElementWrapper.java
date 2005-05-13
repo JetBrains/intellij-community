@@ -12,20 +12,20 @@ class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement>{
   public void copyFromNewInstance(final CachingChildrenTreeNode oldInstance) {
   }
 
-  public void initChildren() {
-    clearChildren();
-    TreeElement[] children = getValue().getChildren();
-    for (int i = 0; i < children.length; i++) {
-      TreeElementWrapper childNode = new TreeElementWrapper(getProject(), children[i], myTreeModel);
-      addSubElement(childNode);
-    }
-  }
-
   public void update(PresentationData presentation) {
     if (((StructureViewTreeElement)getValue()).getValue() != null){
       presentation.updateFrom(getValue().getPresentation());
     }
   }
+  public void initChildren() {
+    clearChildren();
+    TreeElement[] children = getValue().getChildren();
+    for (TreeElement child : children) {
+      TreeElementWrapper childNode = new TreeElementWrapper(getProject(), child, myTreeModel);
+      addSubElement(childNode);
+    }
+  }
+
 
   protected void performTreeActions() {
     filterChildren(myTreeModel.getFilters());

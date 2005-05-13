@@ -22,26 +22,25 @@ public class TreeModelWrapper implements StructureViewModel {
   }
 
   public Grouper[] getGroupers() {
-    ArrayList<TreeAction> filtered = filter(myModel.getGroupers());
+    ArrayList<TreeAction> filtered = filterActive(myModel.getGroupers());
     return filtered.toArray(new Grouper[filtered.size()]);
   }
 
-  private ArrayList<TreeAction> filter(Object[] actions) {
+  private ArrayList<TreeAction> filterActive(TreeAction[] actions) {
     ArrayList<TreeAction> filtered = new ArrayList<TreeAction>();
-    for (int i = 0; i < actions.length; i++) {
-      TreeAction grouper = (TreeAction)actions[i];
-      if (myStructureView.isActionActive(grouper.getName())) filtered.add(grouper);
+    for (TreeAction action : actions) {
+      if (myStructureView.isActionActive(action.getName())) filtered.add(action);
     }
     return filtered;
   }
 
   public Sorter[] getSorters() {
-    ArrayList<TreeAction> filtered = filter(myModel.getSorters());
+    ArrayList<TreeAction> filtered = filterActive(myModel.getSorters());
     return filtered.toArray(new Sorter[filtered.size()]);
   }
 
   public Filter[] getFilters() {
-    ArrayList<TreeAction> filtered = filter(myModel.getFilters());
+    ArrayList<TreeAction> filtered = filterActive(myModel.getFilters());
     return filtered.toArray(new Filter[filtered.size()]);
   }
 

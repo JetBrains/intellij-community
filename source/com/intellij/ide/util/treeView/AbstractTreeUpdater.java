@@ -15,7 +15,7 @@ public class AbstractTreeUpdater {
   private int myDelay = 300;
 
   private final Alarm myAlarm = new Alarm();
-  private LinkedList myNodesToUpdate = new LinkedList();
+  private LinkedList<DefaultMutableTreeNode> myNodesToUpdate = new LinkedList<DefaultMutableTreeNode>();
   private final AbstractTreeBuilder myTreeBuilder;
   private Runnable myRunAfterUpdate;
   private Runnable myRunBeforeUpdate;
@@ -36,8 +36,8 @@ public class AbstractTreeUpdater {
       LOG.debug("addSubtreeToUpdate:" + rootNode);
     }
 
-    for (Iterator iterator = myNodesToUpdate.iterator(); iterator.hasNext();) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode) iterator.next();
+    for (Iterator<DefaultMutableTreeNode> iterator = myNodesToUpdate.iterator(); iterator.hasNext();) {
+      DefaultMutableTreeNode node = iterator.next();
       if (rootNode.isNodeAncestor(node)){
         return;
       }
@@ -83,7 +83,7 @@ public class AbstractTreeUpdater {
     }
 
     while(myNodesToUpdate.size() > 0){
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode) myNodesToUpdate.removeFirst();
+      DefaultMutableTreeNode node = myNodesToUpdate.removeFirst();
       updateSubtree(node);
     }
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.scope.ElementClassHint;
@@ -96,15 +97,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment,
   }
 
   public String importsToString() {
-    StringBuffer buffer = new StringBuffer();
-    for (Iterator<String> iterator = myPseudoImports.values().iterator(); iterator.hasNext();) {
-      if (buffer.length() > 0) {
-        buffer.append(",");
-      }
-      String importedQName = iterator.next();
-      buffer.append(importedQName);
-    }
-    return buffer.toString();
+    return StringUtil.join(myPseudoImports.values(), ",");
   }
 
   public void addImportsFromString(String imports) {

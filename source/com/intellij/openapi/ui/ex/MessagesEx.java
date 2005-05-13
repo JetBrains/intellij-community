@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
@@ -23,16 +24,7 @@ public class MessagesEx extends Messages {
   }
 
   private static String filePaths(String[] files) {
-    StringBuffer result = new StringBuffer();
-    for (int i = 0; i < files.length; i++) {
-      String file = files[i];
-      if (i > 0){
-        result.append(",");
-        result.append("\n");
-      }
-      result.append(file);
-    }
-    return result.toString();
+    return StringUtil.join(files, ",\n");
   }
 
   public static MessageInfo fileIsReadOnly(Project project, VirtualFile file) {

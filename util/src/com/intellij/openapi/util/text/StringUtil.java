@@ -420,14 +420,6 @@ public class StringUtil {
     return Character.toUpperCase(s.charAt(0)) + s.substring(1);
   }
 
-  public static String concatenate(String[] strings, String separator) {
-    String result = strings[0];
-    for (int i = 1; i < strings.length; i++) {
-      result = result + separator + strings[i];
-    }
-    return result;
-  }
-
   public static int stringHashCode(CharSequence chars) {
     int h = 0;
     int to = chars.length();
@@ -573,7 +565,17 @@ public class StringUtil {
     }
     return result.toString();
   }
-  
+  public static String join(Iterable<String> strings, final String separator) {
+    final StringBuffer result = new StringBuffer();
+    for (String string : strings) {
+      if (string != null && string.length() != 0) {
+        if (result.length() != 0) result.append(separator);
+        result.append(string);
+      }
+    }
+    return result.toString();
+  }
+
   public static String join(final int[] strings, final String separator) {
     final StringBuffer result = new StringBuffer();
     for (int i = 0; i < strings.length; i++) {

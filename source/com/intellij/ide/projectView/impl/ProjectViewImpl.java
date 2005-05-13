@@ -11,8 +11,10 @@ import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.AlphaComparator;
+import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.components.ProjectComponent;
@@ -1264,7 +1266,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     setComparator(getProjectViewPaneById(paneId));
   }
 
-  private abstract static class GroupByTypeComparator implements Comparator<NodeDescriptor> {
+  public abstract static class GroupByTypeComparator implements Comparator<NodeDescriptor> {
     public int compare(final NodeDescriptor o1, final NodeDescriptor o2) {
       if (o1 instanceof PsiDirectoryNode != o2 instanceof PsiDirectoryNode) {
         return o1 instanceof PsiDirectoryNode ? -1 : 1;
@@ -1283,11 +1285,11 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         final int result = pos1 - pos2;
         if (result != 0) return result;
       }
-      else if (isSortByType() && o1 instanceof PsiFileNode && o2 instanceof PsiFileNode) {
-        final PsiFile file1 = ((PsiFileNode)o1).getValue();
-        final PsiFile file2 = ((PsiFileNode)o2).getValue();
-        String type1 = extension(file1);
-        String type2 = extension(file2);
+      else if (isSortByType()
+               && (o1 instanceof PsiFileNode || ((AbstractTreeNode)o1).getValue() instanceof ResourceBundle )
+               && (o2 instanceof PsiFileNode || ((AbstractTreeNode)o2).getValue() instanceof ResourceBundle )) {
+        String type1 = o1 instanceof PsiFileNode ? extension(((PsiFileNode)o1).getValue()) : PropertiesFileType.FILE_TYPE.getDefaultExtension();
+        String type2 = o2 instanceof PsiFileNode ? extension(((PsiFileNode)o2).getValue()) : PropertiesFileType.FILE_TYPE.getDefaultExtension();
         if (type1 != null && type2 != null) {
           int result = type1.compareTo(type2);
           if (result != 0) return result;
@@ -1336,7 +1338,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
     public void setSelected(AnActionEvent event, boolean flag) {
       setSortByType(getCurrentViewId(), flag);
-      setComparator(getCurrentProjectViewPane());
     }
 
     public void update(final AnActionEvent e) {

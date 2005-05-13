@@ -12,5 +12,4 @@ public interface Property extends PsiNamedElement {
   String getKey();
   String getValue();
   String getKeyValueSeparator();
-
 }

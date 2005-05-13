@@ -19,6 +19,7 @@ import javax.swing.*;
  */
 public class PropertiesStructureViewElement implements StructureViewTreeElement<Property> {
   private Property myProperty;
+  private String myPresentableName;
 
   protected PropertiesStructureViewElement(final Property element) {
     myProperty = element;
@@ -47,7 +48,12 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement<
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
       public String getPresentableText() {
-        return myProperty.getName();
+        if (myPresentableName == null) {
+          return myProperty.getKey();
+        }
+        else {
+          return myPresentableName;
+        }
       }
 
       public TextAttributesKey getTextAttributesKey() {
@@ -62,5 +68,9 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement<
         return myProperty.getIcon(Iconable.ICON_FLAG_OPEN);
       }
     };
+  }
+
+  public void setPresentableName(final String presentableName) {
+    myPresentableName = presentableName;
   }
 }

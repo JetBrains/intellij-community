@@ -5,6 +5,9 @@ import com.intellij.j2ee.ejb.EjbUsagesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.j2ee.ejb.role.EjbDeclMethodRole;
 import com.intellij.j2ee.ejb.role.EjbMethodRole;
+import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -39,7 +42,7 @@ import java.util.*;
 public class RenameProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameProcessor");
 
-  LinkedHashMap<PsiElement, String> myAllRenames = new LinkedHashMap<PsiElement, String>();
+  private LinkedHashMap<PsiElement, String> myAllRenames = new LinkedHashMap<PsiElement, String>();
 
   private PsiElement myPrimaryElement;
   private String myNewName = null;
@@ -120,6 +123,17 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       prepareMethodRenaming((PsiMethod) myPrimaryElement, myNewName);
     } else if (myPrimaryElement instanceof PsiPackage) {
       preparePackageRenaming((PsiPackage) myPrimaryElement, myNewName);
+    } else if (myPrimaryElement instanceof Property) {
+      preparePropertyRenaming((Property) myPrimaryElement, myNewName);
+    }
+  }
+
+  private void preparePropertyRenaming(final Property property, final String newName) {
+    ResourceBundle resourceBundle = ((PropertiesFile)property.getContainingFile()).getResourceBundle();
+    List<Property> properties = resourceBundle.findProperties(property.getKey());
+    myAllRenames.clear();
+    for (Property otherProperty : properties) {
+      myAllRenames.put(otherProperty, newName);
     }
   }
 

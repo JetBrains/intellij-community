@@ -2,15 +2,17 @@ package com.intellij.lang.properties;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.vfs.*;
 import gnu.trove.THashSet;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -25,6 +27,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
   private VirtualFileListener myVirtualFileListener;
   private final VirtualFileManager myVirtualFileManager;
   private final FileTypeManager myFileTypeManager;
+  private final List<PropertiesFileListener> myPropertiesFileListeners = new ArrayList<PropertiesFileListener>();
 
   public static PropertiesFilesManager getInstance() {
     return ApplicationManager.getApplication().getComponent(PropertiesFilesManager.class);
@@ -36,7 +39,12 @@ public class PropertiesFilesManager implements ApplicationComponent {
   }
 
   private void removeOldFile(final VirtualFileEvent event) {
-    myPropertiesFiles.remove(event.getFile());
+    VirtualFile file = event.getFile();
+    FileType fileType = myFileTypeManager.getFileTypeByFile(file);
+    if (fileType == PropertiesFileType.FILE_TYPE) {
+      myPropertiesFiles.remove(file);
+      firePropertiesFileRemoved(file);
+    }
   }
 
   private void addNewFile(final VirtualFileEvent event) {
@@ -48,6 +56,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
     FileType fileType = myFileTypeManager.getFileTypeByFile(file);
     if (fileType == PropertiesFileType.FILE_TYPE) {
       myPropertiesFiles.add(file);
+      firePropertiesFileAdded(file);
     }
   }
 
@@ -69,8 +78,25 @@ public class PropertiesFilesManager implements ApplicationComponent {
         removeOldFile(event);
         addNewFile(event);
       }
+
+      public void propertyChanged(VirtualFilePropertyEvent event) {
+        VirtualFile file = event.getFile();
+        fileChanged(file);
+      }
+
+      public void contentsChanged(VirtualFileEvent event) {
+        VirtualFile file = event.getFile();
+        fileChanged(file);
+      }
     };
     myVirtualFileManager.addVirtualFileListener(myVirtualFileListener);
+  }
+
+  private void fileChanged(final VirtualFile file) {
+    FileType fileType = myFileTypeManager.getFileTypeByFile(file);
+    if (fileType == PropertiesFileType.FILE_TYPE) {
+      firePropertiesFileChanged(file);
+    }
   }
 
   public void disposeComponent() {
@@ -95,5 +121,35 @@ public class PropertiesFilesManager implements ApplicationComponent {
         }
       }
     });
+  }
+
+  public void addPropertiesFileListener(PropertiesFileListener fileListener) {
+    myPropertiesFileListeners.add(fileListener);
+  }
+  public void removePropertiesFileListener(PropertiesFileListener fileListener) {
+    myPropertiesFileListeners.remove(fileListener);
+  }
+  private void firePropertiesFileAdded(VirtualFile propertiesFile) {
+    for (PropertiesFileListener listener : myPropertiesFileListeners) {
+      listener.fileAdded(propertiesFile);
+      listener.fileChanged(propertiesFile);
+    }
+  }
+  private void firePropertiesFileRemoved(VirtualFile propertiesFile) {
+    for (PropertiesFileListener listener : myPropertiesFileListeners) {
+      listener.fileRemoved(propertiesFile);
+      listener.fileChanged(propertiesFile);
+    }
+  }
+  private void firePropertiesFileChanged(VirtualFile propertiesFile) {
+    for (PropertiesFileListener listener : myPropertiesFileListeners) {
+      listener.fileChanged(propertiesFile);
+    }
+  }
+
+  public static interface PropertiesFileListener {
+    void fileAdded(VirtualFile propertiesFile);
+    void fileRemoved(VirtualFile propertiesFile);
+    void fileChanged(VirtualFile propertiesFile);
   }
 }

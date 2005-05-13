@@ -9,9 +9,11 @@
 package com.intellij.refactoring.util.classMembers;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -21,9 +23,9 @@ import java.util.Set;
 public class UsesMemberDependencyGraph implements MemberDependencyGraph {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.classMembers.UsesMemberDependencyGraph");
   protected HashSet mySelectedNormal;
-  protected HashSet mySelectedAbstract;
-  protected HashSet myDependencies = null;
-  protected com.intellij.util.containers.HashMap myDependenciesToDependentMap = null;
+  protected HashSet<PsiElement> mySelectedAbstract;
+  protected HashSet<PsiElement> myDependencies = null;
+  protected HashMap<PsiElement,HashSet<PsiElement>> myDependenciesToDependentMap = null;
   private final PsiClass mySuperClass;
   private final boolean myRecursive;
   private MemberDependenciesStorage myMemberDependenciesStorage;
@@ -33,7 +35,7 @@ public class UsesMemberDependencyGraph implements MemberDependencyGraph {
     mySuperClass = superClass;
     myRecursive = recursive;
     mySelectedNormal = new HashSet();
-    mySelectedAbstract = new HashSet();
+    mySelectedAbstract = new HashSet<PsiElement>();
     myClass = aClass;
     myMemberDependenciesStorage = new MemberDependenciesStorage(myClass, superClass);
   }
@@ -41,8 +43,8 @@ public class UsesMemberDependencyGraph implements MemberDependencyGraph {
 
   public Set getDependent() {
     if (myDependencies == null) {
-      myDependencies = new HashSet();
-      myDependenciesToDependentMap = new com.intellij.util.containers.HashMap();
+      myDependencies = new HashSet<PsiElement>();
+      myDependenciesToDependentMap = new com.intellij.util.containers.HashMap<PsiElement, HashSet<PsiElement>>();
       buildDeps(null, mySelectedNormal, myDependencies, myDependenciesToDependentMap, true);
     }
     return myDependencies;
@@ -51,14 +53,14 @@ public class UsesMemberDependencyGraph implements MemberDependencyGraph {
   public Set getDependenciesOf(PsiElement element) {
     final Set dependent = getDependent();
     if(!dependent.contains(element)) return null;
-    return (Set) myDependenciesToDependentMap.get(element);
+    return (Set<PsiElement>) myDependenciesToDependentMap.get(element);
   }
 
   public String getElementTooltip(PsiElement element) {
     final Set dependencies = getDependenciesOf(element);
     if(dependencies == null || dependencies.size() == 0) return null;
 
-    ArrayList strings = new ArrayList();
+    ArrayList<String> strings = new ArrayList<String>();
     for (Iterator iterator = dependencies.iterator(); iterator.hasNext();) {
       PsiElement dep = (PsiElement) iterator.next();
       if(dep instanceof PsiNamedElement) {
@@ -70,20 +72,11 @@ public class UsesMemberDependencyGraph implements MemberDependencyGraph {
     }
 
     if(strings.isEmpty()) return null;
-    StringBuffer buffer = new StringBuffer("used by ");
-    final int size = strings.size();
-    for (int i = 0; i < size; i++) {
-      String s = (String) strings.get(i);
-      buffer.append(s);
-      if(i < size - 1) {
-        buffer.append(", ");
-      }
-    }
-    return buffer.toString();
+    return "used by " + StringUtil.join(strings,", ");
   }
 
 
-  protected void buildDeps(PsiElement sourceElement, Set elements, Set result, com.intellij.util.containers.HashMap relationMap, boolean recurse) {
+  protected void buildDeps(PsiElement sourceElement, Set elements, Set<PsiElement> result, HashMap<PsiElement,HashSet<PsiElement>> relationMap, boolean recurse) {
     for (Iterator iterator = elements.iterator(); iterator.hasNext();) {
       PsiElement element = (PsiElement) iterator.next();
 
@@ -93,9 +86,9 @@ public class UsesMemberDependencyGraph implements MemberDependencyGraph {
         }
         result.add(element);
         if (sourceElement != null) {
-          HashSet relations = (HashSet) relationMap.get(element);
+          HashSet<PsiElement> relations = relationMap.get(element);
           if(relations == null) {
-            relations = new HashSet();
+            relations = new HashSet<PsiElement>();
             relationMap.put(element, relations);
           }
           relations.add(sourceElement);

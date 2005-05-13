@@ -5,15 +5,19 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtil;
 
 import javax.swing.*;
-import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvider{
   private final SmartPsiElementPointer mySuperClassPointer;
   private final boolean myOverrides;
+  private final Collection<TreeElement> myChildren = new ArrayList<TreeElement>();
   private static final Icon OVERRIDING_ICON = IconLoader.getIcon("/general/overridingMethod.png");
   private static final Icon IMLLEMENTING_ICON = IconLoader.getIcon("/general/implementingMethod.png");
 
@@ -22,24 +26,8 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
     mySuperClassPointer = SmartPointerManager.getInstance(superClass.getProject()).createSmartPsiElementPointer(superClass);
   }
 
-  public boolean contains(TreeElement o) {
-    if (o instanceof PsiMethodTreeElement) {
-      PsiMethod method = ((PsiMethodTreeElement)o).getMethod();
-      WeakReference<PsiMethod> ref = method.getUserData(SuperTypesGrouper.SUPER_METHOD_KEY);
-      if (ref == null) return false;
-      PsiMethod superMethod = ref.get();
-      if (superMethod == null) return false;
-      PsiClass superClass = superMethod.getContainingClass();
-      if (!superClass.equals(getSuperClass())) return false;
-      boolean overrides = SuperTypesGrouper.methodOverridesSuper(method, superMethod);
-      if (overrides != myOverrides) return false;
-      method.putUserData(SuperTypesGrouper.SUPER_METHOD_KEY, null);
-      return true;
-    }
-    else {
-      return false;
-    }
-
+  public Collection<TreeElement> getChildren() {
+    return myChildren;
   }
 
   private PsiClass getSuperClass() {
@@ -103,5 +91,9 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
 
   public TextAttributesKey getTextAttributesKey() {
     return null;
+  }
+
+  public void addMethod(final TreeElement superMethod) {
+     myChildren.add(superMethod);
   }
 }

@@ -1,6 +1,7 @@
 
 package com.intellij.refactoring.rename;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.HelpID;
@@ -8,8 +9,10 @@ import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import gnu.trove.THashSet;
 
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 class RenameViewDescriptor implements UsageViewDescriptor{
   private final boolean mySearchInComments;
@@ -36,36 +39,29 @@ class RenameViewDescriptor implements UsageViewDescriptor{
     myUsages = usages;
     myRefreshCommand = refreshCommand;
 
-    StringBuffer processedElementsHeader = new StringBuffer();
-    StringBuffer codeReferencesText = new StringBuffer();
-    codeReferencesText.append("References in code to ");
+    Set<String> processedElementsHeaders = new THashSet<String>();
+    Set<String> codeReferences = new THashSet<String>();
 
-    for (int i = 0; i < myElements.length; i++) {
-      final PsiElement element = myElements[i];
+    for (final PsiElement element : myElements) {
       String newName = renamesMap.get(element);
 
       String prefix = "";
-      if (element instanceof PsiDirectory/* || element instanceof PsiClass*/){
+      if (element instanceof PsiDirectory/* || element instanceof PsiClass*/) {
         String fullName = UsageViewUtil.getLongName(element);
         int lastDot = fullName.lastIndexOf('.');
-        if (lastDot >= 0){
+        if (lastDot >= 0) {
           prefix = fullName.substring(0, lastDot + 1);
         }
       }
 
-      processedElementsHeader.append(UsageViewUtil.capitalize(
-          UsageViewUtil.getType(element) + " to be renamed to " + prefix + newName));
-      codeReferencesText.append(UsageViewUtil.getType(element) + " " + UsageViewUtil.getLongName(element));
-
-      if (i < myElements.length - 1) {
-        processedElementsHeader.append(", ");
-        codeReferencesText.append(", ");
-      }
+      processedElementsHeaders.add(UsageViewUtil.capitalize(
+        UsageViewUtil.getType(element) + " to be renamed to " + prefix + newName));
+      codeReferences.add(UsageViewUtil.getType(element) + " " + UsageViewUtil.getLongName(element));
     }
-    codeReferencesText.append(" ");
 
-    myProcessedElementsHeader = processedElementsHeader.toString();
-    myCodeReferencesText =  codeReferencesText.toString();
+
+    myProcessedElementsHeader = StringUtil.join(processedElementsHeaders.toArray(new String[0]),", ");
+    myCodeReferencesText =  "References in code to " + StringUtil.join(codeReferences.toArray(new String[0]),", ") + " ";
     myHelpID = HelpID.getRenameHelpID(primaryElement);
   }
 

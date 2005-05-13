@@ -14,6 +14,8 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 
 import javax.swing.*;
+import java.util.Collection;
+import java.util.ArrayList;
 
 public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvider {
   private final String myPropertyName;
@@ -30,6 +32,7 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
   public static final Icon PROPERTY_READ_WRITE_ICON = loadIcon("/nodes/propertyReadWrite.png");
   public static final Icon PROPERTY_READ_WRITE_STATIC_ICON = loadIcon("/nodes/propertyReadWriteStatic.png");
   private final Project myProject;
+  private final Collection<TreeElement> myChildren = new ArrayList<TreeElement>();
 
   private PropertyGroup(String propertyName, PsiType propertyType, boolean isStatic, Project project) {
     myPropertyName = propertyName;
@@ -38,12 +41,13 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
     myProject = project;
   }
 
-  public static final PropertyGroup createOn(PsiElement object) {
+  public static final PropertyGroup createOn(PsiElement object, final TreeElement treeElement) {
     if (object instanceof PsiField) {
       PsiField field = (PsiField)object;
       PropertyGroup group = new PropertyGroup(PropertyUtil.suggestPropertyName(field.getProject(), field), field.getType(),
                                               field.hasModifierProperty(PsiModifier.STATIC), object.getProject());
       group.setField(field);
+      group.myChildren.add(treeElement);
       return group;
     }
     else if (object instanceof PsiMethod) {
@@ -52,6 +56,7 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
         PropertyGroup group = new PropertyGroup(PropertyUtil.getPropertyNameByGetter(method), method.getReturnType(),
                                                 method.hasModifierProperty(PsiModifier.STATIC), object.getProject());
         group.setGetter(method);
+        group.myChildren.add(treeElement);
         return group;
       }
       else if (PropertyUtil.isSimplePropertySetter(method)) {
@@ -59,17 +64,15 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
           new PropertyGroup(PropertyUtil.getPropertyNameBySetter(method), method.getParameterList().getParameters()[0].getType(),
                             method.hasModifierProperty(PsiModifier.STATIC), object.getProject());
         group.setSetter(method);
+        group.myChildren.add(treeElement);
         return group;
       }
     }
     return null;
   }
 
-  public boolean contains(TreeElement object) {
-    if (object instanceof JavaClassTreeElementBase){
-      return equals(createOn(((JavaClassTreeElementBase)object).getElement()));
-    }
-    return false;
+  public Collection<TreeElement> getChildren() {
+    return myChildren;
   }
 
   public ItemPresentation getPresentation() {
@@ -184,10 +187,11 @@ public class PropertyGroup implements Group, ItemPresentation, AccessLevelProvid
     return (PsiMethod)(mySetterPointer == null ? null : mySetterPointer.getElement());
   }
 
-  public void copyAccessorsFrom(PropertyGroup group) {
+  void copyAccessorsFrom(PropertyGroup group) {
     if (group.getGetter() != null) setGetter(group.getGetter());
     if (group.getSetter() != null) setSetter(group.getSetter());
     if (group.getField() != null) setField(group.getField());
+    myChildren.addAll(group.myChildren);
   }
 
   private static Icon loadIcon(String resourceName) {

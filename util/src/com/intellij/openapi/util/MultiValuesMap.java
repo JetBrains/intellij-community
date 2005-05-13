@@ -4,7 +4,6 @@ import java.util.*;
 
 public class MultiValuesMap<Key, Value>{
   private final Map<Key, Collection<Value>> myBaseMap = new HashMap<Key, Collection<Value>>();
-  private static final ArrayList EMPTY_LIST = new ArrayList();
 
   public void put(Key key, Value value) {
     if (!myBaseMap.containsKey(key)) {
