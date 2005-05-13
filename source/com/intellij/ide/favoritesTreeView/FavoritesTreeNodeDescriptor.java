@@ -28,13 +28,12 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
   public FavoritesTreeNodeDescriptor(final Project project, final NodeDescriptor parentDescriptor, final AbstractTreeNode element) {
     super(project, parentDescriptor);
     myElement = element;
-    myOpenIcon = myElement.getPresentation().getIcon(true);
-    myClosedIcon = myElement.getPresentation().getIcon(false);
-    myName = myElement.getPresentation().getPresentableText();
   }
 
   public boolean update() {
     myElement.update();
+    myOpenIcon = myElement.getPresentation().getIcon(true);
+    myClosedIcon = myElement.getPresentation().getIcon(false);
     myName = myElement.getPresentation().getPresentableText();
     final Object value = myElement.getValue();
     if (value instanceof PsiElement){
