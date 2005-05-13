@@ -321,7 +321,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
      * @param tempContainer
      * @return
      */
-    protected static boolean invalidContainer(PsiElement tempContainer) {
+    protected boolean invalidContainer(PsiElement tempContainer) {
         return !(tempContainer instanceof PsiCodeBlock) && !IntroduceVariableBase.isLoopOrIf(tempContainer);
     }
 
