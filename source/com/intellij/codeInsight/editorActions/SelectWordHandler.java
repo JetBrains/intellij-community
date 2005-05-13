@@ -11,6 +11,11 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.jsp.JspFile;
+import com.intellij.lang.java.JavaLanguage;
 
 import java.util.List;
 
@@ -100,7 +105,7 @@ public class SelectWordHandler extends EditorActionHandler {
         break;
       }
 
-      element = element.getParent();
+      element = getUpperElement(element, selectionRange);
     }
 
     if (newRange == null) {
@@ -114,6 +119,30 @@ public class SelectWordHandler extends EditorActionHandler {
     editor.getSelectionModel().setSelection(selectionRange.getStartOffset(), selectionRange.getEndOffset());
   }
 
+  private static PsiElement getUpperElement(final PsiElement e, final TextRange selectionRange) {
+    final PsiElement parent = e.getParent();
+
+    if (e.getContainingFile() instanceof JspFile && e.getLanguage() instanceof JavaLanguage) {
+      final JspFile psiFile = (JspFile)e.getContainingFile();
+      if (e.getParent().getTextLength() == psiFile.getTextLength()) {
+        final PsiFile[] psiRoots = psiFile.getPsiRoots();
+        for (PsiFile root : psiRoots) {
+          if (root instanceof XmlFile) {
+            XmlFile xmlFile = (XmlFile)root;
+            XmlTag tag = PsiTreeUtil.getParentOfType(xmlFile.getDocument().findElementAt(e.getTextRange().getStartOffset()), XmlTag.class);
+            while (tag != null && !tag.getTextRange().contains(selectionRange)) {
+              tag = tag.getParentTag();
+            }
+
+            if (tag != null) return tag;
+          }
+        }
+      }
+    }
+
+    return parent;
+  }
+
   private static TextRange advance(TextRange selectionRange,
                                    PsiElement element,
                                    CharSequence text,
@@ -124,9 +153,7 @@ public class SelectWordHandler extends EditorActionHandler {
     }
     TextRange minimumRange = null;
 
-    for (int i = 0; i < SelectWordUtil.SELECTIONERS.length; i++) {
-      SelectWordUtil.Selectioner selectioner = SelectWordUtil.SELECTIONERS[i];
-
+    for (SelectWordUtil.Selectioner selectioner : SelectWordUtil.SELECTIONERS) {
       if (!selectioner.canSelect(element)) {
         continue;
       }

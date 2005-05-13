@@ -6,6 +6,9 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
@@ -13,6 +16,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.lang.java.JavaLanguage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +44,7 @@ public class SelectWordUtil {
     new XmlTagSelectioner(),
     new XmlElementSelectioner(),
     new XmlTokenSelectioner(),
+    new ScriptletSelectioner(),
     new PlainTextLineSelectioner()
   };
 
@@ -578,7 +583,7 @@ public class SelectWordUtil {
 
       PsiElement parent = e.getParent();
 
-      if (!(parent instanceof PsiCodeBlock) && !(parent instanceof PsiBlockStatement)) {
+      if (!(parent instanceof PsiCodeBlock) && !(parent instanceof PsiBlockStatement) || parent instanceof JspCodeBlock) {
         return result;
       }
 
@@ -929,6 +934,31 @@ public class SelectWordUtil {
         addWordSelection(editor.getSettings().isCamelWords(), editorText, cursorOffset, result);
         return result;
       }
+    }
+  }
+
+  static class ScriptletSelectioner extends BasicSelectioner {
+    @Override
+    public boolean canSelect(PsiElement e) {
+      return e.getContainingFile() instanceof JspFile && e.getLanguage() instanceof JavaLanguage;
+    }
+
+    @Override
+    public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+      List<TextRange> ranges = super.select(e, editorText, cursorOffset, editor);
+      final JspFile psiFile = (JspFile)e.getContainingFile();
+      if (e.getParent().getTextLength() == psiFile.getTextLength()) {
+        final PsiFile[] psiRoots = psiFile.getPsiRoots();
+        for (PsiFile root : psiRoots) {
+          if (root instanceof XmlFile) {
+            XmlFile xmlFile = (XmlFile)root;
+            XmlTag tag = PsiTreeUtil.getParentOfType(xmlFile.getDocument().findElementAt(cursorOffset), XmlTag.class);
+            ranges.add(tag.getTextRange());
+            break;
+          }
+        }
+      }
+      return ranges;
     }
   }
 
