@@ -42,5 +42,8 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
   public CharSequence getText(final TextRange textRange) {
     return myDocument.getCharsSequence().subSequence(textRange.getStartOffset(), textRange.getEndOffset());
   }
-  
+
+  public String getText() {
+    return myDocument.getText();
+  }
 }
