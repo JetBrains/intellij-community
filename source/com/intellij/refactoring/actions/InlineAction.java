@@ -13,8 +13,14 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.inline.InlineHandler;
 import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 
 public class InlineAction extends BaseRefactoringAction {
+  /**
+   * @fabrique
+   */
+  public static final String INLINE_ACTION_HANDLER = "InlineActionHandler";
+
   public boolean isAvailableInEditorOnly() {
     return false;
   }
@@ -25,11 +31,16 @@ public class InlineAction extends BaseRefactoringAction {
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {
+    final RefactoringActionHandler handler = (RefactoringActionHandler) dataContext.getData(INLINE_ACTION_HANDLER);
+    if (handler != null) {
+      return handler;
+    }
+
     return new InlineHandler();
   }
 
   protected boolean isAvailableForLanguage(Language language) {
-    return language.equals(StdFileTypes.JAVA.getLanguage()) ||
+    return language instanceof JavaLanguage ||
            language.equals(StdFileTypes.JSPX.getLanguage()) ||
            language.equals(StdFileTypes.JSP.getLanguage());
   }
