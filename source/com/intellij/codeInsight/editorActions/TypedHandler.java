@@ -382,7 +382,11 @@ public class TypedHandler implements TypedActionHandler {
     }
     else if ('"' == charTyped || '\'' == charTyped){
       if (handleQuote(editor, fileType, charTyped, dataContext)) return;
-    } else if ('}' == charTyped && originalFileType == StdFileTypes.JSPX) {
+    } else if ('}' == charTyped &&
+               ( originalFileType == StdFileTypes.JSPX ||
+                 originalFileType == StdFileTypes.JSP
+               )
+    ) {
       if (handleELClosingBrace(editor, file,project)) return;
     }
 
@@ -398,7 +402,9 @@ public class TypedHandler implements TypedActionHandler {
       indentClosingBrace(project, editor);
     }
     else if ('{' == charTyped){
-      if (originalFileType == StdFileTypes.JSPX) {
+      if (originalFileType == StdFileTypes.JSPX ||
+          originalFileType == StdFileTypes.JSP
+        ) {
         if(handleELOpeningBrace(editor, file,project)) return;
       }
       indentOpenedBrace(project, editor);
