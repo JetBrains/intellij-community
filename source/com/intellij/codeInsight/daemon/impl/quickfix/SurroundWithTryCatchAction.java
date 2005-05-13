@@ -9,7 +9,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.generation.surroundWith.SurroundWithTryCatchHandler;
+import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchSurrounder;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -63,8 +63,8 @@ public class SurroundWithTryCatchAction implements IntentionAction {
     }
 
     try{
-      SurroundWithTryCatchHandler handler = new SurroundWithTryCatchHandler();
-      range = handler.surroundStatements(project, editor, myStatement.getParent(), new PsiElement[] {myStatement});
+      JavaWithTryCatchSurrounder handler = new JavaWithTryCatchSurrounder();
+      range = handler.surroundElements(project, editor, new PsiElement[] {myStatement});
     }
     catch(IncorrectOperationException e){
       LOG.error(e);

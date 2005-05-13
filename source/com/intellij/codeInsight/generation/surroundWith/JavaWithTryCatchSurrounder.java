@@ -10,8 +10,12 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.IncorrectOperationException;
 
-public class SurroundWithTryCatchHandler implements SurroundStatementsHandler {
+public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
   protected boolean myGenerateFinally = false;
+
+  public String getTemplateDescription() {
+    return "try / catch";
+  }
 
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements)
     throws IncorrectOperationException {
@@ -33,7 +37,7 @@ public class SurroundWithTryCatchHandler implements SurroundStatementsHandler {
     }
 
     StringBuffer buffer = new StringBuffer("try{\n}");
-    for (int i = 0; i < exceptions.length; i++) {
+    for (PsiClassType exception : exceptions) {
       buffer.append("catch(Exception e){\n}");
     }
     if (myGenerateFinally) {

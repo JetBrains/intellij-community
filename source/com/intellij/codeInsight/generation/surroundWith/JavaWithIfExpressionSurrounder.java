@@ -9,7 +9,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.IncorrectOperationException;
 
-class SurroundWithIfExpressionHandler implements SurroundExpressionHandler{
+class JavaWithIfExpressionSurrounder extends JavaExpressionSurrounder{
   public boolean isApplicable(PsiExpression expr) {
     PsiType type = expr.getType();
     if (PsiType.BOOLEAN != type) return false;
@@ -37,5 +37,9 @@ class SurroundWithIfExpressionHandler implements SurroundExpressionHandler{
     TextRange range = block.getStatements()[0].getTextRange();
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     return new TextRange(range.getStartOffset(), range.getStartOffset());
+  }
+
+  public String getTemplateDescription() {
+    return "if (expr) {...}";
   }
 }

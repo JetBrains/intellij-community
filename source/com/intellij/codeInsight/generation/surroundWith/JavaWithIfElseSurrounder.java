@@ -8,7 +8,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
-class SurroundWithIfElseHandler implements SurroundStatementsHandler{
+class JavaWithIfElseSurrounder extends JavaStatementsSurrounder{
+  public String getTemplateDescription() {
+    return "if / else";
+  }
+
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
     PsiManager manager = PsiManager.getInstance(project);
     PsiElementFactory factory = manager.getElementFactory();

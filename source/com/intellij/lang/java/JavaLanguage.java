@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.fileTypes.FileType;
@@ -21,6 +22,8 @@ import com.intellij.psi.impl.source.codeStyle.java.JavaAdapter;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.newCodeFormatting.FormattingModelBuilder;
 import com.intellij.newCodeFormatting.FormattingModel;
+import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurroundDescriptor;
+import com.intellij.codeInsight.generation.surroundWith.JavaStatementsSurroundDescriptor;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,6 +34,11 @@ import com.intellij.newCodeFormatting.FormattingModel;
  */
 public class JavaLanguage extends Language {
   private final FormattingModelBuilder myFormattingModelBuilder;
+
+  private final static SurroundDescriptor[] SURROUND_DESCRIPTORS = new SurroundDescriptor[] {
+    new JavaExpressionSurroundDescriptor(),
+    new JavaStatementsSurroundDescriptor()
+  };
 
   public JavaLanguage() {
     super("JAVA");
@@ -73,5 +81,9 @@ public class JavaLanguage extends Language {
 
   public FormattingModelBuilder getFormattingModelBuilder() {
     return myFormattingModelBuilder;
+  }
+
+  public SurroundDescriptor[] getSurroundDescriptors() {
+    return SURROUND_DESCRIPTORS;
   }
 }

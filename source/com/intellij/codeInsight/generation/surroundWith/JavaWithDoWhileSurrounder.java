@@ -8,7 +8,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
-class SurroundWithTryFinallyHandler implements SurroundStatementsHandler{
+class JavaWithDoWhileSurrounder extends JavaStatementsSurrounder{
+  public String getTemplateDescription() {
+    return "do / while";
+  }
+
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
     PsiManager manager = PsiManager.getInstance(project);
     PsiElementFactory factory = manager.getElementFactory();
@@ -19,18 +23,16 @@ class SurroundWithTryFinallyHandler implements SurroundStatementsHandler{
       return null;
     }
 
-    String text = "try{\n}finally{\n}";
-    PsiTryStatement tryStatement = (PsiTryStatement)factory.createStatementFromText(text, null);
-    tryStatement = (PsiTryStatement)codeStyleManager.reformat(tryStatement);
+    String text = "do{\n}while(true);";
+    PsiDoWhileStatement doWhileStatement = (PsiDoWhileStatement)factory.createStatementFromText(text, null);
+    doWhileStatement = (PsiDoWhileStatement)codeStyleManager.reformat(doWhileStatement);
 
-    tryStatement = (PsiTryStatement)container.addAfter(tryStatement, statements[statements.length - 1]);
+    doWhileStatement = (PsiDoWhileStatement)container.addAfter(doWhileStatement, statements[statements.length - 1]);
 
-    PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-    tryBlock.addRange(statements[0], statements[statements.length - 1]);
+    PsiCodeBlock bodyBlock = ((PsiBlockStatement)doWhileStatement.getBody()).getCodeBlock();
+    bodyBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
-    PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-    int offset = finallyBlock.getTextRange().getStartOffset() + 1;
-    return new TextRange(offset, offset);
+    return doWhileStatement.getCondition().getTextRange();
   }
 }

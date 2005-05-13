@@ -8,7 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
-class SurroundWithNotHandler implements SurroundExpressionHandler{
+class JavaWithNotSurrounder extends JavaExpressionSurrounder{
   public boolean isApplicable(PsiExpression expr) {
     return PsiType.BOOLEAN == expr.getType();
   }
@@ -24,5 +24,9 @@ class SurroundWithNotHandler implements SurroundExpressionHandler{
     expr = (PsiExpression)expr.replace(prefixExpr);
     int offset = expr.getTextRange().getEndOffset();
     return new TextRange(offset, offset);
+  }
+
+  public String getTemplateDescription() {
+    return "!(expr)";
   }
 }

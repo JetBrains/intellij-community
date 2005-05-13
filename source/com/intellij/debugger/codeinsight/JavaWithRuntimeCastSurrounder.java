@@ -1,8 +1,8 @@
 package com.intellij.debugger.codeinsight;
 
-import com.intellij.codeInsight.generation.surroundWith.SurroundExpressionHandler;
-import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.Value;
 
@@ -33,10 +32,14 @@ import com.sun.jdi.Value;
  * Date: Jul 17, 2003
  * Time: 7:51:01 PM
  */
-public class SurroundWithRuntimeCastHandler implements SurroundExpressionHandler {
+public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.codeinsight.SurroundWithRuntimeCastHandler");
 
-  public SurroundWithRuntimeCastHandler() {
+  public String getTemplateDescription() {
+    return "((RuntimeType)expr)";
+  }
+
+  public JavaWithRuntimeCastSurrounder() {
   }
 
   public boolean isApplicable(PsiExpression expr) {
@@ -120,7 +123,7 @@ public class SurroundWithRuntimeCastHandler implements SurroundExpressionHandler
 
       ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new com.intellij.debugger.EvaluatingComputable<ExpressionEvaluator>() {
         public ExpressionEvaluator compute() throws EvaluateException {
-          return EvaluatorBuilderImpl.getInstance().build((PsiExpression)myElement);
+          return EvaluatorBuilderImpl.getInstance().build(myElement);
         }
       });
 

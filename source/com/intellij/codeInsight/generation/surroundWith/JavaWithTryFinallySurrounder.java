@@ -8,7 +8,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
-class SurroundWithSynchronizedHandler implements SurroundStatementsHandler{
+class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
+  public String getTemplateDescription() {
+    return "try / finally";
+  }
+
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
     PsiManager manager = PsiManager.getInstance(project);
     PsiElementFactory factory = manager.getElementFactory();
@@ -19,18 +23,18 @@ class SurroundWithSynchronizedHandler implements SurroundStatementsHandler{
       return null;
     }
 
-    String text = "synchronized(a){\n}";
-    PsiSynchronizedStatement synchronizedStatement = (PsiSynchronizedStatement)factory.createStatementFromText(text, null);
-    synchronizedStatement = (PsiSynchronizedStatement)codeStyleManager.reformat(synchronizedStatement);
+    String text = "try{\n}finally{\n}";
+    PsiTryStatement tryStatement = (PsiTryStatement)factory.createStatementFromText(text, null);
+    tryStatement = (PsiTryStatement)codeStyleManager.reformat(tryStatement);
 
-    synchronizedStatement = (PsiSynchronizedStatement)container.addAfter(synchronizedStatement, statements[statements.length - 1]);
+    tryStatement = (PsiTryStatement)container.addAfter(tryStatement, statements[statements.length - 1]);
 
-    PsiCodeBlock synchronizedBlock = synchronizedStatement.getBody();
-    synchronizedBlock.addRange(statements[0], statements[statements.length - 1]);
+    PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+    tryBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
-    TextRange range = synchronizedStatement.getLockExpression().getTextRange();
-    editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-    return new TextRange(range.getStartOffset(), range.getStartOffset());
+    PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+    int offset = finallyBlock.getTextRange().getStartOffset() + 1;
+    return new TextRange(offset, offset);
   }
 }

@@ -77,8 +77,7 @@ public class TemplateBuilder {
     String text = myContainerElement.getText();
     final int containerStart = myContainerElement.getTextRange().getStartOffset();
     int start = 0;
-    for (Iterator<PsiElement> iterator = myElements.iterator(); iterator.hasNext();) {
-      final PsiElement element = iterator.next();
+    for (final PsiElement element : myElements) {
       int offset = element.getTextRange().getStartOffset() - containerStart;
       template.addTextSegment(text.substring(start, offset));
 
@@ -86,18 +85,23 @@ public class TemplateBuilder {
         template.addSelectionStartVariable();
         template.addTextSegment(mySelection.getText());
         template.addSelectionEndVariable();
-      } else if (element == myEndElement) {
+      }
+      else if (element == myEndElement) {
         template.addEndVariable();
         start = offset;
         continue;
-      } else {
+      }
+      else {
         final boolean alwaysStopAt = myAlwaysStopAtMap.get(element) == null ? true : myAlwaysStopAtMap.get(element).booleanValue();
         final Expression expression = myExpressions.get(element);
-        final String variableName = myVariableNamesMap.get(element) == null ? String.valueOf(expression.hashCode()) : myVariableNamesMap.get(element);
+        final String variableName = myVariableNamesMap.get(element) == null
+                                    ? String.valueOf(expression.hashCode())
+                                    : myVariableNamesMap.get(element);
 
         if (expression != null) {
           template.addVariable(variableName, expression, expression, alwaysStopAt);
-        } else {
+        }
+        else {
           template.addVariableSegment(variableName);
         }
       }
@@ -107,15 +111,14 @@ public class TemplateBuilder {
 
     template.addTextSegment(text.substring(start));
 
-    for (Iterator<PsiElement> iterator1 = myElements.iterator(); iterator1.hasNext();) {
-      PsiElement element = iterator1.next();
+    for (PsiElement element : myElements) {
       final String dependantVariable = myVariableExpressions.get(element);
       if (dependantVariable != null) {
         final boolean alwaysStopAt = myAlwaysStopAtMap.get(element) == null ? true : myAlwaysStopAtMap.get(element).booleanValue();
         final Expression expression = myExpressions.get(element);
         final String variableName = myVariableNamesMap.get(element) == null
-          ? String.valueOf(expression.hashCode())
-          : myVariableNamesMap.get(element);
+                                    ? String.valueOf(expression.hashCode())
+                                    : myVariableNamesMap.get(element);
         template.addVariable(variableName, dependantVariable, dependantVariable, alwaysStopAt);
       }
     }

@@ -7,12 +7,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.jsp.JspFile;
@@ -23,6 +21,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -705,6 +704,41 @@ public class XmlUtil {
       LOG.error(e);
     }
     return null;
+  }
+
+  public static Pair<XmlTagChild, XmlTagChild> findTagChildrenInRange(final PsiFile file, int startOffset, int endOffset) {
+    PsiElement elementAtStart = file.findElementAt(startOffset);
+    PsiElement elementAtEnd = file.findElementAt(endOffset - 1);
+    if (elementAtStart instanceof PsiWhiteSpace) {
+      startOffset = elementAtStart.getTextRange().getEndOffset();
+      elementAtStart = file.findElementAt(startOffset);
+    }
+    if (elementAtEnd instanceof PsiWhiteSpace) {
+      endOffset = elementAtEnd.getTextRange().getStartOffset();
+      elementAtEnd = file.findElementAt(endOffset - 1);
+    }
+    if (elementAtStart == null || elementAtEnd == null) return null;
+
+    XmlTagChild first = PsiTreeUtil.getParentOfType(elementAtStart, XmlTagChild.class);
+    if (first == null) return null;
+
+    XmlTagChild last = first;
+    while (last != null && last.getTextRange().getEndOffset() < endOffset) {
+      last = PsiTreeUtil.getNextSiblingOfType(last, XmlTagChild.class);
+    }
+
+    if (last == null/* || last.getTextRange().getEndOffset() != elementAtEnd.getTextRange().getEndOffset()*/) return null;
+    if (last.getTextRange().getEndOffset() != elementAtEnd.getTextRange().getEndOffset()) {
+      //Probably 'last' ends with whitespace
+      PsiElement elementAt = file.findElementAt(last.getTextRange().getEndOffset() - 1);
+      if (elementAt instanceof PsiWhiteSpace) {
+        elementAt = file.findElementAt(elementAt.getTextRange().getStartOffset());
+      }
+
+      if (elementAt.getTextRange().getStartOffset() != endOffset) return null;
+    }
+
+    return new Pair<XmlTagChild, XmlTagChild>(first, last);
   }
 
   private static class MyAttributeInfo implements Comparable {

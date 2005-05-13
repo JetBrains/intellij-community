@@ -8,7 +8,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
-class SurroundWithForHandler implements SurroundStatementsHandler{
+class JavaWithIfSurrounder extends JavaStatementsSurrounder{
+  public String getTemplateDescription() {
+    return "if";
+  }
+
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
     PsiManager manager = PsiManager.getInstance(project);
     PsiElementFactory factory = manager.getElementFactory();
@@ -19,19 +23,18 @@ class SurroundWithForHandler implements SurroundStatementsHandler{
       return null;
     }
 
-    String text = "for(a;b;c){\n}";
-    PsiForStatement forStatement = (PsiForStatement)factory.createStatementFromText(text, null);
-    forStatement = (PsiForStatement)codeStyleManager.reformat(forStatement);
+    String text = "if(a){\n}";
+    PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText(text, null);
+    ifStatement = (PsiIfStatement)codeStyleManager.reformat(ifStatement);
 
-    forStatement = (PsiForStatement)container.addAfter(forStatement, statements[statements.length - 1]);
+    ifStatement = (PsiIfStatement)container.addAfter(ifStatement, statements[statements.length - 1]);
 
-    PsiCodeBlock bodyBlock = ((PsiBlockStatement)forStatement.getBody()).getCodeBlock();
-    bodyBlock.addRange(statements[0], statements[statements.length - 1]);
+    PsiCodeBlock thenBlock = ((PsiBlockStatement)ifStatement.getThenBranch()).getCodeBlock();
+    thenBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
-    TextRange range1 = forStatement.getInitialization().getTextRange();
-    TextRange range3 = forStatement.getUpdate().getTextRange();
-    editor.getDocument().deleteString(range1.getStartOffset(), range3.getEndOffset());
-    return new TextRange(range1.getStartOffset(), range1.getStartOffset());
+    TextRange range = ifStatement.getCondition().getTextRange();
+    editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+    return new TextRange(range.getStartOffset(), range.getStartOffset());
   }
 }

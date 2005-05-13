@@ -8,14 +8,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.Set;
 import java.util.LinkedHashSet;
 
-class SurroundWithCastHandler implements SurroundExpressionHandler {
+class JavaWithCastSurrounder extends JavaExpressionSurrounder {
   public boolean isApplicable(PsiExpression expr) {
     return true;
   }
@@ -38,8 +38,7 @@ class SurroundWithCastHandler implements SurroundExpressionHandler {
     template.setToReformat(true);
 
     LinkedHashSet itemSet = new LinkedHashSet();
-    for (int i = 0; i < suggestedTypes.length; i++) {
-      PsiType type = suggestedTypes[i];
+    for (PsiType type : suggestedTypes) {
       LookupItemUtil.addLookupItem(itemSet, type, "");
     }
     final LookupItem[] lookupItems = (LookupItem[]) itemSet.toArray(new LookupItem[itemSet.size()]);
@@ -65,5 +64,9 @@ class SurroundWithCastHandler implements SurroundExpressionHandler {
     template.addEndVariable();
 
     return template;
+  }
+
+  public String getTemplateDescription() {
+    return "((Type)expr)";
   }
 }

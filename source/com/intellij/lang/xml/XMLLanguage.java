@@ -7,6 +7,7 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.newCodeFormatting.FormattingModel;
@@ -22,6 +23,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.impl.source.xml.behavior.CDATAOnAnyEncodedPolicy;
 import com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -68,6 +70,10 @@ public class XMLLanguage extends Language {
 
   public FindUsagesProvider getFindUsagesProvider() {
     return new XmlFindUsagesProvider();
+  }
+
+  @NotNull public SurroundDescriptor[] getSurroundDescriptors() {
+    return new SurroundDescriptor[] {new XmlSurroundDescriptor()};
   }
 
   public Commenter getCommenter() {

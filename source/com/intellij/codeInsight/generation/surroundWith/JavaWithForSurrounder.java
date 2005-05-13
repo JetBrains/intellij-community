@@ -8,7 +8,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
-class SurroundWithWhileHandler implements SurroundStatementsHandler{
+class JavaWithForSurrounder extends JavaStatementsSurrounder{
+  public String getTemplateDescription() {
+    return "for";
+  }
+
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
     PsiManager manager = PsiManager.getInstance(project);
     PsiElementFactory factory = manager.getElementFactory();
@@ -19,16 +23,19 @@ class SurroundWithWhileHandler implements SurroundStatementsHandler{
       return null;
     }
 
-    String text = "while(true){\n}";
-    PsiWhileStatement whileStatement = (PsiWhileStatement)factory.createStatementFromText(text, null);
-    whileStatement = (PsiWhileStatement)codeStyleManager.reformat(whileStatement);
+    String text = "for(a;b;c){\n}";
+    PsiForStatement forStatement = (PsiForStatement)factory.createStatementFromText(text, null);
+    forStatement = (PsiForStatement)codeStyleManager.reformat(forStatement);
 
-    whileStatement = (PsiWhileStatement)container.addAfter(whileStatement, statements[statements.length - 1]);
+    forStatement = (PsiForStatement)container.addAfter(forStatement, statements[statements.length - 1]);
 
-    PsiCodeBlock bodyBlock = ((PsiBlockStatement)whileStatement.getBody()).getCodeBlock();
+    PsiCodeBlock bodyBlock = ((PsiBlockStatement)forStatement.getBody()).getCodeBlock();
     bodyBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
-    return whileStatement.getCondition().getTextRange();
+    TextRange range1 = forStatement.getInitialization().getTextRange();
+    TextRange range3 = forStatement.getUpdate().getTextRange();
+    editor.getDocument().deleteString(range1.getStartOffset(), range3.getEndOffset());
+    return new TextRange(range1.getStartOffset(), range1.getStartOffset());
   }
 }

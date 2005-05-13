@@ -23,14 +23,13 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTagChild;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.util.XmlUtil;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -57,41 +56,6 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
                            final Language includingLanguage) throws IncorrectOperationException;
 
   protected abstract boolean verifyChildRange (final XmlTagChild first, final XmlTagChild last);
-
-  protected Pair<XmlTagChild, XmlTagChild> findTagChildrenInRange(int startOffset, int endOffset) {
-    PsiElement elementAtStart = myIncludingFile.findElementAt(startOffset);
-    PsiElement elementAtEnd = myIncludingFile.findElementAt(endOffset - 1);
-    if (elementAtStart instanceof PsiWhiteSpace) {
-      startOffset = elementAtStart.getTextRange().getEndOffset();
-      elementAtStart = myIncludingFile.findElementAt(startOffset);
-    }
-    if (elementAtEnd instanceof PsiWhiteSpace) {
-      endOffset = elementAtEnd.getTextRange().getStartOffset();
-      elementAtEnd = myIncludingFile.findElementAt(endOffset - 1);
-    }
-    if (elementAtStart == null || elementAtEnd == null) return null;
-
-    XmlTagChild first = PsiTreeUtil.getParentOfType(elementAtStart, XmlTagChild.class);
-    if (first == null) return null;
-
-    XmlTagChild last = first;
-    while (last != null && last.getTextRange().getEndOffset() < endOffset) {
-      last = PsiTreeUtil.getNextSiblingOfType(last, XmlTagChild.class);
-    }
-
-    if (last == null/* || last.getTextRange().getEndOffset() != elementAtEnd.getTextRange().getEndOffset()*/) return null;
-    if (last.getTextRange().getEndOffset() != elementAtEnd.getTextRange().getEndOffset()) {
-      //Probably 'last' ends with whitespace
-      PsiElement elementAt = myIncludingFile.findElementAt(last.getTextRange().getEndOffset() - 1);
-      if (elementAt instanceof PsiWhiteSpace) {
-        elementAt = myIncludingFile.findElementAt(elementAt.getTextRange().getStartOffset());
-      }
-
-      if (elementAt.getTextRange().getStartOffset() != endOffset) return null;
-    }
-
-    return new Pair<XmlTagChild, XmlTagChild>(first, last);
-  }
 
   protected void replaceDuplicates(final String includePath,
                                  final List<Pair<PsiElement, PsiElement>> duplicates,
@@ -170,7 +134,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
     final int start = editor.getSelectionModel().getSelectionStart();
     final int end = editor.getSelectionModel().getSelectionEnd();
 
-    final Pair<XmlTagChild, XmlTagChild> children = findTagChildrenInRange(start, end);
+    final Pair<XmlTagChild, XmlTagChild> children = XmlUtil.findTagChildrenInRange(myIncludingFile, start, end);
     if (children == null) {
       String message = "Cannot extract: selection does not form a fragment for extraction";
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INCLUDE, project);

@@ -7,6 +7,7 @@ import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -23,6 +24,8 @@ import java.util.Map;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Created by IntelliJ IDEA.
  * User: max
@@ -33,6 +36,7 @@ import java.util.Collections;
 public abstract class Language {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.Language");
 
+  private static SurroundDescriptor[] EMPTY_SURROUND_DESCRIPTORS_ARRAY = new SurroundDescriptor[0];
   private static Map<Class<? extends Language>, Language> ourRegisteredLanguages = new HashMap<Class<? extends Language>, Language>();
   private String myID;
   public static final Language ANY = new Language("") {};
@@ -112,6 +116,10 @@ public abstract class Language {
 
   public RefactoringSupportProvider getRefactoringSupportProvider() {
     return null;
+  }
+
+  @NotNull public SurroundDescriptor[] getSurroundDescriptors() {
+    return EMPTY_SURROUND_DESCRIPTORS_ARRAY;
   }
 
   public String toString() {

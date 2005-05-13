@@ -1,0 +1,51 @@
+package com.intellij.lang.xml;
+
+import com.intellij.codeInsight.generation.surroundWith.TemplateSurrounder;
+import com.intellij.codeInsight.template.impl.TemplateContext;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.lang.surroundWith.SurroundDescriptor;
+import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author ven
+ */
+public class XmlSurroundDescriptor implements SurroundDescriptor {
+  @NotNull public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+    final Pair<XmlTagChild, XmlTagChild> childrenInRange = XmlUtil.findTagChildrenInRange(file, startOffset, endOffset);
+    if (childrenInRange == null) return PsiElement.EMPTY_ARRAY;
+    List<PsiElement> result = new ArrayList<PsiElement>();
+    PsiElement first = childrenInRange.getFirst();
+    PsiElement last = childrenInRange.getSecond();
+    while(true) {
+      result.add(first);
+      if (first == last) break;
+      first = first.getNextSibling();
+    }
+
+    return result.toArray(new PsiElement[result.size()]);
+  }
+
+  @NotNull public Surrounder[] getSurrounders() {
+    List<TemplateSurrounder> surrounders = new ArrayList<TemplateSurrounder>();
+    TemplateImpl[] templates = TemplateSettings.getInstance().getTemplates();
+    for (TemplateImpl template : templates) {
+      if (template.isDeactivated() || !template.isSelectionTemplate()) continue;
+      if (template.getTemplateContext().isInContext(TemplateContext.XML_CONTEXT) ||
+          template.getTemplateContext().isInContext(TemplateContext.HTML_CONTEXT) ||
+          template.getTemplateContext().isInContext(TemplateContext.JSP_CONTEXT)) {
+        surrounders.add(new TemplateSurrounder(template));
+      }
+    }
+    return surrounders.toArray(new Surrounder[surrounders.size()]);
+  }
+}
