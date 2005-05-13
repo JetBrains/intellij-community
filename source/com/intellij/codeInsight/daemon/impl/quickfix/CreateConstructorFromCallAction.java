@@ -2,11 +2,13 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
+import com.intellij.codeInsight.template.TemplateStateListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -21,30 +23,40 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
 
   private final PsiConstructorCall myConstructorCall;
 
-  protected void invokeImpl(PsiClass targetClass) {
+  protected void invokeImpl(final PsiClass targetClass) {
     PsiManager psiManager = myConstructorCall.getManager();
-    Project project = psiManager.getProject();
+    final Project project = psiManager.getProject();
     PsiElementFactory elementFactory = psiManager.getElementFactory();
 
     try {
-      PsiMethod constructor = elementFactory.createConstructor();
-      constructor = (PsiMethod)targetClass.add(constructor);
+      final PsiMethod constructor = (PsiMethod)targetClass.add(elementFactory.createConstructor());
 
+      final PsiFile file = targetClass.getContainingFile();
       TemplateBuilder templateBuilder = new TemplateBuilder(constructor);
       CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, myConstructorCall.getArgumentList(), getTargetSubstitutor(myConstructorCall));
-
       CreateClassFromNewAction.setupSuperCall(targetClass, constructor, templateBuilder);
-
-      getReferenceElement(myConstructorCall).bindToElement(targetClass);
 
       Template template = templateBuilder.buildTemplate();
 
-      Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);
+      final Editor editor = positionCursor(project, targetClass.getContainingFile(), targetClass);
       TextRange textRange = constructor.getTextRange();
       editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
       editor.getCaretModel().moveToOffset(textRange.getStartOffset());
 
-      startTemplate(editor, template, project);
+      startTemplate(editor, template, project, new TemplateStateListener() {
+        public void templateFinished(Template template) {
+          try {
+            PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+            final int offset = editor.getCaretModel().getOffset();
+            PsiMethod constructor = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
+            CreateFromUsageUtils.setupMethodBody(constructor);
+            CreateFromUsageUtils.setupEditor(constructor, editor);
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
+        }
+      });
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -53,7 +65,12 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
 
 
   private PsiFile getTargetFile(PsiElement element) {
-    PsiJavaCodeReferenceElement referenceElement = getReferenceElement((PsiConstructorCall)element);
+    final PsiConstructorCall constructorCall = (PsiConstructorCall)element;
+
+    //Enum constants constructors are file local
+    if (constructorCall instanceof PsiEnumConstant) return constructorCall.getContainingFile();
+
+    PsiJavaCodeReferenceElement referenceElement = getReferenceElement(constructorCall);
     if (referenceElement.getQualifier() instanceof PsiJavaCodeReferenceElement) {
       PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)referenceElement.getQualifier();
       PsiElement psiElement = qualifier.resolve();
@@ -71,6 +88,9 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
 
     PsiExpressionList argumentList = myConstructorCall.getArgumentList();
     if (argumentList == null) return null;
+
+    if (myConstructorCall instanceof PsiEnumConstant) return myConstructorCall;
+
     PsiJavaCodeReferenceElement referenceElement = getReferenceElement(myConstructorCall);
     if (referenceElement == null) return null;
     if (referenceElement.getReferenceNameElement() instanceof PsiIdentifier) return myConstructorCall;
@@ -88,14 +108,14 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
   }
 
   protected boolean isAvailableImpl(int offset) {
-    PsiElement nameElement = getElement(myConstructorCall);
+    PsiElement element = getElement(myConstructorCall);
 
     PsiFile targetFile = getTargetFile(myConstructorCall);
     if (targetFile != null && !targetFile.getManager().isInProject(targetFile)) {
       return false;
     }
 
-    if (shouldShowTag(offset, nameElement, myConstructorCall)) {
+    if (shouldShowTag(offset, element, myConstructorCall)) {
       setText("Create Constructor");
       return true;
     }
@@ -107,13 +127,6 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
     if (constructorCall instanceof PsiNewExpression) {
       return ((PsiNewExpression)constructorCall).getClassReference();
     }
-    else if (constructorCall instanceof PsiEnumConstant) {
-      PsiEnumConstant enumConstant = (PsiEnumConstant)constructorCall;
-      PsiClassType type = (PsiClassType)enumConstant.getType();
-      if (type != null) {
-        return constructorCall.getManager().getElementFactory().createReferenceElementByType(type);
-      }
-    }
 
     return null;
   }
@@ -124,9 +137,7 @@ public class CreateConstructorFromCallAction extends CreateFromUsageBaseAction {
       if (referenceElement == null) return null;
       return referenceElement.getReferenceNameElement();
     } else if (targetElement instanceof PsiEnumConstant) {
-      PsiEnumConstant enumConstant = (PsiEnumConstant)targetElement;
-      PsiExpressionList argumentList = enumConstant.getArgumentList();
-      return argumentList != null ? (PsiElement)argumentList : enumConstant;
+      return targetElement;
     }
 
     return null;

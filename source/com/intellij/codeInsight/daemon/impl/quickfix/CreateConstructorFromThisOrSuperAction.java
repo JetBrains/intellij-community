@@ -78,10 +78,9 @@ public abstract class CreateConstructorFromThisOrSuperAction extends CreateFromU
             public void run() {
               try {
                 PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-                PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-                PsiMethod constructor = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-                PsiClass targetClass = PsiTreeUtil.getParentOfType(constructor, PsiClass.class);
-                CreateFromUsageUtils.setupMethodBody(targetClass, constructor);
+                final int offset = editor.getCaretModel().getOffset();
+                PsiMethod constructor = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
+                CreateFromUsageUtils.setupMethodBody(constructor);
                 CreateFromUsageUtils.setupEditor(constructor, editor);
 
                 QuickFixAction.markDocumentForUndo(callSite);

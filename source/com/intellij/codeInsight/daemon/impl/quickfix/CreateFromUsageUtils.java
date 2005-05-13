@@ -81,12 +81,13 @@ public class CreateFromUsageUtils {
     }
   }
 
-  public static void setupMethodBody(PsiClass targetClass, PsiMethod method) throws IncorrectOperationException {
+  public static void setupMethodBody(PsiMethod method) throws IncorrectOperationException {
+    PsiClass aClass = method.getContainingClass();
     PsiType returnType = method.getReturnType() != null ? method.getReturnType() : PsiType.VOID;
 
     PsiElementFactory factory = method.getManager().getElementFactory();
 
-    LOG.assertTrue(!targetClass.isInterface(), "Interface bodies should be already set up");
+    LOG.assertTrue(!aClass.isInterface(), "Interface bodies should be already set up");
 
     FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(
       FileTemplateManager.TEMPLATE_FROM_USAGE_METHOD_BODY);
@@ -96,7 +97,7 @@ public class CreateFromUsageUtils {
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE,
                            CodeInsightUtil.getDefaultValueOfType(returnType));
 
-    FileTemplateUtil.setClassAndMethodNameProperties(properties, targetClass, method);
+    FileTemplateUtil.setClassAndMethodNameProperties(properties, aClass, method);
 
     String methodText;
     CodeStyleManager csManager = CodeStyleManager.getInstance(method.getProject());
@@ -113,7 +114,7 @@ public class CreateFromUsageUtils {
     if (methodText != null) {
       PsiMethod m;
       try {
-        m = factory.createMethodFromText(methodText, targetClass);
+        m = factory.createMethodFromText(methodText, aClass);
       }
       catch (IncorrectOperationException e) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {

@@ -124,12 +124,12 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
                 PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
-                PsiElement element = file.findElementAt(newEditor.getCaretModel().getOffset());
-                PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+                final int offset = newEditor.getCaretModel().getOffset();
+                PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);
+
                 if (method != null) {
-                  PsiClass targetClass = PsiTreeUtil.getParentOfType(method, PsiClass.class);
                   try {
-                    CreateFromUsageUtils.setupMethodBody(targetClass, method);
+                    CreateFromUsageUtils.setupMethodBody(method);
                   } catch (IncorrectOperationException e) {
                   }
 
