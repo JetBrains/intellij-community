@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.resolve.reference;
 import com.intellij.ant.impl.dom.impl.RegisterInPsi;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiPlainTextFile;
@@ -41,7 +42,7 @@ import java.util.List;
 public class ReferenceProvidersRegistry implements ProjectComponent {
   private final List<Class> myTempScopes = new ArrayList<Class>();
   private final List<ProviderBinding> myBindings = new ArrayList<ProviderBinding>();
-  private final List<Object[]> myManipulators = new ArrayList<Object[]>();
+  private final List<Pair<Class, ElementManipulator>> myManipulators = new ArrayList<Pair<Class, ElementManipulator>>();
 
   public static final ReferenceProvidersRegistry getInstance(Project project) {
     return project.getComponent(ReferenceProvidersRegistry.class);
@@ -218,22 +219,22 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     return ret.toArray(new PsiReferenceProvider[ret.size()]);
   }
 
-  public ElementManipulator getManipulator(PsiElement element) {
+  public <T extends PsiElement> ElementManipulator<T> getManipulator(T element) {
     if(element == null) return null;
-    final Iterator<Object[]> iter = myManipulators.iterator();
+    final Iterator<Pair<Class,ElementManipulator>> iter = myManipulators.iterator();
 
     while (iter.hasNext()) {
-      final Object[] pair = iter.next();
-      if (((Class)pair[0]).isAssignableFrom(element.getClass())) {
-        return (ElementManipulator)pair[1];
+      final Pair<Class,ElementManipulator> pair = iter.next();
+      if (pair.getFirst().isAssignableFrom(element.getClass())) {
+        return (ElementManipulator<T>)pair.getSecond();
       }
     }
 
     return null;
   }
 
-  public void registerManipulator(Class<? extends PsiElement> elementClass, ElementManipulator manipulator) {
-    myManipulators.add(new Object[]{elementClass, manipulator});
+  public <T extends PsiElement> void registerManipulator(Class<T> elementClass, ElementManipulator<T> manipulator) {
+    myManipulators.add(new Pair<Class, ElementManipulator>(elementClass, manipulator));
   }
 
   private boolean isScopeFinal(Class scopeClass) {

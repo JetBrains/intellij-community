@@ -11,6 +11,6 @@ import com.intellij.util.IncorrectOperationException;
  * Time: 11:22:05
  * To change this template use Options | File Templates.
  */
-public interface ElementManipulator{
-  PsiElement handleContentChange(PsiElement element, TextRange range, String newContent) throws IncorrectOperationException;
+public interface ElementManipulator<T extends PsiElement> {
+  T handleContentChange(T element, TextRange range, String newContent) throws IncorrectOperationException;
 }

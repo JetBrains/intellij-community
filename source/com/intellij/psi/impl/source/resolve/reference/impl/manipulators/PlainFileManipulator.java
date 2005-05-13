@@ -1,12 +1,11 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
-import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -16,13 +15,13 @@ import com.intellij.util.IncorrectOperationException;
  * Time: 14:10:35
  * To change this template use Options | File Templates.
  */
-public class PlainFileManipulator implements ElementManipulator {
-  public PsiElement handleContentChange(PsiElement element, TextRange range, String newContent)
+public class PlainFileManipulator implements ElementManipulator<PsiPlainTextFile> {
+  public PsiPlainTextFile handleContentChange(PsiPlainTextFile file, TextRange range, String newContent)
   throws IncorrectOperationException {
-    final Document document = FileDocumentManager.getInstance().getDocument(((PsiFile)element).getVirtualFile());
+    final Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
     document.replaceString(range.getStartOffset(), range.getEndOffset(), newContent);
-    PsiDocumentManager.getInstance(element.getProject()).commitDocument(document);
+    PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
 
-    return element;
+    return file;
   }
 }

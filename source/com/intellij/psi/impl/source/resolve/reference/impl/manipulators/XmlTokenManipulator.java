@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
 import com.intellij.psi.impl.source.tree.Factory;
@@ -15,16 +14,15 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author ven
  */
-public class XmlTokenManipulator implements ElementManipulator {
-  public PsiElement handleContentChange(PsiElement element, TextRange range, String newContent) throws IncorrectOperationException {
-    XmlToken xmlToken = ((XmlToken)element);
+public class XmlTokenManipulator implements ElementManipulator<XmlToken> {
+  public XmlToken handleContentChange(XmlToken xmlToken, TextRange range, String newContent) throws IncorrectOperationException {
     String oldText = xmlToken.getText();
     String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());
     IElementType tokenType = xmlToken.getTokenType();
     char[] buffer = newText.toCharArray();
-    FileElement holder = new DummyHolder(element.getManager(), null).getTreeElement();
+    FileElement holder = new DummyHolder(xmlToken.getManager(), null).getTreeElement();
     LeafElement leaf = Factory.createLeafElement(tokenType, buffer, 0, buffer.length, -1, holder.getCharTable());
     TreeUtil.addChildren(holder, leaf);
-    return xmlToken.getParent().replace(leaf.getPsi());
+    return (XmlToken)xmlToken.getParent().replace(leaf.getPsi());
   }
 }

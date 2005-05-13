@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -21,9 +22,9 @@ import com.intellij.util.IncorrectOperationException;
  * Time: 20:00:23
  * To change this template use Options | File Templates.
  */
-public class XmlAttributeValueManipulator implements ElementManipulator{
+public class XmlAttributeValueManipulator implements ElementManipulator<XmlAttributeValue> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator");
-  public PsiElement handleContentChange(PsiElement element, TextRange range, String newContent) throws IncorrectOperationException{
+  public XmlAttributeValue handleContentChange(XmlAttributeValue element, TextRange range, String newContent) throws IncorrectOperationException{
     final CompositeElement compositeElement = (CompositeElement)element.getNode();
     final PsiElement nextSibling = element.getFirstChild().getNextSibling();
 

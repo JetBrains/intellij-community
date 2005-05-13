@@ -192,7 +192,7 @@ public class FileReferenceSet {
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException{
-      final ElementManipulator manipulator = getManipulator(getElement());
+      final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
       if (manipulator != null) {
         myElement = manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName);
         //Correct ranges

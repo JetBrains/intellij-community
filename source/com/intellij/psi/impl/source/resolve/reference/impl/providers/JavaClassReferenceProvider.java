@@ -198,7 +198,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
       }
 
       public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException{
-        final ElementManipulator manipulator = getManipulator(getElement());
+        final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
         if(manipulator != null){
           final PsiElement element = manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName);
           myRange = new TextRange(getRangeInElement().getStartOffset(), getRangeInElement().getStartOffset() + newElementName.length());

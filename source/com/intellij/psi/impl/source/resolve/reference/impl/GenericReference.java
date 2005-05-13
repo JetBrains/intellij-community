@@ -93,7 +93,7 @@ public abstract class GenericReference implements PsiReference{
     }
   }
 
-  protected ElementManipulator getManipulator(PsiElement currentElement){
+  protected ElementManipulator<PsiElement> getManipulator(PsiElement currentElement){
     return ReferenceProvidersRegistry.getInstance(currentElement.getProject()).getManipulator(currentElement);
   }
 
