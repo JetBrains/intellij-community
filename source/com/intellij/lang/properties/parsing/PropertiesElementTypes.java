@@ -1,7 +1,8 @@
-package com.intellij.lang.properties;
+package com.intellij.lang.properties.parsing;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.lang.properties.parsing.PropertiesElementType;
 
 /**
  * Created by IntelliJ IDEA.

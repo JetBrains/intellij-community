@@ -2,6 +2,7 @@ package com.intellij.lang.properties;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.lang.properties.parsing.PropertiesLexer;
 
 /**
  * Created by IntelliJ IDEA.

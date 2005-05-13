@@ -2,7 +2,7 @@ package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.properties.PropertiesElementTypes;
+import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;

@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import gnu.trove.THashMap;
 
 import java.util.HashMap;

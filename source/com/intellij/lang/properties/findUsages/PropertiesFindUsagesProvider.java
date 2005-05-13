@@ -2,7 +2,7 @@ package com.intellij.lang.properties.findUsages;
 
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.properties.PropertiesWordsScanner;
+import com.intellij.lang.properties.parsing.PropertiesWordsScanner;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;

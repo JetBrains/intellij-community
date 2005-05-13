@@ -1,6 +1,7 @@
-package com.intellij.lang.properties;
+package com.intellij.lang.properties.parsing;
 
 import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.properties.PropertiesFileType;
 
 /**
  * Created by IntelliJ IDEA.

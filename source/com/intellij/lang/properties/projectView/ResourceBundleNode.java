@@ -1,7 +1,7 @@
 /**
  * @author Alexey
  */
-package com.intellij.lang.properties;
+package com.intellij.lang.properties.projectView;
 
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
@@ -14,6 +14,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
+import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 

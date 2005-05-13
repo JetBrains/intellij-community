@@ -12,6 +12,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.findUsages.PropertiesFindUsagesProvider;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.structureView.PropertiesStructureViewModel;
+import com.intellij.lang.properties.parsing.PropertiesParserDefinition;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;

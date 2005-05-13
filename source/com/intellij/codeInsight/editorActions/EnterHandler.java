@@ -3,7 +3,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.lang.properties.PropertiesTokenTypes;
+import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;

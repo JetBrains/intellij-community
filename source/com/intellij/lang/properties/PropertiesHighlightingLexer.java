@@ -3,6 +3,8 @@ package com.intellij.lang.properties;
 import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.properties.parsing.PropertiesLexer;
+import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 
 /**
  * @author cdr

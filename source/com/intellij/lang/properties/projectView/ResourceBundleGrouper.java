@@ -1,12 +1,13 @@
-package com.intellij.lang.properties;
+package com.intellij.lang.properties.projectView;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.psi.PsiElement;
 import gnu.trove.THashSet;
 

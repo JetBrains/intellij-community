@@ -5,8 +5,6 @@ package com.intellij.lang.properties.parsing;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.lang.properties.PropertiesElementTypes;
-import com.intellij.lang.properties.PropertiesTokenTypes;
 
 public class Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.parsing.Parsing");

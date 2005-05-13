@@ -1,4 +1,4 @@
-package com.intellij.lang.properties;
+package com.intellij.lang.properties.parsing;
 
 import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
 import com.intellij.psi.tree.IElementType;

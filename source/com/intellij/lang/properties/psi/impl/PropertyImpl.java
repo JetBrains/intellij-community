@@ -1,7 +1,7 @@
 package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.properties.PropertiesTokenTypes;
+import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiElement;

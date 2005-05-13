@@ -1,4 +1,4 @@
-package com.intellij.lang.properties;
+package com.intellij.lang.properties.parsing;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
