@@ -5,6 +5,7 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -45,8 +46,9 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
 
   public static Icon ICON = IconLoader.getIcon("/debugger/db_field_breakpoint.png");
   public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_field_breakpoint.png");
-  private static Icon ourInvalidIcon = IconLoader.getIcon("/gutter/db_invalid_field_breakpoint.png");
-  private static Icon ourVerifiedIcon = IconLoader.getIcon("/gutter/db_verified_field_breakpoint.png");
+  public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_field_breakpoint.png");
+  private static Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_field_breakpoint.png");
+  private static Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_field_breakpoint.png");
   public static final String CATEGORY = "field_breakpoints";
 
   protected FieldBreakpoint(Project project) {
@@ -69,7 +71,8 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
 
 
   protected Icon getDisabledIcon() {
-    return DISABLED_ICON;
+    final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
+    return master == null? DISABLED_ICON : DISABLED_DEP_ICON;
   }
 
   protected Icon getSetIcon() {

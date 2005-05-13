@@ -851,7 +851,7 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
   
-  public Breakpoint findBaseBreakpoint(@NotNull Breakpoint dependentBreakpoint) {
+  public Breakpoint findMasterBreakpoint(@NotNull Breakpoint dependentBreakpoint) {
     for (Iterator<EnableBreakpointRule> it = myBreakpointRules.iterator(); it.hasNext();) {
       final EnableBreakpointRule rule = it.next();
       if (dependentBreakpoint.equals(rule.getSlaveBreakpoint())) {

@@ -19,7 +19,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
-import com.intellij.util.ui.FilePathSplittingPolicy;
 
 import javax.swing.*;
 import java.awt.*;
@@ -587,7 +586,7 @@ public abstract class BreakpointPropertiesPanel {
         }
       }
       myCombo.setModel(new BreakpointComboboxModel(breakpoints.toArray(new Breakpoint[breakpoints.size()])));
-      final Breakpoint baseBreakpoint = myCurrentBreakpoint != null? myBreakpointManager.findBaseBreakpoint(myCurrentBreakpoint) : null;
+      final Breakpoint baseBreakpoint = myCurrentBreakpoint != null? myBreakpointManager.findMasterBreakpoint(myCurrentBreakpoint) : null;
       ((BreakpointComboboxModel)myCombo.getModel()).selectBreakpoint(baseBreakpoint);
     }
   }

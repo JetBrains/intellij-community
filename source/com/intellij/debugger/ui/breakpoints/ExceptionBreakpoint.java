@@ -6,6 +6,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -38,6 +39,7 @@ public class ExceptionBreakpoint extends Breakpoint {
 
   public static Icon ICON = IconLoader.getIcon("/debugger/db_exception_breakpoint.png");
   public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_exception_breakpoint.png");
+  public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_exception_breakpoint.png");
   protected final static String READ_NO_CLASS_NAME = "No class_name for exception breakpoint";
   public static final String CATEGORY = "exception_breakpoints";
 
@@ -72,7 +74,8 @@ public class ExceptionBreakpoint extends Breakpoint {
 
   public Icon getIcon() {
     if (!ENABLED) {
-      return DISABLED_ICON;
+      final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
+      return master == null? DISABLED_ICON : DISABLED_DEP_ICON;
     }
     return ICON;
   }

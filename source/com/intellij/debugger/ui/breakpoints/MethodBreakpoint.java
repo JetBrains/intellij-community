@@ -12,6 +12,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -41,10 +42,11 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   private JVMName mySignature;
   private boolean myIsStatic;
 
-  public static Icon ICON = IconLoader.getIcon("/gutter/db_method_breakpoint.png");
-  public static Icon DISABLED_ICON = IconLoader.getIcon("/gutter/db_disabled_method_breakpoint.png");
-  private static Icon ourInvalidIcon = IconLoader.getIcon("/gutter/db_invalid_method_breakpoint.png");
-  private static Icon ourVerifiedIcon = IconLoader.getIcon("/gutter/db_verified_method_breakpoint.png");
+  public static Icon ICON = IconLoader.getIcon("/debugger/db_method_breakpoint.png");
+  public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_method_breakpoint.png");
+  public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_method_breakpoint.png");
+  private static Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_method_breakpoint.png");
+  private static Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_method_breakpoint.png");
   public static final String CATEGORY = "method_breakpoints";
 
   protected MethodBreakpoint(Project project) {
@@ -175,10 +177,22 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
     return getPsiClass();
   }
 
-  protected Icon getDisabledIcon() { return DISABLED_ICON; }
-  protected Icon getSetIcon     () { return ICON; }
-  protected Icon getInvalidIcon () { return ourInvalidIcon; }
-  protected Icon getVerifiedIcon() { return ourVerifiedIcon; }
+  protected Icon getDisabledIcon() { 
+    final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
+    return master == null? DISABLED_ICON : DISABLED_DEP_ICON;
+  }
+  
+  protected Icon getSetIcon() { 
+    return ICON; 
+  }
+  
+  protected Icon getInvalidIcon() { 
+    return ourInvalidIcon; 
+  }
+  
+  protected Icon getVerifiedIcon() { 
+    return ourVerifiedIcon; 
+  }
 
   public String getDisplayName() {
     StringBuffer buffer = new StringBuffer();

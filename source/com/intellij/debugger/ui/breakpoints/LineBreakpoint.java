@@ -33,10 +33,11 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
 
   // icons
-  public static Icon ICON = IconLoader.getIcon("/gutter/db_set_breakpoint.png");
-  public static final Icon DISABLED_ICON = IconLoader.getIcon("/gutter/db_disabled_breakpoint.png");
-  private static Icon ourInvalidIcon = IconLoader.getIcon("/gutter/db_invalid_breakpoint.png");
-  private static Icon ourVerifiedIcon = IconLoader.getIcon("/gutter/db_verified_breakpoint.png");
+  public static Icon ICON = IconLoader.getIcon("/debugger/db_set_breakpoint.png");
+  public static final Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_breakpoint.png");
+  public static final Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_line_breakpoint.png");
+  private static Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_breakpoint.png");
+  private static Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_breakpoint.png");
 
   private String myMethodName;
   public static final String CATEGORY = "line_breakpoints";
@@ -50,7 +51,8 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   protected Icon getDisabledIcon() {
-    return DISABLED_ICON;
+    final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
+    return master == null? DISABLED_ICON : DISABLED_DEP_ICON;
   }
 
   protected Icon getSetIcon() {

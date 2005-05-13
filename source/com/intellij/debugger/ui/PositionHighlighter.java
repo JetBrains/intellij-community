@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.sun.jdi.event.Event;
@@ -46,6 +47,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class PositionHighlighter {
+  public static final Key<Boolean> HIGHLIGHTER_USERDATA_KEY = new Key<Boolean>("HIGHLIGHTER_USERDATA_KEY");
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.PositionHighlighter");
   private final Project myProject;
   private DebuggerContextImpl myContext = DebuggerContextImpl.EMPTY_CONTEXT;
@@ -101,6 +103,7 @@ public class PositionHighlighter {
         scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES)
       );
       myHighlighter.setErrorStripeTooltip("Execution line");
+      myHighlighter.putUserData(HIGHLIGHTER_USERDATA_KEY, Boolean.TRUE);
     }
 
     public void remove() {
