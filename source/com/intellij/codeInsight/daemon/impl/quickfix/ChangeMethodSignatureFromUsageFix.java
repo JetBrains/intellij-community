@@ -24,8 +24,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.SearchScopeCache;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
@@ -263,7 +263,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     PsiMethod method = (PsiMethod)candidate.getElement();
     PsiSubstitutor substitutor = candidate.getSubstitutor();
     if (method.getManager().isInProject(method)) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new ChangeMethodSignatureFromUsageFix(method, expressions, substitutor, context));
+      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new ChangeMethodSignatureFromUsageFix(method, expressions, substitutor, context), null);
     }
   }
 

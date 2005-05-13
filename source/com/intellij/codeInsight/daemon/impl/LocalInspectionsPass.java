@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -97,7 +98,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
             PsiMethod psiMethod = (PsiMethod)element;
             for (LocalInspectionTool tool : tools) {
               currentTool = tool;
-              if (iManager.isToCheckMember(psiMethod, currentTool.getID())) {
+              if (InspectionManagerEx.isToCheckMember(psiMethod, currentTool.getID())) {
                 appendDescriptors(currentTool.checkMethod(psiMethod, iManager, true), currentTool);
               }
             }
@@ -106,7 +107,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
             PsiClass psiClass = (PsiClass)element;
             for (LocalInspectionTool tool : tools) {
               currentTool = tool;
-              if (iManager.isToCheckMember(psiClass, currentTool.getID())) {
+              if (InspectionManagerEx.isToCheckMember(psiClass, currentTool.getID())) {
                 appendDescriptors(currentTool.checkClass(psiClass, iManager, true), currentTool);
               }
             }
@@ -115,7 +116,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
             PsiField psiField = (PsiField)element;
             for (LocalInspectionTool tool : tools) {
               currentTool = tool;
-              if (iManager.isToCheckMember(psiField, currentTool.getID())) {
+              if (InspectionManagerEx.isToCheckMember(psiField, currentTool.getID())) {
                 appendDescriptors(currentTool.checkField(psiField, iManager, true), currentTool);
               }
             }
@@ -153,13 +154,17 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       HighlightInfo highlightInfo =
         HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, psiElement, message, message);
       highlights.add(highlightInfo);
-      if (problemDescriptor.getFix() != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor));
-      }
       LocalInspectionTool tool = myTools.get(i);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(tool, psiElement));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(tool, psiElement));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(tool));
+      List<IntentionAction> options = new ArrayList<IntentionAction>();
+      options.add(new AddNoInspectionCommentAction(tool, psiElement));
+      options.add(new AddNoInspectionDocTagAction(tool, psiElement));
+      options.add(new AddNoInspectionAllForClassAction(psiElement));
+      options.add(new SwitchOffToolAction(tool));
+      if (problemDescriptor.getFix() != null) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor), options);
+      } else {
+        QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options);
+      }
     }
     return highlights.toArray(new HighlightInfo[highlights.size()]);
   }
@@ -167,13 +172,12 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   private void appendDescriptors(ProblemDescriptor[] problemDescriptors, LocalInspectionTool tool) {
     ProgressManager.getInstance().checkCanceled();
 
-    InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     if (problemDescriptors != null) {
       boolean isError = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getErrorLevel(
         HighlightDisplayKey.find(tool.getShortName())) ==
                         HighlightDisplayLevel.ERROR;
       for (ProblemDescriptor problemDescriptor : problemDescriptors) {
-        if (!manager.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool.getID())) {
+        if (!InspectionManagerEx.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool.getID())) {
           myDescriptors.add(problemDescriptor);
           ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
           HighlightInfoType type = null;
@@ -226,12 +230,16 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       String plainMessage = XmlUtil.unescape(message.replaceAll("<[^>]*>", ""));
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, psiElement, plainMessage, message);
       infos.add(highlightInfo);
+      List<IntentionAction> options = new ArrayList<IntentionAction>();
+      options.add(new AddNoInspectionCommentAction(tool, psiElement));
+      options.add(new AddNoInspectionDocTagAction(tool, psiElement));
+      options.add(new AddNoInspectionAllForClassAction(psiElement));
+      options.add(new SwitchOffToolAction(tool));
       if (descriptor.getFix() != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor), options);
+      } else {
+        QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options);
       }
-      QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(tool, psiElement));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(tool, psiElement));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(tool));
     }
 
     HighlightInfo[] array = infos.toArray(new HighlightInfo[infos.size()]);

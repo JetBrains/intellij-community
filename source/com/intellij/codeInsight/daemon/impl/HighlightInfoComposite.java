@@ -22,8 +22,8 @@ public class HighlightInfoComposite extends HighlightInfo {
     text = infos.get(0).text;
     highlighter = infos.get(0).highlighter;
     group = infos.get(0).group;
-    quickFixActionMarkers = new ArrayList<Pair<IntentionAction, RangeMarker>>();
-    quickFixActionRanges = new ArrayList<Pair<IntentionAction, TextRange>>();
+    quickFixActionMarkers = new ArrayList<Pair<Pair<IntentionAction, List<IntentionAction>>, RangeMarker>>();
+    quickFixActionRanges = new ArrayList<Pair<Pair<IntentionAction, List<IntentionAction>>, TextRange>>();
     for (int i = 0; i < infos.size(); i++) {
       HighlightInfo info = infos.get(i);
       if (info.quickFixActionMarkers != null) {

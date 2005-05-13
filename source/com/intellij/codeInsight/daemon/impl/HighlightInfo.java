@@ -138,8 +138,8 @@ public class HighlightInfo {
   public RangeHighlighter highlighter;
   public String text;
 
-  public List<Pair<IntentionAction, TextRange>> quickFixActionRanges;
-  public List<Pair<IntentionAction, RangeMarker>> quickFixActionMarkers;
+  public List<Pair<Pair<IntentionAction, List<IntentionAction>>, TextRange>> quickFixActionRanges;
+  public List<Pair<Pair<IntentionAction, List<IntentionAction>>, RangeMarker>> quickFixActionMarkers;
 
   public HighlightInfo(HighlightInfoType type, int startOffset, int endOffset, String description, String toolTip) {
     this.type = type;

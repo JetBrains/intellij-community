@@ -9,11 +9,13 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author mike
@@ -32,8 +34,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     final IntentionAction[] intentionActions = IntentionManager.getInstance(project).getIntentionActions();
 
-    ArrayList intentionsToShow = new ArrayList();
-    ArrayList fixesToShow = new ArrayList();
+    ArrayList<Pair<IntentionAction,List<IntentionAction>>> intentionsToShow = new ArrayList<Pair<IntentionAction,List<IntentionAction>>>();
+    ArrayList<Pair<IntentionAction,List<IntentionAction>>> fixesToShow = new ArrayList<Pair<IntentionAction,List<IntentionAction>>>();
     for(int i = 0; i < intentionActions.length; i++){
       IntentionAction action = intentionActions[i];
       if (action instanceof IntentionActionComposite) {
@@ -44,7 +46,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
           intentionsToShow.addAll(((IntentionActionComposite)action).getAvailableActions(editor, file));
         }
       } else if (action.isAvailable(project, editor, file)){
-        intentionsToShow.add(action);
+        intentionsToShow.add(new Pair<IntentionAction, List<IntentionAction>>(action, null));
       }
     }
 

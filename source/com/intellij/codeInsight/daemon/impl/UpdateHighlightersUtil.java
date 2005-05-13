@@ -21,7 +21,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class UpdateHighlightersUtil {
@@ -113,15 +112,15 @@ public class UpdateHighlightersUtil {
       HashMap<TextRange, RangeMarker> ranges2markers = new HashMap<TextRange, RangeMarker>();
       ranges2markers.put(new TextRange(info.startOffset, info.endOffset), info.highlighter);
       if (info.quickFixActionRanges != null) {
-        info.quickFixActionMarkers = new ArrayList<Pair<IntentionAction, RangeMarker>>();
-        for (Pair<IntentionAction, TextRange> pair : info.quickFixActionRanges) {
+        info.quickFixActionMarkers = new ArrayList<Pair<Pair<IntentionAction, List<IntentionAction>>, RangeMarker>>();
+        for (Pair<Pair<IntentionAction, List<IntentionAction>>, TextRange> pair : info.quickFixActionRanges) {
           TextRange range = pair.second;
           RangeMarker marker = ranges2markers.get(range);
           if (marker == null) {
             marker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset());
             ranges2markers.put(range, marker);
           }
-          info.quickFixActionMarkers.add(new Pair<IntentionAction, RangeMarker>(pair.first, marker));
+          info.quickFixActionMarkers.add(new Pair<Pair<IntentionAction, List<IntentionAction>>, RangeMarker>(pair.first, marker));
         }
       }
       info.fixMarker = ranges2markers.get(new TextRange(info.fixStartOffset, info.fixEndOffset));

@@ -24,8 +24,8 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.SmartList;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -34,7 +34,10 @@ import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 /**
  * @author Mike
@@ -73,14 +76,14 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     if(childByRole != null) {
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, childByRole, localizedMessage);
       result.add(highlightInfo);
-      QuickFixAction.registerQuickFixAction(highlightInfo, quickFixAction);
+      QuickFixAction.registerQuickFixAction(highlightInfo, quickFixAction, null);
     }
 
     childByRole = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tagElement);
 
     if(childByRole != null) {
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, childByRole, localizedMessage);
-      QuickFixAction.registerQuickFixAction(highlightInfo, quickFixAction);
+      QuickFixAction.registerQuickFixAction(highlightInfo, quickFixAction, null);
       result.add(highlightInfo);
     }
   }
@@ -192,8 +195,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             IntentionAction intentionAction = new RenameTagBeginOrEndIntentionAction(tag, name, false);
             IntentionAction intentionAction2 = new RenameTagBeginOrEndIntentionAction(tag, text, true);
 
-            QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction);
-            QuickFixAction.registerQuickFixAction(highlightInfo, startTagNameToken.getTextRange(), intentionAction2);
+            QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction, null);
+            QuickFixAction.registerQuickFixAction(highlightInfo, startTagNameToken.getTextRange(), intentionAction2, null);
 
             return false;
           }
@@ -473,7 +476,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           }
         };
 
-        QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction);
+        QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction, null);
       }
     }
   }
@@ -627,8 +630,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             xmlDoctype.getDtdUrlElement().getTextRange().getEndOffset() - 1,
             "URI is not registered (Settings | IDE Settings | Resources)");
       myResult.add(info);
-      QuickFixAction.registerQuickFixAction(info, new FetchExtResourceAction());
-      QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction());
+      QuickFixAction.registerQuickFixAction(info, new FetchExtResourceAction(), null);
+      QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction(), null);
     }
   }
 
@@ -704,8 +707,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         start,
         end,
       "URI is not registered (Settings | IDE Settings | Resources)");
-    QuickFixAction.registerQuickFixAction(info, new FetchExtResourceAction());
-    QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction());
+    QuickFixAction.registerQuickFixAction(info, new FetchExtResourceAction(), null);
+    QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction(), null);
     myResult.add(info);
   }
 

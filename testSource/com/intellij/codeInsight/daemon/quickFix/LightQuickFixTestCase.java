@@ -3,13 +3,13 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -120,12 +120,19 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
           && info.quickFixActionRanges != null
       ) {
         for (int j = 0; j < info.quickFixActionRanges.size(); j++) {
-          Pair<IntentionAction, TextRange> pair = info.quickFixActionRanges.get(j);
-          IntentionAction action = pair.first;
+          Pair<Pair<IntentionAction, List<IntentionAction>>,TextRange> pair = info.quickFixActionRanges.get(j);
+          IntentionAction action = pair.first.first;
           TextRange range = pair.second;
           if (range.getStartOffset() <= offset && offset <= range.getEndOffset() &&
               action.isAvailable(getProject(), editor, file)) {
             availableActions.add(action);
+            if (pair.first.second != null){
+              for (IntentionAction intentionAction : pair.first.second) {
+                if (intentionAction.isAvailable(getProject(), editor, file)){
+                  availableActions.add(intentionAction);
+                }
+              }
+            }
           }
         }
       }

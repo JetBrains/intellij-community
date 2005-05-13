@@ -29,6 +29,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -36,7 +37,6 @@ import com.intellij.psi.search.PsiShortNamesCache;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -140,13 +140,13 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     Point xy = myEditor.logicalPositionToXY(caretPos);
     if (!visibleArea.contains(xy)) return;
 
-    ArrayList<IntentionAction> intentionsToShow = new ArrayList<IntentionAction>();
-    ArrayList<IntentionAction> fixesToShow = new ArrayList<IntentionAction>();
+    ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentionsToShow = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>();
+    ArrayList<Pair<IntentionAction, List<IntentionAction>>> fixesToShow = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>();
     for (IntentionAction action : myIntentionActions) {
       if (action instanceof IntentionActionComposite) {
         if (action instanceof QuickFixAction ||
             action instanceof PostIntentionsQuickFixAction && codeAnalyzer.showPostIntentions()) {
-          List<IntentionAction> availableActions = ((IntentionActionComposite)action).getAvailableActions(myEditor, myFile);
+          List<Pair<IntentionAction,List<IntentionAction>>> availableActions = ((IntentionActionComposite)action).getAvailableActions(myEditor, myFile);
 
           int offset = myEditor.getCaretModel().getOffset();
           HighlightInfo info = codeAnalyzer.findHighlightByOffset(myEditor.getDocument(), offset, true);
@@ -159,21 +159,21 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         }
       }
       else if (action.isAvailable(myProject, myEditor, myFile)) {
-        intentionsToShow.add(action);
+        intentionsToShow.add(new Pair<IntentionAction, List<IntentionAction>>(action, null));
       }
     }
 
     if (!intentionsToShow.isEmpty() || !fixesToShow.isEmpty()) {
       boolean showBulb = false;
-      for (IntentionAction action : fixesToShow) {
-        if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
+      for (Pair<IntentionAction,List<IntentionAction>> action : fixesToShow) {
+        if (IntentionManagerSettings.getInstance().isShowLightBulb(action.first)) {
           showBulb = true;
           break;
         }
       }
       if (!showBulb) {
-        for (IntentionAction action : intentionsToShow) {
-          if (IntentionManagerSettings.getInstance().isShowLightBulb(action)) {
+        for (Pair<IntentionAction,List<IntentionAction>> action : intentionsToShow) {
+          if (IntentionManagerSettings.getInstance().isShowLightBulb(action.first)) {
             showBulb = true;
             break;
           }

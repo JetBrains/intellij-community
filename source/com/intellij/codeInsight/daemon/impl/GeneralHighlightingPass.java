@@ -43,7 +43,10 @@ import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
@@ -287,12 +290,12 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
                                                                      "\"");
               if (info != null) {
                 list.add(info);
-                for (int i = 0; i < rules.length; i++) {
-                  QuickFixAction.registerQuickFixAction(info, new EditDependencyRulesAction(rules[i]));
-                }
-                QuickFixAction.registerQuickFixAction(info, new AddNoInspectionDocTagAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
-                QuickFixAction.registerQuickFixAction(info, new AddNoInspectionCommentAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
-                QuickFixAction.registerQuickFixAction(info, new SwitchOffToolAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY));
+                List<IntentionAction> options = new ArrayList<IntentionAction>();
+                options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
+                options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
+                options.add(new AddNoInspectionAllForClassAction(place));
+                options.add(new SwitchOffToolAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY));
+                QuickFixAction.registerQuickFixAction(info, new EditDependencyRulesAction(rules[0]), options);
               }
             }
           }

@@ -18,7 +18,7 @@ import com.intellij.util.IncorrectOperationException;
 public class AddNoInspectionDocTagAction implements IntentionAction {
   private String myDisplayName;
   private String myID;
-  private PsiElement myContext;
+  protected PsiElement myContext;
 
   public AddNoInspectionDocTagAction(LocalInspectionTool tool, PsiElement context) {
     myDisplayName = tool.getDisplayName();
@@ -32,6 +32,12 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
     myContext = context;
   }
 
+  public AddNoInspectionDocTagAction(String displayName, String ID, PsiElement context) {
+    myDisplayName = displayName;
+    myID = ID;
+    myContext = context;
+  }
+
   public String getText() {
     PsiDocCommentOwner container = getContainer();
 
@@ -39,7 +45,7 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
     return "Suppress '" + myDisplayName + "' for " + subj;
   }
 
-  private PsiDocCommentOwner getContainer() {
+  protected PsiDocCommentOwner getContainer() {
     PsiElement container = myContext;
     do {
       container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);

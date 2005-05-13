@@ -48,8 +48,8 @@ public class HighlightControlFlowUtil {
             HighlightInfoType.ERROR,
             context,
             "Missing return statement");
-        QuickFixAction.registerQuickFixAction(highlightInfo, new AddReturnFix(method));
-        QuickFixAction.registerQuickFixAction(highlightInfo, new MethodReturnFix(method, PsiType.VOID, false));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new AddReturnFix(method), null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new MethodReturnFix(method, PsiType.VOID, false), null);
         return highlightInfo;
       }
     }
@@ -249,7 +249,7 @@ public class HighlightControlFlowUtil {
           description);
       final PsiClass containingClass = field.getContainingClass();
       if (containingClass != null && !containingClass.isInterface()) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(field, PsiModifier.FINAL, false));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(field, PsiModifier.FINAL, false), null);
       }
       return highlightInfo;
     }
@@ -527,8 +527,8 @@ public class HighlightControlFlowUtil {
           HighlightInfoType.ERROR,
           expression,
           description);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(variable, PsiModifier.FINAL, false));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new DeferFinalAssignmentFix(variable, expression));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(variable, PsiModifier.FINAL, false), null);
+      QuickFixAction.registerQuickFixAction(highlightInfo, new DeferFinalAssignmentFix(variable, expression), null);
       return highlightInfo;
     }
 
@@ -559,7 +559,7 @@ public class HighlightControlFlowUtil {
           HighlightInfoType.ERROR,
           expression,
           description);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix((PsiVariable)resolved, PsiModifier.FINAL, false));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix((PsiVariable)resolved, PsiModifier.FINAL, false), null);
       return highlightInfo;
     }
     return null;
@@ -600,10 +600,10 @@ public class HighlightControlFlowUtil {
           description);
       final PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, expression);
       if (innerClass == null || variable instanceof PsiField) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(variable, PsiModifier.FINAL, false));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(variable, PsiModifier.FINAL, false), null);
       }
       else {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new VariableAccessFromInnerClassFix(variable, innerClass));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new VariableAccessFromInnerClassFix(variable, innerClass), null);
       }
       return highlightInfo;
     }
@@ -642,7 +642,7 @@ public class HighlightControlFlowUtil {
       String description = MessageFormat.format("Variable ''{0}'' is accessed from within inner class. Needs to be declared final.",
                                                 new Object[]{context.getText()});
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, context, description);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new VariableAccessFromInnerClassFix(variable, innerClass));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new VariableAccessFromInnerClassFix(variable, innerClass), null);
       return highlightInfo;
     }
     return null;

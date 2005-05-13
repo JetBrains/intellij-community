@@ -149,7 +149,7 @@ public class CastMethodParametersFix extends AddTypeCastFix implements Intention
           ResolveResult[] result = processor.getResult();
           if (result.length == 1 && result[0].isValidResult()) {
             suggestedCasts.add(parameterType.getCanonicalText());
-            QuickFixAction.registerQuickFixAction(highlightInfo, new CastMethodParametersFix(list, i, parameterType));
+            QuickFixAction.registerQuickFixAction(highlightInfo, new CastMethodParametersFix(list, i, parameterType), null);
           }
         }
       }

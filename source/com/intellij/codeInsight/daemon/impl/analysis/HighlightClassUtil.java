@@ -13,6 +13,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.RefCountHolder;
 import com.intellij.codeInsight.daemon.impl.SwitchOffToolAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
@@ -78,7 +79,7 @@ public class HighlightClassUtil {
                                             });
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, highlightElement, message);
       if (ClassUtil.getAnyMethodToImplement(aClass, allMethods) != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new ImplementMethodsFix(aClass));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new ImplementMethodsFix(aClass), null);
       }
       return highlightInfo;
     }
@@ -94,7 +95,7 @@ public class HighlightClassUtil {
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, highlighElement, message);
       if (!aClass.isInterface() && ClassUtil.getAnyAbstractMethod(aClass, MethodSignatureUtil.getOverrideEquivalentMethods(aClass)) == null) {
         // suggest to make not abstract only if possible
-        QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(aClass, PsiModifier.ABSTRACT, false));
+        QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(aClass, PsiModifier.ABSTRACT, false), null);
       }
     }
     return errorResult;
@@ -122,11 +123,11 @@ public class HighlightClassUtil {
                                                       textRange,
                                                       message);
       if (ClassUtil.getAnyMethodToImplement(aClass, allMethods) != null) {
-        QuickFixAction.registerQuickFixAction(errorResult, new ImplementMethodsFix(aClass));
+        QuickFixAction.registerQuickFixAction(errorResult, new ImplementMethodsFix(aClass), null);
       }
       if (!(aClass instanceof PsiAnonymousClass)
           && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, aClass.getModifierList()) == null) {
-        QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(aClass, PsiModifier.ABSTRACT, true));
+        QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(aClass, PsiModifier.ABSTRACT, true), null);
       }
     }
     return errorResult;
@@ -241,10 +242,10 @@ public class HighlightClassUtil {
                                                       aClass.getNameIdentifier(),
                                                       message);
       QuickFixAction.registerQuickFixAction(errorResult,
-                                            new ModifierFix(psiModifierList, PsiModifier.PUBLIC, false));
+                                            new ModifierFix(psiModifierList, PsiModifier.PUBLIC, false), null);
       PsiClass[] classes = file.getClasses();
       if (classes.length > 1) {
-        QuickFixAction.registerQuickFixAction(errorResult, new MoveClassToSeparateFileFix(aClass));
+        QuickFixAction.registerQuickFixAction(errorResult, new MoveClassToSeparateFileFix(aClass), null);
       }
       for (PsiClass otherClass : classes) {
         if (!otherClass.getManager().areElementsEquivalent(otherClass, aClass) && otherClass.hasModifierProperty(PsiModifier.PUBLIC)
@@ -252,8 +253,8 @@ public class HighlightClassUtil {
           return errorResult;
         }
       }
-      QuickFixAction.registerQuickFixAction(errorResult, new RenameFileFix(aClass.getName()));
-      QuickFixAction.registerQuickFixAction(errorResult, new RenamePublicClassFix(aClass));
+      QuickFixAction.registerQuickFixAction(errorResult, new RenameFileFix(aClass.getName()), null);
+      QuickFixAction.registerQuickFixAction(errorResult, new RenamePublicClassFix(aClass), null);
     }
     return errorResult;
   }
@@ -279,9 +280,9 @@ public class HighlightClassUtil {
     HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                                   keyword,
                                                                   STATIC_DECLARATION_IN_INNER_CLASS);
-    QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(field, PsiModifier.STATIC, false));
+    QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(field, PsiModifier.STATIC, false), null);
     PsiModifierList classModifiers = ((PsiClass)field.getParent()).getModifierList();
-    QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(classModifiers, PsiModifier.STATIC, true));
+    QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(classModifiers, PsiModifier.STATIC, true), null);
     return errorResult;
   }
 
@@ -303,10 +304,10 @@ public class HighlightClassUtil {
                                                                   keyword,
                                                                   STATIC_DECLARATION_IN_INNER_CLASS);
     QuickFixAction.registerQuickFixAction(errorResult,
-                                          new ModifierFix(method, PsiModifier.STATIC, false));
+                                          new ModifierFix(method, PsiModifier.STATIC, false), null);
     PsiModifierList classModifiers = ((PsiClass)keyword.getParent().getParent().getParent()).getModifierList();
     QuickFixAction.registerQuickFixAction(errorResult,
-                                          new ModifierFix(classModifiers, PsiModifier.STATIC, true));
+                                          new ModifierFix(classModifiers, PsiModifier.STATIC, true), null);
     return errorResult;
   }
 
@@ -327,9 +328,9 @@ public class HighlightClassUtil {
     HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                                   keyword,
                                                                   STATIC_DECLARATION_IN_INNER_CLASS);
-    QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(initializer, PsiModifier.STATIC, false));
+    QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(initializer, PsiModifier.STATIC, false), null);
     PsiModifierList classModifiers = ((PsiClass)keyword.getParent().getParent().getParent()).getModifierList();
-    QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(classModifiers, PsiModifier.STATIC, true));
+    QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(classModifiers, PsiModifier.STATIC, true), null);
     return errorResult;
   }
 
@@ -363,9 +364,9 @@ public class HighlightClassUtil {
     }
     HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, STATIC_DECLARATION_IN_INNER_CLASS);
     if (context != keyword) {
-      QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(aClass, PsiModifier.STATIC, false));
+      QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(aClass, PsiModifier.STATIC, false), null);
     }
-    QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(aClass.getContainingClass(), PsiModifier.STATIC, true));
+    QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(aClass.getContainingClass(), PsiModifier.STATIC, true), null);
     return errorResult;
   }
 
@@ -412,7 +413,7 @@ public class HighlightClassUtil {
                                                       context,
                                                       mustBeInterface ? INTERFACE_EXPECTED : CLASS_EXPECTED);
       PsiClassType type = aClass.getManager().getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
-      QuickFixAction.registerQuickFixAction(errorResult, new ChangeExtendsToImplementsFix(aClass, type));
+      QuickFixAction.registerQuickFixAction(errorResult, new ChangeExtendsToImplementsFix(aClass, type), null);
     }
     return errorResult;
   }
@@ -423,7 +424,7 @@ public class HighlightClassUtil {
     if (superClass.hasModifierProperty(PsiModifier.FINAL) || superClass.isEnum()) {
       String message = MessageFormat.format("Cannot inherit from final ''{0}''", new Object[]{superClass.getQualifiedName()});
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, elementToHighlight, message);
-      QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(superClass, PsiModifier.FINAL, false));
+      QuickFixAction.registerQuickFixAction(errorResult, new ModifierFix(superClass, PsiModifier.FINAL, false), null);
     }
     return errorResult;
   }
@@ -460,10 +461,11 @@ public class HighlightClassUtil {
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_PACKAGE_STATEMENT,
                                                                             statement,
                                                                             description);
-      if (classPackage != null) QuickFixAction.registerQuickFixAction(highlightInfo, new MoveToPackageFix(file, classPackage));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new AdjustPackageNameFix(file, statement, dirPackage));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT));
-      return highlightInfo;
+      if (classPackage != null) QuickFixAction.registerQuickFixAction(highlightInfo, new MoveToPackageFix(file, classPackage), null);
+       List<IntentionAction> options = new ArrayList<IntentionAction>();
+       options.add(new SwitchOffToolAction(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT));
+       QuickFixAction.registerQuickFixAction(highlightInfo, new AdjustPackageNameFix(file, statement, dirPackage), options);
+       return highlightInfo;
     }
     return null;
   }
@@ -497,8 +499,9 @@ public class HighlightClassUtil {
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_PACKAGE_STATEMENT,
                                                                             textRange,
                                                                             description);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new AdjustPackageNameFix(javaFile, null, dirPackage));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT));
+      List<IntentionAction> options = new ArrayList<IntentionAction>();
+      options.add(new SwitchOffToolAction(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new AdjustPackageNameFix(javaFile, null, dirPackage), options);
       return highlightInfo;
     }
     return null;
@@ -560,7 +563,7 @@ public class HighlightClassUtil {
 
     String description = MessageFormat.format(HighlightUtil.NO_DEFAULT_CONSTRUCTOR, new Object[]{HighlightUtil.formatClass(baseClass)});
     HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
-    QuickFixAction.registerQuickFixAction(info, new CreateConstructorMatchingSuperAction(aClass));
+    QuickFixAction.registerQuickFixAction(info, new CreateConstructorMatchingSuperAction(aClass), null);
 
     return info;
   }
@@ -694,8 +697,8 @@ public class HighlightClassUtil {
                                                                             expression,
                                                                             "Qualified new of static class");
       if (!aClass.isEnum()) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(aClass, PsiModifier.STATIC, false));
-        QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveNewQualifierFix(expression, aClass));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(aClass, PsiModifier.STATIC, false), null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveNewQualifierFix(expression, aClass), null);
       }
       return highlightInfo;
     }
@@ -778,7 +781,7 @@ public class HighlightClassUtil {
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING,
                                                                             context,
                                                                             "Externalizable class should have public no-args constructor");
-      QuickFixAction.registerQuickFixAction(highlightInfo, new AddDefaultConstructorFix(aClass));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new AddDefaultConstructorFix(aClass), null);
       return highlightInfo;
     }
     return null;
@@ -855,9 +858,9 @@ public class HighlightClassUtil {
                                                 new Object[]{outerClass == null ? "" : HighlightUtil.formatClass(outerClass) + ".this"});
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, elementToHighlight, description);
       // make context not static or referenced class static
-      QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(staticParent, PsiModifier.STATIC, false));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(staticParent, PsiModifier.STATIC, false), null);
       if (aClass != null && HighlightUtil.getIncompatibleModifier(PsiModifier.STATIC, aClass.getModifierList()) == null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(aClass, PsiModifier.STATIC, true));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(aClass, PsiModifier.STATIC, true), null);
       }
       return highlightInfo;
     }

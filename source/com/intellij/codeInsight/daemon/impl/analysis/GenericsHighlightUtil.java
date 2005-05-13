@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -15,11 +16,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 
 import java.text.MessageFormat;
 import java.util.*;
-
-import gnu.trove.THashMap;
 
 /**
  * @author cdr
@@ -136,7 +136,7 @@ public abstract class GenericsHighlightUtil {
                                                                                   typeElement,
                                                                                   description);
             if (bound instanceof PsiClassType) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, new ExtendsListFix(referenceClass, (PsiClassType)bound, true));
+              QuickFixAction.registerQuickFixAction(highlightInfo, new ExtendsListFix(referenceClass, (PsiClassType)bound, true), null);
             }
             return highlightInfo;
           }
@@ -182,7 +182,7 @@ public abstract class GenericsHighlightUtil {
       final String description = HighlightClassUtil.INTERFACE_EXPECTED;
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, context, description);
       PsiClassType type = aClass.getManager().getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
-      QuickFixAction.registerQuickFixAction(errorResult, new MoveBoundClassToFrontFix(aClass, type));
+      QuickFixAction.registerQuickFixAction(errorResult, new MoveBoundClassToFrontFix(aClass, type), null);
     }
     return errorResult;
   }
@@ -372,10 +372,12 @@ public abstract class GenericsHighlightUtil {
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
                                                                       elementToHighlight,
                                                                       description);
-    QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()));
-    QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
-    QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
-    QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
+    List<IntentionAction> options = new ArrayList<IntentionAction>();
+    options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
+    options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
+    options.add(new AddNoInspectionAllForClassAction(elementToHighlight));
+    options.add(new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
+    QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()), options);
     return highlightInfo;
   }
 
@@ -405,10 +407,12 @@ public abstract class GenericsHighlightUtil {
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
                                                                       typeCast,
                                                                       description);
-      QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(expression.getContainingFile()));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
+      List<IntentionAction> options = new ArrayList<IntentionAction>();
+      options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
+      options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
+      options.add(new AddNoInspectionAllForClassAction(expression));
+      options.add(new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(expression.getContainingFile()), options);
       return highlightInfo;
     }
     return null;
@@ -535,10 +539,12 @@ public abstract class GenericsHighlightUtil {
                              : call;
         if (InspectionManagerEx.inspectionResultSuppressed(call, HighlightDisplayKey.UNCHECKED_WARNING.toString())) return null;
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, element, description);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(element.getContainingFile()));
-        QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
-        QuickFixAction.registerQuickFixAction(highlightInfo, new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
-        QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
+        List<IntentionAction> options = new ArrayList<IntentionAction>();
+        options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
+        options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
+        options.add(new AddNoInspectionAllForClassAction(call));
+        options.add(new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
+        QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(element.getContainingFile()), options);
         return highlightInfo;
       }
     }
@@ -561,7 +567,7 @@ public abstract class GenericsHighlightUtil {
     final PsiType parameterType = parameter.getType();
     final HighlightInfo highlightInfo = HighlightUtil.checkAssignability(parameterType, itemType, null, new TextRange(start, end));
     if (highlightInfo != null) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(parameter, itemType));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new VariableTypeFix(parameter, itemType), null);
     }
     return highlightInfo;
   }
@@ -796,7 +802,7 @@ public abstract class GenericsHighlightUtil {
       PsiParameter[] params = ((PsiMethod)declarationScope).getParameterList().getParameters();
       if (parameter.isVarArgs() && params[params.length - 1] != parameter) {
         HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameter, "Vararg parameter must be the last in the list");
-        QuickFixAction.registerQuickFixAction(info, new MakeVarargParameterLastFix(parameter));
+        QuickFixAction.registerQuickFixAction(info, new MakeVarargParameterLastFix(parameter), null);
         return info;
       }
     }
@@ -880,10 +886,15 @@ public abstract class GenericsHighlightUtil {
 
         final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING,
                                                                               overrider.getReturnTypeElement(), message);
+        List<IntentionAction> options = new ArrayList<IntentionAction>();
+
+        options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, overrider.getReturnTypeElement()));
+        options.add(new AddNoInspectionAllForClassAction(overrider.getReturnTypeElement()));
+        options.add(new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
         QuickFixAction.registerQuickFixAction(highlightInfo,
-                                              new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING,
-                                                                              overrider.getReturnTypeElement()));
-        QuickFixAction.registerQuickFixAction(highlightInfo, new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
+                                              new EmptyIntentionAction("Unchecked overriding", options),
+                                              options);
+
         return highlightInfo;
       }
     }

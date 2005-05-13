@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
@@ -35,13 +36,12 @@ import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.containers.HashMap;
-import com.intellij.pom.java.LanguageLevel;
 import gnu.trove.THashMap;
 
 import java.text.MessageFormat;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Collection;
 
 public class HighlightVisitorImpl extends PsiElementVisitor implements HighlightVisitor, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl");
@@ -171,7 +171,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (fixes != null) {
       for (int i = 0; i < fixes.size(); i++) {
         Pair<IntentionAction, TextRange> pair = fixes.get(i);
-        QuickFixAction.registerQuickFixAction(info, pair.getSecond(), pair.getFirst());
+        QuickFixAction.registerQuickFixAction(info, pair.getSecond(), pair.getFirst(), null);
       }
     }
     return info;
@@ -664,7 +664,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       String description = MessageFormat.format(UNKNOWN_SYMBOL, new Object[]{refName});
       HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(), description);
       myHolder.add(info);
-      QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace());
+      QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace(), null);
     }
     else {
       PsiManager manager = ref.getManager();
