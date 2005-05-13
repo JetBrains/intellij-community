@@ -86,17 +86,29 @@ public class ModuleEditor {
   private void createEditors(Module module) {
     Object[] providers = module.getComponents(ModuleConfigurationEditorProvider.class);
     ModuleConfigurationState state = new ModuleConfigurationStateImpl(myProject, module, myModulesProvider, myModifiableRootModelProxy);
-    for (int i = 0; i < providers.length; i++) {
+    List<ModuleLevelConfigurablesEditorProvider> moduleLevelProviders = new ArrayList<ModuleLevelConfigurablesEditorProvider>();
+    for (int i = 0; i < providers.length; i ++) {
       ModuleConfigurationEditorProvider provider = (ModuleConfigurationEditorProvider)providers[i];
-      final ModuleConfigurationEditor[] editors = provider.createEditors(state);
-      myEditors.addAll(Arrays.asList(editors));
-      if (myDependenciesEditor == null) {
-        for (int idx = 0; idx < editors.length; idx++) {
-          ModuleConfigurationEditor editor = editors[idx];
-          if (editor instanceof DependenciesEditor) {
-            myDependenciesEditor = (DependenciesEditor)editor;
-            break;
-          }
+      if (provider instanceof ModuleLevelConfigurablesEditorProvider){
+        moduleLevelProviders.add((ModuleLevelConfigurablesEditorProvider)provider);
+        continue;
+      }
+      processEditorsProvider(provider, state);
+    }
+    for (ModuleLevelConfigurablesEditorProvider provider : moduleLevelProviders) {
+      processEditorsProvider(provider, state);
+    }
+  }
+
+  private void processEditorsProvider(final ModuleConfigurationEditorProvider provider, final ModuleConfigurationState state) {
+    final ModuleConfigurationEditor[] editors = provider.createEditors(state);
+    myEditors.addAll(Arrays.asList(editors));
+    if (myDependenciesEditor == null) {
+      for (int idx = 0; idx < editors.length; idx++) {
+        ModuleConfigurationEditor editor = editors[idx];
+        if (editor instanceof DependenciesEditor) {
+          myDependenciesEditor = (DependenciesEditor)editor;
+          break;
         }
       }
     }
