@@ -250,6 +250,9 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                   synchronizer = null;
                 }
 
+                LOG.info("afterRefreshFinish()");
+                myVirtualFileManagerListenerMulticaster.getMulticaster().afterRefreshFinish(asynchronous);
+
                 if (asynchronous) {
                   int filesCount = synchronizer.collectFilesToUpdate();
                   if (filesCount > 0) {
@@ -269,9 +272,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
                     }
                   }
                 }
-
-                LOG.info("afterRefreshFinish()");
-                myVirtualFileManagerListenerMulticaster.getMulticaster().afterRefreshFinish(asynchronous);
               }
             }
           }
