@@ -13,7 +13,7 @@ public class IntroduceVariableAction extends BaseRefactoringAction {
   /**
    * @fabrique
    */
-  public static final String INTRUDOCE_VARIABLE_ACTION_HANDLER = "IntroduceVariableActionHandler";
+  public static final String INTRODUCE_VARIABLE_ACTION_HANDLER = "IntroduceVariableActionHandler";
 
   protected boolean isAvailableInEditorOnly() {
     return true;
@@ -24,7 +24,7 @@ public class IntroduceVariableAction extends BaseRefactoringAction {
   }
 
   protected RefactoringActionHandler getHandler(DataContext dataContext) {
-    final RefactoringActionHandler handler = (RefactoringActionHandler) dataContext.getData(INTRUDOCE_VARIABLE_ACTION_HANDLER);
+    final RefactoringActionHandler handler = (RefactoringActionHandler) dataContext.getData(INTRODUCE_VARIABLE_ACTION_HANDLER);
     if (handler != null) {
       return handler;
     }
