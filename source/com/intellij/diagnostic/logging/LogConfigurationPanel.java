@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.TableView;
@@ -96,9 +98,11 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase>{
           myFilesTable.requestFocus();
       }
     });
-
-    myWholePanel.add(ScrollPaneFactory.createScrollPane(myFilesTable), BorderLayout.CENTER);
+    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myFilesTable);
+    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    myWholePanel.add(scrollPane, BorderLayout.CENTER);
     myWholePanel.add(myButtonsPanel, BorderLayout.EAST);
+    myWholePanel.setBorder(BorderFactory.createTitledBorder("Log Files To Show In Console"));
   }
 
   private void clearModel(){
