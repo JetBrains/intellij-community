@@ -746,6 +746,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(UnnecessaryTemporaryOnConversionFromStringInspection.class);
         inspectionClasses.add(FieldMayBeStaticInspection.class);
         inspectionClasses.add(MethodMayBeStaticInspection.class);
+        inspectionClasses.add(MapReplaceableByEnumMapInspection.class);
+        inspectionClasses.add(SetReplaceableByEnumSetInspection.class);
         inspectionClasses.add(InnerClassMayBeStaticInspection.class);
         inspectionClasses.add(AnonymousInnerClassMayBeStaticInspection.class);
         inspectionClasses.add(StringBufferMustHaveInitialCapacityInspection.class);

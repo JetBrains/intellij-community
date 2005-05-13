@@ -1,17 +1,18 @@
 package com.siyeh.ig.cloneable;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 class CallToSuperCloneVisitor extends PsiRecursiveElementVisitor{
     private boolean callToSuperCloneFound = false;
 
-    public void visitElement(PsiElement element){
+    public void visitElement(@NotNull PsiElement element){
         if(!callToSuperCloneFound){
             super.visitElement(element);
         }
     }
 
-    public void visitMethodCallExpression(PsiMethodCallExpression expression){
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
         if(callToSuperCloneFound){
             return;
         }

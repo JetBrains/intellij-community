@@ -54,7 +54,7 @@ public class NegatedConditionalInspection extends ExpressionInspection{
 
         public void applyFix(Project project,
                              ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiConditionalExpression exp =
                     (PsiConditionalExpression) descriptor.getPsiElement()
                             .getParent();
@@ -66,7 +66,7 @@ public class NegatedConditionalInspection extends ExpressionInspection{
             final String newStatement =
             negatedCondition + '?' + elseBranch.getText() + ':' +
                     thenBranch.getText();
-            replaceExpression(project, exp, newStatement);
+            replaceExpression(exp, newStatement);
         }
     }
 

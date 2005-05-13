@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -116,7 +117,7 @@ public class FieldCountInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
             final int totalFields = countFields(aClass);
             if (totalFields <= getLimit()) {

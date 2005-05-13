@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class TestMethodWithoutAssertionInspection extends ExpressionInspection {
     public String getID(){
@@ -34,7 +35,7 @@ public class TestMethodWithoutAssertionInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if(method.hasModifierProperty(PsiModifier.ABSTRACT) ||
                        !method.hasModifierProperty(PsiModifier.PUBLIC)){

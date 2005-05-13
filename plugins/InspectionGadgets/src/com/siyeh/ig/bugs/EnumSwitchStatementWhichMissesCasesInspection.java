@@ -3,6 +3,7 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class EnumSwitchStatementWhichMissesCasesInspection extends StatementInspection {
 
@@ -35,7 +36,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends StatementInsp
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitSwitchStatement(PsiSwitchStatement statement) {
+        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             if (!switchStatementMissingCases(statement)) {
                 return;

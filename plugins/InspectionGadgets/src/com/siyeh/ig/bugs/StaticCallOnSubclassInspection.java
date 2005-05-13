@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class StaticCallOnSubclassInspection extends ExpressionInspection {
     public String getID(){
@@ -43,7 +44,7 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiIdentifier name = (PsiIdentifier) descriptor.getPsiElement();
             final PsiReferenceExpression expression = (PsiReferenceExpression) name.getParent();
             final PsiMethodCallExpression call = (PsiMethodCallExpression) expression.getParent();
@@ -53,7 +54,7 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
             final PsiExpressionList argumentList = call.getArgumentList();
             final String containingClassName = containingClass.getName();
             final String argText = argumentList.getText();
-            replaceExpression(project, call, containingClassName + '.' + methodName + argText );
+            replaceExpression(call, containingClassName + '.' + methodName + argText );
         }
     }
 
@@ -66,7 +67,7 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression call) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression = call.getMethodExpression();
             if(methodExpression == null){

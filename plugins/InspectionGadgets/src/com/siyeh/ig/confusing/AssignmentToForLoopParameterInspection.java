@@ -9,6 +9,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToForLoopParameterInspection extends ExpressionInspection {
 
@@ -33,7 +34,7 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
@@ -43,7 +44,7 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
             checkForForeachLoopParam(lhs);
         }
 
-        public void visitPrefixExpression(PsiPrefixExpression expression) {
+        public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
             if (sign == null) {
@@ -61,7 +62,7 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
             checkForForLoopParam(operand);
         }
 
-        public void visitPostfixExpression(PsiPostfixExpression expression) {
+        public void visitPostfixExpression(@NotNull PsiPostfixExpression expression) {
             super.visitPostfixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
             if (sign == null) {

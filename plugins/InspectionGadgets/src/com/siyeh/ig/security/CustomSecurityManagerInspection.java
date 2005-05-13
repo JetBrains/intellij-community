@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class CustomSecurityManagerInspection extends ClassInspection {
 
@@ -32,7 +33,7 @@ public class CustomSecurityManagerInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             if(!ClassUtils.isSubclass(aClass, "java.lang.SecurityManager")) {
                 return;
             }

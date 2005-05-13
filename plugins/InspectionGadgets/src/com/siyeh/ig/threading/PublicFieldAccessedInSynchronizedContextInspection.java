@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class PublicFieldAccessedInSynchronizedContextInspection
         extends ExpressionInspection{
@@ -42,7 +43,7 @@ public class PublicFieldAccessedInSynchronizedContextInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression){
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);
             if(!m_inSynchronizedContext){
                 return;
@@ -59,7 +60,7 @@ public class PublicFieldAccessedInSynchronizedContextInspection
             registerError(expression);
         }
 
-        public void visitMethod(PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method){
             final boolean wasInSynchronizedContext = m_inSynchronizedContext;
             if(method.hasModifierProperty(PsiModifier.SYNCHRONIZED)){
 
@@ -72,7 +73,7 @@ public class PublicFieldAccessedInSynchronizedContextInspection
             }
         }
 
-        public void visitSynchronizedStatement(PsiSynchronizedStatement psiSynchronizedStatement){
+        public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement psiSynchronizedStatement){
             final boolean wasInSynchronizedContext = m_inSynchronizedContext;
             m_inSynchronizedContext = true;
             super.visitSynchronizedStatement(psiSynchronizedStatement);

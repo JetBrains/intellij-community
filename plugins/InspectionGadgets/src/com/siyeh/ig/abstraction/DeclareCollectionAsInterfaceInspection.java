@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.psiutils.CollectionUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
 
@@ -37,7 +38,7 @@ public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitVariable(PsiVariable variable) {
+        public void visitVariable(@NotNull PsiVariable variable) {
             final PsiType type = variable.getType();
             if (type == null) {
                 return;
@@ -49,7 +50,7 @@ public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
             registerError(typeElement);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             final PsiType type = method.getReturnType();
             if (type == null) {

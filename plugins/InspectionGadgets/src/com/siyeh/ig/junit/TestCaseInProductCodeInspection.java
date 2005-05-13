@@ -7,6 +7,7 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.MoveClassFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class TestCaseInProductCodeInspection extends ClassInspection {
     private final MoveClassFix fix = new MoveClassFix();
@@ -45,7 +46,7 @@ public class TestCaseInProductCodeInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             if(TestUtils.isTest(aClass))
             {
                 return;

@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -39,7 +40,7 @@ public class DuplicateConditionInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitIfStatement(PsiIfStatement statement){
+        public void visitIfStatement(@NotNull PsiIfStatement statement){
             super.visitIfStatement(statement);
             final PsiElement parent = statement.getParent();
             if(parent instanceof PsiIfStatement){

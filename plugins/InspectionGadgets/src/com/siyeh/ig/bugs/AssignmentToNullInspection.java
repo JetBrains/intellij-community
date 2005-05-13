@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToNullInspection extends ExpressionInspection {
 
@@ -30,7 +31,7 @@ public class AssignmentToNullInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLiteralExpression(PsiLiteralExpression value) {
+        public void visitLiteralExpression(@NotNull PsiLiteralExpression value) {
             super.visitLiteralExpression(value);
             final String text = value.getText();
             if (!"null".equals(text)) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class ForeachStatementInspection extends StatementInspection{
     private final ForEachFix fix = new ForEachFix();
@@ -32,7 +33,7 @@ public class ForeachStatementInspection extends StatementInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiForeachStatement statement =
@@ -106,7 +107,7 @@ public class ForeachStatementInspection extends StatementInspection{
                 }
                 newStatement.append('}');
             }
-            replaceStatement(project, statement, newStatement.toString());
+            replaceStatement(statement, newStatement.toString());
         }
     }
 
@@ -123,7 +124,7 @@ public class ForeachStatementInspection extends StatementInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitForeachStatement(PsiForeachStatement statement){
+        public void visitForeachStatement(@NotNull PsiForeachStatement statement){
             super.visitForeachStatement(statement);
             registerStatementError(statement);
         }

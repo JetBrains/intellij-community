@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ExceptionNameDoesntEndWithExceptionInspection extends ClassInspection {
     private final RenameFix fix = new RenameFix();
@@ -43,7 +44,7 @@ public class ExceptionNameDoesntEndWithExceptionInspection extends ClassInspecti
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down into inner classes
             final String className = aClass.getName();
             if (className == null) {

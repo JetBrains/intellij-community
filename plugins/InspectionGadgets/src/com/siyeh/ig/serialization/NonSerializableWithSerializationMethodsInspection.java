@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.MakeSerializableFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class NonSerializableWithSerializationMethodsInspection
         extends ClassInspection{
@@ -56,7 +57,7 @@ public class NonSerializableWithSerializationMethodsInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so it doesn't drill down
             if(aClass.isInterface() || aClass.isAnnotationType()){
                 return;

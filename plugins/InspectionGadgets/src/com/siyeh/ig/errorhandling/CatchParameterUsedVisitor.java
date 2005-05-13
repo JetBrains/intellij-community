@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiReferenceExpression;
+import org.jetbrains.annotations.NotNull;
 
 class CatchParameterUsedVisitor extends PsiRecursiveElementVisitor{
     private final PsiParameter parameter;
@@ -14,13 +15,13 @@ class CatchParameterUsedVisitor extends PsiRecursiveElementVisitor{
         parameter = variable;
     }
 
-    public void visitElement(PsiElement element){
+    public void visitElement(@NotNull PsiElement element){
         if(!used){
             super.visitElement(element);
         }
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression reference){
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression reference){
         if(used){
             return;
         }

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiSwitchStatement;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -48,7 +49,7 @@ public class SwitchStatementWithTooManyBranchesInspection extends StatementInspe
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitSwitchStatement(PsiSwitchStatement statement) {
+        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             final PsiCodeBlock body = statement.getBody();
             if (body == null) {
                 return;

@@ -8,6 +8,7 @@ import com.intellij.psi.PsiJavaFile;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.MoveClassFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ClassInTopLevelPackageInspection extends ClassInspection {
     private final MoveClassFix fix = new MoveClassFix();
@@ -45,7 +46,7 @@ public class ClassInTopLevelPackageInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes
             if (ClassUtils.isInnerClass(aClass)) {
                 return;

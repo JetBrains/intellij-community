@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
+import org.jetbrains.annotations.NotNull;
 
 public class UnconditionalWaitInspection extends MethodInspection {
 
@@ -30,7 +31,7 @@ public class UnconditionalWaitInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (!method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
                 return;
@@ -41,7 +42,7 @@ public class UnconditionalWaitInspection extends MethodInspection {
             }
         }
 
-        public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+        public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
             super.visitSynchronizedStatement(statement);
             final PsiCodeBlock body = statement.getBody();
             if (body != null) {

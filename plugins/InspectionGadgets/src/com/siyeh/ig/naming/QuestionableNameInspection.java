@@ -10,6 +10,7 @@ import com.intellij.psi.PsiVariable;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -102,7 +103,7 @@ public class QuestionableNameInspection extends ClassInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitVariable(PsiVariable variable){
+        public void visitVariable(@NotNull PsiVariable variable){
             super.visitVariable(variable);
             final String name = variable.getName();
             if(nameList.contains(name)){
@@ -110,7 +111,7 @@ public class QuestionableNameInspection extends ClassInspection{
             }
         }
 
-        public void visitMethod(PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             final String name = method.getName();
             if(nameList.contains(name)){
@@ -118,7 +119,7 @@ public class QuestionableNameInspection extends ClassInspection{
             }
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             if(inClass){
                 return;
             }

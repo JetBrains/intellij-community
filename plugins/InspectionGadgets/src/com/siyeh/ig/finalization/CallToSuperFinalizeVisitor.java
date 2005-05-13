@@ -1,17 +1,18 @@
 package com.siyeh.ig.finalization;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 class CallToSuperFinalizeVisitor extends PsiRecursiveElementVisitor{
     private boolean callToSuperFinalizeFound = false;
 
-    public void visitElement(PsiElement element){
+    public void visitElement(@NotNull PsiElement element){
         if(!callToSuperFinalizeFound){
             super.visitElement(element);
         }
     }
 
-    public void visitMethodCallExpression(PsiMethodCallExpression expression){
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
         if(callToSuperFinalizeFound){
             return;
         }

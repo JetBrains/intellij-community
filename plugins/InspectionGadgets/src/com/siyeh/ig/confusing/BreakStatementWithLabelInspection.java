@@ -5,6 +5,7 @@ import com.intellij.psi.PsiBreakStatement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class BreakStatementWithLabelInspection extends StatementInspection {
 
@@ -29,7 +30,7 @@ public class BreakStatementWithLabelInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBreakStatement(PsiBreakStatement statement) {
+        public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
             super.visitBreakStatement(statement);
             final PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
             if (labelIdentifier == null) {

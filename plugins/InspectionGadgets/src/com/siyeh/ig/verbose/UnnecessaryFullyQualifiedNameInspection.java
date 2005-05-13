@@ -21,6 +21,8 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
     public boolean m_ignoreJavadoc = false;
 
@@ -62,7 +64,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final CodeStyleSettingsManager settingsManager =
                     CodeStyleSettingsManager.getInstance(project);
             final CodeStyleSettings settings =
@@ -101,7 +103,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             final boolean wasInClass = m_inClass;
             if(!m_inClass){
 

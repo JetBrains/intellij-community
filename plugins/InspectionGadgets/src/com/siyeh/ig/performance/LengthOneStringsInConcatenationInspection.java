@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class LengthOneStringsInConcatenationInspection extends ExpressionInspection {
     private final ReplaceStringsWithCharsFix fix = new ReplaceStringsWithCharsFix();
@@ -43,7 +44,7 @@ public class LengthOneStringsInConcatenationInspection extends ExpressionInspect
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
             final String text = expression.getText();
             final int length = text.length();
@@ -54,7 +55,7 @@ public class LengthOneStringsInConcatenationInspection extends ExpressionInspect
             } else {
                 charLiteral = '\'' + character + '\'';
             }
-            replaceExpression(project, expression, charLiteral);
+            replaceExpression(expression, charLiteral);
         }
     }
 
@@ -63,7 +64,7 @@ public class LengthOneStringsInConcatenationInspection extends ExpressionInspect
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLiteralExpression(PsiLiteralExpression expression) {
+        public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();
             if (!TypeUtils.isJavaLangString(type)) {

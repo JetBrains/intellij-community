@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ChannelResourceInspection extends ExpressionInspection{
     public String getID(){
@@ -42,7 +43,7 @@ public class ChannelResourceInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             if(!isChannelFactoryMethod(expression)) {
                 return;
@@ -119,13 +120,13 @@ public class ChannelResourceInspection extends ExpressionInspection{
             this.objectToClose = objectToClose;
         }
 
-        public void visitElement(PsiElement element){
+        public void visitElement(@NotNull PsiElement element){
             if(!containsClose){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression call){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
             if(containsClose){
                 return;
             }

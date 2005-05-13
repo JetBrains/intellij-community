@@ -1,5 +1,8 @@
 package com.siyeh.ig.psiutils;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Set;
 import java.util.HashSet;
 
@@ -65,7 +68,7 @@ public class StringUtils{
         super();
     }
 
-    public static String capitalize(String name){
+    public static String capitalize(@NotNull String name){
         final char startChar = name.charAt(0);
         if(Character.isUpperCase(startChar)){
             return name;
@@ -74,9 +77,9 @@ public class StringUtils{
         }
     }
 
-    public static String stripPrefixAndSuffix(String name,
-                                              String prefix,
-                                              String suffix){
+    public static @NotNull String stripPrefixAndSuffix(@NotNull String name,
+                                              @Nullable String prefix,
+                                              @Nullable String suffix){
         String strippedName = name;
         if(prefix != null){
             final int prefixLength = prefix.length();
@@ -94,7 +97,7 @@ public class StringUtils{
         return strippedName;
     }
 
-    public static String createSingularFromName(String name){
+    public static @NotNull String createSingularFromName(@NotNull String name){
         final String singularName;
         final int nameLength = name.length();
         if(name.endsWith("ies")){

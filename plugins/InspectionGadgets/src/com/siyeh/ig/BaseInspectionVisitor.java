@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -119,6 +120,7 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
         return fix;
     }
 
+    @Nullable
     public ProblemDescriptor[] getErrors()
     {
         final List<ProblemDescriptor> errors = m_errors;

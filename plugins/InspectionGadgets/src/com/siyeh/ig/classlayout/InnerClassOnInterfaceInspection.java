@@ -1,14 +1,15 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.PsiAnonymousClass;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.MoveClassFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -66,7 +67,7 @@ public class InnerClassOnInterfaceInspection extends ClassInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so that it doesn't drill down to inner classes
             if(!aClass.isInterface() || aClass.isAnnotationType()) {
                 return;

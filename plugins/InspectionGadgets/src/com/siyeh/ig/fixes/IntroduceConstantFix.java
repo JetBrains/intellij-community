@@ -13,7 +13,7 @@ public class IntroduceConstantFix extends InspectionGadgetsFix {
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
-        if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+        if(isQuickFixOnReadOnlyFile(descriptor)) return;
         final RefactoringActionHandlerFactory factory = RefactoringActionHandlerFactory.getInstance();
         final RefactoringActionHandler introduceHandler = factory.createIntroduceConstantHandler();
         final PsiElement constant = descriptor.getPsiElement();

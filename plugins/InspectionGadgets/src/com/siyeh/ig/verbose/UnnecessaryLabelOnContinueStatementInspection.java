@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryLabelOnContinueStatementInspection extends StatementInspection {
     private final UnnecessaryLabelOnContinueStatementFix fix = new UnnecessaryLabelOnContinueStatementFix();
@@ -34,11 +35,11 @@ public class UnnecessaryLabelOnContinueStatementInspection extends StatementInsp
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement continueKeywordElement = descriptor.getPsiElement();
             final PsiContinueStatement continueStatement =
                     (PsiContinueStatement) continueKeywordElement.getParent();
-            replaceStatement(project, continueStatement, "continue;");
+            replaceStatement(continueStatement, "continue;");
         }
     }
 
@@ -53,35 +54,35 @@ public class UnnecessaryLabelOnContinueStatementInspection extends StatementInsp
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitForStatement(PsiForStatement statement) {
+        public void visitForStatement(@NotNull PsiForStatement statement) {
             final PsiStatement prevContainer = currentContainer;
             currentContainer = statement;
             super.visitForStatement(statement);
             currentContainer = prevContainer;
         }
 
-        public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+        public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
             final PsiStatement prevContainer = currentContainer;
             currentContainer = statement;
             super.visitDoWhileStatement(statement);
             currentContainer = prevContainer;
         }
 
-        public void visitForeachStatement(PsiForeachStatement statement) {
+        public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
             final PsiStatement prevContainer = currentContainer;
             currentContainer = statement;
             super.visitForeachStatement(statement);
             currentContainer = prevContainer;
         }
 
-        public void visitWhileStatement(PsiWhileStatement statement) {
+        public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
             final PsiStatement prevContainer = currentContainer;
             currentContainer = statement;
             super.visitWhileStatement(statement);
             currentContainer = prevContainer;
         }
 
-        public void visitContinueStatement(PsiContinueStatement statement) {
+        public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
             super.visitContinueStatement(statement);
             final PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
             if (labelIdentifier == null) {

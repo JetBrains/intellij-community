@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class InstanceofCatchParameterInspection extends ExpressionInspection {
 
@@ -31,7 +32,7 @@ public class InstanceofCatchParameterInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitInstanceOfExpression(PsiInstanceOfExpression exp){
+        public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression exp){
             super.visitInstanceOfExpression(exp);
             if(!ControlFlowUtils.isInCatchBlock(exp)){
                 return;

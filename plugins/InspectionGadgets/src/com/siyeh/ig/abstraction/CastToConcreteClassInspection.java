@@ -8,9 +8,10 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class CastToConcreteClassInspection extends ExpressionInspection {
-                                         
+
     public String getDisplayName() {
         return "Cast to a concrete class";
     }
@@ -33,7 +34,7 @@ public class CastToConcreteClassInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+        public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);
             final PsiTypeElement typeElement = expression.getCastType();
 

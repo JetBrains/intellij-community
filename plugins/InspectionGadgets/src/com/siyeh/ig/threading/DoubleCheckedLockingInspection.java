@@ -9,6 +9,7 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
+import org.jetbrains.annotations.NotNull;
 
 public class DoubleCheckedLockingInspection extends ExpressionInspection {
 
@@ -33,7 +34,7 @@ public class DoubleCheckedLockingInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitIfStatement(PsiIfStatement statement) {
+        public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiExpression outerCondition = statement.getCondition();
             if (outerCondition == null) {

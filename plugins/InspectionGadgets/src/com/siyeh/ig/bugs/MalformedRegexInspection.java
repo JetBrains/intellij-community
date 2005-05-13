@@ -9,11 +9,12 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.Set;
-import java.util.HashSet;
 
 public class MalformedRegexInspection extends ExpressionInspection{
     /** @noinspection StaticCollection*/
@@ -58,7 +59,7 @@ public class MalformedRegexInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiExpressionList argList = expression.getArgumentList();
             final PsiExpression[] args = argList.getExpressions();

@@ -1,23 +1,24 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class VariableAssignedFromVisitor extends PsiRecursiveElementVisitor{
     private boolean assignedFrom = false;
-    private final PsiVariable variable;
+    private final @NotNull PsiVariable variable;
 
-    public VariableAssignedFromVisitor(PsiVariable variable){
+    public VariableAssignedFromVisitor(@NotNull PsiVariable variable){
         super();
         this.variable = variable;
     }
 
-    public void visitElement(PsiElement element){
+    public void visitElement(@NotNull PsiElement element){
         if(!assignedFrom){
             super.visitElement(element);
         }
     }
 
-    public void visitAssignmentExpression(PsiAssignmentExpression assignment){
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment){
         if(assignedFrom){
             return;
         }
@@ -35,7 +36,7 @@ public class VariableAssignedFromVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitVariable(PsiVariable var){
+    public void visitVariable(@NotNull PsiVariable var){
         if(assignedFrom){
             return;
         }

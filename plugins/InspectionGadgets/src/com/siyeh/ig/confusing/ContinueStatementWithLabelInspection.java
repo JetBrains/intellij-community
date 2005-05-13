@@ -5,6 +5,7 @@ import com.intellij.psi.PsiContinueStatement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class ContinueStatementWithLabelInspection extends StatementInspection {
 
@@ -29,7 +30,7 @@ public class ContinueStatementWithLabelInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitContinueStatement(PsiContinueStatement statement) {
+        public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
             super.visitContinueStatement(statement);
             final PsiIdentifier label = statement.getLabelIdentifier();
             if (label == null) {

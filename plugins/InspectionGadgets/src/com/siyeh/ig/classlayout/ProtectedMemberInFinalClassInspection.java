@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RemoveModifierFix;
+import org.jetbrains.annotations.NotNull;
 
 public class ProtectedMemberInFinalClassInspection extends MethodInspection {
 
@@ -33,7 +34,7 @@ public class ProtectedMemberInFinalClassInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes
             if (!method.hasModifierProperty(PsiModifier.PROTECTED)) {
                 return;
@@ -58,7 +59,7 @@ public class ProtectedMemberInFinalClassInspection extends MethodInspection {
             return superMethods != null && superMethods.length != 0;
         }
 
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
             //no call to super, so we don't drill into anonymous classes
             if (!field.hasModifierProperty(PsiModifier.PROTECTED)) {
                 return;

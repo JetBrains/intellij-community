@@ -12,6 +12,8 @@ import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 public class MagicNumberInspection extends ExpressionInspection {
 
     private static final int NUM_SPECIAL_CASE_LITERALS = 22;
@@ -67,7 +69,7 @@ public class MagicNumberInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLiteralExpression(PsiLiteralExpression expression) {
+        public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();
             if (!ClassUtils.isPrimitiveNumericType(type)) {

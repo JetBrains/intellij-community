@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class TestCaseWithNoTestMethodsInspection extends ClassInspection {
     public String getID(){
@@ -34,7 +35,7 @@ public class TestCaseWithNoTestMethodsInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             super.visitClass(aClass);
             if (aClass.isInterface()
                     || aClass.isEnum()

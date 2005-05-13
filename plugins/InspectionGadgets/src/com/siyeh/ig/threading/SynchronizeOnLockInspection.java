@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
+import org.jetbrains.annotations.NotNull;
 
 public class SynchronizeOnLockInspection extends MethodInspection{
     public String getID(){
@@ -38,7 +39,7 @@ public class SynchronizeOnLockInspection extends MethodInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitSynchronizedStatement(PsiSynchronizedStatement statement){
+        public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement){
             super.visitSynchronizedStatement(statement);
             final PsiExpression lockExpression = statement.getLockExpression();
             if(lockExpression == null){

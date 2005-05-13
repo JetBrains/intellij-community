@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class AbstractClassExtendsConcreteClassInspection extends ClassInspection {
 
@@ -33,7 +34,7 @@ public class AbstractClassExtendsConcreteClassInspection extends ClassInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes
             if (aClass.isInterface()|| aClass.isAnnotationType()) {
                 return;

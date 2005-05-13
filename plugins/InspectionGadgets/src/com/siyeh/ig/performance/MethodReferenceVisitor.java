@@ -3,6 +3,7 @@ package com.siyeh.ig.performance;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
     private boolean m_referencesStaticallyAccessible = true;
@@ -39,7 +40,7 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
         m_referencesStaticallyAccessible &= aClass.hasModifierProperty(PsiModifier.STATIC);
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression){
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
         if(!m_referencesStaticallyAccessible){
             return;
         }
@@ -53,7 +54,7 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitThisExpression(PsiThisExpression expression){
+    public void visitThisExpression(@NotNull PsiThisExpression expression){
         if(!m_referencesStaticallyAccessible){
             return;
         }

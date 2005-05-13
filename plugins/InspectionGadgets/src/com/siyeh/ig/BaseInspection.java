@@ -9,6 +9,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 
@@ -42,10 +43,12 @@ public abstract class BaseInspection extends LocalInspectionTool{
         return false;
     }
 
+    @Nullable
     protected InspectionGadgetsFix buildFix(PsiElement location){
         return null;
     }
 
+    @Nullable
     public ProblemDescriptor[] checkMethod(PsiMethod method,
                                            InspectionManager manager,
                                            boolean isOnTheFly){
@@ -63,12 +66,14 @@ public abstract class BaseInspection extends LocalInspectionTool{
         }
     }
 
+    @Nullable
     protected ProblemDescriptor[] doCheckMethod(PsiMethod method,
                                                 InspectionManager manager,
                                                 boolean isOnTheFly){
         return super.checkMethod(method, manager, isOnTheFly);
     }
 
+    @Nullable
     public ProblemDescriptor[] checkClass(PsiClass aClass,
                                           InspectionManager manager,
                                           boolean isOnTheFly){
@@ -92,6 +97,7 @@ public abstract class BaseInspection extends LocalInspectionTool{
         return super.checkClass(aClass, manager, isOnTheFly);
     }
 
+    @Nullable
     public ProblemDescriptor[] checkField(PsiField field,
                                           InspectionManager manager,
                                           boolean isOnTheFly){
@@ -119,6 +125,7 @@ public abstract class BaseInspection extends LocalInspectionTool{
         }
     }
 
+    @Nullable
     protected ProblemDescriptor[] doCheckField(PsiField field,
                                                InspectionManager manager,
                                                boolean isOnTheFly){

@@ -9,6 +9,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -85,10 +86,6 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement) location;
-        final PsiClass referredClass = (PsiClass) reference.resolve();
-
-        final String exceptionName = referredClass.getName();
         return "Prohibited exception '#ref' declared. #loc ";
     }
 
@@ -101,7 +98,7 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             final PsiReferenceList throwsList = method.getThrowsList();
             if(throwsList ==null)

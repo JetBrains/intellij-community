@@ -6,6 +6,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ErrorRethrownInspection extends StatementInspection {
     public String getID(){
@@ -32,7 +33,7 @@ public class ErrorRethrownInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitTryStatement(PsiTryStatement statement) {
+        public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             final PsiCatchSection[] catchSections = statement.getCatchSections();
             for(PsiCatchSection catchSection : catchSections){

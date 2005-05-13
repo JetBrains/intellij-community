@@ -9,6 +9,7 @@ import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ThisEscapedInConstructorInspection extends ClassInspection{
     public String getID(){
@@ -44,7 +45,7 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             final boolean wasInClass = m_inClass;
             if(!m_inClass){
 
@@ -54,7 +55,7 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
             m_inClass = wasInClass;
         }
 
-        public void visitNewExpression(PsiNewExpression psiNewExpression){
+        public void visitNewExpression(@NotNull PsiNewExpression psiNewExpression){
 
             super.visitNewExpression(psiNewExpression);
 
@@ -92,7 +93,7 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
             registerError(thisExposed);
         }
 
-        public void visitAssignmentExpression(PsiAssignmentExpression assignment){
+        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment){
             super.visitAssignmentExpression(assignment);
             if(!WellFormednessUtils.isWellFormed(assignment)){
                 return;
@@ -140,7 +141,7 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
             registerError(thisExpression);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression call){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
 
             final boolean isInInitialization = checkForInitialization(call);

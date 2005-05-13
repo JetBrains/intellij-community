@@ -7,6 +7,8 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class SwitchStatementsWithoutDefaultInspection extends StatementInspection {
 
     /** @noinspection PublicField*/
@@ -42,7 +44,7 @@ public class SwitchStatementsWithoutDefaultInspection extends StatementInspectio
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitSwitchStatement(PsiSwitchStatement statement) {
+        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             if (switchStatementHasDefault(statement)) {
                 return;

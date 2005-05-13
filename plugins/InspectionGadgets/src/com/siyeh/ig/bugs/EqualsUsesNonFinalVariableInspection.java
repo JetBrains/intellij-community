@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class EqualsUsesNonFinalVariableInspection extends ExpressionInspection{
     public String getID(){
@@ -40,7 +41,7 @@ public class EqualsUsesNonFinalVariableInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression){
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);
             if(!m_inEquals){
                 return;
@@ -56,7 +57,7 @@ public class EqualsUsesNonFinalVariableInspection extends ExpressionInspection{
             registerError(expression);
         }
 
-        public void visitMethod(PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method){
             final boolean isEquals = isEqualsMethod(method);
             if(isEquals){
                 m_inEquals = true;

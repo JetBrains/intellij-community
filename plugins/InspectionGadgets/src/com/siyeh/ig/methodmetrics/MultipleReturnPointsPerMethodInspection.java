@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class MultipleReturnPointsPerMethodInspection extends MethodMetricInspection {
     public String getID(){
@@ -42,7 +43,7 @@ public class MultipleReturnPointsPerMethodInspection extends MethodMetricInspect
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             final int numReturnPoints = calculateNumReturnPoints(method);
             if (numReturnPoints <= getLimit()) {

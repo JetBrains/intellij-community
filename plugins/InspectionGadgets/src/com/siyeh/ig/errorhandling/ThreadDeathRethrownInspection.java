@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ThreadDeathRethrownInspection extends StatementInspection{
     public String getID(){
@@ -36,7 +37,7 @@ public class ThreadDeathRethrownInspection extends StatementInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitTryStatement(PsiTryStatement statement){
+        public void visitTryStatement(@NotNull PsiTryStatement statement){
             super.visitTryStatement(statement);
             final PsiCatchSection[] catchSections = statement.getCatchSections();
             for(PsiCatchSection catchSection : catchSections){

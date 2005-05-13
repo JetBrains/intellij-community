@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToMethodParameterInspection extends ExpressionInspection{
     private final AssignmentToMethodParameterFix fix =
@@ -40,7 +41,7 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             try{
                 final PsiExpression variable =
                         (PsiExpression) descriptor.getPsiElement();
@@ -131,7 +132,7 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitAssignmentExpression(PsiAssignmentExpression expression){
+        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression){
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
@@ -140,7 +141,7 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
             checkForMethodParam(lhs);
         }
 
-        public void visitPrefixExpression(PsiPrefixExpression expression){
+        public void visitPrefixExpression(@NotNull PsiPrefixExpression expression){
             super.visitPrefixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
             if(sign == null){
@@ -158,7 +159,7 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
             checkForMethodParam(operand);
         }
 
-        public void visitPostfixExpression(PsiPostfixExpression expression){
+        public void visitPostfixExpression(@NotNull PsiPostfixExpression expression){
             super.visitPostfixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
             if(sign == null){

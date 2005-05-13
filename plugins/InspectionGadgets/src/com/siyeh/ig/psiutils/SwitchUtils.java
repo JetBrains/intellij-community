@@ -4,13 +4,14 @@ import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiSwitchLabelStatement;
 import com.intellij.psi.PsiSwitchStatement;
+import org.jetbrains.annotations.NotNull;
 
 public class SwitchUtils{
     private SwitchUtils(){
         super();
     }
 
-    public static int calculateBranchCount(PsiSwitchStatement statement){
+    public static int calculateBranchCount(@NotNull PsiSwitchStatement statement){
     final PsiCodeBlock body = statement.getBody();
         int branches = 0;
         final PsiStatement[] statements = body.getStatements();

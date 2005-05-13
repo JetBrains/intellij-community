@@ -11,6 +11,8 @@ import com.siyeh.ig.psiutils.WellFormednessUtils;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
+
 public class TrivialStringConcatenationInspection extends ExpressionInspection{
     /** @noinspection StaticCollection*/
     private static final Map<String,String> s_typeToWrapperMap = new HashMap<String, String>(6);
@@ -86,12 +88,12 @@ public class TrivialStringConcatenationInspection extends ExpressionInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiBinaryExpression expression =
                     (PsiBinaryExpression) descriptor.getPsiElement();
             final String newExpression =
                     calculateReplacementExpression(expression);
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(expression, newExpression);
         }
     }
 
@@ -109,7 +111,7 @@ public class TrivialStringConcatenationInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression exp){
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression exp){
             super.visitBinaryExpression(exp);
             if(!WellFormednessUtils.isWellFormed(exp))
             {

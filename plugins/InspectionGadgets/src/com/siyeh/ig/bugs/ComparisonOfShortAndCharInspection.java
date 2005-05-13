@@ -11,6 +11,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ComparisonOfShortAndCharInspection extends ExpressionInspection{
 
@@ -41,7 +42,7 @@ public class ComparisonOfShortAndCharInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression expression){
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression){
             super.visitBinaryExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;

@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         extends ClassInspection{
@@ -81,7 +82,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
             super(inspection, inspectionManager, onTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             final boolean wasInClass = m_inClass;
             if(!m_inClass){
                 m_inClass = true;
@@ -90,7 +91,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
             m_inClass = wasInClass;
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression){
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);
             final PsiElement element = expression.resolve();
             if(!(element instanceof PsiMethod || element instanceof PsiField)){

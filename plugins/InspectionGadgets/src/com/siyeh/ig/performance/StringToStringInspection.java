@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class StringToStringInspection extends ExpressionInspection {
     private final StringToStringFix fix = new StringToStringFix();
@@ -42,12 +43,12 @@ public class StringToStringInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiMethodCallExpression call = (PsiMethodCallExpression) descriptor.getPsiElement();
             final PsiReferenceExpression expression = call.getMethodExpression();
             final PsiExpression qualifier = expression.getQualifierExpression();
             final String qualifierText = qualifier.getText();
-            replaceExpression(project, call, qualifierText);
+            replaceExpression(call, qualifierText);
         }
     }
 
@@ -56,7 +57,7 @@ public class StringToStringInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
             if (methodExpression == null) {

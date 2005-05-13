@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -45,7 +46,7 @@ public class EmptyStatementBodyInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+        public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
             final PsiStatement body = statement.getBody();
             if (body == null) {
@@ -57,7 +58,7 @@ public class EmptyStatementBodyInspection extends StatementInspection {
             registerStatementError(statement);
         }
 
-        public void visitWhileStatement(PsiWhileStatement statement) {
+        public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             final PsiStatement body = statement.getBody();
             if (body == null) {
@@ -69,7 +70,7 @@ public class EmptyStatementBodyInspection extends StatementInspection {
             registerStatementError(statement);
         }
 
-        public void visitForStatement(PsiForStatement statement) {
+        public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
 
             final PsiStatement body = statement.getBody();
@@ -82,7 +83,7 @@ public class EmptyStatementBodyInspection extends StatementInspection {
             registerStatementError(statement);
         }
 
-        public void visitForeachStatement(PsiForeachStatement statement) {
+        public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
             super.visitForeachStatement(statement);
 
             final PsiStatement body = statement.getBody();
@@ -95,7 +96,7 @@ public class EmptyStatementBodyInspection extends StatementInspection {
             registerStatementError(statement);
         }
 
-        public void visitIfStatement(PsiIfStatement statement) {
+        public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiStatement thenBranch = statement.getThenBranch();
             if (thenBranch != null) {

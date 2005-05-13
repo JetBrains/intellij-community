@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
+import org.jetbrains.annotations.NotNull;
 
 public class WhileLoopSpinsOnFieldInspection extends MethodInspection {
 
@@ -30,7 +31,7 @@ public class WhileLoopSpinsOnFieldInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitWhileStatement(PsiWhileStatement statement) {
+        public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             final PsiStatement body = statement.getBody();
             if (!statementIsEmpty(body)) {

@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class ClassWithoutConstructorInspection extends ClassInspection {
     private final ClassWithoutConstructorFix fix = new ClassWithoutConstructorFix();
@@ -34,7 +35,7 @@ public class ClassWithoutConstructorInspection extends ClassInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             try {
                 final PsiElement classIdentifier = descriptor.getPsiElement();
                 final PsiClass psiClass = (PsiClass) classIdentifier.getParent();
@@ -83,7 +84,7 @@ public class ClassWithoutConstructorInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
             if (aClass.isInterface() || aClass.isEnum() ||
                     aClass.isAnnotationType()) {

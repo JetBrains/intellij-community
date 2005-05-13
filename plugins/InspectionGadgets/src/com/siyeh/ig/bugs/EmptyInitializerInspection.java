@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.*;
 import com.intellij.openapi.project.Project;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class EmptyInitializerInspection extends StatementInspection{
     public String getID(){
@@ -52,7 +53,7 @@ public class EmptyInitializerInspection extends StatementInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClassInitializer(PsiClassInitializer initializer){
+        public void visitClassInitializer(@NotNull PsiClassInitializer initializer){
             super.visitClassInitializer(initializer);
             final PsiCodeBlock body = initializer.getBody();
             if(!codeBlockIsEmpty(body)){

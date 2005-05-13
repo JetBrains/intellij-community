@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class LocalVariableOfConcreteClassInspection extends ExpressionInspection {
 
@@ -31,7 +32,7 @@ public class LocalVariableOfConcreteClassInspection extends ExpressionInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLocalVariable(PsiLocalVariable variable) {
+        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             final PsiTypeElement typeElement = variable.getTypeElement();
             if (!ConcreteClassUtil.typeIsConcreteClass(typeElement)) {

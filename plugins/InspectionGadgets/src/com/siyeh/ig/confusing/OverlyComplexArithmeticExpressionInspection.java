@@ -7,10 +7,11 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.ExtractMethodFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 public class OverlyComplexArithmeticExpressionInspection extends ExpressionInspection {
     private static final int TERM_LIMIT = 6;
@@ -67,12 +68,12 @@ public class OverlyComplexArithmeticExpressionInspection extends ExpressionInspe
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitPrefixExpression(PsiPrefixExpression expression) {
+        public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
             checkExpression(expression);
         }

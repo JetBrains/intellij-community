@@ -6,6 +6,7 @@ import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.PsiElement;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.MoveClassFix;
+import org.jetbrains.annotations.NotNull;
 
 public class LimitedScopeInnerClassInspection extends ClassInspection {
 
@@ -38,7 +39,7 @@ public class LimitedScopeInnerClassInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.getParent() instanceof PsiDeclarationStatement) {
                 registerClassError(aClass);
             }

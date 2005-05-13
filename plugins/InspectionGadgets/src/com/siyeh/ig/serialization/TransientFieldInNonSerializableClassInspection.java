@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class TransientFieldInNonSerializableClassInspection extends ClassInspection {
     private final TransientFieldInNonSerializableClassFix fix = new TransientFieldInNonSerializableClassFix();
@@ -34,7 +35,7 @@ public class TransientFieldInNonSerializableClassInspection extends ClassInspect
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement transientModifier = descriptor.getPsiElement();
             deleteElement(transientModifier);
         }
@@ -52,7 +53,7 @@ public class TransientFieldInNonSerializableClassInspection extends ClassInspect
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             final boolean wasInClass = m_inClass;
             if (!m_inClass) {
 
@@ -62,7 +63,7 @@ public class TransientFieldInNonSerializableClassInspection extends ClassInspect
             m_inClass = wasInClass;
         }
 
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
             if (!field.hasModifierProperty(PsiModifier.TRANSIENT)) {
                 return;
             }

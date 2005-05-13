@@ -8,6 +8,7 @@ import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.InitializationUtils;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ReadObjectInitializationInspection extends FieldInspection {
     public String getID(){
@@ -34,7 +35,7 @@ public class ReadObjectInitializationInspection extends FieldInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             // no call to super, so it doesn't drill down
             final PsiClass aClass = method.getContainingClass();
             if (aClass.isInterface() || aClass.isAnnotationType()) {

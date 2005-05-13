@@ -3,6 +3,7 @@ package com.siyeh.ig.confusing;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -40,7 +41,7 @@ public class SwitchStatementWithConfusingDeclarationInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitSwitchStatement(PsiSwitchStatement statement){
+        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement){
             final Set<PsiLocalVariable> variablesInCurrentBranch = new HashSet<PsiLocalVariable>(10);
             final Set<PsiLocalVariable> variablesInPreviousBranches = new HashSet<PsiLocalVariable>(10);
             final PsiCodeBlock body = statement.getBody();

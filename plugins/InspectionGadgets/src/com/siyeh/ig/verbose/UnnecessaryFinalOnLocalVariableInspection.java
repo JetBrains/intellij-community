@@ -6,6 +6,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import com.siyeh.ig.psiutils.VariableUsedInInnerClassVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection {
     public String getDisplayName() {
@@ -67,7 +68,7 @@ public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection 
             registerModifierError(PsiModifier.FINAL, variable1);
         }
 
-        public void visitTryStatement(PsiTryStatement statement) {
+        public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             final PsiCatchSection[] catchSections = statement.getCatchSections();
             for(PsiCatchSection catchSection : catchSections){

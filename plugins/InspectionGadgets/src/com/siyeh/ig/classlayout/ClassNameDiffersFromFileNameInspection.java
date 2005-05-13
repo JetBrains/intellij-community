@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
 public class ClassNameDiffersFromFileNameInspection extends ClassInspection {
 
@@ -49,7 +50,7 @@ public class ClassNameDiffersFromFileNameInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes
             if (!(aClass.getParent() instanceof PsiJavaFile)) {
                 return;

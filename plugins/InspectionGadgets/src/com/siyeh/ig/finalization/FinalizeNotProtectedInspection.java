@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class FinalizeNotProtectedInspection extends MethodInspection {
     private static final Logger s_logger =
@@ -39,7 +40,7 @@ public class FinalizeNotProtectedInspection extends MethodInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement methodName = descriptor.getPsiElement();
             final PsiMethod method = (PsiMethod) methodName.getParent();
             try {
@@ -58,7 +59,7 @@ public class FinalizeNotProtectedInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;
             final String methodName = method.getName();
             if (!"finalize".equals(methodName)) {

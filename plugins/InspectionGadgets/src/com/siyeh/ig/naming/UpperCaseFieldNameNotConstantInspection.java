@@ -6,6 +6,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
 public class UpperCaseFieldNameNotConstantInspection extends FieldInspection {
     private final RenameFix fix = new RenameFix();
@@ -44,7 +45,7 @@ public class UpperCaseFieldNameNotConstantInspection extends FieldInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
             super.visitField(field);
             if(field.hasModifierProperty(PsiModifier.STATIC) &&
                     field.hasModifierProperty(PsiModifier.FINAL))

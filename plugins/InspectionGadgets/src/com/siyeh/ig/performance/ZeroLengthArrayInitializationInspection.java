@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
+import org.jetbrains.annotations.NotNull;
 
 public class ZeroLengthArrayInitializationInspection extends ExpressionInspection {
     private final IntroduceConstantFix fix = new IntroduceConstantFix();
@@ -43,7 +44,7 @@ public class ZeroLengthArrayInitializationInspection extends ExpressionInspectio
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitNewExpression(PsiNewExpression expression) {
+        public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiExpression[] dimensions = expression.getArrayDimensions();
             final PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();

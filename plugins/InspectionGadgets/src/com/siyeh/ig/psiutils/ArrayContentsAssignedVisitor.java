@@ -2,17 +2,18 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class ArrayContentsAssignedVisitor extends PsiRecursiveElementVisitor {
     private boolean assigned = false;
     private final PsiVariable variable;
 
-    public ArrayContentsAssignedVisitor(PsiVariable variable) {
+    public ArrayContentsAssignedVisitor(@NotNull PsiVariable variable) {
         super();
         this.variable = variable;
     }
 
-    public void visitAssignmentExpression(PsiAssignmentExpression assignment){
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment){
         if(assigned)
         {
             return;
@@ -36,7 +37,7 @@ public class ArrayContentsAssignedVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public void visitPrefixExpression(PsiPrefixExpression expression){
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression){
         super.visitPrefixExpression(expression);
         final PsiJavaToken operationSign = expression.getOperationSign();
         final IElementType tokenType = operationSign.getTokenType();
@@ -61,7 +62,7 @@ public class ArrayContentsAssignedVisitor extends PsiRecursiveElementVisitor {
             assigned = true;
         }
     }
-    public void visitPostfixExpression(PsiPostfixExpression expression){
+    public void visitPostfixExpression(@NotNull PsiPostfixExpression expression){
         super.visitPostfixExpression(expression);
         final PsiJavaToken operationSign = expression.getOperationSign();
         final IElementType tokenType = operationSign.getTokenType();

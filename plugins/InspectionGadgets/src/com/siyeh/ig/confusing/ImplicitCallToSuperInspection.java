@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class ImplicitCallToSuperInspection extends MethodInspection {
     private final AddExplicitSuperCall fix = new AddExplicitSuperCall();
@@ -34,7 +35,7 @@ public class ImplicitCallToSuperInspection extends MethodInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             try {
                 final PsiElement methodName = descriptor.getPsiElement();
                 final PsiMethod method = (PsiMethod) methodName.getParent();
@@ -64,7 +65,7 @@ public class ImplicitCallToSuperInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (!method.isConstructor()) {
                 return;

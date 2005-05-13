@@ -9,6 +9,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
 public class EnumeratedClassNamingConventionInspection extends ConventionInspection {
     private static final int DEFAULT_MIN_LENGTH = 8;
@@ -74,7 +75,7 @@ public class EnumeratedClassNamingConventionInspection extends ConventionInspect
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             if (!aClass.isEnum()) {
                 return;
             }

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ConfusingElseInspection extends StatementInspection {
     public String getID(){
@@ -33,7 +34,7 @@ public class ConfusingElseInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitIfStatement(PsiIfStatement statement) {
+        public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiStatement thenBranch = statement.getThenBranch();
             if (thenBranch == null) {

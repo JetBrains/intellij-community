@@ -11,6 +11,8 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 
 import javax.swing.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class NegatedIfElseInspection extends StatementInspection {
     /** @noinspection PublicField*/
     public boolean m_ignoreNegatedNullComparison = true;
@@ -54,7 +56,7 @@ public class NegatedIfElseInspection extends StatementInspection {
 
         public void applyFix(Project project,
                              ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement ifToken = descriptor.getPsiElement();
             final PsiIfStatement ifStatement = (PsiIfStatement) ifToken.getParent();
             final PsiStatement elseBranch = ifStatement.getElseBranch();
@@ -62,7 +64,7 @@ public class NegatedIfElseInspection extends StatementInspection {
             final PsiExpression condition = ifStatement.getCondition();
             final String negatedCondition = BoolUtils.getNegatedExpressionText(condition);
             final String newStatement = "if("+ negatedCondition + ')' +elseBranch.getText() + " else " + thenBranch.getText();
-            replaceStatement(project, ifStatement, newStatement);
+            replaceStatement(ifStatement, newStatement);
         }
     }
     private class NegatedIfElseVisitor extends StatementInspectionVisitor {
@@ -70,7 +72,7 @@ public class NegatedIfElseInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitIfStatement(PsiIfStatement statement) {
+        public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiStatement thenBranch = statement.getThenBranch();
             if (thenBranch == null) {

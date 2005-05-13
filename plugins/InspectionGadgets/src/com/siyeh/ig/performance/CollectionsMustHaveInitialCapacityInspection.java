@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.CollectionUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class CollectionsMustHaveInitialCapacityInspection extends ExpressionInspection {
     public String getID(){
@@ -34,7 +35,7 @@ public class CollectionsMustHaveInitialCapacityInspection extends ExpressionInsp
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitNewExpression(PsiNewExpression expression) {
+        public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiType type = expression.getType();
 

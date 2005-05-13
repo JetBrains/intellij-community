@@ -8,6 +8,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class MissingOverrideAnnotationInspection extends MethodInspection{
     private final MissingOverrideAnnotationFix fix = new MissingOverrideAnnotationFix();
@@ -35,7 +36,7 @@ public class MissingOverrideAnnotationInspection extends MethodInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiElement identifier = descriptor.getPsiElement();
@@ -74,7 +75,7 @@ public class MissingOverrideAnnotationInspection extends MethodInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method){
             if(method.isConstructor()){
                 return;
             }

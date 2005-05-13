@@ -6,6 +6,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameterList;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
 public class MisspelledToStringInspection extends MethodInspection {
     private final RenameFix fix = new RenameFix("toString");
@@ -39,7 +40,7 @@ public class MisspelledToStringInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super
             final String methodName = method.getName();
             if (!"tostring".equals(methodName)) {

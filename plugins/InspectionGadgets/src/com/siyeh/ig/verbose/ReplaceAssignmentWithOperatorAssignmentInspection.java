@@ -9,6 +9,7 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceAssignmentWithOperatorAssignmentInspection
         extends ExpressionInspection{
@@ -83,14 +84,14 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiAssignmentExpression expression =
                     (PsiAssignmentExpression) descriptor.getPsiElement();
             final String newExpression =
                     calculateReplacementExpression(expression);
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(expression, newExpression);
         }
     }
 
@@ -102,7 +103,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitAssignmentExpression(
+        public void visitAssignmentExpression(@NotNull
                 PsiAssignmentExpression assignment){
             super.visitAssignmentExpression(assignment);
             if(!WellFormednessUtils.isWellFormed(assignment)){

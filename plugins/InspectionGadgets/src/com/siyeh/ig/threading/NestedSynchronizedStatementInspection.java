@@ -7,6 +7,7 @@ import com.intellij.psi.PsiSynchronizedStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class NestedSynchronizedStatementInspection extends StatementInspection {
 
@@ -31,7 +32,7 @@ public class NestedSynchronizedStatementInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+        public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
             super.visitSynchronizedStatement(statement);
             final PsiElement containingSynchronizedStatement =
                     PsiTreeUtil.getParentOfType(statement, PsiSynchronizedStatement.class);

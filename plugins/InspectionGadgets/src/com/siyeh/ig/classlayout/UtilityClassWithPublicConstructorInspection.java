@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class UtilityClassWithPublicConstructorInspection extends ClassInspection {
 
@@ -49,7 +50,7 @@ public class UtilityClassWithPublicConstructorInspection extends ClassInspection
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             try {
                 final PsiElement classNameIdentifer = descriptor.getPsiElement();
                 final PsiClass psiClass = (PsiClass) classNameIdentifer.getParent();
@@ -76,7 +77,7 @@ public class UtilityClassWithPublicConstructorInspection extends ClassInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes
             if (!UtilityClassUtil.isUtilityClass(aClass)) {
                 return;

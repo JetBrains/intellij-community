@@ -6,6 +6,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.EncapsulateVariableFix;
+import org.jetbrains.annotations.NotNull;
 
 public class PackageVisibleFieldInspection extends FieldInspection {
     private final EncapsulateVariableFix fix = new EncapsulateVariableFix();
@@ -39,7 +40,7 @@ public class PackageVisibleFieldInspection extends FieldInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
             if (field.hasModifierProperty(PsiModifier.PROTECTED) ||
                     field.hasModifierProperty(PsiModifier.PUBLIC) ||
                     field.hasModifierProperty(PsiModifier.PRIVATE)) {

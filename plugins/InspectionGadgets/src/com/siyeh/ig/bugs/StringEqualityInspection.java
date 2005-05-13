@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.*;
+import org.jetbrains.annotations.NotNull;
 
 public class StringEqualityInspection extends ExpressionInspection {
     private final EqualityToEqualsFix fix = new EqualityToEqualsFix();
@@ -41,7 +42,7 @@ public class StringEqualityInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement comparisonToken = descriptor.getPsiElement();
             boolean negated = false;
             final PsiBinaryExpression expression =
@@ -69,7 +70,7 @@ public class StringEqualityInspection extends ExpressionInspection {
             } else {
                 newExpression = expString;
             }
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(expression, newExpression);
         }
     }
 
@@ -78,7 +79,7 @@ public class StringEqualityInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;

@@ -9,6 +9,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class NestedAssignmentInspection extends ExpressionInspection {
 
@@ -33,7 +34,7 @@ public class NestedAssignmentInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             final PsiElement parent = expression.getParent();
             final PsiElement grandparent = parent.getParent();

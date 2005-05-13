@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class UnsecureRandomNumberGenerationInspection extends ExpressionInspection {
 
@@ -43,7 +44,7 @@ public class UnsecureRandomNumberGenerationInspection extends ExpressionInspecti
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitNewExpression(PsiNewExpression expression){
+        public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
             if(!TypeUtils.expressionHasTypeOrSubtype("java.util.Random", expression )){
                 return;
@@ -56,7 +57,7 @@ public class UnsecureRandomNumberGenerationInspection extends ExpressionInspecti
             registerError(reference);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
             if(methodExpression== null)

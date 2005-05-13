@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.NormalizeDeclarationFix;
+import org.jetbrains.annotations.NotNull;
 
 public class MultipleDeclarationInspection extends VariableInspection {
     private final NormalizeDeclarationFix fix = new NormalizeDeclarationFix();
@@ -56,7 +57,7 @@ public class MultipleDeclarationInspection extends VariableInspection {
             }
         }
 
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
             super.visitField(field);
             if (childrenContainTypeElement(field)) {
                 return;

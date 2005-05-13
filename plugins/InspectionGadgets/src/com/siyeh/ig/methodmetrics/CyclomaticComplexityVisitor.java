@@ -1,30 +1,31 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 class CyclomaticComplexityVisitor extends PsiRecursiveElementVisitor {
     private int m_complexity = 1;
 
-    public void visitAnonymousClass(PsiAnonymousClass aClass) {
+    public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
         // to call to super, to keep this from drilling down
     }
 
-    public void visitForStatement(PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
         super.visitForStatement(statement);
         m_complexity++;
     }
 
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
         super.visitForeachStatement(statement);
         m_complexity++;
     }
 
-    public void visitIfStatement(PsiIfStatement statement) {
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
         super.visitIfStatement(statement);
         m_complexity++;
     }
 
-    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
         super.visitDoWhileStatement(statement);
         m_complexity++;
     }
@@ -34,7 +35,7 @@ class CyclomaticComplexityVisitor extends PsiRecursiveElementVisitor {
         m_complexity++;
     }
 
-    public void visitSwitchStatement(PsiSwitchStatement statement) {
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
         super.visitSwitchStatement(statement);
         final PsiCodeBlock body = statement.getBody();
         if (body == null) {
@@ -54,7 +55,7 @@ class CyclomaticComplexityVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public void visitWhileStatement(PsiWhileStatement statement) {
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
         super.visitWhileStatement(statement);
         m_complexity++;
     }

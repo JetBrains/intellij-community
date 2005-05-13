@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.psiutils.*;
+import org.jetbrains.annotations.NotNull;
 
 public class MismatchedCollectionQueryUpdateInspection
         extends VariableInspection{
@@ -58,7 +59,7 @@ public class MismatchedCollectionQueryUpdateInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitField(PsiField field){
+        public void visitField(@NotNull PsiField field){
             super.visitField(field);
             if(!field.hasModifierProperty(PsiModifier.PRIVATE)){
                 return;
@@ -80,7 +81,7 @@ public class MismatchedCollectionQueryUpdateInspection
             }
         }
 
-        public void visitLocalVariable(PsiLocalVariable variable){
+        public void visitLocalVariable(@NotNull PsiLocalVariable variable){
             super.visitLocalVariable(variable);
             final PsiCodeBlock codeBlock =
                     PsiTreeUtil.getParentOfType(variable,

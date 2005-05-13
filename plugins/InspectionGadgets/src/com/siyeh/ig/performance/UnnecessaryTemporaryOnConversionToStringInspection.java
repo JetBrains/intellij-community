@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -66,10 +67,10 @@ public class UnnecessaryTemporaryOnConversionToStringInspection extends Expressi
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiMethodCallExpression expression = (PsiMethodCallExpression) descriptor.getPsiElement();
             final String newExpression = calculateReplacementExpression(expression);
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(expression, newExpression);
         }
 
     }
@@ -83,7 +84,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection extends Expressi
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();

@@ -6,6 +6,7 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -48,7 +49,7 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
 
             if (aClass.isInterface() || aClass.isAnnotationType()|| aClass.isEnum()) {

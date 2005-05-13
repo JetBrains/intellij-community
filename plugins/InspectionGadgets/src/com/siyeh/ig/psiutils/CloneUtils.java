@@ -2,41 +2,18 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-
-import java.util.HashSet;
-import java.util.Set;
+import org.jetbrains.annotations.NotNull;
 
 public class CloneUtils{
     private CloneUtils(){
         super();
     }
 
-    public static boolean isCloneable(PsiClass aClass){
-        return isCloneable(aClass, new HashSet<String>());
+    public static boolean isCloneable(@NotNull PsiClass aClass){
+       return ClassUtils.isSubclass(aClass, "java.lang.Cloneable");
     }
 
-    private static boolean isCloneable(PsiClass aClass,
-                                       Set<String> alreadyChecked){
-        final String qualifiedName = aClass.getQualifiedName();
-        if(alreadyChecked.contains(qualifiedName)){
-            return false;
-        }
-        alreadyChecked.add(qualifiedName);
-        final PsiClass[] supers = aClass.getSupers();
-        for(final PsiClass aSuper : supers){
-            if(aSuper != null){
-                if("java.lang.Cloneable".equals(aSuper.getQualifiedName())){
-                    return true;
-                }
-                if(isCloneable(aSuper, alreadyChecked)){
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public static boolean isDirectlyCloneable(PsiClass aClass){
+    public static boolean isDirectlyCloneable(@NotNull PsiClass aClass){
         final PsiClass[] interfaces = aClass.getInterfaces();
         for(PsiClass aInterfaces : interfaces){
             final String qualifiedName = aInterfaces.getQualifiedName();
@@ -47,7 +24,7 @@ public class CloneUtils{
         return false;
     }
 
-    public static boolean isClone(PsiMethod method){
+    public static boolean isClone(@NotNull PsiMethod method){
         final String methodName = method.getName();
         if(!"clone".equals(methodName)){
             return false;

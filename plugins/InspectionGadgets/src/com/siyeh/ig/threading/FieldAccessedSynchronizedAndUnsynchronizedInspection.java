@@ -9,6 +9,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -39,7 +40,7 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection extends ClassI
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             final VariableAccessVisitor visitor = new VariableAccessVisitor();
             aClass.accept(visitor);
             final Set<PsiElement> fields = visitor.getInappropriatelyAccessedFields();

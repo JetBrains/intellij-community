@@ -32,12 +32,13 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends Expres
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiConditionalExpression expression =
                     (PsiConditionalExpression) descriptor.getPsiElement();
 
-            final String bodyText = expression.getThenExpression().getText();
-            replaceExpression(project, expression, bodyText);
+            final PsiExpression thenExpression = expression.getThenExpression();
+            final String bodyText = thenExpression.getText();
+            replaceExpression(expression, bodyText);
         }
     }
 

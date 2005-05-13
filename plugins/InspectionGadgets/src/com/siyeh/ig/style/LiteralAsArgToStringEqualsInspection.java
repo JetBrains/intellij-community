@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class LiteralAsArgToStringEqualsInspection extends ExpressionInspection {
     private final SwapEqualsFix swapEqualsFix = new SwapEqualsFix();
@@ -40,7 +41,7 @@ public class LiteralAsArgToStringEqualsInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiMethodCallExpression expression = (PsiMethodCallExpression) descriptor.getPsiElement();
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
             final PsiExpression target = methodExpression.getQualifierExpression();
@@ -57,7 +58,7 @@ public class LiteralAsArgToStringEqualsInspection extends ExpressionInspection {
             } else {
                 callString = strippedArg.getText() + '.' + methodName + '(' + strippedTarget.getText() + ')';
             }
-            replaceExpression(project, expression, callString);
+            replaceExpression(expression, callString);
         }
     }
 
@@ -66,7 +67,7 @@ public class LiteralAsArgToStringEqualsInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();

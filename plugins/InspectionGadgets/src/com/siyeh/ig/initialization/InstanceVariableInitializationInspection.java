@@ -8,6 +8,7 @@ import com.siyeh.ig.fixes.MakeInitializerExplicitFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.InitializationUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -49,7 +50,7 @@ public class InstanceVariableInitializationInspection extends FieldInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
             if (field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }

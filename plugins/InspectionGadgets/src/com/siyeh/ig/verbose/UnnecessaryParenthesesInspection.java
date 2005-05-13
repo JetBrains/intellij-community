@@ -37,11 +37,11 @@ public class UnnecessaryParenthesesInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
 
             final PsiExpression exp = (PsiExpression) descriptor.getPsiElement();
             final String newExpression = ParenthesesUtils.removeParentheses(exp);
-            replaceExpression(project, exp, newExpression);
+            replaceExpression(exp, newExpression);
         }
 
     }

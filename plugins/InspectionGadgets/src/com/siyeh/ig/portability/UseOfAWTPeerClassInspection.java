@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class UseOfAWTPeerClassInspection extends VariableInspection {
 
@@ -31,7 +32,7 @@ public class UseOfAWTPeerClassInspection extends VariableInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitVariable(PsiVariable variable) {
+        public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final PsiType type = variable.getType();
             if (type == null) {
@@ -70,7 +71,7 @@ public class UseOfAWTPeerClassInspection extends VariableInspection {
             registerError(typeElement);
         }
 
-        public void visitNewExpression(PsiNewExpression newExpression) {
+        public void visitNewExpression(@NotNull PsiNewExpression newExpression) {
             super.visitNewExpression(newExpression);
             final PsiType type = newExpression.getType();
             if (type == null) {

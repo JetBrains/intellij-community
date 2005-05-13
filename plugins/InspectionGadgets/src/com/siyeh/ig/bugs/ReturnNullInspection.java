@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -71,7 +72,7 @@ public class ReturnNullInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLiteralExpression(PsiLiteralExpression value) {
+        public void visitLiteralExpression(@NotNull PsiLiteralExpression value) {
             super.visitLiteralExpression(value);
             final String text = value.getText();
             if (!"null".equals(text)) {

@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
+import org.jetbrains.annotations.NotNull;
 
 public class MethodReturnOfConcreteClassInspection extends MethodInspection {
 
@@ -32,7 +33,7 @@ public class MethodReturnOfConcreteClassInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (method.isConstructor()) {
                 return;

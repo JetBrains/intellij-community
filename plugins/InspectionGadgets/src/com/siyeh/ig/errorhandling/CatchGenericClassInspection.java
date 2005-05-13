@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ExceptionUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -30,17 +31,14 @@ public class CatchGenericClassInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitTryStatement(PsiTryStatement statement) {
+        public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             final PsiCodeBlock tryBlock = statement.getTryBlock();
             if (tryBlock == null) {
                 return;
             }
-            final PsiManager manager = statement.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
-
             final Set<PsiType> exceptionsThrown =
-                    ExceptionUtils.calculateExceptionsThrown(tryBlock, factory);
+                    ExceptionUtils.calculateExceptionsThrown(tryBlock);
             final PsiParameter[] parameters = statement.getCatchBlockParameters();
             for(final PsiParameter parameter : parameters){
                 checkParameter(parameter, exceptionsThrown);

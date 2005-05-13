@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class MisorderedAssertEqualsParametersInspection extends ExpressionInspection {
     private final FlipParametersFix fix = new FlipParametersFix();
@@ -34,7 +35,7 @@ public class MisorderedAssertEqualsParametersInspection extends ExpressionInspec
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement methodNameIdentifier = descriptor.getPsiElement();
             final PsiMethodCallExpression callExpression = (PsiMethodCallExpression) methodNameIdentifier.getParent().getParent();
             final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
@@ -62,8 +63,8 @@ public class MisorderedAssertEqualsParametersInspection extends ExpressionInspec
             final PsiExpression actualArg = args[actualPosition];
             final String actualArgText = actualArg.getText();
             final String expectedArgText = expectedArg.getText();
-            replaceExpression(project, expectedArg, actualArgText);
-            replaceExpression(project, actualArg, expectedArgText);
+            replaceExpression(expectedArg, actualArgText);
+            replaceExpression(actualArg, expectedArgText);
         }
 
     }
@@ -78,7 +79,7 @@ public class MisorderedAssertEqualsParametersInspection extends ExpressionInspec
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!isAssertEquals(expression)) {
                 return;

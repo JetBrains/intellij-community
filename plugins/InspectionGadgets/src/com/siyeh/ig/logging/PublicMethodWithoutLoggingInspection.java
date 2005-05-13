@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -94,7 +95,7 @@ public class PublicMethodWithoutLoggingInspection extends MethodInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method){
             //no drilldown
             if(!method.hasModifierProperty(PsiModifier.PUBLIC)){
                 return;
@@ -127,13 +128,13 @@ public class PublicMethodWithoutLoggingInspection extends MethodInspection{
             extends PsiRecursiveElementVisitor{
         private boolean containsLoggingCall = false;
 
-        public void visitElement(PsiElement element){
+        public void visitElement(@NotNull PsiElement element){
             if(containsLoggingCall){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             if(containsLoggingCall){
                 return;
             }

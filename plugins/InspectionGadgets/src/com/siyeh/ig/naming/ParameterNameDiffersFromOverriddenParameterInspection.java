@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameParameterFix;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -108,7 +109,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method){
             final PsiParameterList parameterList = method.getParameterList();
             if(parameterList == null){
                 return;

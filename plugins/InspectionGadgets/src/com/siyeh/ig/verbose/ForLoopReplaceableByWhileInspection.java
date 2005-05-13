@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -44,7 +45,7 @@ public class ForLoopReplaceableByWhileInspection extends StatementInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement forKeywordElement = descriptor.getPsiElement();
             final PsiForStatement forStatement =
                     (PsiForStatement) forKeywordElement.getParent();
@@ -56,7 +57,7 @@ public class ForLoopReplaceableByWhileInspection extends StatementInspection {
             } else {
                 whileStatement = "while(" + condition.getText() + ')' + body.getText();
             }
-            replaceStatement(project, forStatement, whileStatement);
+            replaceStatement(forStatement, whileStatement);
         }
     }
 
@@ -69,7 +70,7 @@ public class ForLoopReplaceableByWhileInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitForStatement(PsiForStatement statement) {
+        public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiStatement initialization = statement.getInitialization();
             if (initialization != null && !(initialization instanceof PsiEmptyStatement)) {

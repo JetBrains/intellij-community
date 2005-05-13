@@ -7,6 +7,7 @@ import com.intellij.psi.PsiSwitchStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class NestedSwitchStatementInspection extends StatementInspection {
 
@@ -31,7 +32,7 @@ public class NestedSwitchStatementInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitSwitchStatement(PsiSwitchStatement statement) {
+        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             final PsiElement containingSwitchStatement =
                     PsiTreeUtil.getParentOfType(statement, PsiSwitchStatement.class);

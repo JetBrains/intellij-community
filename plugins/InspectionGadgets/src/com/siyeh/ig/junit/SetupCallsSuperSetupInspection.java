@@ -9,6 +9,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class SetupCallsSuperSetupInspection extends MethodInspection{
     private final AddSuperSetUpCall fix = new AddSuperSetUpCall();
@@ -35,7 +36,7 @@ public class SetupCallsSuperSetupInspection extends MethodInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             try{
@@ -79,7 +80,7 @@ public class SetupCallsSuperSetupInspection extends MethodInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method){
             //note: no call to super;
             final String methodName = method.getName();
             if(!"setUp".equals(methodName)){

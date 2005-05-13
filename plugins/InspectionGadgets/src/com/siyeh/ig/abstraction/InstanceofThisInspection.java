@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class InstanceofThisInspection extends ExpressionInspection {
 
@@ -30,7 +31,7 @@ public class InstanceofThisInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitThisExpression(PsiThisExpression thisValue) {
+        public void visitThisExpression(@NotNull PsiThisExpression thisValue) {
             super.visitThisExpression(thisValue);
             if (thisValue.getQualifier() != null) {
                 return;

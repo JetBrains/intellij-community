@@ -13,6 +13,7 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class InstanceMethodNamingConventionInspection extends ConventionInspection {
     private static final int DEFAULT_MIN_LENGTH = 4;
@@ -80,7 +81,7 @@ public class InstanceMethodNamingConventionInspection extends ConventionInspecti
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (method.isConstructor()) {
                 return;

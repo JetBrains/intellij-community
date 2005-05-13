@@ -6,6 +6,7 @@ import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class NonCommentSourceStatementsInspection extends MethodMetricInspection {
     private static final int DEFAULT_LIMIT = 30;
@@ -47,7 +48,7 @@ public class NonCommentSourceStatementsInspection extends MethodMetricInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             final NCSSVisitor visitor = new NCSSVisitor();
             method.accept(visitor);

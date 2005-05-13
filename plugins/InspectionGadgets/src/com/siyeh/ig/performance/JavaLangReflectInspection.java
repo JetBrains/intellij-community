@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.VariableInspection;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaLangReflectInspection extends VariableInspection {
 
@@ -30,7 +31,7 @@ public class JavaLangReflectInspection extends VariableInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitVariable(PsiVariable variable) {
+        public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final PsiType type = variable.getType();
             if (type == null) {

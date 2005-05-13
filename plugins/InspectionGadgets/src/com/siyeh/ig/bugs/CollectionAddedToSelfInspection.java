@@ -8,6 +8,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import org.jetbrains.annotations.NotNull;
 
 public class CollectionAddedToSelfInspection extends ExpressionInspection {
 
@@ -35,7 +36,7 @@ public class CollectionAddedToSelfInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             if(!inClass)
             {
                 inClass = true;
@@ -44,7 +45,7 @@ public class CollectionAddedToSelfInspection extends ExpressionInspection {
             }
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression call) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression = call.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();

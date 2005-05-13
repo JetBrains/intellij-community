@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
     private final SimplifyJUnitAssertFix fix = new SimplifyJUnitAssertFix();
@@ -33,7 +34,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiElement methodNameIdentifier = descriptor.getPsiElement();
@@ -63,12 +64,6 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
             final PsiParameterList paramList = method.getParameterList();
             final PsiParameter[] parameters = paramList.getParameters();
 
-            final PsiManager psiManager = callExpression.getManager();
-
-            final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-            final PsiType stringType =
-                    PsiType.getJavaLangString(psiManager, scope);
-            final PsiType paramType1 = parameters[0].getType();
             final PsiExpressionList argumentList =
                     callExpression.getArgumentList();
 
@@ -86,7 +81,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
                 newExpression.append(message.getText());
             }
             newExpression.append(')');
-            replaceExpression(project, callExpression,
+            replaceExpression(callExpression,
                               newExpression.toString());
         }
 
@@ -156,7 +151,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
                 newExpression.append(",0.0");
             }
             newExpression.append(')');
-            replaceExpression(project, callExpression,
+            replaceExpression(callExpression,
                               newExpression.toString());
         }
 
@@ -213,7 +208,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
             }
             newExpression.append(compareValue);
             newExpression.append(')');
-            replaceExpression(project, callExpression,
+            replaceExpression(callExpression,
                               newExpression.toString());
         }
 
@@ -238,7 +233,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             if(isAssertTrueThatCouldBeAssertEquality(expression)){
                 registerMethodCallError(expression);
@@ -334,7 +329,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
         if(testArg == null){
             return false;
         }
-        return testArg.getText().equals("false");
+        return "false".equals(testArg.getText());
     }
 
     private static boolean isAssertFalseThatCouldBeFail(PsiMethodCallExpression expression){
@@ -376,7 +371,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
         if(testArg == null){
             return false;
         }
-        return testArg.getText().equals("true");
+        return "true".equals(testArg.getText());
     }
 
     private static boolean isAssertEqualsThatCouldBeAssertLiteral(PsiMethodCallExpression expression){

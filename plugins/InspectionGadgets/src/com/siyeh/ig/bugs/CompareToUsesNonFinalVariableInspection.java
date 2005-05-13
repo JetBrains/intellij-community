@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class CompareToUsesNonFinalVariableInspection extends ExpressionInspection {
 
@@ -34,7 +35,7 @@ public class CompareToUsesNonFinalVariableInspection extends ExpressionInspectio
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             if (!m_inCompareTo) {
                 return;
@@ -50,7 +51,7 @@ public class CompareToUsesNonFinalVariableInspection extends ExpressionInspectio
             registerError(expression);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             final boolean isCompareTo = isCompareTo(method);
             if (isCompareTo) {
                 m_inCompareTo = true;

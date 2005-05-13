@@ -1,6 +1,7 @@
 package com.siyeh.ig.verbose;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor
 {
@@ -14,13 +15,13 @@ public class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor
         this.variable = variable;
     }
 
-    public void visitElement(PsiElement element){
+    public void visitElement(@NotNull PsiElement element){
         if(!usedInInnerClass){
             super.visitElement(element);
         }
     }
 
-    public void visitAnonymousClass(PsiAnonymousClass psiAnonymousClass)
+    public void visitAnonymousClass(@NotNull PsiAnonymousClass psiAnonymousClass)
     {
         if(usedInInnerClass){
             return;
@@ -31,7 +32,7 @@ public class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor
         inInnerClass = wasInInnerClass;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression reference)
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression reference)
     {
         if(usedInInnerClass){
             return;

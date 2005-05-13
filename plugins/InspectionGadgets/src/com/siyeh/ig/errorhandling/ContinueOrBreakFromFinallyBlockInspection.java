@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiStatement;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ContinueOrBreakFromFinallyBlockInspection extends StatementInspection {
 
@@ -34,7 +35,7 @@ public class ContinueOrBreakFromFinallyBlockInspection extends StatementInspecti
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitContinueStatement(PsiContinueStatement statement) {
+        public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
             super.visitContinueStatement(statement);
             if (!ControlFlowUtils.isInFinallyBlock(statement)) {
                 return;
@@ -46,7 +47,7 @@ public class ContinueOrBreakFromFinallyBlockInspection extends StatementInspecti
             registerStatementError(statement);
         }
 
-        public void visitBreakStatement(PsiBreakStatement statement) {
+        public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
             super.visitBreakStatement(statement);
             if (!ControlFlowUtils.isInFinallyBlock(statement)) {
                 return;

@@ -1,13 +1,14 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class SingletonUtil {
     private SingletonUtil() {
         super();
     }
 
-    public static boolean isSingleton(PsiClass aClass) {
+    public static boolean isSingleton(@NotNull PsiClass aClass) {
         if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
             return false;
         }

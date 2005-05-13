@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class SimpleDateFormatWithoutLocaleInspection extends ExpressionInspection {
 
@@ -31,7 +32,7 @@ public class SimpleDateFormatWithoutLocaleInspection extends ExpressionInspectio
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitNewExpression(PsiNewExpression expression) {
+        public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             if(!TypeUtils.expressionHasType("java.util.SimpleDateFormat", expression))
             {

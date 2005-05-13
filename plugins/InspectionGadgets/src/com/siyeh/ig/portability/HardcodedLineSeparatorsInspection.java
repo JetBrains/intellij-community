@@ -9,6 +9,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class HardcodedLineSeparatorsInspection extends ExpressionInspection {
     private static final int NEW_LINE_CHAR = (int) '\n';
@@ -40,7 +41,7 @@ public class HardcodedLineSeparatorsInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLiteralExpression(PsiLiteralExpression expression) {
+        public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();
             if (type == null) {

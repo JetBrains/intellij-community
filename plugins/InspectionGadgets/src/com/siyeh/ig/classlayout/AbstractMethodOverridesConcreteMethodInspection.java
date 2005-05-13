@@ -10,6 +10,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
+import org.jetbrains.annotations.NotNull;
 
 public class AbstractMethodOverridesConcreteMethodInspection extends MethodInspection {
 
@@ -35,7 +36,7 @@ public class AbstractMethodOverridesConcreteMethodInspection extends MethodInspe
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes
             if (method.isConstructor()) {
                 return;

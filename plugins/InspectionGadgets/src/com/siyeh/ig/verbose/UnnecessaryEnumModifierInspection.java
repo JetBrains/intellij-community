@@ -11,6 +11,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryEnumModifierInspection extends BaseInspection{
     public String getDisplayName(){
@@ -83,7 +84,7 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             try{
@@ -117,7 +118,7 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             if(!aClass.isEnum()){
                 return;
             }
@@ -140,7 +141,7 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection{
             }
         }
 
-        public void visitMethod(PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method){
             // don't call super, to keep this from drilling in
             if(!method.isConstructor()){
                 return;

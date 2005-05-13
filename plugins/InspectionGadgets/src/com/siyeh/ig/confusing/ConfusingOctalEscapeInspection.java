@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ConfusingOctalEscapeInspection extends ExpressionInspection {
     public String getID(){
@@ -34,7 +35,7 @@ public class ConfusingOctalEscapeInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLiteralExpression(PsiLiteralExpression exp) {
+        public void visitLiteralExpression(@NotNull PsiLiteralExpression exp) {
             super.visitLiteralExpression(exp);
             if (!TypeUtils.expressionHasType("java.lang.String", exp)) {
                 return;

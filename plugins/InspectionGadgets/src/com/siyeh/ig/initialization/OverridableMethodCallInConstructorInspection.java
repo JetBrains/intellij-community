@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
+import org.jetbrains.annotations.NotNull;
 
 public class OverridableMethodCallInConstructorInspection extends MethodInspection {
 
@@ -32,7 +33,7 @@ public class OverridableMethodCallInConstructorInspection extends MethodInspecti
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression call) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(call,

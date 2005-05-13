@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
     public String getID(){
@@ -38,7 +39,7 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression call){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();

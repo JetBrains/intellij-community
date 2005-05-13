@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -83,11 +84,11 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends Expres
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiMethodCallExpression expression =
                     (PsiMethodCallExpression) descriptor.getPsiElement();
             final String newExpression = calculateReplacementExpression(expression);
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(expression, newExpression);
         }
 
     }
@@ -101,7 +102,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends Expres
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();

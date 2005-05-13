@@ -42,7 +42,7 @@ public class ForCanBeForEachInspection {
         }
         return total;
     }
-    
+
     public int wildBazoom() {
         int total = 0;
         final List<? extends Integer> ints = new ArrayList<Integer>();
@@ -90,4 +90,12 @@ public class ForCanBeForEachInspection {
     }
 
 
+    public void boom2()
+    {
+        OuterClass.UnnecessaryEnumModifier2Inspection[] inners = new OuterClass.UnnecessaryEnumModifier2Inspection[3];
+        for(int i = 0; i < inners.length; i++){
+            OuterClass.UnnecessaryEnumModifier2Inspection inner = inners[i];
+            System.out.println(inner);
+        }
+    }
 }

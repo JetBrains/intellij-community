@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class WaitNotInLoopInspection extends ExpressionInspection {
 
@@ -28,7 +29,7 @@ public class WaitNotInLoopInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
             if (methodExpression == null) {

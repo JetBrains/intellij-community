@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class ObjectNotifyInspection extends ExpressionInspection {
     private final ObjectNotifyFix fix = new ObjectNotifyFix();
@@ -38,16 +39,16 @@ public class ObjectNotifyInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement methodNameElement = descriptor.getPsiElement();
             final PsiReferenceExpression methodExpression =
                     (PsiReferenceExpression) methodNameElement.getParent();
             final PsiExpression qualifier = methodExpression.getQualifierExpression();
             if (qualifier == null) {
-                replaceExpression(project, methodExpression, "notifyAll");
+                replaceExpression(methodExpression, "notifyAll");
             } else {
                 final String qualifierText = qualifier.getText();
-                replaceExpression(project, methodExpression, qualifierText + ".notifyAll");
+                replaceExpression(methodExpression, qualifierText + ".notifyAll");
             }
         }
 
@@ -58,7 +59,7 @@ public class ObjectNotifyInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
             if (methodExpression == null) {

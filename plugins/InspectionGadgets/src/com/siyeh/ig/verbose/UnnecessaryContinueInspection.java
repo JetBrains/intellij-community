@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryContinueInspection extends StatementInspection{
     private final UnnecessaryContinueFix fix = new UnnecessaryContinueFix();
@@ -42,7 +43,7 @@ public class UnnecessaryContinueInspection extends StatementInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiElement returnKeywordElement = descriptor.getPsiElement();
@@ -60,7 +61,7 @@ public class UnnecessaryContinueInspection extends StatementInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitContinueStatement(PsiContinueStatement statement){
+        public void visitContinueStatement(@NotNull PsiContinueStatement statement){
             final PsiStatement continuedStatement =
                     statement.findContinuedStatement();
             PsiStatement body = null;

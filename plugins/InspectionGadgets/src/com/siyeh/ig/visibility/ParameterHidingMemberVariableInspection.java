@@ -12,6 +12,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class ParameterHidingMemberVariableInspection extends MethodInspection{
     /** @noinspection PublicField*/
     public boolean m_ignoreInvisibleFields = false;
@@ -63,7 +65,7 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitParameter(PsiParameter variable){
+        public void visitParameter(@NotNull PsiParameter variable){
             super.visitParameter(variable);
             if(variable.getDeclarationScope() instanceof PsiCatchSection){
                 return;

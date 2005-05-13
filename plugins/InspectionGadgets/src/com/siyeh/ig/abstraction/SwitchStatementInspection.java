@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSwitchStatement;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class SwitchStatementInspection extends StatementInspection {
 
@@ -28,7 +29,7 @@ public class SwitchStatementInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitSwitchStatement(PsiSwitchStatement statement) {
+        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             registerStatementError(statement);
         }

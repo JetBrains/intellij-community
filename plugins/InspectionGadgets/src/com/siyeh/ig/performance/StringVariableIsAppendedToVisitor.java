@@ -2,6 +2,7 @@ package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 class StringVariableIsAppendedToVisitor extends PsiRecursiveElementVisitor {
     private boolean appendedTo = false;
@@ -12,7 +13,7 @@ class StringVariableIsAppendedToVisitor extends PsiRecursiveElementVisitor {
         this.variable = variable;
     }
 
-    public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
         if(appendedTo){
             return;
         }

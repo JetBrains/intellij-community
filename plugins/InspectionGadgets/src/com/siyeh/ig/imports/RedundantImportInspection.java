@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.DeleteImportFix;
 import com.siyeh.ig.psiutils.ImportUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -37,7 +38,7 @@ public class RedundantImportInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
             if (!(aClass.getParent() instanceof PsiJavaFile)) {
                 return;

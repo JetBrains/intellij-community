@@ -3,6 +3,7 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class TextLabelInSwitchStatementInspection extends StatementInspection {
 
@@ -27,7 +28,7 @@ public class TextLabelInSwitchStatementInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitSwitchStatement(PsiSwitchStatement statement) {
+        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             final PsiCodeBlock body = statement.getBody();
             if (body == null) {

@@ -8,6 +8,7 @@ import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class ClassComplexityInspection
         extends ClassMetricInspection {
@@ -47,7 +48,7 @@ public class ClassComplexityInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
             final int totalComplexity = calculateTotalComplexity(aClass);
             if (totalComplexity <= getLimit()) {

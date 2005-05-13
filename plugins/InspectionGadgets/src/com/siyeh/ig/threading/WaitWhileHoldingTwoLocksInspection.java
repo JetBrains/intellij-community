@@ -3,6 +3,7 @@ package com.siyeh.ig.threading;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class WaitWhileHoldingTwoLocksInspection extends ExpressionInspection {
 
@@ -29,7 +30,7 @@ public class WaitWhileHoldingTwoLocksInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (m_numLocksHeld < 2) {
                 return;
@@ -72,7 +73,7 @@ public class WaitWhileHoldingTwoLocksInspection extends ExpressionInspection {
             registerMethodCallError(expression);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
                 m_numLocksHeld++;
             }
@@ -82,7 +83,7 @@ public class WaitWhileHoldingTwoLocksInspection extends ExpressionInspection {
             }
         }
 
-        public void visitSynchronizedStatement(PsiSynchronizedStatement psiSynchronizedStatement) {
+        public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement psiSynchronizedStatement) {
             m_numLocksHeld++;
             super.visitSynchronizedStatement(psiSynchronizedStatement);
             m_numLocksHeld--;

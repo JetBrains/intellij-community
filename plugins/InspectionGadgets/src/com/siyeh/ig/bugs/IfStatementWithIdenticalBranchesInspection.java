@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import org.jetbrains.annotations.NotNull;
 
 public class IfStatementWithIdenticalBranchesInspection extends StatementInspection{
     private InspectionGadgetsFix fix = new CollapseIfFix();
@@ -32,12 +33,12 @@ public class IfStatementWithIdenticalBranchesInspection extends StatementInspect
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement identifier = descriptor.getPsiElement();
             final PsiIfStatement statement =
                     (PsiIfStatement) identifier.getParent();
             final String bodyText = statement.getThenBranch().getText();
-            replaceStatement(project, statement, bodyText);
+            replaceStatement(statement, bodyText);
         }
     }
 
@@ -53,7 +54,7 @@ public class IfStatementWithIdenticalBranchesInspection extends StatementInspect
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitIfStatement(PsiIfStatement statement){
+        public void visitIfStatement(@NotNull PsiIfStatement statement){
             super.visitIfStatement(statement);
             final PsiStatement thenBranch = statement.getThenBranch();
             final PsiStatement elseBranch = statement.getElseBranch();

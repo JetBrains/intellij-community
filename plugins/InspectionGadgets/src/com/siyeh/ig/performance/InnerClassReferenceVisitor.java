@@ -3,6 +3,7 @@ package com.siyeh.ig.performance;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
     private PsiClass innerClass;
@@ -40,7 +41,7 @@ class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
         return true;
     }
 
-    public void visitThisExpression(PsiThisExpression expression){
+    public void visitThisExpression(@NotNull PsiThisExpression expression){
         if(!referencesStaticallyAccessible)
         {
             return;
@@ -72,7 +73,7 @@ class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
                 aClass.hasModifierProperty(PsiModifier.STATIC);
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression referenceExpression) {
         if(!referencesStaticallyAccessible){
             return;
         }

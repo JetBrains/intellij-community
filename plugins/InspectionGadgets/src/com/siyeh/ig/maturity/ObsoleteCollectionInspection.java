@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.VariableInspection;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -48,7 +49,7 @@ public class ObsoleteCollectionInspection extends VariableInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitVariable(PsiVariable variable){
+        public void visitVariable(@NotNull PsiVariable variable){
             super.visitVariable(variable);
             final PsiType type = variable.getType();
             if(!isObsoleteCollectionType(type)){
@@ -58,7 +59,7 @@ public class ObsoleteCollectionInspection extends VariableInspection{
             registerError(typeElement);
         }
 
-        public void visitNewExpression(PsiNewExpression newExpression){
+        public void visitNewExpression(@NotNull PsiNewExpression newExpression){
             super.visitNewExpression(newExpression);
             final PsiType type = newExpression.getType();
             if(!isObsoleteCollectionType(type)){

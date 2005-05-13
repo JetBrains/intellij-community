@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class CStyleArrayDeclarationInspection extends ClassInspection {
     private final CStyleArrayDeclarationFix fix = new CStyleArrayDeclarationFix();
@@ -33,7 +34,7 @@ public class CStyleArrayDeclarationInspection extends ClassInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement nameElement = descriptor.getPsiElement();
             final PsiVariable var = (PsiVariable) nameElement.getParent();
             try {
@@ -58,7 +59,7 @@ public class CStyleArrayDeclarationInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             final boolean wasInClass = m_inClass;
             if (!m_inClass) {
 
@@ -68,7 +69,7 @@ public class CStyleArrayDeclarationInspection extends ClassInspection {
             m_inClass = wasInClass;
         }
 
-        public void visitVariable(PsiVariable var) {
+        public void visitVariable(@NotNull PsiVariable var) {
             super.visitVariable(var);
             final PsiType declaredType = var.getType();
             if(declaredType.getArrayDimensions()==0)

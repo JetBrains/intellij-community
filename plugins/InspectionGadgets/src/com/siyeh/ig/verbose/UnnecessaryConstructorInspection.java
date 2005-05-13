@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryConstructorInspection extends ClassInspection {
     private final UnnecessaryConstructorFix fix = new UnnecessaryConstructorFix();
@@ -38,7 +39,7 @@ public class UnnecessaryConstructorInspection extends ClassInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement nameIdentifier = descriptor.getPsiElement();
             final PsiElement constructor = nameIdentifier.getParent();
             deleteElement(constructor);
@@ -51,7 +52,7 @@ public class UnnecessaryConstructorInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
 
             final PsiMethod[] constructors = aClass.getConstructors();
             if (constructors == null) {

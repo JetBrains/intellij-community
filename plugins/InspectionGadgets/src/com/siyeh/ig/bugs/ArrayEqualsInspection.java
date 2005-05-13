@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class ArrayEqualsInspection extends ExpressionInspection{
     private InspectionGadgetsFix fix = new ArrayEqualsFix();
@@ -34,7 +35,7 @@ public class ArrayEqualsInspection extends ExpressionInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiIdentifier name =
                     (PsiIdentifier) descriptor.getPsiElement();
             final PsiReferenceExpression expression =
@@ -87,7 +88,7 @@ public class ArrayEqualsInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();

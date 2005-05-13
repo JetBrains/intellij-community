@@ -8,6 +8,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class OverlyStrongTypeCastInspection extends ExpressionInspection {
 
@@ -35,7 +36,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement castTypeElement = descriptor.getPsiElement();
             final PsiTypeCastExpression expression =
                     (PsiTypeCastExpression) castTypeElement.getParent();
@@ -45,7 +46,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             final String newExpression =
                     '(' + expectedType.getPresentableText() + ')' +
                     operand.getText();
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(expression, newExpression);
         }
     }
 
@@ -58,7 +59,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+        public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);
             final PsiExpression operand = expression.getOperand();
             if (operand == null) {

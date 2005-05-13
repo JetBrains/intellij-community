@@ -12,6 +12,8 @@ import com.siyeh.ig.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jetbrains.annotations.NotNull;
+
 public class ConfusingFloatingPointLiteralInspection extends ExpressionInspection {
     private static final Pattern pickyFloatingPointPattern =
             Pattern.compile("[0-9]+\\.[0-9]+((e|E)(-)?[0-9]+)?(f|F|d|D)?");
@@ -39,11 +41,11 @@ public class ConfusingFloatingPointLiteralInspection extends ExpressionInspectio
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiExpression literalExpression = (PsiExpression) descriptor.getPsiElement();
             final String text = literalExpression.getText();
             final String newText = getCanonicalForm(text);
-            replaceExpression(project, literalExpression, newText);
+            replaceExpression(literalExpression, newText);
         }
 
         private static String getCanonicalForm(String text) {
@@ -98,7 +100,7 @@ public class ConfusingFloatingPointLiteralInspection extends ExpressionInspectio
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLiteralExpression(PsiLiteralExpression literal) {
+        public void visitLiteralExpression(@NotNull PsiLiteralExpression literal) {
             super.visitLiteralExpression(literal);
             final PsiType type = literal.getType();
             if (type == null) {

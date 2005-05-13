@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class ConstantDeclaredInInterfaceInspection extends FieldInspection {
 
@@ -32,7 +33,7 @@ public class ConstantDeclaredInInterfaceInspection extends FieldInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
             //no call to super, so we don't drill into anonymous classes
             final PsiClass containingClass = field.getContainingClass();
             if (containingClass == null) {

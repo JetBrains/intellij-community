@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class ClassWithoutToStringInspection extends ClassInspection {
 
@@ -31,7 +32,7 @@ public class ClassWithoutToStringInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             //don't call super, to prevent drilldown
             if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
                 return;

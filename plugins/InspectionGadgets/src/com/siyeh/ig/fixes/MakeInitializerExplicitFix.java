@@ -14,7 +14,7 @@ public class MakeInitializerExplicitFix extends InspectionGadgetsFix{
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor){
-        if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+        if(isQuickFixOnReadOnlyFile(descriptor)) return;
         try{
             final PsiElement fieldName = descriptor.getPsiElement();
             final PsiField field = (PsiField) fieldName.getParent();

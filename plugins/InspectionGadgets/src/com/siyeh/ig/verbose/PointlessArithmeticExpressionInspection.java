@@ -13,6 +13,8 @@ import com.siyeh.ig.psiutils.WellFormednessUtils;
 import java.util.Set;
 import java.util.HashSet;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PointlessArithmeticExpressionInspection extends ExpressionInspection {
 
 
@@ -79,10 +81,10 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
             final String newExpression = calculateReplacementExpression(expression);
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(expression, newExpression);
         }
 
     }
@@ -105,11 +107,11 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
            //to avoid drilldown
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;

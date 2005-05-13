@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.NormalizeDeclarationFix;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +67,7 @@ public class MultipleTypedDeclarationInspection extends VariableInspection {
             }
         }
 
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
             super.visitField(field);
             if (!childrenContainTypeElement(field)) {
                 return;

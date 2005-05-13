@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.VariableInspection;
+import org.jetbrains.annotations.NotNull;
 
 public class RawUseOfParameterizedTypeInspection extends VariableInspection {
 
@@ -30,25 +31,25 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitVariable(PsiVariable variable) {
+        public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final PsiTypeElement typeElement = variable.getTypeElement();
             checkTypeElement(typeElement);
         }
 
-        public void visitTypeCastExpression(PsiTypeCastExpression cast) {
+        public void visitTypeCastExpression(@NotNull PsiTypeCastExpression cast) {
             super.visitTypeCastExpression(cast);
             final PsiTypeElement typeElement = cast.getCastType();
             checkTypeElement(typeElement);
         }
 
-        public void visitInstanceOfExpression(PsiInstanceOfExpression expression){
+        public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression){
             super.visitInstanceOfExpression(expression);
             final PsiTypeElement typeElement = expression.getCheckType();
             checkTypeElement(typeElement);
         }
 
-        public void visitNewExpression(PsiNewExpression newExpression){
+        public void visitNewExpression(@NotNull PsiNewExpression newExpression){
             super.visitNewExpression(newExpression);
             final PsiJavaCodeReferenceElement classReference =
                     newExpression.getClassReference();

@@ -8,9 +8,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 public class PointlessBooleanExpressionInspection extends ExpressionInspection{
     private final BooleanLiteralComparisonFix fix =
@@ -117,20 +118,20 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement element = descriptor.getPsiElement();
             if(element instanceof PsiBinaryExpression){
                 final PsiBinaryExpression expression =
                         (PsiBinaryExpression) element;
                 final String replacementString =
                         calculateSimplifiedBinaryExpression(expression);
-                replaceExpression(project, expression, replacementString);
+                replaceExpression(expression, replacementString);
             } else{
                 final PsiPrefixExpression expression =
                         (PsiPrefixExpression) element;
                 final String replacementString =
                         calculateSimplifiedPrefixExpression(expression);
-                replaceExpression(project, expression, replacementString);
+                replaceExpression(expression, replacementString);
             }
         }
     }
@@ -155,11 +156,11 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             //to avoid drilldown
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression expression){
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression){
             super.visitBinaryExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
@@ -210,7 +211,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
             registerError(expression);
         }
 
-        public void visitPrefixExpression(PsiPrefixExpression expression){
+        public void visitPrefixExpression(@NotNull PsiPrefixExpression expression){
             super.visitPrefixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
             if(sign == null){

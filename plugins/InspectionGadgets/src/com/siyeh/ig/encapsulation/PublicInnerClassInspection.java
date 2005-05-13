@@ -7,6 +7,7 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.MoveClassFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class PublicInnerClassInspection extends ClassInspection {
     private final MoveClassFix fix = new MoveClassFix();
@@ -40,7 +41,7 @@ public class PublicInnerClassInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
                 return;
             }

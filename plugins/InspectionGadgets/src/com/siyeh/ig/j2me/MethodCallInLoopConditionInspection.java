@@ -3,6 +3,7 @@ package com.siyeh.ig.j2me;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class MethodCallInLoopConditionInspection extends StatementInspection {
 
@@ -27,7 +28,7 @@ public class MethodCallInLoopConditionInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitForStatement(PsiForStatement statement) {
+        public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiExpression condition = statement.getCondition();
             if(condition== null)
@@ -37,7 +38,7 @@ public class MethodCallInLoopConditionInspection extends StatementInspection {
             checkForMethodCalls(condition);
         }
 
-        public void visitWhileStatement(PsiWhileStatement statement) {
+        public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             final PsiExpression condition = statement.getCondition();
             if(condition == null){
@@ -47,7 +48,7 @@ public class MethodCallInLoopConditionInspection extends StatementInspection {
         }
 
 
-        public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+        public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
             final PsiExpression condition = statement.getCondition();
             if(condition == null){
@@ -58,7 +59,7 @@ public class MethodCallInLoopConditionInspection extends StatementInspection {
 
         private void checkForMethodCalls(PsiExpression condition){
             final PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor(){
-                public void visitMethodCallExpression(PsiMethodCallExpression expression){
+                public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
                     super.visitMethodCallExpression(expression);
                     registerMethodCallError(expression);
                 }

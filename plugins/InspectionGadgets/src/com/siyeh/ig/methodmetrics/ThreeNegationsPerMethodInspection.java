@@ -10,10 +10,12 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class ThreeNegationsPerMethodInspection extends MethodInspection {
+    /** @noinspection PublicField*/
     public boolean m_ignoreInEquals = true;
 
     public String getID(){
@@ -49,7 +51,7 @@ public class ThreeNegationsPerMethodInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             final NegationCountVisitor visitor = new NegationCountVisitor();
             method.accept(visitor);
@@ -58,7 +60,8 @@ public class ThreeNegationsPerMethodInspection extends MethodInspection {
                 return;
             }
             if(m_ignoreInEquals){
-                if("equals".equals(method.getName())){
+                final String methodName = method.getName();
+                if("equals".equals(methodName)){
                     final PsiParameterList parameterList =
                             method.getParameterList();
                     final PsiParameter[] parameters = parameterList.getParameters();

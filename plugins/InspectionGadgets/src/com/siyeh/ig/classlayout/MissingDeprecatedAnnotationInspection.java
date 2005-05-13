@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class MissingDeprecatedAnnotationInspection extends ClassInspection{
     private final MissingDeprecatedAnnotationFix fix = new MissingDeprecatedAnnotationFix();
@@ -37,7 +38,7 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiElement identifier = descriptor.getPsiElement();
@@ -77,7 +78,7 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             super.visitClass(aClass);
             final boolean wasInClass = inClass;
             if(!inClass){
@@ -100,7 +101,7 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
             inClass = wasInClass;
         }
 
-        public void visitMethod(PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method){
             final PsiManager manager = method.getManager();
             final LanguageLevel languageLevel =
                     manager.getEffectiveLanguageLevel();
@@ -117,7 +118,7 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
             registerMethodError(method);
         }
 
-        public void visitField(PsiField field){
+        public void visitField(@NotNull PsiField field){
             final PsiManager manager = field.getManager();
             final LanguageLevel languageLevel =
                     manager.getEffectiveLanguageLevel();

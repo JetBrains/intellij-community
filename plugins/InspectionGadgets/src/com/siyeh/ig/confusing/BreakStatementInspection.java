@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class BreakStatementInspection extends StatementInspection {
 
@@ -28,7 +29,7 @@ public class BreakStatementInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBreakStatement(PsiBreakStatement statement) {
+        public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
             super.visitBreakStatement(statement);
 
             final PsiSwitchStatement switchStatement =

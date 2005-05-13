@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class CovariantCompareToInspection extends MethodInspection {
     private static final String COMPARE_TO_METHOD_NAME = "compareTo";
@@ -33,7 +34,7 @@ public class CovariantCompareToInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             final String name = method.getName();
             if (!COMPARE_TO_METHOD_NAME.equals(name)) {

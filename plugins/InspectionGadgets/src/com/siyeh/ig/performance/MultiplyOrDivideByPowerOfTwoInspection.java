@@ -9,6 +9,7 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection {
     private final MultiplyByPowerOfTwoFix fix = new MultiplyByPowerOfTwoFix();
@@ -88,10 +89,10 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
             final String newExpression = calculateReplacementShift(expression);
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(expression, newExpression);
         }
 
     }
@@ -101,7 +102,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression))
             {
@@ -128,7 +129,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
             registerError(expression);
         }
 
-        public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;

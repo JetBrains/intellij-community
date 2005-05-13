@@ -1,6 +1,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 class ParameterClassCheckVisitor
         extends PsiRecursiveElementVisitor{
@@ -13,13 +14,13 @@ class ParameterClassCheckVisitor
         this.parameter = parameter;
     }
 
-    public void visitElement(PsiElement element){
+    public void visitElement(@NotNull PsiElement element){
         if(!checked){
             super.visitElement(element);
         }
     }
 
-    public void visitMethodCallExpression(PsiMethodCallExpression expression){
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
         if(checked){
             return;
         }
@@ -49,7 +50,7 @@ class ParameterClassCheckVisitor
         }
     }
 
-    public void visitInstanceOfExpression(PsiInstanceOfExpression expression){
+    public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression){
         if(checked){
             return;
         }

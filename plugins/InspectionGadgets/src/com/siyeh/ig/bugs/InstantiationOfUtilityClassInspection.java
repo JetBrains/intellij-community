@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class InstantiationOfUtilityClassInspection extends ExpressionInspection{
 
@@ -31,7 +32,7 @@ public class InstantiationOfUtilityClassInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitNewExpression(PsiNewExpression expression){
+        public void visitNewExpression(@NotNull PsiNewExpression expression){
             final PsiType type = expression.getType();
             if(!(type instanceof PsiClassType))
             {

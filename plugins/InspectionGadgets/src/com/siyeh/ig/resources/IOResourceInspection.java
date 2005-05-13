@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class IOResourceInspection extends ExpressionInspection{
     public String getID(){
@@ -41,7 +42,7 @@ public class IOResourceInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitNewExpression(PsiNewExpression expression){
+        public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
             if(!isIOResource(expression)){
                 return;
@@ -137,13 +138,13 @@ public class IOResourceInspection extends ExpressionInspection{
             this.streamToClose = streamToClose;
         }
 
-        public void visitElement(PsiElement element){
+        public void visitElement(@NotNull PsiElement element){
             if(!containsStreamClose){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression call){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
             if(containsStreamClose){
                 return;
             }
@@ -188,7 +189,7 @@ public class IOResourceInspection extends ExpressionInspection{
             this.ioResource = ioResource;
         }
 
-        public void visitNewExpression(PsiNewExpression expression){
+        public void visitNewExpression(@NotNull PsiNewExpression expression){
             if(usedAsArgToResourceCreation){
                 return;
             }

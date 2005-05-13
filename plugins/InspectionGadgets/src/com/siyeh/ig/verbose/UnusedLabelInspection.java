@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class UnusedLabelInspection extends StatementInspection{
     private final UnusedLabelFix fix = new UnusedLabelFix();
@@ -40,7 +41,7 @@ public class UnusedLabelInspection extends StatementInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiElement label = descriptor.getPsiElement();
@@ -48,7 +49,7 @@ public class UnusedLabelInspection extends StatementInspection{
                     (PsiLabeledStatement) label.getParent();
             final PsiStatement labeledStatement = statement.getStatement();
             final String statementText = labeledStatement.getText();
-            replaceStatement(project, statement, statementText);
+            replaceStatement(statement, statementText);
         }
     }
 
@@ -85,13 +86,13 @@ public class UnusedLabelInspection extends StatementInspection{
             label = labelIdentifier.getText();
         }
 
-        public void visitElement(PsiElement element){
+        public void visitElement(@NotNull PsiElement element){
             if(!found){
                 super.visitElement(element);
             }
         }
 
-        public void visitContinueStatement(PsiContinueStatement continueStatement){
+        public void visitContinueStatement(@NotNull PsiContinueStatement continueStatement){
             if(found){
                 return;
             }
@@ -104,7 +105,7 @@ public class UnusedLabelInspection extends StatementInspection{
             }
         }
 
-        public void visitBreakStatement(PsiBreakStatement breakStatement){
+        public void visitBreakStatement(@NotNull PsiBreakStatement breakStatement){
             if(found){
                 return;
             }

@@ -1,11 +1,13 @@
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -63,7 +65,7 @@ public class ClassUtils {
         super();
     }
 
-    public static boolean isSubclass(PsiClass aClass, String ancestorName) {
+    public static boolean isSubclass(@NotNull PsiClass aClass, String ancestorName) {
         final PsiManager psiManager = aClass.getManager();
         final Project project = psiManager.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -92,9 +94,17 @@ public class ClassUtils {
         return immutableTypes.contains(className);
     }
 
-    private static boolean inSamePackage(PsiClass class1, PsiClass class2) {
+    private static boolean inSamePackage(@Nullable PsiClass class1,
+                                         @Nullable PsiClass class2) {
+        if(class1 == null || class2==null){
+            return false;
+        }
         final String className1 = class1.getQualifiedName();
         if (className1 == null) {
+            return false;
+        }
+        final String className2 = class2.getQualifiedName();
+        if (className2 == null) {
             return false;
         }
         final int packageLength1 = className1.lastIndexOf((int) '.');
@@ -103,10 +113,6 @@ public class ClassUtils {
             classPackageName1 = "";
         } else {
             classPackageName1 = className1.substring(0, packageLength1);
-        }
-        final String className2 = class2.getQualifiedName();
-        if (className2 == null) {
-            return false;
         }
         final int packageLength2 = className2.lastIndexOf((int) '.');
         final String classPackageName2;

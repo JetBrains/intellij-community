@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class IncrementDecrementUsedAsExpressionInspection extends ExpressionInspection {
     public String getID(){
@@ -50,7 +51,7 @@ public class IncrementDecrementUsedAsExpressionInspection extends ExpressionInsp
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitPostfixExpression(PsiPostfixExpression expression) {
+        public void visitPostfixExpression(@NotNull PsiPostfixExpression expression) {
             super.visitPostfixExpression(expression);
             if(expression.getParent() instanceof PsiExpressionStatement ||
                                     (expression.getParent() instanceof PsiExpressionList &&
@@ -69,7 +70,7 @@ public class IncrementDecrementUsedAsExpressionInspection extends ExpressionInsp
             registerError(expression);
         }
 
-        public void visitPrefixExpression(PsiPrefixExpression expression) {
+        public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
 
             if (expression.getParent() instanceof PsiExpressionStatement ||

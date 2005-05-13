@@ -11,10 +11,11 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-import java.util.HashSet;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
   private final static Set<String> INTERFACE_REDUNDANT_MODIFIERS = new HashSet<String>(
@@ -113,7 +114,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
-      if (isQuickFixOnReadOnlyFile(project, descriptor)) return;
+      if (isQuickFixOnReadOnlyFile(descriptor)) return;
       try {
         final PsiElement element = descriptor.getPsiElement();
         final PsiModifierList modifierList;
@@ -144,7 +145,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
       super(inspection, inspectionManager, isOnTheFly);
     }
 
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       if (aClass.isInterface()) {
         final PsiModifierList modifiers = aClass.getModifierList();
         checkForRedundantModifiers(modifiers, INTERFACE_REDUNDANT_MODIFIERS);
@@ -156,7 +157,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
       }
     }
 
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
       // don't call super, to keep this from drilling in
       final PsiClass containingClass = field.getContainingClass();
       if (containingClass == null) {
@@ -169,7 +170,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
       checkForRedundantModifiers(modifiers, FIELD_REDUNDANT_MODIFIERS);
     }
 
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       // don't call super, to keep this from drilling in
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null) {

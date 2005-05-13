@@ -1,6 +1,8 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -152,7 +154,7 @@ public class CollectionUtils{
         super();
     }
 
-    public static boolean isCollectionWithInitialCapacity(PsiType type){
+    public static boolean isCollectionWithInitialCapacity(@Nullable PsiType type){
         if(!(type instanceof PsiClassType)) {
             return false;
         }
@@ -165,7 +167,7 @@ public class CollectionUtils{
         return s_collectionClassesRequiringCapacity.contains(className);
     }
 
-    public static boolean isCollectionClass(PsiType type){
+    public static boolean isCollectionClass(@Nullable PsiType type){
         if(!(type instanceof PsiClassType)) {
             return false;
         }
@@ -178,7 +180,7 @@ public class CollectionUtils{
         return s_allCollectionClasses.contains(className);
     }
 
-    public static boolean isCollectionClassOrInterface(PsiType type){
+    public static boolean isCollectionClassOrInterface(@Nullable PsiType type){
         if(!(type instanceof PsiClassType)) {
             return false;
         }
@@ -190,7 +192,10 @@ public class CollectionUtils{
         final String className = resolved.getQualifiedName();
         return s_allCollectionClassesAndInterfaces.contains(className);
     }
-    public static boolean isWeakCollectionClass(PsiType type){
+    public static boolean isWeakCollectionClass(@Nullable PsiType type){
+        if(!(type instanceof PsiClassType)){
+            return false;
+        }
         final String typeText = type.getCanonicalText();
         if(typeText == null)
         {
@@ -199,7 +204,7 @@ public class CollectionUtils{
         return "java.util.WeakHashMap".equals(typeText);
     }
 
-    public static boolean isConstantArrayOfZeroSize(PsiField field){
+    public static boolean isConstantArrayOfZeroSize(@NotNull PsiField field){
         if(!field.hasModifierProperty(PsiModifier.STATIC) ||
                 !field.hasModifierProperty(PsiModifier.FINAL)) {
             return false;
@@ -223,7 +228,7 @@ public class CollectionUtils{
         return false;
     }
 
-    public static boolean isArrayOrCollectionField(PsiExpression value){
+    public static boolean isArrayOrCollectionField(@Nullable PsiExpression value){
         if(!(value instanceof PsiReferenceExpression)) {
             return false;
         }

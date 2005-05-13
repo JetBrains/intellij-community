@@ -9,6 +9,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspection {
     private final AbstractMethodOverridesAbstractMethodFix fix = new AbstractMethodOverridesAbstractMethodFix();
@@ -35,7 +36,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspe
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement methodNameIdentifier = descriptor.getPsiElement();
             final PsiElement method = methodNameIdentifier.getParent();
             deleteElement(method);
@@ -52,7 +53,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspe
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes
             if (method.isConstructor()) {
                 return;

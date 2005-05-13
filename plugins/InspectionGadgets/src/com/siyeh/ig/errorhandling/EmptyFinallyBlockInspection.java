@@ -5,6 +5,7 @@ import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTryStatement;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class EmptyFinallyBlockInspection extends StatementInspection {
 
@@ -32,7 +33,7 @@ public class EmptyFinallyBlockInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitTryStatement(PsiTryStatement statement) {
+        public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             final PsiCodeBlock finallyBlock = statement.getFinallyBlock();
             if (finallyBlock == null) {

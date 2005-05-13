@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class ObjectEqualsNullInspection extends ExpressionInspection {
 
@@ -34,7 +35,7 @@ public class ObjectEqualsNullInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression call) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression = call.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();

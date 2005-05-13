@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class ClassNestingDepthInspection
         extends ClassMetricInspection {
@@ -45,7 +46,7 @@ public class ClassNestingDepthInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
 
             final int nestingLevel = getNestingLevel(aClass);

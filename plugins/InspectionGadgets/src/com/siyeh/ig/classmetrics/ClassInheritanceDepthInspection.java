@@ -1,13 +1,14 @@
 package com.siyeh.ig.classmetrics;
 
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.PsiAnonymousClass;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -50,7 +51,7 @@ public class ClassInheritanceDepthInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.isEnum()) {
                 return;
             }

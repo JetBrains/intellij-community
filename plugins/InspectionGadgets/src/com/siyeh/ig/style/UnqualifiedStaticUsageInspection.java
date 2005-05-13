@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -92,14 +93,14 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiReferenceExpression expression =
                     (PsiReferenceExpression) descriptor.getPsiElement();
             final PsiMember member = (PsiMember) expression.resolve();
             final PsiClass containingClass = member.getContainingClass();
             final String className = containingClass.getName();
             final String text = expression.getText();
-            replaceExpression(project, expression, className + '.' + text);
+            replaceExpression(expression, className + '.' + text);
         }
     }
 
@@ -108,7 +109,7 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (m_ignoreStaticMethodCalls) {
                 return;
@@ -120,7 +121,7 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
             registerError(methodExpression);
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             if (m_ignoreStaticFieldAccesses) {
                 return;

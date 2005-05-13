@@ -11,6 +11,8 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public class IncompatibleMaskInspection extends ExpressionInspection{
     public String getID(){
@@ -53,7 +55,7 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression expression){
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression){
             super.visitBinaryExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
@@ -91,6 +93,7 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
         }
     }
 
+    @Nullable
     private static PsiExpression stripExpression(PsiExpression exp){
         if(exp == null){
             return null;

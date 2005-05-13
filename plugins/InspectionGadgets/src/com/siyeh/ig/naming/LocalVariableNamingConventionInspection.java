@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -89,7 +90,7 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLocalVariable(PsiLocalVariable variable) {
+        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             if (m_ignoreForLoopParameters) {
                 final PsiElement declStatement = variable.getParent();
@@ -111,7 +112,7 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
             registerVariableError(variable);
         }
 
-        public void visitParameter(PsiParameter variable) {
+        public void visitParameter(@NotNull PsiParameter variable) {
             final boolean isCatchParameter =
                     variable.getDeclarationScope() instanceof PsiCatchSection;
             if (!isCatchParameter) {

@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class BooleanConstructorInspection extends ExpressionInspection{
     private final BooleanConstructorFix fix = new BooleanConstructorFix();
@@ -47,7 +48,7 @@ public class BooleanConstructorInspection extends ExpressionInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiNewExpression expression =
@@ -78,7 +79,7 @@ public class BooleanConstructorInspection extends ExpressionInspection{
             } else{
                 newExpression = "Boolean.valueOf(" + text + ')';
             }
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(expression, newExpression);
         }
     }
 
@@ -90,7 +91,7 @@ public class BooleanConstructorInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitNewExpression(PsiNewExpression expression){
+        public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
             final PsiType type = expression.getType();
             if(!TypeUtils.typeEquals("java.lang.Boolean", type)){

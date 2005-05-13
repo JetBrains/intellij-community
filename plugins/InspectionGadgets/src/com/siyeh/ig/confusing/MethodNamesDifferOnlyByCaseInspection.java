@@ -7,6 +7,7 @@ import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
 public class MethodNamesDifferOnlyByCaseInspection extends MethodInspection {
     public String getID(){
@@ -44,7 +45,7 @@ public class MethodNamesDifferOnlyByCaseInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             if (method.isConstructor()) {
                 return;
             }

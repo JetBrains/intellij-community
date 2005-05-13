@@ -11,6 +11,8 @@ import com.siyeh.ig.*;
 import java.util.Set;
 import java.util.HashSet;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
 
     private final PointlessBitwiseFix fix = new PointlessBitwiseFix();
@@ -83,10 +85,10 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
             final String newExpression = calculateReplacementExpression(expression);
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(expression, newExpression);
         }
 
     }
@@ -111,10 +113,10 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             //to avoid drilldown
         }
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
             if(sign == null){

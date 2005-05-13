@@ -39,7 +39,7 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiElement extendClassIdentifier = descriptor.getPsiElement();

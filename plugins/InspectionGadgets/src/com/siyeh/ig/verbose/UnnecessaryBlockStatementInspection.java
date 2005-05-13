@@ -12,6 +12,8 @@ import com.siyeh.ig.*;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 public class UnnecessaryBlockStatementInspection extends StatementInspection{
     private final UnnecessaryBlockFix fix = new UnnecessaryBlockFix();
 
@@ -47,7 +49,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiElement leftBrace = descriptor.getPsiElement();
@@ -167,7 +169,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
             this.exceptBlock = exceptBlock;
         }
 
-        public void visitElement(PsiElement element){
+        public void visitElement(@NotNull PsiElement element){
             if(!hasConflictingDeclaration)
                 super.visitElement(element);
         }
@@ -182,7 +184,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
             super.visitCodeBlock(block);
         }
 
-        public void visitVariable(PsiVariable variable){
+        public void visitVariable(@NotNull PsiVariable variable){
             if(hasConflictingDeclaration){
                 return;
             }

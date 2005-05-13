@@ -10,6 +10,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ShiftOutOfRangeInspection extends ExpressionInspection{
     public String getDisplayName(){
@@ -29,7 +30,7 @@ public class ShiftOutOfRangeInspection extends ExpressionInspection{
         final PsiExpression rhs = binaryExp.getROperand();
         final Integer value = (Integer) ConstantExpressionUtil.computeCastTo(rhs,
                                                                   PsiType.INT);
-        if((value)>0){
+        if(value>0){
             return "Shift operation #ref by overly large constant value #loc";
         } else{
             return "Shift operation #ref by negative constant value #loc";
@@ -48,7 +49,7 @@ public class ShiftOutOfRangeInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression expression){
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression){
             super.visitBinaryExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
@@ -76,15 +77,14 @@ public class ShiftOutOfRangeInspection extends ExpressionInspection{
             {
                 return;
             }
-            final int value = valueObject;
             if(expressionType.equals(PsiType.LONG)){
-                if(value < 0 || value>63)
+                if(valueObject < 0 || valueObject>63)
                 {
                     registerError(sign);
                 }
             }
             if(expressionType.equals(PsiType.INT)){
-                if(value < 0 || value > 31){
+                if(valueObject < 0 || valueObject > 31){
                     registerError(sign);
                 }
             }

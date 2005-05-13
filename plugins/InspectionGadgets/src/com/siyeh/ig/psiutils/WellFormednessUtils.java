@@ -4,21 +4,22 @@ import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
+import org.jetbrains.annotations.NotNull;
 
 public class WellFormednessUtils{
     private WellFormednessUtils(){
         super();
     }
 
-    public static boolean isWellFormed(PsiBinaryExpression expression)
+    public static boolean isWellFormed(@NotNull PsiBinaryExpression expression)
     {
         final PsiExpression lhs = expression.getLOperand();
-        if(lhs == null || !lhs.isValid())
+        if(lhs == null )
         {
             return false;
         }
         final PsiExpression rhs = expression.getROperand();
-        if(rhs == null || !rhs.isValid())
+        if(rhs == null )
         {
             return false;
         }
@@ -26,7 +27,7 @@ public class WellFormednessUtils{
         return operationSign != null;
     }
 
-    public static boolean isWellFormed(PsiAssignmentExpression expression){
+    public static boolean isWellFormed(@NotNull PsiAssignmentExpression expression){
         final PsiExpression lhs = expression.getLExpression();
         if(lhs == null || !lhs.isValid()){
             return false;

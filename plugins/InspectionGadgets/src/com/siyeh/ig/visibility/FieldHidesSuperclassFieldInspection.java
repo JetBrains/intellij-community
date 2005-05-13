@@ -8,6 +8,7 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.HashSet;
@@ -56,7 +57,7 @@ public class FieldHidesSuperclassFieldInspection extends FieldInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
             final PsiClass aClass = field.getContainingClass();
             if (aClass == null) {
                 return;

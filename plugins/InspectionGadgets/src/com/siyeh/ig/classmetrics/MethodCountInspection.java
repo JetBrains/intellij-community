@@ -7,6 +7,7 @@ import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class MethodCountInspection
         extends ClassMetricInspection {
@@ -46,7 +47,7 @@ public class MethodCountInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
             final int totalComplexity = calculateTotalMethodCount(aClass);
             if (totalComplexity <= getLimit()) {

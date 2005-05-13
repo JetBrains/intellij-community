@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class NonThreadSafeLazyInitializationInspection extends ExpressionInspection {
 
@@ -31,7 +32,7 @@ public class NonThreadSafeLazyInitializationInspection extends ExpressionInspect
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitAssignmentExpression(PsiAssignmentExpression expression){
+        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression){
             super.visitAssignmentExpression(expression);
         }
 

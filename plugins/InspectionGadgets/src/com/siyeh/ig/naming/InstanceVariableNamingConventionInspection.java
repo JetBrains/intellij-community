@@ -11,6 +11,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
 public class InstanceVariableNamingConventionInspection extends ConventionInspection {
     private static final int DEFAULT_MIN_LENGTH = 5;
@@ -78,7 +79,7 @@ public class InstanceVariableNamingConventionInspection extends ConventionInspec
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
             super.visitField(field);
             if (field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;

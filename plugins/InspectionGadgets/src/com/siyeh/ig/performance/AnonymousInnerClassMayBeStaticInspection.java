@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
+import org.jetbrains.annotations.NotNull;
 
 public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
     private final MoveAnonymousToInnerClassFix fix = new MoveAnonymousToInnerClassFix() ;
@@ -38,7 +39,7 @@ public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             if(aClass instanceof PsiAnonymousClass)
             {
                 final PsiAnonymousClass anAnonymousClass = (PsiAnonymousClass) aClass;

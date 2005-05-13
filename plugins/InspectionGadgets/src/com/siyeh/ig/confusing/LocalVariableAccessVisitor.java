@@ -1,6 +1,7 @@
 package com.siyeh.ig.confusing;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -13,7 +14,7 @@ class LocalVariableAccessVisitor extends PsiRecursiveElementVisitor {
         super();
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression ref) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
         super.visitReferenceExpression(ref);
         final PsiExpression qualifier = ref.getQualifierExpression();
         if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {

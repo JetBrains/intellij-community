@@ -6,6 +6,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RemoveModifierFix;
+import org.jetbrains.annotations.NotNull;
 
 public class FinalPrivateMethodInspection extends MethodInspection {
     public String getDisplayName() {
@@ -36,7 +37,7 @@ public class FinalPrivateMethodInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes
             if (!method.hasModifierProperty(PsiModifier.FINAL)
                     || !method.hasModifierProperty(PsiModifier.PRIVATE)) {

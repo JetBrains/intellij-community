@@ -11,6 +11,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class DateToStringInspection extends ExpressionInspection {
     public String getID(){
@@ -37,7 +38,7 @@ public class DateToStringInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final String methodName = MethodCallUtils.getMethodName(expression);
             if (!"toString".equals(methodName)) {

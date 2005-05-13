@@ -5,6 +5,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.StringTokenizer;
 
@@ -41,7 +42,7 @@ public class ClassNamePrefixedWithPackageNameInspection extends ClassInspection 
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down into inner classes
             final String className = aClass.getName();
             final String qualifiedName = aClass.getQualifiedName();

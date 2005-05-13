@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReturnStatement;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ReturnFromFinallyBlockInspection extends StatementInspection{
     public String getID(){
@@ -41,7 +42,7 @@ public class ReturnFromFinallyBlockInspection extends StatementInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitReturnStatement(PsiReturnStatement statement){
+        public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);
             if(!ControlFlowUtils.isInFinallyBlock(statement)){
                 return;

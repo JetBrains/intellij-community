@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
 public class MethodNameSameAsParentNameInspection extends MethodInspection {
     private final RenameFix fix = new RenameFix();
@@ -39,7 +40,7 @@ public class MethodNameSameAsParentNameInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             // no call to super, so it doesn't drill down into inner classes
             if(method.isConstructor()){
                 return;

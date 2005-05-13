@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class OctalLiteralInspection extends ExpressionInspection{
     public String getID(){
@@ -42,7 +43,7 @@ public class OctalLiteralInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLiteralExpression(PsiLiteralExpression literal){
+        public void visitLiteralExpression(@NotNull PsiLiteralExpression literal){
             super.visitLiteralExpression(literal);
             final PsiType type = literal.getType();
             if(type == null){

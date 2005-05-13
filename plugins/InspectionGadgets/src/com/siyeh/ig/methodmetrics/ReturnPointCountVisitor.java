@@ -1,16 +1,17 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 class ReturnPointCountVisitor extends PsiRecursiveElementVisitor {
     private int m_count = 0;
 
 
-    public void visitAnonymousClass(PsiAnonymousClass aClass) {
+    public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
         // no call to super, to keep it from drilling into anonymous classes
     }
 
-    public void visitReturnStatement(PsiReturnStatement statement) {
+    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
         super.visitReturnStatement(statement);
         m_count++;
     }

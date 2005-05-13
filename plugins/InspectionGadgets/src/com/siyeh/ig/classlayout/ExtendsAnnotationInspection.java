@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ExtendsAnnotationInspection extends ClassInspection{
 
@@ -44,7 +45,7 @@ public class ExtendsAnnotationInspection extends ClassInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             final PsiManager manager = aClass.getManager();
             final LanguageLevel languageLevel =
                     manager.getEffectiveLanguageLevel();

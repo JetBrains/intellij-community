@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RemoveModifierFix;
+import org.jetbrains.annotations.NotNull;
 
 public class FinalClassInspection extends MethodInspection {
 
@@ -34,7 +35,7 @@ public class FinalClassInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             //no call to super, so we don't drill into inner classes
             if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
                 return;

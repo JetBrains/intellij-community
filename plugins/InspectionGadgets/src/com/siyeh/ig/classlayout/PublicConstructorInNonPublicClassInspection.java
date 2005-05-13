@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RemoveModifierFix;
+import org.jetbrains.annotations.NotNull;
 
 public class PublicConstructorInNonPublicClassInspection extends MethodInspection {
     public String getDisplayName() {
@@ -35,7 +36,7 @@ public class PublicConstructorInNonPublicClassInspection extends MethodInspectio
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes
             if (!method.isConstructor()) {
                 return;

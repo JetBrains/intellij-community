@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class SerializationUtils{
     private static final String SERIALIZABLE_CLASS_NAME = "java.io.Serializable";
@@ -14,7 +15,7 @@ public class SerializationUtils{
         super();
     }
 
-    public static boolean isSerializable(PsiClass aClass){
+    public static boolean isSerializable(@NotNull PsiClass aClass){
         final PsiManager manager = aClass.getManager();
         final Project project = manager.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -23,7 +24,7 @@ public class SerializationUtils{
         return InheritanceUtil.isInheritorOrSelf(aClass, serializable, true);
     }
 
-    public static boolean isExternalizable(PsiClass aClass){
+    public static boolean isExternalizable(@NotNull PsiClass aClass){
         final PsiManager manager = aClass.getManager();
         final Project project = manager.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -32,7 +33,7 @@ public class SerializationUtils{
         return InheritanceUtil.isInheritorOrSelf(aClass, serializable, true);
     }
 
-    public static boolean isDirectlySerializable(PsiClass aClass){
+    public static boolean isDirectlySerializable(@NotNull PsiClass aClass){
         final PsiReferenceList implementsList = aClass.getImplementsList();
         if(implementsList != null){
             final PsiJavaCodeReferenceElement[] interfaces = implementsList.getReferenceElements();
@@ -49,7 +50,7 @@ public class SerializationUtils{
         return false;
     }
 
-    public static boolean hasReadObject(PsiClass aClass){
+    public static boolean hasReadObject(@NotNull PsiClass aClass){
         final PsiMethod[] methods = aClass.getMethods();
         for(final PsiMethod method : methods){
             if(isReadObject(method)){
@@ -59,7 +60,7 @@ public class SerializationUtils{
         return false;
     }
 
-    public static boolean hasWriteObject(PsiClass aClass){
+    public static boolean hasWriteObject(@NotNull PsiClass aClass){
         final PsiMethod[] methods = aClass.getMethods();
         for(final PsiMethod method : methods){
             if(isWriteObject(method)){
@@ -69,7 +70,7 @@ public class SerializationUtils{
         return false;
     }
 
-    public static boolean isReadObject(PsiMethod method){
+    public static boolean isReadObject(@NotNull PsiMethod method){
         final String methodName = method.getName();
         if(!"readObject".equals(methodName)){
             return false;
@@ -87,7 +88,7 @@ public class SerializationUtils{
         return TypeUtils.typeEquals("void", returnType);
     }
 
-    public static boolean isWriteObject(PsiMethod method){
+    public static boolean isWriteObject(@NotNull PsiMethod method){
         final String methodName = method.getName();
         if(!"writeObject".equals(methodName)){
             return false;
@@ -105,7 +106,7 @@ public class SerializationUtils{
         return TypeUtils.typeEquals("void", returnType);
     }
 
-    public static boolean isReadResolve(PsiMethod method){
+    public static boolean isReadResolve(@NotNull PsiMethod method){
         final String methodName = method.getName();
         if(!"readResolve".equals(methodName)){
             return false;
@@ -119,7 +120,7 @@ public class SerializationUtils{
         return TypeUtils.isJavaLangObject(returnType);
     }
 
-    public static boolean isWriteReplace(PsiMethod method){
+    public static boolean isWriteReplace(@NotNull PsiMethod method){
         final String methodName = method.getName();
         if(!"writeReplace".equals(methodName)){
             return false;
@@ -133,7 +134,7 @@ public class SerializationUtils{
         return TypeUtils.isJavaLangObject(returnType);
     }
 
-    public static boolean typeIsSerializable(PsiType type){
+    public static boolean typeIsSerializable(@NotNull PsiType type){
         final PsiType componentType = type.getDeepComponentType();
         if(TypeConversionUtil.isPrimitiveAndNotNull(componentType)){
             return true;

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameterList;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
 public class MisspelledEqualsInspection extends MethodInspection {
     private final RenameFix fix = new RenameFix("equals");
@@ -31,15 +32,15 @@ public class MisspelledEqualsInspection extends MethodInspection {
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new MisspelledToStringVisitor(this, inspectionManager, onTheFly);
+        return new MisspelledEqualsVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class MisspelledToStringVisitor extends BaseInspectionVisitor {
-        private MisspelledToStringVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class MisspelledEqualsVisitor extends BaseInspectionVisitor {
+        private MisspelledEqualsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super
             final String methodName = method.getName();
             if (!"equal".equals(methodName)) {

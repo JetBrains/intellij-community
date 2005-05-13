@@ -1,13 +1,14 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class UtilityClassUtil {
     private UtilityClassUtil() {
         super();
     }
 
-    public static boolean isUtilityClass(PsiClass aClass) {
+    public static boolean isUtilityClass(@NotNull PsiClass aClass) {
         if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
             return false;
         }
@@ -35,7 +36,7 @@ public class UtilityClassUtil {
                 aClass.getFields().length == 0);
     }
 
-    private static boolean allFieldsStatic(PsiClass aClass) {
+    private static boolean allFieldsStatic(@NotNull PsiClass aClass) {
         boolean allFieldsStatic = true;
         final PsiField[] fields = aClass.getFields();
         for(final PsiField field : fields){
@@ -46,7 +47,7 @@ public class UtilityClassUtil {
         return allFieldsStatic;
     }
 
-    private static boolean allMethodsStatic(PsiClass aClass) {
+    private static boolean allMethodsStatic(@NotNull PsiClass aClass) {
         final PsiMethod[] methods = aClass.getMethods();
         for(final PsiMethod method : methods){
             if(!(method.isConstructor() ||

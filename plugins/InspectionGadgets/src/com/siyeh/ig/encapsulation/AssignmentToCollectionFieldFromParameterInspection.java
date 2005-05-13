@@ -9,6 +9,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToCollectionFieldFromParameterInspection
         extends ExpressionInspection{
@@ -58,7 +59,7 @@ public class AssignmentToCollectionFieldFromParameterInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitAssignmentExpression(
+        public void visitAssignmentExpression(@NotNull
                 PsiAssignmentExpression expression){
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){

@@ -3,6 +3,7 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +59,7 @@ public class ForLoopThatDoesntUseLoopVariableInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitForStatement(PsiForStatement statement){
+        public void visitForStatement(@NotNull PsiForStatement statement){
             super.visitForStatement(statement);
 
             if(conditionUsesInitializer(statement)
@@ -153,13 +154,13 @@ public class ForLoopThatDoesntUseLoopVariableInspection
             variable = var;
         }
 
-        public void visitElement(PsiElement element){
+        public void visitElement(@NotNull PsiElement element){
             if(!used){
                 super.visitElement(element);
             }
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression ref){
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
             if(used){
                 return;
             }

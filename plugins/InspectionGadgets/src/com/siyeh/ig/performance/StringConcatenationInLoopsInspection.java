@@ -11,6 +11,7 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -52,7 +53,7 @@ public class StringConcatenationInLoopsInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression))
             {
@@ -87,7 +88,7 @@ public class StringConcatenationInLoopsInspection extends ExpressionInspection {
         }
 
 
-        public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;

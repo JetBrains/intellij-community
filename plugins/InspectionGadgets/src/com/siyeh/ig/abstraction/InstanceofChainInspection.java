@@ -3,6 +3,7 @@ package com.siyeh.ig.abstraction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class InstanceofChainInspection extends StatementInspection {
 
@@ -31,7 +32,7 @@ public class InstanceofChainInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitIfStatement(PsiIfStatement statement) {
+        public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiElement parent = statement.getParent();
             if (parent instanceof PsiIfStatement) {

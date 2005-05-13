@@ -9,6 +9,7 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
 public class JUnitTestClassNamingConventionInspection extends ConventionInspection {
     private static final int DEFAULT_MIN_LENGTH = 8;
@@ -72,7 +73,7 @@ public class JUnitTestClassNamingConventionInspection extends ConventionInspecti
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
                 return;
             }

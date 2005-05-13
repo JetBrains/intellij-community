@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class InstanceofInterfacesInspection extends ExpressionInspection {
 
@@ -32,7 +33,7 @@ public class InstanceofInterfacesInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+        public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
             super.visitInstanceOfExpression(expression);
             final PsiTypeElement typeElement = expression.getCheckType();
             if (!ConcreteClassUtil.typeIsConcreteClass(typeElement)) {

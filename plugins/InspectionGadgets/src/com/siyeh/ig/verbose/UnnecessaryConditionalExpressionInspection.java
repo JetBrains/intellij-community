@@ -63,10 +63,10 @@ public class UnnecessaryConditionalExpressionInspection
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiConditionalExpression expression = (PsiConditionalExpression) descriptor.getPsiElement();
             final String newExpression = calculateReplacementExpression(expression);
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(expression, newExpression);
         }
     }
 

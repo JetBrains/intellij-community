@@ -6,6 +6,7 @@ import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class CyclomaticComplexityInspection
         extends MethodMetricInspection {
@@ -45,7 +46,7 @@ public class CyclomaticComplexityInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             final CyclomaticComplexityVisitor visitor = new CyclomaticComplexityVisitor();
             method.accept(visitor);

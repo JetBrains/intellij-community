@@ -12,6 +12,7 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -104,7 +105,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             final PsiType returnType = method.getReturnType();
             if(returnType== null)
@@ -128,7 +129,7 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
             registerMethodError(method);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             if(inClass){
                 return;
             }

@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiContinueStatement;
 import com.intellij.psi.PsiElement;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class ContinueStatementInspection extends StatementInspection {
 
@@ -28,7 +29,7 @@ public class ContinueStatementInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitContinueStatement(PsiContinueStatement statement) {
+        public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
             super.visitContinueStatement(statement);
             registerStatementError(statement);
         }

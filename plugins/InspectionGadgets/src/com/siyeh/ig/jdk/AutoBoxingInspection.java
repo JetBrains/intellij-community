@@ -55,7 +55,7 @@ public class AutoBoxingInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
             final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression);
             final String newExpression;
@@ -68,7 +68,7 @@ public class AutoBoxingInspection extends ExpressionInspection {
                 final String classToConstruct = s_boxingClasses.get(expression.getType().getPresentableText());
                 newExpression = "new " + classToConstruct + '(' + expression.getText() + ')';
             }
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(expression, newExpression);
         }
     }
 

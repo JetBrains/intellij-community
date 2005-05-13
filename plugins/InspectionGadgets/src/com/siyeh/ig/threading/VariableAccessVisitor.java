@@ -1,6 +1,7 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -15,7 +16,7 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor {
         super();
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression ref) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
         super.visitReferenceExpression(ref);
         final PsiExpression qualifier = ref.getQualifierExpression();
 
@@ -34,14 +35,14 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
         final boolean wasInSync = m_inSynchronizedContext;
         m_inSynchronizedContext = true;
         super.visitSynchronizedStatement(statement);
         m_inSynchronizedContext = wasInSync;
     }
 
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
         final boolean methodIsSynchonized = method.hasModifierProperty(PsiModifier.SYNCHRONIZED);
         boolean wasInSync = false;
         if (methodIsSynchonized) {
@@ -61,13 +62,13 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public void visitClassInitializer(PsiClassInitializer initializer) {
+    public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
         m_inInitializer = true;
         super.visitClassInitializer(initializer);
         m_inInitializer = false;
     }
 
-    public void visitField(PsiField field) {
+    public void visitField(@NotNull PsiField field) {
         m_inInitializer = true;
         super.visitField(field);    //To change body of overriden methods use Options | File Templates.
         m_inInitializer = false;

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class MisspelledTearDownInspection extends MethodInspection {
 
@@ -40,7 +41,7 @@ public class MisspelledTearDownInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             final String methodName = method.getName();
             if(!"teardown".equals(methodName)){

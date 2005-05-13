@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class NonShortCircuitBooleanInspection extends ExpressionInspection {
     public String getID(){
@@ -36,14 +37,14 @@ public class NonShortCircuitBooleanInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiBinaryExpression expression = (PsiBinaryExpression) descriptor.getPsiElement();
             final PsiExpression lhs = expression.getLOperand();
             final PsiExpression rhs = expression.getROperand();
             final PsiJavaToken operationSign = expression.getOperationSign();
             final IElementType tokenType = operationSign.getTokenType();
             final String newExpression = lhs.getText() + getShortCircuitOperand(tokenType) + rhs.getText();
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(expression, newExpression);
         }
 
         private static String getShortCircuitOperand(IElementType tokenType) {
@@ -65,7 +66,7 @@ public class NonShortCircuitBooleanInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;

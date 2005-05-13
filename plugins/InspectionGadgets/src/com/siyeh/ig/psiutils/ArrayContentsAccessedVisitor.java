@@ -1,17 +1,18 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class ArrayContentsAccessedVisitor extends PsiRecursiveElementVisitor{
     private boolean accessed = false;
     private final PsiVariable variable;
 
-    public ArrayContentsAccessedVisitor(PsiVariable variable){
+    public ArrayContentsAccessedVisitor(@NotNull PsiVariable variable){
         super();
         this.variable = variable;
     }
 
-    public void visitForeachStatement(PsiForeachStatement statement){
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement){
         if(accessed){
             return;
         }

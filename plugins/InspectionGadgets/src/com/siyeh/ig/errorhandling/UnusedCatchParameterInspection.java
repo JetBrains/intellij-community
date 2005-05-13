@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -73,7 +74,7 @@ public class UnusedCatchParameterInspection extends StatementInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitTryStatement(PsiTryStatement statement){
+        public void visitTryStatement(@NotNull PsiTryStatement statement){
             super.visitTryStatement(statement);
             if(m_ignoreTestCases){
                 final PsiClass aClass =

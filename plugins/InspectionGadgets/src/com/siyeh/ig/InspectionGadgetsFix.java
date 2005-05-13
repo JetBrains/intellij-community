@@ -9,9 +9,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class InspectionGadgetsFix implements LocalQuickFix{
-    protected void deleteElement(PsiElement element){
+    protected void deleteElement(@NotNull PsiElement element){
         try{
             element.delete();
         } catch(IncorrectOperationException e){
@@ -22,10 +23,10 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         }
     }
 
-    protected void replaceExpression(Project project, PsiExpression expression,
+    protected void replaceExpression(PsiExpression expression,
                                      String newExpression){
         try{
-            final PsiManager psiManager = PsiManager.getInstance(project);
+            final PsiManager psiManager = expression.getManager();
             final PsiElementFactory factory = psiManager.getElementFactory();
             final PsiExpression newExp = factory.createExpressionFromText(newExpression,
                                                                           null);
@@ -40,10 +41,10 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         }
     }
 
-    protected void replaceStatement(Project project, PsiStatement statement,
+    protected void replaceStatement(PsiStatement statement,
                                     String newStatement){
         try{
-            final PsiManager psiManager = PsiManager.getInstance(project);
+            final PsiManager psiManager = statement.getManager();
             final PsiElementFactory factory = psiManager.getElementFactory();
             final PsiStatement newExp = factory.createStatementFromText(newStatement,
                                                                         null);
@@ -58,9 +59,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         }
     }
 
-    public static boolean isQuickFixOnReadOnlyFile(Project project,
-                                                   ProblemDescriptor descriptor){
-        final ReadonlyStatusHandler handler = ReadonlyStatusHandler.getInstance(project);
+    public static boolean isQuickFixOnReadOnlyFile(ProblemDescriptor descriptor){
         final PsiElement problemElement = descriptor.getPsiElement();
         if(problemElement == null){
             return false;
@@ -70,6 +69,9 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             return false;
         }
         final VirtualFile virtualFile = containingPsiFile.getVirtualFile();
+        final PsiManager psiManager = problemElement.getManager();
+        final Project project = psiManager.getProject();
+        final ReadonlyStatusHandler handler = ReadonlyStatusHandler.getInstance(project);
         return handler.ensureFilesWritable(new VirtualFile[]{virtualFile})
                 .hasReadonlyFiles();
     }

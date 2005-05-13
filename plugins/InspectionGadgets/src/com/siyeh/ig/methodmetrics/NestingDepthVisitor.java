@@ -1,13 +1,14 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 class NestingDepthVisitor extends PsiRecursiveElementVisitor {
     private int m_maximumDepth = 0;
     private int m_currentDepth = 0;
 
 
-    public void visitAnonymousClass(PsiAnonymousClass aClass) {
+    public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
         // to call to super, to keep this from drilling down
     }
 
@@ -27,19 +28,19 @@ class NestingDepthVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
         enterScope();
         super.visitDoWhileStatement(statement);
         exitScope();
     }
 
-    public void visitForStatement(PsiForStatement statement) {
+    public void visitForStatement(@NotNull PsiForStatement statement) {
         enterScope();
         super.visitForStatement(statement);
         exitScope();
     }
 
-    public void visitIfStatement(PsiIfStatement statement) {
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
         boolean isAlreadyCounted = false;
         if (statement.getParent() instanceof PsiIfStatement) {
             final PsiIfStatement parent = (PsiIfStatement) statement.getParent();
@@ -57,25 +58,25 @@ class NestingDepthVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
         enterScope();
         super.visitSynchronizedStatement(statement);
         exitScope();
     }
 
-    public void visitTryStatement(PsiTryStatement statement) {
+    public void visitTryStatement(@NotNull PsiTryStatement statement) {
         enterScope();
         super.visitTryStatement(statement);
         exitScope();
     }
 
-    public void visitSwitchStatement(PsiSwitchStatement statement) {
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
         enterScope();
         super.visitSwitchStatement(statement);
         exitScope();
     }
 
-    public void visitWhileStatement(PsiWhileStatement statement) {
+    public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
         enterScope();
         super.visitWhileStatement(statement);
         exitScope();

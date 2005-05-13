@@ -9,6 +9,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ClassLoaderInstantiationInspection extends ExpressionInspection {
 
@@ -26,15 +27,15 @@ public class ClassLoaderInstantiationInspection extends ExpressionInspection {
     }
 
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new SystemSetSecurityManagerVisitor(this, inspectionManager, onTheFly);
+        return new ClassLoaderInstantiationVisitor(this, inspectionManager, onTheFly);
     }
 
-    private static class SystemSetSecurityManagerVisitor extends BaseInspectionVisitor {
-        private SystemSetSecurityManagerVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
+    private static class ClassLoaderInstantiationVisitor extends BaseInspectionVisitor {
+        private ClassLoaderInstantiationVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitNewExpression(PsiNewExpression expression){
+        public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
             if(!TypeUtils.expressionHasTypeOrSubtype("java.lang.ClassLoader", expression )){
                 return;

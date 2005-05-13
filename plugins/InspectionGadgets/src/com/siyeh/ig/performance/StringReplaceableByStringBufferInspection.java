@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class StringReplaceableByStringBufferInspection extends ExpressionInspection {
     public String getID(){
@@ -35,7 +36,7 @@ public class StringReplaceableByStringBufferInspection extends ExpressionInspect
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLocalVariable(PsiLocalVariable variable) {
+        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             final PsiCodeBlock codeBlock =
                     PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);

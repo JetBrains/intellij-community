@@ -8,6 +8,7 @@ import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CollectionUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ClassReferencesSubclassInspection extends ClassInspection {
 
@@ -38,7 +39,7 @@ public class ClassReferencesSubclassInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             final boolean wasInClass = m_inClass;
             if (!m_inClass) {
 
@@ -50,7 +51,7 @@ public class ClassReferencesSubclassInspection extends ClassInspection {
             m_inClass = wasInClass;
         }
 
-        public void visitVariable(PsiVariable variable) {
+        public void visitVariable(@NotNull PsiVariable variable) {
             final PsiType type = variable.getType();
             if (type == null) {
                 return;
@@ -69,7 +70,7 @@ public class ClassReferencesSubclassInspection extends ClassInspection {
             registerError(typeElement);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             final PsiType type = method.getReturnType();
             if (type == null) {
@@ -90,7 +91,7 @@ public class ClassReferencesSubclassInspection extends ClassInspection {
             registerError(typeElement);
         }
 
-        public void visitInstanceOfExpression(PsiInstanceOfExpression exp) {
+        public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression exp) {
             super.visitInstanceOfExpression(exp);
             final PsiTypeElement typeElement = exp.getCheckType();
             if (typeElement == null) {
@@ -111,7 +112,7 @@ public class ClassReferencesSubclassInspection extends ClassInspection {
             registerError(typeElement);
         }
 
-        public void visitTypeCastExpression(PsiTypeCastExpression exp) {
+        public void visitTypeCastExpression(@NotNull PsiTypeCastExpression exp) {
             super.visitTypeCastExpression(exp);
             final PsiTypeElement typeElement = exp.getCastType();
             if (typeElement == null) {

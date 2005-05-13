@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class CastToIncompatibleInterfaceInspection extends ExpressionInspection{
     public String getDisplayName(){
@@ -35,7 +36,7 @@ public class CastToIncompatibleInterfaceInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitTypeCastExpression(PsiTypeCastExpression expression){
+        public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression){
             super.visitTypeCastExpression(expression);
 
             final PsiTypeElement castTypeElement = expression.getCastType();

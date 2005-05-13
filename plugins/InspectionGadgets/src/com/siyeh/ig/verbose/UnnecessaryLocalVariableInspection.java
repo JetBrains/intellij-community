@@ -4,10 +4,11 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.fixes.InlineVariableFix;
 import com.siyeh.ig.psiutils.VariableAssignedVisitor;
 import com.siyeh.ig.psiutils.VariableUsedVisitor;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -53,7 +54,7 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLocalVariable(PsiLocalVariable variable) {
+        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             if (isCopyVariable(variable)) {
                 registerVariableError(variable);

@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.CollectionUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ReturnOfCollectionFieldInspection extends StatementInspection{
     public String getID(){
@@ -42,7 +43,7 @@ public class ReturnOfCollectionFieldInspection extends StatementInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitReturnStatement(PsiReturnStatement statement){
+        public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);
             final PsiExpression returnValue = statement.getReturnValue();
             if(returnValue == null){

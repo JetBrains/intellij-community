@@ -1,6 +1,7 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor{
     private boolean modified = false;
@@ -11,13 +12,13 @@ class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor{
         this.variable = variable;
     }
 
-    public void visitElement(PsiElement element){
+    public void visitElement(@NotNull PsiElement element){
         if(!modified){
             super.visitElement(element);
         }
     }
 
-    public void visitMethodCallExpression(PsiMethodCallExpression call){
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
         if(modified){
             return;
         }

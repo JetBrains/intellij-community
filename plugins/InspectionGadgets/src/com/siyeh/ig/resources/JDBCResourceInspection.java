@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -79,7 +80,7 @@ public class JDBCResourceInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             if(!isJDBCResourceCreation(expression)){
                 return;
@@ -155,13 +156,13 @@ public class JDBCResourceInspection extends ExpressionInspection{
             this.streamToClose = streamToClose;
         }
 
-        public void visitElement(PsiElement element){
+        public void visitElement(@NotNull PsiElement element){
             if(!containsResourceClose){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression call){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
             if(containsResourceClose){
                 return;
             }

@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToStaticFieldFromInstanceMethodInspection
         extends ExpressionInspection{
@@ -41,7 +42,7 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             if(!inClass){
                 inClass = true;
                 super.visitClass(aClass);
@@ -49,14 +50,14 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
             }
         }
 
-        public void visitMethod(PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method){
             final boolean wasInInstanceMethod = inInstanceMethod;
             inInstanceMethod = !method.hasModifierProperty(PsiModifier.STATIC);
             super.visitMethod(method);
             inInstanceMethod = wasInInstanceMethod;
         }
 
-        public void visitAssignmentExpression(PsiAssignmentExpression expression){
+        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression){
             super.visitAssignmentExpression(expression);
             if(!inInstanceMethod){
                 return;
@@ -68,7 +69,7 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
             checkForStaticFieldAccess(lhs);
         }
 
-        public void visitPrefixExpression(PsiPrefixExpression expression){
+        public void visitPrefixExpression(@NotNull PsiPrefixExpression expression){
             super.visitPrefixExpression(expression);
             if(!inInstanceMethod){
                 return;
@@ -89,7 +90,7 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
             checkForStaticFieldAccess(operand);
         }
 
-        public void visitPostfixExpression(PsiPostfixExpression expression){
+        public void visitPostfixExpression(@NotNull PsiPostfixExpression expression){
             super.visitPostfixExpression(expression);
             if(!inInstanceMethod){
                 return;

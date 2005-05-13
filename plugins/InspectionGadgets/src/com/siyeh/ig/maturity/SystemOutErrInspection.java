@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class SystemOutErrInspection extends ExpressionInspection {
     public String getID(){
@@ -34,7 +35,7 @@ public class SystemOutErrInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
 
             final String name = expression.getReferenceName();

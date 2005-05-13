@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class RandomDoubleForRandomIntegerInspection extends ExpressionInspection {
     private final RandomDoubleForRandomIntegerFix fix = new RandomDoubleForRandomIntegerFix();
@@ -36,7 +37,7 @@ public class RandomDoubleForRandomIntegerInspection extends ExpressionInspection
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiIdentifier name = (PsiIdentifier) descriptor.getPsiElement();
@@ -56,7 +57,7 @@ public class RandomDoubleForRandomIntegerInspection extends ExpressionInspection
                 multiplierExpression = multiplication.getLOperand();
             }
             final String multiplierText = multiplierExpression.getText();
-            replaceExpression(project, cast, qualifierText + ".nextInt((int) " + multiplierText + ')');
+            replaceExpression(cast, qualifierText + ".nextInt((int) " + multiplierText + ')');
         }
     }
 
@@ -69,7 +70,7 @@ public class RandomDoubleForRandomIntegerInspection extends ExpressionInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression call) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression = call.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();

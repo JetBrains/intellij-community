@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryReturnInspection extends StatementInspection{
     private final UnnecessaryReturnFix fix = new UnnecessaryReturnFix();
@@ -53,7 +54,7 @@ public class UnnecessaryReturnInspection extends StatementInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiElement returnKeywordElement = descriptor.getPsiElement();
@@ -69,13 +70,12 @@ public class UnnecessaryReturnInspection extends StatementInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitReturnStatement(PsiReturnStatement statement){
+        public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);
             final PsiMethod method =
-                    PsiTreeUtil.getParentOfType(statement,
-                                                            PsiMethod.class);
+                    PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
             if(method == null){
-                return;
+            return;
             }
             if(!method.isConstructor()){
                 final PsiType returnType = method.getReturnType();

@@ -7,6 +7,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -56,7 +57,7 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiMethodCallExpression methodCall = (PsiMethodCallExpression) descriptor.getPsiElement();
             final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
             final PsiExpression qualifier = methodExpression.getQualifierExpression();
@@ -67,16 +68,16 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
                 final String strippedQualifierText = strippedQualifier.getText();
                 if (ParenthesesUtils.getPrecendence(strippedQualifier) >
                         ParenthesesUtils.getPrecendence((PsiExpression) parent)) {
-                    replaceExpression(project, methodCall, strippedQualifierText);
+                    replaceExpression(methodCall, strippedQualifierText);
                 } else {
-                    replaceExpression(project, methodCall,
+                    replaceExpression(methodCall,
                             '(' + strippedQualifierText + ')');
                 }
             } else {
                 final PsiExpression strippedQualifier =
                         ParenthesesUtils.stripParentheses(qualifier);
                 final String strippedQualiferText = strippedQualifier.getText();
-                replaceExpression(project, methodCall, strippedQualiferText);
+                replaceExpression(methodCall, strippedQualiferText);
             }
         }
     }
@@ -86,7 +87,7 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiManager manager = expression.getManager();
             final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();

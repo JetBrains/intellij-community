@@ -1,25 +1,26 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
-public class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor {
-    private final PsiVariable variable;
+public class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor{
+    private final @NotNull PsiVariable variable;
     private boolean usedInInnerClass = false;
     private boolean inInnerClass = false;
 
-    public VariableUsedInInnerClassVisitor(PsiVariable variable) {
+    public VariableUsedInInnerClassVisitor(@NotNull PsiVariable variable){
         super();
         this.variable = variable;
     }
 
-    public void visitElement(PsiElement element){
-        if(!usedInInnerClass)
-        super.visitElement(element);
+    public void visitElement(@NotNull PsiElement element){
+        if(!usedInInnerClass){
+            super.visitElement(element);
+        }
     }
 
-    public void visitAnonymousClass(PsiAnonymousClass psiAnonymousClass) {
-        if(usedInInnerClass)
-        {
+    public void visitAnonymousClass(@NotNull PsiAnonymousClass psiAnonymousClass){
+        if(usedInInnerClass){
             return;
         }
         final boolean wasInInnerClass = inInnerClass;
@@ -28,22 +29,22 @@ public class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor 
         inInnerClass = wasInInnerClass;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression ref) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
         if(usedInInnerClass){
             return;
         }
         super.visitReferenceExpression(ref);
 
-        if (!inInnerClass) {
+        if(!inInnerClass){
             return;
         }
         final PsiElement element = ref.resolve();
-        if (variable.equals(element)) {
+        if(variable.equals(element)){
             usedInInnerClass = true;
         }
     }
 
-    public boolean isUsedInInnerClass() {
+    public boolean isUsedInInnerClass(){
         return usedInInnerClass;
     }
 }

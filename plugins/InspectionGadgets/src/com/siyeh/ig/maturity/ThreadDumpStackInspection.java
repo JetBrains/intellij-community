@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ThreadDumpStackInspection extends ExpressionInspection {
     public String getID(){
@@ -33,7 +34,7 @@ public class ThreadDumpStackInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final String methodName = MethodCallUtils.getMethodName(expression);
             if (!"dumpStack".equals(methodName)) {

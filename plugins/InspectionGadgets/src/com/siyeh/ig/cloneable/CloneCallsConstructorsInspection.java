@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class CloneCallsConstructorsInspection extends ExpressionInspection {
 
@@ -33,7 +34,7 @@ public class CloneCallsConstructorsInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             boolean wasInClone = m_inClone;
             final String methodName = method.getName();
             final PsiParameterList parameterList = method.getParameterList();
@@ -49,7 +50,7 @@ public class CloneCallsConstructorsInspection extends ExpressionInspection {
             }
         }
 
-        public void visitNewExpression(PsiNewExpression newExpression) {
+        public void visitNewExpression(@NotNull PsiNewExpression newExpression) {
             super.visitNewExpression(newExpression);
             if (!m_inClone) {
                 return;

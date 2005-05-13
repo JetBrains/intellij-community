@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ArithmeticOnVolatileFieldInspection extends ExpressionInspection{
     public String getDisplayName(){
@@ -36,7 +37,7 @@ public class ArithmeticOnVolatileFieldInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression expression){
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression){
             super.visitBinaryExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
@@ -55,7 +56,7 @@ public class ArithmeticOnVolatileFieldInspection extends ExpressionInspection{
             final PsiExpression rhs = expression.getROperand();
             checkForVolatile(rhs);
         }
-        public void visitAssignmentExpression(PsiAssignmentExpression expression){
+        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression){
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;

@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -47,7 +48,7 @@ public class SwitchStatementDensityInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitSwitchStatement(PsiSwitchStatement statement) {
+        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             final PsiCodeBlock body = statement.getBody();
             if (body == null) {
                 return;
@@ -72,7 +73,7 @@ public class SwitchStatementDensityInspection extends StatementInspection {
     private static class StatementCountVisitor extends PsiRecursiveElementVisitor {
         private int numStatements = 0;
 
-        public void visitStatement(PsiStatement psiStatement) {
+        public void visitStatement(@NotNull PsiStatement psiStatement) {
             super.visitStatement(psiStatement);
             numStatements++;
         }

@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class StaticVariableOfConcreteClassInspection extends FieldInspection {
 
@@ -32,7 +33,7 @@ public class StaticVariableOfConcreteClassInspection extends FieldInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
             super.visitField(field);
             if (!field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;

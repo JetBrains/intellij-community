@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiSynchronizedStatement;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class EmptySynchronizedStatementInspection extends StatementInspection {
     public String getDisplayName() {
@@ -29,7 +30,7 @@ public class EmptySynchronizedStatementInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+        public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
             super.visitSynchronizedStatement(statement);
             final PsiCodeBlock body = statement.getBody();
             if (body == null) {

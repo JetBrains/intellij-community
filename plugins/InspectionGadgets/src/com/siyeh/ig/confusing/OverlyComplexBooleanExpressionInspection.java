@@ -6,6 +6,7 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.ExtractMethodFix;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -55,12 +56,12 @@ public class OverlyComplexBooleanExpressionInspection extends ExpressionInspecti
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitPrefixExpression(PsiPrefixExpression expression) {
+        public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
             checkExpression(expression);
         }

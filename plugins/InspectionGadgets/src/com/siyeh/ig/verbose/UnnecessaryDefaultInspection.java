@@ -3,6 +3,7 @@ package com.siyeh.ig.verbose;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryDefaultInspection extends StatementInspection {
 
@@ -31,7 +32,7 @@ public class UnnecessaryDefaultInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitSwitchStatement(PsiSwitchStatement statement) {
+        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             if (!switchStatementContainsUnnecessaryDefault(statement)) {
                 return;

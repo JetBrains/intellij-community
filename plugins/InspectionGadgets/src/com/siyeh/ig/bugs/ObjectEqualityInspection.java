@@ -17,6 +17,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 
+import org.jetbrains.annotations.NotNull;
+
 public class ObjectEqualityInspection extends ExpressionInspection {
     /** @noinspection PublicField*/
     public boolean m_ignoreEnums = false;
@@ -82,7 +84,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement comparisonToken = descriptor.getPsiElement();
             final PsiBinaryExpression
                     expression = (PsiBinaryExpression) comparisonToken.getParent();
@@ -118,7 +120,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             } else {
                 newExpression = expString;
             }
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(expression, newExpression);
         }
     }
 
@@ -127,7 +129,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;

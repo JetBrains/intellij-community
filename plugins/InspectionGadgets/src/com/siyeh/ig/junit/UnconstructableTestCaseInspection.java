@@ -8,6 +8,7 @@ import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class UnconstructableTestCaseInspection extends ClassInspection{
     public String getID(){
@@ -40,7 +41,7 @@ public class UnconstructableTestCaseInspection extends ClassInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             if(aClass.isInterface() || aClass.isEnum() ||
                        aClass.isAnnotationType() ||
                        aClass.hasModifierProperty(PsiModifier.ABSTRACT)){

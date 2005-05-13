@@ -9,6 +9,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiThisExpression;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryQualifierForThisInspection extends ExpressionInspection {
     private final UnnecessaryThisFix fix = new UnnecessaryThisFix();
@@ -39,10 +40,10 @@ public class UnnecessaryQualifierForThisInspection extends ExpressionInspection 
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement qualifier = descriptor.getPsiElement();
             final PsiThisExpression thisExpression = (PsiThisExpression) qualifier.getParent();
-            replaceExpression(project, thisExpression, "this");
+            replaceExpression(thisExpression, "this");
         }
 
     }
@@ -52,7 +53,7 @@ public class UnnecessaryQualifierForThisInspection extends ExpressionInspection 
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitThisExpression(PsiThisExpression thisExpression){
+        public void visitThisExpression(@NotNull PsiThisExpression thisExpression){
             super.visitThisExpression(thisExpression);
             final PsiJavaCodeReferenceElement qualifier =
                     thisExpression.getQualifier();

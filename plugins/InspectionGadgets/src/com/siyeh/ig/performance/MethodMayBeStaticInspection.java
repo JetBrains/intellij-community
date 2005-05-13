@@ -11,6 +11,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -46,7 +47,7 @@ public class MethodMayBeStaticInspection extends MethodInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiJavaToken classNameToken = (PsiJavaToken) descriptor.getPsiElement();
             try {
                 final PsiMethod innerClass = (PsiMethod) classNameToken.getParent();
@@ -102,7 +103,7 @@ public class MethodMayBeStaticInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (method.hasModifierProperty(PsiModifier.STATIC)) {
                 return;

@@ -81,12 +81,12 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
             final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression);
             if (isConvertible(expression, expectedType)) {
                 final String newExpression = convertExpression(expression, expectedType);
-                replaceExpression(project, expression, newExpression);
+                replaceExpression(expression, newExpression);
             } else {
                 final String newExpression;
                 if (ParenthesesUtils.getPrecendence(expression) <= ParenthesesUtils.TYPE_CAST_PRECEDENCE) {
@@ -94,7 +94,7 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
                 } else {
                     newExpression = '(' + expectedType.getPresentableText() + ")(" + expression.getText() + ')';
                 }
-                replaceExpression(project, expression, newExpression);
+                replaceExpression(expression, newExpression);
             }
         }
 

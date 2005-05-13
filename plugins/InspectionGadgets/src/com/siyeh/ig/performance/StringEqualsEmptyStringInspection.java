@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class StringEqualsEmptyStringInspection extends ExpressionInspection {
     private final StringEqualsEmptyStringFix fix = new StringEqualsEmptyStringFix();
@@ -33,7 +34,7 @@ public class StringEqualsEmptyStringInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiIdentifier name = (PsiIdentifier) descriptor.getPsiElement();
             final PsiReferenceExpression expression = (PsiReferenceExpression) name.getParent();
             final PsiExpression call = (PsiExpression) expression.getParent();
@@ -42,11 +43,11 @@ public class StringEqualsEmptyStringInspection extends ExpressionInspection {
             final PsiElement parent = call.getParent();
             if(parent instanceof PsiExpression && BoolUtils.isNegation( (PsiExpression) parent))
             {
-                replaceExpression(project, (PsiExpression) parent, qualifierText + ".length()!=0");
+                replaceExpression((PsiExpression) parent, qualifierText + ".length()!=0");
             }
             else
             {
-                replaceExpression(project, call, qualifierText + ".length()==0");
+                replaceExpression(call, qualifierText + ".length()==0");
             }
         }
     }
@@ -60,7 +61,7 @@ public class StringEqualsEmptyStringInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression call) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression = call.getMethodExpression();
             final String methodName = methodExpression.getReferenceName();

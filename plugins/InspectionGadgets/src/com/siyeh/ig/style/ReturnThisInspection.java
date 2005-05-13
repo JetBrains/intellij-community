@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class ReturnThisInspection extends ExpressionInspection {
     public String getID(){
@@ -33,7 +34,7 @@ public class ReturnThisInspection extends ExpressionInspection {
         }
 
 
-        public void visitThisExpression(PsiThisExpression thisValue) {
+        public void visitThisExpression(@NotNull PsiThisExpression thisValue) {
             super.visitThisExpression(thisValue);
             if (thisValue.getQualifier() != null) {
                 return;

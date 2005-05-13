@@ -6,6 +6,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -85,7 +86,7 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLocalVariable(PsiLocalVariable variable) {
+        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             if (m_ignoreStaticMethods) {
                 final PsiMethod aMethod =
@@ -112,7 +113,7 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
             }
         }
 
-        public void visitParameter(PsiParameter variable) {
+        public void visitParameter(@NotNull PsiParameter variable) {
             super.visitParameter(variable);
             if (!(variable.getDeclarationScope() instanceof PsiCatchSection)) {
                 return;

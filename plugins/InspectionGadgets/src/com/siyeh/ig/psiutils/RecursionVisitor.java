@@ -1,25 +1,26 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class RecursionVisitor extends PsiRecursiveElementVisitor{
     private boolean recursive = false;
     private final PsiMethod method;
     private String methodName;
 
-    public RecursionVisitor(PsiMethod method){
+    public RecursionVisitor(@NotNull PsiMethod method){
         super();
         this.method = method;
         methodName = method.getName();
     }
 
-    public void visitElement(PsiElement element){
+    public void visitElement(@NotNull PsiElement element){
         if(!recursive){
             super.visitElement(element);
         }
     }
 
-    public void visitMethodCallExpression(PsiMethodCallExpression call){
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
         if(recursive)
         {
             return;

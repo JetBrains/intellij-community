@@ -6,6 +6,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -63,7 +64,7 @@ public class StandardVariableNamesInspection extends VariableInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitVariable(PsiVariable var) {
+        public void visitVariable(@NotNull PsiVariable var) {
             super.visitVariable(var);
             final String variableName = var.getName();
             final String expectedType = s_expectedTypes.get(variableName);

@@ -2,13 +2,14 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class SideEffectChecker{
     private SideEffectChecker(){
         super();
     }
 
-    public static boolean mayHaveSideEffects(PsiExpression exp){
+    public static boolean mayHaveSideEffects(@NotNull PsiExpression exp){
         final SideEffectsVisitor visitor = new SideEffectsVisitor();
         exp.accept(visitor);
         return visitor.mayHaveSideEffects();
@@ -17,13 +18,13 @@ public class SideEffectChecker{
     private static class SideEffectsVisitor extends PsiRecursiveElementVisitor{
         private boolean mayHaveSideEffects = false;
 
-        public void visitElement(PsiElement element){
+        public void visitElement(@NotNull PsiElement element){
             if(!mayHaveSideEffects){
                 super.visitElement(element);
             }
         }
 
-        public void visitAssignmentExpression(PsiAssignmentExpression expression){
+        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression){
             if(mayHaveSideEffects){
                 return;
             }
@@ -31,7 +32,7 @@ public class SideEffectChecker{
             mayHaveSideEffects = true;
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             if(mayHaveSideEffects){
                 return;
             }
@@ -39,7 +40,7 @@ public class SideEffectChecker{
             mayHaveSideEffects = true;
         }
 
-        public void visitNewExpression(PsiNewExpression expression){
+        public void visitNewExpression(@NotNull PsiNewExpression expression){
             if(mayHaveSideEffects){
                 return;
             }
@@ -47,7 +48,7 @@ public class SideEffectChecker{
             mayHaveSideEffects = true;
         }
 
-        public void visitPostfixExpression(PsiPostfixExpression expression){
+        public void visitPostfixExpression(@NotNull PsiPostfixExpression expression){
             if(mayHaveSideEffects){
                 return;
             }
@@ -60,7 +61,7 @@ public class SideEffectChecker{
             }
         }
 
-        public void visitPrefixExpression(PsiPrefixExpression expression){
+        public void visitPrefixExpression(@NotNull PsiPrefixExpression expression){
             if(mayHaveSideEffects){
                 return;
             }

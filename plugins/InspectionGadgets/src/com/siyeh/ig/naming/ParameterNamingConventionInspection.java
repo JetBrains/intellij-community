@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
 public class ParameterNamingConventionInspection extends ConventionInspection {
     private static final int DEFAULT_MIN_LENGTH = 1;
@@ -79,7 +80,7 @@ public class ParameterNamingConventionInspection extends ConventionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitParameter(PsiParameter variable) {
+        public void visitParameter(@NotNull PsiParameter variable) {
             if (variable.getDeclarationScope() instanceof PsiCatchSection) {
                 return;
             }

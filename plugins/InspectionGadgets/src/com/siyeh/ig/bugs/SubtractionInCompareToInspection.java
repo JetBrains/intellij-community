@@ -10,6 +10,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class SubtractionInCompareToInspection extends ExpressionInspection {
 
@@ -34,7 +35,7 @@ public class SubtractionInCompareToInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression exp) {
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression exp) {
             super.visitBinaryExpression(exp);
             if(!WellFormednessUtils.isWellFormed(exp)){
                 return;

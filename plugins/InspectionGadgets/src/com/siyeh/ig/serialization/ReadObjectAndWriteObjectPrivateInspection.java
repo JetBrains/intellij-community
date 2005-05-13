@@ -8,6 +8,7 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.MakePrivateFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ReadObjectAndWriteObjectPrivateInspection extends MethodInspection {
     private final MakePrivateFix fix = new MakePrivateFix();
@@ -40,7 +41,7 @@ public class ReadObjectAndWriteObjectPrivateInspection extends MethodInspection 
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             // no call to super, so it doesn't drill down
             final PsiClass aClass = method.getContainingClass();
             if (aClass.isInterface() || aClass.isAnnotationType()) {

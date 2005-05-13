@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class StringConstructorInspection extends ExpressionInspection {
     public String getID(){
@@ -54,7 +55,7 @@ public class StringConstructorInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiNewExpression expression = (PsiNewExpression) descriptor.getPsiElement();
             final PsiExpressionList argList = expression.getArgumentList();
             final PsiExpression[] args = argList.getExpressions();
@@ -64,7 +65,7 @@ public class StringConstructorInspection extends ExpressionInspection {
             } else {
                 argText = "\"\"";
             }
-            replaceExpression(project, expression, argText);
+            replaceExpression(expression, argText);
         }
     }
 
@@ -73,7 +74,7 @@ public class StringConstructorInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitNewExpression(PsiNewExpression expression) {
+        public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiType type = expression.getType();
             if (!TypeUtils.isJavaLangString(type)) {

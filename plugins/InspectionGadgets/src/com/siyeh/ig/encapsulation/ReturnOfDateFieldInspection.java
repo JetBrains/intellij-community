@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ReturnOfDateFieldInspection extends StatementInspection{
     public String getDisplayName(){
@@ -32,7 +33,7 @@ public class ReturnOfDateFieldInspection extends StatementInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitReturnStatement(PsiReturnStatement statement){
+        public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);
             final PsiExpression returnValue = statement.getReturnValue();
             if(!(returnValue instanceof PsiReferenceExpression)){

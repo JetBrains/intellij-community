@@ -8,6 +8,7 @@ import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.MakeProtectedFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ReadResolveAndWriteReplaceProtectedInspection extends MethodInspection {
     private final MakeProtectedFix fix = new MakeProtectedFix();
@@ -38,7 +39,7 @@ public class ReadResolveAndWriteReplaceProtectedInspection extends MethodInspect
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             // no call to super, so it doesn't drill down
             final PsiClass aClass = method.getContainingClass();
             if (aClass.isInterface() || aClass.isAnnotationType()) {

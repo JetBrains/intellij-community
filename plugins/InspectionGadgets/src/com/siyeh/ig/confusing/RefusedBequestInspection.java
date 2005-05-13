@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
+import org.jetbrains.annotations.NotNull;
 
 public class RefusedBequestInspection extends MethodInspection{
     public String getDisplayName(){
@@ -33,7 +34,7 @@ public class RefusedBequestInspection extends MethodInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             final PsiCodeBlock body = method.getBody();
             if(body == null){
@@ -84,13 +85,13 @@ public class RefusedBequestInspection extends MethodInspection{
             this.methodToSearchFor = methodToSearchFor;
         }
 
-        public void visitElement(PsiElement element){
+        public void visitElement(@NotNull PsiElement element){
             if(!hasSuperCall){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             if(hasSuperCall){
                 return;
             }

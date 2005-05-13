@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ConfusingMainMethodInspection extends MethodInspection {
     private final RenameFix fix = new RenameFix();
@@ -38,7 +39,7 @@ public class ConfusingMainMethodInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod aMethod) {
+        public void visitMethod(@NotNull PsiMethod aMethod) {
             // no call to super, so it doesn't drill down into inner classes
             final String methodName = aMethod.getName();
             if (!"main".equals(methodName)) {

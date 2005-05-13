@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ExceptionUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -25,10 +26,7 @@ public class TooBroadCatchInspection extends StatementInspection{
         final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(location,
                                                                          PsiTryStatement.class);
         final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-        final PsiElementFactory factory = tryStatement.getManager()
-                .getElementFactory();
-        final Set<PsiType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(tryBlock,
-                                                                                       factory);
+        final Set<PsiType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(tryBlock);
         final int numExceptionsThrown = exceptionsThrown.size();
         final Set<PsiType> exceptionsCaught = new HashSet<PsiType>(numExceptionsThrown);
 
@@ -85,17 +83,13 @@ public class TooBroadCatchInspection extends StatementInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitTryStatement(PsiTryStatement statement){
+        public void visitTryStatement(@NotNull PsiTryStatement statement){
             super.visitTryStatement(statement);
-
-            final PsiManager manager = statement.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
             final PsiCodeBlock tryBlock = statement.getTryBlock();
             if(tryBlock == null){
                 return;
             }
-            final Set<PsiType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(tryBlock,
-                                                                                           factory);
+            final Set<PsiType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(tryBlock);
             final int numExceptionsThrown = exceptionsThrown.size();
             final Set<PsiType> exceptionsCaught = new HashSet<PsiType>(numExceptionsThrown);
             final PsiParameter[] parameters = statement.getCatchBlockParameters();

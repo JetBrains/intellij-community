@@ -9,6 +9,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class StringBufferReplaceableByStringInspection
         extends ExpressionInspection{
@@ -39,14 +40,13 @@ public class StringBufferReplaceableByStringInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLocalVariable(PsiLocalVariable variable){
+        public void visitLocalVariable(@NotNull PsiLocalVariable variable){
             super.visitLocalVariable(variable);
 
             final PsiCodeBlock codeBlock =
-                    PsiTreeUtil.getParentOfType(variable,
-                                                               PsiCodeBlock.class);
+                    PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
             if(codeBlock == null){
-                return;
+            return;
             }
             final PsiType type = variable.getType();
             if(!TypeUtils.typeEquals("java.lang.StringBuffer", type) &&

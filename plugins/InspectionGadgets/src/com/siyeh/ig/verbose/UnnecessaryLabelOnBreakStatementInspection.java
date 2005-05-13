@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryLabelOnBreakStatementInspection extends StatementInspection {
     private final UnnecessaryLabelOnBreakStatementFix fix = new UnnecessaryLabelOnBreakStatementFix();
@@ -34,11 +35,11 @@ public class UnnecessaryLabelOnBreakStatementInspection extends StatementInspect
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement breakKeywordElement = descriptor.getPsiElement();
             final PsiBreakStatement breakStatement =
                     (PsiBreakStatement) breakKeywordElement.getParent();
-            replaceStatement(project, breakStatement, "break;");
+            replaceStatement(breakStatement, "break;");
         }
     }
 
@@ -53,42 +54,42 @@ public class UnnecessaryLabelOnBreakStatementInspection extends StatementInspect
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitForStatement(PsiForStatement statement) {
+        public void visitForStatement(@NotNull PsiForStatement statement) {
             final PsiStatement prevContainer = currentContainer;
             currentContainer = statement;
             super.visitForStatement(statement);
             currentContainer = prevContainer;
         }
 
-        public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+        public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
             final PsiStatement prevContainer = currentContainer;
             currentContainer = statement;
             super.visitDoWhileStatement(statement);
             currentContainer = prevContainer;
         }
 
-        public void visitForeachStatement(PsiForeachStatement statement) {
+        public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
             final PsiStatement prevContainer = currentContainer;
             currentContainer = statement;
             super.visitForeachStatement(statement);
             currentContainer = prevContainer;
         }
 
-        public void visitWhileStatement(PsiWhileStatement statement) {
+        public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
             final PsiStatement prevContainer = currentContainer;
             currentContainer = statement;
             super.visitWhileStatement(statement);
             currentContainer = prevContainer;
         }
 
-        public void visitSwitchStatement(PsiSwitchStatement statement) {
+        public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             final PsiStatement prevContainer = currentContainer;
             currentContainer = statement;
             super.visitSwitchStatement(statement);
             currentContainer = prevContainer;
         }
 
-        public void visitBreakStatement(PsiBreakStatement statement) {
+        public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
             super.visitBreakStatement(statement);
             final PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
             if (labelIdentifier == null) {

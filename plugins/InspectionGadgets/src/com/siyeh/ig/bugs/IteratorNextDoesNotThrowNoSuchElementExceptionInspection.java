@@ -9,6 +9,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.ExceptionUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -45,7 +46,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method){
             // note: no call to super
             final String name = method.getName();
             if(!"next".equals(name)){
@@ -75,8 +76,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
                     psiManager.getElementFactory();
 
             final Set<PsiType> exceptions =
-                    ExceptionUtils.calculateExceptionsThrown(method,
-                                                             elementFactory);
+                    ExceptionUtils.calculateExceptionsThrown(method);
             for(Object exception : exceptions){
                 final PsiClassType type =
                         (PsiClassType) exception;
@@ -102,13 +102,13 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
             extends PsiRecursiveElementVisitor{
         private boolean doesCallIteratorNext = false;
 
-        public void visitElement(PsiElement element){
+        public void visitElement(@NotNull PsiElement element){
             if(!doesCallIteratorNext){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             if(doesCallIteratorNext){
                 return;
             }

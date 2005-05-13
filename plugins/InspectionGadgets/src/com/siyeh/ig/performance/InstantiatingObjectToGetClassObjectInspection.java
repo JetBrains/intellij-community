@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class InstantiatingObjectToGetClassObjectInspection extends ExpressionInspection {
     private final InstantiatingObjectToGetClassObjectFix fix = new InstantiatingObjectToGetClassObjectFix();
@@ -37,7 +38,7 @@ public class InstantiatingObjectToGetClassObjectInspection extends ExpressionIns
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiMethodCallExpression expression =
                     (PsiMethodCallExpression) descriptor.getPsiElement();
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
@@ -45,7 +46,7 @@ public class InstantiatingObjectToGetClassObjectInspection extends ExpressionIns
             final PsiType type = qualifier.getType();
             final String text = type.getPresentableText();
             final String newExpression = text + ".class";
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(expression, newExpression);
         }
     }
 
@@ -58,7 +59,7 @@ public class InstantiatingObjectToGetClassObjectInspection extends ExpressionIns
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();

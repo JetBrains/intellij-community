@@ -17,7 +17,7 @@ public class MakeCloneableFix extends InspectionGadgetsFix {
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
-        if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+        if(isQuickFixOnReadOnlyFile(descriptor)) return;
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiClass containingClass = ClassUtils.getContainingClass(nameElement);
         final PsiManager psiManager = containingClass.getManager();

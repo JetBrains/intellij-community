@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class StringBufferToStringInConcatenationInspection extends ExpressionInspection {
     private final StringBufferToStringFix fix = new StringBufferToStringFix();
@@ -35,7 +36,7 @@ public class StringBufferToStringInConcatenationInspection extends ExpressionIns
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement methodNameToken = descriptor.getPsiElement();
             final PsiElement methodCallExpression = methodNameToken.getParent();
             final PsiMethodCallExpression methodCall =
@@ -43,7 +44,7 @@ public class StringBufferToStringInConcatenationInspection extends ExpressionIns
             final PsiReferenceExpression expression = methodCall.getMethodExpression();
             final PsiExpression qualifier = expression.getQualifierExpression();
             final String newExpression = qualifier.getText();
-            replaceExpression(project, methodCall, newExpression);
+            replaceExpression(methodCall, newExpression);
         }
     }
 
@@ -52,7 +53,7 @@ public class StringBufferToStringInConcatenationInspection extends ExpressionIns
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiElement parent = expression.getParent();
             if (!(parent instanceof PsiBinaryExpression)) {

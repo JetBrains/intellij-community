@@ -1,6 +1,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -45,13 +46,13 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
         this.variable = variable;
     }
 
-    public void visitElement(PsiElement element){
+    public void visitElement(@NotNull PsiElement element){
         if(!updated){
             super.visitElement(element);
         }
     }
 
-    public void visitMethodCallExpression(PsiMethodCallExpression call){
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
         super.visitMethodCallExpression(call);
         if(updated){
             return;

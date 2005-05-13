@@ -18,7 +18,7 @@ public class RemoveModifierFix extends InspectionGadgetsFix {
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
-        if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+        if(isQuickFixOnReadOnlyFile(descriptor)) return;
         final PsiElement modifierElement = descriptor.getPsiElement();
         deleteElement(modifierElement);
     }

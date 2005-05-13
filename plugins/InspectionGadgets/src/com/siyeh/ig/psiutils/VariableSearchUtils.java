@@ -23,10 +23,9 @@ public class VariableSearchUtils {
 
     private static boolean existsParameter(String varName, PsiElement element) {
         PsiMethod ancestor =
-                PsiTreeUtil.getParentOfType(element,
-                                                        PsiMethod.class);
-        while (ancestor != null) {
-            final PsiParameterList paramList = ancestor.getParameterList();
+                PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+        while(ancestor != null){
+        final PsiParameterList paramList = ancestor.getParameterList();
             final PsiParameter[] parameters = paramList.getParameters();
             for(final PsiParameter parameter : parameters){
                 final String paramName = parameter.getName();

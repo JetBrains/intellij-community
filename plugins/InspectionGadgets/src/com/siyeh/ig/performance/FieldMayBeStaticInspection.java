@@ -9,6 +9,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
+import org.jetbrains.annotations.NotNull;
 
 public class FieldMayBeStaticInspection extends FieldInspection{
     private static final Logger s_logger =
@@ -42,7 +43,7 @@ public class FieldMayBeStaticInspection extends FieldInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiJavaToken m_fieldNameToken =
@@ -64,7 +65,7 @@ public class FieldMayBeStaticInspection extends FieldInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitField(PsiField field){
+        public void visitField(@NotNull PsiField field){
             if(field.hasModifierProperty(PsiModifier.STATIC)){
                 return;
             }

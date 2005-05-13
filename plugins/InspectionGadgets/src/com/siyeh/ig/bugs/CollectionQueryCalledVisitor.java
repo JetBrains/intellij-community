@@ -1,6 +1,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -47,13 +48,13 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
         this.variable = variable;
     }
 
-    public void visitElement(PsiElement element){
+    public void visitElement(@NotNull PsiElement element){
         if(!queried){
             super.visitElement(element);
         }
     }
 
-    public void visitForeachStatement(PsiForeachStatement statement){
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement){
         if(queried){
             return;
         }
@@ -72,7 +73,7 @@ class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
         queried = true;
     }
 
-    public void visitMethodCallExpression(PsiMethodCallExpression call){
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
         if(queried){
             return;
         }

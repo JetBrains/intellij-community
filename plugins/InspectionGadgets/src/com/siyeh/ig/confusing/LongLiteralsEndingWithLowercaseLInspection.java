@@ -8,6 +8,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class LongLiteralsEndingWithLowercaseLInspection extends ExpressionInspection {
     private final LongLiteralFix fix = new LongLiteralFix();
@@ -42,11 +43,11 @@ public class LongLiteralsEndingWithLowercaseLInspection extends ExpressionInspec
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiExpression literal = (PsiExpression) descriptor.getPsiElement();
             final String text = literal.getText();
             final String newText = text.replace('l', 'L');
-            replaceExpression(project, literal, newText);
+            replaceExpression(literal, newText);
         }
     }
 
@@ -55,7 +56,7 @@ public class LongLiteralsEndingWithLowercaseLInspection extends ExpressionInspec
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLiteralExpression(PsiLiteralExpression expression) {
+        public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();
             if (type == null) {

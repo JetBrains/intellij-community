@@ -1,23 +1,24 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class VariablePassedAsArgumentVisitor extends PsiRecursiveElementVisitor{
     private boolean passed = false;
-    private final PsiVariable variable;
+    private final @NotNull PsiVariable variable;
 
-    public VariablePassedAsArgumentVisitor(PsiVariable variable){
+    public VariablePassedAsArgumentVisitor(@NotNull PsiVariable variable){
         super();
         this.variable = variable;
     }
 
-    public void visitElement(PsiElement element){
+    public void visitElement(@NotNull PsiElement element){
         if(!passed){
             super.visitElement(element);
         }
     }
 
-    public void visitMethodCallExpression(PsiMethodCallExpression call){
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
         if(passed){
             return;
         }
@@ -41,7 +42,7 @@ public class VariablePassedAsArgumentVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitNewExpression(PsiNewExpression newExpression){
+    public void visitNewExpression(@NotNull PsiNewExpression newExpression){
         if(passed){
             return;
         }

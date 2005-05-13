@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.MakeCloneableFix;
 import com.siyeh.ig.psiutils.CloneUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class CloneInNonCloneableClassInspection extends MethodInspection {
 
@@ -34,7 +35,7 @@ public class CloneInNonCloneableClassInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method){
             final PsiClass containingClass = method.getContainingClass();
             final String name = method.getName();
             if(!"clone".equals(name))

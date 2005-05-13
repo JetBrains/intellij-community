@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -81,11 +82,11 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiReferenceExpression expression =
                     (PsiReferenceExpression) descriptor.getPsiElement();
             final String newExpression = expression.getReferenceName();
-            replaceExpression(project, expression, newExpression);
+            replaceExpression(expression, newExpression);
         }
     }
 
@@ -95,7 +96,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (m_ignoreStaticMethodCalls) {
                 return;
@@ -107,7 +108,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
             registerError(methodExpression);
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             if (m_ignoreStaticFieldAccesses) {
                 return;

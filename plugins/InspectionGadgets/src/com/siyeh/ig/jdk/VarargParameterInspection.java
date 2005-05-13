@@ -6,6 +6,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class VarargParameterInspection extends MethodInspection {
     public String getID(){
@@ -32,7 +33,7 @@ public class VarargParameterInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             final PsiParameterList parameterList = method.getParameterList();
             if (parameterList == null) {
                 return;

@@ -3,6 +3,7 @@ package com.siyeh.ig.logging;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -86,7 +87,7 @@ public class ClassWithoutLoggerInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             //no recursion to avoid drilldown
             if(aClass.isInterface() || aClass.isEnum()|| aClass.isAnnotationType())
             {

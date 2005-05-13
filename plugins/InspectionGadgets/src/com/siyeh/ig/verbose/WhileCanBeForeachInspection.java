@@ -16,6 +16,7 @@ import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.StringUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class WhileCanBeForeachInspection extends StatementInspection{
     private final WhileCanBeForeachFix fix = new WhileCanBeForeachFix();
@@ -55,7 +56,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiElement whileElement = descriptor.getPsiElement();
@@ -65,7 +66,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
                     createCollectionIterationText(whileStatement, project);
             final PsiStatement statement = getPreviousStatement(whileStatement);
             deleteElement(statement);
-            replaceStatement(project, whileStatement, newExpression);
+            replaceStatement(whileStatement, newExpression);
         }
 
         private String createCollectionIterationText(PsiWhileStatement whileStatement,
@@ -304,7 +305,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitWhileStatement(PsiWhileStatement whileStatement){
+        public void visitWhileStatement(@NotNull PsiWhileStatement whileStatement){
             super.visitWhileStatement(whileStatement);
             final PsiManager manager = whileStatement.getManager();
             final LanguageLevel languageLevel =
@@ -567,13 +568,13 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             this.arrayName = arrayName;
         }
 
-        public void visitElement(PsiElement element){
+        public void visitElement(@NotNull PsiElement element){
             if(!arrayAssigned){
                 super.visitElement(element);
             }
         }
 
-        public void visitAssignmentExpression(PsiAssignmentExpression exp){
+        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression exp){
             super.visitAssignmentExpression(exp);
             final PsiExpression lhs = exp.getLExpression();
             if(lhs != null){
@@ -598,7 +599,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             this.iteratorName = iteratorName;
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression callExpression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression callExpression){
             super.visitMethodCallExpression(callExpression);
             final PsiReferenceExpression methodExpression =
                     callExpression.getMethodExpression();
@@ -637,13 +638,13 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             this.iteratorName = iteratorName;
         }
 
-        public void visitElement(PsiElement element){
+        public void visitElement(@NotNull PsiElement element){
             if(!iteratorAssigned){
                 super.visitElement(element);
             }
         }
 
-        public void visitAssignmentExpression(PsiAssignmentExpression exp){
+        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression exp){
             super.visitAssignmentExpression(exp);
             final PsiExpression lhs = exp.getLExpression();
             if(lhs != null){
@@ -669,13 +670,13 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             this.iteratorName = iteratorName;
         }
 
-        public void visitElement(PsiElement element){
+        public void visitElement(@NotNull PsiElement element){
             if(!removeCalled){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
@@ -707,13 +708,13 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             this.iteratorName = iteratorName;
         }
 
-        public void visitElement(PsiElement element){
+        public void visitElement(@NotNull PsiElement element){
             if(!hasNextCalled){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
@@ -749,13 +750,13 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             this.indexVariable = indexVariable;
         }
 
-        public void visitElement(PsiElement element){
+        public void visitElement(@NotNull PsiElement element){
             if(indexVariableUsedOnlyAsIndex){
                 super.visitElement(element);
             }
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression ref){
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
             if(!indexVariableUsedOnlyAsIndex){
                 return;
             }

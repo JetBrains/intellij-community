@@ -5,6 +5,8 @@ import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,7 +45,7 @@ public class ComparisonUtils {
 
     }
 
-    public static boolean isComparison(PsiExpression exp){
+    public static boolean isComparison(@Nullable PsiExpression exp){
         if(!(exp instanceof PsiBinaryExpression)){
             return false;
         }
@@ -53,15 +55,15 @@ public class ComparisonUtils {
         return s_comparisonStrings.contains(operation);
     }
 
-    public static boolean isComparison(String str) {
+    public static boolean isComparison(@NotNull String str) {
         return s_comparisonStrings.contains(str);
     }
 
-    public static String getFlippedComparison(String str) {
+    public static String getFlippedComparison(@NotNull String str) {
         return s_swappedComparisons.get(str);
     }
 
-    public static boolean isEqualityComparison(PsiBinaryExpression operator) {
+    public static boolean isEqualityComparison(@NotNull PsiBinaryExpression operator) {
         final PsiJavaToken sign = operator.getOperationSign();
         if (sign == null) {
             return false;
@@ -70,7 +72,7 @@ public class ComparisonUtils {
         return tokenType.equals(JavaTokenType.EQEQ) || tokenType.equals(JavaTokenType.NE);
     }
 
-    public static String getNegatedComparison(String str){
+    public static String getNegatedComparison(@NotNull String str){
         return s_invertedComparisons.get(str);
     }
 

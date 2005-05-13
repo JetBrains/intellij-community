@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ThreadStartInConstructionInspection extends ExpressionInspection{
     public String getID(){
@@ -41,7 +42,7 @@ public class ThreadStartInConstructionInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method){
             boolean wasInConstructor = false;
             if(method.isConstructor()){
                 inConstruction = true;
@@ -53,7 +54,7 @@ public class ThreadStartInConstructionInspection extends ExpressionInspection{
             }
         }
 
-        public void visitClassInitializer(PsiClassInitializer initializer){
+        public void visitClassInitializer(@NotNull PsiClassInitializer initializer){
             boolean wasInConstructor = false;
             if(!initializer.hasModifierProperty(PsiModifier.STATIC)){
                 inConstruction = true;
@@ -65,7 +66,7 @@ public class ThreadStartInConstructionInspection extends ExpressionInspection{
             }
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             if(!inConstruction){
                 return;

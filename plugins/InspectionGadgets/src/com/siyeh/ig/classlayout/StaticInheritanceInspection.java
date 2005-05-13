@@ -8,6 +8,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class StaticInheritanceInspection extends ClassInspection{
     public String getDisplayName(){
@@ -53,7 +54,7 @@ public class StaticInheritanceInspection extends ClassInspection{
                             (PsiReferenceExpression) reference1;
                     if(!reference.isQualified()){
                         final String referenceText = reference.getText();
-                        replaceExpression(project, reference,
+                        replaceExpression(reference,
                                           referencedClassName + '.' +
                                                   referenceText);
                     } else{
@@ -65,12 +66,12 @@ public class StaticInheritanceInspection extends ClassInspection{
                             final PsiElement referent =
                                     ((PsiReference) qualifier).resolve();
                             if(!referent.equals(iface)){
-                                replaceExpression(project, reference,
+                                replaceExpression(reference,
                                                   referencedClassName + '.' +
                                                           referenceName);
                             }
                         } else{
-                            replaceExpression(project, reference,
+                            replaceExpression(reference,
                                               referencedClassName + '.' +
                                                       referenceName);
                         }
@@ -93,7 +94,7 @@ public class StaticInheritanceInspection extends ClassInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so it doesn't drill down
             final PsiReferenceList implementsList = aClass.getImplementsList();
             if(implementsList == null){

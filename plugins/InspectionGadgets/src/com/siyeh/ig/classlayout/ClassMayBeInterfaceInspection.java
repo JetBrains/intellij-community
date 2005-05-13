@@ -10,6 +10,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class ClassMayBeInterfaceInspection extends ClassInspection {
     private final ClassMayBeInterfaceFix fix = new ClassMayBeInterfaceFix();
@@ -36,7 +37,7 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiIdentifier classNameIdentifier = (PsiIdentifier) descriptor.getPsiElement();
             final PsiClass interfaceClass = (PsiClass) classNameIdentifier.getParent();
             try {
@@ -112,7 +113,7 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes
             if(aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()){
                 return;

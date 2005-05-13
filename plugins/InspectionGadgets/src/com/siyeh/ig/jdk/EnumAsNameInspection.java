@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
 public class EnumAsNameInspection extends BaseInspection {
     private static final String ENUM_STRING = "enum";
@@ -86,7 +87,7 @@ public class EnumAsNameInspection extends BaseInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitVariable(PsiVariable variable) {
+        public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final String variableName = variable.getName();
             if (!ENUM_STRING.equals(variableName)) {
@@ -95,7 +96,7 @@ public class EnumAsNameInspection extends BaseInspection {
             registerVariableError(variable);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             final String name = method.getName();
             if (!ENUM_STRING.equals(name)) {
@@ -104,7 +105,7 @@ public class EnumAsNameInspection extends BaseInspection {
             registerMethodError(method);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             //note: no call to super, to avoid drill-down
             final String name = aClass.getName();
             if (!ENUM_STRING.equals(name)) {

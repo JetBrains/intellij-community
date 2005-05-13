@@ -3,6 +3,7 @@ package com.siyeh.ig.threading;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class WaitNotInSynchronizedContextInspection extends ExpressionInspection{
     public String getID(){
@@ -37,7 +38,7 @@ public class WaitNotInSynchronizedContextInspection extends ExpressionInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             if(m_inSynchronizedContext){
                 return;
@@ -80,7 +81,7 @@ public class WaitNotInSynchronizedContextInspection extends ExpressionInspection
             registerMethodCallError(expression);
         }
 
-        public void visitMethod(PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method){
             final boolean wasInSynchronizedContext = m_inSynchronizedContext;
             if(method.hasModifierProperty(PsiModifier.SYNCHRONIZED)){
 
@@ -93,7 +94,7 @@ public class WaitNotInSynchronizedContextInspection extends ExpressionInspection
             }
         }
 
-        public void visitSynchronizedStatement(PsiSynchronizedStatement psiSynchronizedStatement){
+        public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement psiSynchronizedStatement){
             final boolean wasInSynchronizedContext = m_inSynchronizedContext;
             m_inSynchronizedContext = true;
             super.visitSynchronizedStatement(psiSynchronizedStatement);

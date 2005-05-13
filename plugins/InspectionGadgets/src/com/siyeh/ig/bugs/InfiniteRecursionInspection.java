@@ -9,6 +9,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.RecursionUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class InfiniteRecursionInspection extends MethodInspection {
 
@@ -36,7 +37,7 @@ public class InfiniteRecursionInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 return;

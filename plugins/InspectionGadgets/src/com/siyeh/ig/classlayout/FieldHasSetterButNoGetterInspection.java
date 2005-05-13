@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class FieldHasSetterButNoGetterInspection extends FieldInspection {
 
@@ -32,7 +33,7 @@ public class FieldHasSetterButNoGetterInspection extends FieldInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
             final PsiManager psiManager = field.getManager();
             final Project project = psiManager.getProject();
             final String propertyName =

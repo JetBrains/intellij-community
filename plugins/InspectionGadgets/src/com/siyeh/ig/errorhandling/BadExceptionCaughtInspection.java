@@ -9,6 +9,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -94,7 +95,7 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitTryStatement(PsiTryStatement statement) {
+        public void visitTryStatement(@NotNull PsiTryStatement statement) {
 
             super.visitTryStatement(statement);
             final PsiParameter[] catchBlockParameters = statement.getCatchBlockParameters();

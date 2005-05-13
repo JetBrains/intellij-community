@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -58,7 +59,7 @@ public class MissortedModifiersInspection extends ClassInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiModifierList modifierList = (PsiModifierList) descriptor.getPsiElement();
@@ -113,7 +114,7 @@ public class MissortedModifiersInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             if (!m_isInClass) {
                 m_isInClass = true;
                 super.visitClass(aClass);
@@ -122,27 +123,27 @@ public class MissortedModifiersInspection extends ClassInspection {
             }
         }
 
-        public void visitClassInitializer(PsiClassInitializer initializer) {
+        public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
             super.visitClassInitializer(initializer);
             checkForMissortedModifiers(initializer);
         }
 
-        public void visitLocalVariable(PsiLocalVariable variable) {
+        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             checkForMissortedModifiers(variable);
         }
 
-        public void visitParameter(PsiParameter parameter) {
+        public void visitParameter(@NotNull PsiParameter parameter) {
             super.visitParameter(parameter);
             checkForMissortedModifiers(parameter);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             checkForMissortedModifiers(method);
         }
 
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
             super.visitField(field);
             checkForMissortedModifiers(field);
         }

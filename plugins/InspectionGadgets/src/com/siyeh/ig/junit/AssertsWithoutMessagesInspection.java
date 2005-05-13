@@ -9,6 +9,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -50,14 +51,14 @@ public class AssertsWithoutMessagesInspection extends ExpressionInspection{
     }
 
     private static class AssertionsWithoutMessagesVisitor
-                                                          extends BaseInspectionVisitor{
+            extends BaseInspectionVisitor{
         private AssertionsWithoutMessagesVisitor(BaseInspection inspection,
                                                  InspectionManager inspectionManager,
                                                  boolean isOnTheFly){
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             if(!isJUnitAssertion(expression)){
                 return;
@@ -73,7 +74,12 @@ public class AssertsWithoutMessagesInspection extends ExpressionInspection{
                 return;
             }
             final PsiParameter[] parameters = paramList.getParameters();
-            if(parameters.length < 2){
+            final String methodName = method.getName();
+            if(parameters.length < 2 && methodName.startsWith("assert")){
+                registerMethodCallError(expression);
+                return;
+            }
+            if(parameters.length < 1){
                 registerMethodCallError(expression);
                 return;
             }
@@ -109,8 +115,7 @@ public class AssertsWithoutMessagesInspection extends ExpressionInspection{
 
             final PsiClass targetClass = method.getContainingClass();
             return targetClass != null &&
-                    ClassUtils
-                            .isSubclass(targetClass, "junit.framework.Assert");
+                    ClassUtils.isSubclass(targetClass, "junit.framework.Assert");
         }
     }
 }

@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class NullArgumentToVariableArgMethodInspection extends ExpressionInspection{
     public String getDisplayName(){
@@ -39,7 +40,7 @@ public class NullArgumentToVariableArgMethodInspection extends ExpressionInspect
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression call){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
             final PsiManager manager = call.getManager();
             final LanguageLevel languageLevel =

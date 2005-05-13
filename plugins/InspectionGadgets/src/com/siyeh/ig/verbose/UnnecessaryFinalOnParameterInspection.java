@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import com.siyeh.ig.psiutils.VariableUsedInInnerClassVisitor;
+import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryFinalOnParameterInspection extends MethodInspection {
     public String getID(){
@@ -39,7 +40,7 @@ public class UnnecessaryFinalOnParameterInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             final PsiParameterList parameterList = method.getParameterList();
             if (parameterList == null) {

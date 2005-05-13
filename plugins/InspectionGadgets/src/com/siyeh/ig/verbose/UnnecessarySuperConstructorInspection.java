@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class UnnecessarySuperConstructorInspection extends ExpressionInspection {
     private final UnnecessarySuperConstructorFix fix = new UnnecessarySuperConstructorFix();
@@ -39,7 +40,7 @@ public class UnnecessarySuperConstructorInspection extends ExpressionInspection 
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement superCall = descriptor.getPsiElement();
             final PsiElement callStatement = superCall.getParent();
             deleteElement(callStatement);
@@ -52,7 +53,7 @@ public class UnnecessarySuperConstructorInspection extends ExpressionInspection 
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression call) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression = call.getMethodExpression();
             if (methodExpression == null) {

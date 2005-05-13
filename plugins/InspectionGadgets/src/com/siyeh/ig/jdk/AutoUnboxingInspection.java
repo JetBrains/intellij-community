@@ -75,7 +75,7 @@ public class AutoUnboxingInspection extends ExpressionInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiExpression expression =
@@ -90,13 +90,13 @@ public class AutoUnboxingInspection extends ExpressionInspection{
             final String expressionText = expression.getText();
             final String boxClassName = s_unboxingMethods.get(expectedTypeText);
             if(TypeUtils.typeEquals("java.lang.Boolean", type)){
-                replaceExpression(project, expression,
+                replaceExpression(expression,
                                   expressionText + '.' + boxClassName + "()");
             } else if(s_numberTypes.contains(typeText)){
-                replaceExpression(project, expression,
+                replaceExpression(expression,
                                   expressionText + '.' + boxClassName + "()");
             } else{
-                replaceExpression(project, expression,
+                replaceExpression(expression,
                                   "((Number)" + expressionText + ")." + boxClassName + "()");
             }
         }

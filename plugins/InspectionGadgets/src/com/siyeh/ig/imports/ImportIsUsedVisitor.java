@@ -1,6 +1,7 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 class ImportIsUsedVisitor extends PsiRecursiveElementVisitor {
     private final PsiImportStatement m_import;
@@ -16,7 +17,7 @@ class ImportIsUsedVisitor extends PsiRecursiveElementVisitor {
         followReferenceToImport(ref);
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression ref) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
         super.visitReferenceExpression(ref);
         followReferenceToImport(ref);
     }

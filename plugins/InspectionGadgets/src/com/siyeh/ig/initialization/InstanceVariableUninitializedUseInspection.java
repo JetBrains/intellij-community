@@ -10,6 +10,7 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.InitializationReadUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -54,7 +55,7 @@ public class InstanceVariableUninitializedUseInspection
 
         private InitializationReadUtils iru = new InitializationReadUtils();
 
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
             if (field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }

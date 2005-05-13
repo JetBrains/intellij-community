@@ -8,6 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
+import org.jetbrains.annotations.NotNull;
 
 public class ManualArrayCopyInspection extends ExpressionInspection {
     private final ManualArrayCopyFix fix = new ManualArrayCopyFix();
@@ -42,11 +43,11 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement forElement = descriptor.getPsiElement();
             final PsiForStatement forStatement = (PsiForStatement) forElement.getParent();
             final String newExpression = getSystemArrayCopyText(forStatement);
-            replaceStatement(project, forStatement, newExpression);
+            replaceStatement(forStatement, newExpression);
         }
 
         private static String getSystemArrayCopyText(PsiForStatement forStatement) {
@@ -112,7 +113,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitForStatement(PsiForStatement forStatement) {
+        public void visitForStatement(@NotNull PsiForStatement forStatement) {
             super.visitForStatement(forStatement);
             final PsiStatement initialization = forStatement.getInitialization();
             if (!(initialization instanceof PsiDeclarationStatement)) {

@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ThreadWithDefaultRunMethodInspection extends ExpressionInspection{
     public String getID(){
@@ -38,7 +39,7 @@ public class ThreadWithDefaultRunMethodInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitNewExpression(PsiNewExpression expression){
+        public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
 
             if(expression.getAnonymousClass() != null){

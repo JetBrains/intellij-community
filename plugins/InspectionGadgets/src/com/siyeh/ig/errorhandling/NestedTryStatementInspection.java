@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class NestedTryStatementInspection extends StatementInspection {
 
@@ -30,7 +31,7 @@ public class NestedTryStatementInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitTryStatement(PsiTryStatement statement) {
+        public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             final PsiTryStatement parentTry = PsiTreeUtil.getParentOfType(statement,
                     PsiTryStatement.class);

@@ -15,7 +15,7 @@ public class AddSerialVersionUIDFix extends InspectionGadgetsFix {
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor){
-        if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+        if(isQuickFixOnReadOnlyFile(descriptor)) return;
         final PsiElement classIdentifier = descriptor.getPsiElement();
         final PsiClass aClass = (PsiClass) classIdentifier.getParent();
         try{

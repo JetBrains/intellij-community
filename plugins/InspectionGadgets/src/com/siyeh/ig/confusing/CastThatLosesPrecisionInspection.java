@@ -2,8 +2,12 @@ package com.siyeh.ig.confusing;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +53,7 @@ public class CastThatLosesPrecisionInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitTypeCastExpression(PsiTypeCastExpression exp) {
+        public void visitTypeCastExpression(@NotNull PsiTypeCastExpression exp) {
             final PsiType castType = exp.getType();
             if (!ClassUtils.isPrimitiveNumericType(castType)) {
                 return;

@@ -2,13 +2,14 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.LibraryUtil;
+import org.jetbrains.annotations.Nullable;
 
 class ConcreteClassUtil {
     private ConcreteClassUtil() {
         super();
     }
 
-    public static boolean typeIsConcreteClass(PsiTypeElement typeElement) {
+    public static boolean typeIsConcreteClass(@Nullable PsiTypeElement typeElement) {
         if (typeElement == null) {
             return false;
         }

@@ -15,7 +15,7 @@ public class ExtractMethodFix extends InspectionGadgetsFix {
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
-        if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+        if(isQuickFixOnReadOnlyFile(descriptor)) return;
         final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
         final RefactoringActionHandlerFactory factory =
                 RefactoringActionHandlerFactory.getInstance();

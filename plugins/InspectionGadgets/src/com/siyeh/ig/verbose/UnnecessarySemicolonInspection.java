@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class UnnecessarySemicolonInspection extends ClassInspection{
     private final UnnecessarySemicolonFix fix = new UnnecessarySemicolonFix();
@@ -42,7 +43,7 @@ public class UnnecessarySemicolonInspection extends ClassInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiElement semicolonElement = descriptor.getPsiElement();
@@ -58,7 +59,7 @@ public class UnnecessarySemicolonInspection extends ClassInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             PsiElement sibling = skipForwardWhiteSpacesAndComments(aClass);
             while(sibling != null){
                 if(sibling instanceof PsiJavaToken &&

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiForStatement;
 import com.intellij.psi.PsiWhileStatement;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class InfiniteLoopStatementInspection extends StatementInspection {
 
@@ -35,7 +36,7 @@ public class InfiniteLoopStatementInspection extends StatementInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitForStatement(PsiForStatement statement) {
+        public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
             if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
                 return;
@@ -46,7 +47,7 @@ public class InfiniteLoopStatementInspection extends StatementInspection {
             registerStatementError(statement);
         }
 
-        public void visitWhileStatement(PsiWhileStatement statement) {
+        public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
 
             super.visitWhileStatement(statement);
             if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
@@ -58,7 +59,7 @@ public class InfiniteLoopStatementInspection extends StatementInspection {
             registerStatementError(statement);
         }
 
-        public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+        public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
             if (ControlFlowUtils.statementMayCompleteNormally(statement)) {
                 return;

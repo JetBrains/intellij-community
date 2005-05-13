@@ -4,6 +4,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.DeleteImportFix;
+import org.jetbrains.annotations.NotNull;
 
 public class UnusedImportInspection extends ClassInspection {
     private final DeleteImportFix fix = new DeleteImportFix();
@@ -33,7 +34,7 @@ public class UnusedImportInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             if (!(aClass.getParent() instanceof PsiJavaFile)) {
                 return;
             }

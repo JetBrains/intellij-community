@@ -31,7 +31,7 @@ public class RenameFix extends InspectionGadgetsFix {
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
-        if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+        if(isQuickFixOnReadOnlyFile(descriptor)) return;
         final PsiElement nameIdentifier = descriptor.getPsiElement();
         final PsiElement elementToRename = nameIdentifier.getParent();
         if (m_targetName == null) {

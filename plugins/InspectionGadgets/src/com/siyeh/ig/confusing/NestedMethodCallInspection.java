@@ -9,6 +9,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.siyeh.ig.*;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -52,7 +53,7 @@ public class NestedMethodCallInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final RefactoringActionHandlerFactory factory = RefactoringActionHandlerFactory.getInstance();
             final RefactoringActionHandler introduceHandler =
                     factory.createIntroduceVariableHandler();
@@ -68,7 +69,7 @@ public class NestedMethodCallInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             PsiExpression outerExpression = expression;
             while(outerExpression.getParent() instanceof PsiExpression){

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.VariableSearchUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryThisInspection extends ExpressionInspection {
     private final UnnecessaryThisFix fix = new UnnecessaryThisFix();
@@ -36,11 +37,11 @@ public class UnnecessaryThisInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement thisToken = descriptor.getPsiElement();
             final PsiReferenceExpression thisExpression = (PsiReferenceExpression) thisToken.getParent();
             final String newExpression = thisExpression.getReferenceName();
-            replaceExpression(project, thisExpression, newExpression);
+            replaceExpression(thisExpression, newExpression);
         }
 
     }
@@ -50,7 +51,7 @@ public class UnnecessaryThisInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression){
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);
             final PsiReferenceParameterList parameterList =
                     expression.getParameterList();

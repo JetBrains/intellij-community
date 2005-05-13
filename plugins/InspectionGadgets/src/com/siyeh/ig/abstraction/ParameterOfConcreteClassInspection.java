@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
+import org.jetbrains.annotations.NotNull;
 
 public class ParameterOfConcreteClassInspection extends MethodInspection {
     public String getID(){
@@ -34,7 +35,7 @@ public class ParameterOfConcreteClassInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitParameter(PsiParameter parameter) {
+        public void visitParameter(@NotNull PsiParameter parameter) {
             super.visitParameter(parameter);
 
             if (parameter.getDeclarationScope() instanceof PsiCatchSection) {

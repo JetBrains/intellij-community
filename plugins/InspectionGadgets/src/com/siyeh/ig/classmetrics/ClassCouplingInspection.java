@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -131,7 +132,7 @@ public class ClassCouplingInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
             final int totalDependencies = calculateTotalDependencies(aClass);
             if (totalDependencies <= getLimit()) {

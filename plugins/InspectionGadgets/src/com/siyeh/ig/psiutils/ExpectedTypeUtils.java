@@ -5,9 +5,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 public class ExpectedTypeUtils{
     /** @noinspection StaticCollection*/
@@ -108,14 +109,14 @@ public class ExpectedTypeUtils{
             return expectedType;
         }
 
-        public void visitField(PsiField field){
+        public void visitField(@NotNull PsiField field){
             final PsiExpression initializer = field.getInitializer();
             if(wrappedExp.equals(initializer)){
                 expectedType = field.getType();
             }
         }
 
-        public void visitVariable(PsiVariable variable){
+        public void visitVariable(@NotNull PsiVariable variable){
             expectedType = variable.getType();
         }
 
@@ -133,7 +134,7 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression binaryExp){
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression binaryExp){
             final PsiJavaToken sign = binaryExp.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             final PsiType type = binaryExp.getType();
@@ -168,38 +169,38 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitPrefixExpression(PsiPrefixExpression expression){
+        public void visitPrefixExpression(@NotNull PsiPrefixExpression expression){
             expectedType = expression.getType();
         }
 
-        public void visitPostfixExpression(PsiPostfixExpression expression){
+        public void visitPostfixExpression(@NotNull PsiPostfixExpression expression){
             expectedType = expression.getType();
         }
 
-        public void visitWhileStatement(PsiWhileStatement whileStatement){
+        public void visitWhileStatement(@NotNull PsiWhileStatement whileStatement){
             expectedType = PsiType.BOOLEAN;
         }
 
-        public void visitForStatement(PsiForStatement statement){
+        public void visitForStatement(@NotNull PsiForStatement statement){
             expectedType = PsiType.BOOLEAN;
         }
 
-        public void visitIfStatement(PsiIfStatement statement){
+        public void visitIfStatement(@NotNull PsiIfStatement statement){
             expectedType = PsiType.BOOLEAN;
         }
 
-        public void visitDoWhileStatement(PsiDoWhileStatement statement){
+        public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement){
             expectedType = PsiType.BOOLEAN;
         }
 
-        public void visitSynchronizedStatement(PsiSynchronizedStatement statement){
+        public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement){
             final PsiManager manager = statement.getManager();
             final Project project = manager.getProject();
             final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
             expectedType = PsiType.getJavaLangObject(manager, scope);
         }
 
-        public void visitAssignmentExpression(PsiAssignmentExpression assignment){
+        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment){
             final PsiExpression rExpression = assignment.getRExpression();
             if(rExpression != null){
                 if(rExpression.equals(wrappedExp)){
@@ -230,7 +231,7 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitReturnStatement(PsiReturnStatement returnStatement){
+        public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement){
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(returnStatement,
                                                             PsiMethod.class);
@@ -272,7 +273,7 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression ref){
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
             final PsiManager manager = ref.getManager();
             final PsiElement parent = ref.getParent();
             if(parent instanceof PsiMethodCallExpression){

@@ -9,6 +9,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class TeardownCallsSuperTeardownInspection extends MethodInspection {
 
@@ -36,7 +37,7 @@ public class TeardownCallsSuperTeardownInspection extends MethodInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             try{
                 final PsiElement methodName = descriptor.getPsiElement();
                 final PsiMethod method = (PsiMethod) methodName.getParent();
@@ -72,7 +73,7 @@ public class TeardownCallsSuperTeardownInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;
             final String methodName = method.getName();
             if (!"tearDown".equals(methodName)) {

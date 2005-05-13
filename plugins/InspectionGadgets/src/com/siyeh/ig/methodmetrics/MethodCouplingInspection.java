@@ -6,6 +6,7 @@ import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -133,7 +134,7 @@ public class MethodCouplingInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             final CouplingVisitor visitor = new CouplingVisitor(method, m_includeJavaClasses, m_includeLibraryClasses);
             method.accept(visitor);

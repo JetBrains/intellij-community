@@ -7,6 +7,7 @@ import com.intellij.psi.PsiField;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.MakeSerializableFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassInspection {
     private final MakeSerializableFix fix = new MakeSerializableFix();
@@ -41,7 +42,7 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends ClassIns
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
 
             if (aClass.isInterface() || aClass.isAnnotationType()) {

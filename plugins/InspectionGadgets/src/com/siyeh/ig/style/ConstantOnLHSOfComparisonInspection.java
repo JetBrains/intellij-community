@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ConstantOnLHSOfComparisonInspection extends ExpressionInspection {
     private final SwapComparisonFix fix = new SwapComparisonFix();
@@ -45,7 +46,7 @@ public class ConstantOnLHSOfComparisonInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiBinaryExpression expression = (PsiBinaryExpression) descriptor.getPsiElement();
             final PsiExpression rhs = expression.getROperand();
             final PsiExpression lhs = expression.getLOperand();
@@ -54,7 +55,7 @@ public class ConstantOnLHSOfComparisonInspection extends ExpressionInspection {
             final String flippedSign = ComparisonUtils.getFlippedComparison(sign);
             final String rhsText = rhs.getText();
             final String lhsText = lhs.getText();
-            replaceExpression(project, expression,
+            replaceExpression(expression,
                     rhsText + ' ' + flippedSign + ' ' + lhsText);
 
         }
@@ -66,7 +67,7 @@ public class ConstantOnLHSOfComparisonInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression))
             {

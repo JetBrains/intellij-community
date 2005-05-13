@@ -7,6 +7,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
+import org.jetbrains.annotations.NotNull;
 
 public class AnonymousClassMethodCountInspection
         extends ClassMetricInspection {
@@ -55,11 +56,11 @@ public class AnonymousClassMethodCountInspection
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass psiClass) {
+        public void visitClass(@NotNull PsiClass psiClass) {
             // no call to super, to prevent double counting
         }
 
-        public void visitAnonymousClass(PsiAnonymousClass aClass) {
+        public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
             final int totalMethodCount = calculateTotalMethodCount(aClass);
             if (totalMethodCount <= getLimit()) {
                 return;

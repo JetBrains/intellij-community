@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -56,7 +57,7 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiNewExpression expression = (PsiNewExpression) descriptor.getPsiElement();
             final PsiType boxedType = expression.getType();
             final PsiExpressionList argList = expression.getArgumentList();
@@ -64,7 +65,7 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
             final PsiType argType = args[0].getType();
             final String cast = getCastString(argType, boxedType);
             final String newExpression = args[0].getText();
-            replaceExpression(project, expression, cast + newExpression);
+            replaceExpression(expression, cast + newExpression);
         }
 
         private String getCastString(PsiType fromType, PsiType toType){
@@ -87,7 +88,7 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitNewExpression(PsiNewExpression expression) {
+        public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiManager manager = expression.getManager();
             final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();

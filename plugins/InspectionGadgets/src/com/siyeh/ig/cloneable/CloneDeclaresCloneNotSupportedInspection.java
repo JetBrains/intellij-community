@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection {
     private final CloneDeclaresCloneNotSupportedInspectionFix fix = new CloneDeclaresCloneNotSupportedInspectionFix();
@@ -41,7 +42,7 @@ public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection {
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             try {
                 final PsiElement methodNameIdentifier = descriptor.getPsiElement();
                 final PsiMethod method = (PsiMethod) methodNameIdentifier.getParent();
@@ -64,7 +65,7 @@ public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;
             final String methodName = method.getName();
             if (!"clone".equals(methodName)) {

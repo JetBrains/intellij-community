@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
+import org.jetbrains.annotations.NotNull;
 
 public class AnonymousInnerClassInspection extends ClassInspection {
     private final MoveAnonymousToInnerClassFix fix =
@@ -40,11 +41,11 @@ public class AnonymousInnerClassInspection extends ClassInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass) {
            //no call to super here, to avoid double counting
         }
 
-        public void visitAnonymousClass(PsiAnonymousClass aClass) {
+        public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
             super.visitAnonymousClass(aClass);
             final PsiJavaCodeReferenceElement classReference = aClass.getBaseClassReference();
             registerError(classReference);

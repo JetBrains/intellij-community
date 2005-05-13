@@ -9,6 +9,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -155,7 +156,7 @@ public class HardcodedFileSeparatorsInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLiteralExpression(PsiLiteralExpression expression){
+        public void visitLiteralExpression(@NotNull PsiLiteralExpression expression){
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();
             if(TypeUtils.isJavaLangString(type)){

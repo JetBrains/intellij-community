@@ -2,6 +2,7 @@ package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -15,7 +16,7 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor {
         super();
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression ref) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
         super.visitReferenceExpression(ref);
         final PsiExpression qualifier = ref.getQualifierExpression();
 

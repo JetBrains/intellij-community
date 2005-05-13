@@ -6,6 +6,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import org.jetbrains.annotations.NotNull;
 
 public class ResultOfObjectAllocationIgnoredInspection extends ExpressionInspection {
 
@@ -31,7 +32,7 @@ public class ResultOfObjectAllocationIgnoredInspection extends ExpressionInspect
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitExpressionStatement(PsiExpressionStatement statement) {
+        public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
             super.visitExpressionStatement(statement);
             if (!(statement.getExpression() instanceof PsiNewExpression)) {
                 return;

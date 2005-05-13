@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class TailRecursionInspection extends ExpressionInspection{
     public String getDisplayName(){
@@ -58,7 +59,7 @@ public class TailRecursionInspection extends ExpressionInspection{
 
         public void applyFix(Project project,
                              ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             try{
                 final PsiElement methodNameToken =
                         descriptor.getPsiElement();
@@ -191,7 +192,7 @@ public class TailRecursionInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitReturnStatement(PsiReturnStatement statement){
+        public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);
             final PsiExpression returnValue = statement.getReturnValue();
             if(!(returnValue instanceof PsiMethodCallExpression)){

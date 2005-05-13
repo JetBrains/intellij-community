@@ -4,23 +4,24 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiVariable;
+import org.jetbrains.annotations.NotNull;
 
 public class VariableUsedVisitor extends PsiRecursiveElementVisitor{
     private boolean used = false;
-    private final PsiVariable variable;
+    private final @NotNull PsiVariable variable;
 
-    public VariableUsedVisitor(PsiVariable variable){
+    public VariableUsedVisitor(@NotNull PsiVariable variable){
         super();
         this.variable = variable;
     }
 
-    public void visitElement(PsiElement element){
+    public void visitElement(@NotNull PsiElement element){
         if(!used){
             super.visitElement(element);
         }
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression ref){
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
         if(used){
             return;
         }

@@ -9,13 +9,14 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.VariableInspection;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class StaticCollectionInspection extends VariableInspection {
-    
+
     /** @noinspection PublicField*/
     public boolean m_ignoreWeakCollections = false;
 
@@ -44,7 +45,7 @@ public class StaticCollectionInspection extends VariableInspection {
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitField(PsiField field) {
+        public void visitField(@NotNull PsiField field) {
             if (!field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }

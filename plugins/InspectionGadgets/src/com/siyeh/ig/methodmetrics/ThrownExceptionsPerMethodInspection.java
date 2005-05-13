@@ -1,12 +1,14 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiSuperMethodUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReferenceList;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.psiutils.LibraryUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class ThrownExceptionsPerMethodInspection extends MethodMetricInspection {
     public String getID(){
@@ -44,7 +46,7 @@ public class ThrownExceptionsPerMethodInspection extends MethodMetricInspection 
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitMethod(PsiMethod method) {
+        public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             final PsiReferenceList throwList = method.getThrowsList();
             if(throwList == null)

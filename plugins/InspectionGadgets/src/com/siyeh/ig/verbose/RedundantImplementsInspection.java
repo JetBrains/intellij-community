@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiReferenceList;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 public class RedundantImplementsInspection extends ClassInspection{
     private final RedundantImplementsFix fix = new RedundantImplementsFix();
@@ -38,7 +39,7 @@ public class RedundantImplementsInspection extends ClassInspection{
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)){
+            if(isQuickFixOnReadOnlyFile(descriptor)){
                 return;
             }
             final PsiElement implementReference = descriptor.getPsiElement();
@@ -60,7 +61,7 @@ public class RedundantImplementsInspection extends ClassInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitClass(PsiClass aClass){
+        public void visitClass(@NotNull PsiClass aClass){
             if(aClass.isAnnotationType()){
                 return;
             }

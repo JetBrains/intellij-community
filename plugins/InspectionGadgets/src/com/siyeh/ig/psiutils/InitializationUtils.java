@@ -3,6 +3,8 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,11 +14,14 @@ public class InitializationUtils {
         super();
     }
 
-    public static boolean blockMustAssignVariableOrFail(PsiVariable field, PsiCodeBlock block) {
+    public static boolean blockMustAssignVariableOrFail(@NotNull PsiVariable field,
+                                                        @Nullable PsiCodeBlock block) {
         return cachingblockMustAssignVariableOrFail(field, block, new HashSet<MethodSignature>());
     }
 
-    private static boolean cachingblockMustAssignVariableOrFail(PsiVariable field, PsiCodeBlock block, Set<MethodSignature> checkedMethods) {
+    private static boolean cachingblockMustAssignVariableOrFail(@NotNull PsiVariable field,
+                                                                @NotNull PsiCodeBlock block,
+                                                                @NotNull Set<MethodSignature> checkedMethods) {
         if (block == null) {
             return false;
         }
@@ -31,7 +36,7 @@ public class InitializationUtils {
     }
 
 
-    private static boolean statementMustAssignVariableOrFail(PsiVariable field, PsiStatement statement, Set<MethodSignature> checkedMethods) {
+    private static boolean statementMustAssignVariableOrFail(@NotNull PsiVariable field, PsiStatement statement, Set<MethodSignature> checkedMethods) {
         if (statement == null) {
             return false;
         }

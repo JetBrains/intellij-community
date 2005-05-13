@@ -6,6 +6,7 @@ import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiStatement;
 import com.siyeh.ig.*;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -58,7 +59,7 @@ public class IfStatementWithTooManyBranchesInspection extends StatementInspectio
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitIfStatement(PsiIfStatement statement) {
+        public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiElement parent = statement.getParent();
             if (parent instanceof PsiIfStatement) {

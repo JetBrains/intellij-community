@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class StringBufferReplaceableByStringBuilderInspection extends ExpressionInspection {
     private final StringBufferMayBeStringBuilderFix fix = new StringBufferMayBeStringBuilderFix();
@@ -40,7 +41,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends Expression
         }
 
         public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(project, descriptor)) return;
+            if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiElement variableIdentifier =
                     descriptor.getPsiElement();
             final PsiLocalVariable variable = (PsiLocalVariable) variableIdentifier.getParent();
@@ -48,7 +49,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends Expression
                     (PsiDeclarationStatement) variable.getParent();
             final String text = declarationStatement.getText();
             final String newStatement = text.replaceAll("StringBuffer", "StringBuilder");
-            replaceStatement(project, declarationStatement, newStatement);
+            replaceStatement(declarationStatement, newStatement);
         }
     }
     public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
@@ -60,7 +61,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends Expression
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitLocalVariable(PsiLocalVariable variable) {
+        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             final PsiManager manager = variable.getManager();
             final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();

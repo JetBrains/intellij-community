@@ -2,13 +2,15 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class BoolUtils {
     private BoolUtils() {
         super();
     }
 
-    public static boolean isNegation(PsiExpression exp) {
+    public static boolean isNegation(@NotNull PsiExpression exp) {
         if (!(exp instanceof PsiPrefixExpression)) {
             return false;
         }
@@ -18,12 +20,13 @@ public class BoolUtils {
         return JavaTokenType.EXCL.equals(tokenType);
     }
 
-    private static PsiExpression getNegated(PsiExpression exp) {
+    private static PsiExpression getNegated(@NotNull PsiExpression exp) {
         final PsiPrefixExpression prefixExp = (PsiPrefixExpression) exp;
         final PsiExpression operand = prefixExp.getOperand();
         return ParenthesesUtils.stripParentheses(operand);
     }
-    public static String getNegatedExpressionText(PsiExpression condition){
+
+    public static String getNegatedExpressionText(@NotNull PsiExpression condition){
         if(condition instanceof PsiParenthesizedExpression)
         {
             final PsiExpression contentExpression = ((PsiParenthesizedExpression) condition).getExpression();
@@ -48,7 +51,7 @@ public class BoolUtils {
 
     }
 
-    public static boolean isTrue(PsiExpression test) {
+    public static boolean isTrue(@Nullable PsiExpression test) {
         if (test == null) {
             return false;
         }

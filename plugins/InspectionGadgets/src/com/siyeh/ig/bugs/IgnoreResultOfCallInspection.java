@@ -11,6 +11,7 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -129,7 +130,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
             super(inspection, inspectionManager, isOnTheFly);
         }
 
-        public void visitExpressionStatement(PsiExpressionStatement statement){
+        public void visitExpressionStatement(@NotNull PsiExpressionStatement statement){
             super.visitExpressionStatement(statement);
             if(!(statement.getExpression() instanceof PsiMethodCallExpression)){
                 return;

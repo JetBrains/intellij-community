@@ -1,8 +1,12 @@
 package com.siyeh.ig.abstraction;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.LibraryUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -16,7 +20,7 @@ class ClassAccessVisitor extends PsiRecursiveElementVisitor {
         this.currentClass = currentClass;
     }
 
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         final PsiMethod method = expression.resolveMethod();
         if (method == null) {
