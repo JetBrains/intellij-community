@@ -103,6 +103,7 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase>{
     myWholePanel.add(scrollPane, BorderLayout.CENTER);
     myWholePanel.add(myButtonsPanel, BorderLayout.EAST);
     myWholePanel.setBorder(BorderFactory.createTitledBorder("Log Files To Show In Console"));
+    myWholePanel.setPreferredSize(new Dimension(-1, 150));
   }
 
   private void clearModel(){
