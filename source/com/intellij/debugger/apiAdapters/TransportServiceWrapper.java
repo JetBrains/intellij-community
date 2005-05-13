@@ -72,6 +72,7 @@ public class TransportServiceWrapper {
   public String startListening() throws IOException {
     try {
       final Method method = myDelegateClass.getMethod("startListening", new Class[0]);
+      method.setAccessible(true);
       return (String)method.invoke(myDelegateObject, new Object[0]);
     }
     catch (NoSuchMethodException e) {
@@ -93,6 +94,7 @@ public class TransportServiceWrapper {
   public void stopListening(final String address) throws IOException {
     try {
       final Method method = myDelegateClass.getMethod("stopListening", new Class[] {String.class});
+      method.setAccessible(true);
       method.invoke(myDelegateObject, new Object[]{address});
     }
     catch (NoSuchMethodException e) {

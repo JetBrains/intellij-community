@@ -550,7 +550,7 @@ public final class FormSourceCodeGenerator {
     }
 
     // todo[anton] check that no generated name is equal to class' field
-
+    if (!class2variableIndex.containsKey(className)) class2variableIndex.put(className, 0);
     class2variableIndex.increment(className);
     int newIndex = class2variableIndex.get(className);
 
