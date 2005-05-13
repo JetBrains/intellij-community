@@ -32,14 +32,11 @@ public class TemplateSurrounder implements Surrounder {
   @Nullable public TextRange surroundElements(@NotNull Project project,
                                               @NotNull Editor editor,
                                               @NotNull PsiElement[] elements) throws IncorrectOperationException {
-    final PsiElement first = elements[0];
-    final PsiElement last = elements[elements.length - 1];
-    final int startOffset = first.getTextRange().getStartOffset();
-    final int endOffset = last.getTextRange().getEndOffset();
+    final int startOffset = elements[0].getTextRange().getStartOffset();
+    final int endOffset = elements[elements.length - 1].getTextRange().getEndOffset();
     editor.getCaretModel().moveToOffset(startOffset);
     editor.getSelectionModel().setSelection(startOffset, endOffset);
     final String text = editor.getDocument().getText().substring(startOffset, endOffset).trim();
-    //first.getParent().deleteChildRange(first, last);;
     TemplateManager.getInstance(project).startTemplate(editor, text, myTemplate);
     return null;
   }
