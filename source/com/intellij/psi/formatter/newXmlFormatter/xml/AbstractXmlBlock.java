@@ -105,7 +105,11 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     if (treeParent.getElementType() != ElementType.XML_TAG) return false;
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(treeParent);
     final String name = ((XmlTag)psiElement).getName();
-    return Comparing.equal(name, JSPX_SCRIPTLET_TAG_NAME) || Comparing.equal(name, JSPX_DECLARATION_TAG_NAME); 
+    if (!(Comparing.equal(name, JSPX_SCRIPTLET_TAG_NAME) 
+           || Comparing.equal(name, JSPX_DECLARATION_TAG_NAME))){
+      return false;
+    }
+    return child.getText().trim().length() > 0;
   }
 
   public ASTNode getTreeNode() {

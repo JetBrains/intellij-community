@@ -144,6 +144,10 @@ public class XmlTagBlock extends AbstractXmlBlock{
   }
 
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    return new ChildAttributes(Formatter.getInstance().createNormalIndent(), null);
+    if (myXmlFormattingPolicy.indentChildrenOf(getTag())) {
+      return new ChildAttributes(Formatter.getInstance().createNormalIndent(), null);
+    } else {
+      return new ChildAttributes(Formatter.getInstance().getNoneIndent(), null);  
+    }    
   }
 }
