@@ -4,16 +4,16 @@
  */
 package org.jetbrains.idea.devkit.module;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
-import com.intellij.j2ee.make.ModuleBuildProperties;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.idea.devkit.build.PluginModuleBuildConfEditor;
-import org.jetbrains.idea.devkit.build.PluginModuleBuildProperties;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PluginModuleEditorsProvider implements ModuleComponent, ModuleConfigurationEditorProvider{
   public String getComponentName() {
@@ -23,16 +23,17 @@ public class PluginModuleEditorsProvider implements ModuleComponent, ModuleConfi
 
   public ModuleConfigurationEditor[] createEditors(ModuleConfigurationState state) {
     final DefaultModuleConfigurationEditorFactory editorFactory = DefaultModuleConfigurationEditorFactory.getInstance();
-    final ModifiableRootModel rootModel = state.getRootModel();
-    final Module module = rootModel.getModule();
-    return new ModuleConfigurationEditor[] {
-      editorFactory.createModuleContentRootsEditor(state),
-      editorFactory.createLibrariesEditor(state),
-      editorFactory.createDependenciesEditor(state),
-      editorFactory.createOrderEntriesEditor(state),
-      editorFactory.createJavadocEditor(state),
-      new PluginModuleBuildConfEditor(state)
-    };
+    ModulesProvider provider = state.getModulesProvider();
+    List<ModuleConfigurationEditor> editors = new ArrayList<ModuleConfigurationEditor>();
+    editors.add(editorFactory.createModuleContentRootsEditor(state));
+    editors.add(editorFactory.createLibrariesEditor(state));
+    if (provider.getModules().length > 1) {
+      editors.add(editorFactory.createDependenciesEditor(state));
+    }
+    editors.add(editorFactory.createOrderEntriesEditor(state));
+    editors.add(editorFactory.createJavadocEditor(state));
+    editors.add(new PluginModuleBuildConfEditor(state));
+    return editors.toArray(new ModuleConfigurationEditor[editors.size()]);
   }
 
   public void projectOpened() {}
