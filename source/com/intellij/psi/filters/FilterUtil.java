@@ -3,6 +3,9 @@ package com.intellij.psi.filters;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.ChameleonElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.filters.classes.AnyInnerFilter;
 import com.intellij.psi.filters.classes.InheritorFilter;
 import com.intellij.psi.filters.classes.InterfaceFilter;
@@ -173,10 +176,21 @@ public class FilterUtil{
 
   public static PsiElement searchNonSpaceNonCommentBack(PsiElement element) {
     if(element == null || element.getNode() == null) return null;
-    ASTNode leftNeibour = TreeUtil.prevLeaf(element.getNode());
-    while (leftNeibour != null && (leftNeibour.getElementType() == TokenType.WHITE_SPACE || leftNeibour.getPsi() instanceof PsiComment))
-      leftNeibour = TreeUtil.prevLeaf(leftNeibour);
+    ASTNode leftNeibour = prevLeaf(element.getNode());
+    while (leftNeibour != null && (leftNeibour.getElementType() == TokenType.WHITE_SPACE || leftNeibour.getPsi() instanceof PsiComment)){
+      leftNeibour = prevLeaf(leftNeibour);
+    }
     return leftNeibour != null ? leftNeibour.getPsi() : null;
+
+  }
+
+  private static ASTNode prevLeaf(final ASTNode leaf) {
+    LeafElement leftNeibour = (LeafElement)TreeUtil.prevLeaf(leaf);
+    if(leftNeibour instanceof ChameleonElement){
+      ChameleonTransforming.transform(leftNeibour);
+      return prevLeaf(leftNeibour);
+    }
+    return leftNeibour;
   }
 
   public static final PsiElement getPreviousElement(final PsiElement element, boolean skipReference){
