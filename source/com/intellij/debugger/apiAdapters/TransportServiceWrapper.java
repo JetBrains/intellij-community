@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author max
@@ -25,6 +27,8 @@ public class TransportServiceWrapper {
   private static final String SHMEM_TRANSPORT_CLASS = SystemInfo.JAVA_VERSION.startsWith("1.4")
                                                       ? "com.sun.tools.jdi.SharedMemoryTransport"
                                                       : "com.sun.tools.jdi.SharedMemoryTransportService";
+  
+  private final Map<String, Object> myListenAddresses = new HashMap<String, Object>();
 
   private TransportServiceWrapper(Class delegateClass) throws NoSuchMethodException,
                                                       IllegalAccessException,
@@ -73,7 +77,11 @@ public class TransportServiceWrapper {
     try {
       final Method method = myDelegateClass.getMethod("startListening", new Class[0]);
       method.setAccessible(true);
-      return (String)method.invoke(myDelegateObject, new Object[0]);
+      final Object rv = method.invoke(myDelegateObject, new Object[0]);
+      // important! do not cast to string cause return types differ in jdk 1.4 and jdk 1.5
+      final String strValue = rv.toString();
+      myListenAddresses.put(strValue, rv);
+      return strValue;
     }
     catch (NoSuchMethodException e) {
       LOG.error(e);
@@ -93,9 +101,17 @@ public class TransportServiceWrapper {
 
   public void stopListening(final String address) throws IOException {
     try {
-      final Method method = myDelegateClass.getMethod("stopListening", new Class[] {String.class});
+      Object value = myListenAddresses.get(address);
+      if (value == null) {
+        value = address;
+      }
+      Class paramClass = value.getClass();
+      for (Class superClass = paramClass.getSuperclass(); !Object.class.equals(superClass); superClass = superClass.getSuperclass()) {
+        paramClass = superClass;
+      }
+      final Method method = myDelegateClass.getMethod("stopListening", new Class[] {paramClass});
       method.setAccessible(true);
-      method.invoke(myDelegateObject, new Object[]{address});
+      method.invoke(myDelegateObject, new Object[]{value});
     }
     catch (NoSuchMethodException e) {
       LOG.error(e);
