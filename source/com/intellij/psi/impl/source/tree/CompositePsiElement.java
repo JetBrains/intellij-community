@@ -31,7 +31,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     super(type);
   }
 
-  public final PsiElement[] getChildren() {
+  public PsiElement[] getChildren() {
     return getChildrenAsPsiElements(null, PSI_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 

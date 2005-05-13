@@ -7,6 +7,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.lang.ASTNode;
 import org.jdom.Element;
 
 import java.lang.reflect.Field;
@@ -32,11 +33,13 @@ public class TokenTypeFilter implements ElementFilter{
   }
 
   public boolean isAcceptable(Object element, PsiElement context){
-    if(element instanceof PsiDocToken)
-      return ((PsiDocToken)element).getTokenType() == myType;
-    else if(element instanceof XmlToken)
-      return ((XmlToken)element).getTokenType() == myType;
-
+    if(element instanceof PsiElement) {
+      final ASTNode node = ((PsiElement)element).getNode();
+      return node != null ? node.getElementType() == myType : false;
+    }
+    else if(element instanceof ASTNode){
+      return ((ASTNode)element).getElementType() == myType;
+    }
     return false;
   }
 

@@ -2,6 +2,7 @@ package com.intellij.psi.filters;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.filters.classes.AnyInnerFilter;
 import com.intellij.psi.filters.classes.InheritorFilter;
 import com.intellij.psi.filters.classes.InterfaceFilter;
@@ -12,6 +13,7 @@ import com.intellij.psi.filters.element.PackageEqualsFilter;
 import com.intellij.psi.filters.position.PreviousElementFilter;
 import com.intellij.psi.filters.position.StartElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.lang.ASTNode;
 import org.jdom.Element;
 import org.jdom.Namespace;
 
@@ -170,14 +172,11 @@ public class FilterUtil{
   }
 
   public static PsiElement searchNonSpaceNonCommentBack(PsiElement element) {
-    if(element == null) return null;
-    while (true) {
-      int offset = element.getTextRange().getStartOffset() - 1;
-      if (offset < 0) return null;
-      element = element.getContainingFile().findElementAt(offset);
-      if (element == null) return null;
-      if (!(element instanceof PsiWhiteSpace) && !(element instanceof PsiComment)) return element;
-    }
+    if(element == null || element.getNode() == null) return null;
+    ASTNode leftNeibour = TreeUtil.prevLeaf(element.getNode());
+    while (leftNeibour != null && (leftNeibour.getElementType() == TokenType.WHITE_SPACE || leftNeibour.getPsi() instanceof PsiComment))
+      leftNeibour = TreeUtil.prevLeaf(leftNeibour);
+    return leftNeibour != null ? leftNeibour.getPsi() : null;
   }
 
   public static final PsiElement getPreviousElement(final PsiElement element, boolean skipReference){

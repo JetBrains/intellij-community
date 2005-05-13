@@ -11,6 +11,8 @@ import com.intellij.psi.filters.element.ReferenceOnFilter;
 import com.intellij.psi.filters.getters.UpWalkGetter;
 import com.intellij.psi.filters.position.*;
 import com.intellij.psi.filters.types.TypeCodeFragmentIsVoidEnabledFilter;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.impl.source.tree.JspElementType;
 
 public class JavaCompletionData extends CompletionData{
 
@@ -48,7 +50,7 @@ public class JavaCompletionData extends CompletionData{
 
     {
       // Class body
-      final CompletionVariant variant = new CompletionVariant(new AfterElementFilter(new TextFilter("{")));
+      final CompletionVariant variant = new CompletionVariant(CLASS_BODY);
       variant.includeScopeClass(PsiClass.class, true);
       this.registerVariant(variant);
     }
@@ -131,7 +133,7 @@ public class JavaCompletionData extends CompletionData{
 // position
     {
       final ElementFilter position = new AndFilter(new ElementFilter[]{
-        new NotFilter(new AfterElementFilter(new TextFilter("{"))),
+        new NotFilter(CLASS_BODY),
         new NotFilter(new AfterElementFilter(new ContentFilter(new TextFilter(PsiKeyword.EXTENDS)))),
         new NotFilter(new AfterElementFilter(new ContentFilter(new TextFilter(PsiKeyword.IMPLEMENTS)))),
         new NotFilter(new LeftNeighbour(new LeftNeighbour(new TextFilter("<", ",")))),
@@ -153,7 +155,7 @@ public class JavaCompletionData extends CompletionData{
 // position
     {
       final ElementFilter position = new AndFilter(new ElementFilter[]{
-        new NotFilter(new AfterElementFilter(new TextFilter("{"))),
+        new NotFilter(CLASS_BODY),
         new NotFilter(new BeforeElementFilter(new ContentFilter(new TextFilter(PsiKeyword.EXTENDS)))),
         new NotFilter(new AfterElementFilter(new ContentFilter(new TextFilter(PsiKeyword.IMPLEMENTS)))),
         new NotFilter(new LeftNeighbour(new LeftNeighbour(new TextFilter("<", ",")))),
@@ -175,7 +177,7 @@ public class JavaCompletionData extends CompletionData{
 // position
     {
       final ElementFilter position = new AndFilter(
-        new NotFilter(new AfterElementFilter(new TextFilter("{"))),
+        new NotFilter(CLASS_BODY),
         new OrFilter( new ElementFilter [] {
           new AndFilter(
             new LeftNeighbour(new TextFilter(PsiKeyword.EXTENDS, ",")),
@@ -210,7 +212,7 @@ public class JavaCompletionData extends CompletionData{
 // position
     {
       final ElementFilter position = new AndFilter(
-        new NotFilter(new AfterElementFilter(new TextFilter("{"))),
+        new NotFilter(CLASS_BODY),
         new AndFilter(new ElementFilter[]{
           new LeftNeighbour(new TextFilter(PsiKeyword.EXTENDS)),
           new ScopeFilter(new NotFilter(new InterfaceFilter()))
@@ -237,7 +239,7 @@ public class JavaCompletionData extends CompletionData{
 // declaration start
 // position
       final CompletionVariant variant = new CompletionVariant(PsiClass.class, new AndFilter(
-        new AfterElementFilter(new TextFilter("{")),
+        CLASS_BODY,
         new OrFilter(END_OF_BLOCK, new LeftNeighbour(new TextFilter(MODIFIERS_LIST))
         )));
 
@@ -615,6 +617,7 @@ public class JavaCompletionData extends CompletionData{
       new LeftNeighbour(new OrFilter(new ElementFilter[]{
         new TextFilter(ourBlockFinalizers),
         new TextFilter("*/"),
+        new TokenTypeFilter(JspElementType.HOLDER_TEMPLATE_DATA),
         new AndFilter(
           new TextFilter(")"),
           new NotFilter(
@@ -636,4 +639,8 @@ public class JavaCompletionData extends CompletionData{
     PsiKeyword.INT, PsiKeyword.FLOAT,
     PsiKeyword.VOID, PsiKeyword.CHAR, PsiKeyword.BYTE
   };
+
+  private final static ElementFilter CLASS_BODY = new OrFilter(
+    new AfterElementFilter(new TextFilter("{")),
+    new ScopeFilter(new ClassFilter(JspClass.class)));
 }
