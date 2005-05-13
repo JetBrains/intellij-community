@@ -132,7 +132,10 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   public boolean isTextElement() {
-    return myNode.getElementType() == ElementType.XML_TEXT || myNode.getElementType() == ElementType.XML_DATA_CHARACTERS;
+    return myNode.getElementType() == ElementType.XML_TEXT 
+           || myNode.getElementType() == ElementType.XML_DATA_CHARACTERS
+           || myNode.getElementType() == ElementType.XML_CHAR_ENTITY_REF
+      ;
   }
 
   public ChildAttributes getChildAttributes(final int newChildIndex) {
