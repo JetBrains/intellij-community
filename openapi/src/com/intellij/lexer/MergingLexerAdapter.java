@@ -78,4 +78,8 @@ public class MergingLexerAdapter extends LexerBase {
       }
     }
   }
+
+  public Lexer getOriginal() {
+    return myOriginal;
+  }
 }

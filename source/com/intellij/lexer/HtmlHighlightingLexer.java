@@ -57,7 +57,23 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     registerHandler(XmlTokenType.XML_COMMENT_CHARACTERS,value);
 
     if (withEl) {
-      registerHandler(ELTokenType.JSP_EL_CONTENT, new ElEmbeddmentHandler());
+      activateElSupport();
+    }
+  }
+
+  public void activateElSupport() {
+    registerHandler(ELTokenType.JSP_EL_CONTENT, new ElEmbeddmentHandler());
+    Lexer baseLexer = getBaseLexer();
+
+    if (baseLexer instanceof MergingLexerAdapter) {
+      baseLexer = ((MergingLexerAdapter)baseLexer).getOriginal();
+      if (baseLexer instanceof FlexAdapter) {
+        final FlexLexer flex = ((FlexAdapter)baseLexer).getFlex();
+
+        if (flex instanceof ELHostLexer) {
+          ((ELHostLexer)flex).setElTypes(ELTokenType.JSP_EL_CONTENT,ELTokenType.JSP_EL_CONTENT);
+        }
+      }
     }
   }
 
