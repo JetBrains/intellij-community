@@ -16,46 +16,49 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
 public interface Editor extends UserDataHolder {
-  Document getDocument();
+  @NotNull Document getDocument();
   boolean isViewer();
 
-  JComponent getComponent();
-  JComponent getContentComponent();
+  @NotNull JComponent getComponent();
+  @NotNull JComponent getContentComponent();
 
-  SelectionModel getSelectionModel();
-  MarkupModel getMarkupModel();
-  FoldingModel getFoldingModel();
-  ScrollingModel getScrollingModel();
-  CaretModel getCaretModel();
+  @NotNull SelectionModel getSelectionModel();
+  @NotNull MarkupModel getMarkupModel();
+  @NotNull FoldingModel getFoldingModel();
+  @NotNull ScrollingModel getScrollingModel();
+  @NotNull CaretModel getCaretModel();
 
-  EditorSettings getSettings();
-  EditorColorsScheme getColorsScheme();
+  @NotNull EditorSettings getSettings();
+  @NotNull EditorColorsScheme getColorsScheme();
 
   int getLineHeight();
 
-  Point logicalPositionToXY(LogicalPosition pos);
-  int logicalPositionToOffset(LogicalPosition pos);
-  VisualPosition logicalToVisualPosition(LogicalPosition logicalPos);
+  @NotNull Point logicalPositionToXY(@NotNull LogicalPosition pos);
+  int logicalPositionToOffset(@NotNull LogicalPosition pos);
+  @NotNull VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos);
 
-  Point visualPositionToXY(VisualPosition visible);
-  LogicalPosition visualToLogicalPosition(VisualPosition visiblePos);
+  @NotNull Point visualPositionToXY(@NotNull VisualPosition visible);
+  @NotNull LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos);
 
-  LogicalPosition offsetToLogicalPosition(int offset);
-  VisualPosition offsetToVisualPosition(int offset);
+  @NotNull LogicalPosition offsetToLogicalPosition(int offset);
+  @NotNull VisualPosition offsetToVisualPosition(int offset);
 
-  LogicalPosition xyToLogicalPosition(Point p);
-  VisualPosition xyToVisualPosition(Point p);
+  @NotNull LogicalPosition xyToLogicalPosition(@NotNull Point p);
+  @NotNull VisualPosition xyToVisualPosition(@NotNull Point p);
 
-  void addEditorMouseListener(EditorMouseListener listener);
-  void removeEditorMouseListener(EditorMouseListener listener);
+  void addEditorMouseListener(@NotNull EditorMouseListener listener);
+  void removeEditorMouseListener(@NotNull EditorMouseListener listener);
 
-  void addEditorMouseMotionListener(EditorMouseMotionListener listener);
-  void removeEditorMouseMotionListener(EditorMouseMotionListener listener);
+  void addEditorMouseMotionListener(@NotNull EditorMouseMotionListener listener);
+  void removeEditorMouseMotionListener(@NotNull EditorMouseMotionListener listener);
 
   boolean isDisposed();
 
-  Project getProject();
+  @Nullable Project getProject();
 
   boolean isInsertMode();
 
@@ -65,7 +68,7 @@ public interface Editor extends UserDataHolder {
 
   boolean isOneLineMode();
 
-  EditorGutter getGutter();
+  @NotNull EditorGutter getGutter();
 
-  EditorMouseEventArea getMouseEventArea(MouseEvent e);
+  @Nullable EditorMouseEventArea getMouseEventArea(@NotNull MouseEvent e);
 }

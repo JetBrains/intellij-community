@@ -22,7 +22,8 @@ public class AnnotationUtil {
   }
 
   public static boolean isNullable(PsiModifierListOwner owner) {
-    final PsiAnnotation ann = findAnnotation(owner, ALL_ANNOTATIONS);
+    if (isNotNull(owner)) return false;
+    final PsiAnnotation ann = findAnnotationInHierarchy(owner, ALL_ANNOTATIONS);
     return ann != null && NULLABLE.equals(ann.getQualifiedName());
   }
 

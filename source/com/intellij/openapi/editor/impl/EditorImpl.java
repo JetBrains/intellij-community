@@ -35,9 +35,9 @@ import com.intellij.ui.JScrollPane2;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashMap;
-import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ScrollBarUI;
@@ -59,7 +59,6 @@ import java.text.AttributedString;
 import java.text.CharacterIterator;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.TooManyListenersException;
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx {
@@ -1852,7 +1851,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     return new VisualPosition(line, Math.max(0, column));
   }
 
-  private FoldRegion getLastCollapsedBeforePosition(VisualPosition visual) {
+  private @Nullable FoldRegion getLastCollapsedBeforePosition(VisualPosition visual) {
     FoldRegion[] topLevelCollapsed = myFoldingModel.fetchTopLevel();
 
     if (topLevelCollapsed == null) return null;
