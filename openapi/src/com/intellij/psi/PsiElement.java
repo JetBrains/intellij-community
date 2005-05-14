@@ -16,6 +16,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface PsiElement extends UserDataHolder, Iconable {
   PsiElement[] EMPTY_ARRAY = new PsiElement[0];
@@ -28,15 +29,15 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   PsiElement[] getChildren();
 
-  PsiElement getParent();
+  @Nullable PsiElement getParent();
 
-  PsiElement getFirstChild();
+  @Nullable  PsiElement getFirstChild();
 
-  PsiElement getLastChild();
+  @Nullable  PsiElement getLastChild();
 
-  PsiElement getNextSibling();
+  @Nullable  PsiElement getNextSibling();
 
-  PsiElement getPrevSibling();
+  @Nullable  PsiElement getPrevSibling();
 
   PsiFile getContainingFile();
 

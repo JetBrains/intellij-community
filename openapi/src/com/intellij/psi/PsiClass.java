@@ -7,10 +7,10 @@ package com.intellij.psi;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.meta.PsiMetaOwner;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 public interface PsiClass extends PsiElement, PsiNamedElement, PsiModifierListOwner, PsiDocCommentOwner, PsiMetaOwner, PsiTypeParameterListOwner, PsiMember {
   PsiClass[] EMPTY_ARRAY  = new PsiClass[0];
@@ -58,17 +58,17 @@ public interface PsiClass extends PsiElement, PsiNamedElement, PsiModifierListOw
   PsiMethod[] getAllMethods();
   PsiClass[] getAllInnerClasses();
 
-  PsiField    findFieldByName(String name, boolean checkBases);
-  PsiMethod   findMethodBySignature(PsiMethod patternMethod, boolean checkBases);
-  PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases);
-  PsiMethod[] findMethodsByName(String name, boolean checkBases);
-  List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases);
-  List<Pair<PsiMethod,PsiSubstitutor>> getAllMethodsAndTheirSubstitutors();
+  @Nullable PsiField    findFieldByName(String name, boolean checkBases);
+  @Nullable PsiMethod   findMethodBySignature(PsiMethod patternMethod, boolean checkBases);
+  @NotNull PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases);
+  @NotNull PsiMethod[] findMethodsByName(String name, boolean checkBases);
+  @NotNull List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases);
+  @NotNull List<Pair<PsiMethod,PsiSubstitutor>> getAllMethodsAndTheirSubstitutors();
 
-  PsiClass findInnerClassByName(String name, boolean checkBases);
+  @Nullable PsiClass findInnerClassByName(String name, boolean checkBases);
 
-  PsiJavaToken getLBrace();
-  PsiJavaToken getRBrace();
+  @Nullable PsiJavaToken getLBrace();
+  @Nullable PsiJavaToken getRBrace();
 
   @Nullable(documentation = "parser understands classes without name identifiers")
   PsiIdentifier getNameIdentifier();
