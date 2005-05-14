@@ -83,8 +83,7 @@ class ReloadClassesWorker {
                           }
 
                           MethodSignature sig = method.getSignature(PsiSubstitutor.EMPTY);
-                          myProgress.addMessage(MessageCategory.WARNING, new String[]{sig + " : Breakpoints will be ignored for the obsolete version of the method. "},
-                                                   file, lineIndex + 1, 1);
+                          myProgress.addMessage(MessageCategory.WARNING, sig + " : Breakpoints will be ignored for the obsolete version of the method. ");
                         }
                       }
                     }
@@ -162,36 +161,36 @@ class ReloadClassesWorker {
     return null;
   }
 
-  private void processException(ReferenceType reference, Throwable e) {
+  private void processException(Throwable e) {
     if (e.getMessage() != null) {
-      myProgress.error(reference, e.getMessage());
+      myProgress.addMessage(MessageCategory.ERROR, e.getMessage());
     }
 
     if (e instanceof ProcessCanceledException) {
-      myProgress.message(null, "Operation canceled");
+      myProgress.addMessage(MessageCategory.INFORMATION, "Operation canceled");
       return;
     }
 
     if (e instanceof UnsupportedOperationException) {
-      myProgress.error(reference, "Operation not supported by VM");
+      myProgress.addMessage(MessageCategory.ERROR, "Operation not supported by VM");
     }
     else if (e instanceof NoClassDefFoundError) {
-      myProgress.error(reference, "Class not found");
+      myProgress.addMessage(MessageCategory.ERROR, "Class not found");
     }
     else if (e instanceof VerifyError) {
-      myProgress.error(reference, "Verification error");
+      myProgress.addMessage(MessageCategory.ERROR, "Verification error");
     }
     else if (e instanceof UnsupportedClassVersionError) {
-      myProgress.error(reference, "Unsupported class version");
+      myProgress.addMessage(MessageCategory.ERROR, "Unsupported class version");
     }
     else if (e instanceof ClassFormatError) {
-      myProgress.error(reference, "Class format error");
+      myProgress.addMessage(MessageCategory.ERROR, "Class format error");
     }
     else if (e instanceof ClassCircularityError) {
-      myProgress.error(reference, "Class circularity error");
+      myProgress.addMessage(MessageCategory.ERROR, "Class circularity error");
     }
     else {
-      myProgress.error(reference, "Exception while reloading classes : " + e.getClass().getName());
+      myProgress.addMessage(MessageCategory.ERROR, "Exception while reloading classes : " + e.getClass().getName());
     }
   }
 
@@ -206,7 +205,7 @@ class ReloadClassesWorker {
 
   public void reloadClasses(final HashMap<String, HotSwapFile> modifiedClasses) {
     if(modifiedClasses == null) {
-      myProgress.addMessage(MessageCategory.INFORMATION, new String[] { "Loaded classes are up to date. Nothing to reload." }, null, -1, -1);
+      myProgress.addMessage(MessageCategory.INFORMATION, "Loaded classes are up to date. Nothing to reload.");
       return;
     }
 
@@ -244,7 +243,7 @@ class ReloadClassesWorker {
           ReferenceType reference = (ReferenceType)i.next();
 
           if (buffer == null) {
-            myProgress.error(reference, "I/O error");
+            myProgress.addMessage(MessageCategory.ERROR, "I/O error");
           }
           redefineMap.put(reference, buffer);
         }
@@ -252,9 +251,9 @@ class ReloadClassesWorker {
         //myProgress.addMessage(MessageCategory.INFORMATION, new String[] { qualifiedName + " reloaded" }, null, -1, -1);
       }
       myProgress.setFraction(1);
-      myProgress.message(null,
-                            modifiedClasses.size() + " class" + (modifiedClasses.size() == 1 ? "" : "es") +
-                            " reloaded.");
+      String text = modifiedClasses.size() + " class" + (modifiedClasses.size() == 1 ? "" : "es") +
+      " reloaded.";
+      myProgress.addMessage(MessageCategory.INFORMATION, text);
       if (LOG.isDebugEnabled()) {
         LOG.debug("classes reloaded");
       }
@@ -264,7 +263,7 @@ class ReloadClassesWorker {
       }
     }
     catch (Throwable e) {
-      processException(null, e);
+      processException(e);
     }
 
     DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
@@ -284,7 +283,7 @@ class ReloadClassesWorker {
               getDebugProcess().getVirtualMachineProxy().resume();
             }
             catch (Exception e) {
-              processException(null, e);
+              processException(e);
             }
           }
         });

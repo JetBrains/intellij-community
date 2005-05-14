@@ -1,15 +1,23 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.Patches;
+import com.intellij.util.ui.MessageCategory;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapProgress;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.util.IJSwingUtilities;
+import gnu.trove.TIntObjectHashMap;
+
+import javax.swing.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -17,11 +25,10 @@ import com.intellij.util.IJSwingUtilities;
  */
 
 public class HotSwapProgressImpl extends HotSwapProgress{
-  private HotSwapView myHotSwapView;
+  TIntObjectHashMap<List<String>> myMessages = new TIntObjectHashMap<List<String>>();
   private final ProgressIndicator myProgressIndicator;
   private final ProgressWindow myProgressWindow;
-
-  private DebuggerSession myDebuggerSession;
+  private String myTitle = "Hot Swap";
 
   public HotSwapProgressImpl(Project project) {
     super(project);
@@ -37,15 +44,58 @@ public class HotSwapProgressImpl extends HotSwapProgress{
     myProgressIndicator = Patches.MAC_HIDE_QUIT_HACK ? myProgressWindow : (ProgressIndicator)new SmoothProgressAdapter(myProgressWindow, project);
   }
 
-  public void addMessage(final int type, final String[] text, final VirtualFile file, final int line, final int column) {
-    IJSwingUtilities.invoke(new Runnable() {
+  public void finished() {
+    super.finished();
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if(myHotSwapView == null) {
-          myHotSwapView = HotSwapView.findView(myDebuggerSession);          
+        final List<String> errors = getMessages(MessageCategory.ERROR);
+        final List<String> warnings = getMessages(MessageCategory.WARNING);
+        if (errors.size() > 0) {
+          Messages.showErrorDialog(getProject(), buildMessage(errors), myTitle);
+          WindowManager.getInstance().getStatusBar(getProject()).setInfo("Hot Swap completed with errors");
         }
-        myHotSwapView.addMessage(type, text, file, line, column, null);
+        else if (warnings.size() > 0){
+          Messages.showWarningDialog(getProject(), buildMessage(warnings), myTitle);
+          WindowManager.getInstance().getStatusBar(getProject()).setInfo("Hot Swap completed with warnings");
+        }
+        else {
+          final StringBuffer msg = new StringBuffer();
+          for (int category : myMessages.keys()) {
+            if (msg.length() > 0) {
+              msg.append("\n");
+            }
+            msg.append(buildMessage(getMessages(category)));
+          }
+          WindowManager.getInstance().getStatusBar(getProject()).setInfo(msg.toString());
+        }
       }
     });
+  }
+
+  private List<String> getMessages(int category) {
+    final List<String> messages = myMessages.get(category);
+    return messages == null? (List<String>)Collections.EMPTY_LIST : messages;
+  }
+    
+  private String buildMessage(List<String> messages) {
+    StringBuffer msg = new StringBuffer();
+    for (Iterator<String> it = messages.iterator(); it.hasNext();) {
+      final String message = it.next();
+      if (msg.length() > 0) {
+        msg.append("\n");
+      }
+      msg.append(message);
+    }
+    return msg.toString();
+  } 
+  
+  public void addMessage(final int type, final String text) {
+    List<String> messages = myMessages.get(type);
+    if (messages == null) {
+      messages = new ArrayList<String>();
+      myMessages.put(type, messages);
+    }
+    messages.add(text);
   }
 
   public void setText(final String text) {
@@ -83,13 +133,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   }
 
   public void setDebuggerSession(DebuggerSession session) {
-    final DebuggerSession oldSession = myDebuggerSession;
-    myDebuggerSession = session;
-    myProgressWindow.setTitle("Hot Swap : " + myDebuggerSession.getSessionName());
-    DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-      public void run() {
-        myHotSwapView = null;
-      }
-    });
+    myTitle = "Hot Swap : " + session.getSessionName();
+    myProgressWindow.setTitle(myTitle);
   }
 }

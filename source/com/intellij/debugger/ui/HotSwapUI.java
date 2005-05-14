@@ -46,14 +46,6 @@ public class HotSwapUI implements ProjectComponent{
   public HotSwapUI(final Project project, CompilerManager compilerManager, DebuggerManagerEx debuggerManager) {
     myProject = project;
     compilerManager.addCompilationStatusListener(myListener);
-    debuggerManager.addDebuggerManagerListener(new DebuggerManagerListener() {
-      public void sessionCreated(DebuggerSession session) {
-      }
-
-      public void sessionRemoved(DebuggerSession session) {
-        HotSwapView.removeView(session);
-      }
-    });
   }
 
   public void projectOpened() {
@@ -132,7 +124,9 @@ public class HotSwapUI implements ProjectComponent{
 
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
-        HotSwapManager.reloadModifiedClasses(modifiedClasses, reloadClassesProgress[0]);
+        final HotSwapProgressImpl swapProgress = reloadClassesProgress[0];
+        HotSwapManager.reloadModifiedClasses(modifiedClasses, swapProgress);
+        swapProgress.finished();
       }
     }, reloadClassesProgress[0].getProgressIndicator());
   }
@@ -150,6 +144,8 @@ public class HotSwapUI implements ProjectComponent{
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
         classes[0] = HotSwapManager.getModifiedClasses(sessions, swapProgress[0]);
+        swapProgress[0].finished();
+        
       }
     }, swapProgress[0].getProgressIndicator());
 
