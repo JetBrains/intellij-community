@@ -106,9 +106,6 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
       if (node instanceof TreeElementWrapper) {
         ungrouped.add(node);
       }
-      else {
-        node.groupElements(grouper);
-      }
     }
 
     if (ungrouped.size() != 0) {
