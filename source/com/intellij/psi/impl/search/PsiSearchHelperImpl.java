@@ -395,18 +395,21 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                             PsiManagerImpl manager) {
     List<String> words = StringUtil.getWordsIn(text);
     String bestWord = null;
-    int nFiles = Integer.MAX_VALUE;
+    int bestFilesCount = Integer.MAX_VALUE;
     for (String word : words) {
       boolean isBetter;
+      int filesCount = bestFilesCount;
       if (searchScope instanceof GlobalSearchScope) {
         PsiFile[] files = manager.getCacheManager().getFilesWithWord(word, searchContext, (GlobalSearchScope)searchScope);
-        isBetter = files.length < nFiles;
+        filesCount = files.length;
+        isBetter = filesCount < bestFilesCount;
       }
       else {
         isBetter = bestWord == null || word.length() > bestWord.length();
       }
       if (isBetter) {
         bestWord = word;
+        bestFilesCount = filesCount;
       }
     }
     return bestWord;
