@@ -277,7 +277,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         if (tag.getAttribute(attrName, tag.getNamespace()) == null) {
           addElementsForTag(
             tag,
-            "Element " + name + " doesn't have required attribute",
+            "Element " + name + " doesn't have required attribute " + attrName,
             myResult,
             HighlightInfoType.WRONG_REF,
             new IntentionAction() {

@@ -4,7 +4,6 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
-import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.psi.xml.XmlTag;
 
 /**
@@ -27,24 +26,4 @@ public class RelaxedNsXmlNSDescriptor extends XmlNSDescriptorImpl {
     return new RelaxedNsXmlElementDescriptor(tag);
   }
 
-  public static class RelaxedNsXmlElementDescriptor extends XmlElementDescriptorImpl {
-
-    public RelaxedNsXmlElementDescriptor() {}
-
-    RelaxedNsXmlElementDescriptor(XmlTag tag) {
-      super(tag);
-    }
-
-    public XmlElementDescriptor getElementDescriptor(XmlTag childTag) {
-      XmlElementDescriptor elementDescriptor = super.getElementDescriptor(childTag);
-
-      if (elementDescriptor == null &&
-          !childTag.getNamespace().equals(XmlUtil.XHTML_URI)
-        ) {
-        return new AnyXmlElementDescriptor(this,childTag.getNSDescriptor(childTag.getNamespace(),true));
-      }
-
-      return elementDescriptor;
-    }
-  }
 }

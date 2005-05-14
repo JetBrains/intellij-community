@@ -48,6 +48,7 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
 
   public XmlAttribute getAttribute(String name, String namespace) {
     final XmlAttribute[] attributes = getAttributes();
+    name = name.toLowerCase();
 
     for (int i = 0; i < attributes.length; i++) {
       final XmlAttribute attribute = attributes[i];

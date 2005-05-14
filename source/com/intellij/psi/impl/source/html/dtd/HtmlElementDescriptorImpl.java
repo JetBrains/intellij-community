@@ -9,6 +9,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.jsp.impl.RelaxedNsXmlElementDescriptor;
 
 import java.util.HashMap;
 
@@ -22,12 +23,14 @@ import java.util.HashMap;
 public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl");
 
-  private XmlElementDescriptor delegate;
+  private XmlElementDescriptor myDelegate;
+  private boolean myRelaxed;
   private HashMap<String,XmlElementDescriptor> cachedDescriptors;
   private HashMap<String,XmlAttributeDescriptor> cachedAttributeDescriptors;
 
   public HtmlElementDescriptorImpl(XmlElementDescriptor _delegate) {
-    delegate = _delegate;
+    myDelegate = _delegate;
+    myRelaxed = myDelegate instanceof RelaxedNsXmlElementDescriptor;
   }
 
   public HtmlElementDescriptorImpl() {
@@ -35,11 +38,11 @@ public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
   }
 
   public String getQualifiedName() {
-    return delegate.getQualifiedName();
+    return myDelegate.getQualifiedName();
   }
 
   public String getDefaultName() {
-    return delegate.getDefaultName();
+    return myDelegate.getDefaultName();
   }
 
   private XmlElementDescriptor[] myElementDescriptors = null;
@@ -47,7 +50,7 @@ public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
 
     if (myElementDescriptors==null) {
-      XmlElementDescriptor[] elementsDescriptors = delegate.getElementsDescriptors(context);
+      XmlElementDescriptor[] elementsDescriptors = myDelegate.getElementsDescriptors(context);
       myElementDescriptors = new XmlElementDescriptor[elementsDescriptors.length];
 
       for (int i = 0; i < elementsDescriptors.length; i++) {
@@ -64,7 +67,7 @@ public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
 
     if (cachedDescriptors==null) {
       cachedDescriptors = new HashMap<String, XmlElementDescriptor>();
-      XmlElementDescriptor[] elementDescriptors = delegate.getElementsDescriptors(null);
+      XmlElementDescriptor[] elementDescriptors = myDelegate.getElementsDescriptors(null);
 
       for (int i = 0; i < elementDescriptors.length; i++) {
         XmlElementDescriptor elementDescriptor = elementDescriptors[i];
@@ -72,7 +75,12 @@ public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
       }
     }
 
-    return cachedDescriptors.get(name);
+    XmlElementDescriptor xmlElementDescriptor = cachedDescriptors.get(name);
+    if (xmlElementDescriptor == null && myRelaxed) {
+      xmlElementDescriptor = myDelegate.getElementDescriptor(element);
+    }
+
+    return xmlElementDescriptor;
   }
 
   private XmlAttributeDescriptor[] myAttributeDescriptors;
@@ -80,7 +88,7 @@ public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
   public XmlAttributeDescriptor[] getAttributesDescriptors() {
 
     if (myAttributeDescriptors==null) {
-      final XmlAttributeDescriptor[] attributesDescriptors = delegate.getAttributesDescriptors();
+      final XmlAttributeDescriptor[] attributesDescriptors = myDelegate.getAttributesDescriptors();
       myAttributeDescriptors = new XmlAttributeDescriptor[attributesDescriptors.length];
 
       for (int i = 0; i < attributesDescriptors.length; i++) {
@@ -95,7 +103,7 @@ public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
 
     if (cachedAttributeDescriptors==null) {
       cachedAttributeDescriptors = new HashMap<String, XmlAttributeDescriptor>();
-      XmlAttributeDescriptor[] elementAttributeDescriptors = delegate.getAttributesDescriptors();
+      XmlAttributeDescriptor[] elementAttributeDescriptors = myDelegate.getAttributesDescriptors();
 
       for (int i = 0; i < elementAttributeDescriptors.length; i++) {
         final XmlAttributeDescriptor attributeDescriptor = elementAttributeDescriptors[i];
@@ -114,15 +122,15 @@ public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
   }
 
   public XmlNSDescriptor getNSDescriptor() {
-    return delegate.getNSDescriptor();
+    return myDelegate.getNSDescriptor();
   }
 
   public int getContentType() {
-    return delegate.getContentType();
+    return myDelegate.getContentType();
   }
 
   public PsiElement getDeclaration() {
-    return delegate.getDeclaration();
+    return myDelegate.getDeclaration();
   }
 
   public boolean processDeclarations(PsiElement context,
@@ -130,22 +138,22 @@ public class HtmlElementDescriptorImpl implements XmlElementDescriptor {
                                      PsiSubstitutor substitutor,
                                      PsiElement lastElement,
                                      PsiElement place) {
-    return delegate.processDeclarations(context, processor, substitutor, lastElement, place);
+    return myDelegate.processDeclarations(context, processor, substitutor, lastElement, place);
   }
 
   public String getName(PsiElement context) {
-    return delegate.getName(context);
+    return myDelegate.getName(context);
   }
 
   public String getName() {
-    return delegate.getName();
+    return myDelegate.getName();
   }
 
   public void init(PsiElement element) {
-    delegate.init(element);
+    myDelegate.init(element);
   }
 
   public Object[] getDependences() {
-    return delegate.getDependences();
+    return myDelegate.getDependences();
   }
 }
