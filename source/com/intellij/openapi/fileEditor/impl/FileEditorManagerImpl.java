@@ -326,8 +326,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     final EditorWindow [] windows = getWindows(); // TODO: use current file as base
     for (int i = 0; i != windows.length; ++ i) {
       final VirtualFile[] files = windows [i].getFiles();
-      for (int j = 0; j < files.length; j++) {
-        final VirtualFile fileAt = files[j];
+      for (final VirtualFile fileAt : files) {
         if (fileAt != file) {
           return fileAt;
         }
@@ -346,8 +345,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       final EditorWindow[] windows = mySplitters.findWindows(file);
       if (windows != null) {
         final VirtualFile nextFile = findNextFile(file);
-        for (int i = 0; i < windows.length; i++) {
-          final EditorWindow window = windows[i];
+        for (final EditorWindow window : windows) {
           LOG.assertTrue(window.getSelectedEditor() != null);
           final EditorWithProviderComposite oldComposite = window.findFileComposite(file);
           if (oldComposite != null) {
@@ -733,10 +731,10 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     assertThread();
     final ArrayList<FileEditor> result = new ArrayList<FileEditor>();
     final EditorWithProviderComposite[] editorsComposites = mySplitters.getEditorsComposites();
-    for (int i = 0; i < editorsComposites.length; i++) {
-      final FileEditor[] editors = editorsComposites[i].getEditors();
-      for (int j = 0; j < editors.length; j++) {
-        result.add(editors[j]);
+    for (EditorWithProviderComposite editorsComposite : editorsComposites) {
+      final FileEditor[] editors = editorsComposite.getEditors();
+      for (FileEditor editor : editors) {
+        result.add(editor);
       }
     }
     return result.toArray(new FileEditor[result.size()]);
@@ -853,16 +851,16 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   //================== Firing events =====================
   private void fireFileOpened(final VirtualFile file) {
-    final FileEditorManagerListener[] listeners = (FileEditorManagerListener[])myListenerList.getListeners(FileEditorManagerListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].fileOpened(this, file);
+    final FileEditorManagerListener[] listeners = myListenerList.getListeners(FileEditorManagerListener.class);
+    for (FileEditorManagerListener listener : listeners) {
+      listener.fileOpened(this, file);
     }
   }
 
   public void fireFileClosed(final VirtualFile file) {
-    final FileEditorManagerListener[] listeners = (FileEditorManagerListener[])myListenerList.getListeners(FileEditorManagerListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].fileClosed(this, file);
+    final FileEditorManagerListener[] listeners = myListenerList.getListeners(FileEditorManagerListener.class);
+    for (FileEditorManagerListener listener : listeners) {
+      listener.fileClosed(this, file);
     }
   }
 
@@ -875,9 +873,9 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     final FileEditor newSelectedEditor = newSelectedComposite != null ? newSelectedComposite.getSelectedEditor() : null;
 
     final FileEditorManagerEvent event = new FileEditorManagerEvent(this, oldSelectedFile, oldSelectedEditor, newSelectedFile, newSelectedEditor);
-    final FileEditorManagerListener[] listeners = (FileEditorManagerListener[])myListenerList.getListeners(FileEditorManagerListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].selectionChanged(event);
+    final FileEditorManagerListener[] listeners = myListenerList.getListeners(FileEditorManagerListener.class);
+    for (FileEditorManagerListener listener : listeners) {
+      listener.selectionChanged(event);
     }
   }
 
@@ -887,9 +885,9 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     LOG.assertTrue(selectedFile != null);
     if (!Comparing.equal(oldSelectedEditor, newSelectedEditor)) {
       final FileEditorManagerEvent event = new FileEditorManagerEvent(this, selectedFile, oldSelectedEditor, selectedFile, newSelectedEditor);
-      final FileEditorManagerListener[] listeners = (FileEditorManagerListener[])myListenerList.getListeners(FileEditorManagerListener.class);
-      for (int i = 0; i < listeners.length; i++) {
-        listeners[i].selectionChanged(event);
+      final FileEditorManagerListener[] listeners = myListenerList.getListeners(FileEditorManagerListener.class);
+      for (FileEditorManagerListener listener : listeners) {
+        listener.selectionChanged(event);
       }
     }
   }
@@ -980,9 +978,8 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     public void fileMoved(VirtualFileMoveEvent e){
       final VirtualFile file = e.getFile();
       final VirtualFile[] selectedFiles = getSelectedFiles();
-      for (int i = 0; i < selectedFiles.length; i++) {
-        final VirtualFile selectedFile = selectedFiles[i];
-        if(VfsUtil.isAncestor(file, selectedFile, false)){
+      for (final VirtualFile selectedFile : selectedFiles) {
+        if (VfsUtil.isAncestor(file, selectedFile, false)) {
           updateFileName(selectedFile);
         }
       }
@@ -1186,13 +1183,12 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   public void closeAllFiles() {
     final VirtualFile[] openFiles = mySplitters.getOpenFiles();
-    for (int i = 0; i < openFiles.length; i++) {
-      closeFile(openFiles[i]);
+    for (VirtualFile openFile : openFiles) {
+      closeFile(openFile);
     }
   }
 
   public VirtualFile[] getSiblings(VirtualFile file) {
     return getOpenFiles();
   }
-
 }

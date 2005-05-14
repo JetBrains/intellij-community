@@ -175,8 +175,7 @@ public class EditorsSplitters extends JPanel {
           window.myInsideTabChange++;
           final List<Element> children = leaf.getChildren("file");
           VirtualFile currentFile = null;
-          for (Iterator<Element> iterator = children.iterator(); iterator.hasNext();) {
-            final Element file = iterator.next();
+          for (final Element file : children) {
             final HistoryEntry entry;
             entry = new HistoryEntry(getManager().myProject, file.getChild(HistoryEntry.TAG));
             FileEditorManagerImpl.openFileImpl3(window, entry.myFile, false, entry);
@@ -186,7 +185,7 @@ public class EditorsSplitters extends JPanel {
                 currentFile = entry.myFile;
               }
               if (Boolean.valueOf(file.getAttributeValue("current")).booleanValue()) {
-                setCurrentWindow (window, false);
+                setCurrentWindow(window, false);
               }
             }
           }
@@ -210,10 +209,9 @@ public class EditorsSplitters extends JPanel {
 
   public VirtualFile[] getOpenFiles() {
     final ArrayListSet<VirtualFile> files = new ArrayListSet<VirtualFile>();
-    for (final Iterator<EditorWindow> iter = myWindows.iterator(); iter.hasNext();) {
-      final EditorWithProviderComposite[] editors = iter.next().getEditors();
-      for (int i = 0; i < editors.length; i++) {
-        final EditorWithProviderComposite editor = editors[i];
+    for (final EditorWindow myWindow : myWindows) {
+      final EditorWithProviderComposite[] editors = myWindow.getEditors();
+      for (final EditorWithProviderComposite editor : editors) {
         files.add(editor.getFile());
       }
     }
@@ -222,8 +220,7 @@ public class EditorsSplitters extends JPanel {
 
   public VirtualFile[] getSelectedFiles() {
     final ArrayListSet<VirtualFile> files = new ArrayListSet<VirtualFile>();
-    for (Iterator<EditorWindow> iterator = myWindows.iterator(); iterator.hasNext();) {
-      final EditorWindow window = iterator.next();
+    for (final EditorWindow window : myWindows) {
       final VirtualFile file = window.getSelectedFile();
       if (file != null) {
         files.add(file);
@@ -253,9 +250,8 @@ public class EditorsSplitters extends JPanel {
       }
     }
 
-    for (Iterator<EditorWindow> iterator = myWindows.iterator(); iterator.hasNext();) {
-      final EditorWindow window = iterator.next();
-      if (!window.equals (currentWindow)) {
+    for (final EditorWindow window : myWindows) {
+      if (!window.equals(currentWindow)) {
         final EditorWithProviderComposite composite = window.getSelectedEditor();
         if (composite != null) {
           editors.add(composite.getSelectedEditor());
@@ -296,8 +292,7 @@ public class EditorsSplitters extends JPanel {
     LOG.assertTrue(file != null);
     final EditorWindow[] windows = findWindows(file);
     if (windows != null) {
-      for (int i = 0; i < windows.length; i++) {
-        final EditorWindow window = windows[i];
+      for (final EditorWindow window : windows) {
         final int index = window.findEditorIndex(window.findFileComposite(file));
         LOG.assertTrue(index != -1);
         window.setForegroundAt(index, getManager().getFileColor(file));
@@ -306,8 +301,7 @@ public class EditorsSplitters extends JPanel {
   }
 
   public void trimToSize(final int editor_tab_limit, final VirtualFile fileToIgnore) {
-    for (Iterator<EditorWindow> iterator = myWindows.iterator(); iterator.hasNext();) {
-      final EditorWindow window = iterator.next();
+    for (final EditorWindow window : myWindows) {
       window.trimToSize(editor_tab_limit, fileToIgnore);
     }
   }
@@ -383,8 +377,7 @@ public class EditorsSplitters extends JPanel {
   //---------------------------------------------------------
 
   public EditorWindow findWindow(final EditorComposite editor) {
-    for (Iterator<EditorWindow> elem = myWindows.iterator(); elem.hasNext();) {
-      final EditorWindow window = elem.next();
+    for (final EditorWindow window : myWindows) {
       if (window.findEditorIndex(editor) != -1) {
         return window;
       }
@@ -393,8 +386,7 @@ public class EditorsSplitters extends JPanel {
   }
 
   public EditorWindow findWindow(final Component editorComponent) {
-    for (Iterator<EditorWindow> elem = myWindows.iterator(); elem.hasNext();) {
-      final EditorWindow window = elem.next();
+    for (final EditorWindow window : myWindows) {
       for (Component component = editorComponent; component != null; component = component.getParent()) {
         if (window.findComponentIndex(component) != -1) {
           return window;
@@ -407,10 +399,9 @@ public class EditorsSplitters extends JPanel {
   public EditorWithProviderComposite[] getEditorsComposites() {
     final ArrayList<EditorWithProviderComposite> res = new ArrayList<EditorWithProviderComposite>();
 
-    for (final Iterator<EditorWindow> iter = myWindows.iterator(); iter.hasNext();) {
-      final EditorWithProviderComposite[] editors = iter.next().getEditors();
-      for (int i = 0; i < editors.length; i++) {
-        final EditorWithProviderComposite editor = editors[i];
+    for (final EditorWindow myWindow : myWindows) {
+      final EditorWithProviderComposite[] editors = myWindow.getEditors();
+      for (final EditorWithProviderComposite editor : editors) {
         res.add(editor);
       }
     }
@@ -423,8 +414,7 @@ public class EditorsSplitters extends JPanel {
 
   public EditorWithProviderComposite[] findEditorComposites(final VirtualFile file) {
     final ArrayList<EditorWithProviderComposite> res = new ArrayList<EditorWithProviderComposite>();
-    for (final Iterator<EditorWindow> iter = myWindows.iterator(); iter.hasNext();) {
-      final EditorWindow window = iter.next();
+    for (final EditorWindow window : myWindows) {
       final EditorWithProviderComposite fileComposite = window.findFileComposite(file);
       if (fileComposite != null) {
         res.add(fileComposite);
@@ -435,8 +425,7 @@ public class EditorsSplitters extends JPanel {
 
   public EditorWindow[] findWindows(final VirtualFile file) {
     final ArrayList<EditorWindow> res = new ArrayList<EditorWindow>();
-    for (final Iterator<EditorWindow> iter = myWindows.iterator(); iter.hasNext();) {
-      final EditorWindow window = iter.next();
+    for (final EditorWindow window : myWindows) {
       if (window.findFileComposite(file) != null) {
         res.add(window);
       }
@@ -446,8 +435,7 @@ public class EditorsSplitters extends JPanel {
 
   public EditorWindow[] findWindowsWithCurrent(final VirtualFile file) {
     final ArrayList<EditorWindow> res = new ArrayList<EditorWindow>();
-    for (final Iterator<EditorWindow> iter = myWindows.iterator(); iter.hasNext();) {
-      final EditorWindow window = iter.next();
+    for (final EditorWindow window : myWindows) {
       if (window.getSelectedFile() == file) {
         res.add(window);
       }
@@ -496,8 +484,7 @@ public class EditorsSplitters extends JPanel {
 
   public EditorWindow findWindowWith(final Component component) {
     if (component != null) {
-      for (final Iterator<EditorWindow> iter = myWindows.iterator(); iter.hasNext();) {
-        final EditorWindow window = iter.next();
+      for (final EditorWindow window : myWindows) {
         if (SwingUtilities.isDescendingFrom(component, window.myPanel)) {
           return window;
         }
@@ -507,17 +494,27 @@ public class EditorsSplitters extends JPanel {
   }
 
   private final class MyFocusWatcher extends FocusWatcher {
+    private final Alarm myAlarm = new Alarm();
     protected void focusedComponentChanged(final Component component) {
-      if (myInsideChange > 0 || component == null) {
+      if (myInsideChange > 0) {
         return;
       }
       final EditorWindow oldActiveWindow = getCurrentWindow();
       final EditorWindow newActiveWindow = findWindowWith(component);
       if (oldActiveWindow != newActiveWindow || getCurrentFile() != myCurrentFile) {
-        setCurrentWindow(newActiveWindow, false);
-        getManager().updateFileName(newActiveWindow.getSelectedFile());
-        myCurrentFile = getCurrentFile();
-        getManager().fireSelectionChanged(oldActiveWindow == null ? null : oldActiveWindow.getSelectedEditor(), newActiveWindow.getSelectedEditor());
+        // alarm here is to prevent title flickering when tab is being closed and two events arriving: with component==null and component==next focused tab
+        // only the last event makes sense to handle
+        myAlarm.cancelAllRequests();
+        myAlarm.addRequest(new Runnable(){
+          public void run() {
+            setCurrentWindow(newActiveWindow, false);
+            getManager().updateFileName(newActiveWindow == null ? null : newActiveWindow.getSelectedFile());
+            myCurrentFile = getCurrentFile();
+            EditorWithProviderComposite oldSelected = oldActiveWindow == null ? null : oldActiveWindow.getSelectedEditor();
+            EditorWithProviderComposite newSelected = newActiveWindow == null ? null : newActiveWindow.getSelectedEditor();
+            getManager().fireSelectionChanged(oldSelected, newSelected);
+          }
+        },50);
       }
     }
   }
