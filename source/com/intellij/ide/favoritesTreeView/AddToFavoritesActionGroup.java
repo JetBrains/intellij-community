@@ -22,7 +22,8 @@ public class AddToFavoritesActionGroup extends DefaultActionGroup{
       add(new AddToFavoritesAction(favoritesList));
     }
     addSeparator();
-    add(new AddToNewFavoritesListAction());
-    e.getPresentation().setEnabled(true);
+    final AddToNewFavoritesListAction action = new AddToNewFavoritesListAction();
+    add(action);
+    action.update(e);    
   }
 }

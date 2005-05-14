@@ -2,6 +2,7 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.PackageViewPane;
@@ -77,9 +78,14 @@ public class AddToFavoritesAction extends AnAction {
   }
 
   private AbstractTreeNode[] createNodes(DataContext dataContext, boolean inProjectView) {
+    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final ViewSettings favoritesConfig = FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel(myFavoritesList).getFavoritesTreeStructure().getFavoritesConfiguration();
+    return createNodes(dataContext, inProjectView, favoritesConfig);
+  }
+
+  public static AbstractTreeNode[] createNodes(DataContext dataContext, boolean inProjectView, ViewSettings favoritesConfig) {
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    final FavoritesTreeViewConfiguration favoritesConfig = FavoritesViewImpl.getInstance(project).getFavoritesTreeViewPanel(myFavoritesList).getFavoritesTreeStructure().getFavoritesConfiguration();
     final PsiManager psiManager = PsiManager.getInstance(project);
 
     final String currentViewId = ProjectView.getInstance(project).getCurrentViewId();
@@ -234,7 +240,7 @@ public class AddToFavoritesAction extends AnAction {
   public static void addPsiElementNode(PsiElement psiElement,
                                        final Project project,
                                        final ArrayList<AbstractTreeNode> result,
-                                       final FavoritesTreeViewConfiguration favoritesConfig,
+                                       final ViewSettings favoritesConfig,
                                        Module module) {
     Class <? extends AbstractTreeNode> klass = getPsiElementNodeClass(psiElement);
     if (klass == null){

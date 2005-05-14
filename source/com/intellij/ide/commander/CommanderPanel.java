@@ -3,7 +3,11 @@ package com.intellij.ide.commander;
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
+import com.intellij.ide.projectView.impl.nodes.Form;
+import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
+import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.DeleteHandler;
@@ -18,6 +22,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.localVcs.impl.LvcsIntegration;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -25,6 +30,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -388,6 +394,7 @@ public class CommanderPanel extends JPanel {
 
   public final Object getDataImpl(final String dataId) {
     if (myBuilder == null) return null;
+    final Object selectedValue = getSelectedValue();
     if (DataConstants.PSI_ELEMENT.equals(dataId)) {
       final PsiElement selectedElement = getSelectedElement();
       return (selectedElement != null && selectedElement.isValid())? selectedElement : null;
@@ -416,6 +423,16 @@ public class CommanderPanel extends JPanel {
     }
     else if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return myDeleteElementProvider;
+    } else if (DataConstants.MODULE.equals(dataId)){
+      return selectedValue instanceof Module ? selectedValue : null;
+    } else if (DataConstantsEx.MODULE_GROUP_ARRAY.equals(dataId)){
+      return selectedValue instanceof ModuleGroup ? new ModuleGroup[]{(ModuleGroup)selectedValue} : null;
+    } else if (DataConstantsEx.GUI_DESIGNER_FORM_ARRAY.equals(dataId)){
+      return selectedValue instanceof Form ? new Form[]{(Form)selectedValue} : null;
+    } else if (DataConstantsEx.LIBRARY_GROUP_ARRAY.equals(dataId)){
+      return selectedValue instanceof LibraryGroupElement ? new LibraryGroupElement[] {(LibraryGroupElement)selectedValue} : null;
+    } else if (DataConstantsEx.NAMED_LIBRARY_ARRAY.equals(dataId)){
+      return selectedValue instanceof NamedLibraryElement ? new NamedLibraryElement[]{(NamedLibraryElement)selectedValue} : null;
     }
     return null;
   }
@@ -437,9 +454,9 @@ public class CommanderPanel extends JPanel {
 
   }
 
-  private static PsiElement[] filterInvalidElements(final PsiElement[] elements) {
+  @Nullable private static PsiElement[] filterInvalidElements(final PsiElement[] elements) {
     if (elements == null || elements.length == 0) {
-      return elements;
+      return null;
     }
     final java.util.List<PsiElement> validElements = new ArrayList<PsiElement>(elements.length);
     for (int idx = 0; idx < elements.length; idx++) {
