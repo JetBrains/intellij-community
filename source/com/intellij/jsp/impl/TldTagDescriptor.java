@@ -10,7 +10,6 @@ import com.intellij.psi.impl.source.jsp.JspImplUtil;
 import com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl;
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
 import com.intellij.j2ee.jsp.MyTEI;
-import com.intellij.j2ee.jsp.UseBeanTEI;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -128,13 +127,6 @@ public class TldTagDescriptor extends CustomTagDescriptorBase implements Validat
   }
 
   public TagExtraInfo getExtraInfo(WebModuleProperties moduleProperties) {
-    //if (getName().equals("useBean") &&
-    //    getNSDescriptor() instanceof TldDescriptor &&
-    //    getNSDescriptor().getDescriptorFile().getVirtualFile().getName().equals("jsp12.tld")
-    //   ) {
-    //  return new UseBeanTEI(); // HACK for old JSP to work
-    //}
-
     Object tei;
     TagExtraInfo castedTei = null;
 

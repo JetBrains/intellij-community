@@ -5,8 +5,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.jsp.tagLibrary.JspTagAttributeInfo;
-import com.intellij.psi.jsp.tagLibrary.JspTagInfo;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.SplittingUtil;
@@ -91,9 +89,6 @@ class ParameterInfoComponent extends JPanel{
       }
       else if (o instanceof XmlElementDescriptor) {
         updateElementDescriptor((XmlElementDescriptor)o, i);
-      }
-      else if (o instanceof JspTagInfo) {
-        updateTagInfo((JspTagInfo)o, i);
       }
     }
     invalidate();
@@ -295,62 +290,6 @@ class ParameterInfoComponent extends JPanel{
 
   public void setHighlightedMethod(PsiMethod method) {
     myHighlightedMethod = method;
-  }
-
-  private void updateTagInfo(JspTagInfo info, int i) {
-    StringBuffer buffer = new StringBuffer();
-    int highlightStartOffset = -1;
-    int highlightEndOffset = -1;
-
-    final JspTagAttributeInfo[] attributes = info.getAttributes();
-
-    if (attributes.length == 0) {
-      buffer.append(NO_ATTRIBUTES_TEXT);
-    }
-    else {
-      StringBuffer text1 = new StringBuffer(" ");
-      StringBuffer text2 = new StringBuffer(" ");
-      StringBuffer text3 = new StringBuffer(" ");
-
-      for (int j = 0; j < attributes.length; j++) {
-        JspTagAttributeInfo attribute = attributes[j];
-
-        if (attribute.isRequired()) {
-          if (!(text2.toString().equals(" "))) {
-            text2.append(", ");
-          }
-          text2.append(attribute.getName());
-        }
-        else {
-          if (!(text3.toString().equals(" "))) {
-            text3.append(", ");
-          }
-          text3.append(attribute.getName());
-        }
-      }
-
-      if (!text1.toString().equals(" ") && !text2.toString().equals(" ")) {
-        text1.append(", ");
-      }
-
-      if (!text2.toString().equals(" ") && !text3.toString().equals(" ")) {
-        text2.append(", ");
-      }
-
-      if (!text1.toString().equals(" ") && !text3.toString().equals(" ") && text2.toString().equals(" ")) {
-        text1.append(", ");
-      }
-
-      buffer.append(text1);
-      highlightStartOffset = buffer.length();
-      buffer.append(text2);
-      highlightEndOffset = buffer.length();
-      buffer.append(text3);
-    }
-
-    myPanels[i].setup(buffer.toString(), highlightStartOffset, highlightEndOffset, false, false, true, BACKGROUND_COLOR);
-
-    myPanels[i].setBorder(i == (myObjects.length - 1) ? BACKGROUND_BORDER : BOTTOM_BORDER);
   }
 
   private class OneElementComponent extends JPanel {

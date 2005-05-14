@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.jsp.tagLibrary.JspTagInfo;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.LightweightHint;
 import com.intellij.xml.XmlElementDescriptor;
@@ -45,7 +44,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
         if (item.getObject() instanceof PsiMethod) {
           showLookupMethodInfo(project, item, editor);
         }
-        else if (item.getObject() instanceof XmlElementDescriptor || item.getObject() instanceof JspTagInfo) {
+        else if (item.getObject() instanceof XmlElementDescriptor) {
           showEditorHint(new Object[]{item.getObject()}, editor, project);
         }
       }
