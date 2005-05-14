@@ -100,7 +100,7 @@ public class ClassBodyParsing extends Parsing {
       }
 
       // adding a reference, not simple tokens allows "Browse .." to work well
-      CompositeElement ref = parseJavaCodeReference(filterLexer, true);
+      CompositeElement ref = parseJavaCodeReference(filterLexer, true, true);
       if (ref != null){
         TreeUtil.addChildren(invalidElementsGroup, ref);
         continue;

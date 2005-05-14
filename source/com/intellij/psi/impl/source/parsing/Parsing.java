@@ -38,7 +38,7 @@ public class Parsing implements Constants{
     lexer.start(buffer, startOffset, endOffset);
 
     JavaParsingContext context = new JavaParsingContext(table, manager.getEffectiveLanguageLevel());
-    CompositeElement ref = context.getStatementParsing().parseJavaCodeReference(lexer, false);
+    CompositeElement ref = context.getStatementParsing().parseJavaCodeReference(lexer, false, true);
     final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
     if (ref == null) {
       if (!eatAll) return null;
@@ -61,7 +61,7 @@ public class Parsing implements Constants{
     return (TreeElement)dummyRoot.getFirstChildNode();
   }
 
-  public CompositeElement parseJavaCodeReference(Lexer lexer, boolean allowIncomplete) {
+  public CompositeElement parseJavaCodeReference(Lexer lexer, boolean allowIncomplete, final boolean parseParameterList) {
     if (lexer.getTokenType() != IDENTIFIER) return null;
 
     TreeElement identifier = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
@@ -69,7 +69,13 @@ public class Parsing implements Constants{
 
     CompositeElement refElement = Factory.createCompositeElement(JAVA_CODE_REFERENCE);
     TreeUtil.addChildren(refElement, identifier);
-    CompositeElement parameterList = parseReferenceParameterList(lexer, true);
+    CompositeElement parameterList;
+    if (parseParameterList) {
+      parameterList = parseReferenceParameterList(lexer, true);
+    }
+    else {
+      parameterList = Factory.createCompositeElement(REFERENCE_PARAMETER_LIST);
+    }
     TreeUtil.addChildren(refElement, parameterList);
 
     while (lexer.getTokenType() == DOT) {
@@ -183,7 +189,7 @@ public class Parsing implements Constants{
       lexer.advance();
     }
     else if (tokenType == IDENTIFIER){
-      refElement = parseJavaCodeReference(lexer, eatLastDot);
+      refElement = parseJavaCodeReference(lexer, eatLastDot, true);
     }
     else if (allowWildcard && lexer.getTokenType() == QUEST) {
       return parseWildcardType(lexer);

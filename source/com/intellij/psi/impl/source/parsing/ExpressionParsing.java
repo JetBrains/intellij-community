@@ -462,7 +462,7 @@ public class ExpressionParsing extends Parsing {
                    && element.getElementType() == REFERENCE_EXPRESSION) {
 
             lexer.restore(startPos);
-            CompositeElement element1 = parseJavaCodeReference(lexer, false); // don't eat the last dot before "this" or "super"!
+            CompositeElement element1 = parseJavaCodeReference(lexer, false, true); // don't eat the last dot before "this" or "super"!
             if (element1 == null || lexer.getTokenType() != DOT || lexer.getTokenStart() != pos.getOffset()) {
               lexer.restore(pos);
               return element;
@@ -711,7 +711,7 @@ public class ExpressionParsing extends Parsing {
     TreeElement refOrType;
     if (lexer.getTokenType() == IDENTIFIER) {
       isPrimitive = false;
-      refOrType = parseJavaCodeReference(lexer, true);
+      refOrType = parseJavaCodeReference(lexer, true, true);
     }
     else if (lexer.getTokenType() != null && PRIMITIVE_TYPE_BIT_SET.isInSet(lexer.getTokenType())) {
       isPrimitive = true;

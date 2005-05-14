@@ -118,7 +118,7 @@ public class FileTextParsing extends Parsing {
 
     TreeUtil.addChildren(packageStatement, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
-    TreeElement packageReference = parseJavaCodeReference(lexer, true);
+    TreeElement packageReference = parseJavaCodeReference(lexer, true, false);
     if (packageReference == null) {
       lexer.restore(startPos);
       return null;

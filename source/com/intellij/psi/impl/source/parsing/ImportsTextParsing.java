@@ -78,7 +78,7 @@ public class ImportsTextParsing extends Parsing {
       return statement;
     }
 
-    CompositeElement refElement = parseJavaCodeReference(lexer, true);
+    CompositeElement refElement = parseJavaCodeReference(lexer, true, false);
     final TreeElement refParameterList = (TreeElement)refElement.getLastChildNode();
     if (refParameterList.getTreePrev().getElementType() == ERROR_ELEMENT){
       final ASTNode qualifier = refElement.findChildByRole(ChildRole.QUALIFIER);
