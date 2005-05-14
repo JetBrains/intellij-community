@@ -146,7 +146,9 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
       EvaluationContextImpl evaluationContext = new EvaluationContextImpl(action.getSuspendContext(), frameProxy,
         Breakpoint.this.getThisObject(context, event));
 
-      if(!evaluateCondition(evaluationContext, event)) return true;
+      if(!evaluateCondition(evaluationContext, event)) {
+        return true;
+      }
 
       errorMsg[0] = "Breakpoint Action Error";
       runAction(evaluationContext, event);
@@ -181,13 +183,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
         }, ModalityState.NON_MMODAL);
 
       return shouldResume[0];
-    } finally{
-      
-    }
-
-    if (DebuggerSettings.SUSPEND_NONE.equals(SUSPEND_POLICY)) {
-      return true;
-    }
+    } 
 
     return false;
   }

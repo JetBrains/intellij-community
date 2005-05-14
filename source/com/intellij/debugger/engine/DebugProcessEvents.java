@@ -1,6 +1,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
@@ -358,7 +359,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     LOG.assertTrue(thread.isSuspended());
     preprocessEvent(suspendContext, thread);
 
-    //we use invokeLater to allow processing events during processing this one
+    //we use invokeLater to allow processing other events during processing this one
     //this is especially nesessary if a method is breakpoint condition
     getManagerThread().invokeLater(new SuspendContextCommandImpl(suspendContext) {
       public void contextAction() throws Exception {
@@ -372,26 +373,23 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
         LocatableEventRequestor requestor = (LocatableEventRequestor) getRequestsManager().findRequestor(event.request());
 
-        boolean shouldResumeExecution = true;
+        final boolean requestorAsksResume = (requestor != null)? requestor.processLocatableEvent(this, event): true;
+        final boolean userWantsResume = (requestor instanceof Breakpoint)? DebuggerSettings.SUSPEND_NONE.equals(((Breakpoint)requestor).SUSPEND_POLICY) : false;
 
-        if(requestor != null) {
-          shouldResumeExecution = requestor.processLocatableEvent(this, event);
+        if (requestor instanceof Breakpoint && !requestorAsksResume) {
+          // if requestor is a breakpoint and this breakpoint was hit, no matter its suspend policy
+          DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().processBreakpointHit((Breakpoint)requestor);
         }
 
-        if(shouldResumeExecution) {
+        if(requestorAsksResume || userWantsResume) {
           suspendManager.voteResume(suspendContext);
         }
         else {
-          //suspendContext.voteResume();
           suspendManager.voteSuspend(suspendContext);
           showStatusText(DebugProcessEvents.this, event);
-          if (requestor instanceof Breakpoint) {
-            DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().processBreakpointHit((Breakpoint)requestor);
-          }
         }
       }
     });
-    //suspendContext.voteResume();
   }
 
   private void processDefaultEvent(SuspendContextImpl suspendContext) {
