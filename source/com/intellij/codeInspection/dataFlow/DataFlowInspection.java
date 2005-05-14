@@ -20,10 +20,13 @@ import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -66,7 +69,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     return allProblems == null ? null : allProblems.toArray(new ProblemDescriptor[allProblems.size()]);
   }
 
-  private ProblemDescriptor[] analyzeCodeBlock(final PsiCodeBlock body, InspectionManager manager) {
+  private @Nullable ProblemDescriptor[] analyzeCodeBlock(final PsiCodeBlock body, InspectionManager manager) {
     if (body == null) return null;
     DataFlowRunner dfaRunner = new DataFlowRunner(SUGGEST_NULLABLE_ANNOTATIONS);
     if (dfaRunner.analyzeMethod(body)) {
@@ -78,7 +81,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     return null;
   }
 
-  private static LocalQuickFix createAssertNotNullFix(PsiExpression qualifier) {
+  private static @Nullable LocalQuickFix createAssertNotNullFix(PsiExpression qualifier) {
     if (qualifier != null && qualifier.getManager().getEffectiveLanguageLevel().hasAssertKeyword() &&
         !(qualifier instanceof PsiMethodCallExpression)) {
       try {
@@ -251,7 +254,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     return descriptions.toArray(new ProblemDescriptor[descriptions.size()]);
   }
 
-  private static LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
+  private static @Nullable LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
     if (!(element instanceof PsiExpression)) return null;
     final PsiExpression expression = (PsiExpression)element;
     while (element.getParent() instanceof PsiExpression) {
@@ -322,13 +325,18 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     private void annotateMethod(final PsiMethod method) {
       if (method.getModifierList().findAnnotation(AnnotationUtil.NULLABLE) != null) return;
 
+      if (ReadonlyStatusHandler.getInstance(method.getProject()).ensureFilesWritable(
+        new VirtualFile[]{method.getContainingFile().getVirtualFile()}).hasReadonlyFiles()) {
+        return;
+      }
+
       try {
         method.getModifierList().add(method.getManager().getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NULLABLE,
                                                                                                       method));
         CodeStyleManager.getInstance(method.getProject()).shortenClassReferences(method.getModifierList());
       }
       catch (IncorrectOperationException e) {
-        e.printStackTrace();
+        LOG.error(e);
       }
     }
   }

@@ -25,8 +25,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
       if (invoker != null) {
         ProblemDescriptor[] descriptors = invoker.getSelectedDescriptors();
         boolean hasFixes = false;
-        for (int i = 0; i < descriptors.length; i++) {
-          ProblemDescriptor descriptor = descriptors[i];
+        for (ProblemDescriptor descriptor : descriptors) {
           if (descriptor.getFix() != null && descriptor.getPsiElement() != null) {
             hasFixes = true;
             break;
@@ -56,8 +55,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
 
   private String getName(ProblemDescriptor[] descriptors) {
     String name = null;
-    for (int i = 0; i < descriptors.length; i++) {
-      ProblemDescriptor descriptor = descriptors[i];
+    for (ProblemDescriptor descriptor : descriptors) {
       final LocalQuickFix fix = descriptor.getFix();
       if (fix != null) {
         if (name == null) {
@@ -74,17 +72,16 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   }
 
   protected boolean applyFix(RefElement[] refElements) {
-    for (int i = 0; i < refElements.length; i++) {
-      RefElement refElement = refElements[i];
+    for (RefElement refElement : refElements) {
       ProblemDescriptor[] problems = myTool.getDescriptions(refElement);
       if (problems != null) {
         PsiElement psiElement = refElement.getElement();
         if (psiElement != null) {
-          for (int j = 0; j < problems.length; j++) {
-            LocalQuickFix fix = problems[j].getFix();
+          for (ProblemDescriptor problem : problems) {
+            LocalQuickFix fix = problem.getFix();
             if (fix != null) {
-              fix.applyFix(psiElement.getProject(), problems[j]);
-              myTool.ignoreProblem(refElement, problems[j]);
+              fix.applyFix(psiElement.getProject(), problem);
+              myTool.ignoreProblem(refElement, problem);
             }
           }
         }
