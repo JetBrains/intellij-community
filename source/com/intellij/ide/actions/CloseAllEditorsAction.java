@@ -40,7 +40,15 @@ public class CloseAllEditorsAction extends AnAction {
   
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
+    final DataContext dataContext = event.getDataContext();
+    final EditorWindow editorWindow = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+    if (editorWindow != null && editorWindow.inSplitter()) {
+      presentation.setText("Close All Editors In Tab Group");
+    }
+    else {
+      presentation.setText("Close All Editors");
+    }
+    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;

@@ -24,7 +24,8 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
     final EditorWindow[] windows;
     if (editorWindow != null){
       windows = new EditorWindow[]{ editorWindow };
-    } else {
+    } 
+    else {
       windows = editorManager.getWindows ();
     }
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
@@ -62,7 +63,15 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
   
   public void update(final AnActionEvent event){
     final Presentation presentation = event.getPresentation();
-    final Project project = (Project)event.getDataContext().getData(DataConstants.PROJECT);
+    final DataContext dataContext = event.getDataContext();
+    final EditorWindow editorWindow = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
+    if (editorWindow != null && editorWindow.inSplitter()) {
+      presentation.setText("Close All Unmodified Editors In Tab Group");
+    }
+    else {
+      presentation.setText("Close All Unmodified Editors");
+    }
+    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;
