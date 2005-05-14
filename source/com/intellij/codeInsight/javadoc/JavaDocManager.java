@@ -232,7 +232,7 @@ public class JavaDocManager implements ProjectComponent {
       PsiDocComment comment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class);
       if (comment == null) return null;
       element = comment.getParent();
-      if (!(element instanceof PsiClass) && !(element instanceof PsiField) && !(element instanceof PsiMethod)) return null;
+      if (!(element instanceof PsiDocCommentOwner)) return null;
     }
 
     LightweightHint oldHint = getDocInfoHint();
@@ -470,8 +470,7 @@ public class JavaDocManager implements ProjectComponent {
     }
 
     final OrderEntry[] orderEntries = fileIndex.getOrderEntriesForFile(virtualFile);
-    for (int i = 0; i < orderEntries.length; i++) {
-      OrderEntry orderEntry = orderEntries[i];
+    for (OrderEntry orderEntry : orderEntries) {
       final VirtualFile[] files = orderEntry.getFiles(OrderRootType.JAVADOC);
       final String httpRoot = getHttpRoot(files, relPath);
       if (httpRoot != null) return httpRoot;
@@ -480,8 +479,7 @@ public class JavaDocManager implements ProjectComponent {
   }
 
   private static String getHttpRoot(final VirtualFile[] roots, String relPath) {
-    for (int i = 0; i < roots.length; i++) {
-      VirtualFile root = roots[i];
+    for (VirtualFile root : roots) {
       if (root.getFileSystem() instanceof HttpFileSystem) {
         return root.getUrl() + relPath;
       }
@@ -498,8 +496,8 @@ public class JavaDocManager implements ProjectComponent {
     String qName = aPackage.getQualifiedName();
     qName = qName.replace('.', File.separatorChar);
     String[] docPaths = JavaDocUtil.getDocPaths(myProject);
-    for (int i = 0; i < docPaths.length; i++) {
-      String url = docPaths[i] + File.separator + qName + File.separatorChar + "package-summary.html";
+    for (String docPath : docPaths) {
+      String url = docPath + File.separator + qName + File.separatorChar + "package-summary.html";
       File file = new File(url);
       if (file.exists()) return /*"file:///" + */url;
     }
@@ -517,8 +515,8 @@ public class JavaDocManager implements ProjectComponent {
     String qName = basePackage.getQualifiedName();
     qName = qName.replace('.', File.separatorChar);
     String[] docPaths = JavaDocUtil.getDocPaths(myProject);
-    for (int i = 0; i < docPaths.length; i++) {
-      String url = docPaths[i] + File.separator + qName + File.separatorChar + link;
+    for (String docPath : docPaths) {
+      String url = docPath + File.separator + qName + File.separatorChar + link;
       File file = new File(url);
       if (file.exists()) return url + tail;
     }
@@ -603,8 +601,7 @@ public class JavaDocManager implements ProjectComponent {
     if (candidates.length > 0) {
       final StringBuffer sb = new StringBuffer();
 
-      for (int i = 0; i < candidates.length; i++) {
-        final CandidateInfo candidate = candidates[i];
+      for (final CandidateInfo candidate : candidates) {
         final PsiElement element = candidate.getElement();
 
         if (!(element instanceof PsiMethod)) {

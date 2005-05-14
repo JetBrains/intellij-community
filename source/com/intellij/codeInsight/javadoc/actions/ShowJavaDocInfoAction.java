@@ -27,7 +27,7 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
       }
 
       public boolean startInWriteAction() {
-        return true;
+        return false;
       }
     };
   }
