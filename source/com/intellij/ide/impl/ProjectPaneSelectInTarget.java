@@ -1,5 +1,6 @@
 package com.intellij.ide.impl;
 
+import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -34,5 +35,9 @@ public class ProjectPaneSelectInTarget extends ProjectViewSelectInTarget {
 
   public String getMinorViewId() {
     return ProjectViewPane.ID;
+  }
+
+  public float getWeight() {
+    return StandardTargetWeights.PROJECT_WEIGHT;
   }
 }

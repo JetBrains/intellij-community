@@ -1,5 +1,6 @@
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.SelectInTargetPsiWrapper;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.openapi.project.Project;
@@ -111,5 +112,9 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper{
 
   public String getMinorViewId() {
     return null;
+  }
+
+  public float getWeight() {
+    return StandardTargetWeights.FAVORITES_WEIGHT;
   }
 }

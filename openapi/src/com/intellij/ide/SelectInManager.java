@@ -53,18 +53,27 @@ public class SelectInManager implements JDOMExternalizable, ProjectComponent {
 
   public SelectInTarget[] getTargets() {
     SelectInTarget[] targets = myTargets.toArray(new SelectInTarget[myTargets.size()]);
+    /*
     for(int i = 0; i < targets.length; i++){
       String name = targets[i].toString();
       if (!myOrder.contains(name)) {
         myOrder.add(name);
       }
     }
-
     Arrays.sort(targets, new Comparator() {
-      public int compare(Object o1, Object o2) {
-        int index1 = myOrder.indexOf(o1.toString());
-        int index2 = myOrder.indexOf(o2.toString());
-        return index1 - index2;
+       public int compare(Object o1, Object o2) {
+         int index1 = myOrder.indexOf(o1.toString());
+         int index2 = myOrder.indexOf(o2.toString());
+         return index1 - index2;
+       }
+     });
+    */
+
+    Arrays.sort(targets, new Comparator<SelectInTarget>() {
+      public int compare(final SelectInTarget o1, final SelectInTarget o2) {
+        if (o1.getWeight() < o2.getWeight()) return -1;
+        if (o1.getWeight() > o2.getWeight()) return 1;
+        return 0;
       }
     });
 

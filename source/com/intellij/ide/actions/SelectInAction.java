@@ -5,19 +5,16 @@ import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionListPopup;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListPopup;
-import com.intellij.ui.SimpleTextAttributes;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class SelectInAction extends AnAction {
   
@@ -25,7 +22,7 @@ public class SelectInAction extends AnAction {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.select.in");
     SelectInContextImpl.SelectInContextProvider context = SelectInContextImpl.createContext(e);
     if (context == null) return;
-    invoke(context);
+    invoke(e.getDataContext(), context);
   }
 
   public void update(AnActionEvent event) {
@@ -40,59 +37,42 @@ public class SelectInAction extends AnAction {
     }
   }
 
-  public void invoke(SelectInContextImpl.SelectInContextProvider contextProvider) {
-    final SelectInTarget[] targetVector = getTargets(contextProvider.getContext());
+  public void invoke(DataContext dataContext, SelectInContextImpl.SelectInContextProvider contextProvider) {
+    final SelectInContext context = contextProvider.getContext();
+    final SelectInTarget[] targetVector = getTargets(context);
 
-    final JList list;
-    final Runnable runnable;
-
-    if (targetVector.length > 0) {
-      list = new JList(targetVector);
-      list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      list.setCellRenderer(new MyListCellRenderer());
-
-      runnable = new MyRunnable(contextProvider.getContext(), list);
+    DefaultActionGroup group = new DefaultActionGroup();
+    boolean hasEnabled = false;
+    for (SelectInTarget target : targetVector) {
+      final boolean enabled = target.canSelect(context);
+      hasEnabled |= enabled;
+      group.add(new TargetSelectedAction(target, context, enabled));
     }
-    else {
-      list = new JList(new String[] {"No targets available in this context"});
-      //list.setSelectionModel(ListSelectionModel.SINGLE_SELECTION);
 
-      runnable = new Runnable() {
-        public void run() {
-          // empty runnable
-        }
-      };
+    if (!hasEnabled) {
+      group.removeAll();
+      group.add(new NoTargetsAction());
     }
-    ListPopup listPopup = new ListPopup(
-      " Select Target ",
-      list,
-      runnable,
-      contextProvider.getContext().getProject()
-    );
+
+    ListPopup listPopup = ActionListPopup.createListPopup("Select Target", group, dataContext, true, true);
+
     Point p = contextProvider.getInvocationPoint();
 
     listPopup.show(p.x, p.y);
   }
 
   protected SelectInTarget[] getTargets(SelectInContext context) {
-     ArrayList<SelectInTarget> result = getTargetsFor(context);
+    ArrayList<SelectInTarget> result = new ArrayList<SelectInTarget>(Arrays.asList(getTargetsFor(context)));
 
     if (result.size() > 1) {
       rearrangeTargetList(context, result);
     }
+
     return result.toArray(new SelectInTarget[result.size()]);
   }
 
-  private ArrayList<SelectInTarget> getTargetsFor(final SelectInContext context) {
-    ArrayList<SelectInTarget> result = new ArrayList<SelectInTarget>();
-    final SelectInTarget[] targets = getSelectInManager(context.getProject()).getTargets();
-    for (int i = 0; i < targets.length; i++) {
-      SelectInTarget target = targets[i];
-      if (target.canSelect(context)) {
-        result.add(target);
-      }
-    }
-    return result;
+  private SelectInTarget[] getTargetsFor(final SelectInContext context) {
+    return getSelectInManager(context.getProject()).getTargets();
   }
 
   private static SelectInManager getSelectInManager(Project project) {
@@ -117,42 +97,29 @@ public class SelectInAction extends AnAction {
     }
   }
 
-  private static final class MyListCellRenderer extends ColoredListCellRenderer{
-    private final SimpleTextAttributes myAttributes;
 
-    public MyListCellRenderer(){
-      myAttributes=SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES;
+  private static class TargetSelectedAction extends AnAction {
+    private SelectInTarget myTarget;
+    private SelectInContext myContext;
+
+    public TargetSelectedAction(final SelectInTarget target, final SelectInContext context, final boolean enabled) {
+      super(target.toString());
+      getTemplatePresentation().setEnabled(enabled);
+      myTarget = target;
+      myContext = context;
     }
 
-    protected void customizeCellRenderer(
-      JList list,
-      Object value,
-      int index,
-      boolean selected,
-      boolean hasFocus
-    ){
-      append(value.toString(),myAttributes);
+    public void actionPerformed(AnActionEvent e) {
+      myTarget.selectIn(myContext, true);
     }
   }
 
-  private static class MyRunnable implements Runnable {
-    private final JList myList;
-    private final SelectInContext myContext;
-
-    public MyRunnable(SelectInContext context, JList list) {
-      myContext = context;
-      myList = list;
+  private static class NoTargetsAction extends AnAction {
+    public NoTargetsAction() {
+      super("No targets available in this context");
     }
 
-    public void run() {
-      SelectInTarget selected = (SelectInTarget)myList.getSelectedValue();
-      if (selected == null) {
-        // this can be if you click item with Ctrl pressed
-        return;
-      }
-      SelectInManager selectInManager = getSelectInManager(myContext.getProject());
-      selectInManager.moveToTop(selected);
-      selected.selectIn(myContext, true);
+    public void actionPerformed(AnActionEvent e) {
     }
   }
 }

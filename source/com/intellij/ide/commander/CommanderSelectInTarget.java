@@ -1,5 +1,6 @@
 package com.intellij.ide.commander;
 
+import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.SelectInTargetPsiWrapper;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.openapi.project.Project;
@@ -81,5 +82,9 @@ final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
 
   public String getMinorViewId() {
     return null;
+  }
+
+  public float getWeight() {
+    return StandardTargetWeights.COMMANDER_WEIGHT;
   }
 }

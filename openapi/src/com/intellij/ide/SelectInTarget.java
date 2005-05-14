@@ -20,4 +20,9 @@ public interface SelectInTarget {
   /** aux view id specific for tool window, e.g. Project/Packages/J2EE tab inside project View */
   String getMinorViewId();
 
+  /**
+   * Weight is used to provide an order in SelectIn popup. Lesser weights come first.
+   * @return weight of this particular target.
+   */
+  float getWeight();
 }
