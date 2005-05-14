@@ -98,9 +98,11 @@ public class ClassUtil {
     if (aClass instanceof PsiEnumConstantInitializer) {
       return aClass.getLBrace().getTextRange();
     }
-    TextRange startTextRange = (aClass instanceof PsiAnonymousClass
-                     ? ((PsiAnonymousClass)aClass).getBaseClassReference()
-                     : aClass.getModifierList() == null ? (PsiElement)aClass.getNameIdentifier() : aClass.getModifierList()).getTextRange();
+    final PsiElement psiElement = aClass instanceof PsiAnonymousClass
+                                  ? ((PsiAnonymousClass)aClass).getBaseClassReference()
+                                  : aClass.getModifierList() == null ? (PsiElement)aClass.getNameIdentifier() : aClass.getModifierList();
+    if(psiElement == null) return new TextRange(aClass.getTextRange().getStartOffset(), aClass.getTextRange().getStartOffset());
+    TextRange startTextRange = psiElement.getTextRange();
     int start = startTextRange == null ? 0 : startTextRange.getStartOffset();
     TextRange endTextRange = (aClass instanceof PsiAnonymousClass
                    ? (PsiElement)((PsiAnonymousClass)aClass).getBaseClassReference()
