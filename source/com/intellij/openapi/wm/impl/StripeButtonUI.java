@@ -77,7 +77,7 @@ final class StripeButtonUI extends MetalToggleButtonUI{
       button.getVerticalAlignment(),button.getHorizontalAlignment(),
       button.getVerticalTextPosition(),button.getHorizontalTextPosition(),
       ourViewRect,ourIconRect,ourTextRect,
-      button.getText()==null ? 0 : defaultTextIconGap
+      button.getText()==null ? 0 : button.getIconTextGap()
     );
 
     // Paint button's background
