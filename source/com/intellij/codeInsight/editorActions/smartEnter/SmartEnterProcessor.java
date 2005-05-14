@@ -42,6 +42,7 @@ public class SmartEnterProcessor {
     ourFixers.add(new MissingIfBranchesFixer());
     ourFixers.add(new MissingArrayInitializerBraceFixer());
     ourFixers.add(new MissingWhileBodyFixer());
+    ourFixers.add(new MissingSynchronizedBodyFixer());
     ourFixers.add(new MissingForBodyFixer());
     ourFixers.add(new MissingForeachBodyFixer());
     ourFixers.add(new MissingMethodBodyFixer());
