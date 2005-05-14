@@ -7,6 +7,8 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -64,12 +66,12 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    return myContext.isValid() && myContext.getManager().isInProject(myContext) &&
-           file.isWritable() && getContainer() != null;
+    return myContext.isValid() && myContext.getManager().isInProject(myContext) && getContainer() != null;
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiDocCommentOwner container = getContainer();
+    ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[] {container.getContainingFile().getVirtualFile()});
     PsiDocComment docComment = container.getDocComment();
     PsiManager manager = myContext.getManager();
     if (docComment == null) {

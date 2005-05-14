@@ -3,6 +3,8 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
@@ -36,6 +38,7 @@ public class AddNoInspectionAllForClassAction extends AddNoInspectionDocTagActio
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiDocCommentOwner container = getContainer();
+    ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[] {container.getContainingFile().getVirtualFile()});
     PsiDocComment docComment = container.getDocComment();
     if (docComment != null){
       PsiDocTag noInspectionTag = docComment.findTagByName(InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME);

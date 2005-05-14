@@ -6,6 +6,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -45,12 +47,12 @@ public class AddNoInspectionCommentAction implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    return myContext.isValid() && myContext.getManager().isInProject(myContext) &&
-           file.isWritable() && getContainer() != null;
+    return myContext.isValid() && myContext.getManager().isInProject(myContext) && getContainer() != null;
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiStatement container = getContainer();
+    ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[] {container.getContainingFile().getVirtualFile()});
     PsiElement prev = PsiTreeUtil.skipSiblingsBackward(container, new Class[]{PsiWhiteSpace.class});
     PsiElementFactory factory = myContext.getManager().getElementFactory();
     if (prev instanceof PsiComment) {
