@@ -1338,6 +1338,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
       showStatusText("Stepping over");
       final SuspendContextImpl suspendContext = getSuspendContext();
       final ThreadReferenceProxyImpl steppingThread = suspendContext.getThread();
+      // need this hint whil stepping over for JSR45 support:
+      // several lines of generated java code may sorrespond to a single line in the source file, 
+      // from which the java code was generated
       RequestHint hint = new RequestHint(steppingThread, suspendContext, StepRequest.STEP_OVER);
       hint.setRestoreBreakpoints(myIsIgnoreBreakpoints);
 

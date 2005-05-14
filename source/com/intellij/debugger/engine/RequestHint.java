@@ -103,7 +103,9 @@ class RequestHint {
           }
         });
 
-        if(locationPosition == null) return true;
+        if(locationPosition == null) {
+          return true;
+        }
 
         int frameCount = -1;
         if (context.getFrameProxy() != null) {
@@ -117,39 +119,43 @@ class RequestHint {
           return true;
         }
       }
-      DebuggerSettings settings = DebuggerSettings.getInstance();
-      if (settings.SKIP_SYNTHETIC_METHODS) {
-        Location location = context.getFrameProxy().location();
-        Method method = location.method();
-        if (method != null) {
-          if (myVirtualMachineProxy.canGetSyntheticAttribute()? method.isSynthetic() : method.name().indexOf('$') >= 0) {
-            return true;
-          }
-        }
-      }
-      if (!myIgnoreFilters) {
-        if(settings.SKIP_GETTERS) {
-          boolean isGetter = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
-            public Boolean compute() {
-              PsiMethod psiMethod = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class);
-              if(psiMethod == null) return Boolean.FALSE;
+      // the rest of the code makes sence for depth == STEP_INTO only
 
-              return PropertyUtil.isSimplePropertyGetter(psiMethod)? Boolean.TRUE : Boolean.FALSE;
-            }
-          }).booleanValue();
-
-          if(isGetter) {
-            mySkipThisMethod = isGetter;
-            return true;
-          }
-        }
-
-        if (settings.SKIP_CONSTRUCTORS) {
+      if (myDepth == StepRequest.STEP_INTO) {
+        DebuggerSettings settings = DebuggerSettings.getInstance();
+        if (settings.SKIP_SYNTHETIC_METHODS) {
           Location location = context.getFrameProxy().location();
           Method method = location.method();
-          if (method != null && method.isConstructor()) {
-            mySkipThisMethod = true;
-            return true;
+          if (method != null) {
+            if (myVirtualMachineProxy.canGetSyntheticAttribute()? method.isSynthetic() : method.name().indexOf('$') >= 0) {
+              return true;
+            }
+          }
+        }
+        if (!myIgnoreFilters) {
+          if(settings.SKIP_GETTERS) {
+            boolean isGetter = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
+              public Boolean compute() {
+                PsiMethod psiMethod = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class);
+                if(psiMethod == null) return Boolean.FALSE;
+
+                return PropertyUtil.isSimplePropertyGetter(psiMethod)? Boolean.TRUE : Boolean.FALSE;
+              }
+            }).booleanValue();
+
+            if(isGetter) {
+              mySkipThisMethod = true;
+              return true;
+            }
+          }
+
+          if (settings.SKIP_CONSTRUCTORS) {
+            Location location = context.getFrameProxy().location();
+            Method method = location.method();
+            if (method != null && method.isConstructor()) {
+              mySkipThisMethod = true;
+              return true;
+            }
           }
         }
       }
