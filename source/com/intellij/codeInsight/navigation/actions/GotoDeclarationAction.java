@@ -150,7 +150,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
             | TargetElementUtil.THIS_ACCEPTED
             | TargetElementUtil.SUPER_ACCEPTED;
     PsiElement element = TargetElementUtil.findTargetElement(editor, flags, offset);
-    if (element instanceof PsiPackage) return null;
 
     if (element != null) return element;
 
