@@ -11,6 +11,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.StringTokenizer;
 import java.util.List;
+import java.util.Collection;
 
 public class StringUtil {
   private static final String VOWELS = "aeiouy";
@@ -565,7 +566,8 @@ public class StringUtil {
     }
     return result.toString();
   }
-  public static String join(Iterable<String> strings, final String separator) {
+  
+  public static String join(Collection<String> strings, final String separator) {
     final StringBuffer result = new StringBuffer();
     for (String string : strings) {
       if (string != null && string.length() != 0) {
