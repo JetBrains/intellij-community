@@ -11,6 +11,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -21,8 +22,11 @@ public class AddNoInspectionAllForClassAction extends AddNoInspectionDocTagActio
     super("ALL", "ALL", context);
   }
 
-  protected PsiDocCommentOwner getContainer() {
+  @Nullable protected PsiDocCommentOwner getContainer() {
     final PsiDocCommentOwner container = super.getContainer();
+    if (container == null){
+      return null;
+    }
     return container instanceof PsiClass ? container : PsiTreeUtil.getParentOfType(container, PsiClass.class);
   }
 

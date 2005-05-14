@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -11,6 +12,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -45,7 +47,10 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
     return "Suppress '" + myDisplayName + "' for " + subj;
   }
 
-  protected PsiDocCommentOwner getContainer() {
+  @Nullable protected PsiDocCommentOwner getContainer() {
+    if (!(myContext.getContainingFile().getLanguage() instanceof JavaLanguage)){
+      return null;
+    }
     PsiElement container = myContext;
     do {
       container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);
