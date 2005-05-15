@@ -9,11 +9,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiElementProcessor;
-
-import java.util.ArrayList;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
 
 public class PsiTreeUtil {
   private static final Key INDEX = Key.create("PsiTreeUtil.copyElements.INDEX");
@@ -287,5 +286,25 @@ public class PsiTreeUtil {
     }
 
     return result;
+  }
+
+  @NotNull
+  public static PsiElement getDeepestFirst(@NotNull PsiElement elt) {
+    @NotNull PsiElement res = elt;
+    do {
+      if (res.getFirstChild() == null) return res;
+      res = res.getFirstChild();
+    }
+    while (true);
+  }
+
+  @NotNull
+  public static PsiElement getDeepestLast(@NotNull PsiElement elt) {
+    @NotNull PsiElement res = elt;
+    do {
+      if (res.getLastChild() == null) return res;
+      res = res.getLastChild();
+    }
+    while (true);
   }
 }

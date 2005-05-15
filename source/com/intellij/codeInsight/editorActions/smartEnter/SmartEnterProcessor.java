@@ -45,8 +45,8 @@ public class SmartEnterProcessor {
     ourFixers.add(new MissingSynchronizedBodyFixer());
     ourFixers.add(new MissingForBodyFixer());
     ourFixers.add(new MissingForeachBodyFixer());
-    ourFixers.add(new MissingMethodBodyFixer());
     ourFixers.add(new ParameterListFixer());
+    ourFixers.add(new MissingMethodBodyFixer());
     ourFixers.add(new MissingReturnExpressionFixer());
     ourFixers.add(new MissingThrowExpressionFixer());
     ourFixers.add(new ParenthesizedFixer());
@@ -91,6 +91,7 @@ public class SmartEnterProcessor {
       List<PsiElement> queue = new ArrayList<PsiElement>();
       collectAllElements(atCaret, queue, true);
       queue.add(atCaret);
+
       for (int i = 0; i < queue.size(); i++) {
         PsiElement psiElement = queue.get(i);
         if (StdFileTypes.JAVA.getLanguage().equals(psiElement.getLanguage())) {
@@ -183,7 +184,7 @@ public class SmartEnterProcessor {
   }
 
   private boolean doNotStepInto(PsiElement element) {
-    return element instanceof PsiClass || element instanceof PsiCodeBlock || element instanceof PsiStatement;
+    return element instanceof PsiClass || element instanceof PsiCodeBlock || element instanceof PsiStatement || element instanceof PsiMethod;
   }
 
   public void registerUnresolvedError(int offset) {

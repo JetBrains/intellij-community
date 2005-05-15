@@ -3,10 +3,8 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -22,8 +20,24 @@ public class MissingMethodBodyFixer implements Fixer {
     PsiMethod method = (PsiMethod) psiElement;
     if (method.getContainingClass().isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT)) return;
     final PsiCodeBlock body = method.getBody();
-    if (body != null) return;
     final Document doc = editor.getDocument();
+    if (body != null) {
+      // See IDEADEV-1093. This is quite hacky heuristic but it seem to be best we can do.
+      String bodyText = body.getText();
+      if (bodyText.startsWith("{")) {
+        final PsiStatement[] statements = body.getStatements();
+        if (statements.length > 0) {
+          if (statements[0] instanceof PsiDeclarationStatement) {
+            if (PsiTreeUtil.getDeepestLast(statements[0]) instanceof PsiErrorElement) {
+              if (method.getContainingClass().getRBrace() == null) {
+                doc.insertString(body.getTextRange().getStartOffset() + 1, "\n}");
+              }
+            }
+          }
+        }
+      }
+      return;
+    }
     int endOffset = method.getTextRange().getEndOffset();
     if (StringUtil.endsWithChar(method.getText(), ';')) {
       doc.deleteString(endOffset - 1, endOffset);
