@@ -292,8 +292,9 @@ public class PsiTreeUtil {
   public static PsiElement getDeepestFirst(@NotNull PsiElement elt) {
     @NotNull PsiElement res = elt;
     do {
-      if (res.getFirstChild() == null) return res;
-      res = res.getFirstChild();
+      final PsiElement firstChild = res.getFirstChild();
+      if (firstChild == null) return res;
+      res = firstChild;
     }
     while (true);
   }
@@ -302,8 +303,9 @@ public class PsiTreeUtil {
   public static PsiElement getDeepestLast(@NotNull PsiElement elt) {
     @NotNull PsiElement res = elt;
     do {
-      if (res.getLastChild() == null) return res;
-      res = res.getLastChild();
+      final PsiElement lastChild = res.getLastChild();
+      if (lastChild == null) return res;
+      res = lastChild;
     }
     while (true);
   }
