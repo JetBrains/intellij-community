@@ -262,10 +262,6 @@ public class StatementParsing extends Parsing {
     }
     else {
       {
-        if (tokenType instanceof IJspElementType) {
-          return myContext.getJspParsing().parseJspConstruction(lexer);
-        }
-
         if (lexer.getTokenType() == IDENTIFIER) {
           final LexerPosition refPos = lexer.getCurrentPosition();
           skipQualifiedName(lexer);

@@ -98,11 +98,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     else if (i == IMPORT_STATIC_STATEMENT) {
       return CLASS_FQ_OR_PACKAGE_NAME_KIND;
     }
-    else if (i == JSP_IMPORT_VALUE) {
-      final ASTNode nextNonSpace = TreeUtil.skipElements(getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
-      final boolean isOnDemand = nextNonSpace != null && nextNonSpace.getElementType() == DOT;
-      return isOnDemand ? CLASS_FQ_OR_PACKAGE_NAME_KIND : CLASS_FQ_NAME_KIND;
-    }
     else if (i == JAVA_CODE_REFERENCE) {
       final int parentKind = ((PsiJavaCodeReferenceElementImpl)getTreeParent()).getKind();
       switch (parentKind) {

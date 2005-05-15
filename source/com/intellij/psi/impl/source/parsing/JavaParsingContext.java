@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.source.parsing;
 
 import com.intellij.psi.impl.source.ParsingContext;
-import com.intellij.psi.impl.source.parsing.jsp.JspParsing;
 import com.intellij.util.CharTable;
 import com.intellij.pom.java.LanguageLevel;
 
@@ -19,7 +18,6 @@ public class JavaParsingContext extends ParsingContext {
   private final StatementParsing myStatementParsing;
   private final ImportsTextParsing myImportsParsing;
   private final FileTextParsing myFileTextParsing;
-  private final JspParsing myJspParsing;
   private final JavadocParsing myJavadocParsing;
   private final LanguageLevel myLanguageLevel;
 
@@ -32,7 +30,6 @@ public class JavaParsingContext extends ParsingContext {
     myClassBodyParsing = new ClassBodyParsing(this);
     myImportsParsing = new ImportsTextParsing(this);
     myFileTextParsing = new FileTextParsing(this);
-    myJspParsing = new JspParsing(this);
     myJavadocParsing = new JavadocParsing(this);
   }
 
@@ -58,10 +55,6 @@ public class JavaParsingContext extends ParsingContext {
 
   public FileTextParsing getFileTextParsing() {
     return myFileTextParsing;
-  }
-
-  public JspParsing getJspParsing() {
-    return myJspParsing;
   }
 
   public JavadocParsing getJavadocParsing() {
