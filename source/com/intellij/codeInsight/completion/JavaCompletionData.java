@@ -240,7 +240,11 @@ public class JavaCompletionData extends CompletionData{
 // position
       final CompletionVariant variant = new CompletionVariant(PsiClass.class, new AndFilter(
         CLASS_BODY,
-        new OrFilter(END_OF_BLOCK, new LeftNeighbour(new TextFilter(MODIFIERS_LIST))
+        new OrFilter(
+          END_OF_BLOCK,
+          new LeftNeighbour(new OrFilter(
+            new TextFilter(MODIFIERS_LIST),
+            new TokenTypeFilter(JavaTokenType.GT)))
         )));
 
 // completion
