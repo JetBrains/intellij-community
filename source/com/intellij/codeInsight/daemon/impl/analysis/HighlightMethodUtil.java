@@ -382,14 +382,8 @@ public class HighlightMethodUtil {
 
 
     if (element instanceof PsiMethod && resolveResult.isValidResult()) {
-      PsiMethod resolvedMethod = (PsiMethod)element;
-      if (resolvedMethod.isConstructor() && !isThisOrSuper) {
-        highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, methodCall, "Direct constructor call is not allowed");
-      }
-      else {
-        TextRange fixRange = getFixRange(methodCall);
-        highlightInfo = HighlightUtil.checkUnhandledExceptions(methodCall, fixRange);
-      }
+      TextRange fixRange = getFixRange(methodCall);
+      highlightInfo = HighlightUtil.checkUnhandledExceptions(methodCall, fixRange);
 
       if (highlightInfo == null) {
         highlightInfo = GenericsHighlightUtil.checkUncheckedCall(resolveResult, methodCall);

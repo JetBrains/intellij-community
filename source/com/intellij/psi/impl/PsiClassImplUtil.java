@@ -86,8 +86,9 @@ public class PsiClassImplUtil{
       final MethodSignature signature = method.getSignature(substitutor);
       if (signature.equals(patternSignature)) {
         methods.add(method);
-        if (stopOnFirst)
+        if (stopOnFirst) {
           break;
+        }
       }
     }
     return methods.toArray(new PsiMethod[methods.size()]);
@@ -437,6 +438,9 @@ public class PsiClassImplUtil{
           while (iterator.hasNext()) {
             final Pair<PsiMethod, PsiSubstitutor> candidate = iterator.next();
             PsiMethod candidateMethod = candidate.getFirst();
+            if (processor instanceof MethodResolverProcessor) {
+              if (candidateMethod.isConstructor() != ((MethodResolverProcessor)processor).isConstructor()) continue;
+            }
             final PsiClass containingClass = candidateMethod.getContainingClass();
             PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(containingClass, candidate.getSecond(), aClass,
                                                                      substitutor);
@@ -489,8 +493,9 @@ public class PsiClassImplUtil{
     if (classHint == null || classHint.shouldProcess(PsiField.class)) {
       if (nameHint != null) {
         final PsiField fieldByName = aClass.findFieldByName(nameHint.getName(), false);
-        if(fieldByName != null)
-          if(!processor.execute(fieldByName, substitutor)) return false;
+        if (fieldByName != null) {
+          if (!processor.execute(fieldByName, substitutor)) return false;
+        }
       }
       else {
         final PsiField[] fields = aClass.getFields();
@@ -539,8 +544,9 @@ public class PsiClassImplUtil{
         // Inners
         if(nameHint != null){
           final PsiClass inner = aClass.findInnerClassByName(nameHint.getName(), false);
-          if(inner != null)
-            if(!processor.execute(inner, substitutor)) return false;
+          if (inner != null) {
+            if (!processor.execute(inner, substitutor)) return false;
+          }
         }
         else{
           final PsiClass[] inners = aClass.getInnerClasses();

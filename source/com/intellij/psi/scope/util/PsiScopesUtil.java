@@ -239,8 +239,8 @@ public class PsiScopesUtil {
             }
           } else if (type instanceof PsiIntersectionType) {
             final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
-            for (int i = 0; i < conjuncts.length; i++) {
-              if (!processQualifierType (conjuncts[i], processor, manager, methodCall)) break;
+            for (PsiType conjunct : conjuncts) {
+              if (!processQualifierType(conjunct, processor, manager, methodCall)) break;
             }
           } else {
             processQualifierType(type, processor, manager, methodCall);
@@ -326,9 +326,8 @@ public class PsiScopesUtil {
     if (aClass instanceof PsiAnonymousClass) return;
     try{
       PsiMethod[] methods = aClass.getMethods();
-      for(int i = 0; i < methods.length; i++){
-        PsiMethod method = methods[i];
-        if(method.isConstructor()){
+      for (PsiMethod method : methods) {
+        if (method.isConstructor()) {
           return;
         }
       }
