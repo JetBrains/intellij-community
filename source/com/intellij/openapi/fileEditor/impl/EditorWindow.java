@@ -632,7 +632,7 @@ public class EditorWindow {
           return;
         }
 
-        // Try to close non-modified files first (is specified in oprion)
+        // Try to close non-modified files first (is specified in option)
         if (closeNonModifiedFilesFirst) {
           // Search in history
           final VirtualFile[] allFiles = getFiles();
