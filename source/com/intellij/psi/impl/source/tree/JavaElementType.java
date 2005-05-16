@@ -131,10 +131,14 @@ public interface JavaElementType {
       final Lexer lexer = getLanguage().getParserDefinition().createLexer(project);
       final char[] chars = CharArrayUtil.fromSequence(seq);
       lexer.start(chars, 0, chars.length);
-      int balance = 0;
+      if(lexer.getTokenType() != JavaTokenType.LBRACE) return FATAL_ERROR;
+      lexer.advance();
+      int balance = 1;
+      IElementType type;
       while(true){
-        IElementType type = lexer.getTokenType();
+        type = lexer.getTokenType();
         if (type == null) break;
+        if(balance == 0) return FATAL_ERROR;
         if (type == JavaTokenType.LBRACE) {
           balance++;
         }
