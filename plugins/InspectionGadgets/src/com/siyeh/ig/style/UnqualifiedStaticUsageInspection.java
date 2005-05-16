@@ -97,6 +97,7 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
             final PsiReferenceExpression expression =
                     (PsiReferenceExpression) descriptor.getPsiElement();
             final PsiMember member = (PsiMember) expression.resolve();
+            assert member != null;
             final PsiClass containingClass = member.getContainingClass();
             final String className = containingClass.getName();
             final String text = expression.getText();

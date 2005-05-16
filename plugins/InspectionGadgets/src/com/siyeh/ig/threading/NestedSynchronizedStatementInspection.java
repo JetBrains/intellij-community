@@ -6,7 +6,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSynchronizedStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class NestedSynchronizedStatementInspection extends StatementInspection {
@@ -39,9 +38,12 @@ public class NestedSynchronizedStatementInspection extends StatementInspection {
             if(containingSynchronizedStatement == null){
                 return;
             }
-            final PsiMethod containingMethod = ClassUtils.getContainingMethod(statement);
-            final PsiMethod containingContainingMethod = ClassUtils.getContainingMethod(containingSynchronizedStatement);
-            if(!containingMethod.equals(containingContainingMethod)){
+            final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(statement,
+                                                                 PsiMethod.class);
+            final PsiMethod containingContainingMethod = PsiTreeUtil.getParentOfType(containingSynchronizedStatement,
+                                                                 PsiMethod.class);
+            if(containingMethod == null || containingContainingMethod == null ||
+                    !containingMethod.equals(containingContainingMethod)){
                 return;
             }
             registerStatementError(statement);

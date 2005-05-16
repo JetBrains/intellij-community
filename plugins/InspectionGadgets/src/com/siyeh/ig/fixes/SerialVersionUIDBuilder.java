@@ -36,8 +36,28 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
 
     private static final Comparator<PsiClass> INTERFACE_COMPARATOR = new Comparator<PsiClass>(){
         public int compare(PsiClass object1, PsiClass object2){
+            if(object1 == null && object2 == null)
+            {
+                return 0;
+            }if(object1 == null)
+            {
+                return 1;
+            }
+            if(object2 == null)
+            {
+                return -1;
+            }
             final String name1 = object1.getQualifiedName();
             final String name2 = object2.getQualifiedName();
+            if(name1 == null && name2 == null){
+                return 0;
+            }
+            if(name1 == null){
+                return 1;
+            }
+            if(name2 == null){
+                return -1;
+            }
             return name1.compareTo(name2);
         }
     };

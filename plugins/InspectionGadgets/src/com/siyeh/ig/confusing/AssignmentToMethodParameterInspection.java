@@ -46,9 +46,9 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
                 final PsiExpression variable =
                         (PsiExpression) descriptor.getPsiElement();
                 final PsiMethod method =
-                        PsiTreeUtil.getParentOfType(variable,
-                                                                PsiMethod.class);
+                        PsiTreeUtil.getParentOfType(variable, PsiMethod.class);
 
+                assert method != null;
                 final PsiCodeBlock body = method.getBody();
                 final String replacementText;
                 final PsiType type = variable.getType();

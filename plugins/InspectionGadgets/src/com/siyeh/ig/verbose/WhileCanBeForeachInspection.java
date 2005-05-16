@@ -17,6 +17,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class WhileCanBeForeachInspection extends StatementInspection{
     private final WhileCanBeForeachFix fix = new WhileCanBeForeachFix();
@@ -65,6 +66,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             final String newExpression =
                     createCollectionIterationText(whileStatement, project);
             final PsiStatement statement = getPreviousStatement(whileStatement);
+            assert statement!=null;
             deleteElement(statement);
             replaceStatement(whileStatement, newExpression);
         }
@@ -82,6 +84,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
                     getPreviousStatement(whileStatement);
             final PsiDeclarationStatement declaration =
                     (PsiDeclarationStatement) initialization;
+            assert declaration != null;
             final PsiLocalVariable iterator =
                     (PsiLocalVariable) declaration.getDeclaredElements()[0];
 
@@ -428,7 +431,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         return !isIteratorAssigned(iteratorName, body);
     }
 
-    private static PsiStatement getPreviousStatement(PsiWhileStatement statement){
+    private static @Nullable PsiStatement getPreviousStatement(PsiWhileStatement statement){
         final PsiElement prevStatement =
                 PsiTreeUtil.skipSiblingsBackward(statement,
                                                  new Class[]{PsiWhiteSpace.class});

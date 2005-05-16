@@ -15,6 +15,8 @@ import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jetbrains.annotations.Nullable;
+
 public class ImplicitNumericConversionInspection extends ExpressionInspection {
     /** @noinspection StaticCollection*/
     private static final Map<PsiType,Integer> s_typePrecisions = new HashMap<PsiType, Integer>(7);
@@ -98,7 +100,7 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
             }
         }
 
-        private static String convertExpression(PsiExpression expression, PsiType expectedType) {
+        private static @Nullable String convertExpression(PsiExpression expression, PsiType expectedType) {
             final PsiType expressionType = expression.getType();
 
             if (expressionType.equals(PsiType.INT) && expectedType.equals(PsiType.LONG)) {

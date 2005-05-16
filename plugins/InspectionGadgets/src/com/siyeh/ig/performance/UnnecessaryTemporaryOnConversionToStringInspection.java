@@ -44,6 +44,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection extends Expressi
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();
         final PsiNewExpression qualifier = (PsiNewExpression) methodExpression.getQualifierExpression();
         final PsiExpressionList argumentList = qualifier.getArgumentList();
+        assert argumentList != null;
         final PsiExpression arg = argumentList.getExpressions()[0];
         final PsiType type = qualifier.getType();
         final String qualifierType = type.getPresentableText();

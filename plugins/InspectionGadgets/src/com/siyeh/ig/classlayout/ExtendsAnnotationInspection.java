@@ -30,6 +30,7 @@ public class ExtendsAnnotationInspection extends ClassInspection{
 
     public String buildErrorString(PsiElement location){
         final PsiClass containingClass = ClassUtils.getContainingClass(location);
+        assert containingClass != null;
         return "Class "+ containingClass.getName()+" explicitly extends annotation interface '#ref' #loc";
     }
 

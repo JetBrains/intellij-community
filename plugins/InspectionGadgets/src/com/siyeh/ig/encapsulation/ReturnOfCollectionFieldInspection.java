@@ -21,6 +21,7 @@ public class ReturnOfCollectionFieldInspection extends StatementInspection{
 
     public String buildErrorString(PsiElement location){
         final PsiField field = (PsiField) ((PsiReference) location).resolve();
+        assert field != null;
         final PsiType type = field.getType();
         if(type.getArrayDimensions() > 0){
             return "'return' of array field #ref #loc";

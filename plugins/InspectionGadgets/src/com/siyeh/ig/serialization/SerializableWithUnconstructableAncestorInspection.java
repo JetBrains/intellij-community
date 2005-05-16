@@ -28,8 +28,10 @@ public class SerializableWithUnconstructableAncestorInspection extends ClassInsp
         final PsiClass aClass = (PsiClass) location.getParent();
         PsiClass ancestor = aClass.getSuperClass();
         while (SerializationUtils.isSerializable(ancestor)) {
+            assert ancestor != null;
             ancestor = ancestor.getSuperClass();
         }
+        assert ancestor != null;
         return "#ref has an non-serializable ancestor " + ancestor.getName() + " without a no-arg constructor #loc";
     }
 

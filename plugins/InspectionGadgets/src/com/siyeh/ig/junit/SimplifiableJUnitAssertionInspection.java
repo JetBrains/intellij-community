@@ -48,25 +48,26 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
                 replaceAssertEqualsWithAssertLiteral(callExpression, project);
             }
             else if(isAssertTrueThatCouldBeFail(callExpression)){
-                replaceAssertWithFail(callExpression, project);
+                replaceAssertWithFail(callExpression);
             }
             else if(isAssertFalseThatCouldBeFail(callExpression)){
-                replaceAssertWithFail(callExpression, project);
+                replaceAssertWithFail(callExpression);
             }
         }
 
-        private void replaceAssertWithFail(PsiMethodCallExpression callExpression,
-                                                       Project project){
+        private void replaceAssertWithFail(PsiMethodCallExpression callExpression){
             final PsiReferenceExpression methodExpression =
                     callExpression.getMethodExpression();
 
             final PsiMethod method = (PsiMethod) methodExpression.resolve();
+            assert method != null;
             final PsiParameterList paramList = method.getParameterList();
             final PsiParameter[] parameters = paramList.getParameters();
 
             final PsiExpressionList argumentList =
                     callExpression.getArgumentList();
 
+            assert argumentList != null;
             final PsiExpression[] args = argumentList.getExpressions();
             final PsiExpression message;
             if( parameters.length == 2){
@@ -91,6 +92,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
                     callExpression.getMethodExpression();
 
             final PsiMethod method = (PsiMethod) methodExpression.resolve();
+            assert method != null;
             final PsiParameterList paramList = method.getParameterList();
             final PsiParameter[] parameters = paramList.getParameters();
 
@@ -103,6 +105,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
             final PsiExpressionList argumentList =
                     callExpression.getArgumentList();
 
+            assert argumentList != null;
             final PsiExpression[] args = argumentList.getExpressions();
             final int testPosition;
             final PsiExpression message;
@@ -127,6 +130,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
                         call.getMethodExpression();
                 final PsiExpressionList equalityArgumentList =
                         call.getArgumentList();
+                assert equalityArgumentList != null;
                 final PsiExpression[] equalityArgs =
                         equalityArgumentList.getExpressions();
                 rhs = equalityArgs[0];
@@ -144,6 +148,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
                 newExpression.append(message.getText());
                 newExpression.append(',');
             }
+            assert lhs != null;
             newExpression.append(lhs.getText());
             newExpression.append(',');
             newExpression.append(rhs.getText());
@@ -161,6 +166,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
                     callExpression.getMethodExpression();
 
             final PsiMethod method = (PsiMethod) methodExpression.resolve();
+            assert method != null;
             final PsiParameterList paramList = method.getParameterList();
             final PsiParameter[] parameters = paramList.getParameters();
 
@@ -173,6 +179,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
             final PsiExpressionList argumentList =
                     callExpression.getArgumentList();
 
+            assert argumentList != null;
             final PsiExpression[] args = argumentList.getExpressions();
             final int firstTestPosition;
             final int secondTestPosition;

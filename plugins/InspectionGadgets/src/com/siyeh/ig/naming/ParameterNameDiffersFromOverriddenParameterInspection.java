@@ -37,10 +37,10 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
         final PsiParameter parameter = (PsiParameter) location.getParent();
         final String parameterName = parameter.getName();
         final PsiMethod method =
-                PsiTreeUtil.getParentOfType(parameter,
-                                                        PsiMethod.class);
+                PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
         final PsiMethod[] superMethods =
                 PsiSuperMethodUtil.findSuperMethods(method);
+        assert method != null;
         final PsiParameterList methodParamList = method.getParameterList();
         final int index = methodParamList.getParameterIndex(parameter);
         for(final PsiMethod superMethod : superMethods){
@@ -73,6 +73,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
                                                         PsiMethod.class);
         final PsiMethod[] superMethods =
                 PsiSuperMethodUtil.findSuperMethods(method);
+        assert method != null;
         final PsiParameterList methodParamList = method.getParameterList();
         final int index = methodParamList.getParameterIndex(parameter);
         for(final PsiMethod superMethod : superMethods){

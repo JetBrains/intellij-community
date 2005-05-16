@@ -15,7 +15,11 @@ public class SerializationUtils{
         super();
     }
 
-    public static boolean isSerializable(@NotNull PsiClass aClass){
+    public static boolean isSerializable(PsiClass aClass){
+        if(aClass == null)
+        {
+            return false;
+        }
         final PsiManager manager = aClass.getManager();
         final Project project = manager.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);

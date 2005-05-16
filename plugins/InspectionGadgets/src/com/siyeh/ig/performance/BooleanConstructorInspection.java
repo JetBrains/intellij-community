@@ -54,6 +54,7 @@ public class BooleanConstructorInspection extends ExpressionInspection{
             final PsiNewExpression expression =
                     (PsiNewExpression) descriptor.getPsiElement();
             final PsiExpressionList argList = expression.getArgumentList();
+            assert argList != null;
             final PsiExpression[] args = argList.getExpressions();
             final PsiExpression arg = args[0];
             final String text = arg.getText();

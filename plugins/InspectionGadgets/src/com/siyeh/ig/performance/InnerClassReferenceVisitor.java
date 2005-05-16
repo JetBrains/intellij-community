@@ -108,7 +108,8 @@ class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
                     PsiTreeUtil.getParentOfType(referenceExpression, PsiMethod.class);
             final PsiElement referencedMethod =
                     PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-            if(!containingMethod.equals(referencedMethod))
+            if(containingMethod!=null && referencedMethod!=null &&
+                    !containingMethod.equals(referencedMethod))
             {
                 referencesStaticallyAccessible = false;
             }

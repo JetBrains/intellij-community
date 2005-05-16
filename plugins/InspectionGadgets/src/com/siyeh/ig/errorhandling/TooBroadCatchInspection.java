@@ -25,6 +25,7 @@ public class TooBroadCatchInspection extends StatementInspection{
     protected String buildErrorString(PsiElement location){
         final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(location,
                                                                          PsiTryStatement.class);
+        assert tryStatement != null;
         final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
         final Set<PsiType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(tryBlock);
         final int numExceptionsThrown = exceptionsThrown.size();

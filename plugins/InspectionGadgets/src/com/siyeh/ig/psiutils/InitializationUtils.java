@@ -20,7 +20,7 @@ public class InitializationUtils {
     }
 
     private static boolean cachingblockMustAssignVariableOrFail(@NotNull PsiVariable field,
-                                                                @NotNull PsiCodeBlock block,
+                                                                @Nullable PsiCodeBlock block,
                                                                 @NotNull Set<MethodSignature> checkedMethods) {
         if (block == null) {
             return false;

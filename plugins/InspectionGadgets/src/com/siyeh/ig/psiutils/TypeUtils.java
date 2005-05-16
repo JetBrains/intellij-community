@@ -19,7 +19,7 @@ public class TypeUtils {
     }
 
     public static boolean typeEquals(@NotNull String typeName, @Nullable PsiType targetType) {
-        if (targetType == null || typeName == null) {
+        if (targetType == null) {
             return false;
         }
         return targetType.equalsToText(typeName);

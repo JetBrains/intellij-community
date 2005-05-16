@@ -10,6 +10,7 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ThisEscapedInConstructorInspection extends ClassInspection{
     public String getID(){
@@ -134,6 +135,10 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
 
             // Inheritance check
             final PsiClass cls = ClassUtils.getContainingClass(assignment);
+            if(cls==null)
+            {
+                return;
+            }
             if(cls.isInheritor(field.getContainingClass(), true)){
                 return;
             }
@@ -166,7 +171,10 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
                     calledMethod.getContainingClass();
             final PsiClass methodClass =
                     ClassUtils.getContainingClass(call);
-
+            if(methodClass == null || calledMethodClass == null)
+            {
+                return;
+            }
             if(calledMethodClass.equals(methodClass))   // compares class types statically?
             {
                 return;
@@ -204,7 +212,7 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
         }
 
         // Get rightmost expression of assignment. Used when assignments are chained. Recursive
-        private static PsiExpression getLastRightExpression(PsiAssignmentExpression assignmentExp){
+        private static @Nullable PsiExpression getLastRightExpression(PsiAssignmentExpression assignmentExp){
 
             if(assignmentExp == null){
                 return null;

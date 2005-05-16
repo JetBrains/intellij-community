@@ -367,6 +367,7 @@ public class ParenthesesUtils{
     private static String removeParensFromMethodCallExpression(PsiMethodCallExpression methCall){
         final PsiReferenceExpression target = methCall.getMethodExpression();
         final PsiExpressionList argumentList = methCall.getArgumentList();
+        assert argumentList != null;
         final PsiExpression[] args = argumentList.getExpressions();
 
         final String methodCallText = methCall.getText();

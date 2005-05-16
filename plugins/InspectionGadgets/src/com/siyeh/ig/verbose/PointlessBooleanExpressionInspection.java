@@ -9,6 +9,7 @@ import com.intellij.psi.util.ConstantExpressionUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -47,7 +48,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
         }
     }
 
-    private static String calculateSimplifiedBinaryExpression(PsiBinaryExpression expression){
+    private static @Nullable String calculateSimplifiedBinaryExpression(PsiBinaryExpression expression){
         final PsiJavaToken sign = expression.getOperationSign();
         final PsiExpression lhs = expression.getLOperand();
 

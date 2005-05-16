@@ -17,6 +17,7 @@ public class ReturnOfDateFieldInspection extends StatementInspection{
 
     public String buildErrorString(PsiElement location){
         final PsiField field = (PsiField) ((PsiReference) location).resolve();
+        assert field != null;
         final PsiType type = field.getType();
         return "'return' of " + type.getPresentableText() + " field #ref #loc";
     }

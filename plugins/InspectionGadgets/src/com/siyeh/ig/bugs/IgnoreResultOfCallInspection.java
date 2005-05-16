@@ -113,6 +113,7 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         final PsiMethodCallExpression methodCallExpression =
                 (PsiMethodCallExpression) parent.getParent();
         final PsiMethod method = methodCallExpression.resolveMethod();
+        assert method != null;
         final PsiClass containingClass = method.getContainingClass();
         final String className = containingClass.getName();
         return "result of " + className + ".#ref() is ignored. #loc ";

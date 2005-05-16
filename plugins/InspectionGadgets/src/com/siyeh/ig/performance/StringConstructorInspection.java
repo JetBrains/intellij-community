@@ -42,6 +42,7 @@ public class StringConstructorInspection extends ExpressionInspection {
         private StringConstructorFix(PsiNewExpression expression) {
             super();
             final PsiExpressionList argList = expression.getArgumentList();
+            assert argList != null;
             final PsiExpression[] args = argList.getExpressions();
             if (args.length == 1) {
                 m_name = "Replace with arg";
@@ -58,6 +59,7 @@ public class StringConstructorInspection extends ExpressionInspection {
             if(isQuickFixOnReadOnlyFile(descriptor)) return;
             final PsiNewExpression expression = (PsiNewExpression) descriptor.getPsiElement();
             final PsiExpressionList argList = expression.getArgumentList();
+            assert argList != null;
             final PsiExpression[] args = argList.getExpressions();
             final String argText;
             if (args.length == 1) {

@@ -1,5 +1,7 @@
 package com.siyeh.ig.telemetry;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.table.DefaultTableModel;
 import java.text.NumberFormat;
 
@@ -28,7 +30,7 @@ class TelemetryTableModel extends DefaultTableModel{
         return telemetry.getInspections().length;
     }
 
-    public Object getValueAt(int row, int column){
+    public @Nullable Object getValueAt(int row, int column){
         if(telemetry == null)
         {
             return null;
@@ -57,7 +59,7 @@ class TelemetryTableModel extends DefaultTableModel{
         //don't do anything
     }
 
-    public String getColumnName(int column){
+    public @Nullable String getColumnName(int column){
         switch(column){
             case 0:
                 return "Inspection Name";

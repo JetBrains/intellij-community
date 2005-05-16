@@ -28,6 +28,7 @@ public class AssignmentToDateFieldFromParameterInspection extends ExpressionInsp
         final PsiElement element = ((PsiReference) lhs).resolve();
 
         final PsiField field = (PsiField) element;
+        assert field != null;
         final PsiType type = field.getType();
         return "assignment to " + type.getPresentableText() + " field #ref from parameter " + rhs.getText() + "#loc";
     }

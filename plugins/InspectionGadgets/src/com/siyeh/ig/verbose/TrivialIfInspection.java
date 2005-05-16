@@ -5,10 +5,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,40 +39,6 @@ public class TrivialIfInspection extends StatementInspection{
         return "#ref statement can be simplified #loc";
     }
 
-    private static String calculateReplacementStatement(PsiIfStatement statement){
-        PsiStatement thenBranch = statement.getThenBranch();
-        thenBranch = ControlFlowUtils.stripBraces(thenBranch);
-        final PsiExpression condition = statement.getCondition();
-        final String replacementString;
-        if(thenBranch instanceof PsiReturnStatement){
-            if(isReturn(thenBranch, "true")){
-                replacementString = "return " + condition.getText() + ';';
-            } else{
-                replacementString =
-                        "return " +
-                                BoolUtils.getNegatedExpressionText(condition) +
-                                ';';
-            }
-        } else{
-            final PsiExpressionStatement expressionStatement =
-                    (PsiExpressionStatement) thenBranch;
-            final PsiAssignmentExpression assignment =
-                    (PsiAssignmentExpression) expressionStatement.getExpression();
-
-            final PsiExpression lhs = assignment.getLExpression();
-            final PsiJavaToken sign = assignment.getOperationSign();
-            if(isAssignment(thenBranch, "true")){
-                replacementString = lhs.getText() + ' ' +
-                        sign.getText() + ' ' + condition.getText() + ';';
-            } else{
-                replacementString = lhs.getText() + ' ' +
-                        sign.getText() + ' ' +
-                        BoolUtils.getNegatedExpressionText(condition) + ';';
-            }
-        }
-        return replacementString;
-    }
-
     public InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
@@ -91,33 +55,26 @@ public class TrivialIfInspection extends StatementInspection{
             final PsiElement ifKeywordElement = descriptor.getPsiElement();
             final PsiIfStatement statement =
                     (PsiIfStatement) ifKeywordElement.getParent();
-            try{
-                if(isSimplifiableAssignment(statement)){
-                    replaceSimplifiableAssignment(statement, project);
-                } else if(isSimplifiableReturn(statement)){
-                    repaceSimplifiableReturn(statement, project);
-                } else if(isSimplifiableImplicitReturn(statement)){
-                    replaceSimplifiableImplicitReturn(statement, project);
-                } else if(isSimplifiableAssignmentNegated(statement)){
-                    replaceSimplifiableAssignmentNegated(statement, project);
-                } else if(isSimplifiableReturnNegated(statement)){
-                    repaceSimplifiableReturnNegated(statement, project);
-                } else if(isSimplifiableImplicitReturnNegated(statement)){
-                    replaceSimplifiableImplicitReturnNegated(statement,
-                                                             project);
-                } else if(isSimplifiableImplicitAssignment(statement)){
-                    replaceSimplifiableImplicitAssignment(statement, project);
-                } else if(isSimplifiableImplicitAssignmentNegated(statement)){
-                    replaceSimplifiableImplicitAssignmentNegated(statement,
-                                                                 project);
-                }
-            } catch(IncorrectOperationException e){
+            if(isSimplifiableAssignment(statement)){
+                replaceSimplifiableAssignment(statement);
+            } else if(isSimplifiableReturn(statement)){
+                repaceSimplifiableReturn(statement);
+            } else if(isSimplifiableImplicitReturn(statement)){
+                replaceSimplifiableImplicitReturn(statement);
+            } else if(isSimplifiableAssignmentNegated(statement)){
+                replaceSimplifiableAssignmentNegated(statement);
+            } else if(isSimplifiableReturnNegated(statement)){
+                repaceSimplifiableReturnNegated(statement);
+            } else if(isSimplifiableImplicitReturnNegated(statement)){
+                replaceSimplifiableImplicitReturnNegated(statement);
+            } else if(isSimplifiableImplicitAssignment(statement)){
+                replaceSimplifiableImplicitAssignment(statement);
+            } else if(isSimplifiableImplicitAssignmentNegated(statement)){
+                replaceSimplifiableImplicitAssignmentNegated(statement);
             }
         }
 
-        private void replaceSimplifiableImplicitReturn(PsiIfStatement statement,
-                                                       Project project)
-                throws IncorrectOperationException{
+        private void replaceSimplifiableImplicitReturn(PsiIfStatement statement){
             final PsiExpression condition = statement.getCondition();
             final String conditionText = condition.getText();
             final PsiElement nextStatement =
@@ -126,21 +83,18 @@ public class TrivialIfInspection extends StatementInspection{
                                                         PsiWhiteSpace.class});
             final String newStatement = "return " + conditionText + ';';
             replaceStatement(statement, newStatement);
-            nextStatement.delete();
+            assert nextStatement != null;
+            deleteElement(nextStatement);
         }
 
-        private void repaceSimplifiableReturn(PsiIfStatement statement,
-                                              Project project)
-                throws IncorrectOperationException{
+        private void repaceSimplifiableReturn(PsiIfStatement statement){
             final PsiExpression condition = statement.getCondition();
             final String conditionText = condition.getText();
             final String newStatement = "return " + conditionText + ';';
             replaceStatement(statement, newStatement);
         }
 
-        private void replaceSimplifiableAssignment(PsiIfStatement statement,
-                                                   Project project)
-                throws IncorrectOperationException{
+        private void replaceSimplifiableAssignment(PsiIfStatement statement){
             final PsiExpression condition = statement.getCondition();
             final String conditionText = condition.getText();
             final PsiStatement thenBranch = statement.getThenBranch();
@@ -157,14 +111,14 @@ public class TrivialIfInspection extends StatementInspection{
                              lhsText + operand + conditionText + ';');
         }
 
-        private void replaceSimplifiableImplicitAssignment(PsiIfStatement statement,
-                                                           Project project)
-                throws IncorrectOperationException{
+        private void replaceSimplifiableImplicitAssignment(PsiIfStatement statement){
             final PsiElement prevStatement =
                     PsiTreeUtil.skipSiblingsBackward(statement,
                                                      new Class[]{
                                                          PsiWhiteSpace.class});
-
+            if(prevStatement == null){
+                return;
+            }
             final PsiExpression condition = statement.getCondition();
             final String conditionText = condition.getText();
             final PsiStatement thenBranch = statement.getThenBranch();
@@ -179,12 +133,10 @@ public class TrivialIfInspection extends StatementInspection{
             final String lhsText = lhs.getText();
             replaceStatement(statement,
                              lhsText + operand + conditionText + ';');
-            prevStatement.delete();
+            deleteElement(prevStatement);
         }
 
-        private void replaceSimplifiableImplicitAssignmentNegated(PsiIfStatement statement,
-                                                                  Project project)
-                throws IncorrectOperationException{
+        private void replaceSimplifiableImplicitAssignmentNegated(PsiIfStatement statement){
             final PsiElement prevStatement =
                     PsiTreeUtil.skipSiblingsBackward(statement,
                                                      new Class[]{
@@ -205,12 +157,12 @@ public class TrivialIfInspection extends StatementInspection{
             final String lhsText = lhs.getText();
             replaceStatement(statement,
                              lhsText + operand + conditionText + ';');
-            prevStatement.delete();
+            assert prevStatement!=null;
+            deleteElement(prevStatement);
         }
 
-        private void replaceSimplifiableImplicitReturnNegated(PsiIfStatement statement,
-                                                              Project project)
-                throws IncorrectOperationException{
+        private void replaceSimplifiableImplicitReturnNegated(PsiIfStatement statement)
+                {
             final PsiExpression condition = statement.getCondition();
 
             final String conditionText =
@@ -219,14 +171,15 @@ public class TrivialIfInspection extends StatementInspection{
                     PsiTreeUtil.skipSiblingsForward(statement,
                                                     new Class[]{
                                                         PsiWhiteSpace.class});
+            if(nextStatement == null){
+                return;
+            }
             final String newStatement = "return " + conditionText + ';';
             replaceStatement(statement, newStatement);
-            nextStatement.delete();
+           deleteElement(nextStatement);
         }
 
-        private void repaceSimplifiableReturnNegated(PsiIfStatement statement,
-                                                     Project project)
-                throws IncorrectOperationException{
+        private void repaceSimplifiableReturnNegated(PsiIfStatement statement){
             final PsiExpression condition = statement.getCondition();
             final String conditionText =
                     BoolUtils.getNegatedExpressionText(condition);
@@ -234,9 +187,7 @@ public class TrivialIfInspection extends StatementInspection{
             replaceStatement(statement, newStatement);
         }
 
-        private void replaceSimplifiableAssignmentNegated(PsiIfStatement statement,
-                                                          Project project)
-                throws IncorrectOperationException{
+        private void replaceSimplifiableAssignmentNegated(PsiIfStatement statement){
             final PsiExpression condition = statement.getCondition();
             final String conditionText =
                     BoolUtils.getNegatedExpressionText(condition);

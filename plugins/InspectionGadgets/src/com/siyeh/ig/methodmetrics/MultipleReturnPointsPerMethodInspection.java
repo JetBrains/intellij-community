@@ -82,6 +82,6 @@ public class MultipleReturnPointsPerMethodInspection extends MethodMetricInspect
             return true;
         }
         final PsiType returnType = method.getReturnType();
-        return returnType.equals(PsiType.VOID);
+        return PsiType.VOID.equals(returnType);
     }
 }

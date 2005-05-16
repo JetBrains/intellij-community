@@ -67,6 +67,7 @@ public class TailRecursionInspection extends ExpressionInspection{
                         PsiTreeUtil.getParentOfType(methodNameToken,
                                                                 PsiMethod.class);
 
+                assert method != null;
                 final PsiCodeBlock body = method.getBody();
                 final String replacementText;
 

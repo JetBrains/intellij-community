@@ -50,6 +50,7 @@ public class AssignmentToCatchBlockParameterInspection
                         PsiTreeUtil.getParentOfType(variable,
                                                                       PsiCatchSection.class);
 
+                assert catchSection != null;
                 final PsiCodeBlock body = catchSection.getCatchBlock();
                 final String replacementText;
                 final PsiType type = variable.getType();

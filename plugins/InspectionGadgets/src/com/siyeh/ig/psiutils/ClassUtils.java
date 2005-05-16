@@ -159,7 +159,7 @@ public class ClassUtils {
         return parentClass != null;
     }
 
-    public static PsiClass getContainingClass(PsiElement aClass) {
+    public static @Nullable PsiClass getContainingClass(PsiElement aClass) {
         return PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
     }
 
@@ -174,10 +174,6 @@ public class ClassUtils {
                 return outerClass;
             }
         }
-    }
-
-    public static PsiMethod getContainingMethod(PsiElement element){
-        return PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     }
 
     public static boolean isClassVisibleFromClass(PsiClass baseClass,

@@ -61,6 +61,7 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
             final PsiNewExpression expression = (PsiNewExpression) descriptor.getPsiElement();
             final PsiType boxedType = expression.getType();
             final PsiExpressionList argList = expression.getArgumentList();
+            assert argList != null;
             final PsiExpression[] args = argList.getExpressions();
             final PsiType argType = args[0].getType();
             final String cast = getCastString(argType, boxedType);

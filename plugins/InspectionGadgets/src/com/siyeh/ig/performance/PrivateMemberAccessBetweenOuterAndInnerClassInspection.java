@@ -36,6 +36,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
             final PsiReferenceExpression reference =
                     (PsiReferenceExpression) location;
             final PsiMember member = (PsiMember) reference.resolve();
+            assert member != null;
             final String memberName = member.getName();
             final PsiClass containingClass = member.getContainingClass();
             final String containingClassName = containingClass.getName();
@@ -52,6 +53,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
                         (PsiReferenceExpression) descriptor.getPsiElement();
                 final PsiModifierListOwner member =
                         (PsiModifierListOwner) reference.resolve();
+                assert member != null;
                 final PsiModifierList modifiers = member.getModifierList();
                 modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
                 modifiers.setModifierProperty(PsiModifier.PROTECTED, false);
@@ -108,6 +110,10 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
             }
             final PsiClass memberClass =
                     ClassUtils.getContainingClass(member);
+            if(memberClass == null)
+            {
+                return;
+            }
             if(memberClass.equals(containingClass)){
                 return;
             }

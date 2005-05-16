@@ -36,9 +36,6 @@ public class TestUtils{
 
     private static boolean isTest(@NotNull Project project,
                                    @NotNull VirtualFile virtualFile){
-        if(virtualFile == null){
-            return false;
-        }
         final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
         final ProjectFileIndex fileIndex = rootManager.getFileIndex();
         return fileIndex.isInTestSourceContent(virtualFile);

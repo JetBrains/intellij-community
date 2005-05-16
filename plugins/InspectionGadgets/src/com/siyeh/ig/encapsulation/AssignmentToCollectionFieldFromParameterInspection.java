@@ -32,6 +32,7 @@ public class AssignmentToCollectionFieldFromParameterInspection
         final PsiElement element = ((PsiReference) lhs).resolve();
 
         final PsiField field = (PsiField) element;
+        assert field != null;
         final PsiType type = field.getType();
         if(type.getArrayDimensions() > 0){
             return "assignment to array field #ref from parameter " +

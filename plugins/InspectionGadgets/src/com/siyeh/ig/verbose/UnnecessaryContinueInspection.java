@@ -74,7 +74,10 @@ public class UnnecessaryContinueInspection extends StatementInspection{
             } else if(continuedStatement instanceof PsiWhileStatement){
                 body = ((PsiWhileStatement) continuedStatement).getBody();
             }
-
+            if(body == null)
+            {
+                return;
+            }
             if(body instanceof PsiBlockStatement){
                 final PsiCodeBlock block =
                         ((PsiBlockStatement) body).getCodeBlock();

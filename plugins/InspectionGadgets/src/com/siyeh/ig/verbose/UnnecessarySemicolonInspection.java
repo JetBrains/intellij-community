@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class UnnecessarySemicolonInspection extends ClassInspection{
     private final UnnecessarySemicolonFix fix = new UnnecessarySemicolonFix();
@@ -93,7 +94,7 @@ public class UnnecessarySemicolonInspection extends ClassInspection{
             }
         }
 
-        private PsiElement skipForwardWhiteSpacesAndComments(final PsiElement element){
+        private static @Nullable  PsiElement skipForwardWhiteSpacesAndComments(PsiElement element){
             return PsiTreeUtil.skipSiblingsForward(element,
                                                    new Class[]{
                                                        PsiWhiteSpace.class,

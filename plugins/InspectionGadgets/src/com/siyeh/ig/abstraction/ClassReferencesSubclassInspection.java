@@ -23,6 +23,7 @@ public class ClassReferencesSubclassInspection extends ClassInspection {
     public String buildErrorString(PsiElement location) {
         final PsiClass containingClass =
                 ClassUtils.getContainingClass(location);
+        assert containingClass != null;
         final String containingClassName = containingClass.getName();
         return "Class " + containingClassName + " references subclass #ref #loc";
     }

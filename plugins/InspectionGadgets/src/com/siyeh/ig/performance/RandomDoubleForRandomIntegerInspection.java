@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RandomDoubleForRandomIntegerInspection extends ExpressionInspection {
     private final RandomDoubleForRandomIntegerFix fix = new RandomDoubleForRandomIntegerFix();
@@ -48,6 +49,7 @@ public class RandomDoubleForRandomIntegerInspection extends ExpressionInspection
             final PsiBinaryExpression multiplication = (PsiBinaryExpression) getContainingExpression(call);
             final PsiExpression cast = getContainingExpression(multiplication);
             final PsiExpression multiplierExpression;
+            assert multiplication != null;
             if(multiplication.getLOperand().equals(call))
             {
                 multiplierExpression = multiplication.getROperand();
@@ -143,7 +145,7 @@ public class RandomDoubleForRandomIntegerInspection extends ExpressionInspection
         }
     }
 
-        private static PsiExpression getContainingExpression(PsiExpression exp){
+        private static @Nullable PsiExpression getContainingExpression(PsiExpression exp){
             PsiElement ancestor = exp.getParent();
             while(true)
             {

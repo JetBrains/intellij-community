@@ -45,6 +45,7 @@ public class ArrayEqualsInspection extends ExpressionInspection{
             final PsiExpression qualifier = expression.getQualifierExpression();
             final String qualifierText = qualifier.getText();
             final PsiExpressionList argumentList = call.getArgumentList();
+            assert argumentList != null;
             final PsiExpression[] args = argumentList.getExpressions();
             final String argText = args[0].getText();
             final String newExpressionText =

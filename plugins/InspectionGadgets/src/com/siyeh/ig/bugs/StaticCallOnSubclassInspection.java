@@ -27,6 +27,7 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
         final PsiReferenceExpression methodExpression = (PsiReferenceExpression) location.getParent();
         final PsiMethodCallExpression methodCall = (PsiMethodCallExpression) methodExpression.getParent();
         final PsiMethod method = methodCall.resolveMethod();
+        assert method != null;
         final PsiClass containingClass = method.getContainingClass();
         final String declaringClass = containingClass.getName();
         final PsiElement qualifier = methodExpression.getQualifier();
@@ -48,11 +49,13 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
             final PsiIdentifier name = (PsiIdentifier) descriptor.getPsiElement();
             final PsiReferenceExpression expression = (PsiReferenceExpression) name.getParent();
             final PsiMethodCallExpression call = (PsiMethodCallExpression) expression.getParent();
-            final PsiMethod method = call.resolveMethod();
             final String methodName = expression.getReferenceName();
+            final PsiMethod method = call.resolveMethod();
+            assert method != null;
             final PsiClass containingClass = method.getContainingClass();
             final PsiExpressionList argumentList = call.getArgumentList();
             final String containingClassName = containingClass.getName();
+            assert argumentList != null;
             final String argText = argumentList.getText();
             replaceExpression(call, containingClassName + '.' + methodName + argText );
         }

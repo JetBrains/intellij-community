@@ -41,6 +41,7 @@ public class MisorderedAssertEqualsParametersInspection extends ExpressionInspec
             final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
 
             final PsiMethod method = (PsiMethod) methodExpression.resolve();
+            assert method != null;
             final PsiParameterList paramList = method.getParameterList();
             final PsiParameter[] parameters = paramList.getParameters();
             final PsiManager psiManager = callExpression.getManager();
@@ -58,6 +59,7 @@ public class MisorderedAssertEqualsParametersInspection extends ExpressionInspec
             }
             final PsiExpressionList argumentList = callExpression.getArgumentList();
 
+            assert argumentList != null;
             final PsiExpression[] args = argumentList.getExpressions();
             final PsiExpression expectedArg = args[expectedPosition];
             final PsiExpression actualArg = args[actualPosition];

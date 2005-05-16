@@ -25,6 +25,7 @@ public class EqualsBetweenInconvertibleTypesInspection extends ExpressionInspect
                 (PsiMethodCallExpression) methodExpression.getParent();
         final PsiExpressionList argumentList = expression.getArgumentList();
 
+        assert argumentList != null;
         final PsiExpression[] args = argumentList.getExpressions();
         final PsiType comparedType = args[0].getType();
         final PsiExpression qualifier = methodExpression.getQualifierExpression();

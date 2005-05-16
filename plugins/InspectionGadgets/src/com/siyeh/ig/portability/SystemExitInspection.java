@@ -24,6 +24,7 @@ public class SystemExitInspection extends ExpressionInspection {
         final PsiIdentifier methodNameIdentifier = (PsiIdentifier) location;
         final PsiReference methodExpression = (PsiReference) methodNameIdentifier.getParent();
         final PsiMethod method = (PsiMethod) methodExpression.resolve();
+        assert method != null;
         final PsiClass containingClass = method.getContainingClass();
         return "Call to " + containingClass.getName() + ".#ref() is non-portable #loc";
     }

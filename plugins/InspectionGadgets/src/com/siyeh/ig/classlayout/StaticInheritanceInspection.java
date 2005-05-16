@@ -37,6 +37,7 @@ public class StaticInheritanceInspection extends ClassInspection{
                     (PsiJavaCodeReferenceElement) descriptor.getPsiElement();
             final String referencedClassName = referenceElement.getText();
             final PsiClass iface = (PsiClass) referenceElement.resolve();
+            assert iface != null;
             final PsiField[] allFields = iface.getAllFields();
 
             final PsiClass implementingClass =
@@ -44,6 +45,7 @@ public class StaticInheritanceInspection extends ClassInspection{
                                                            PsiClass.class);
             final PsiManager manager = referenceElement.getManager();
             final PsiSearchHelper searchHelper = manager.getSearchHelper();
+            assert implementingClass != null;
             final SearchScope searchScope = implementingClass.getUseScope();
             for(final PsiField field : allFields){
                 final PsiReference[] references =

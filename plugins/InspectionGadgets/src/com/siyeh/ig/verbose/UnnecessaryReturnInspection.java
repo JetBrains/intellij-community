@@ -32,6 +32,7 @@ public class UnnecessaryReturnInspection extends StatementInspection{
         final PsiMethod method =
                 PsiTreeUtil.getParentOfType(location,
                                                         PsiMethod.class);
+        assert method != null;
         if(method.isConstructor()){
             return "#ref is unnecessary as the last statement in a constructor #loc";
         } else{

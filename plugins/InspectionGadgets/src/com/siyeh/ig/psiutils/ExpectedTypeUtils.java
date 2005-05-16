@@ -6,6 +6,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -57,7 +58,7 @@ public class ExpectedTypeUtils{
         return -1;
     }
 
-    private static PsiType getTypeOfParemeter(PsiMethod psiMethod,
+    private static @Nullable PsiType getTypeOfParemeter(PsiMethod psiMethod,
                                               int parameterPosition){
         final PsiParameterList paramList = psiMethod.getParameterList();
         final PsiParameter[] parameters = paramList.getParameters();
@@ -83,7 +84,7 @@ public class ExpectedTypeUtils{
         return param.getType();
     }
 
-    private static PsiMethod findCalledMethod(PsiExpressionList expList){
+    private static @Nullable PsiMethod findCalledMethod(PsiExpressionList expList){
         final PsiElement parent = expList.getParent();
         if(parent instanceof PsiMethodCallExpression){
             final PsiMethodCallExpression methodCall =

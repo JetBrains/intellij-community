@@ -31,11 +31,11 @@ public abstract class BaseInspection extends LocalInspectionTool{
     protected abstract BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
                                                            boolean onTheFly);
 
-    protected String buildErrorString(PsiElement location){
+    protected @Nullable String buildErrorString(PsiElement location){
         return null;
     }
 
-    protected String buildErrorString(Object arg){
+    protected @Nullable String buildErrorString(Object arg){
         return null;
     }
 

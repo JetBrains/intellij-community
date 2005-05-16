@@ -55,10 +55,12 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
         private static void changeClassToInterface(PsiClass aClass)
                 throws IncorrectOperationException {
             final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
+            assert nameIdentifier !=null;
             final PsiKeyword classKeyword = PsiTreeUtil.getPrevSiblingOfType(nameIdentifier, PsiKeyword.class);
             final PsiManager manager = aClass.getManager();
             final PsiElementFactory factory = manager.getElementFactory();
             final PsiKeyword interfaceKeyword = factory.createKeyword("interface");
+            assert classKeyword != null;
             classKeyword.replace(interfaceKeyword);
         }
 
@@ -66,6 +68,7 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
                 throws IncorrectOperationException {
             final PsiReferenceList extendsList = anInterface.getExtendsList();
             final PsiReferenceList implementsList = anInterface.getImplementsList();
+            assert implementsList != null;
             final PsiJavaCodeReferenceElement[] referenceElements = implementsList.getReferenceElements();
             for(final PsiJavaCodeReferenceElement referenceElement : referenceElements){
                 final PsiElement elementCopy = referenceElement.copy();

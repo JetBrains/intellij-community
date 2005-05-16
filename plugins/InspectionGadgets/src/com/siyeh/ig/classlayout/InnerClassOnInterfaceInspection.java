@@ -42,6 +42,7 @@ public class InnerClassOnInterfaceInspection extends ClassInspection{
         final PsiClass innerClass = (PsiClass) location.getParent();
         final PsiClass parentInterface =
                 ClassUtils.getContainingClass(innerClass);
+        assert parentInterface != null;
         final String interfaceName = parentInterface.getName();
         return "Interface " + interfaceName + " has inner class #ref #loc";
     }

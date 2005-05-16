@@ -5,6 +5,7 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MethodCallUtils {
     private MethodCallUtils() {
@@ -12,7 +13,7 @@ public class MethodCallUtils {
 
     }
 
-    public static String getMethodName(@NotNull PsiMethodCallExpression expression) {
+    public static @Nullable String getMethodName(@NotNull PsiMethodCallExpression expression) {
         final PsiReferenceExpression method = expression.getMethodExpression();
         if (method == null) {
             return null;
@@ -20,7 +21,7 @@ public class MethodCallUtils {
         return method.getReferenceName();
     }
 
-    public static PsiType getTargetType(@NotNull PsiMethodCallExpression expression) {
+    public static @Nullable PsiType getTargetType(@NotNull PsiMethodCallExpression expression) {
         final PsiReferenceExpression method = expression.getMethodExpression();
         if (method == null) {
             return null;
