@@ -164,12 +164,14 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public final PsiElement findChildByRoleAsPsiElement(int role) {
-    ASTNode element = findChildByRole(role);
-    if (element == null) return null;
-    if (element instanceof LeafElement && ((LeafElement)element).isChameleon()) {
-      element = ChameleonTransforming.transform((LeafElement)element);
+    synchronized (PsiLock.LOCK) {
+      ASTNode element = findChildByRole(role);
+      if (element == null) return null;
+      if (element instanceof LeafElement && ((LeafElement)element).isChameleon()) {
+        element = ChameleonTransforming.transform((LeafElement)element);
+      }
+      return SourceTreeToPsiMap.treeElementToPsi(element);
     }
-    return SourceTreeToPsiMap.treeElementToPsi(element);
   }
 
   public ASTNode findChildByRole(int role) {
