@@ -99,28 +99,32 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   private Icon calcIcon(DebugProcessImpl debugProcess) {
-    if (!ENABLED) {
+    if (!ENABLED || (debugProcess != null && debugProcess.areBreakpointsMuted())) {
       return getDisabledIcon();
     }
 
     myInvalidMessage = "";
 
-    if (!isValid()) return getInvalidIcon();
+    if (!isValid()) {
+      return getInvalidIcon();
+    }
 
     if(debugProcess == null){
       return getSetIcon();
     }
 
-    RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
+    final RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
 
     if(requestsManager.isVerified(this)){
       return getVerifiedIcon();
-    } else if(requestsManager.isInvalid(this)){
+    }
+    
+    if(requestsManager.isInvalid(this)){
       myInvalidMessage = requestsManager.getInvalidMessage(this);
       return getInvalidIcon();
-    } else {
-      return getSetIcon();
-    }
+    } 
+    
+    return getSetIcon();
   }
 
   protected BreakpointWithHighlighter(Project project) {

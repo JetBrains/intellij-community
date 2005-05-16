@@ -720,12 +720,16 @@ public class BreakpointManager implements JDOMExternalizable {
 
   //interaction with RequestManagerImpl
   public void disableBreakpoints(final DebugProcessImpl debugProcess) {
-    List<Breakpoint> breakpoints = getBreakpoints();
-
+    final List<Breakpoint> breakpoints = getBreakpoints();
     for (Iterator<Breakpoint> iterator = breakpoints.iterator(); iterator.hasNext();) {
       Breakpoint breakpoint = iterator.next();
       debugProcess.getRequestsManager().deleteRequest(breakpoint);
     }
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        updateBreakpointsUI();
+      }
+    });
   }
 
   public void enableBreakpoints(final DebugProcessImpl debugProcess) {
