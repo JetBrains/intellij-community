@@ -67,7 +67,7 @@ public class ComplementaryFontsRegistry {
       ourSharedKeyInstance = new FontKey(null, 0, 0);
     }
 
-    if (defaultFont.canDisplay(c)) {
+    if (c < 128 || defaultFont.canDisplay(c)) {
       return defaultFont;
     }
 
