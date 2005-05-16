@@ -1,6 +1,5 @@
 package com.intellij.xml.impl.schema;
 
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -73,7 +72,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
     collectAttributes(result, myTag, new ArrayList<XmlTag>());
 
-    addStdAttributes(result);
+    if (myDocumentDescriptor.supportsStdAttributes()) addStdAttributes(result);
 
     return result.toArray(new XmlAttributeDescriptor[result.size()]);
   }

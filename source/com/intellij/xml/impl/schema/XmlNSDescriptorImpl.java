@@ -501,4 +501,8 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
   public void validate(PsiElement context, Validator.ValidationHost host) {
     ExternalDocumentValidator.doValidation(context,host);
   }
+
+  protected boolean supportsStdAttributes() {
+    return true;
+  }
 }
