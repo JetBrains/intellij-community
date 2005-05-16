@@ -323,7 +323,8 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     }
 
     private void annotateMethod(final PsiMethod method) {
-      if (method.getModifierList().findAnnotation(AnnotationUtil.NULLABLE) != null) return;
+      final PsiModifierList modList = method.getModifierList();
+      if (modList.findAnnotation(AnnotationUtil.NULLABLE) != null) return;
 
       if (ReadonlyStatusHandler.getInstance(method.getProject()).ensureFilesWritable(
         new VirtualFile[]{method.getContainingFile().getVirtualFile()}).hasReadonlyFiles()) {
@@ -331,9 +332,10 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       }
 
       try {
-        method.getModifierList().add(method.getManager().getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NULLABLE,
-                                                                                                      method));
-        CodeStyleManager.getInstance(method.getProject()).shortenClassReferences(method.getModifierList());
+        PsiAnnotation annotation = method.getManager().getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NULLABLE, method);
+        modList.addBefore(annotation, modList.getFirstChild());
+
+        CodeStyleManager.getInstance(method.getProject()).shortenClassReferences(modList);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
