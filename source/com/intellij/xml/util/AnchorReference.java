@@ -105,7 +105,7 @@ class AnchorReference implements PsiReference {
         return attributeValue;
       }
 
-      if (xmlTag.getName().equalsIgnoreCase("a")) {
+      if ("a".equalsIgnoreCase(xmlTag.getName())) {
         final String attributeValue2 = xmlTag.getAttributeValue("name");
         if (attributeValue2!=null) {
           return attributeValue2;
