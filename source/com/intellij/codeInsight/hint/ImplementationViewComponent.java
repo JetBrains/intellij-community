@@ -42,8 +42,12 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -63,9 +67,14 @@ public class ImplementationViewComponent extends JPanel {
 
   private ActionToolbar myToolbar;
   private Editor myEditor;
+  private JPanel myViewingPanel;
   private JLabel myLocationLabel;
   private JLabel myCountLabel;
   private JComboBox myFileChooser;
+  private CardLayout myBinarySwitch;
+  private JPanel myBinaryPanel;
+  private FileEditor myNonTextEditor;
+  private FileEditorProvider myCurrentNonTextEditorProvider;
 
   private static class FileDescriptor {
     public VirtualFile myFile;
@@ -92,8 +101,8 @@ public class ImplementationViewComponent extends JPanel {
     Document doc = factory.createDocument("");
     doc.setReadOnly(true);
     myEditor = factory.createEditor(doc, project);
-    EditorHighlighter highlighter=HighlighterFactory.createHighlighter(project, myElements[0].getContainingFile().getName());
-    ((EditorEx) myEditor).setHighlighter(highlighter);
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, myElements[0].getContainingFile().getName());
+    ((EditorEx)myEditor).setHighlighter(highlighter);
     ((EditorEx)myEditor).setBackgroundColor(EditorFragmentComponent.getBackgroundColor(myEditor));
 
     myEditor.getSettings().setAdditionalLinesCount(1);
@@ -102,7 +111,14 @@ public class ImplementationViewComponent extends JPanel {
     myEditor.getSettings().setLineNumbersShown(false);
     myEditor.getSettings().setFoldingOutlineShown(false);
 
-    this.add(myEditor.getComponent(), BorderLayout.CENTER);
+    myBinarySwitch = new CardLayout();
+    myViewingPanel = new JPanel(myBinarySwitch);
+    myViewingPanel.add(myEditor.getComponent(), "Text");
+
+    myBinaryPanel = new JPanel(new BorderLayout());
+    myViewingPanel.add(myBinaryPanel, "Binary");
+
+    add(myViewingPanel, BorderLayout.CENTER);
 
     myToolbar = createToolbar();
     myLocationLabel = new JLabel();
@@ -166,7 +182,38 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private void updateEditorText() {
+    disposeNonTextEditor();
+
     final PsiElement elt = myElements[myIndex];
+    Project project = elt.getProject();
+    final VirtualFile vFile = elt.getContainingFile().getVirtualFile();
+    final FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, vFile);
+    for (FileEditorProvider provider : providers) {
+      if (provider instanceof TextEditorProvider) {
+        updateTextElement(elt);
+        myBinarySwitch.show(myViewingPanel, "Text");
+        break;
+      }
+      else if (provider.accept(project, vFile)) {
+        myCurrentNonTextEditorProvider = provider;
+        myNonTextEditor = myCurrentNonTextEditorProvider.createEditor(project, vFile);
+        myBinaryPanel.removeAll();
+        myBinaryPanel.add(myNonTextEditor.getComponent());
+        myBinarySwitch.show(myViewingPanel, "Binary");
+        break;
+      }
+    }
+  }
+
+  private void disposeNonTextEditor() {
+    if (myNonTextEditor != null) {
+      myCurrentNonTextEditorProvider.disposeEditor(myNonTextEditor);
+      myNonTextEditor = null;
+      myCurrentNonTextEditorProvider = null;
+    }
+  }
+
+  private void updateTextElement(final PsiElement elt) {
     Project project = elt.getProject();
     final Document doc = PsiDocumentManager.getInstance(project).getDocument(elt.getContainingFile());
 
@@ -206,6 +253,7 @@ public class ImplementationViewComponent extends JPanel {
   public void removeNotify() {
     super.removeNotify();
     EditorFactory.getInstance().releaseEditor(myEditor);
+    disposeNonTextEditor();
   }
 
   private void updateLabels() {

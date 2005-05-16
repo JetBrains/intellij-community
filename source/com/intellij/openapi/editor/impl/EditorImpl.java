@@ -1024,6 +1024,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   public Color getBackroundColor() {
     if (myForcedBackground != null) return myForcedBackground;
 
+    return getBackgroundIgnoreForced();
+  }
+
+  private Color getBackgroundColor(final TextAttributes attributes) {
+    final Color attrColor = attributes.getBackgroundColor();
+    return attrColor == getBackgroundIgnoreForced() ? getBackroundColor() : attrColor;
+  }
+
+  private Color getBackgroundIgnoreForced() {
     Color color = myScheme.getDefaultBackground();
     if (myDocument.isWritable()) {
       return color;
@@ -1104,8 +1113,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
           int charWidth = getSpaceWidth(Font.PLAIN);
           int lineHeight = getLineHeight();
           TextAttributes attributes = segmentHighlighter.getTextAttributes();
-          if (attributes != null && attributes.getBackgroundColor() != null) {
-            g.setColor(attributes.getBackgroundColor());
+          if (attributes != null && getBackgroundColor(attributes) != null) {
+            g.setColor(getBackgroundColor(attributes));
             g.fillRect(end.x, end.y, charWidth, lineHeight);
           }
           if (attributes != null && attributes.getEffectColor() != null) {
@@ -1162,7 +1171,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     }
 
     TextAttributes attributes = iterationState.getMergedAttributes();
-    Color backColor = attributes.getBackgroundColor();
+    Color backColor = getBackgroundColor(attributes);
     Point position = new Point(0, visibleLineNumber * lineHeight);
     int fontType = attributes.getFontType();
     CharSequence text = myDocument.getCharsNoThreadCheck();
@@ -1216,7 +1225,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
 
         iterationState.advance();
         attributes = iterationState.getMergedAttributes();
-        backColor = attributes.getBackgroundColor();
+        backColor = getBackgroundColor(attributes);
         fontType = attributes.getFontType();
         start = iterationState.getStartOffset();
       }
