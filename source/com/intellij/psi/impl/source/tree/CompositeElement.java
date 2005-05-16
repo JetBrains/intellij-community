@@ -44,6 +44,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     }
     if (sum != myParentModifications) {
       myParentModifications = sum;
+      LOG.assertTrue(prev != this, "Loop in tree");
       if (prev != null) {
         myStartOffset = prev.getStartOffset() + prev.getTextLength();
       }
