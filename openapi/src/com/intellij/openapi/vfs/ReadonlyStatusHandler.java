@@ -43,7 +43,7 @@ public abstract class ReadonlyStatusHandler {
       if (hasReadonlyFiles()) {
         StringBuffer buf = new StringBuffer();
         if (myReadonlyFiles.length > 1) {
-          buf.append("Failed to make the following files writeable:");
+          buf.append("Failed to make the following files writable:");
           for (int i = 0; i < myReadonlyFiles.length; i++) {
             VirtualFile file = myReadonlyFiles[i];
             buf.append('\n');
