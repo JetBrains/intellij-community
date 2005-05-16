@@ -54,8 +54,11 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.LightweightHint;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -65,7 +68,6 @@ public class ImplementationViewComponent extends JPanel {
   private final PsiElement[] myElements;
   private int myIndex;
 
-  private ActionToolbar myToolbar;
   private Editor myEditor;
   private JPanel myViewingPanel;
   private JLabel myLocationLabel;
@@ -75,6 +77,11 @@ public class ImplementationViewComponent extends JPanel {
   private JPanel myBinaryPanel;
   private FileEditor myNonTextEditor;
   private FileEditorProvider myCurrentNonTextEditorProvider;
+  private LightweightHint myHint;
+
+  public void setHint(final LightweightHint hint) {
+    myHint = hint;
+  }
 
   private static class FileDescriptor {
     public VirtualFile myFile;
@@ -120,53 +127,69 @@ public class ImplementationViewComponent extends JPanel {
 
     add(myViewingPanel, BorderLayout.CENTER);
 
-    myToolbar = createToolbar();
+    final ActionToolbar toolbar = createToolbar();
     myLocationLabel = new JLabel();
     myCountLabel = new JLabel();
 
     JPanel header = new JPanel(new BorderLayout());
     header.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    JPanel toolbar = new JPanel(new FlowLayout());
-    toolbar.add(myToolbar.getComponent());
+    JPanel toolbarPanel = new JPanel(new FlowLayout());
+    toolbarPanel.add(toolbar.getComponent());
 
 
-    myFileChooser = new JComboBox(files);
-    myFileChooser.setRenderer(new DefaultListCellRenderer() {
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        VirtualFile file = ((FileDescriptor)value).myFile;
-        setIcon(file.getIcon());
-        setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
-        setText(file.getPresentableName());
-        return this;
-      }
-    });
-
-    myFileChooser.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        int index = myFileChooser.getSelectedIndex();
-        if (myIndex != index) {
-          myIndex = index;
-          updateControls();
+    if (myElements.length > 1) {
+      myFileChooser = new JComboBox(files);
+      myFileChooser.setRenderer(new DefaultListCellRenderer() {
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          VirtualFile file = ((FileDescriptor)value).myFile;
+          setIcon(file.getIcon());
+          setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
+          setText(file.getPresentableName());
+          return this;
         }
-      }
-    });
+      });
 
-    toolbar.add(myFileChooser);
-    toolbar.add(myCountLabel);
+      myFileChooser.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          int index = myFileChooser.getSelectedIndex();
+          if (myIndex != index) {
+            myIndex = index;
+            updateControls();
+          }
+        }
+      });
 
-    header.add(toolbar, BorderLayout.WEST);
+      toolbarPanel.add(myFileChooser);
+      toolbarPanel.add(myCountLabel);
+    }
+    else {
+      final JLabel label = new JLabel();
+      VirtualFile file = myElements[0].getContainingFile().getVirtualFile();
+      label.setIcon(file.getIcon());
+      label.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
+      label.setText(file.getPresentableName());
+      label.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(), IdeBorderFactory.createEmptyBorder(0, 0, 0, 5)));
+      toolbarPanel.add(label);
+    }
+
+
+    header.add(toolbarPanel, BorderLayout.WEST);
     header.add(myLocationLabel, BorderLayout.EAST);
 
-    this.add(header, BorderLayout.NORTH);
-
-    this.setPreferredSize(new Dimension(600, 400));
+    add(header, BorderLayout.NORTH);
+    setPreferredSize(new Dimension(600, 400));
 
     updateControls();
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        myFileChooser.requestFocusInWindow();
+        if (myFileChooser != null) {
+          myFileChooser.requestFocusInWindow();
+        }
+        else {
+          myViewingPanel.requestFocusInWindow();
+        }
       }
     });
   }
@@ -178,7 +201,9 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private void updateCombo() {
-    myFileChooser.setSelectedIndex(myIndex);
+    if (myFileChooser != null) {
+      myFileChooser.setSelectedIndex(myIndex);
+    }
   }
 
   private void updateEditorText() {
@@ -330,11 +355,27 @@ public class ImplementationViewComponent extends JPanel {
     public EditSourceAction() {
       super(true, IconLoader.getIcon("/actions/editSource.png"), "Edit Source");
     }
+
+    @Override public void actionPerformed(AnActionEvent e) {
+      super.actionPerformed(e);
+      if (myHint.isVisible()) {
+        myHint.hide();
+      }
+    }
   }
 
   private class ShowSourceAction extends EditSourceActionBase implements HintManager.ActionToIgnore {
     public ShowSourceAction() {
       super(false, IconLoader.getIcon("/actions/showSource.png"), "Show Source");
+    }
+
+    @Override public void actionPerformed(AnActionEvent e) {
+      super.actionPerformed(e);
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          myHint.getComponent().requestFocusInWindow();
+        }
+      });
     }
   }
 
@@ -357,7 +398,12 @@ public class ImplementationViewComponent extends JPanel {
       Project project = element.getProject();
       FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file.getVirtualFile(), navigationElement.getTextOffset());
-      fileEditorManager.openTextEditor(descriptor, myFocusEditor);
+      if (myFocusEditor) {
+        fileEditorManager.openTextEditor(descriptor, true);
+      }
+      else {
+        fileEditorManager.openTextEditorEnsureNoFocus(descriptor);
+      }
     }
   }
 }

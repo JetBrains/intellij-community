@@ -351,6 +351,7 @@ public class EditorWindow {
 
   public EditorWindow split(final int orientation) {
     checkConsistency();
+    final FileEditorManagerImpl fileEditorManager = myOwner.getManager();
     if (splitAvailable()) {
       final JPanel panel = myPanel;
       final int tabCount = getTabCount();
@@ -369,7 +370,7 @@ public class EditorWindow {
             for (int i = 0; i != tabCount; ++i) {
               final EditorWithProviderComposite eC = getEditorAt(i);
               final VirtualFile file = eC.getFile();
-              FileEditorManagerImpl.openFileImpl3(res, file, false, null);
+              fileEditorManager.openFileImpl3(res, file, false, null);
               res.setFilePinned (file, isFilePinned (file));
             }
             res.setSelectedEditor(selectedEditor);
@@ -384,8 +385,8 @@ public class EditorWindow {
           splitter.setSecondComponent(res.myPanel);
           panel.revalidate();
           final VirtualFile file = firstEC.getFile();
-          FileEditorManagerImpl.openFileImpl3(this, file, true, null);
-          FileEditorManagerImpl.openFileImpl3(res, file, false, null);
+          fileEditorManager.openFileImpl3(this, file, true, null);
+          fileEditorManager.openFileImpl3(res, file, false, null);
         }
         return res;
       }

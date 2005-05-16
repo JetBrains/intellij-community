@@ -1,8 +1,10 @@
 package com.intellij.openapi.fileEditor.ex;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.Project;
@@ -92,6 +94,8 @@ public abstract class FileEditorManagerEx extends FileEditorManager {
   public FileEditor[] openFile(final VirtualFile file, final boolean focusEditor) {
     return openFileWithProviders(file, focusEditor).getFirst ();
   }
+
+  public abstract Editor openTextEditorEnsureNoFocus(OpenFileDescriptor descriptor);
 
   public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(VirtualFile file, boolean focusEditor);
 

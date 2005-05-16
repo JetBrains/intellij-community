@@ -2,6 +2,8 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -13,14 +15,16 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction{
   public void actionPerformed(final AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
     final VirtualFile vFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
-    if (vFile == null){
+    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    if (vFile == null || project == null){
       return;
     }
     final EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
     if (window != null) {
       final EditorWindow[] siblings = window.findSiblings ();
       if (siblings != null && siblings.length == 1) {
-        FileEditorManagerImpl.openFileImpl3 (siblings [0], vFile, true, null);
+
+        ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project)).openFileImpl3 (siblings [0], vFile, true, null);
         window.closeFile(vFile);
       }
     }
@@ -33,10 +37,12 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction{
     final EditorWindow window = (EditorWindow)dataContext.getData(DataConstantsEx.EDITOR_WINDOW);
     if (vFile != null && window != null) {
       final EditorWindow[] siblings = window.findSiblings ();
-      if (siblings != null && siblings.length == 1)
+      if (siblings != null && siblings.length == 1) {
         presentation.setEnabled(true);
-      else
+      }
+      else {
         presentation.setEnabled(false);
+      }
       return;
     }
     presentation.setEnabled(false);

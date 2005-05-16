@@ -92,6 +92,10 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Applic
   public void closeAllFiles() {
   }
 
+  public Editor openTextEditorEnsureNoFocus(OpenFileDescriptor descriptor) {
+    return openTextEditor(descriptor, false);
+  }
+
   public FileEditorProvider getProvider(FileEditor editor) {
     return new FileEditorProvider() {
       public boolean accept(Project project, VirtualFile file) {

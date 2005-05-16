@@ -34,10 +34,10 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
-import com.intellij.psi.PsiFile;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -93,6 +93,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    */
   private final MyPsiTreeChangeListener myPsiTreeChangeListener;
   final private EditorsSplitters mySplitters;
+  private boolean myDoNotTransferFocus = false;
 
 
   FileEditorManagerImpl(final Project project) {
@@ -413,10 +414,10 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * @param entry map between FileEditorProvider and FileEditorState. If this parameter
    *              is not <code>null</code> then it's used to restore state for the newly created
    */
-  static protected Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(final EditorWindow window,
-                                                                          final VirtualFile file,
-                                                                          final boolean focusEditor,
-                                                                          final HistoryEntry entry) {
+  protected Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(final EditorWindow window,
+                                                                   final VirtualFile file,
+                                                                   final boolean focusEditor,
+                                                                   final HistoryEntry entry) {
     LOG.assertTrue(file != null);
 
     // Open file
@@ -529,7 +530,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
       // Transfer focus into editor
       if (!ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
-        if (focusEditor || ToolWindowManager.getInstance(window.getManager().myProject).isEditorComponentActive()) {
+        if ((focusEditor || ToolWindowManager.getInstance(window.getManager().myProject).isEditorComponentActive()) && !myDoNotTransferFocus) {
           //myFirstIsActive = myTabbedContainer1.equals(tabbedContainer);
           window.setAsCurrentWindow(false);
           ToolWindowManager.getInstance(window.getManager().myProject).activateEditorComponent();
@@ -936,6 +937,10 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return null;
   }
 
+  public boolean isFocusingBlocked() {
+    return myDoNotTransferFocus;
+  }
+
   //================== Listeners =====================
   /**
    * Closes deleted files. Closes file which are in the deleted directories.
@@ -1125,7 +1130,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       } else {
         mySplitters.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
       }
-      
+
       // "Mark modified files with asterisk"
       final VirtualFile[] openFiles = getOpenFiles();
       for (int i = openFiles.length - 1; i >= 0; i--) {
@@ -1185,6 +1190,16 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     final VirtualFile[] openFiles = mySplitters.getOpenFiles();
     for (VirtualFile openFile : openFiles) {
       closeFile(openFile);
+    }
+  }
+
+  public Editor openTextEditorEnsureNoFocus(OpenFileDescriptor descriptor) {
+    myDoNotTransferFocus = true;
+    try {
+      return openTextEditor(descriptor, false);
+    }
+    finally {
+      myDoNotTransferFocus = false;
     }
   }
 

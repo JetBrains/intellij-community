@@ -139,7 +139,7 @@ public class EditorsSplitters extends JPanel {
         add(comp, BorderLayout.CENTER);
         final EditorComposite lastSelected = getManager ().getLastSelected();
         if(lastSelected != null)  {
-          FileEditorManagerImpl.openFileImpl3(myCurrentWindow, lastSelected.getFile(), true, null);
+          getManager().openFileImpl3(myCurrentWindow, lastSelected.getFile(), true, null);
           //lastSelected.getComponent().requestFocus();
           //ToolWindowManager.getInstance(getManager().myProject).activateEditorComponent();
         }
@@ -178,7 +178,7 @@ public class EditorsSplitters extends JPanel {
           for (final Element file : children) {
             final HistoryEntry entry;
             entry = new HistoryEntry(getManager().myProject, file.getChild(HistoryEntry.TAG));
-            FileEditorManagerImpl.openFileImpl3(window, entry.myFile, false, entry);
+            getManager().openFileImpl3(window, entry.myFile, false, entry);
             if (getManager().isFileOpen(entry.myFile)) {
               window.setFilePinned(entry.myFile, Boolean.valueOf(file.getAttributeValue("pinned")).booleanValue());
               if (Boolean.valueOf(file.getAttributeValue("current-in-tab")).booleanValue()) {
@@ -367,7 +367,8 @@ public class EditorsSplitters extends JPanel {
     if (window != null) {
       final EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
       if (selectedEditor != null) {
-        final boolean focusEditor = ToolWindowManager.getInstance(myManager.myProject).isEditorComponentActive();
+        final boolean focusEditor = ToolWindowManager.getInstance(myManager.myProject).isEditorComponentActive() &&
+                                    !window.getManager().isFocusingBlocked();
         if (focusEditor || requestFocus)
           selectedEditor.getComponent().requestFocus ();
       }
