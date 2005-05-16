@@ -7,13 +7,14 @@ import com.intellij.newCodeFormatting.ChildAttributes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.formatter.newXmlFormatter.AbstractBlock;
 
 import java.util.List;
 
-public class SynteticBlock extends AbstractSynteticBlock implements Block{
+public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
   private final List<Block> mySubBlocks;
 
-  SynteticBlock(final List<Block> subBlocks, final Block parent, final Indent indent, XmlFormattingPolicy policy) {
+  SyntheticBlock(final List<Block> subBlocks, final Block parent, final Indent indent, XmlFormattingPolicy policy) {
     super(subBlocks, parent, policy, indent);
     mySubBlocks = subBlocks;
   }
@@ -27,8 +28,8 @@ public class SynteticBlock extends AbstractSynteticBlock implements Block{
   }
 
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
-    final IElementType type1 = ((AbstractBlock)child1).myNode.getElementType();
-    final IElementType type2 = ((AbstractBlock)child2).myNode.getElementType();
+    final IElementType type1 = ((AbstractBlock)child1).getNode().getElementType();
+    final IElementType type2 = ((AbstractBlock)child2).getNode().getElementType();
 
     if (isXmlTagName(type1, type2)){
       final int spaces = myXmlFormattingPolicy.getShouldAddSpaceAroundTagName() ? 1 : 0;
@@ -77,8 +78,8 @@ public class SynteticBlock extends AbstractSynteticBlock implements Block{
     return new ChildAttributes(getIndent(), null);
   }
 
-  public boolean isIncopleted() {
-    return getSubBlocks().get(getSubBlocks().size() - 1).isIncopleted();
+  public boolean isIncomplete() {
+    return getSubBlocks().get(getSubBlocks().size() - 1).isIncomplete();
   }
   
 }

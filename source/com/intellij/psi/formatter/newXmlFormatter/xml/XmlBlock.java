@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.formatter.newXmlFormatter.AbstractBlock;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,8 +55,8 @@ public class XmlBlock extends AbstractXmlBlock {
 
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
     final IElementType elementType = myNode.getElementType();
-    final IElementType type1 = ((AbstractBlock)child1).myNode.getElementType();
-    final IElementType type2 = ((AbstractBlock)child2).myNode.getElementType();
+    final IElementType type1 = ((AbstractBlock)child1).getNode().getElementType();
+    final IElementType type2 = ((AbstractBlock)child2).getNode().getElementType();
 
     if ((type2 == getTagType() || type2 == ElementType.XML_END_TAG_START || type2 == ElementType.XML_TEXT) && myXmlFormattingPolicy
       .getShouldKeepWhiteSpaces()) {

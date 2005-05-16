@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter.newXmlFormatter.xml;
+package com.intellij.psi.formatter.newXmlFormatter;
 
 import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
@@ -46,6 +46,10 @@ public abstract class AbstractBlock implements Block {
     return myAlignment;
   }
 
+  public ASTNode getNode() {
+    return myNode;
+  }
+
   protected boolean containsWhiteSpacesOnly(final ASTNode node) {
     if (node.getElementType() == ElementType.WHITE_SPACE) return true;
     if (node.getElementType() == ElementType.DOC_COMMENT_DATA && node.textContains('\n') && node.getText().trim().length() == 0) {
@@ -68,7 +72,7 @@ public abstract class AbstractBlock implements Block {
     return new ChildAttributes(getIndent(), null);
   }
 
-  public boolean isIncopleted() {
+  public boolean isIncomplete() {
     return FormatterUtil.isIncompleted(getTreeNode());
   }
 }

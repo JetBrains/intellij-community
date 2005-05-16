@@ -555,10 +555,10 @@ class FormatProcessor {
     if (index == 0) return null;
 
     Block currentResult = subBlocks.get(index - 1);
-    if (!currentResult.isIncopleted()) return null;
+    if (!currentResult.isIncomplete()) return null;
 
     Block lastChild = getLastChildOf(currentResult);
-    while (lastChild != null && lastChild.isIncopleted()) {
+    while (lastChild != null && lastChild.isIncomplete()) {
       currentResult = lastChild;
       lastChild = getLastChildOf(currentResult);
     }

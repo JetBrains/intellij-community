@@ -22,5 +22,5 @@ public interface Block {
 
   @NotNull ChildAttributes getChildAttributes(final int newChildIndex);
 
-  boolean isIncopleted();
+  boolean isIncomplete();
 }

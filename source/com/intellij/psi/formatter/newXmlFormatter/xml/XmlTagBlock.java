@@ -89,16 +89,16 @@ public class XmlTagBlock extends AbstractXmlBlock{
                           ? getFormatter().createNormalIndent()
                           : getFormatter().getNoneIndent();
     }
-    return AbstractSynteticBlock.createSynteticBlock(localResult, this, indent, myXmlFormattingPolicy);
+    return AbstractSyntheticBlock.createSynteticBlock(localResult, this, indent, myXmlFormattingPolicy);
   }
 
   private Block createTagDescriptionNode(final ArrayList<Block> localResult) {
-    return AbstractSynteticBlock.createSynteticBlock(localResult, this, null, myXmlFormattingPolicy);
+    return AbstractSyntheticBlock.createSynteticBlock(localResult, this, null, myXmlFormattingPolicy);
   }
 
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
-    final AbstractSynteticBlock synteticBlock1 = ((AbstractSynteticBlock)child1);
-    final AbstractSynteticBlock synteticBlock2 = ((AbstractSynteticBlock)child2);
+    final AbstractSyntheticBlock syntheticBlock1 = ((AbstractSyntheticBlock)child1);
+    final AbstractSyntheticBlock syntheticBlock2 = ((AbstractSyntheticBlock)child2);
 
     if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag())) return getFormatter().getReadOnlySpace();
 
@@ -106,19 +106,19 @@ public class XmlTagBlock extends AbstractXmlBlock{
       return getFormatter().getReadOnlySpace();
     }
 
-    if (synteticBlock1.endsWithTextElement() && synteticBlock2.startsWithTextElement()) {
+    if (syntheticBlock1.endsWithTextElement() && syntheticBlock2.startsWithTextElement()) {
       return getFormatter().createSafeSpace(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
-    if (synteticBlock1.endsWithText()) { //text</tag
+    if (syntheticBlock1.endsWithText()) { //text</tag
       return getFormatter().createSpaceProperty(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
-    } else if (synteticBlock1.isTagDescription() && synteticBlock2.isTagDescription()) { //></
+    } else if (syntheticBlock1.isTagDescription() && syntheticBlock2.isTagDescription()) { //></
       return getFormatter().createSpaceProperty(0, 0, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
-    } else if (synteticBlock2.startsWithText()) { //>text
+    } else if (syntheticBlock2.startsWithText()) { //>text
       return getFormatter().createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
-    } else if (synteticBlock1.isTagDescription() && synteticBlock2.startsWithTag()) {
+    } else if (syntheticBlock1.isTagDescription() && syntheticBlock2.startsWithTag()) {
       return getFormatter().createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
-    } else if (synteticBlock1.endsWithTag() && synteticBlock2.isTagDescription()) {
+    } else if (syntheticBlock1.endsWithTag() && syntheticBlock2.isTagDescription()) {
       return getFormatter().createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());      
     }
     else {

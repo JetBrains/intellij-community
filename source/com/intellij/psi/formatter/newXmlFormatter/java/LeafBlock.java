@@ -53,7 +53,7 @@ public class LeafBlock implements Block{
     return new ChildAttributes(getIndent(), null);
   }
 
-  public boolean isIncopleted() {
+  public boolean isIncomplete() {
     return false;
   }
 }

@@ -7,18 +7,19 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.formatter.newXmlFormatter.AbstractBlock;
 
 import java.util.List;
 
 
-public abstract class AbstractSynteticBlock implements Block{
+public abstract class AbstractSyntheticBlock implements Block{
   protected final Indent myIndent;
   protected final XmlFormattingPolicy myXmlFormattingPolicy;
   protected final ASTNode myEndTreeNode;
   protected final ASTNode myStartTreeNode;
   private final XmlTag myTag;
 
-  public AbstractSynteticBlock(List<Block> subBlocks, Block parent, XmlFormattingPolicy policy, Indent indent) {
+  public AbstractSyntheticBlock(List<Block> subBlocks, Block parent, XmlFormattingPolicy policy, Indent indent) {
     myEndTreeNode = ((AbstractXmlBlock)subBlocks.get(subBlocks.size() - 1)).getTreeNode();
     myStartTreeNode = ((AbstractXmlBlock)subBlocks.get(0)).getTreeNode();
     myIndent = indent;
@@ -117,17 +118,17 @@ public abstract class AbstractSynteticBlock implements Block{
                                                   final Block parent,
                                                   final Indent indent,
                                                   XmlFormattingPolicy policy) {
-    if (!isTagDescription(((AbstractBlock)subBlocks.get(0)).myNode)
+    if (!isTagDescription(((AbstractBlock)subBlocks.get(0)).getNode())
         && (policy.getShouldKeepWhiteSpaces()
         || policy.keepWhiteSpacesInsideTag(((XmlTagBlock)parent).getTag()))) {
-      return new ReadOnlySynteticBlock(subBlocks, parent, policy, indent);
+      return new ReadOnlySyntheticBlock(subBlocks, parent, policy, indent);
     } else {
-      return new SynteticBlock(subBlocks, parent, indent, policy);
+      return new SyntheticBlock(subBlocks, parent, indent, policy);
     }
   }
 
-  public boolean isIncopleted() {
-    return getSubBlocks().get(getSubBlocks().size() - 1).isIncopleted();
+  public boolean isIncomplete() {
+    return getSubBlocks().get(getSubBlocks().size() - 1).isIncomplete();
   }
 
   public boolean startsWithTag() {
