@@ -7,10 +7,17 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.IncorrectOperationException;
+
+import javax.swing.*;
+import java.util.List;
+import java.util.ArrayList;
 
 abstract class OverrideImplementMethodAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.method.OverrideImplementMethodAction");
@@ -30,11 +37,32 @@ abstract class OverrideImplementMethodAction extends AnAction {
 
             try{
               final MethodHierarchyNodeDescriptor[] selectedDescriptors = methodHierarchyBrowser.getSelectedDescriptors();
-              for (int i = 0; i < selectedDescriptors.length; i++) {
-                OverrideImplementUtil.overrideOrImplement(selectedDescriptors[i].getPsiClass(), methodHierarchyBrowser.getBaseMethod());
+              if (selectedDescriptors.length > 0) {
+                final List<VirtualFile> files = new ArrayList<VirtualFile>(selectedDescriptors.length);
+                for (int i = 0; i < selectedDescriptors.length; i++) {
+                  final PsiFile containingFile = selectedDescriptors[i].getPsiClass().getContainingFile();
+                  if (containingFile != null) {
+                    final VirtualFile vFile = containingFile.getVirtualFile();
+                    if (vFile != null) {
+                      files.add(vFile);
+                    }
+                  }
+                }
+                final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files.toArray(new VirtualFile[files.size()]));
+                if (!status.hasReadonlyFiles()) {
+                  for (int i = 0; i < selectedDescriptors.length; i++) {
+                    OverrideImplementUtil.overrideOrImplement(selectedDescriptors[i].getPsiClass(), methodHierarchyBrowser.getBaseMethod());
+                  }
+                  ToolWindowManager.getInstance(project).activateEditorComponent();
+                }
+                else {
+                  ApplicationManager.getApplication().invokeLater(new Runnable() {
+                    public void run() {
+                      Messages.showErrorDialog(project, status.getReadonlyFilesMessage(), commandName);
+                    }
+                  });
+                }
               }
-
-              ToolWindowManager.getInstance(project).activateEditorComponent();
             }
             catch(IncorrectOperationException e){
               LOG.error(e);
