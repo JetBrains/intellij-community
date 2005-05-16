@@ -217,7 +217,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
             else {
               message.append(".\nThe module will be treated as a JAVA module.");
             }
-            Messages.showWarningDialog(myProject, message.toString(), "Unknon Module Type");
+            Messages.showWarningDialog(myProject, message.toString(), "Unknown Module Type");
           }
         }
       });
