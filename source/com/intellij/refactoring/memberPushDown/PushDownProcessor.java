@@ -58,7 +58,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     if (usages[0].length == 0) {
       final String message = (myClass.isInterface() ? "Interface " : "Class ")
               + myClass.getQualifiedName() + " does not have inheritors.\n" +
-              "Pushing memebers down will result in them being deleted. Continue?";
+              "Pushing members down will result in them being deleted. Continue?";
       final int answer = Messages.showYesNoDialog(message, "Push Down", Messages.getWarningIcon());
       if (answer != 0) return false;
     }
