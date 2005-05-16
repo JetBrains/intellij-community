@@ -188,7 +188,8 @@ public class ExternalDocumentValidator {
     XmlTag.class,
     XmlProcessingInstruction.class,
     XmlElementDecl.class,
-    XmlMarkupDecl.class
+    XmlMarkupDecl.class,
+    XmlDoctype.class
   };
 
   private XmlElement getNodeForMessage(final PsiElement currentElement) {
