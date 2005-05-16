@@ -6,5 +6,8 @@ package com.intellij.psi.jsp;
 public enum JspDirectiveKind {
   PAGE,
   INCLUDE,
-  TAGLIB;
+  TAGLIB,
+  TAG,
+  ATTRIBUTE,
+  VARIABLE;
 }
