@@ -190,8 +190,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
     final Set<PsiImportStatementBase> redundants = new HashSet<PsiImportStatementBase>(Arrays.asList(imports));
     final PsiFile[] roots = file.getPsiRoots();
-    for (int i = 0; i < roots.length; i++) {
-      roots[i].accept(new PsiRecursiveElementVisitor() {
+    for (PsiFile root : roots) {
+      root.accept(new PsiRecursiveElementVisitor() {
         public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           if (!reference.isQualified()) {
             final ResolveResult resolveResult = reference.advancedResolve(false);
@@ -206,8 +206,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       });
     }
 
-    for (Iterator<PsiImportStatementBase> iterator = redundants.iterator(); iterator.hasNext();) {
-      final PsiImportStatementBase importStatement = iterator.next();
+    for (final PsiImportStatementBase importStatement : redundants) {
       final PsiJavaCodeReferenceElement ref = importStatement.getImportReference();
       //Do not remove non-resolving refs
       if (ref == null || ref.resolve() == null) continue;
@@ -538,7 +537,12 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
     else {
       if (variable instanceof PsiParameter) {
-        return VariableKind.PARAMETER;
+        if (((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement) {
+          return VariableKind.LOCAL_VARIABLE;
+        }
+        else {
+          return VariableKind.PARAMETER;
+        }
       }
       else {
         if (variable instanceof PsiLocalVariable) {
@@ -616,16 +620,14 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     String[] allNames = myStatisticsManager.getAllVariableNamesUsed(variableKind, propertyName, type);
 
     int maxFrequency = 0;
-    for (int i = 0; i < allNames.length; i++) {
-      String name = allNames[i];
+    for (String name : allNames) {
       int count = myStatisticsManager.getVariableNameUseCount(name, variableKind, propertyName, type);
       maxFrequency = Math.max(maxFrequency, count);
     }
 
     int frequencyLimit = Math.max(5, maxFrequency / 2);
 
-    for (int i = 0; i < allNames.length; i++) {
-      String name = allNames[i];
+    for (String name : allNames) {
       if (names.contains(name)) continue;
       int count = myStatisticsManager.getVariableNameUseCount(name, variableKind, propertyName, type);
       if (LOG.isDebugEnabled()) {
@@ -1192,8 +1194,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       if (type != null) {
         LOG.debug("type:" + type);
       }
-      for (int i = 0; i < names.length; i++) {
-        String name = names[i];
+      for (String name : names) {
         int count = myStatisticsManager.getVariableNameUseCount(name, variableKind, propertyName, type);
         LOG.debug(name + " : " + count);
       }

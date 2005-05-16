@@ -52,21 +52,21 @@ public class SuggestVariableNameMacro implements Macro {
     PsiElement e = file.findElementAt(context.getStartOffset());
     PsiVariable[] vars = MacroUtil.getVariablesVisibleAt(e, "");
     LinkedList namesList = new LinkedList(Arrays.asList(names));
-    for (int i = 0; i < vars.length; i++) {
-      if (e.equals(vars[i].getNameIdentifier())) continue;
-      namesList.remove(vars[i].getName());
+    for (PsiVariable var : vars) {
+      if (e.equals(var.getNameIdentifier())) continue;
+      namesList.remove(var.getName());
     }
 
     if (namesList.size() == 0) {
-        String name = names[0];
-        index: for (int j = 1; ; j++) {
-            String name1 = name + j;
-            for (int i = 0; i < vars.length; i++) {
-                PsiVariable var = vars[i];
-                if (name1.equals(var.getName()) && !var.getNameIdentifier().equals(e)) continue index;
-            }
-            return new String[] {name1};
+      String name = names[0];
+      index:
+      for (int j = 1; ; j++) {
+        String name1 = name + j;
+        for (PsiVariable var : vars) {
+          if (name1.equals(var.getName()) && !var.getNameIdentifier().equals(e)) continue index;
         }
+        return new String[]{name1};
+      }
     }
 
     return (String[]) namesList.toArray(new String[namesList.size()]);
