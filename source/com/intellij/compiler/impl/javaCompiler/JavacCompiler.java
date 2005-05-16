@@ -5,8 +5,8 @@ import com.intellij.compiler.JavacOutputParser;
 import com.intellij.compiler.JavacSettings;
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.ide.util.generics.GenericsSetupUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -16,10 +16,14 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.projectRoots.impl.MockJdkWrapper;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 
 import java.io.*;
@@ -29,6 +33,7 @@ class JavacCompiler implements BackendCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavacCompiler");
   private Project myProject;
   private final List<File> myTempFiles = new ArrayList<File>();
+  private static final Key<File> COLLECT_JAR_KEY = new Key<File>("collect.jar");
 
   public boolean checkCompiler() {
     final Module[] modules = ModuleManager.getInstance(myProject).getModules();
@@ -67,12 +72,12 @@ class JavacCompiler implements BackendCompiler {
         return false;
       }
       if (shouldUseJSR14Compiler(versionString)) {
-        final File collectionsJar = GenericsSetupUtil.getGenericsJar("collect.jar", myProject);
+        final File collectionsJar = getGenericsJar("collect.jar", myProject);
         if (!collectionsJar.exists()) {
           Messages.showMessageDialog(myProject, collectionsJar.getPath() + " not found", "Compiler Classes Not Found", Messages.getErrorIcon());
           return false;
         }
-        final File gjcJar = GenericsSetupUtil.getGenericsJar("gjc-rt.jar", myProject);
+        final File gjcJar = getGenericsJar("gjc-rt.jar", myProject);
         if (!gjcJar.exists()) {
           Messages.showMessageDialog(myProject, gjcJar.getPath() + " not found", "Compiler Classes Not Found", Messages.getErrorIcon());
           return false;
@@ -153,7 +158,7 @@ class JavacCompiler implements BackendCompiler {
       commandLine.add("-Xmx" + javacSettings.MAXIMUM_HEAP_SIZE + "m");
     }
 
-    final String javacLocation = GenericsSetupUtil.getGenericsJar("gjc-rt.jar", myProject).getPath();
+    final String javacLocation = getGenericsJar("gjc-rt.jar", myProject).getPath();
     final boolean useJSR14Compiler = shouldUseJSR14Compiler(versionString);
     if (useJSR14Compiler) {
       commandLine.add("-Xbootclasspath/p:" + javacLocation);
@@ -189,7 +194,7 @@ class JavacCompiler implements BackendCompiler {
     if (useJSR14Compiler) {
       commandLine.add("-bootclasspath");
       final String rtJarPath = jdk.getRtLibraryPath();
-      commandLine.add(GenericsSetupUtil.getGenericsJar("collect.jar", myProject).getPath() + File.pathSeparator + rtJarPath);
+      commandLine.add(getGenericsJar("collect.jar", myProject).getPath() + File.pathSeparator + rtJarPath);
     }
 
     final LanguageLevel applicableLanguageLevel = getApplicableLanguageLevel(versionString);
@@ -326,5 +331,34 @@ class JavacCompiler implements BackendCompiler {
       }
       myTempFiles.clear();
     }
+  }
+
+  private File getGenericsJar(String jarName, Project project) {
+    File collectJar = project.getUserData(COLLECT_JAR_KEY);
+    if (collectJar == null) {
+      final VirtualFile[] fullClassPath = ProjectRootManager.getInstance(project).getFullClassPath();
+      for (VirtualFile file : fullClassPath) {
+        if (file.getName().equals("collect.jar")) {
+          String s = StringUtil.replace(file.getPath(), "/", File.separator);
+          if (s.endsWith(JarFileSystem.JAR_SEPARATOR)) s = s.substring(0, s.length() - JarFileSystem.JAR_SEPARATOR.length());
+          collectJar = new File(s);
+          project.putUserData(COLLECT_JAR_KEY, collectJar);
+          break;
+        }
+      }
+    }
+
+    if (collectJar != null && collectJar.exists()) {
+      if ("collect.jar".equals(jarName)) return collectJar;
+      File neededJar = new File(collectJar.getParentFile(), jarName);
+      if (neededJar.exists()) return neededJar;
+    }
+    else {
+      collectJar = new File(PathManager.getLibPath() + File.separator + "generics" + File.separator + "collect.jar");
+      project.putUserData(COLLECT_JAR_KEY, collectJar);
+    }
+
+
+    return new File(PathManager.getLibPath() + File.separator + "generics" + File.separator + jarName);
   }
 }

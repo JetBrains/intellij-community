@@ -509,7 +509,6 @@
         <action id="SaveAsTemplate" class="com.intellij.codeInsight.template.actions.SaveAsTemplateAction" text="Save as L_ive Template..." description="Save the selected text as live template"/>
         <action id="SaveFileAsTemplate" class="com.intellij.ide.actions.SaveFileAsTemplateAction" text="Save File as Temp_late..." description="Save current file as template"/>
         <action id="GenerateJavadoc" class="com.intellij.javadoc.actions.GenerateJavadocAction" text="Generate Java_Doc..." description="Run the JavaDoc tool"/>
-        <action id="SetupGenerics" class="com.intellij.ide.util.generics.SetupGenericsAction" text="Set Up JSR014 _Implementation..." description="Set up JSR014 implementation for current project"/>
         <separator/>
         <group id="Macros" text="_Macros" description="View, Change, Record, Play Macros" popup="true">
           <group id="StanardMacroActions">
