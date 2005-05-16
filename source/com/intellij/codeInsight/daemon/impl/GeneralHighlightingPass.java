@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
@@ -280,8 +279,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       builder.analyzeFileDependencies(myFile, new DependenciesBuilder.DependencyProcessor() {
         public void process(PsiElement place, PsiElement dependency) {
           PsiFile dependencyFile = dependency.getContainingFile();
-          InspectionManagerEx iManager = ((InspectionManagerEx)InspectionManager.getInstance(place.getProject()));
-          if (iManager.inspectionResultSuppressed(place, HighlightDisplayKey.ILLEGAL_DEPENDENCY.toString())) return;              
+          if (InspectionManagerEx.inspectionResultSuppressed(place, HighlightDisplayKey.ILLEGAL_DEPENDENCY.toString())) return;              
           if (dependencyFile != null && dependencyFile.isPhysical() && dependencyFile.getVirtualFile() != null) {
             DependencyRule[] rules = validationManager.getViolatorDependencyRules(myFile, dependencyFile);
             if (rules.length > 0) {
@@ -293,7 +291,9 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
                 List<IntentionAction> options = new ArrayList<IntentionAction>();
                 options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
                 options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
+                options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
                 options.add(new AddNoInspectionAllForClassAction(place));
+                options.add(new AddSuppressWarningsAnnotationForAllAction(place));
                 options.add(new SwitchOffToolAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY));
                 QuickFixAction.registerQuickFixAction(info, new EditDependencyRulesAction(rules[0]), options);
               }

@@ -17,6 +17,7 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
   private JTextField myMarkMinHeight;
   private JPanel myPanel;
   private JCheckBox myNextErrorGoesToErrorsFirst;
+  private JCheckBox mySuppressWay;
 
   public ErrorHighlightingPanel() {
     super(DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getName(), null);
@@ -65,6 +66,7 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
 
     myMarkMinHeight.setText(Integer.toString(settings.ERROR_STRIPE_MARK_MIN_HEIGHT));
     myNextErrorGoesToErrorsFirst.setSelected(settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST);
+    mySuppressWay.setSelected(settings.SUPPRESS_WARNINGS);
   }
 
   public void apply() throws ConfigurationException {
@@ -77,6 +79,8 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
     settings.ERROR_STRIPE_MARK_MIN_HEIGHT = getErrorStripeMarkMinHeight();
 
     settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = myNextErrorGoesToErrorsFirst.isSelected();
+
+    settings.SUPPRESS_WARNINGS = mySuppressWay.isSelected();
 
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (int i = 0; i < projects.length; i++) {
@@ -95,6 +99,7 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
     isModified |= myCbShowImportPopup.isSelected() != settings.isImportHintEnabled();
     isModified |= getErrorStripeMarkMinHeight() != settings.ERROR_STRIPE_MARK_MIN_HEIGHT;
     isModified |= myNextErrorGoesToErrorsFirst.isSelected() != settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST;
+    isModified |= mySuppressWay.isSelected() != settings.SUPPRESS_WARNINGS;
     if (isModified) return true;
     return super.isModified();
   }

@@ -14,6 +14,7 @@ import java.io.File;
 public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Cloneable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings");
 
+
   public DaemonCodeAnalyzerSettings() {
   }
 
@@ -33,7 +34,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   public int AUTOREPARSE_DELAY = 300;
   public boolean SHOW_ADD_IMPORT_HINTS = true;
   public String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
-
+  public boolean SUPPRESS_WARNINGS = true;
   public boolean SHOW_METHOD_SEPARATORS = false;
   public int ERROR_STRIPE_MARK_MIN_HEIGHT = 3;
 

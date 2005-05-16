@@ -350,7 +350,9 @@ public class HighlightMethodUtil {
     HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_THROWS_DECL, referenceElement, description);
     List<IntentionAction> options = new ArrayList<IntentionAction>();
     options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNUSED_THROWS_DECL, method.getBody()));
+    options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNUSED_THROWS_DECL, method.getBody()));
     options.add(new AddNoInspectionAllForClassAction(method.getBody()));
+    options.add(new AddSuppressWarningsAnnotationForAllAction(method.getBody()));
     options.add(new SwitchOffToolAction(HighlightDisplayKey.UNUSED_THROWS_DECL));
     QuickFixAction.registerQuickFixAction(errorResult, new MethodThrowsFix(method, exceptionType, false), options);
     return errorResult;
@@ -1147,7 +1149,9 @@ public class HighlightMethodUtil {
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.DEPRECATED, methodName, description);
         List<IntentionAction> options = new ArrayList<IntentionAction>();
         options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.DEPRECATED_SYMBOL, method));
+        options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.DEPRECATED_SYMBOL, method));
         options.add(new AddNoInspectionAllForClassAction(method));
+        options.add(new AddSuppressWarningsAnnotationForAllAction(method));
         options.add(new SwitchOffToolAction(HighlightDisplayKey.DEPRECATED_SYMBOL));
         QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.DEPRECATED_SYMBOL), options), options);
         return highlightInfo;

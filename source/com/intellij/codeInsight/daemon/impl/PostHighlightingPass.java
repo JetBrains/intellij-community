@@ -212,7 +212,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     List<IntentionAction> options = new ArrayList<IntentionAction>();
     options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.UNUSED_SYMBOL, identifier));
     options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNUSED_SYMBOL, identifier));
+    options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNUSED_SYMBOL, identifier));
     options.add(new AddNoInspectionAllForClassAction(identifier));
+    options.add(new AddSuppressWarningsAnnotationForAllAction(identifier));
     options.add(new SwitchOffToolAction(HighlightDisplayKey.UNUSED_SYMBOL));
     InspectionProfile.UnusedSymbolSettings unusedSymbolSettings = profile.getUnusedSymbolSettings();
     if (parent instanceof PsiLocalVariable && unusedSymbolSettings.LOCAL_VARIABLE) {

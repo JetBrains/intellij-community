@@ -158,7 +158,9 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       List<IntentionAction> options = new ArrayList<IntentionAction>();
       options.add(new AddNoInspectionCommentAction(tool, psiElement));
       options.add(new AddNoInspectionDocTagAction(tool, psiElement));
+      options.add(new AddSuppressWarningsAnnotationAction(tool, psiElement));
       options.add(new AddNoInspectionAllForClassAction(psiElement));
+      options.add(new AddSuppressWarningsAnnotationForAllAction(psiElement));
       options.add(new SwitchOffToolAction(tool));
       if (problemDescriptor.getFix() != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor), options);
@@ -233,7 +235,9 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       List<IntentionAction> options = new ArrayList<IntentionAction>();
       options.add(new AddNoInspectionCommentAction(tool, psiElement));
       options.add(new AddNoInspectionDocTagAction(tool, psiElement));
+      options.add(new AddSuppressWarningsAnnotationAction(tool, psiElement));
       options.add(new AddNoInspectionAllForClassAction(psiElement));
+      options.add(new AddSuppressWarningsAnnotationForAllAction(psiElement));
       options.add(new SwitchOffToolAction(tool));
       if (descriptor.getFix() != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor), options);

@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -83,7 +84,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
 
   public static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
-  private static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "com.intellij.util.annotations.NoInspection";
+  public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
 
   //for use in local comments
   private static final Pattern SUPPRESS_PATTERN = Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(,\\w+)*)");
@@ -185,7 +186,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   private static boolean isInspectionToolIdMentioned(String inspectionsList, String inspectionToolID) {
-    String[] ids = inspectionsList.split(",");
+    String[] ids = inspectionsList.split("[, \t]");
     for (String id : ids) {
       if (id.equals(inspectionToolID) || id.equals("ALL")) return true;
     }
@@ -193,28 +194,55 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   public static boolean isToCheckMember(PsiDocCommentOwner owner, String inspectionToolID) {
+    if (!isToCheckMemberInDocComment(owner, inspectionToolID)){
+      return false;
+    }
+    if (!isToCheckMemberInAnnotation(owner, inspectionToolID)){
+      return false;
+    }
+    PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(owner, PsiClass.class, true);
+    while (classContainer != null) {
+      if (!isToCheckMemberInDocComment(classContainer, inspectionToolID)){
+        return false;
+      }
+      if (!isToCheckMemberInAnnotation(classContainer, inspectionToolID)){
+        return false;
+      }
+      classContainer = PsiTreeUtil.getParentOfType(classContainer, PsiClass.class, true);
+    }
+    return true;
+  }
+
+  private static boolean isToCheckMemberInAnnotation(final PsiDocCommentOwner owner, final String inspectionToolID) {
+    if (LanguageLevel.JDK_1_5.compareTo(owner.getManager().getEffectiveLanguageLevel()) > 0 ) return true;
+    PsiModifierList modifierList = owner.getModifierList();
+    if (modifierList != null) {
+      PsiAnnotation annotation = modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+      if (annotation != null) {
+        final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
+        if (attributes == null || attributes.length == 0) {
+          return true;
+        }
+        final PsiAnnotationMemberValue attributeValue = attributes[0].getValue();
+        if (attributeValue instanceof PsiLiteralExpression) {
+          String value = (String)((PsiLiteralExpression) attributeValue).getValue();
+          if (isInspectionToolIdMentioned(value, inspectionToolID)) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  private static boolean isToCheckMemberInDocComment(final PsiDocCommentOwner owner, final String inspectionToolID) {
     PsiDocComment docComment = owner.getDocComment();
     if (docComment != null) {
       PsiDocTag inspectionTag = docComment.findTagByName(SUPPRESS_INSPECTIONS_TAG_NAME);
       if (inspectionTag != null && inspectionTag.getValueElement() != null) {
         String valueText = inspectionTag.getValueElement().getText();
-        return !isInspectionToolIdMentioned(valueText, inspectionToolID);
-      }
-    }
-
-    PsiModifierList modifierList = owner.getModifierList();
-    if (modifierList != null) {
-      PsiAnnotation annotation = modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
-      if (annotation != null) {
-        PsiAnnotationMemberValue attributeValue = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
-        if (attributeValue instanceof PsiArrayInitializerMemberValue) {
-          PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)attributeValue).getInitializers();
-          for (PsiAnnotationMemberValue initializer : initializers) {
-            if (initializer instanceof PsiLiteralExpression) {
-              Object value = ((PsiLiteralExpression) initializer).getValue();
-              if (inspectionToolID.equals(value) || "ALL".equals(value)) return false;
-            }
-          }
+        if (isInspectionToolIdMentioned(valueText, inspectionToolID)){
+          return false;
         }
       }
     }

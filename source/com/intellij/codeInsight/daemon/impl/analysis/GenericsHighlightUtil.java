@@ -375,7 +375,9 @@ public abstract class GenericsHighlightUtil {
     List<IntentionAction> options = new ArrayList<IntentionAction>();
     options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
     options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
+    options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
     options.add(new AddNoInspectionAllForClassAction(elementToHighlight));
+    options.add(new AddSuppressWarningsAnnotationForAllAction(elementToHighlight));
     options.add(new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
     QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()), options);
     return highlightInfo;
@@ -410,7 +412,9 @@ public abstract class GenericsHighlightUtil {
       List<IntentionAction> options = new ArrayList<IntentionAction>();
       options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
       options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
+      options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
       options.add(new AddNoInspectionAllForClassAction(expression));
+      options.add(new AddSuppressWarningsAnnotationForAllAction(expression));
       options.add(new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
       QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(expression.getContainingFile()), options);
       return highlightInfo;
@@ -542,7 +546,9 @@ public abstract class GenericsHighlightUtil {
         List<IntentionAction> options = new ArrayList<IntentionAction>();
         options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
         options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
+        options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
         options.add(new AddNoInspectionAllForClassAction(call));
+        options.add(new AddSuppressWarningsAnnotationForAllAction(call));
         options.add(new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
         QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(element.getContainingFile()), options);
         return highlightInfo;
@@ -889,7 +895,9 @@ public abstract class GenericsHighlightUtil {
         List<IntentionAction> options = new ArrayList<IntentionAction>();
 
         options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, overrider.getReturnTypeElement()));
+        options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNCHECKED_WARNING, overrider.getReturnTypeElement()));
         options.add(new AddNoInspectionAllForClassAction(overrider.getReturnTypeElement()));
+        options.add(new AddSuppressWarningsAnnotationForAllAction(overrider.getReturnTypeElement()));
         options.add(new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
         QuickFixAction.registerQuickFixAction(highlightInfo,
                                               new EmptyIntentionAction("Unchecked overriding", options),

@@ -25,11 +25,18 @@ public class AddNoInspectionAllForClassAction extends AddNoInspectionDocTagActio
   }
 
   @Nullable protected PsiDocCommentOwner getContainer() {
-    final PsiDocCommentOwner container = super.getContainer();
+    PsiDocCommentOwner container = super.getContainer();
     if (container == null){
       return null;
     }
-    return container instanceof PsiClass ? container : PsiTreeUtil.getParentOfType(container, PsiClass.class);
+    while (container != null ) {
+      final PsiClass parentClass = PsiTreeUtil.getParentOfType(container, PsiClass.class);
+      if (parentClass == null && container instanceof PsiClass){
+        return container;
+      }
+      container = parentClass;
+    }
+    return container;
   }
 
   public String getText() {

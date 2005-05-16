@@ -339,7 +339,11 @@ public class IntentionHintComponent extends JPanel {
   }
 
   public void showPopup() {
-    myListPopup = new ListPopupWithChildPopups(null, myList, myProject, myParentListPopup, new ListPopupRunnable());
+    myListPopup = new ListPopupWithChildPopups(null, myList, myProject, myParentListPopup, new ListPopupRunnable(), new Runnable(){
+      public void run() {
+        showIntentionHintImpl(false);
+      }
+    });
 
     final Component component = myComponentHint.getComponent();
     final EventListener[] listeners = component.getListeners(FocusListener.class);
@@ -371,6 +375,8 @@ public class IntentionHintComponent extends JPanel {
             final IntentionActionWithTextCaching action = (IntentionActionWithTextCaching)myList.getSelectedValue();
             if (action.getOptionIntentions().size() + action.getOptionFixes().size() > 0){
               openChildPopup(action);
+            } else {
+              showIntentionHintImpl(false);
             }
           }
         }, new Computable<Boolean>(){

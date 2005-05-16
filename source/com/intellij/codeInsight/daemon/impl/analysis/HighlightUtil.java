@@ -1558,7 +1558,9 @@ public class HighlightUtil {
     List<IntentionAction> options = new ArrayList<IntentionAction>();
     options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.SILLY_ASSIGNMENT, assignment));
     options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.SILLY_ASSIGNMENT, assignment));
+    options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.SILLY_ASSIGNMENT, assignment));
     options.add(new AddNoInspectionAllForClassAction(assignment));
+    options.add(new AddSuppressWarningsAnnotationForAllAction(assignment));
     options.add(new SwitchOffToolAction(HighlightDisplayKey.SILLY_ASSIGNMENT));
     QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.SILLY_ASSIGNMENT), options), options);
     return highlightInfo;
@@ -1780,7 +1782,9 @@ public class HighlightUtil {
     List<IntentionAction> options = new ArrayList<IntentionAction>();
     options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE, expr));
     options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE, expr));
+    options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE, expr));
     options.add(new AddNoInspectionAllForClassAction(expr));
+    options.add(new AddSuppressWarningsAnnotationForAllAction(expr));
     options.add(new SwitchOffToolAction(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE));
     QuickFixAction.registerQuickFixAction(highlightInfo, new AccessStaticViaInstanceFix(expr, result), options);
     return highlightInfo;
@@ -2045,7 +2049,9 @@ public class HighlightUtil {
     List<IntentionAction> options = new ArrayList<IntentionAction>();
     options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.DEPRECATED_SYMBOL, elementToHighlight));
     options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.DEPRECATED_SYMBOL, elementToHighlight));
+    options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.DEPRECATED_SYMBOL, elementToHighlight));
     options.add(new AddNoInspectionAllForClassAction(elementToHighlight));
+    options.add(new AddSuppressWarningsAnnotationForAllAction(elementToHighlight));
     options.add(new SwitchOffToolAction(HighlightDisplayKey.DEPRECATED_SYMBOL));
     QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.DEPRECATED_SYMBOL), options), options);
     return highlightInfo;
