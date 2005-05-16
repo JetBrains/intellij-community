@@ -53,6 +53,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
       setOpaque(true);
       myTabbedPanePopupHandler = new MyTabbedPanePopupHandler();
       putClientProperty("TabbedPane.paintContentBorder", Boolean.FALSE);
+      setFocusable(false);
       updateUI();
     }
 
