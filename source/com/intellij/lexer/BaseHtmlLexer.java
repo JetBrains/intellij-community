@@ -4,6 +4,7 @@ import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.HashMap;
 
@@ -151,7 +152,25 @@ abstract class BaseHtmlLexer extends LexerBase {
     if (seenTag) {
       int lastState = 0;
       int lastStart = 0;
+
+      FoundEnd:
       while(baseLexer.getTokenType() != XmlTokenType.XML_END_TAG_START) {
+        if (baseLexer.getTokenType() == XmlTokenType.XML_COMMENT_CHARACTERS) {
+          // we should terminate on first occurence of </
+          final char[] buf = baseLexer.getBuffer();
+          final int end = baseLexer.getTokenEnd();
+
+          for(int i = baseLexer.getTokenStart(); i < end; ++i) {
+            if (buf[i] == '<' && i + 1 < end && buf[i+1] == '/') {
+              myTokenEnd = i;
+              lastStart = i - 1;
+              lastState = 0;
+
+              break FoundEnd;
+            }
+          }
+        }
+
         lastState = baseLexer.getState();
         myTokenEnd = baseLexer.getTokenEnd();
         lastStart = baseLexer.getTokenStart();
