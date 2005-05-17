@@ -6,7 +6,6 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class SwitchPredicate implements PsiElementPredicate{
-
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiJavaToken)){
             return false;
@@ -17,22 +16,18 @@ class SwitchPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiElement parent = element.getParent();
-        if(!(parent instanceof PsiSwitchStatement))
-        {
+        if(!(parent instanceof PsiSwitchStatement)){
             return false;
         }
         final PsiSwitchStatement switchStatement = (PsiSwitchStatement) parent;
-        if(ErrorUtil.containsError(switchStatement))
-        {
+        if(ErrorUtil.containsError(switchStatement)){
             return false;
         }
         final PsiExpression expression = switchStatement.getExpression();
-        if(expression == null|| !expression.isValid())
-        {
+        if(expression == null || !expression.isValid()){
             return false;
         }
         final PsiCodeBlock body = switchStatement.getBody();
         return body != null;
     }
-
 }

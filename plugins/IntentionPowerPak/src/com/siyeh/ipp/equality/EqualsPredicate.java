@@ -28,8 +28,7 @@ class EqualsPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if(qualifier== null)
-        {
+        if(qualifier == null){
             return false;
         }
         final String methodName = methodExpression.getReferenceName();

@@ -1,7 +1,5 @@
 package com.siyeh.ipp.exceptions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -22,13 +20,9 @@ public class DetailExceptionsIntention extends Intention{
         return new DetailExceptionsPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-        final PsiJavaToken token =
-                (PsiJavaToken) findMatchingElement(file, editor);
+        final PsiJavaToken token = (PsiJavaToken) element;
         final PsiTryStatement tryStatement =
                 (PsiTryStatement) token.getParent();
 
@@ -40,13 +34,10 @@ public class DetailExceptionsIntention extends Intention{
         final String tryBlockText = tryBlock.getText();
         newTryStatement.append(tryBlockText);
 
-        final Set exceptionsThrown = new HashSet(10);
+        final Set<PsiType> exceptionsThrown = new HashSet<PsiType>(10);
 
-        final PsiManager mgr = PsiManager.getInstance(project);
-        final PsiElementFactory factory = mgr.getElementFactory();
         ExceptionUtils.calculateExceptionsThrownForCodeBlock(tryBlock,
-                                                             exceptionsThrown,
-                                                             factory);
+                                                             exceptionsThrown);
 
         final HeirarchicalTypeComparator comparator =
                 new HeirarchicalTypeComparator();
@@ -56,7 +47,7 @@ public class DetailExceptionsIntention extends Intention{
             final PsiCodeBlock block = catchSection.getCatchBlock();
             if(param != null && block != null){
                 final PsiType caughtType = param.getType();
-                final List exceptionsToExpand = new ArrayList(10);
+                final List<PsiType> exceptionsToExpand = new ArrayList<PsiType>(10);
                 for(Object aExceptionsThrown : exceptionsThrown){
                     final PsiType thrownType = (PsiType) aExceptionsThrown;
                     if(caughtType.isAssignableFrom(thrownType)){
@@ -86,6 +77,6 @@ public class DetailExceptionsIntention extends Intention{
             newTryStatement.append(finallyBlockText);
         }
         final String newStatement = newTryStatement.toString();
-        replaceStatement(project, newStatement, tryStatement);
+        replaceStatement(newStatement, tryStatement);
     }
 }

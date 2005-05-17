@@ -12,22 +12,39 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.psiutils.BoolUtils;
 import com.siyeh.ipp.psiutils.ComparisonUtils;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class Intention implements IntentionAction{
     private final PsiElementPredicate predicate;
 
+    /** @noinspection AbstractMethodCallInConstructor,OverridableMethodCallInConstructor*/
     protected Intention(){
         super();
         predicate = getElementPredicate();
     }
 
-    protected abstract PsiElementPredicate getElementPredicate();
-
-    protected static void replaceExpression(Project project,
-                                            String newExpression,
-                                            PsiExpression exp)
+    public void invoke(Project project, Editor editor, PsiFile file)
             throws IncorrectOperationException{
-        final PsiManager mgr = PsiManager.getInstance(project);
+        if(isFileReadOnly(project, file)){
+            return;
+        }
+        final PsiElement element = findMatchingElement(file, editor);
+        if(element == null){
+            return;
+        }
+        processIntention(element);
+    }
+
+    protected abstract void processIntention(@NotNull PsiElement element)
+            throws IncorrectOperationException;
+
+    protected abstract @NotNull PsiElementPredicate getElementPredicate();
+
+    protected static void replaceExpression(@NotNull String newExpression,
+                                            @NotNull PsiExpression exp)
+            throws IncorrectOperationException{
+        final PsiManager mgr = exp.getManager();
         final PsiElementFactory factory = mgr.getElementFactory();
         final PsiExpression newCall =
                 factory.createExpressionFromText(newExpression, null);
@@ -36,11 +53,10 @@ public abstract class Intention implements IntentionAction{
         codeStyleManager.reformat(insertedElement);
     }
 
-    protected static void replaceExpressionWithNegatedExpression(Project project,
-                                                                 PsiExpression newExpression,
-                                                                 PsiExpression exp)
+    protected static void replaceExpressionWithNegatedExpression(@NotNull PsiExpression newExpression,
+                                                                 @NotNull PsiExpression exp)
             throws IncorrectOperationException{
-        final PsiManager mgr = PsiManager.getInstance(project);
+        final PsiManager mgr = exp.getManager();
         final PsiElementFactory factory = mgr.getElementFactory();
 
         PsiExpression expressionToReplace = exp;
@@ -61,7 +77,7 @@ public abstract class Intention implements IntentionAction{
             expString = lhs.getText() + negatedComparison + rhs.getText();
         } else{
             if(ParenthesesUtils.getPrecendence(newExpression) >
-                       ParenthesesUtils.PREFIX_PRECEDENCE){
+                    ParenthesesUtils.PREFIX_PRECEDENCE){
                 expString = "!(" + newExpressionText + ')';
             } else{
                 expString = '!' + newExpressionText;
@@ -69,16 +85,16 @@ public abstract class Intention implements IntentionAction{
         }
         final PsiExpression newCall =
                 factory.createExpressionFromText(expString, null);
+        assert expressionToReplace != null;
         final PsiElement insertedElement = expressionToReplace.replace(newCall);
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
         codeStyleManager.reformat(insertedElement);
     }
 
-    protected static void replaceExpressionWithNegatedExpressionString(Project project,
-                                                                       String newExpression,
+    protected static void replaceExpressionWithNegatedExpressionString(String newExpression,
                                                                        PsiExpression exp)
             throws IncorrectOperationException{
-        final PsiManager mgr = PsiManager.getInstance(project);
+        final PsiManager mgr = exp.getManager();
         final PsiElementFactory factory = mgr.getElementFactory();
 
         PsiExpression expressionToReplace = exp;
@@ -91,15 +107,16 @@ public abstract class Intention implements IntentionAction{
         }
         final PsiExpression newCall =
                 factory.createExpressionFromText(expString, null);
+        assert expressionToReplace != null;
         final PsiElement insertedElement = expressionToReplace.replace(newCall);
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
         codeStyleManager.reformat(insertedElement);
     }
 
-    protected static void replaceStatement(Project project, String newStatement,
-                                           PsiStatement statement)
+    protected static void replaceStatement(@NotNull String newStatement,
+                                           @NotNull PsiStatement statement)
             throws IncorrectOperationException{
-        final PsiManager mgr = PsiManager.getInstance(project);
+        final PsiManager mgr = statement.getManager();
         final PsiElementFactory factory = mgr.getElementFactory();
         final PsiStatement newCall =
                 factory.createStatementFromText(newStatement, null);
@@ -108,7 +125,8 @@ public abstract class Intention implements IntentionAction{
         codeStyleManager.reformat(insertedElement);
     }
 
-    protected PsiElement findMatchingElement(PsiFile file, Editor editor){
+    @Nullable PsiElement findMatchingElement(PsiFile file,
+                                                       Editor editor){
         final CaretModel caretModel = editor.getCaretModel();
         final int position = caretModel.getOffset();
         PsiElement element = file.findElementAt(position);
@@ -130,7 +148,7 @@ public abstract class Intention implements IntentionAction{
         return true;
     }
 
-    protected static boolean isFileReadOnly(Project project, PsiFile file){
+    private static boolean isFileReadOnly(Project project, PsiFile file){
         final VirtualFile virtualFile = file.getVirtualFile();
         return ReadonlyStatusHandler.getInstance(project)
                 .ensureFilesWritable(new VirtualFile[]{virtualFile})

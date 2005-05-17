@@ -1,7 +1,5 @@
 package com.siyeh.ipp.bool;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -24,13 +22,11 @@ public class RemoveBooleanEqualityIntention extends MutablyNamedIntention{
         return new BooleanLiteralEqualityPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
         final PsiBinaryExpression exp =
-                (PsiBinaryExpression) findMatchingElement(file, editor);
+                (PsiBinaryExpression) element;
+        assert exp != null;
         final PsiJavaToken sign = exp.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
         final boolean isEquals = JavaTokenType.EQEQ.equals(tokenType);
@@ -40,27 +36,27 @@ public class RemoveBooleanEqualityIntention extends MutablyNamedIntention{
         final String rhsText = rhs.getText();
         if("true".equals(lhsText)){
             if(isEquals){
-                replaceExpression(project, rhsText, exp);
+                replaceExpression(rhsText, exp);
             } else{
-                replaceExpressionWithNegatedExpression(project, rhs, exp);
+                replaceExpressionWithNegatedExpression(rhs, exp);
             }
         } else if("false".equals(lhsText)){
             if(isEquals){
-                replaceExpressionWithNegatedExpression(project, rhs, exp);
+                replaceExpressionWithNegatedExpression(rhs, exp);
             } else{
-                replaceExpression(project, rhsText, exp);
+                replaceExpression(rhsText, exp);
             }
         } else if("true".equals(rhsText)){
             if(isEquals){
-                replaceExpression(project, lhsText, exp);
+                replaceExpression(lhsText, exp);
             } else{
-                replaceExpressionWithNegatedExpression(project, lhs, exp);
+                replaceExpressionWithNegatedExpression(lhs, exp);
             }
         } else{
             if(isEquals){
-                replaceExpressionWithNegatedExpression(project, lhs, exp);
+                replaceExpressionWithNegatedExpression(lhs, exp);
             } else{
-                replaceExpression(project, lhsText, exp);
+                replaceExpression(lhsText, exp);
             }
         }
     }

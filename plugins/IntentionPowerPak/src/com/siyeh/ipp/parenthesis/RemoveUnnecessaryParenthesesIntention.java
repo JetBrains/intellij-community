@@ -1,9 +1,7 @@
 package com.siyeh.ipp.parenthesis;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -22,17 +20,13 @@ public class RemoveUnnecessaryParenthesesIntention extends Intention{
         return new UnnecessaryParenthesesPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-        PsiExpression exp =
-                (PsiExpression) findMatchingElement(file, editor);
+        PsiExpression exp = (PsiExpression) element;
         while(exp.getParent() instanceof PsiExpression){
             exp = (PsiExpression) exp.getParent();
         }
         final String newExpression = ParenthesesUtils.removeParentheses(exp);
-        replaceExpression(project, newExpression, exp);
+        replaceExpression(newExpression, exp);
     }
 }

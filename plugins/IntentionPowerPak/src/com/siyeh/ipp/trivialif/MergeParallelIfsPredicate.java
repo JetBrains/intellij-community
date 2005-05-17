@@ -28,7 +28,8 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
         }
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsForward(ifStatement,
-                                                new Class[]{PsiWhiteSpace.class});
+                                                new Class[]{
+                                                    PsiWhiteSpace.class});
         if(!(nextStatement instanceof PsiIfStatement)){
             return false;
         }
@@ -40,8 +41,8 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
         return ifStatementsCanBeMerged(ifStatement, nextIfStatement);
     }
 
-    public static boolean ifStatementsCanBeMerged( PsiIfStatement statement1,
-                                                   PsiIfStatement statement2){
+    public static boolean ifStatementsCanBeMerged(PsiIfStatement statement1,
+                                                  PsiIfStatement statement2){
         final PsiStatement thenBranch = statement1.getThenBranch();
         final PsiStatement elseBranch = statement1.getElseBranch();
         if(thenBranch == null){
@@ -50,8 +51,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
         final PsiExpression firstCondition = statement1.getCondition();
         final PsiExpression secondCondition = statement2.getCondition();
         if(! EquivalenceChecker.expressionsAreEquivalent(firstCondition,
-                                                         secondCondition))
-        {
+                                                         secondCondition)){
             return false;
         }
         final PsiStatement nextThenBranch = statement2.getThenBranch();
@@ -60,20 +60,21 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
         }
         final PsiStatement nextElseBranch = statement2.getElseBranch();
         return elseBranch == null || nextElseBranch == null ||
-                       canBeMerged(elseBranch, nextElseBranch);
+                canBeMerged(elseBranch, nextElseBranch);
     }
 
-    public static boolean canBeMerged(PsiStatement statement1, PsiStatement statement2){
+    private static boolean canBeMerged(PsiStatement statement1,
+                                      PsiStatement statement2){
         if(!ControlFlowUtils.statementMayCompleteNormally(statement1)){
             return false;
         }
         final Set<String> statement1Declarations = calculateTopLevelDeclarations(statement1);
-        if(containsConflictingDeclarations(statement1Declarations, statement2))
-        {
+        if(containsConflictingDeclarations(statement1Declarations, statement2)){
             return false;
         }
         final Set<String> statement2Declarations = calculateTopLevelDeclarations(statement2);
-        return !containsConflictingDeclarations(statement2Declarations, statement1);
+        return !containsConflictingDeclarations(statement2Declarations,
+                                                statement1);
     }
 
     private static boolean containsConflictingDeclarations(Set<String> declarations,
@@ -85,12 +86,9 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
 
     private static Set<String> calculateTopLevelDeclarations(PsiStatement statement){
         final Set<String> out = new HashSet<String>();
-        if(statement instanceof PsiDeclarationStatement)
-        {
-            addDeclarations((PsiDeclarationStatement)statement, out);
-        }
-        else if(statement instanceof PsiBlockStatement)
-        {
+        if(statement instanceof PsiDeclarationStatement){
+            addDeclarations((PsiDeclarationStatement) statement, out);
+        } else if(statement instanceof PsiBlockStatement){
             final PsiBlockStatement blockStatement = (PsiBlockStatement) statement;
             final PsiCodeBlock block = blockStatement.getCodeBlock();
             final PsiStatement[] statements = block.getStatements();
@@ -116,10 +114,10 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
     }
 
     private static class DeclarationVisitor extends PsiRecursiveElementVisitor{
-        private Set<String> declarations;
+        private final Set<String> declarations;
         private boolean hasConflict = false;
 
-        DeclarationVisitor(Set<String> declarations){
+        private DeclarationVisitor(Set<String> declarations){
             super();
             this.declarations = new HashSet<String>(declarations);
         }
@@ -135,7 +133,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
             }
         }
 
-        public boolean hasConflict(){
+        private boolean hasConflict(){
             return hasConflict;
         }
     }

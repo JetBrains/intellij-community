@@ -1,8 +1,6 @@
 package com.siyeh.ipp.integer;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -23,14 +21,9 @@ public class ConvertIntegerToOctalIntention extends Intention{
         return new ConvertIntegerToOctalPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-
-        final PsiLiteralExpression exp =
-                (PsiLiteralExpression) findMatchingElement(file, editor);
+        final PsiLiteralExpression exp = (PsiLiteralExpression) element;
         String textString = exp.getText();
         final int textLength = textString.length();
         final char lastChar = textString.charAt(textLength - 1);
@@ -49,6 +42,6 @@ public class ConvertIntegerToOctalIntention extends Intention{
         if(isLong){
             octString += 'L';
         }
-        replaceExpression(project, octString, exp);
+        replaceExpression(octString, exp);
     }
 }

@@ -1,7 +1,5 @@
 package com.siyeh.ipp.switchtoif;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -10,7 +8,10 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ControlFlowUtils;
 import com.siyeh.ipp.psiutils.SideEffectChecker;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ReplaceSwitchWithIfIntention extends Intention{
     public String getText(){
@@ -25,13 +26,10 @@ public class ReplaceSwitchWithIfIntention extends Intention{
         return new SwitchPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
         final PsiJavaToken switchToken =
-                (PsiJavaToken) findMatchingElement(file, editor);
+                (PsiJavaToken) element;
         final PsiSwitchStatement switchStatement =
                 (PsiSwitchStatement) switchToken.getParent();
         final List<SwitchStatementBranch> allBranches = new ArrayList<SwitchStatementBranch>(10);
@@ -42,7 +40,7 @@ public class ReplaceSwitchWithIfIntention extends Intention{
         final String expressionText;
         final boolean hadSideEffects;
         final String declarationString;
-        final PsiManager mgr = PsiManager.getInstance(project);
+        final PsiManager mgr = switchStatement.getManager();
         final PsiExpression switchExpression = switchStatement.getExpression();
         final CodeStyleManager codeStyleMgr = mgr.getCodeStyleManager();
         if(SideEffectChecker.mayHaveSideEffects(switchExpression)){
@@ -55,10 +53,10 @@ public class ReplaceSwitchWithIfIntention extends Intention{
             expressionText = variableName;
             declarationString =
                     switchExpressionType.getPresentableText() + ' ' +
-                    variableName +
-                    " = " +
-                    switchExpression.getText() +
-                    ';';
+                            variableName +
+                            " = " +
+                            switchExpression.getText() +
+                            ';';
         } else{
             hadSideEffects = false;
             declarationString = null;
@@ -116,15 +114,13 @@ public class ReplaceSwitchWithIfIntention extends Intention{
                                 (PsiDeclarationStatement) statement;
                         final PsiElement[] elements =
                                 decl.getDeclaredElements();
-                        for(PsiElement element : elements){
+                        for(PsiElement varElement : elements){
                             final PsiLocalVariable var =
-                                    (PsiLocalVariable) element;
+                                    (PsiLocalVariable) varElement;
                             declaredVars.add(var);
                         }
                     }
-                    for(Object openBranche : openBranches){
-                        final SwitchStatementBranch branch =
-                                (SwitchStatementBranch) openBranche;
+                    for(SwitchStatementBranch branch : openBranches){
                         branch.addStatement(statement);
                     }
                     if(!ControlFlowUtils.statementMayCompleteNormally((PsiStatement) statement)){
@@ -195,7 +191,8 @@ public class ReplaceSwitchWithIfIntention extends Intention{
 
     private static void dumpBranch(StringBuffer ifStatementString,
                                    String expressionText, List<String> labels,
-                                   List<PsiElement> bodyStatements, boolean firstBranch,
+                                   List<PsiElement> bodyStatements,
+                                   boolean firstBranch,
                                    boolean renameBreaks,
                                    String breakLabel,
                                    Set<PsiLocalVariable> variableDecls){
@@ -238,8 +235,10 @@ public class ReplaceSwitchWithIfIntention extends Intention{
     }
 
     private static void dumpBody(StringBuffer ifStatementString,
-                                 List<PsiElement> bodyStatements, boolean renameBreaks,
-                                 String breakLabel, Set<PsiLocalVariable> variableDecls){
+                                 List<PsiElement> bodyStatements,
+                                 boolean renameBreaks,
+                                 String breakLabel,
+                                 Set<PsiLocalVariable> variableDecls){
 
         ifStatementString.append('{');
         for(Object variableDecl : variableDecls){
@@ -279,8 +278,8 @@ public class ReplaceSwitchWithIfIntention extends Intention{
                 ifStatementString.append(text);
             }
         } else if(element instanceof PsiBlockStatement ||
-                                element instanceof PsiCodeBlock ||
-                                element instanceof PsiIfStatement){
+                element instanceof PsiCodeBlock ||
+                element instanceof PsiIfStatement){
             final PsiElement[] children = element.getChildren();
             for(final PsiElement child : children){
                 appendElement(ifStatementString, child, renameBreakElements,

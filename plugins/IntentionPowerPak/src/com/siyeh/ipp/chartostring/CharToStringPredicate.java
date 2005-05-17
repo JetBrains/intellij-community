@@ -48,7 +48,7 @@ class CharToStringPredicate implements PsiElementPredicate{
             return "java.lang.String".equals(parentTypeText);
         }
         if(parent instanceof PsiExpressionList &&
-                                parent.getParent() instanceof PsiMethodCallExpression){
+                parent.getParent() instanceof PsiMethodCallExpression){
             final PsiMethodCallExpression methodCall =
                     (PsiMethodCallExpression) parent.getParent();
             final PsiReferenceExpression methodExpression =
@@ -59,7 +59,7 @@ class CharToStringPredicate implements PsiElementPredicate{
             }
             final String className = type.getCanonicalText();
             if(!"java.lang.StringBuffer".equals(className) &&
-                       !"java.lang.StringBuilder".equals(className)){
+                    !"java.lang.StringBuilder".equals(className)){
                 return false;
             }
             final String methodName = methodExpression.getReferenceName();

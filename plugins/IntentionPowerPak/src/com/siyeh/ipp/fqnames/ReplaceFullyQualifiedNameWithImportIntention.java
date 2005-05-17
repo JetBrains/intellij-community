@@ -1,8 +1,6 @@
 package com.siyeh.ipp.fqnames;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -23,19 +21,16 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention{
         return new FullyQualifiedNamePredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-        final PsiManager mgr = PsiManager.getInstance(project);
-        PsiJavaCodeReferenceElement element =
-                (PsiJavaCodeReferenceElement) findMatchingElement(file, editor);
-        while(element.getParent() instanceof PsiJavaCodeReferenceElement){
-            element = (PsiJavaCodeReferenceElement) element.getParent();
+        PsiJavaCodeReferenceElement reference =
+                (PsiJavaCodeReferenceElement) element;
+        while(reference.getParent() instanceof PsiJavaCodeReferenceElement){
+            reference = (PsiJavaCodeReferenceElement) reference.getParent();
         }
 
+        final PsiManager mgr = element.getManager();
         final CodeStyleManager styleManager = mgr.getCodeStyleManager();
-        styleManager.shortenClassReferences(element);
+        styleManager.shortenClassReferences(reference);
     }
 }

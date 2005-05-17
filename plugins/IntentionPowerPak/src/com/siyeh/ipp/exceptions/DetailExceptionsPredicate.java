@@ -6,7 +6,6 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 class DetailExceptionsPredicate implements PsiElementPredicate{
@@ -29,23 +28,18 @@ class DetailExceptionsPredicate implements PsiElementPredicate{
 
         final PsiTryStatement tryStatement =
                 (PsiTryStatement) element.getParent();
-        if(ErrorUtil.containsError( tryStatement)){
+        if(ErrorUtil.containsError(tryStatement)){
             return false;
         }
-        final Set exceptionsThrown = new HashSet(10);
-        final PsiManager mgr = element.getManager();
-        final PsiElementFactory factory = mgr.getElementFactory();
+        final Set<PsiType> exceptionsThrown = new HashSet<PsiType>(10);
         final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
         ExceptionUtils.calculateExceptionsThrownForCodeBlock(tryBlock,
-                                                             exceptionsThrown,
-                                                             factory);
-        final Set exceptionsCaught =
+                                                             exceptionsThrown);
+        final Set<PsiType> exceptionsCaught =
                 ExceptionUtils.getExceptionTypesHandled(tryStatement);
-        for(Object aExceptionsThrown : exceptionsThrown){
-            final PsiType typeThrown = (PsiType) aExceptionsThrown;
+        for(PsiType typeThrown : exceptionsThrown){
             if(!exceptionsCaught.contains(typeThrown)){
-                for(Object aExceptionsCaught : exceptionsCaught){
-                    final PsiType typeCaught = (PsiType) aExceptionsCaught;
+                for(PsiType typeCaught : exceptionsCaught){
                     if(typeCaught.isAssignableFrom(typeThrown)){
                         return true;
                     }

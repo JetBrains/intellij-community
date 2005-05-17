@@ -3,8 +3,8 @@ package com.siyeh.ipp.parenthesis;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import com.siyeh.ipp.psiutils.ParenthesesUtils;
 
 class UnnecessaryParenthesesPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -26,14 +26,14 @@ class UnnecessaryParenthesesPredicate implements PsiElementPredicate{
         }
 
         final int parentPrecendence = ParenthesesUtils.getPrecendence(
-                        (PsiExpression) parent);
+                (PsiExpression) parent);
         final int childPrecendence = ParenthesesUtils.getPrecendence(body);
         if(parentPrecendence > childPrecendence){
             return true;
         } else if(parentPrecendence == childPrecendence){
 
             if(parent instanceof PsiBinaryExpression &&
-                                    body instanceof PsiBinaryExpression){
+                    body instanceof PsiBinaryExpression){
                 final PsiJavaToken parentSign =
                         ((PsiBinaryExpression) parent).getOperationSign();
                 final IElementType parentOperator = parentSign.getTokenType();
@@ -45,7 +45,7 @@ class UnnecessaryParenthesesPredicate implements PsiElementPredicate{
                         (PsiBinaryExpression) parent;
                 final PsiExpression lhs = binaryExpression.getLOperand();
                 return lhs.equals(expression) &&
-                               parentOperator.equals(childOperator);
+                        parentOperator.equals(childOperator);
             } else{
                 return false;
             }

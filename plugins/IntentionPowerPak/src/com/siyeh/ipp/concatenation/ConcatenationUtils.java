@@ -34,9 +34,6 @@ class ConcatenationUtils{
             return false;
         }
         final String typeName = lhsType.getCanonicalText();
-        if(!"java.lang.String".equals(typeName)){
-            return false;
-        }
-        return true;
+        return "java.lang.String".equals(typeName);
     }
 }

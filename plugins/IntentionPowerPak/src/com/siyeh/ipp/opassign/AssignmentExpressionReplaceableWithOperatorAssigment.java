@@ -4,8 +4,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
-import com.siyeh.ipp.psiutils.SideEffectChecker;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import com.siyeh.ipp.psiutils.SideEffectChecker;
 
 class AssignmentExpressionReplaceableWithOperatorAssigment
         implements PsiElementPredicate{
@@ -35,13 +35,14 @@ class AssignmentExpressionReplaceableWithOperatorAssigment
         final PsiExpression rhsRhs = binaryRhs.getROperand();
         final PsiExpression rhsLhs = binaryRhs.getLOperand();
 
-        if(rhsRhs == null || rhsLhs == null|| !rhsLhs.isValid() || !rhsRhs.isValid()){
+        if(rhsRhs == null || rhsLhs == null || !rhsLhs.isValid() ||
+                !rhsRhs.isValid()){
             return false;
         }
         final PsiJavaToken operatorSign = binaryRhs.getOperationSign();
         final IElementType rhsTokenType = operatorSign.getTokenType();
         if(JavaTokenType.OROR.equals(rhsTokenType) ||
-                   JavaTokenType.ANDAND.equals(rhsTokenType)){
+                JavaTokenType.ANDAND.equals(rhsTokenType)){
             return false;
         }
         if(SideEffectChecker.mayHaveSideEffects(lhs)){

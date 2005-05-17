@@ -1,10 +1,8 @@
 package com.siyeh.ipp.asserttoif;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAssertStatement;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -23,14 +21,10 @@ public class AssertToIfIntention extends Intention{
         return "Replace Assert With If Statement";
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
-            throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-
-        final PsiAssertStatement assertStatement =
-                (PsiAssertStatement) findMatchingElement(file, editor);
+    public void processIntention(PsiElement element)
+       throws IncorrectOperationException{
+        final PsiAssertStatement assertStatement = (PsiAssertStatement) element;
+        assert assertStatement != null;
         final PsiExpression condition = assertStatement.getAssertCondition();
         final PsiExpression description =
                 assertStatement.getAssertDescription();
@@ -46,6 +40,6 @@ public class AssertToIfIntention extends Intention{
                     "){ throw new IllegalArgumentException(" +
                     description.getText() + ");}";
         }
-        replaceStatement(project, newStatement, assertStatement);
+        replaceStatement(newStatement, assertStatement);
     }
 }

@@ -1,7 +1,5 @@
 package com.siyeh.ipp.initialization;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -21,13 +19,9 @@ public class SplitDeclarationAndInitializationIntention extends Intention{
         return "Split Declaration And Initialization";
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-        final PsiField field =
-                (PsiField) findMatchingElement(file, editor);
+        final PsiField field = (PsiField) element;
         field.normalizeDeclaration();
         final PsiExpression initializer = field.getInitializer();
         final String initializerText = initializer.getText();

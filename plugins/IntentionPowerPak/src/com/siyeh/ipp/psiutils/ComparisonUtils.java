@@ -11,14 +11,14 @@ import java.util.Set;
 
 public class ComparisonUtils{
     private static final Set<String> s_comparisonStrings = new HashSet<String>(6);
-    private static final Map<String,String> s_swappedComparisons = new HashMap<String, String>(6);
-    private static final Map<String,String> s_invertedComparisons = new HashMap<String, String>(6);
+    private static final Map<String, String> s_swappedComparisons = new HashMap<String, String>(6);
+    private static final Map<String, String> s_invertedComparisons = new HashMap<String, String>(6);
 
     private ComparisonUtils(){
         super();
     }
 
-    static{
+    static {
         s_comparisonStrings.add("==");
         s_comparisonStrings.add("!=");
         s_comparisonStrings.add(">");

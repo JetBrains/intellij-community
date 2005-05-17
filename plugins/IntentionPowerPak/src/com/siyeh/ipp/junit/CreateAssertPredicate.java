@@ -1,10 +1,10 @@
 package com.siyeh.ipp.junit;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.openapi.project.Project;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class CreateAssertPredicate implements PsiElementPredicate{
@@ -21,35 +21,30 @@ class CreateAssertPredicate implements PsiElementPredicate{
                 (PsiExpressionStatement) element;
         final PsiExpression expression = statement.getExpression();
         final PsiElement parent = expression.getParent();
-        if(!(parent instanceof PsiExpressionStatement))
-        {
+        if(!(parent instanceof PsiExpressionStatement)){
             return false;
         }
         final PsiType type = expression.getType();
-        if(!PsiType.BOOLEAN.equals(type))
-        {
+        if(!PsiType.BOOLEAN.equals(type)){
             return false;
         }
         final PsiClass containingClass =
                 PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-        if(!isTest(containingClass))
-        {
+        if(!isTest(containingClass)){
             return false;
         }
 
         final PsiMethod containingMethod =
                 PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
         return isTestMethod(containingMethod);
-
     }
 
     private boolean isTestMethod(PsiMethod method){
-        if(method == null)
-        {
+        if(method == null){
             return false;
         }
         if(method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-                   !method.hasModifierProperty(PsiModifier.PUBLIC)){
+                !method.hasModifierProperty(PsiModifier.PUBLIC)){
             return false;
         }
 
@@ -75,9 +70,8 @@ class CreateAssertPredicate implements PsiElementPredicate{
         return methodName.startsWith("test");
     }
 
-    public static boolean isTest(PsiClass aClass){
-        if(aClass == null)
-        {
+    private static boolean isTest(PsiClass aClass){
+        if(aClass == null){
             return false;
         }
         final PsiManager psiManager = aClass.getManager();
@@ -87,5 +81,4 @@ class CreateAssertPredicate implements PsiElementPredicate{
                 psiManager.findClass("junit.framework.TestCase", scope);
         return InheritanceUtil.isInheritorOrSelf(aClass, ancestorClass, true);
     }
-
 }

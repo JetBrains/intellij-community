@@ -1,7 +1,5 @@
 package com.siyeh.ipp.shift;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -45,21 +43,16 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention{
         return new ShiftByLiteralPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-        final PsiElement element = findMatchingElement(file, editor);
         if(element instanceof PsiBinaryExpression){
-            replaceShiftWithMultiplyOrDivide(element, project);
+            replaceShiftWithMultiplyOrDivide(element);
         } else{
-            replaceShiftAssignWithMultiplyOrDivideAssign(element, project);
+            replaceShiftAssignWithMultiplyOrDivideAssign(element);
         }
     }
 
-    private void replaceShiftAssignWithMultiplyOrDivideAssign(PsiElement element,
-                                                              Project project)
+    private void replaceShiftAssignWithMultiplyOrDivideAssign(PsiElement element)
             throws IncorrectOperationException{
         final PsiAssignmentExpression exp =
                 (PsiAssignmentExpression) element;
@@ -75,11 +68,10 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention{
         }
         final String expString =
                 lhs.getText() + assignString + ShiftUtils.getExpBase2(rhs);
-        replaceExpression(project, expString, exp);
+        replaceExpression(expString, exp);
     }
 
-    private void replaceShiftWithMultiplyOrDivide(PsiElement element,
-                                                  Project project)
+    private void replaceShiftWithMultiplyOrDivide(PsiElement element)
             throws IncorrectOperationException{
         final PsiBinaryExpression exp =
                 (PsiBinaryExpression) element;
@@ -95,7 +87,7 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention{
         }
         final String lhsText;
         if(ParenthesesUtils.getPrecendence(lhs) >
-                   ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE){
+                ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE){
             lhsText = '(' + lhs.getText() + ')';
         } else{
             lhsText = lhs.getText();
@@ -105,11 +97,11 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention{
         final PsiElement parent = exp.getParent();
         if(parent != null && parent instanceof PsiExpression){
             if(!(parent instanceof PsiParenthesizedExpression) &&
-                       ParenthesesUtils.getPrecendence((PsiExpression) parent) <
-                       ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE){
+                    ParenthesesUtils.getPrecendence((PsiExpression) parent) <
+                            ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE){
                 expString = '(' + expString + ')';
             }
         }
-        replaceExpression(project, expString, exp);
+        replaceExpression(expString, exp);
     }
 }

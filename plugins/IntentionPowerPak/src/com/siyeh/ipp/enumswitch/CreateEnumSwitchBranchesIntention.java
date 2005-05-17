@@ -1,15 +1,13 @@
 package com.siyeh.ipp.enumswitch;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-import java.util.Set;
-import java.util.HashSet;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class CreateEnumSwitchBranchesIntention extends Intention{
     protected PsiElementPredicate getElementPredicate(){
@@ -24,14 +22,10 @@ public class CreateEnumSwitchBranchesIntention extends Intention{
         return "Create Enum Switch Branches";
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-
         final PsiSwitchStatement switchStatement =
-                (PsiSwitchStatement) findMatchingElement(file, editor);
+                (PsiSwitchStatement) element;
         final PsiCodeBlock body = switchStatement.getBody();
         final PsiExpression switchExpression = switchStatement.getExpression();
         final PsiClassType switchType = (PsiClassType) switchExpression.getType();
@@ -63,7 +57,7 @@ public class CreateEnumSwitchBranchesIntention extends Intention{
         buffer.append(switchExpression.getText());
         buffer.append("){");
         final PsiElement[] children = body.getChildren();
-        for(int i = 1; i < children.length -1; i++){
+        for(int i = 1; i < children.length - 1; i++){
             buffer.append(children[i].getText());
         }
         final String[] missingElementsArray = missingEnumElements.toArray(new String[missingEnumElements.size()]);
@@ -76,6 +70,6 @@ public class CreateEnumSwitchBranchesIntention extends Intention{
         }
         buffer.append('}');
         final String newStatement = buffer.toString();
-        replaceStatement(project, newStatement, switchStatement);
+        replaceStatement(newStatement, switchStatement);
     }
 }

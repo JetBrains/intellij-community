@@ -3,7 +3,6 @@ package com.siyeh.ipp.exceptions;
 import com.intellij.psi.*;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 class ExceptionUtils{
@@ -11,8 +10,8 @@ class ExceptionUtils{
         super();
     }
 
-    public static Set getExceptionTypesHandled(PsiTryStatement statement){
-        final Set out = new HashSet(10);
+    public static Set<PsiType> getExceptionTypesHandled(PsiTryStatement statement){
+        final Set<PsiType> out = new HashSet<PsiType>(10);
         final PsiParameter[] params = statement.getCatchBlockParameters();
         for(PsiParameter param : params){
             final PsiType type = param.getType();
@@ -22,163 +21,143 @@ class ExceptionUtils{
     }
 
     private static void calculateExceptionsThrownForStatement(PsiStatement statement,
-                                                              Set exceptionTypes,
-                                                              PsiElementFactory factory){
+                                                              Set<PsiType> exceptionTypes){
         if(statement == null){
             return;
         }
         if(statement instanceof PsiBreakStatement ||
-                                statement instanceof PsiContinueStatement){
+                statement instanceof PsiContinueStatement){
             // don't do anything
         } else if(statement instanceof PsiReturnStatement){
             final PsiReturnStatement returnStatement =
                     (PsiReturnStatement) statement;
             final PsiExpression returnValue = returnStatement.getReturnValue();
             if(returnValue != null){
-                calculateExceptionsThrown(returnValue, exceptionTypes, factory);
+                calculateExceptionsThrown(returnValue, exceptionTypes);
             }
         } else if(statement instanceof PsiThrowStatement){
             calculateExceptionsThrownForThrowStatement((PsiThrowStatement) statement,
-                                                       exceptionTypes, factory);
+                                                       exceptionTypes);
         } else if(statement instanceof PsiExpressionListStatement){
             final PsiExpressionListStatement listStatement =
                     (PsiExpressionListStatement) statement;
             calculateExceptionsThrownForExpressionListStatement(listStatement,
-                                                                exceptionTypes,
-                                                                factory);
+                                                                exceptionTypes);
         } else if(statement instanceof PsiExpressionStatement){
             final PsiExpressionStatement expStatement =
                     (PsiExpressionStatement) statement;
             final PsiExpression expression = expStatement.getExpression();
-            calculateExceptionsThrown(expression, exceptionTypes, factory);
+            calculateExceptionsThrown(expression, exceptionTypes);
         } else if(statement instanceof PsiAssertStatement){
             final PsiAssertStatement assertStatement =
                     (PsiAssertStatement) statement;
             calculateExceptionsThrownForAssertStatement(assertStatement,
-                                                        exceptionTypes,
-                                                        factory);
+                                                        exceptionTypes);
         } else if(statement instanceof PsiDeclarationStatement){
             final PsiDeclarationStatement declStatement =
                     (PsiDeclarationStatement) statement;
             calculateExceptionsThrownForDeclarationStatemt(declStatement,
-                                                           exceptionTypes,
-                                                           factory);
+                                                           exceptionTypes);
         } else if(statement instanceof PsiForStatement){
             calculateExceptionsThrownForForExpression((PsiForStatement) statement,
-                                                      exceptionTypes, factory);
+                                                      exceptionTypes);
         } else if(statement instanceof PsiWhileStatement){
             calculateExceptionsThrownForWhileStatement((PsiWhileStatement) statement,
-                                                       exceptionTypes, factory);
+                                                       exceptionTypes);
         } else if(statement instanceof PsiDoWhileStatement){
             calculateExceptionsThrownForDoWhileStatement((PsiDoWhileStatement) statement,
-                                                         exceptionTypes,
-                                                         factory);
+                                                         exceptionTypes);
         } else if(statement instanceof PsiSynchronizedStatement){
             calculateExceptionsThrownForSynchronizedStatement((PsiSynchronizedStatement) statement,
-                                                              exceptionTypes,
-                                                              factory);
+                                                              exceptionTypes);
         } else if(statement instanceof PsiBlockStatement){
             final PsiBlockStatement block = (PsiBlockStatement) statement;
-            calculateExceptionsThrownForBlockStatement(block, exceptionTypes,
-                                                       factory);
+            calculateExceptionsThrownForBlockStatement(block, exceptionTypes);
         } else if(statement instanceof PsiLabeledStatement){
             final PsiLabeledStatement labeledStatement =
                     (PsiLabeledStatement) statement;
             calculateExceptionsThrownForLabeledStatement(labeledStatement,
-                                                         exceptionTypes,
-                                                         factory);
+                                                         exceptionTypes);
         } else if(statement instanceof PsiIfStatement){
             final PsiIfStatement ifStatement = (PsiIfStatement) statement;
-            calculateExceptionsThrownForIfStatement(ifStatement, exceptionTypes,
-                                                    factory);
+            calculateExceptionsThrownForIfStatement(ifStatement, exceptionTypes);
         } else if(statement instanceof PsiTryStatement){
             final PsiTryStatement tryStatement = (PsiTryStatement) statement;
-            calculateExceptionsThrownForTryStatement(tryStatement, factory,
+            calculateExceptionsThrownForTryStatement(tryStatement,
                                                      exceptionTypes);
         } else if(statement instanceof PsiSwitchStatement){
             final PsiSwitchStatement switchStatement =
                     (PsiSwitchStatement) statement;
             calculateExceptionsThrownForSwitchStatement(switchStatement,
-                                                        exceptionTypes,
-                                                        factory);
+                                                        exceptionTypes);
         }
     }
 
     private static void calculateExceptionsThrownForLabeledStatement(PsiLabeledStatement labeledStatement,
-                                                                     Set exceptionTypes,
-                                                                     PsiElementFactory factory){
+                                                                     Set<PsiType> exceptionTypes){
         final PsiStatement statement = labeledStatement.getStatement();
-        calculateExceptionsThrownForStatement(statement, exceptionTypes,
-                                              factory);
+        calculateExceptionsThrownForStatement(statement, exceptionTypes);
     }
 
     private static void calculateExceptionsThrownForExpressionListStatement(PsiExpressionListStatement listStatement,
-                                                                            Set exceptionTypes,
-                                                                            PsiElementFactory factory){
+                                                                            Set<PsiType> exceptionTypes){
         final PsiExpressionList expressionList =
                 listStatement.getExpressionList();
         final PsiExpression[] expressions = expressionList.getExpressions();
         for(PsiExpression expression : expressions){
-            calculateExceptionsThrown(expression, exceptionTypes, factory);
+            calculateExceptionsThrown(expression, exceptionTypes);
         }
     }
 
     private static void calculateExceptionsThrownForDeclarationStatemt(PsiDeclarationStatement declStatement,
-                                                                       Set exceptionTypes,
-                                                                       PsiElementFactory factory){
+                                                                       Set<PsiType> exceptionTypes){
         final PsiElement[] elements = declStatement.getDeclaredElements();
         for(PsiElement element : elements){
             final PsiVariable var = (PsiVariable) element;
             final PsiExpression initializer = var.getInitializer();
             if(initializer != null){
-                calculateExceptionsThrown(initializer, exceptionTypes, factory);
+                calculateExceptionsThrown(initializer, exceptionTypes);
             }
         }
     }
 
     private static void calculateExceptionsThrownForAssertStatement(PsiAssertStatement assertStatement,
-                                                                    Set exceptionTypes,
-                                                                    PsiElementFactory factory){
+                                                                    Set<PsiType> exceptionTypes
+    ){
         final PsiExpression assertCondition =
                 assertStatement.getAssertCondition();
-        calculateExceptionsThrown(assertCondition, exceptionTypes, factory);
+        calculateExceptionsThrown(assertCondition, exceptionTypes);
         final PsiExpression assertDescription =
                 assertStatement.getAssertDescription();
-        calculateExceptionsThrown(assertDescription, exceptionTypes, factory);
+        calculateExceptionsThrown(assertDescription, exceptionTypes);
     }
 
     private static void calculateExceptionsThrownForThrowStatement(PsiThrowStatement throwStatement,
-                                                                   Set exceptionTypes,
-                                                                   PsiElementFactory factory){
+                                                                   Set<PsiType> exceptionTypes){
         final PsiExpression exception = throwStatement.getException();
         final PsiType type = exception.getType();
         exceptionTypes.add(type);
-        calculateExceptionsThrown(exception, exceptionTypes, factory);
+        calculateExceptionsThrown(exception, exceptionTypes);
     }
 
     private static void calculateExceptionsThrownForSwitchStatement(PsiSwitchStatement switchStatement,
-                                                                    Set exceptionTypes,
-                                                                    PsiElementFactory factory){
+                                                                    Set<PsiType> exceptionTypes){
         final PsiExpression switchExpression = switchStatement.getExpression();
-        calculateExceptionsThrown(switchExpression, exceptionTypes, factory);
+        calculateExceptionsThrown(switchExpression, exceptionTypes);
         final PsiCodeBlock body = switchStatement.getBody();
-        calculateExceptionsThrownForCodeBlock(body, exceptionTypes, factory);
+        calculateExceptionsThrownForCodeBlock(body, exceptionTypes);
     }
 
     private static void calculateExceptionsThrownForTryStatement(PsiTryStatement tryStatement,
-                                                                 PsiElementFactory factory,
-                                                                 Set exceptionTypes){
-        final Set exceptionThrown = new HashSet(10);
+                                                                 Set <PsiType>exceptionTypes){
+        final Set<PsiType> exceptionThrown = new HashSet<PsiType>(10);
         final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-        calculateExceptionsThrownForCodeBlock(tryBlock, exceptionThrown,
-                                              factory);
-        final Set exceptionHandled =
+        calculateExceptionsThrownForCodeBlock(tryBlock, exceptionThrown);
+        final Set<PsiType> exceptionHandled =
                 ExceptionUtils.getExceptionTypesHandled(tryStatement);
-        for(Object aExceptionThrown : exceptionThrown){
-            final PsiType thrownType = (PsiType) aExceptionThrown;
+        for(PsiType thrownType : exceptionThrown){
             boolean found = false;
-            for(Object aExceptionHandled : exceptionHandled){
-                final PsiType handledType = (PsiType) aExceptionHandled;
+            for(PsiType handledType : exceptionHandled){
                 if(handledType.isAssignableFrom(thrownType)){
                     found = true;
                     break;
@@ -190,169 +169,148 @@ class ExceptionUtils{
         }
         final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
         if(finallyBlock != null){
-            calculateExceptionsThrownForCodeBlock(finallyBlock, exceptionTypes,
-                                                  factory);
+            calculateExceptionsThrownForCodeBlock(finallyBlock, exceptionTypes);
         }
 
         final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
         for(PsiCodeBlock catchBlock : catchBlocks){
             calculateExceptionsThrownForCodeBlock(catchBlock,
-                                                  exceptionTypes, factory);
+                                                  exceptionTypes);
         }
     }
 
     private static void calculateExceptionsThrownForIfStatement(PsiIfStatement ifStatement,
-                                                                Set exceptionTypes,
-                                                                PsiElementFactory factory){
+                                                                Set<PsiType> exceptionTypes){
         final PsiExpression condition = ifStatement.getCondition();
         final PsiStatement thenBranch = ifStatement.getThenBranch();
         final PsiStatement elseBranch = ifStatement.getElseBranch();
-        calculateExceptionsThrown(condition, exceptionTypes, factory);
-        calculateExceptionsThrownForStatement(thenBranch, exceptionTypes,
-                                              factory);
-        calculateExceptionsThrownForStatement(elseBranch, exceptionTypes,
-                                              factory);
+        calculateExceptionsThrown(condition, exceptionTypes);
+        calculateExceptionsThrownForStatement(thenBranch, exceptionTypes);
+        calculateExceptionsThrownForStatement(elseBranch, exceptionTypes);
     }
 
     private static void calculateExceptionsThrownForBlockStatement(PsiBlockStatement block,
-                                                                   Set exceptionTypes,
-                                                                   PsiElementFactory factory){
+                                                                   Set<PsiType> exceptionTypes){
         final PsiCodeBlock codeBlock = block.getCodeBlock();
-        calculateExceptionsThrownForCodeBlock(codeBlock, exceptionTypes,
-                                              factory);
+        calculateExceptionsThrownForCodeBlock(codeBlock, exceptionTypes);
     }
 
     private static void calculateExceptionsThrownForSynchronizedStatement(PsiSynchronizedStatement syncStatement,
-                                                                          Set exceptionTypes,
-                                                                          PsiElementFactory factory){
+                                                                          Set<PsiType> exceptionTypes){
         final PsiExpression lockExpression = syncStatement.getLockExpression();
         if(lockExpression != null){
-            calculateExceptionsThrown(lockExpression, exceptionTypes, factory);
+            calculateExceptionsThrown(lockExpression, exceptionTypes);
         }
         final PsiCodeBlock body = syncStatement.getBody();
-        calculateExceptionsThrownForCodeBlock(body, exceptionTypes, factory);
+        calculateExceptionsThrownForCodeBlock(body, exceptionTypes);
     }
 
     private static void calculateExceptionsThrownForDoWhileStatement(PsiDoWhileStatement loopStatement,
-                                                                     Set exceptionTypes,
-                                                                     PsiElementFactory factory){
+                                                                     Set<PsiType> exceptionTypes){
         final PsiExpression condition = loopStatement.getCondition();
-        calculateExceptionsThrown(condition, exceptionTypes, factory);
+        calculateExceptionsThrown(condition, exceptionTypes);
         final PsiStatement body = loopStatement.getBody();
-        calculateExceptionsThrownForStatement(body, exceptionTypes, factory);
+        calculateExceptionsThrownForStatement(body, exceptionTypes);
     }
 
     private static void calculateExceptionsThrownForWhileStatement(PsiWhileStatement loopStatement,
-                                                                   Set exceptionTypes,
-                                                                   PsiElementFactory factory){
+                                                                   Set<PsiType> exceptionTypes){
         final PsiExpression condition = loopStatement.getCondition();
-        calculateExceptionsThrown(condition, exceptionTypes, factory);
+        calculateExceptionsThrown(condition, exceptionTypes);
         final PsiStatement body = loopStatement.getBody();
-        calculateExceptionsThrownForStatement(body, exceptionTypes, factory);
+        calculateExceptionsThrownForStatement(body, exceptionTypes);
     }
 
     private static void calculateExceptionsThrownForForExpression(PsiForStatement loopStatement,
-                                                                  Set exceptionTypes,
-                                                                  PsiElementFactory factory){
+                                                                  Set<PsiType> exceptionTypes){
         final PsiStatement initialization = loopStatement.getInitialization();
         final PsiExpression condition = loopStatement.getCondition();
         final PsiStatement update = loopStatement.getUpdate();
         final PsiStatement body = loopStatement.getBody();
-        calculateExceptionsThrownForStatement(initialization, exceptionTypes,
-                                              factory);
-        calculateExceptionsThrown(condition, exceptionTypes, factory);
-        calculateExceptionsThrownForStatement(update, exceptionTypes, factory);
-        calculateExceptionsThrownForStatement(body, exceptionTypes, factory);
+        calculateExceptionsThrownForStatement(initialization, exceptionTypes);
+        calculateExceptionsThrown(condition, exceptionTypes);
+        calculateExceptionsThrownForStatement(update, exceptionTypes);
+        calculateExceptionsThrownForStatement(body, exceptionTypes);
     }
 
     private static void calculateExceptionsThrown(PsiExpression exp,
-                                                  Set exceptionTypes,
-                                                  PsiElementFactory factory){
+                                                  Set<PsiType> exceptionTypes){
         if(exp == null){
             return;
         }
         if(exp instanceof PsiThisExpression ||
-                                exp instanceof PsiLiteralExpression ||
-                                exp instanceof PsiSuperExpression ||
-                                exp instanceof PsiClassObjectAccessExpression){
+                exp instanceof PsiLiteralExpression ||
+                exp instanceof PsiSuperExpression ||
+                exp instanceof PsiClassObjectAccessExpression){
         } else if(exp instanceof PsiTypeCastExpression){
             calculateExceptionsThrownForTypeCast((PsiTypeCastExpression) exp,
-                                                 exceptionTypes, factory);
+                                                 exceptionTypes);
         } else if(exp instanceof PsiInstanceOfExpression){
             calculateExceptionsThrownForInstanceOf((PsiInstanceOfExpression) exp,
-                                                   exceptionTypes, factory);
+                                                   exceptionTypes);
         } else if(exp instanceof PsiReferenceExpression){
             final PsiReferenceExpression refExp = (PsiReferenceExpression) exp;
             final PsiExpression qualifier = refExp.getQualifierExpression();
             if(qualifier != null){
-                calculateExceptionsThrown(qualifier, exceptionTypes, factory);
+                calculateExceptionsThrown(qualifier, exceptionTypes);
             }
         } else if(exp instanceof PsiMethodCallExpression){
             calculateExceptionsThrownForMethodCall((PsiMethodCallExpression) exp,
-                                                   exceptionTypes, factory);
+                                                   exceptionTypes);
         } else if(exp instanceof PsiNewExpression){
             calculateExceptionsThrownForNewExpression((PsiNewExpression) exp,
-                                                      exceptionTypes, factory);
+                                                      exceptionTypes);
         } else if(exp instanceof PsiArrayInitializerExpression){
             calculateExceptionsThrownForArrayInitializerExpression((PsiArrayInitializerExpression) exp,
-                                                                   exceptionTypes,
-                                                                   factory);
+                                                                   exceptionTypes);
         } else if(exp instanceof PsiArrayAccessExpression){
             calculateExceptionsThrownForArrayAccessExpression((PsiArrayAccessExpression) exp,
-                                                              exceptionTypes,
-                                                              factory);
+                                                              exceptionTypes);
         } else if(exp instanceof PsiPrefixExpression){
             calculateExceptionsThrownForPrefixException((PsiPrefixExpression) exp,
-                                                        exceptionTypes,
-                                                        factory);
+                                                        exceptionTypes);
         } else if(exp instanceof PsiPostfixExpression){
             calculateExceptionsThrownForPostixExpression((PsiPostfixExpression) exp,
-                                                         exceptionTypes,
-                                                         factory);
+                                                         exceptionTypes);
         } else if(exp instanceof PsiBinaryExpression){
             calculateExceptionsThrownForBinaryExpression((PsiBinaryExpression) exp,
-                                                         exceptionTypes,
-                                                         factory);
+                                                         exceptionTypes);
         } else if(exp instanceof PsiConditionalExpression){
             calculateExceptionsThrownForConditionalExcpression((PsiConditionalExpression) exp,
-                                                               exceptionTypes,
-                                                               factory);
+                                                               exceptionTypes);
         }
     }
 
     private static void calculateExceptionsThrownForTypeCast(PsiTypeCastExpression typeCast,
-                                                             Set exceptionTypes,
-                                                             PsiElementFactory factory){
+                                                             Set<PsiType> exceptionTypes){
         final PsiExpression operand = typeCast.getOperand();
-        calculateExceptionsThrown(operand, exceptionTypes, factory);
+        calculateExceptionsThrown(operand, exceptionTypes);
     }
 
     private static void calculateExceptionsThrownForInstanceOf(PsiInstanceOfExpression instExp,
-                                                               Set exceptionTypes,
-                                                               PsiElementFactory factory){
+                                                               Set<PsiType> exceptionTypes){
         final PsiExpression operand = instExp.getOperand();
-        calculateExceptionsThrown(operand, exceptionTypes, factory);
+        calculateExceptionsThrown(operand, exceptionTypes);
     }
 
     private static void calculateExceptionsThrownForNewExpression(PsiNewExpression newExp,
-                                                                  Set exceptionTypes,
-                                                                  PsiElementFactory factory){
+                                                                  Set<PsiType> exceptionTypes){
         final PsiExpressionList argumentList = newExp.getArgumentList();
         if(argumentList != null){
             final PsiExpression[] args = argumentList.getExpressions();
             for(PsiExpression arg : args){
-                calculateExceptionsThrown(arg, exceptionTypes, factory);
+                calculateExceptionsThrown(arg, exceptionTypes);
             }
         }
         final PsiExpression[] arrayDims = newExp.getArrayDimensions();
         for(PsiExpression arrayDim : arrayDims){
-            calculateExceptionsThrown(arrayDim, exceptionTypes, factory);
+            calculateExceptionsThrown(arrayDim, exceptionTypes);
         }
         final PsiExpression qualifier = newExp.getQualifier();
-        calculateExceptionsThrown(qualifier, exceptionTypes, factory);
+        calculateExceptionsThrown(qualifier, exceptionTypes);
         final PsiArrayInitializerExpression arrayInitializer =
                 newExp.getArrayInitializer();
-        calculateExceptionsThrown(arrayInitializer, exceptionTypes, factory);
+        calculateExceptionsThrown(arrayInitializer, exceptionTypes);
         final PsiMethod method = newExp.resolveMethod();
         if(method != null){
             final PsiReferenceList throwsList = method.getThrowsList();
@@ -361,6 +319,8 @@ class ExceptionUtils{
             for(final PsiJavaCodeReferenceElement referenceElement : list){
                 final PsiClass exceptionClass =
                         (PsiClass) referenceElement.resolve();
+                final PsiManager psiManager = exceptionClass.getManager();
+                final PsiElementFactory factory = psiManager.getElementFactory();
                 final PsiClassType exceptionType =
                         factory.createType(exceptionClass);
                 exceptionTypes.add(exceptionType);
@@ -369,19 +329,17 @@ class ExceptionUtils{
     }
 
     private static void calculateExceptionsThrownForMethodCall(PsiMethodCallExpression methExp,
-                                                               Set exceptionTypes,
-                                                               PsiElementFactory factory){
+                                                               Set<PsiType> exceptionTypes){
         final PsiExpressionList argumentList = methExp.getArgumentList();
         if(argumentList != null){
             final PsiExpression[] expressions = argumentList.getExpressions();
             for(PsiExpression expression : expressions){
-                calculateExceptionsThrown(expression, exceptionTypes,
-                                          factory);
+                calculateExceptionsThrown(expression, exceptionTypes);
             }
         }
         final PsiReferenceExpression methodExpression =
                 methExp.getMethodExpression();
-        calculateExceptionsThrown(methodExpression, exceptionTypes, factory);
+        calculateExceptionsThrown(methodExpression, exceptionTypes);
         final PsiMethod method = methExp.resolveMethod();
 
         if(method != null){
@@ -391,6 +349,8 @@ class ExceptionUtils{
             for(final PsiJavaCodeReferenceElement referenceElement : list){
                 final PsiClass exceptionClass =
                         (PsiClass) referenceElement.resolve();
+                final PsiManager psiManager = exceptionClass.getManager();
+                final PsiElementFactory factory = psiManager.getElementFactory();
                 final PsiClassType exceptionType =
                         factory.createType(exceptionClass);
                 exceptionTypes.add(exceptionType);
@@ -399,69 +359,61 @@ class ExceptionUtils{
     }
 
     private static void calculateExceptionsThrownForConditionalExcpression(PsiConditionalExpression condExp,
-                                                                           Set exceptionTypes,
-                                                                           PsiElementFactory factory){
+                                                                           Set<PsiType> exceptionTypes){
         final PsiExpression condition = condExp.getCondition();
         final PsiExpression elseExpression = condExp.getElseExpression();
         final PsiExpression thenExpression = condExp.getThenExpression();
-        calculateExceptionsThrown(condition, exceptionTypes, factory);
-        calculateExceptionsThrown(elseExpression, exceptionTypes, factory);
-        calculateExceptionsThrown(thenExpression, exceptionTypes, factory);
+        calculateExceptionsThrown(condition, exceptionTypes);
+        calculateExceptionsThrown(elseExpression, exceptionTypes);
+        calculateExceptionsThrown(thenExpression, exceptionTypes);
     }
 
     private static void calculateExceptionsThrownForBinaryExpression(PsiBinaryExpression binaryExp,
-                                                                     Set exceptionTypes,
-                                                                     PsiElementFactory factory){
+                                                                     Set<PsiType> exceptionTypes){
         final PsiExpression lOperand = binaryExp.getLOperand();
-        calculateExceptionsThrown(lOperand, exceptionTypes, factory);
+        calculateExceptionsThrown(lOperand, exceptionTypes);
         final PsiExpression rhs = binaryExp.getROperand();
-        calculateExceptionsThrown(rhs, exceptionTypes, factory);
+        calculateExceptionsThrown(rhs, exceptionTypes);
     }
 
     private static void calculateExceptionsThrownForArrayInitializerExpression(PsiArrayInitializerExpression arrayExp,
-                                                                               Set exceptionTypes,
-                                                                               PsiElementFactory factory){
+                                                                               Set<PsiType> exceptionTypes){
         final PsiExpression[] initializers = arrayExp.getInitializers();
         for(PsiExpression initializer : initializers){
-            calculateExceptionsThrown(initializer, exceptionTypes, factory);
+            calculateExceptionsThrown(initializer, exceptionTypes);
         }
     }
 
     private static void calculateExceptionsThrownForArrayAccessExpression(PsiArrayAccessExpression arrayAccessExp,
-                                                                          Set exceptionTypes,
-                                                                          PsiElementFactory factory){
+                                                                          Set<PsiType> exceptionTypes){
         final PsiExpression arrayExpression =
                 arrayAccessExp.getArrayExpression();
-        calculateExceptionsThrown(arrayExpression, exceptionTypes, factory);
+        calculateExceptionsThrown(arrayExpression, exceptionTypes);
         final PsiExpression indexExpression =
                 arrayAccessExp.getIndexExpression();
-        calculateExceptionsThrown(indexExpression, exceptionTypes, factory);
+        calculateExceptionsThrown(indexExpression, exceptionTypes);
     }
 
     private static void calculateExceptionsThrownForPrefixException(PsiPrefixExpression prefixExp,
-                                                                    Set exceptionTypes,
-                                                                    PsiElementFactory factory){
+                                                                    Set<PsiType> exceptionTypes){
         final PsiExpression operand = prefixExp.getOperand();
-        calculateExceptionsThrown(operand, exceptionTypes, factory);
+        calculateExceptionsThrown(operand, exceptionTypes);
     }
 
     private static void calculateExceptionsThrownForPostixExpression(PsiPostfixExpression postfixExp,
-                                                                     Set exceptionTypes,
-                                                                     PsiElementFactory factory){
+                                                                     Set<PsiType> exceptionTypes){
         final PsiExpression operand = postfixExp.getOperand();
-        calculateExceptionsThrown(operand, exceptionTypes, factory);
+        calculateExceptionsThrown(operand, exceptionTypes);
     }
 
     public static void calculateExceptionsThrownForCodeBlock(PsiCodeBlock block,
-                                                             Set exceptionTypes,
-                                                             PsiElementFactory factory){
+                                                             Set<PsiType> exceptionTypes){
         if(block == null){
             return;
         }
         final PsiStatement[] statements = block.getStatements();
         for(PsiStatement statement : statements){
-            calculateExceptionsThrownForStatement(statement, exceptionTypes,
-                                                  factory);
+            calculateExceptionsThrownForStatement(statement, exceptionTypes);
         }
     }
 }

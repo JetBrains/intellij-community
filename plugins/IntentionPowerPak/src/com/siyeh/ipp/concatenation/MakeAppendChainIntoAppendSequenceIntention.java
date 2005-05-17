@@ -1,7 +1,5 @@
 package com.siyeh.ipp.concatenation;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -24,18 +22,15 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
         return "Make Append Chain Into Append Sequence";
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
 
         final PsiExpression call =
-                (PsiExpression) findMatchingElement(file, editor);
-        final List argsList = new ArrayList();
+                (PsiExpression) element;
+        final List<String> argsList = new ArrayList<String>();
         PsiExpression currentCall = call;
         while(currentCall instanceof PsiMethodCallExpression &&
-                        AppendUtil.isAppend((PsiMethodCallExpression) currentCall)){
+                AppendUtil.isAppend((PsiMethodCallExpression) currentCall)){
             final PsiExpressionList args =
                     ((PsiCall) currentCall).getArgumentList();
             final String argText = args.getText();
@@ -45,7 +40,7 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
             currentCall = methodExpression.getQualifierExpression();
         }
         final String targetText;
-        final PsiManager mgr = PsiManager.getInstance(project);
+        final PsiManager mgr = element.getManager();
         final PsiElementFactory factory = mgr.getElementFactory();
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
         final PsiStatement statement;
@@ -55,16 +50,17 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
             statement = (PsiStatement) call.getParent();
             firstStatement = null;
         } else if(call.getParent() instanceof PsiAssignmentExpression &&
-                                call.getParent()
-                                .getParent() instanceof PsiExpressionStatement){
+                call.getParent()
+                        .getParent() instanceof PsiExpressionStatement){
             statement = (PsiStatement) call.getParent().getParent();
             final PsiAssignmentExpression assignment =
                     (PsiAssignmentExpression) call.getParent();
             targetText = assignment.getLExpression().getText();
             firstStatement =
                     assignment.getLExpression().getText() +
-                    assignment.getOperationSign().getText() + currentCall.getText() +
-                    ';';
+                            assignment.getOperationSign().getText() +
+                            currentCall.getText() +
+                            ';';
         } else{
             statement = (PsiStatement) call.getParent().getParent();
             final PsiDeclarationStatement declaration =
@@ -80,8 +76,9 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
             } else{
                 firstStatement =
                         variable.getType().getPresentableText() +
-                        ' ' + variable.getName() + '=' + currentCall.getText() +
-                        ';';
+                                ' ' + variable.getName() + '=' + currentCall
+                                .getText() +
+                                ';';
             }
         }
 
@@ -95,12 +92,11 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
                     .addAfter(newCall, statement);
             codeStyleManager.reformat(insertedElement);
         }
-        if(firstStatement!=null)
-        {
+        if(firstStatement != null){
             final PsiStatement newCall =
                     factory.createStatementFromText(firstStatement, null);
             final PsiElement insertedElement = statement.getParent()
-                            .addAfter(newCall, statement);
+                    .addAfter(newCall, statement);
             codeStyleManager.reformat(insertedElement);
         }
         statement.delete();

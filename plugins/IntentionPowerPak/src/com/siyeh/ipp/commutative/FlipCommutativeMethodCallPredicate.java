@@ -21,11 +21,10 @@ class FlipCommutativeMethodCallPredicate implements PsiElementPredicate{
 
         // do it only when there is just one argument.
         final PsiExpressionList argumentList = expression.getArgumentList();
-        if(argumentList==null)
-        {
+        if(argumentList == null){
             return false;
         }
-            final PsiExpression[] args = argumentList.getExpressions();
+        final PsiExpression[] args = argumentList.getExpressions();
         if(args.length != 1){
             return false;
         }

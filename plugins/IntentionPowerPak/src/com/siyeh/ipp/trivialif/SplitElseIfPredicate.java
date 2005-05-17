@@ -36,6 +36,5 @@ class SplitElseIfPredicate implements PsiElementPredicate{
             return false;
         }
         return elseBranch instanceof PsiIfStatement;
-
     }
 }

@@ -1,8 +1,6 @@
 package com.siyeh.ipp.chartostring;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -21,30 +19,24 @@ public class StringToCharIntention extends Intention{
         return "Replace String With Char";
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
 
         final PsiLiteralExpression stringLiteral =
-                (PsiLiteralExpression) findMatchingElement(file, editor);
+                (PsiLiteralExpression) element;
 
         final String stringLiteralText = stringLiteral.getText();
         final String charLiteral = charForStringLiteral(stringLiteralText);
-        replaceExpression(project, charLiteral, stringLiteral);
+        replaceExpression(charLiteral, stringLiteral);
     }
 
     private static String charForStringLiteral(String stringLiteral){
-        if("\"'\"".equals(stringLiteral))
-        {
+        if("\"'\"".equals(stringLiteral)){
             return "'\\''";
-        }
-        else
-        {
-            return '\'' + stringLiteral.substring(1, stringLiteral.length()-1) +
-                           '\'';
+        } else{
+            return '\'' + stringLiteral
+                    .substring(1, stringLiteral.length() - 1) +
+                    '\'';
         }
     }
-
 }

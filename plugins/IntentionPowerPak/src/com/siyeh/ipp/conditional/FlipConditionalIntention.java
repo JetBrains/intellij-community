@@ -1,10 +1,8 @@
 package com.siyeh.ipp.conditional;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -23,22 +21,19 @@ public class FlipConditionalIntention extends Intention{
         return new FlipConditionalPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
         final PsiConditionalExpression exp =
-                (PsiConditionalExpression) findMatchingElement(file, editor);
+                (PsiConditionalExpression) element;
 
         final PsiExpression condition = exp.getCondition();
         final PsiExpression elseExpression = exp.getElseExpression();
         final PsiExpression thenExpression = exp.getThenExpression();
         final String newExpression =
                 BoolUtils.getNegatedExpressionText(condition) + '?' +
-                elseExpression.getText() +
-                ':' +
-                thenExpression.getText();
-        replaceExpression(project, newExpression, exp);
+                        elseExpression.getText() +
+                        ':' +
+                        thenExpression.getText();
+        replaceExpression(newExpression, exp);
     }
 }

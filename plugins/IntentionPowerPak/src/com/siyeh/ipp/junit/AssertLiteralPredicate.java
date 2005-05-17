@@ -37,7 +37,7 @@ class AssertLiteralPredicate implements PsiElementPredicate{
         final String methodName = methodExpression.getReferenceName();
 
         return "assertTrue".equals(methodName) ||
-                       "assertFalse".equals(methodName) ||
-                       "assertNull".equals(methodName);
+                "assertFalse".equals(methodName) ||
+                "assertNull".equals(methodName);
     }
 }

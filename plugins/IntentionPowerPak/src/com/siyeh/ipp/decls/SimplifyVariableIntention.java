@@ -1,8 +1,6 @@
 package com.siyeh.ipp.decls;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -21,12 +19,9 @@ public class SimplifyVariableIntention extends Intention{
         return new SimplifyVariablePredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-        final PsiVariable var = (PsiVariable) findMatchingElement(file, editor);
+        final PsiVariable var = (PsiVariable) element;
         var.normalizeDeclaration();
     }
 }

@@ -59,11 +59,12 @@ class IfStatementBranch{
         final Set<String> innerVariables = testBranch.getInnerVariables();
         final Set<String> topLevel = testBranch.getTopLevelVariables();
         return hasNonEmptyIntersection(m_topLevelVariables, topLevel) ||
-                       hasNonEmptyIntersection(m_topLevelVariables,
-                                               innerVariables);
+                hasNonEmptyIntersection(m_topLevelVariables,
+                                        innerVariables);
     }
 
-    private static boolean hasNonEmptyIntersection(Set<String> set1, Set<String> set2){
+    private static boolean hasNonEmptyIntersection(Set<String> set1,
+                                                   Set<String> set2){
         for(final String set1Element : set1){
             if(set2.contains(set1Element)){
                 return true;

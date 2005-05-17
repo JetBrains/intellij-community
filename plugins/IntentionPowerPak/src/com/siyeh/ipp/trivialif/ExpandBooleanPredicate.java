@@ -12,7 +12,7 @@ class ExpandBooleanPredicate implements PsiElementPredicate{
         final PsiJavaToken token = (PsiJavaToken) element;
         final PsiStatement containingStatement =
                 PsiTreeUtil.getParentOfType(token,
-                                                           PsiStatement.class);
+                                            PsiStatement.class);
         if(containingStatement == null){
             return false;
         }

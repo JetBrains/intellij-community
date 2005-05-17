@@ -1,7 +1,5 @@
 package com.siyeh.ipp.trivialif;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -21,22 +19,19 @@ public class MergeParallelIfsIntention extends Intention{
         return new MergeParallelIfsPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-        final PsiJavaToken token =
-                (PsiJavaToken) findMatchingElement(file, editor);
-        final PsiIfStatement firstStatement =
-                (PsiIfStatement) token.getParent();
+        final PsiJavaToken token = (PsiJavaToken) element;
+        final PsiIfStatement firstStatement = (PsiIfStatement) token.getParent();
         final PsiIfStatement secondStatement =
                 (PsiIfStatement) PsiTreeUtil.skipSiblingsForward(firstStatement,
-                                                                 new Class[]{PsiWhiteSpace.class});
+                                                                 new Class[]{
+                                                                     PsiWhiteSpace.class});
 
-        String statement = mergeIfStatements(firstStatement, secondStatement);
+        final String statement = mergeIfStatements(firstStatement, secondStatement);
 
-        replaceStatement(project, statement, firstStatement);
+        replaceStatement(statement, firstStatement);
+        assert secondStatement != null;
         secondStatement.delete();
     }
 
@@ -49,16 +44,18 @@ public class MergeParallelIfsIntention extends Intention{
         final PsiStatement secondThenBranch = secondStatement.getThenBranch();
         String statement =
                 "if(" + conditionText + ')' +
-                printStatementsInSequence(firstThenBranch, secondThenBranch);
+                        printStatementsInSequence(firstThenBranch,
+                                                  secondThenBranch);
 
         final PsiStatement firstElseBranch = firstStatement.getElseBranch();
         final PsiStatement secondElseBranch = secondStatement.getElseBranch();
         if(firstElseBranch != null || secondElseBranch != null){
             if(firstElseBranch instanceof PsiIfStatement
-                            && secondElseBranch instanceof PsiIfStatement
-                            &&
-                            MergeParallelIfsPredicate.ifStatementsCanBeMerged((PsiIfStatement) firstElseBranch,
-                                                    (PsiIfStatement) secondElseBranch)){
+                    && secondElseBranch instanceof PsiIfStatement
+                    &&
+                    MergeParallelIfsPredicate
+                            .ifStatementsCanBeMerged((PsiIfStatement) firstElseBranch,
+                                                     (PsiIfStatement) secondElseBranch)){
                 statement += "else " +
                         mergeIfStatements((PsiIfStatement) firstElseBranch,
                                           (PsiIfStatement) secondElseBranch);

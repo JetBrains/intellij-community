@@ -13,8 +13,7 @@ class AppendChainPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiMethodCallExpression call = (PsiMethodCallExpression) element;
-        if(!AppendUtil.isAppend(call))
-        {
+        if(!AppendUtil.isAppend(call)){
             return false;
         }
         final PsiReferenceExpression methodExpression =
@@ -26,18 +25,18 @@ class AppendChainPredicate implements PsiElementPredicate{
         final PsiMethodCallExpression qualifierCall = (PsiMethodCallExpression) element;
         if(!AppendUtil.isAppend(qualifierCall)){
             return false;
-    }
+        }
         final PsiElement parent = element.getParent();
-        if(parent instanceof PsiExpressionStatement)
+        if(parent instanceof PsiExpressionStatement){
             return true;
+        }
         if(parent instanceof PsiLocalVariable &&
-                                parent.getParent() instanceof PsiDeclarationStatement &&
-                       ( (PsiDeclarationStatement)(parent.getParent())).getDeclaredElements().length == 1)
+                parent.getParent() instanceof PsiDeclarationStatement &&
+                ((PsiDeclarationStatement) parent.getParent())
+                        .getDeclaredElements().length == 1){
             return true;
-        if(parent instanceof PsiAssignmentExpression &&
-                                parent.getParent() instanceof PsiExpressionStatement)
-            return true;
-        return false;
+        }
+        return parent instanceof PsiAssignmentExpression &&
+                parent.getParent() instanceof PsiExpressionStatement;
     }
-
 }

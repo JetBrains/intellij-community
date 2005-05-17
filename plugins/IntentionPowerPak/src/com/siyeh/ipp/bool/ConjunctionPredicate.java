@@ -20,6 +20,6 @@ class ConjunctionPredicate implements PsiElementPredicate{
         final PsiJavaToken sign = expression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
         return tokenType.equals(JavaTokenType.ANDAND) ||
-                       tokenType.equals(JavaTokenType.OROR);
+                tokenType.equals(JavaTokenType.OROR);
     }
 }

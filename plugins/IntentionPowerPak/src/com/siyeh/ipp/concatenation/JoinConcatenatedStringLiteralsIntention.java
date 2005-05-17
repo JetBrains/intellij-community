@@ -1,8 +1,9 @@
 package com.siyeh.ipp.concatenation;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -20,13 +21,8 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention{
         return "Join Concatenated String Literals";
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-
-        final PsiElement element = findMatchingElement(file, editor);
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression) element.getParent();
         final PsiExpression lOperand = binaryExpression.getLOperand();
@@ -55,7 +51,7 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention{
         } else{
             newExpression = leftText + rightText;
         }
-        replaceExpression(project, newExpression, binaryExpression);
+        replaceExpression(newExpression, binaryExpression);
     }
 
     private PsiLiteralExpression getLeftLiteralOperand(PsiExpression expression){

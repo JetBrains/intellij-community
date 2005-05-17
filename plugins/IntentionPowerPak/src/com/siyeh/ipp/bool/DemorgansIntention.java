@@ -1,7 +1,5 @@
 package com.siyeh.ipp.bool;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -32,13 +30,10 @@ public class DemorgansIntention extends MutablyNamedIntention{
         return new ConjunctionPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
-            throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
+    public void processIntention(PsiElement element)
+            throws IncorrectOperationException {
         PsiBinaryExpression exp =
-                (PsiBinaryExpression) findMatchingElement(file, editor);
+                (PsiBinaryExpression) element;
         final PsiJavaToken sign = exp.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
         PsiElement parent = exp.getParent();
@@ -48,7 +43,7 @@ public class DemorgansIntention extends MutablyNamedIntention{
         }
         final String newExpression =
                 convertConjunctionExpression(exp, tokenType);
-        replaceExpressionWithNegatedExpressionString(project, newExpression,
+        replaceExpressionWithNegatedExpressionString(newExpression,
                                                      exp);
     }
 
@@ -85,7 +80,7 @@ public class DemorgansIntention extends MutablyNamedIntention{
         if(BoolUtils.isNegation(condition)){
             final PsiExpression negated = BoolUtils.getNegated(condition);
             if(ParenthesesUtils.getPrecendence(negated) >
-                       ParenthesesUtils.OR_PRECEDENCE){
+                    ParenthesesUtils.OR_PRECEDENCE){
                 return '(' + negated.getText() + ')';
             }
             return negated.getText();
@@ -100,7 +95,7 @@ public class DemorgansIntention extends MutablyNamedIntention{
             final PsiExpression rhs = binaryExpression.getROperand();
             return lhs.getText() + negatedComparison + rhs.getText();
         } else if(ParenthesesUtils.getPrecendence(condition) >
-                          ParenthesesUtils.PREFIX_PRECEDENCE){
+                ParenthesesUtils.PREFIX_PRECEDENCE){
             return "!(" + condition.getText() + ')';
         } else{
             return '!' + condition.getText();

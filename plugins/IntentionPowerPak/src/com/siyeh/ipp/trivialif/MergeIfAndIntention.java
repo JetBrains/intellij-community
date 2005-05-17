@@ -1,7 +1,5 @@
 package com.siyeh.ipp.trivialif;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -22,13 +20,10 @@ public class MergeIfAndIntention extends Intention{
         return new MergeIfAndPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
         final PsiJavaToken token =
-                (PsiJavaToken) findMatchingElement(file, editor);
+                (PsiJavaToken) element;
         final PsiIfStatement parentStatement =
                 (PsiIfStatement) token.getParent();
         final PsiStatement parentThenBranch = parentStatement.getThenBranch();
@@ -38,7 +33,7 @@ public class MergeIfAndIntention extends Intention{
         final String childConditionText;
         final PsiExpression childCondition = childStatement.getCondition();
         if(ParenthesesUtils.getPrecendence(childCondition)
-                   > ParenthesesUtils.AND_PRECEDENCE){
+                > ParenthesesUtils.AND_PRECEDENCE){
             childConditionText = '(' + childCondition.getText() + ')';
         } else{
             childConditionText = childCondition.getText();
@@ -47,7 +42,7 @@ public class MergeIfAndIntention extends Intention{
 
         final PsiExpression parentCondition = parentStatement.getCondition();
         if(ParenthesesUtils.getPrecendence(parentCondition)
-                   > ParenthesesUtils.AND_PRECEDENCE){
+                > ParenthesesUtils.AND_PRECEDENCE){
             parentConditionText = '(' + parentCondition.getText() + ')';
         } else{
             parentConditionText = parentCondition.getText();
@@ -56,7 +51,7 @@ public class MergeIfAndIntention extends Intention{
         final PsiStatement childThenBranch = childStatement.getThenBranch();
         final String statement =
                 "if(" + parentConditionText + "&&" + childConditionText + ')' +
-                childThenBranch.getText();
-        replaceStatement(project, statement, parentStatement);
+                        childThenBranch.getText();
+        replaceStatement(statement, parentStatement);
     }
 }

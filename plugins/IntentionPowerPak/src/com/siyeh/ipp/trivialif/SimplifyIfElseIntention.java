@@ -1,7 +1,5 @@
 package com.siyeh.ipp.trivialif;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -23,57 +21,59 @@ public class SimplifyIfElseIntention extends Intention{
         return new SimplifyIfElsePredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
         final PsiJavaToken token =
-                (PsiJavaToken) findMatchingElement(file, editor);
+                (PsiJavaToken) element;
         final PsiIfStatement statement = (PsiIfStatement) token.getParent();
         if(SimplifyIfElsePredicate.isSimplifiableAssignment(statement)){
-            replaceSimplifiableAssignment(statement, project);
+            replaceSimplifiableAssignment(statement);
         } else if(SimplifyIfElsePredicate.isSimplifiableReturn(statement)){
-            repaceSimplifiableReturn(statement, project);
-        } else if(SimplifyIfElsePredicate.isSimplifiableImplicitReturn(statement)){
-            replaceSimplifiableImplicitReturn(statement, project);
-        } else if(SimplifyIfElsePredicate.isSimplifiableAssignmentNegated(statement)){
-            replaceSimplifiableAssignmentNegated(statement, project);
-        } else if(SimplifyIfElsePredicate.isSimplifiableReturnNegated(statement)){
-            repaceSimplifiableReturnNegated(statement, project);
-        } else if(SimplifyIfElsePredicate.isSimplifiableImplicitReturnNegated(statement)){
-            replaceSimplifiableImplicitReturnNegated(statement, project);
-        } else if(SimplifyIfElsePredicate.isSimplifiableImplicitAssignment(statement)){
-            replaceSimplifiableImplicitAssignment(statement, project);
-        } else if(SimplifyIfElsePredicate.isSimplifiableImplicitAssignmentNegated(statement)){
-            replaceSimplifiableImplicitAssignmentNegated(statement, project);
+            repaceSimplifiableReturn(statement);
+        } else
+        if(SimplifyIfElsePredicate.isSimplifiableImplicitReturn(statement)){
+            replaceSimplifiableImplicitReturn(statement);
+        } else
+        if(SimplifyIfElsePredicate.isSimplifiableAssignmentNegated(statement)){
+            replaceSimplifiableAssignmentNegated(statement);
+        } else
+        if(SimplifyIfElsePredicate.isSimplifiableReturnNegated(statement)){
+            repaceSimplifiableReturnNegated(statement);
+        } else
+        if(SimplifyIfElsePredicate.isSimplifiableImplicitReturnNegated(statement)){
+            replaceSimplifiableImplicitReturnNegated(statement);
+        } else
+        if(SimplifyIfElsePredicate.isSimplifiableImplicitAssignment(statement)){
+            replaceSimplifiableImplicitAssignment(statement);
+        } else
+        if(SimplifyIfElsePredicate.isSimplifiableImplicitAssignmentNegated(statement)){
+            replaceSimplifiableImplicitAssignmentNegated(statement);
         }
     }
 
-    private static void replaceSimplifiableImplicitReturn(PsiIfStatement statement,
-                                                          Project project)
+    private static void replaceSimplifiableImplicitReturn(PsiIfStatement statement)
             throws IncorrectOperationException{
         final PsiExpression condition = statement.getCondition();
         final String conditionText = condition.getText();
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsForward(statement,
-                                                new Class[]{PsiWhiteSpace.class});
+                                                new Class[]{
+                                                    PsiWhiteSpace.class});
         final String newStatement = "return " + conditionText + ';';
-        replaceStatement(project, newStatement, statement);
+        replaceStatement(newStatement, statement);
+        assert nextStatement != null;
         nextStatement.delete();
     }
 
-    private static void repaceSimplifiableReturn(PsiIfStatement statement,
-                                                 Project project)
+    private static void repaceSimplifiableReturn(PsiIfStatement statement)
             throws IncorrectOperationException{
         final PsiExpression condition = statement.getCondition();
         final String conditionText = condition.getText();
         final String newStatement = "return " + conditionText + ';';
-        replaceStatement(project, newStatement, statement);
+        replaceStatement(newStatement, statement);
     }
 
-    private static void replaceSimplifiableAssignment(PsiIfStatement statement,
-                                                      Project project)
+    private static void replaceSimplifiableAssignment(PsiIfStatement statement)
             throws IncorrectOperationException{
         final PsiExpression condition = statement.getCondition();
         final String conditionText = condition.getText();
@@ -86,16 +86,16 @@ public class SimplifyIfElseIntention extends Intention{
         final String operand = operator.getText();
         final PsiExpression lhs = assignmentExpression.getLExpression();
         final String lhsText = lhs.getText();
-        replaceStatement(project, lhsText + operand + conditionText + ';',
+        replaceStatement(lhsText + operand + conditionText + ';',
                          statement);
     }
 
-    private static void replaceSimplifiableImplicitAssignment(PsiIfStatement statement,
-                                                              Project project)
+    private static void replaceSimplifiableImplicitAssignment(PsiIfStatement statement)
             throws IncorrectOperationException{
         final PsiElement prevStatement =
                 PsiTreeUtil.skipSiblingsBackward(statement,
-                                                 new Class[]{PsiWhiteSpace.class});
+                                                 new Class[]{
+                                                     PsiWhiteSpace.class});
 
         final PsiExpression condition = statement.getCondition();
         final String conditionText = condition.getText();
@@ -108,17 +108,18 @@ public class SimplifyIfElseIntention extends Intention{
         final String operand = operator.getText();
         final PsiExpression lhs = assignmentExpression.getLExpression();
         final String lhsText = lhs.getText();
-        replaceStatement(project, lhsText + operand + conditionText + ';',
+        replaceStatement(lhsText + operand + conditionText + ';',
                          statement);
+        assert prevStatement != null;
         prevStatement.delete();
     }
 
-    private static void replaceSimplifiableImplicitAssignmentNegated(PsiIfStatement statement,
-                                                                     Project project)
+    private static void replaceSimplifiableImplicitAssignmentNegated(PsiIfStatement statement)
             throws IncorrectOperationException{
         final PsiElement prevStatement =
                 PsiTreeUtil.skipSiblingsBackward(statement,
-                                                 new Class[]{PsiWhiteSpace.class});
+                                                 new Class[]{
+                                                     PsiWhiteSpace.class});
 
         final PsiExpression condition = statement.getCondition();
         final String conditionText =
@@ -132,13 +133,13 @@ public class SimplifyIfElseIntention extends Intention{
         final String operand = operator.getText();
         final PsiExpression lhs = assignmentExpression.getLExpression();
         final String lhsText = lhs.getText();
-        replaceStatement(project, lhsText + operand + conditionText + ';',
+        replaceStatement(lhsText + operand + conditionText + ';',
                          statement);
+        assert prevStatement != null;
         prevStatement.delete();
     }
 
-    private static void replaceSimplifiableImplicitReturnNegated(PsiIfStatement statement,
-                                                                 Project project)
+    private static void replaceSimplifiableImplicitReturnNegated(PsiIfStatement statement)
             throws IncorrectOperationException{
         final PsiExpression condition = statement.getCondition();
 
@@ -146,24 +147,24 @@ public class SimplifyIfElseIntention extends Intention{
                 BoolUtils.getNegatedExpressionText(condition);
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsForward(statement,
-                                                new Class[]{PsiWhiteSpace.class});
+                                                new Class[]{
+                                                    PsiWhiteSpace.class});
         final String newStatement = "return " + conditionText + ';';
-        replaceStatement(project, newStatement, statement);
+        replaceStatement(newStatement, statement);
+        assert nextStatement != null;
         nextStatement.delete();
     }
 
-    private static void repaceSimplifiableReturnNegated(PsiIfStatement statement,
-                                                        Project project)
+    private static void repaceSimplifiableReturnNegated(PsiIfStatement statement)
             throws IncorrectOperationException{
         final PsiExpression condition = statement.getCondition();
         final String conditionText =
                 BoolUtils.getNegatedExpressionText(condition);
         final String newStatement = "return " + conditionText + ';';
-        replaceStatement(project, newStatement, statement);
+        replaceStatement(newStatement, statement);
     }
 
-    private static void replaceSimplifiableAssignmentNegated(PsiIfStatement statement,
-                                                             Project project)
+    private static void replaceSimplifiableAssignmentNegated(PsiIfStatement statement)
             throws IncorrectOperationException{
         final PsiExpression condition = statement.getCondition();
         final String conditionText =
@@ -177,7 +178,7 @@ public class SimplifyIfElseIntention extends Intention{
         final String operand = operator.getText();
         final PsiExpression lhs = assignmentExpression.getLExpression();
         final String lhsText = lhs.getText();
-        replaceStatement(project, lhsText + operand + conditionText + ';',
+        replaceStatement(lhsText + operand + conditionText + ';',
                          statement);
     }
 }

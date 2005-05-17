@@ -1,10 +1,8 @@
 package com.siyeh.ipp.concatenation;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
@@ -22,13 +20,10 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention{
         return new ReplaceConcatenationWithStringBufferPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
         PsiBinaryExpression exp =
-                (PsiBinaryExpression) findMatchingElement(file, editor);
+                (PsiBinaryExpression) element;
         PsiElement parent = exp.getParent();
         while(ConcatenationUtils.isConcatenation(parent)){
             exp = (PsiBinaryExpression) parent;
@@ -47,22 +42,21 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention{
             expString.append(qualifierText);
             turnExpressionIntoChainedAppends(exp, expString);
             final String newExpression = expString.toString();
-            replaceExpression(project, newExpression, methodCallExpression);
+            replaceExpression(newExpression, methodCallExpression);
         } else{
             final PsiManager manager = exp.getManager();
             final LanguageLevel languageLevel =
                     manager.getEffectiveLanguageLevel();
             if(languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                       languageLevel.equals(LanguageLevel.JDK_1_4))
-            {
+                    languageLevel.equals(LanguageLevel.JDK_1_4)){
                 expString.append("new StringBuffer()");
-            }else{
+            } else{
                 expString.append("new StringBuilder()");
             }
             turnExpressionIntoChainedAppends(exp, expString);
             expString.append(".toString()");
             final String newExpression = expString.toString();
-            replaceExpression(project, newExpression, exp);
+            replaceExpression(newExpression, exp);
         }
     }
 
@@ -80,19 +74,16 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention{
         final PsiReferenceExpression methodExpression =
                 methodCall.getMethodExpression();
         final PsiType type = methodExpression.getType();
-        if (type == null) {
+        if(type == null){
             return false;
         }
         final String className = type.getCanonicalText();
         if(!"java.lang.StringBuffer".equals(className) &&
-                   !"java.lang.StringBuilder".equals(className)){
+                !"java.lang.StringBuilder".equals(className)){
             return false;
         }
         final String methodName = methodExpression.getReferenceName();
-        if(!"append".equals(methodName)){
-            return false;
-        }
-        return true;
+        return "append".equals(methodName);
     }
 
     private static void turnExpressionIntoChainedAppends(PsiExpression exp,

@@ -69,12 +69,9 @@ class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
         final PsiConditionalExpression condition =
                 (PsiConditionalExpression) rhs;
 
-        if(condition.getCondition() == null ||
-                   condition.getThenExpression() == null ||
-                   condition.getElseExpression() == null){
-            return false;
-        }
-        return true;
+        return condition.getCondition() != null &&
+                condition.getThenExpression() != null &&
+                condition.getElseExpression() != null;
     }
 
     private static boolean isReturnOfConditional(PsiReturnStatement returnStatement){
@@ -89,7 +86,7 @@ class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
                 (PsiConditionalExpression) returnValue;
 
         return condition.getCondition() != null &&
-                       condition.getThenExpression() != null &&
-                       condition.getElseExpression() != null;
+                condition.getThenExpression() != null &&
+                condition.getElseExpression() != null;
     }
 }

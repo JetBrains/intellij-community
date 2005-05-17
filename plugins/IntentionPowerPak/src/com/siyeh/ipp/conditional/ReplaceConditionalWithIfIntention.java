@@ -1,7 +1,5 @@
 package com.siyeh.ipp.conditional;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -21,23 +19,18 @@ public class ReplaceConditionalWithIfIntention extends Intention{
         return new ReplaceConditionalWithIfPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-        final PsiElement element = findMatchingElement(file, editor);
         if(element instanceof PsiReturnStatement){
-            replaceConditionalReturn(element, project);
+            replaceConditionalReturn(element);
         } else if(element instanceof PsiDeclarationStatement){
             replaceConditionalDeclaration(element);
         } else{
-            replaceConditionalAssignment(element, project);
+            replaceConditionalAssignment(element);
         }
     }
 
-    private static void replaceConditionalAssignment(PsiElement element,
-                                                     Project project)
+    private static void replaceConditionalAssignment(PsiElement element)
             throws IncorrectOperationException{
         final PsiExpressionStatement statement =
                 (PsiExpressionStatement) element;
@@ -60,7 +53,7 @@ public class ReplaceConditionalWithIfIntention extends Intention{
                 '{' +
                 lhsText + operator + elseExpression.getText() + ';' +
                 '}';
-        replaceStatement(project, ifStatementString, statement);
+        replaceStatement(ifStatementString, statement);
     }
 
     private static void replaceConditionalDeclaration(PsiElement element)
@@ -103,8 +96,7 @@ public class ReplaceConditionalWithIfIntention extends Intention{
         styleManager.reformat(parent);
     }
 
-    private static void replaceConditionalReturn(PsiElement element,
-                                                 Project project)
+    private static void replaceConditionalReturn(PsiElement element)
             throws IncorrectOperationException{
         final PsiReturnStatement returnStatement =
                 (PsiReturnStatement) element;
@@ -123,6 +115,6 @@ public class ReplaceConditionalWithIfIntention extends Intention{
                 '{' +
                 "return " + elseExpression.getText() + ';' +
                 '}';
-        replaceStatement(project, ifStatementString, returnStatement);
+        replaceStatement(ifStatementString, returnStatement);
     }
 }

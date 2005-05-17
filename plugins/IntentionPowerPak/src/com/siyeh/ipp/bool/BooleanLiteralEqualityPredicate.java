@@ -18,7 +18,7 @@ class BooleanLiteralEqualityPredicate implements PsiElementPredicate{
         final PsiJavaToken sign = expression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
         if(!tokenType.equals(JavaTokenType.EQEQ) &&
-                   !tokenType.equals(JavaTokenType.NE)){
+                !tokenType.equals(JavaTokenType.NE)){
             return false;
         }
         final PsiExpression lhs = expression.getLOperand();
@@ -27,6 +27,6 @@ class BooleanLiteralEqualityPredicate implements PsiElementPredicate{
             return false;
         }
         return BoolUtils.isBooleanLiteral(lhs) ||
-                       BoolUtils.isBooleanLiteral(rhs);
+                BoolUtils.isBooleanLiteral(rhs);
     }
 }

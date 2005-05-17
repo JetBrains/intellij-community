@@ -69,7 +69,8 @@ class MergeIfOrPredicate implements PsiElementPredicate{
         }
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsForward(ifStatement,
-                                                new Class[]{PsiWhiteSpace.class});
+                                                new Class[]{
+                                                    PsiWhiteSpace.class});
         if(!(nextStatement instanceof PsiIfStatement)){
             return false;
         }

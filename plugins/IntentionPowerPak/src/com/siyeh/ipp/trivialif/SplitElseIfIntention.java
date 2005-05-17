@@ -1,8 +1,6 @@
 package com.siyeh.ipp.trivialif;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiStatement;
@@ -23,17 +21,13 @@ public class SplitElseIfIntention extends Intention{
         return new SplitElseIfPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-        final PsiJavaToken token =
-                (PsiJavaToken) findMatchingElement(file, editor);
+        final PsiJavaToken token = (PsiJavaToken) element;
         final PsiIfStatement parentStatement =
                 (PsiIfStatement) token.getParent();
         final PsiStatement elseBranch = parentStatement.getElseBranch();
         final String newStatement = '{' + elseBranch.getText() + '}';
-        replaceStatement(project, newStatement, elseBranch);
+        replaceStatement(newStatement, elseBranch);
     }
 }

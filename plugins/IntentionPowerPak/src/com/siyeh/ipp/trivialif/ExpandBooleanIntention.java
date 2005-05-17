@@ -1,7 +1,5 @@
 package com.siyeh.ipp.trivialif;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -21,17 +19,12 @@ public class ExpandBooleanIntention extends Intention{
         return new ExpandBooleanPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-
-        final PsiJavaToken token =
-                (PsiJavaToken) findMatchingElement(file, editor);
+        final PsiJavaToken token = (PsiJavaToken) element;
         final PsiStatement containingStatement =
                 PsiTreeUtil.getParentOfType(token, PsiStatement.class);
-
+        assert containingStatement != null;
         if(ExpandBooleanPredicate.isBooleanAssignment(containingStatement)){
             final PsiExpressionStatement assignmentStatement =
                     (PsiExpressionStatement) containingStatement;
@@ -43,9 +36,9 @@ public class ExpandBooleanIntention extends Intention{
             final String lhsText = lhs.getText();
             final String statement =
                     "if(" + rhsText + "){" + lhsText + " = true;}else{" +
-                    lhsText +
-                    " = false;}";
-            replaceStatement(project, statement, containingStatement);
+                            lhsText +
+                            " = false;}";
+            replaceStatement(statement, containingStatement);
         } else if(ExpandBooleanPredicate.isBooleanReturn(containingStatement)){
             final PsiReturnStatement returnStatement =
                     (PsiReturnStatement) containingStatement;
@@ -53,7 +46,7 @@ public class ExpandBooleanIntention extends Intention{
             final String valueText = returnValue.getText();
             final String statement =
                     "if(" + valueText + "){return true;}else{return false;}";
-            replaceStatement(project, statement, containingStatement);
+            replaceStatement(statement, containingStatement);
         }
     }
 }

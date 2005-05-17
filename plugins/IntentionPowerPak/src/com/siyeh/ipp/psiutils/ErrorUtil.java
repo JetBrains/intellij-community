@@ -1,8 +1,8 @@
 package com.siyeh.ipp.psiutils;
 
-import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 
 public class ErrorUtil{
     private ErrorUtil(){
@@ -22,7 +22,7 @@ public class ErrorUtil{
             containsErrorElement = true;
         }
 
-        public boolean containsErrorElement(){
+        private boolean containsErrorElement(){
             return containsErrorElement;
         }
     }

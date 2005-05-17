@@ -18,20 +18,20 @@ class CaseUtil{
         if(expression == null){
             return false;
         }
-        if(expression instanceof PsiReferenceExpression)
-        {
-            final PsiElement referent = ((PsiReferenceExpression) expression).resolve();
-            if(referent instanceof PsiEnumConstant)
-            return true;
+        if(expression instanceof PsiReferenceExpression){
+            final PsiElement referent = ((PsiReference) expression).resolve();
+            if(referent instanceof PsiEnumConstant){
+                return true;
+            }
         }
         final PsiType type = expression.getType();
         if(type == null){
             return false;
         }
         if(!type.equals(PsiType.INT) &&
-                   !type.equals(PsiType.CHAR) &&
-                   !type.equals(PsiType.LONG) &&
-                   !type.equals(PsiType.SHORT)){
+                !type.equals(PsiType.CHAR) &&
+                !type.equals(PsiType.LONG) &&
+                !type.equals(PsiType.SHORT)){
             return false;
         }
         return PsiUtil.isConstantExpression(expression);
@@ -57,7 +57,7 @@ class CaseUtil{
             final PsiStatement thenBranch = ifStatement.getThenBranch();
             final PsiStatement elseBranch = ifStatement.getElseBranch();
             return containsHiddenBreak(thenBranch, false) ||
-                           containsHiddenBreak(elseBranch, false);
+                    containsHiddenBreak(elseBranch, false);
         } else if(statement instanceof PsiBreakStatement){
             if(isTopLevel){
                 return false;
@@ -75,7 +75,7 @@ class CaseUtil{
 
     public static boolean isUsedByStatementList(PsiLocalVariable var,
                                                 List<PsiElement> elements){
-        for(PsiElement element: elements){
+        for(PsiElement element : elements){
             if(isUsedByStatement(var, element)){
                 return true;
             }
@@ -96,8 +96,8 @@ class CaseUtil{
         PsiElement ancestor = statement;
         while(ancestor.getParent() != null){
             if(ancestor instanceof PsiMethod
-                            || ancestor instanceof PsiClass
-                            || ancestor instanceof PsiFile){
+                    || ancestor instanceof PsiClass
+                    || ancestor instanceof PsiFile){
                 break;
             }
             ancestor = ancestor.getParent();
@@ -196,15 +196,15 @@ class CaseUtil{
         final PsiExpression rhs = binaryExp.getROperand();
         if(operation.equals(JavaTokenType.OROR)){
             return canBeMadeIntoCase(lOperand, caseExpression) &&
-                           canBeMadeIntoCase(rhs, caseExpression);
+                    canBeMadeIntoCase(rhs, caseExpression);
         } else if(operation.equals(JavaTokenType.EQEQ)){
             if(canBeCaseLabel(lOperand) &&
-                       EquivalenceChecker.expressionsAreEquivalent(caseExpression,
-                                                                   rhs)){
+                    EquivalenceChecker.expressionsAreEquivalent(caseExpression,
+                                                                rhs)){
                 return true;
             } else if(canBeCaseLabel(rhs) &&
-                              EquivalenceChecker.expressionsAreEquivalent(caseExpression,
-                                                                          lOperand)){
+                    EquivalenceChecker.expressionsAreEquivalent(caseExpression,
+                                                                lOperand)){
                 return true;
             }
             return false;

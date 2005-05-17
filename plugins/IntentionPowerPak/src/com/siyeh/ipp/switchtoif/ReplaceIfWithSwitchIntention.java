@@ -1,7 +1,5 @@
 package com.siyeh.ipp.switchtoif;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -29,13 +27,10 @@ public class ReplaceIfWithSwitchIntention extends Intention{
         return new IfToSwitchPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
         final PsiJavaToken switchToken =
-                (PsiJavaToken) findMatchingElement(file, editor);
+                (PsiJavaToken) element;
         PsiIfStatement ifStatement = (PsiIfStatement) switchToken.getParent();
         boolean breaksNeedRelabeled = false;
         PsiStatement breakTarget = null;
@@ -152,9 +147,9 @@ public class ReplaceIfWithSwitchIntention extends Intention{
             termReplace(out, breakTarget, statementToReplace,
                         switchStatementString);
             final String newStatement = out.toString();
-            replaceStatement(project, newStatement, breakTarget);
+            replaceStatement(newStatement, breakTarget);
         } else{
-            replaceStatement(project, switchStatementString,
+            replaceStatement(switchStatementString,
                              statementToReplace);
         }
     }

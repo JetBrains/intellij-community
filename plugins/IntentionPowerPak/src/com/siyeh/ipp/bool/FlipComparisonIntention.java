@@ -1,8 +1,9 @@
 package com.siyeh.ipp.bool;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -33,20 +34,17 @@ public class FlipComparisonIntention extends MutablyNamedIntention{
         return new ComparisonPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
-            throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
+    public void processIntention(PsiElement element)
+        throws IncorrectOperationException {
         final PsiBinaryExpression exp =
-                (PsiBinaryExpression) findMatchingElement(file, editor);
+                (PsiBinaryExpression) element;
         final PsiExpression lhs = exp.getLOperand();
         final PsiExpression rhs = exp.getROperand();
         final PsiJavaToken sign = exp.getOperationSign();
         final String operand = sign.getText();
         final String expString =
                 rhs.getText() + ComparisonUtils.getFlippedComparison(operand) +
-                lhs.getText();
-        replaceExpression(project, expString, exp);
+                        lhs.getText();
+        replaceExpression(expString, exp);
     }
 }

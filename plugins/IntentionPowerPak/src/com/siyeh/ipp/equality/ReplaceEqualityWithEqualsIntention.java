@@ -1,7 +1,5 @@
 package com.siyeh.ipp.equality;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -22,13 +20,10 @@ public class ReplaceEqualityWithEqualsIntention extends Intention{
         return new ObjectEqualityPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
         final PsiBinaryExpression exp =
-                (PsiBinaryExpression) findMatchingElement(file, editor);
+                (PsiBinaryExpression) element;
         final PsiExpression lhs = exp.getLOperand();
         final PsiExpression rhs = exp.getROperand();
         final PsiExpression strippedLhs =
@@ -40,7 +35,7 @@ public class ReplaceEqualityWithEqualsIntention extends Intention{
         final String expString;
         if(tokenType.equals(JavaTokenType.EQEQ)){
             if(ParenthesesUtils.getPrecendence(strippedLhs) >
-                       ParenthesesUtils.METHOD_CALL_PRECEDENCE){
+                    ParenthesesUtils.METHOD_CALL_PRECEDENCE){
                 expString = '(' + strippedLhs.getText() + ").equals(" +
                         strippedRhs.getText() + ')';
             } else{
@@ -49,7 +44,7 @@ public class ReplaceEqualityWithEqualsIntention extends Intention{
             }
         } else{
             if(ParenthesesUtils.getPrecendence(strippedLhs) >
-                       ParenthesesUtils.METHOD_CALL_PRECEDENCE){
+                    ParenthesesUtils.METHOD_CALL_PRECEDENCE){
                 expString = "!(" + strippedLhs.getText() + ").equals(" +
                         strippedRhs.getText() + ')';
             } else{
@@ -57,6 +52,6 @@ public class ReplaceEqualityWithEqualsIntention extends Intention{
                         strippedRhs.getText() + ')';
             }
         }
-        replaceExpression(project, expString, exp);
+        replaceExpression(expString, exp);
     }
 }

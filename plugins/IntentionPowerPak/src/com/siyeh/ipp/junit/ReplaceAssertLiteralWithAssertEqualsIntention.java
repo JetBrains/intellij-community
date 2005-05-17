@@ -1,7 +1,5 @@
 package com.siyeh.ipp.junit;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -12,12 +10,13 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
     protected String getTextForElement(PsiElement element){
         final PsiMethodCallExpression call = (PsiMethodCallExpression) element;
         final PsiExpressionList argumentList = call.getArgumentList();
+        assert argumentList != null;
         final PsiExpression[] args = argumentList.getExpressions();
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
         final String methodName = methodExpression.getReferenceName();
         final String literal = methodName.substring("assert".length())
-                        .toLowerCase();
+                .toLowerCase();
 
         final String messageText;
         if(args.length == 1){
@@ -26,7 +25,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
             messageText = "..., ";
         }
         return "Replace " + methodName + "() with assertEquals(" + messageText +
-                       literal + ", ...)";
+                literal + ", ...)";
     }
 
     public String getFamilyName(){
@@ -37,20 +36,17 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
         return new AssertLiteralPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
         final PsiMethodCallExpression call =
-                (PsiMethodCallExpression) findMatchingElement(file, editor);
+                (PsiMethodCallExpression) element;
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
         final PsiExpression qualifierExp =
                 methodExpression.getQualifierExpression();
         final String methodName = methodExpression.getReferenceName();
         final String literal = methodName.substring("assert".length())
-                        .toLowerCase();
+                .toLowerCase();
 
         final String qualifier;
         if(qualifierExp == null){
@@ -59,6 +55,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
             qualifier = qualifierExp.getText() + '.';
         }
         final PsiExpressionList argumentList = call.getArgumentList();
+        assert argumentList != null;
         final PsiExpression[] args = argumentList.getExpressions();
 
         final String callString;
@@ -68,10 +65,10 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
         } else{
             callString =
                     qualifier + "assertEquals(" + args[0].getText() + ", " +
-                    literal +
-                    ", " + args[1].getText() +
-                    ')';
+                            literal +
+                            ", " + args[1].getText() +
+                            ')';
         }
-        replaceExpression(project, callString, call);
+        replaceExpression(callString, call);
     }
 }

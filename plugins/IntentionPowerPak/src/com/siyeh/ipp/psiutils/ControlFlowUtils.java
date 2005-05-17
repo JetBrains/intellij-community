@@ -13,27 +13,27 @@ public class ControlFlowUtils{
         if(statement instanceof PsiBreakStatement ||
                 statement instanceof PsiContinueStatement ||
                 statement instanceof PsiReturnStatement ||
-                statement instanceof PsiThrowStatement) {
+                statement instanceof PsiThrowStatement){
             return false;
         } else if(statement instanceof PsiExpressionListStatement ||
                 statement instanceof PsiExpressionStatement ||
                 statement instanceof PsiEmptyStatement ||
                 statement instanceof PsiAssertStatement ||
-                statement instanceof PsiDeclarationStatement) {
+                statement instanceof PsiDeclarationStatement){
             return true;
-        } else if(statement instanceof PsiForStatement) {
+        } else if(statement instanceof PsiForStatement){
             final PsiForStatement loopStatement = (PsiForStatement) statement;
             final PsiExpression test = loopStatement.getCondition();
 
             return test != null && !isBooleanConstant(test, false) ||
                     statementIsBreakTarget(loopStatement);
-        } else if(statement instanceof PsiWhileStatement) {
+        } else if(statement instanceof PsiWhileStatement){
             final PsiWhileStatement loopStatement =
                     (PsiWhileStatement) statement;
             final PsiExpression test = loopStatement.getCondition();
             return !isBooleanConstant(test, true)
                     || statementIsBreakTarget(loopStatement);
-        } else if(statement instanceof PsiDoWhileStatement) {
+        } else if(statement instanceof PsiDoWhileStatement){
             final PsiDoWhileStatement loopStatement =
                     (PsiDoWhileStatement) statement;
             final PsiExpression test = loopStatement.getCondition();
@@ -41,41 +41,41 @@ public class ControlFlowUtils{
             return statementMayCompleteNormally(body) &&
                     !isBooleanConstant(test, true)
                     || statementIsBreakTarget(loopStatement);
-        } else if(statement instanceof PsiSynchronizedStatement) {
+        } else if(statement instanceof PsiSynchronizedStatement){
             final PsiCodeBlock body =
                     ((PsiSynchronizedStatement) statement).getBody();
             return codeBlockMayCompleteNormally(body);
-        } else if(statement instanceof PsiBlockStatement) {
+        } else if(statement instanceof PsiBlockStatement){
             final PsiCodeBlock codeBlock =
                     ((PsiBlockStatement) statement).getCodeBlock();
             return codeBlockMayCompleteNormally(codeBlock);
-        } else if(statement instanceof PsiLabeledStatement) {
+        } else if(statement instanceof PsiLabeledStatement){
             final PsiLabeledStatement labeledStatement =
                     (PsiLabeledStatement) statement;
             final PsiStatement body = labeledStatement.getStatement();
 
             return statementMayCompleteNormally(body)
                     || statementIsBreakTarget(body);
-        } else if(statement instanceof PsiIfStatement) {
+        } else if(statement instanceof PsiIfStatement){
             final PsiIfStatement ifStatement = (PsiIfStatement) statement;
             final PsiStatement thenBranch = ifStatement.getThenBranch();
-            if(statementMayCompleteNormally(thenBranch)) {
+            if(statementMayCompleteNormally(thenBranch)){
                 return true;
             }
             final PsiStatement elseBranch = ifStatement.getElseBranch();
             return elseBranch == null ||
                     statementMayCompleteNormally(elseBranch);
-        } else if(statement instanceof PsiTryStatement) {
+        } else if(statement instanceof PsiTryStatement){
             final PsiTryStatement tryStatement = (PsiTryStatement) statement;
 
             final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-            if(finallyBlock != null) {
-                if(!codeBlockMayCompleteNormally(finallyBlock)) {
+            if(finallyBlock != null){
+                if(!codeBlockMayCompleteNormally(finallyBlock)){
                     return false;
                 }
             }
             final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-            if(codeBlockMayCompleteNormally(tryBlock)) {
+            if(codeBlockMayCompleteNormally(tryBlock)){
                 return true;
             }
             final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
@@ -85,26 +85,26 @@ public class ControlFlowUtils{
                 }
             }
             return false;
-        } else if(statement instanceof PsiSwitchStatement) {
+        } else if(statement instanceof PsiSwitchStatement){
             final PsiSwitchStatement switchStatement =
                     (PsiSwitchStatement) statement;
-            if(statementIsBreakTarget(switchStatement)) {
+            if(statementIsBreakTarget(switchStatement)){
                 return true;
             }
             final PsiCodeBlock body = switchStatement.getBody();
             final PsiStatement[] statements = body.getStatements();
             int lastNonLabelOffset = -1;
-            if(statements != null) {
+            if(statements != null){
                 for(int i = statements.length - 1; i >= 0; i--){
-                    if(!(statements[i] instanceof PsiSwitchLabelStatement)) {
+                    if(!(statements[i] instanceof PsiSwitchLabelStatement)){
                         lastNonLabelOffset = i;
                         break;
                     }
                 }
             }
-            if(lastNonLabelOffset == -1) {
+            if(lastNonLabelOffset == -1){
                 return true;    // it's all labels
-            } else if(lastNonLabelOffset == statements.length - 1) {
+            } else if(lastNonLabelOffset == statements.length - 1){
                 return statementMayCompleteNormally(statements[statements
                         .length -
                         1]);
@@ -127,7 +127,7 @@ public class ControlFlowUtils{
     }
 
     private static boolean isBooleanConstant(PsiExpression test, boolean val){
-        if(!PsiUtil.isConstantExpression(test)) {
+        if(!PsiUtil.isConstantExpression(test)){
             return false;
         }
         final boolean value =
@@ -137,7 +137,7 @@ public class ControlFlowUtils{
     }
 
     private static boolean statementIsBreakTarget(PsiStatement statement){
-        if(statement == null) {
+        if(statement == null){
             return false;
         }
         final BreakTargetFinder breakFinder = new BreakTargetFinder(statement);
@@ -146,7 +146,7 @@ public class ControlFlowUtils{
     }
 
     public static boolean statementContainsExitingBreak(PsiStatement statement){
-        if(statement == null) {
+        if(statement == null){
             return false;
         }
         final ExitingBreakFinder breakFinder = new ExitingBreakFinder();
@@ -174,7 +174,7 @@ public class ControlFlowUtils{
             super.visitBreakStatement(breakStatement);
             final PsiStatement exitedStatement =
                     breakStatement.findExitedStatement();
-            if(exitedStatement.equals(m_target)) {
+            if(exitedStatement.equals(m_target)){
                 m_found = true;
             }
         }
@@ -196,7 +196,7 @@ public class ControlFlowUtils{
         }
 
         public void visitBreakStatement(PsiBreakStatement breakStatement){
-            if(breakStatement.getLabelIdentifier() != null) {
+            if(breakStatement.getLabelIdentifier() != null){
                 return;
             }
             m_found = true;

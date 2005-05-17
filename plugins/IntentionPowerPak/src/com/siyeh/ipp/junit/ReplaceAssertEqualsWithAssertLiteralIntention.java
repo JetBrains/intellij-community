@@ -1,7 +1,5 @@
 package com.siyeh.ipp.junit;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -13,6 +11,7 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
 
         final PsiMethodCallExpression call = (PsiMethodCallExpression) element;
         final PsiExpressionList argumentList = call.getArgumentList();
+        assert argumentList != null;
         final PsiExpression[] args = argumentList.getExpressions();
         final String assertString;
         if(args.length == 2){
@@ -33,13 +32,10 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
         return new AssertEqualsWithLiteralPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
         final PsiMethodCallExpression call =
-                (PsiMethodCallExpression) findMatchingElement(file, editor);
+                (PsiMethodCallExpression) element;
         final PsiReferenceExpression expression = call.getMethodExpression();
         final PsiExpression qualifierExp = expression.getQualifierExpression();
 
@@ -51,14 +47,15 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
         }
 
         final PsiExpressionList argumentList = call.getArgumentList();
+        assert argumentList != null;
         final PsiExpression[] args = argumentList.getExpressions();
         final String callString;
         if(args.length == 2){
             final PsiExpression otherArg;
             final String argText = args[0].getText();
             if("true".equals(argText) ||
-                       "false".equals(argText) ||
-                       "null".equals(argText)){
+                    "false".equals(argText) ||
+                    "null".equals(argText)){
                 otherArg = args[1];
             } else{
                 otherArg = args[0];
@@ -69,8 +66,8 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
             final PsiExpression otherArg;
             final String argText = args[1].getText();
             if("true".equals(argText) ||
-                       "false".equals(argText) ||
-                       "null".equals(argText)){
+                    "false".equals(argText) ||
+                    "null".equals(argText)){
                 otherArg = args[2];
             } else{
                 otherArg = args[1];
@@ -78,7 +75,7 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
             callString = qualifier + getAssertString(argText) + '(' +
                     args[0].getText() + ", " + otherArg.getText() + ')';
         }
-        replaceExpression(project, callString, call);
+        replaceExpression(callString, call);
     }
 
     private static String getAssertString(String argText){

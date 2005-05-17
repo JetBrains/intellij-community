@@ -1,7 +1,5 @@
 package com.siyeh.ipp.commutative;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -25,18 +23,17 @@ public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention{
         return new FlipCommutativeMethodCallPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
         final PsiMethodCallExpression call =
-                (PsiMethodCallExpression) findMatchingElement(file, editor);
+                (PsiMethodCallExpression) element;
+        assert call != null;
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
         final String methodName = methodExpression.getReferenceName();
         final PsiExpression target = methodExpression.getQualifierExpression();
         final PsiExpressionList argumentList = call.getArgumentList();
+        assert argumentList != null;
         final PsiExpression arg = argumentList.getExpressions()[0];
         final PsiExpression strippedTarget =
                 ParenthesesUtils.stripParentheses(target);
@@ -44,13 +41,13 @@ public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention{
                 ParenthesesUtils.stripParentheses(arg);
         final String callString;
         if(ParenthesesUtils.getPrecendence(strippedArg) >
-                   ParenthesesUtils.METHOD_CALL_PRECEDENCE){
+                ParenthesesUtils.METHOD_CALL_PRECEDENCE){
             callString = '(' + strippedArg.getText() + ")." + methodName + '(' +
                     strippedTarget.getText() + ')';
         } else{
             callString = strippedArg.getText() + '.' + methodName + '(' +
                     strippedTarget.getText() + ')';
         }
-        replaceExpression(project, callString, call);
+        replaceExpression(callString, call);
     }
 }

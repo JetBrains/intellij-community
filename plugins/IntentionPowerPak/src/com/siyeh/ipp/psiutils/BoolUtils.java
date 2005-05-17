@@ -1,6 +1,7 @@
 package com.siyeh.ipp.psiutils;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.Nullable;
 
 public class BoolUtils{
     private BoolUtils(){
@@ -23,7 +24,7 @@ public class BoolUtils{
         return false;
     }
 
-    public static PsiExpression findNegation(PsiExpression exp){
+    public static @Nullable PsiExpression findNegation(PsiExpression exp){
         PsiExpression ancestor = exp;
         while(ancestor.getParent() instanceof PsiParenthesizedExpression){
             ancestor = (PsiExpression) ancestor.getParent();
@@ -78,7 +79,7 @@ public class BoolUtils{
             final PsiExpression rhs = binaryExpression.getROperand();
             return lhs.getText() + negatedComparison + rhs.getText();
         } else if(ParenthesesUtils.getPrecendence(condition) >
-                          ParenthesesUtils.PREFIX_PRECEDENCE){
+                ParenthesesUtils.PREFIX_PRECEDENCE){
             return "!(" + condition.getText() + ')';
         } else{
             return '!' + condition.getText();

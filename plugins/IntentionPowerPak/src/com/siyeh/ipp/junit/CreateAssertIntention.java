@@ -1,7 +1,5 @@
 package com.siyeh.ipp.junit;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -22,19 +20,16 @@ public class CreateAssertIntention extends Intention{
         return new CreateAssertPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
         final PsiExpressionStatement statement =
-                (PsiExpressionStatement) findMatchingElement(file, editor);
-        final PsiExpression expression = statement.  getExpression();
+                (PsiExpressionStatement) element;
+        assert statement != null;
+        final PsiExpression expression = statement.getExpression();
         if(BoolUtils.isNegation(expression)){
             final String newExpression = "assertFalse(" +
                     BoolUtils.getNegatedExpressionText(expression) + ");";
-            replaceStatement(project,
-                             newExpression,
+            replaceStatement(newExpression,
                              statement);
         } else if(isNullComparison(expression)){
             final PsiBinaryExpression binaryExpression =
@@ -49,8 +44,7 @@ public class CreateAssertIntention extends Intention{
             }
             final String newExpression = "assertNull(" +
                     comparedExpression.getText() + ");";
-            replaceStatement(project,
-                             newExpression,
+            replaceStatement(newExpression,
                              statement);
         } else if(isEqualityComparison(expression)){
             final PsiBinaryExpression binaryExpression =
@@ -81,16 +75,17 @@ public class CreateAssertIntention extends Intention{
                         comparedExpression.getText() + ", " +
                         comparingExpression.getText() + ");";
             }
-            replaceStatement(project,
-                             newExpression,
+            replaceStatement(newExpression,
                              statement);
         } else if(isEqualsExpression(expression)){
             final PsiMethodCallExpression call =
                     (PsiMethodCallExpression) expression;
+            final PsiReferenceExpression methodExpression = call.getMethodExpression();
             final PsiExpression comparedExpression =
-                    call.getMethodExpression().getQualifierExpression();
-            final PsiExpression comparingExpression =
-                    call.getArgumentList().getExpressions()[0];
+                    methodExpression.getQualifierExpression();
+            final PsiExpressionList argList = call.getArgumentList();
+            assert argList != null;
+            final PsiExpression comparingExpression = argList.getExpressions()[0];
             final String newExpression;
             if(comparingExpression instanceof PsiLiteralExpression){
                 newExpression = "assertEquals(" +
@@ -101,19 +96,17 @@ public class CreateAssertIntention extends Intention{
                         comparedExpression.getText() + ", " +
                         comparingExpression.getText() + ");";
             }
-            replaceStatement(project,
-                             newExpression,
+            replaceStatement(newExpression,
                              statement);
         } else{
             final String newExpression =
                     "assertTrue(" + expression.getText() + ");";
-            replaceStatement(project,
-                             newExpression,
+            replaceStatement(newExpression,
                              statement);
         }
     }
 
-    private boolean isEqualsExpression(PsiExpression expression){
+    private static boolean isEqualsExpression(PsiExpression expression){
         if(!(expression instanceof PsiMethodCallExpression)){
             return false;
         }
@@ -139,7 +132,7 @@ public class CreateAssertIntention extends Intention{
         }
         final PsiExpression[] expressions = argList.getExpressions();
         return expressions != null && expressions.length == 1 &&
-                       expressions[0] != null;
+                expressions[0] != null;
     }
 
     private static boolean isEqualityComparison(PsiExpression expression){

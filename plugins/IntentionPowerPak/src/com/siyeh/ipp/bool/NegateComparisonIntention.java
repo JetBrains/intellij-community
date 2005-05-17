@@ -1,8 +1,9 @@
 package com.siyeh.ipp.bool;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaToken;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -33,13 +34,10 @@ public class NegateComparisonIntention extends MutablyNamedIntention{
         return new ComparisonPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
         final PsiBinaryExpression exp =
-                (PsiBinaryExpression) findMatchingElement(file, editor);
+                (PsiBinaryExpression) element;
         final PsiExpression lhs = exp.getLOperand();
         final PsiExpression rhs = exp.getROperand();
         final PsiJavaToken sign = exp.getOperationSign();
@@ -48,8 +46,7 @@ public class NegateComparisonIntention extends MutablyNamedIntention{
                 ComparisonUtils.getNegatedComparison(operator);
         final String lhsText = lhs.getText();
         final String rhsText = rhs.getText();
-        replaceExpressionWithNegatedExpressionString(project,
-                                                     lhsText +
+        replaceExpressionWithNegatedExpressionString(lhsText +
                 negatedOperator +
                 rhsText,
                                                      exp);

@@ -20,7 +20,7 @@ class ShiftByLiteralPredicate implements PsiElementPredicate{
         final PsiJavaToken sign = expression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
         if(!tokenType.equals(JavaTokenType.LTLTEQ) &&
-                   !tokenType.equals(JavaTokenType.GTGTEQ)){
+                !tokenType.equals(JavaTokenType.GTGTEQ)){
             return false;
         }
         final PsiExpression lhs = expression.getLExpression();
@@ -45,7 +45,7 @@ class ShiftByLiteralPredicate implements PsiElementPredicate{
         final PsiJavaToken sign = expression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
         if(!tokenType.equals(JavaTokenType.LTLT) &&
-                   !tokenType.equals(JavaTokenType.GTGT)){
+                !tokenType.equals(JavaTokenType.GTGT)){
             return false;
         }
         final PsiExpression lOperand = expression.getLOperand();

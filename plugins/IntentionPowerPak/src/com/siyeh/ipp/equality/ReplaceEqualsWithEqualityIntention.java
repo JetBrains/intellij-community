@@ -1,7 +1,5 @@
 package com.siyeh.ipp.equality;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -21,17 +19,16 @@ public class ReplaceEqualsWithEqualityIntention extends Intention{
         return new EqualsPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
         final PsiMethodCallExpression call =
-                (PsiMethodCallExpression) findMatchingElement(file, editor);
+                (PsiMethodCallExpression) element;
+        assert call != null;
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
         final PsiExpression target = methodExpression.getQualifierExpression();
         final PsiExpressionList argumentList = call.getArgumentList();
+        assert argumentList != null;
         final PsiExpression arg = argumentList.getExpressions()[0];
         final PsiExpression strippedTarget =
                 ParenthesesUtils.stripParentheses(target);
@@ -40,20 +37,20 @@ public class ReplaceEqualsWithEqualityIntention extends Intention{
 
         final String strippedArgText;
         if(ParenthesesUtils.getPrecendence(strippedArg) >
-                   ParenthesesUtils.EQUALITY_PRECEDENCE){
+                ParenthesesUtils.EQUALITY_PRECEDENCE){
             strippedArgText = '(' + strippedArg.getText() + ')';
         } else{
             strippedArgText = strippedArg.getText();
         }
         final String strippedTargetText;
         if(ParenthesesUtils.getPrecendence(strippedTarget) >
-                   ParenthesesUtils.EQUALITY_PRECEDENCE){
+                ParenthesesUtils.EQUALITY_PRECEDENCE){
             strippedTargetText = '(' + strippedTarget.getText() + ')';
         } else{
             strippedTargetText = strippedTarget.getText();
         }
 
-        replaceExpression(project, strippedTargetText + "==" + strippedArgText,
+        replaceExpression(strippedTargetText + "==" + strippedArgText,
                           call);
     }
 }

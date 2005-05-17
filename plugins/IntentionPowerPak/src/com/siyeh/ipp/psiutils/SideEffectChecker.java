@@ -57,7 +57,7 @@ public class SideEffectChecker{
             }
         }
 
-        public boolean mayHaveSideEffects(){
+        private boolean mayHaveSideEffects(){
             return mayHaveSideEffects;
         }
     }

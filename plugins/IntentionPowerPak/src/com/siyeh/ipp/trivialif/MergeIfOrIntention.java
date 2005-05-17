@@ -1,7 +1,5 @@
 package com.siyeh.ipp.trivialif;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -22,25 +20,18 @@ public class MergeIfOrIntention extends Intention{
         return new MergeIfOrPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-        final PsiJavaToken token =
-                (PsiJavaToken) findMatchingElement(file, editor);
+        final PsiJavaToken token = (PsiJavaToken) element;
         if(MergeIfOrPredicate.isMergableExplicitIf(token)){
-            replaceMergeableExplicitIf(file, editor, project);
+            replaceMergeableExplicitIf(token);
         } else{
-            replaceMergeableImplicitIf(file, editor, project);
+            replaceMergeableImplicitIf(token);
         }
     }
 
-    private void replaceMergeableExplicitIf(PsiFile file, Editor editor,
-                                            Project project)
+    private static void replaceMergeableExplicitIf(PsiJavaToken token)
             throws IncorrectOperationException{
-        final PsiJavaToken token =
-                (PsiJavaToken) findMatchingElement(file, editor);
         final PsiIfStatement parentStatement =
                 (PsiIfStatement) token.getParent();
         final PsiIfStatement childStatement =
@@ -49,7 +40,7 @@ public class MergeIfOrIntention extends Intention{
         final String childConditionText;
         final PsiExpression childCondition = childStatement.getCondition();
         if(ParenthesesUtils.getPrecendence(childCondition)
-                   > ParenthesesUtils.OR_PRECEDENCE){
+                > ParenthesesUtils.OR_PRECEDENCE){
             childConditionText = '(' + childCondition.getText() + ')';
         } else{
             childConditionText = childCondition.getText();
@@ -58,7 +49,7 @@ public class MergeIfOrIntention extends Intention{
         final String parentConditionText;
         final PsiExpression condition = parentStatement.getCondition();
         if(ParenthesesUtils.getPrecendence(condition)
-                   > ParenthesesUtils.OR_PRECEDENCE){
+                > ParenthesesUtils.OR_PRECEDENCE){
             parentConditionText = '(' + condition.getText() + ')';
         } else{
             parentConditionText = condition.getText();
@@ -67,33 +58,32 @@ public class MergeIfOrIntention extends Intention{
         final PsiStatement parentThenBranch = parentStatement.getThenBranch();
         final String parentThenBranchText = parentThenBranch.getText();
         final StringBuffer statement = new StringBuffer(
-                        "if(" + parentConditionText + "||" +
-                childConditionText + ')' +
-                parentThenBranchText);
+                "if(" + parentConditionText + "||" +
+                        childConditionText + ')' +
+                        parentThenBranchText);
         final PsiStatement childElseBranch = childStatement.getElseBranch();
         if(childElseBranch != null){
             final String childElseBranchText = childElseBranch.getText();
             statement.append("else " + childElseBranchText);
         }
         final String newStatement = statement.toString();
-        replaceStatement(project, newStatement, parentStatement);
+        replaceStatement(newStatement, parentStatement);
     }
 
-    private void replaceMergeableImplicitIf(PsiFile file, Editor editor,
-                                            Project project)
+    private static void replaceMergeableImplicitIf(PsiJavaToken token)
             throws IncorrectOperationException{
-        final PsiJavaToken token =
-                (PsiJavaToken) findMatchingElement(file, editor);
         final PsiIfStatement parentStatement =
                 (PsiIfStatement) token.getParent();
         final PsiIfStatement childStatement =
                 (PsiIfStatement) PsiTreeUtil.skipSiblingsForward(parentStatement,
-                                                                 new Class[]{PsiWhiteSpace.class});
+                                                                 new Class[]{
+                                                                     PsiWhiteSpace.class});
 
         final String childConditionText;
+        assert childStatement != null;
         final PsiExpression childCondition = childStatement.getCondition();
         if(ParenthesesUtils.getPrecendence(childCondition)
-                   > ParenthesesUtils.OR_PRECEDENCE){
+                > ParenthesesUtils.OR_PRECEDENCE){
             childConditionText = '(' + childCondition.getText() + ')';
         } else{
             childConditionText = childCondition.getText();
@@ -102,7 +92,7 @@ public class MergeIfOrIntention extends Intention{
         final String parentConditionText;
         final PsiExpression condition = parentStatement.getCondition();
         if(ParenthesesUtils.getPrecendence(condition)
-                   > ParenthesesUtils.OR_PRECEDENCE){
+                > ParenthesesUtils.OR_PRECEDENCE){
             parentConditionText = '(' + condition.getText() + ')';
         } else{
             parentConditionText = condition.getText();
@@ -111,12 +101,12 @@ public class MergeIfOrIntention extends Intention{
         final PsiStatement parentThenBranch = parentStatement.getThenBranch();
         String statement =
                 "if(" + parentConditionText + "||" + childConditionText + ')' +
-                parentThenBranch.getText();
+                        parentThenBranch.getText();
         final PsiStatement childElseBranch = childStatement.getElseBranch();
         if(childElseBranch != null){
             statement += "else " + childElseBranch.getText();
         }
-        replaceStatement(project, statement, parentStatement);
+        replaceStatement(statement, parentStatement);
         childStatement.delete();
     }
 }

@@ -1,10 +1,8 @@
 package com.siyeh.ipp.equality;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -23,13 +21,10 @@ public class ReplaceEqualityWithSafeEqualsIntention extends Intention{
         return new ObjectEqualityPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
         final PsiBinaryExpression exp =
-                (PsiBinaryExpression) findMatchingElement(file, editor);
+                (PsiBinaryExpression) element;
         final PsiExpression lhs = exp.getLOperand();
         final PsiExpression rhs = exp.getROperand();
         final PsiExpression strippedLhs =
@@ -40,13 +35,13 @@ public class ReplaceEqualityWithSafeEqualsIntention extends Intention{
         final String lhsText = strippedLhs.getText();
         final String rhsText = strippedRhs.getText();
         if(ParenthesesUtils.getPrecendence(strippedLhs) >
-                   ParenthesesUtils.METHOD_CALL_PRECEDENCE){
+                ParenthesesUtils.METHOD_CALL_PRECEDENCE){
             expString = lhsText + "==null?" + rhsText + " == null:(" + lhsText +
                     ").equals(" + rhsText + ')';
         } else{
             expString = lhsText + "==null?" + rhsText + " == null:" + lhsText +
                     ".equals(" + rhsText + ')';
         }
-        replaceExpression(project, expString, exp);
+        replaceExpression(expString, exp);
     }
 }

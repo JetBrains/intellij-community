@@ -17,12 +17,12 @@ public class DeclarationUtils{
             return;
         }
         if(statement instanceof PsiBreakStatement ||
-                                statement instanceof PsiExpressionStatement ||
-                                statement instanceof PsiContinueStatement ||
-                                statement instanceof PsiThrowStatement ||
-                                statement instanceof PsiExpressionListStatement ||
-                                statement instanceof PsiAssertStatement ||
-                                statement instanceof PsiReturnStatement){
+                statement instanceof PsiExpressionStatement ||
+                statement instanceof PsiContinueStatement ||
+                statement instanceof PsiThrowStatement ||
+                statement instanceof PsiExpressionListStatement ||
+                statement instanceof PsiAssertStatement ||
+                statement instanceof PsiReturnStatement){
         } else if(statement instanceof PsiDeclarationStatement){
             final PsiDeclarationStatement declStatement =
                     (PsiDeclarationStatement) statement;
@@ -129,8 +129,8 @@ public class DeclarationUtils{
     }
 
     private static void calculateVariablesDeclaredInCodeBlock(PsiCodeBlock block,
-                                                              Set variablesDeclaredAtTopLevel,
-                                                              Set variablesDeclaredAtLowerLevels,
+                                                              Set<String> variablesDeclaredAtTopLevel,
+                                                              Set<String>variablesDeclaredAtLowerLevels,
                                                               boolean isTopLevel){
         if(block == null){
             return;

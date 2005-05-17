@@ -24,8 +24,7 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
             return false;
         }
         final PsiExpression condition = ifStatement.getCondition();
-        if(condition == null || !condition.isValid())
-        {
+        if(condition == null || !condition.isValid()){
             return false;
         }
         if(isSimplifiableAssignment(ifStatement)){
@@ -62,7 +61,8 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsForward(ifStatement,
-                                                new Class[]{PsiWhiteSpace.class});
+                                                new Class[]{
+                                                    PsiWhiteSpace.class});
         if(!(nextStatement instanceof PsiStatement)){
             return false;
         }
@@ -77,7 +77,8 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
 
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsForward(ifStatement,
-                                                new Class[]{PsiWhiteSpace.class});
+                                                new Class[]{
+                                                    PsiWhiteSpace.class});
         if(!(nextStatement instanceof PsiStatement)){
             return false;
         }
@@ -110,7 +111,7 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
         PsiStatement elseBranch = ifStatement.getElseBranch();
         elseBranch = ConditionalUtils.stripBraces(elseBranch);
         if(ConditionalUtils.isAssignment(thenBranch, "true") &&
-                   ConditionalUtils.isAssignment(elseBranch, "false")){
+                ConditionalUtils.isAssignment(elseBranch, "false")){
             final PsiAssignmentExpression thenExpression =
                     (PsiAssignmentExpression) ((PsiExpressionStatement) thenBranch).getExpression();
             final PsiAssignmentExpression elseExpression =
@@ -135,7 +136,7 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
         PsiStatement elseBranch = ifStatement.getElseBranch();
         elseBranch = ConditionalUtils.stripBraces(elseBranch);
         if(ConditionalUtils.isAssignment(thenBranch, "false") &&
-                   ConditionalUtils.isAssignment(elseBranch, "true")){
+                ConditionalUtils.isAssignment(elseBranch, "true")){
             final PsiAssignmentExpression thenExpression =
                     (PsiAssignmentExpression) ((PsiExpressionStatement) thenBranch).getExpression();
             final PsiAssignmentExpression elseExpression =
@@ -162,7 +163,8 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsBackward(ifStatement,
-                                                 new Class[]{PsiWhiteSpace.class});
+                                                 new Class[]{
+                                                     PsiWhiteSpace.class});
         if(!(nextStatement instanceof PsiStatement)){
             return false;
         }
@@ -170,7 +172,7 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
 
         elseBranch = ConditionalUtils.stripBraces(elseBranch);
         if(ConditionalUtils.isAssignment(thenBranch, "true") &&
-                   ConditionalUtils.isAssignment(elseBranch, "false")){
+                ConditionalUtils.isAssignment(elseBranch, "false")){
             final PsiAssignmentExpression thenExpression =
                     (PsiAssignmentExpression) ((PsiExpressionStatement) thenBranch).getExpression();
             final PsiAssignmentExpression elseExpression =
@@ -197,7 +199,8 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
         thenBranch = ConditionalUtils.stripBraces(thenBranch);
         final PsiElement nextStatement =
                 PsiTreeUtil.skipSiblingsBackward(ifStatement,
-                                                 new Class[]{PsiWhiteSpace.class});
+                                                 new Class[]{
+                                                     PsiWhiteSpace.class});
         if(!(nextStatement instanceof PsiStatement)){
             return false;
         }
@@ -205,7 +208,7 @@ class SimplifyIfElsePredicate implements PsiElementPredicate{
 
         elseBranch = ConditionalUtils.stripBraces(elseBranch);
         if(ConditionalUtils.isAssignment(thenBranch, "false") &&
-                   ConditionalUtils.isAssignment(elseBranch, "true")){
+                ConditionalUtils.isAssignment(elseBranch, "true")){
             final PsiAssignmentExpression thenExpression =
                     (PsiAssignmentExpression) ((PsiExpressionStatement) thenBranch).getExpression();
             final PsiAssignmentExpression elseExpression =

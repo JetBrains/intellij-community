@@ -1,7 +1,5 @@
 package com.siyeh.ipp.bool;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -24,13 +22,11 @@ public class FlipConjunctionIntention extends MutablyNamedIntention{
         return new ConjunctionPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-        PsiExpression exp = (PsiExpression) findMatchingElement(file, editor);
+        PsiExpression exp = (PsiExpression) element;
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) exp;
+        assert binaryExpression != null;
         final PsiJavaToken sign = binaryExpression.getOperationSign();
         final IElementType conjunctionType = sign.getTokenType();
         PsiElement parent = exp.getParent();
@@ -39,7 +35,7 @@ public class FlipConjunctionIntention extends MutablyNamedIntention{
             parent = exp.getParent();
         }
         final String newExpression = flipExpression(exp, conjunctionType);
-        replaceExpression(project, newExpression, exp);
+        replaceExpression(newExpression, exp);
     }
 
     private String flipExpression(PsiExpression exp,
@@ -56,8 +52,8 @@ public class FlipConjunctionIntention extends MutablyNamedIntention{
                 conjunctionSign = "||";
             }
             return flipExpression(rhs, conjunctionType) + ' ' +
-                           conjunctionSign + ' ' +
-                           flipExpression(lhs, conjunctionType);
+                    conjunctionSign + ' ' +
+                    flipExpression(lhs, conjunctionType);
         } else{
             return exp.getText();
         }

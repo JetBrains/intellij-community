@@ -1,6 +1,5 @@
 package com.siyeh.ipp.forloop;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -21,23 +20,20 @@ public class ReplaceForEachLoopWithForLoopIntention extends Intention{
         return new ForEachLoopPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-        final PsiElement forKeyword = findMatchingElement(file, editor);
-        final PsiForeachStatement statement = (PsiForeachStatement) forKeyword.getParent();
-
+        final PsiForeachStatement statement = (PsiForeachStatement) element.getParent();
 
         final StringBuffer newStatement = new StringBuffer();
+        final PsiManager psiManager = statement.getManager();
+        final Project project = psiManager.getProject();
         final CodeStyleManager codeStyleManager =
                 CodeStyleManager.getInstance(project);
         final PsiExpression iteratedValue = statement.getIteratedValue();
         if(iteratedValue.getType() instanceof PsiArrayType){
             final String index = codeStyleManager.suggestUniqueVariableName("i",
-                                                                      statement,
-                                                                      true);
+                                                                            statement,
+                                                                            true);
             newStatement.append("for(int ");
             newStatement.append(index);
             newStatement.append(" = 0;");
@@ -49,7 +45,7 @@ public class ReplaceForEachLoopWithForLoopIntention extends Intention{
             newStatement.append("++)");
             newStatement.append("{ ");
             newStatement.append(statement.getIterationParameter().getType()
-                                        .getPresentableText());
+                    .getPresentableText());
             newStatement.append(' ');
             newStatement.append(statement.getIterationParameter().getName());
             newStatement.append(" = ");
@@ -77,8 +73,8 @@ public class ReplaceForEachLoopWithForLoopIntention extends Intention{
                     codeStyleManager.suggestUniqueVariableName("it", statement,
                                                                true);
             final String typeText = statement.getIterationParameter()
-                            .getType()
-                            .getPresentableText();
+                    .getType()
+                    .getPresentableText();
             newStatement.append("for(java.util.Iterator<");
             newStatement.append(typeText);
             newStatement.append("> ");
@@ -110,7 +106,6 @@ public class ReplaceForEachLoopWithForLoopIntention extends Intention{
             }
             newStatement.append('}');
         }
-        replaceStatement(project,  newStatement.toString(), statement );
+        replaceStatement(newStatement.toString(), statement);
     }
-
 }

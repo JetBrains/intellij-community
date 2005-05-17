@@ -1,7 +1,5 @@
 package com.siyeh.ipp.trivialif;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -20,13 +18,9 @@ public class MergeElseIfIntention extends Intention{
         return new MergeElseIfPredicate();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-        final PsiJavaToken token =
-                (PsiJavaToken) findMatchingElement(file, editor);
+        final PsiJavaToken token = (PsiJavaToken) element;
         final PsiIfStatement parentStatement =
                 (PsiIfStatement) token.getParent();
         final PsiBlockStatement elseBranch =
@@ -34,6 +28,6 @@ public class MergeElseIfIntention extends Intention{
         final PsiCodeBlock elseBranchBlock = elseBranch.getCodeBlock();
         final PsiStatement elseBranchContents =
                 elseBranchBlock.getStatements()[0];
-        replaceStatement(project, elseBranchContents.getText(), elseBranch);
+        replaceStatement(elseBranchContents.getText(), elseBranch);
     }
 }

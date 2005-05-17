@@ -1,7 +1,5 @@
 package com.siyeh.ipp.opassign;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -26,13 +24,9 @@ public class ReplaceWithOperatorAssignmentIntention
         return new AssignmentExpressionReplaceableWithOperatorAssigment();
     }
 
-    public void invoke(Project project, Editor editor, PsiFile file)
+    public void processIntention(PsiElement element)
             throws IncorrectOperationException{
-        if(isFileReadOnly(project, file)){
-            return;
-        }
-        final PsiAssignmentExpression exp =
-                (PsiAssignmentExpression) findMatchingElement(file, editor);
+        final PsiAssignmentExpression exp = (PsiAssignmentExpression) element;
         final PsiBinaryExpression rhs =
                 (PsiBinaryExpression) exp.getRExpression();
         final PsiExpression lhs = exp.getLExpression();
@@ -41,6 +35,6 @@ public class ReplaceWithOperatorAssignmentIntention
         final PsiExpression rhsrhs = rhs.getROperand();
         final String expString =
                 lhs.getText() + operand + '=' + rhsrhs.getText();
-        replaceExpression(project, expString, exp);
+        replaceExpression(expString, exp);
     }
 }

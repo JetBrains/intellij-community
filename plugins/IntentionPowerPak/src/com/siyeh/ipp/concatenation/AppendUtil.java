@@ -1,17 +1,16 @@
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiClass;
 
 class AppendUtil{
     private AppendUtil(){
         super();
     }
 
-    public static boolean isAppend(PsiMethodCallExpression call)
-    {
+    public static boolean isAppend(PsiMethodCallExpression call){
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
         if(methodExpression == null){
@@ -30,7 +29,7 @@ class AppendUtil{
             return false;
         }
         final String name = containingClass.getQualifiedName();
-        return "java.lang.StringBuffer".equals(name)||
-                       "java.lang.StringBuilder".equals(name);
+        return "java.lang.StringBuffer".equals(name) ||
+                "java.lang.StringBuilder".equals(name);
     }
 }
