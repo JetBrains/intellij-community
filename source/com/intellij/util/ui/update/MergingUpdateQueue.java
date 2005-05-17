@@ -151,6 +151,11 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
   }
 
   public final void queue(Update update) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      update.run();
+      return;
+    }
+    
     synchronized(mySheduledUpdates) {
       boolean updateWasEatenByQueue = eatThisOrOthers(update);
       if (updateWasEatenByQueue) return;
