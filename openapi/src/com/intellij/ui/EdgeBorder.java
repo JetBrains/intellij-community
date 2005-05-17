@@ -1,9 +1,9 @@
 
 package com.intellij.ui;
 
-import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.Border;
+import java.awt.*;
 
 public class EdgeBorder implements Border {
   public static final int EDGE_RIGHT = 61440;
