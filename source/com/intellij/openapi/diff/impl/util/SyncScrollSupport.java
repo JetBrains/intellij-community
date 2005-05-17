@@ -1,6 +1,6 @@
 package com.intellij.openapi.diff.impl.util;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.EditingSides;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
@@ -16,7 +16,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class SyncScrollSupport implements Disposeable {
+public class SyncScrollSupport implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.util.SyncScrollSupport");
   private boolean myDuringVerticalScroll = false;
   private final ArrayList<ScrollListener> myScrollers = new ArrayList<ScrollListener>();
@@ -63,7 +63,7 @@ public class SyncScrollSupport implements Disposeable {
     myScrollers.add(scroller);
   }
 
-  private class ScrollListener implements VisibleAreaListener, Disposeable {
+  private class ScrollListener implements VisibleAreaListener, Disposable {
     private final Pair[] myScrollContexts;
     private final Editor myEditor;
 

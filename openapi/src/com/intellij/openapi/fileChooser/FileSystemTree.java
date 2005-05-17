@@ -31,12 +31,12 @@
  */
 package com.intellij.openapi.fileChooser;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 
-public interface FileSystemTree extends Disposeable {
+public interface FileSystemTree extends Disposable {
   JTree getTree();
 
   void updateTree();

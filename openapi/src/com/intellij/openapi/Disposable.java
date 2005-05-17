@@ -7,6 +7,6 @@ package com.intellij.openapi;
 /**
  * author: lesya
  */
-public interface Disposeable {
+public interface Disposable {
   void dispose();
 }

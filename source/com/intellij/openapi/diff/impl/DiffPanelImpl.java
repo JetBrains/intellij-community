@@ -1,6 +1,6 @@
 package com.intellij.openapi.diff.impl;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffContent;
@@ -224,12 +224,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     final ScrollingModel scrollingModel = editor.getScrollingModel();
     scrollingModel.addVisibleAreaListener(visibleAreaListener);
     myFontSizeSynchronizer.synchronize(editor);
-    source.addDisposable(new Disposeable() {
+    source.addDisposable(new Disposable() {
       public void dispose() {
         myFontSizeSynchronizer.stopSynchronize(editor);
       }
     });
-    source.addDisposable(new Disposeable() {
+    source.addDisposable(new Disposable() {
       public void dispose() {
         scrollingModel.removeVisibleAreaListener(visibleAreaListener);
       }

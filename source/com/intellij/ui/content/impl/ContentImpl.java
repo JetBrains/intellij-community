@@ -1,7 +1,7 @@
 
 package com.intellij.ui.content.impl;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.LayeredIcon;
@@ -26,7 +26,7 @@ public class ContentImpl implements Content {
   private boolean myIsLocked = false;
   private boolean myPinnable = true;
   private Icon myLayeredIcon = new LayeredIcon(2);
-  private Disposeable myDisposer = null;
+  private Disposable myDisposer = null;
 
   public ContentImpl(JComponent component, String displayName, boolean isPinnable) {
     myComponent = component;
@@ -70,11 +70,11 @@ public class ContentImpl implements Content {
     return myDisplayName;
   }
 
-  public Disposeable getDisposer() {
+  public Disposable getDisposer() {
     return myDisposer;
   }
 
-  public void setDisposer(Disposeable disposer) {
+  public void setDisposer(Disposable disposer) {
     myDisposer = disposer;
   }
 

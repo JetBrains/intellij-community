@@ -1,6 +1,6 @@
 package com.intellij.ui.content;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.UserDataHolder;
 
 import javax.swing.*;
@@ -24,12 +24,12 @@ public interface Content extends UserDataHolder {
 
   String getDisplayName();
 
-  Disposeable getDisposer();
+  Disposable getDisposer();
 
   /**
-   * @param disposer a Disposeable object whoes dispose() method will be invoken upon this content release.
+   * @param disposer a Disposable object whoes dispose() method will be invoken upon this content release.
    */
-  void setDisposer(Disposeable disposer);
+  void setDisposer(Disposable disposer);
 
   String getDescription();
 

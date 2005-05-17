@@ -1,6 +1,6 @@
 package com.intellij.openapi.diff.impl;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
@@ -21,7 +21,7 @@ public class CurrentLineMarker implements CaretListener {
     if (myEditor == null) return;
     final CaretModel caretModel = myEditor.getCaretModel();
     caretModel.addCaretListener(this);
-    editorSource.addDisposable(new Disposeable() {
+    editorSource.addDisposable(new Disposable() {
       public void dispose() {
         caretModel.removeCaretListener(CurrentLineMarker.this);
       }

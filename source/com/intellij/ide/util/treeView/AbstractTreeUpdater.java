@@ -3,8 +3,12 @@ package com.intellij.ide.util.treeView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.Alarm;
+import com.intellij.openapi.Disposable;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.util.ui.update.Update;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -12,25 +16,32 @@ import java.util.LinkedList;
 public class AbstractTreeUpdater {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeUpdater");
 
-  private int myDelay = 300;
-
-  private final Alarm myAlarm = new Alarm();
   private LinkedList<DefaultMutableTreeNode> myNodesToUpdate = new LinkedList<DefaultMutableTreeNode>();
   private final AbstractTreeBuilder myTreeBuilder;
   private Runnable myRunAfterUpdate;
   private Runnable myRunBeforeUpdate;
+  private MergingUpdateQueue myUpdateQueue;
+  private Disposable myDisposable;
 
   public AbstractTreeUpdater(AbstractTreeBuilder treeBuilder) {
     myTreeBuilder = treeBuilder;
+    final JTree tree = myTreeBuilder.getTree();
+    myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 300, tree.isShowing(), ModalityState.stateForComponent(tree));
+    myDisposable = new UiNotifyConnector(tree, myUpdateQueue);
   }
 
   /**
    * @param delay update delay in milliseconds.
    */
   public void setDelay(int delay) {
-    myDelay = delay;
+    myUpdateQueue.setMergingTimeSpan(delay);
   }
 
+  public void dispose() {
+    myDisposable.dispose();
+    myUpdateQueue.dispose();
+  }
+  
   public void addSubtreeToUpdate(DefaultMutableTreeNode rootNode) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("addSubtreeToUpdate:" + rootNode);
@@ -47,30 +58,25 @@ public class AbstractTreeUpdater {
     }
     myNodesToUpdate.add(rootNode);
             
-    myAlarm.cancelAllRequests();
-    myAlarm.addRequest(
-      new Runnable() {
-        public void run() {
-          if (myTreeBuilder.isDisposed()) return;
+    myUpdateQueue.queue(new Update("ViewUpdate") {
+      public boolean isExpired() {
+        return myTreeBuilder.isDisposed();
+      }
 
-          if (myTreeBuilder.getTreeStructure().hasSomethingToCommit()) {
-            myAlarm.cancelAllRequests();
-            myAlarm.addRequest(this, myDelay);
-            return;
-          }
-
-          myTreeBuilder.getTreeStructure().commit();
-          //if (myAlarm.getActiveRequestCount() > 0) return; // do not update if commit caused some changes
-          try {
-            performUpdate();
-          } catch(RuntimeException e) {
-            LOG.error(myTreeBuilder.getClass().getName(), e);
-          }
+      public void run() {
+        if (myTreeBuilder.getTreeStructure().hasSomethingToCommit()) {
+          myUpdateQueue.queue(this);
+          return;
         }
-      },
-      myDelay,
-      ModalityState.stateForComponent(myTreeBuilder.getTree())
-    );
+        myTreeBuilder.getTreeStructure().commit();
+        try {
+          performUpdate();
+        } 
+        catch(RuntimeException e) {
+          LOG.error(myTreeBuilder.getClass().getName(), e);
+        }
+      }
+    });
   }
 
   protected void updateSubtree(DefaultMutableTreeNode node) {
@@ -117,11 +123,11 @@ public class AbstractTreeUpdater {
   }
 
   public boolean hasRequestsForUpdate() {
-    return myAlarm.getActiveRequestCount() > 0;
+    return myUpdateQueue.containsUpdateOf(Update.LOW_PRIORITY);
   }
 
   public void cancelAllRequests(){
-    myAlarm.cancelAllRequests();
+    myUpdateQueue.cancelAllUpdates();
   }
 
   public synchronized void runAfterUpdate(final Runnable runnable) {

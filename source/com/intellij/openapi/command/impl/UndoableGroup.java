@@ -1,6 +1,6 @@
 package com.intellij.openapi.command.impl;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -155,7 +155,7 @@ class UndoableGroup {
   public void dispose() {
     for (Iterator each = myActions.iterator(); each.hasNext();) {
       UndoableAction undoableAction = (UndoableAction) each.next();
-      if (undoableAction instanceof Disposeable) ((Disposeable) undoableAction).dispose();
+      if (undoableAction instanceof Disposable) ((Disposable) undoableAction).dispose();
 
     }
   }

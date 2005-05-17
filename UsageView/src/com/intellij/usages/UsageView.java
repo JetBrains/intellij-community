@@ -1,6 +1,6 @@
 package com.intellij.usages;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 
 import javax.swing.*;
 import java.util.Set;
@@ -12,7 +12,7 @@ import java.util.Set;
  * Time: 4:13:28 PM
  * To change this template use File | Settings | File Templates.
  */
-public interface UsageView extends Disposeable {
+public interface UsageView extends Disposable {
   /**
    * Returns {@link com.intellij.usages.UsageTarget} to look usages for
    */

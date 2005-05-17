@@ -2,7 +2,7 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.localVcs.changes.LocalVcsChanges;
 import com.intellij.localVcs.changes.LvcsChange;
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.*;
@@ -28,7 +28,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
   private Collection<RepositoryItem> myLockedRevisions = new HashSet<RepositoryItem>();
   private final Key<CompositeUndoableAction> DELETE_UNDOABLE_ACTION_KEY = new Key<CompositeUndoableAction>("DeleteUndoableAction");
 
-  private static class CompositeUndoableAction implements UndoableAction, Disposeable {
+  private static class CompositeUndoableAction implements UndoableAction, Disposable {
     private final List<MyUndoableAction> myActions = new ArrayList<MyUndoableAction>();
 
     public CompositeUndoableAction addAction(MyUndoableAction action) {
@@ -65,7 +65,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
 
     public void dispose() {
       for (Iterator each = myActions.iterator(); each.hasNext();) {
-        Disposeable undoableAction = (Disposeable)each.next();
+        Disposable undoableAction = (Disposable)each.next();
         undoableAction.dispose();
       }
 
@@ -319,7 +319,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
     }
   }
 
-  private class MyUndoableAction implements UndoableAction, Disposeable {
+  private class MyUndoableAction implements UndoableAction, Disposable {
     private LvcsRevision myBeforeUndoRevision;
     private LvcsRevision myAfterActionPerformedRevision;
 

@@ -1,6 +1,6 @@
 package com.intellij.openapi.diff.impl.highlighting;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.diff.actions.MergeActionGroup;
@@ -30,7 +30,7 @@ public abstract class DiffMarkup implements EditorSource {
   private final ArrayList<RangeHighlighter> myHighLighters = new ArrayList<RangeHighlighter>();
   private final HashSet<RangeHighlighter> myActionHighlighters = new HashSet<RangeHighlighter>();
   private final Project myProject;
-  private final ArrayList<Disposeable> myDisposables = new ArrayList<Disposeable>();
+  private final ArrayList<Disposable> myDisposables = new ArrayList<Disposable>();
   private boolean myDisposed = false;
 
   protected DiffMarkup(Project project) {
@@ -166,15 +166,15 @@ public abstract class DiffMarkup implements EditorSource {
 
   protected void disposeEditor() {
     resetHighlighters();
-    for (Iterator<Disposeable> iterator = myDisposables.iterator(); iterator.hasNext();) {
-      Disposeable disposeable = iterator.next();
-      disposeable.dispose();
+    for (Iterator<Disposable> iterator = myDisposables.iterator(); iterator.hasNext();) {
+      Disposable disposable = iterator.next();
+      disposable.dispose();
     }
     myDisposables.clear();
   }
 
-  public void addDisposable(Disposeable disposeable) {
-    myDisposables.add(disposeable);
+  public void addDisposable(Disposable disposable) {
+    myDisposables.add(disposable);
   }
 
   public String getText() {

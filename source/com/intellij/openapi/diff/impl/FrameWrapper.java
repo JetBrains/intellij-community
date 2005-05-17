@@ -1,6 +1,6 @@
 package com.intellij.openapi.diff.impl;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DimensionService;
@@ -24,7 +24,7 @@ public class FrameWrapper {
   private boolean myCloseOnEsc = false;
   private JFrame myFrame;
   private final Map myDatas = new HashMap();
-  private final ArrayList<Disposeable> myDisposables = new ArrayList<Disposeable>();
+  private final ArrayList<Disposable> myDisposables = new ArrayList<Disposable>();
 
   public FrameWrapper(String dimensionServiceKey) {
     myDimensionKey = dimensionServiceKey;
@@ -129,9 +129,9 @@ public class FrameWrapper {
 
   public void setTitle(String title) { myTitle = title; }
 
-  public void addDisposable(Disposeable disposeable) {
-    LOG.assertTrue(!myDisposables.contains(disposeable));
-    myDisposables.add(disposeable);
+  public void addDisposable(Disposable disposable) {
+    LOG.assertTrue(!myDisposables.contains(disposable));
+    myDisposables.add(disposable);
   }
 
   private class MyJFrame extends JFrame implements DataProvider {
@@ -139,9 +139,9 @@ public class FrameWrapper {
 
     public void dispose() {
       saveFrameState(myDimensionKey, this);
-      for (Iterator<Disposeable> iterator = myDisposables.iterator(); iterator.hasNext();) {
-        Disposeable disposeable = iterator.next();
-        disposeable.dispose();
+      for (Iterator<Disposable> iterator = myDisposables.iterator(); iterator.hasNext();) {
+        Disposable disposable = iterator.next();
+        disposable.dispose();
       }
       super.dispose();
     }

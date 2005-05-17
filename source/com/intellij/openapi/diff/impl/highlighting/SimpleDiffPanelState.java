@@ -1,6 +1,6 @@
 package com.intellij.openapi.diff.impl.highlighting;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.fragments.FragmentList;
@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class SimpleDiffPanelState<DiffMarkupType extends DiffMarkup> implements Disposeable  {
+public class SimpleDiffPanelState<DiffMarkupType extends DiffMarkup> implements Disposable  {
   private ComparisonPolicy myComparisonPolicy = ComparisonPolicy.DEFAULT;
   protected final DiffMarkupType myAppender1;
   protected final DiffMarkupType myAppender2;

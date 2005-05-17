@@ -1,6 +1,6 @@
 package com.intellij.openapi.diff.impl;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.LabeledEditor;
@@ -150,7 +150,7 @@ public class DiffSideView {
       final MouseLineNumberListener listener = new MouseLineNumberListener(content, editor, container, project);
       editor.addEditorMouseListener(listener.myMouseListener);
       editor.addEditorMouseMotionListener(listener.myMouseMotionListener);
-      source.addDisposable(new Disposeable() {
+      source.addDisposable(new Disposable() {
         public void dispose() {
           editor.removeEditorMouseListener(listener.myMouseListener);
           editor.removeEditorMouseMotionListener(listener.myMouseMotionListener);
@@ -175,7 +175,7 @@ public class DiffSideView {
       final MyEditorFocusListener listener = new MyEditorFocusListener(sideView);
       final JComponent focusableComponent = sideView.getFocusableComponent();
       focusableComponent.addFocusListener(listener);
-      sideView.myEditorSource.addDisposable(new Disposeable() {
+      sideView.myEditorSource.addDisposable(new Disposable() {
         public void dispose() {
           focusableComponent.removeFocusListener(listener);
         }

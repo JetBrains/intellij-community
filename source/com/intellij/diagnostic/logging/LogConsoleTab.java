@@ -5,7 +5,7 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 
@@ -17,7 +17,7 @@ import java.io.*;
  * User: anna
  * Date: Apr 19, 2005
  */
-public class LogConsoleTab extends JPanel implements Disposeable{
+public class LogConsoleTab extends JPanel implements Disposable{
   private final ConsoleView myConsole;
   private final Project myProject;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();

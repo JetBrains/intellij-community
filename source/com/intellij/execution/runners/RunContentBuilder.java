@@ -15,7 +15,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.CloseAction;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -35,7 +35,7 @@ public class RunContentBuilder {
   public static final Icon DEFAULT_RERUN_ICON = IconLoader.getIcon("/actions/refreshUsages.png");
   private final JavaProgramRunner myRunner;
   private final Project myProject;
-  private final ArrayList<Disposeable> myDisposeables = new ArrayList<Disposeable>();
+  private final ArrayList<Disposable> myDisposeables = new ArrayList<Disposable>();
   private final ArrayList<AnAction> myRunnerActions = new ArrayList<AnAction>();
   private Icon myRerunIcon = DEFAULT_RERUN_ICON;
   private boolean myReuseProhibited = false;
@@ -108,7 +108,7 @@ public class RunContentBuilder {
           }
         }
       }
-      MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited,  panel, myDisposeables.toArray(new Disposeable[myDisposeables.size()]));
+      MyRunContentDescriptor contentDescriptor = new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited,  panel, myDisposeables.toArray(new Disposable[myDisposeables.size()]));
       if (myComponent != null) {
         panel.add(myComponent, BorderLayout.CENTER);
       }
@@ -116,7 +116,7 @@ public class RunContentBuilder {
       return contentDescriptor;
     }
 
-    return new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited,  panel, myDisposeables.toArray(new Disposeable[myDisposeables.size()]));
+    return new MyRunContentDescriptor(myRunProfile, myExecutionResult, myReuseProhibited,  panel, myDisposeables.toArray(new Disposable[myDisposeables.size()]));
   }
 
   private JComponent createActionToolbar(final RunContentDescriptor contentDescriptor, final JComponent component) {
@@ -162,9 +162,9 @@ public class RunContentBuilder {
 
   private static class MyRunContentDescriptor extends RunContentDescriptor {
     private final boolean myReuseProhibited;
-    private final Disposeable[] myAdditionalDisposables;
+    private final Disposable[] myAdditionalDisposables;
 
-    public MyRunContentDescriptor(final RunProfile profile, final ExecutionResult executionResult, final boolean reuseProhibited, final JComponent component, final Disposeable[] additionalDisposables) {
+    public MyRunContentDescriptor(final RunProfile profile, final ExecutionResult executionResult, final boolean reuseProhibited, final JComponent component, final Disposable[] additionalDisposables) {
       super(executionResult.getExecutionConsole(), executionResult.getProcessHandler(), component, profile.getName());
       myReuseProhibited = reuseProhibited;
       myAdditionalDisposables = additionalDisposables;
@@ -176,7 +176,7 @@ public class RunContentBuilder {
 
     public void dispose() {
       for (int i = 0; i < myAdditionalDisposables.length; i++) {
-        final Disposeable disposable = myAdditionalDisposables[i];
+        final Disposable disposable = myAdditionalDisposables[i];
         disposable.dispose();
       }
       super.dispose();

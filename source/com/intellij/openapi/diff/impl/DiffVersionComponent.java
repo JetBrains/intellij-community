@@ -1,8 +1,8 @@
 package com.intellij.openapi.diff.impl;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 
 public interface DiffVersionComponent {
-  void addDisposable(Disposeable disposeable);
+  void addDisposable(Disposable disposable);
   void removeContent();
 }

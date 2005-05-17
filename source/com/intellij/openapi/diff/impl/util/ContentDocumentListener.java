@@ -1,6 +1,6 @@
 package com.intellij.openapi.diff.impl.util;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.impl.DiffVersionComponent;
 
@@ -15,12 +15,12 @@ public class ContentDocumentListener implements DiffContent.Listener {
     final ContentDocumentListener listener = new ContentDocumentListener(component);
     content.onAssigned(true);
     content.addListener(listener);
-    Disposeable disposeable = new Disposeable() {
+    Disposable disposable = new Disposable() {
         public void dispose() {
           content.onAssigned(false);
         }
       };
-    component.addDisposable(disposeable);
+    component.addDisposable(disposable);
   }
 
   public void contentInvalid() {

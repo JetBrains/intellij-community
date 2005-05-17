@@ -1,6 +1,6 @@
 package com.intellij.openapi.diff.impl;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
@@ -15,7 +15,7 @@ public interface EditorSource {
       return null;
     }
 
-    public void addDisposable(Disposeable disposeable) {
+    public void addDisposable(Disposable disposable) {
       Logger.getInstance("#com.intellij.openapi.diff.impl.EditorSource").assertTrue(false);
     }
 
@@ -30,5 +30,5 @@ public interface EditorSource {
 
   EditorEx getEditor();
 
-  void addDisposable(Disposeable disposeable);
+  void addDisposable(Disposable disposable);
 }

@@ -1,6 +1,6 @@
 package com.intellij.openapi.diff.impl.highlighting;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.impl.ContentChangeListener;
@@ -47,7 +47,7 @@ class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
       Document document = myContent.getDocument();
       final EditorFactory editorFactory = EditorFactory.getInstance();
       myEditor = DiffUtil.createEditor(document, getProject(), false);
-      addDisposable(new Disposeable() {
+      addDisposable(new Disposable() {
         public void dispose() {
           editorFactory.releaseEditor(myEditor);
           myEditor = null;

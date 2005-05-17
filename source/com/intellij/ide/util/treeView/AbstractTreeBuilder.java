@@ -83,6 +83,7 @@ public abstract class AbstractTreeBuilder {
     disposeNode(myRootNode);
     myElementToNodeMap.clear();
     myUpdater.cancelAllRequests();
+    myUpdater.dispose();
     if (myWorker != null) {
       myWorker.dispose(true);
     }

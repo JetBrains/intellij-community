@@ -4,7 +4,7 @@
  */
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -26,7 +26,7 @@ public class DialogBuilder {
   private String myDimensionServiceKey;
   private ArrayList<ActionDescriptor> myActions = null;
   private final MyDialogWrapper myDialogWrapper;
-  private final ArrayList<Disposeable> myDisposables = new ArrayList<Disposeable>();
+  private final ArrayList<Disposable> myDisposables = new ArrayList<Disposable>();
   private Runnable myCancelOperation = null;
 
   public int show() {
@@ -103,8 +103,8 @@ public class DialogBuilder {
     return closeAction;
   }
 
-  public void addDisposable(Disposeable disposeable) {
-    myDisposables.add(disposeable);
+  public void addDisposable(Disposable disposable) {
+    myDisposables.add(disposable);
   }
 
   public void setButtonsAlignment(int alignment) {
@@ -269,9 +269,9 @@ public class DialogBuilder {
     protected JComponent createCenterPanel() { return myCenterPanel; }
 
     protected void dispose() {
-      for (Iterator<Disposeable> iterator = myDisposables.iterator(); iterator.hasNext();) {
-        Disposeable disposeable = iterator.next();
-        disposeable.dispose();
+      for (Iterator<Disposable> iterator = myDisposables.iterator(); iterator.hasNext();) {
+        Disposable disposable = iterator.next();
+        disposable.dispose();
       }
       super.dispose();
     }

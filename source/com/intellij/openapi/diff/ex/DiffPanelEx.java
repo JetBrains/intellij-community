@@ -8,12 +8,12 @@
  */
 package com.intellij.openapi.diff.ex;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.editor.Editor;
 
-public interface DiffPanelEx extends DiffPanel, Disposeable {
+public interface DiffPanelEx extends DiffPanel, Disposable {
   Editor getEditor1();
   Editor getEditor2();
 

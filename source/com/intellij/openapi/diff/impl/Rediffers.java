@@ -1,6 +1,6 @@
 package com.intellij.openapi.diff.impl;
 
-import com.intellij.openapi.Disposeable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -47,7 +47,7 @@ public class Rediffers {
     Rediff rediff = new Rediff(editor.getDocument());
     myRediffers.put(source, rediff);
     rediff.startListen();
-    source.addDisposable(new Disposeable() {
+    source.addDisposable(new Disposable() {
       public void dispose() {
         contentRemoved(source);
       }
@@ -64,7 +64,7 @@ public class Rediffers {
     myAlarm.addRequest(myUpdateRequest, 300);
   }
 
-  private class Rediff implements DocumentListener, Disposeable {
+  private class Rediff implements DocumentListener, Disposable {
     private final Document myDocument;
     private boolean myLinstening = false;
 
