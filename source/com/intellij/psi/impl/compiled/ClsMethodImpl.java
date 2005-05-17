@@ -18,6 +18,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.BytePointer;
@@ -751,10 +752,12 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
 
   public PsiElement getNavigationElement() {
     PsiClass sourceClassMirror = ((ClsClassImpl)getParent()).getSourceMirrorClass();
-    PsiMethod sourceMethodMirror = sourceClassMirror != null
-      ? sourceClassMirror.findMethodBySignature(this, false)
-      : null;
-    return sourceMethodMirror != null ? sourceMethodMirror : this;
+    if (sourceClassMirror == null) return this;
+    final PsiMethod[] methodsByName = sourceClassMirror.findMethodsByName(getName(), false);
+    for (PsiMethod sourceMethod : methodsByName) {
+      if (MethodSignatureUtil.areParametersErasureEqual(this, sourceMethod)) return sourceMethod;
+    }
+    return this;
   }
 
   public PsiTypeParameterList getTypeParameterList() {
