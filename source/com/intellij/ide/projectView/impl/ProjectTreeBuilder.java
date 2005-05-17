@@ -117,8 +117,11 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
     public void fileChanged(VirtualFile propertiesFile) {
       if (!myProject.isDisposed()) {
-        PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(propertiesFile.getParent());
-        myUpdater.addSubtreeToUpdateByElement(dir);
+        VirtualFile parent = propertiesFile.getParent();
+        if (parent != null && parent.isValid()) {
+          PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(parent);
+          myUpdater.addSubtreeToUpdateByElement(dir);
+        }
       }
     }
   }
