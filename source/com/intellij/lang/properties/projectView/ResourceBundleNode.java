@@ -8,7 +8,6 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -16,21 +15,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
->>>> ORIGINAL ResourceBundleNode.java#1
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
-import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.PropertiesFileType;
-==== THEIRS ResourceBundleNode.java#2
-==== YOURS ResourceBundleNode.java
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
-import com.intellij.lang.properties.ResourceBundle;
-<<<<
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 
