@@ -46,6 +46,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
 
   private final class MyTabbedPane extends TabbedPaneWrapper.TabbedPane {
     private final MyTabbedPanePopupHandler myTabbedPanePopupHandler;
+    private int myLastClickedIndex;
 
     public MyTabbedPane(int tabPlacement) {
       super(tabPlacement);
@@ -118,10 +119,17 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
         // have a special sense under Mac OS X. There is a special scroll button
         // in Aqua LAF which shows drop down list with opened tab. To make it
         // work we also have to specially hande clicks outsode the tab bounds.
-        final int index = getTabIndexAt(e.getX(), e.getY());
+        
         if (MouseEvent.MOUSE_PRESSED == e.getID()) {
-          if (index != -1) {
-            setSelectedIndex(index);
+          // use index from mouse pressed event, cause when MOUSE_release event is dispatched, 
+          // the tab may shift because the toolwindow at the left will hide, 
+          // so the situation is: the mouse is pressed over one tab and released over another tab (or even outside the tab area)
+          myLastClickedIndex = getTabIndexAt(e.getX(), e.getY());
+        }
+        
+        if (MouseEvent.MOUSE_RELEASED == e.getID()) {
+          if (myLastClickedIndex != -1) {
+            setSelectedIndex(myLastClickedIndex);
           }
           else {
             // push forward events outside thw tab bounds
@@ -129,7 +137,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
           }
         }
         else {
-          if (index == -1) {
+          if (myLastClickedIndex == -1) {
             // push forward events outside thw tab bounds
             super.processMouseEvent(e);
           }
