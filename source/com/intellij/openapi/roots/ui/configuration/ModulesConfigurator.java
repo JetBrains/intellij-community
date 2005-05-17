@@ -310,7 +310,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       projectRootManagerEx.checkCircularDependency(modelsToCheck.toArray(new ModifiableRootModel[modelsToCheck.size()]), myModuleModel);
     }
     catch (ModuleCircularDependencyException e) {
-      warningMessage = "There is a circular dependency between modules \"" + e.getModuleName1() + "\" and \"" + e.getModuleName2() + "\"";
+      warningMessage = "There is a circular dependency between modules\n\"" + e.getModuleName1() + "\" and \"" + e.getModuleName2() + "\"";
     }
     myWarningLabel.setIcon(warningMessage.length() > 0? Messages.getWarningIcon() : null);
     myWarningLabel.setText(warningMessage);
