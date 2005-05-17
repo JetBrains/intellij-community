@@ -63,10 +63,6 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
         return null;
     }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
-        return true;
-    }
-
     public String buildErrorString(PsiElement location){
         final PsiParameter parameter = (PsiParameter) location.getParent();
         final String parameterName = parameter.getName();

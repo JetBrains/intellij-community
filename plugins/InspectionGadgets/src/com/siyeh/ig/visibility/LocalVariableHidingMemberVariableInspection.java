@@ -1,6 +1,5 @@
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
@@ -81,7 +80,7 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
     }
 
     private class LocalVariableHidingMemberVariableVisitor extends BaseInspectionVisitor {
-     
+
         public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             if (m_ignoreStaticMethods) {
