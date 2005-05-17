@@ -32,15 +32,14 @@ public class SetReplaceableByEnumSetInspection extends ExpressionInspection{
             super.visitNewExpression(expression);
             final PsiType type = expression.getType();
             if(!(type instanceof PsiClassType)){
-               return;
+                return;
             }
             final PsiClassType classType = (PsiClassType) type;
             if(!classType.hasParameters())
             {
                 return;
             }
-            final PsiType[] typeArguments =
-                    expression.getClassReference().getTypeParameters();
+            final PsiType[] typeArguments = classType.getParameters();
             if(typeArguments == null || typeArguments.length!=1)
             {
                 return;

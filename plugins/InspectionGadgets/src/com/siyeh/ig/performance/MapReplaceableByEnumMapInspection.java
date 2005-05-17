@@ -18,7 +18,7 @@ public class MapReplaceableByEnumMapInspection extends ExpressionInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "#ref replaceable by EnumSet #loc";
+        return "#ref replaceable by EnumMap #loc";
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -38,8 +38,7 @@ public class MapReplaceableByEnumMapInspection extends ExpressionInspection{
             {
                 return;
             }
-            final PsiType[] typeArguments =
-                    expression.getClassReference().getTypeParameters();
+            final PsiType[] typeArguments = classType.getParameters();
             if(typeArguments == null || typeArguments.length != 2){
                 return;
             }
@@ -55,8 +54,8 @@ public class MapReplaceableByEnumMapInspection extends ExpressionInspection{
                                                     expression)){
                 return;
             }
-            final PsiClassType argumetClassType = (PsiClassType) argumentType;
-            final PsiClass argumentClass = argumetClassType.resolve();
+            final PsiClassType argumentClassType = (PsiClassType) argumentType;
+            final PsiClass argumentClass = argumentClassType.resolve();
             if(argumentClass == null)
             {
                 return;

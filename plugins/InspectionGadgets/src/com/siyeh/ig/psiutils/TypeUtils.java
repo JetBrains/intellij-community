@@ -2,6 +2,8 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,20 +44,16 @@ public class TypeUtils {
         if (type == null) {
             return false;
         }
-        return typeInherits(type, typeName);
+        if (!(type instanceof PsiClassType)) {
+            return false;
+        }
+        final PsiClassType classType = (PsiClassType) type;
+        final PsiClass aClass = classType.resolve();
+        if(aClass == null)
+        {
+            return false;
+        }
+        return ClassUtils.isSubclass(aClass, typeName);
     }
 
-    private static boolean typeInherits(@NotNull PsiType type,@NotNull String typeName) {
-        if(type.equalsToText(typeName))
-        {
-            return true;
-        }
-        final PsiType[] superTypes = type.getSuperTypes();
-        for(PsiType superType : superTypes){
-            if(typeInherits(superType, typeName)){
-                return true;
-            }
-        }
-        return false;
-    }
 }
