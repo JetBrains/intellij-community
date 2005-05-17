@@ -166,10 +166,10 @@ public class StringLiteralLexer extends LexerBase {
         if (myBuffer[i] == '\\') {
           return i;
         }
-        if (myBuffer[i] == '\n') {
-          myState = AFTER_LAST_QUOTE;
-          return i;
-        }
+        //if (myBuffer[i] == '\n') {
+        //  myState = AFTER_LAST_QUOTE;
+        //  return i;
+        //}
         if (myState == AFTER_FIRST_QUOTE && myBuffer[i] == myQuoteChar) {
           myState = AFTER_LAST_QUOTE;
           return i + 1;

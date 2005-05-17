@@ -72,19 +72,19 @@ public class ResourceBundleRenameHandler implements RenameHandler {
       return doRename(inputString);
     }
     private boolean doRename(final String inputString) {
+      final List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles();
+      for (PropertiesFile propertiesFile : propertiesFiles) {
+        if (!CodeInsightUtil.prepareFileForWrite(propertiesFile)) return false;
+      }
+
       final Ref<Boolean> success = Ref.create(Boolean.TRUE);
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles();
 
               String baseName = myResourceBundle.getBaseName();
               for (PropertiesFile propertiesFile : propertiesFiles) {
-                if (!CodeInsightUtil.prepareFileForWrite(propertiesFile)) {
-                  success.set(Boolean.FALSE);
-                  return;
-                }
                 final VirtualFile virtualFile = propertiesFile.getVirtualFile();
                 final String newName = inputString + virtualFile.getNameWithoutExtension().substring(baseName.length()) + "." + virtualFile.getExtension();
                 try {

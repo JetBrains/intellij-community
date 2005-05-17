@@ -65,11 +65,11 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
     return state == myInitialState ? idx : -idx;
   }
 
-  private boolean isInitialState(int data) {
+  private static boolean isInitialState(int data) {
     return data >= 0;
   }
 
-  private IElementType unpackToken(int data) {
+  private static IElementType unpackToken(int data) {
     return IElementType.find((short)Math.abs(data));
   }
 

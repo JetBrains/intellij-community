@@ -21,7 +21,7 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement<
   private Property myProperty;
   private String myPresentableName;
 
-  protected PropertiesStructureViewElement(final Property element) {
+  public PropertiesStructureViewElement(final Property element) {
     myProperty = element;
   }
 

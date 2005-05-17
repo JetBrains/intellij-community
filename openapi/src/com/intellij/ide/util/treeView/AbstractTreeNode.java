@@ -3,21 +3,22 @@ package com.intellij.ide.util.treeView;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.pom.Navigatable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
-public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements NavigationItem, Navigatable {
+public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements NavigationItem {
   private AbstractTreeNode myParent;
   private Value myValue;
   private NodeDescriptor myParentDescriptor;
   protected String myLocationString;
+  private TextAttributesKey myAttributesKey;
 
   protected AbstractTreeNode(Project project, Value value) {
     super(project, null);
@@ -34,18 +35,20 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
     String name = presentation.getPresentableText();
     String locationString = presentation.getLocationString();
     Color color = getFileStatus().getColor();
+    TextAttributesKey attributesKey = presentation.getTextAttributesKey();
     if (valueIsCut()) {
       color = CopyPasteManager.CUT_COLOR;
     }
 
-     boolean updated = !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, myLocationString, myColor},
-                                             new Object[]{openIcon, closedIcon, name, locationString, color});
+     boolean updated = !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, myLocationString, myColor, myAttributesKey},
+                                             new Object[]{openIcon, closedIcon, name, locationString, color, attributesKey});
 
     myOpenIcon = openIcon;
     myClosedIcon = closedIcon;
     myName = name;
     myLocationString = locationString;
     myColor = color;
+    myAttributesKey = attributesKey;
 
     return updated;
   }
@@ -130,7 +133,7 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
   }
 
   public ItemPresentation getPresentation() {
-    return new PresentationData(myName, myLocationString, myOpenIcon, myClosedIcon);
+    return new PresentationData(myName, myLocationString, myOpenIcon, myClosedIcon,myAttributesKey);
   }
 
   public FileStatus getFileStatus() {

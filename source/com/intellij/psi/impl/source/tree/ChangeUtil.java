@@ -30,6 +30,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class ChangeUtil implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.ChangeUtil");
@@ -72,7 +73,7 @@ public class ChangeUtil implements Constants {
     removeChildrenInner(first, last, charTableByTree);
   }
 
-  public static void replaceChild(final CompositeElement parent, final TreeElement old, final TreeElement newC) {
+  public static void replaceChild(final CompositeElement parent, final @NotNull TreeElement old, final @NotNull TreeElement newC) {
     LOG.assertTrue(old.getTreeParent() == parent);
     final TreeElement oldChild = transformAll(old);
     final TreeElement newChildNext = newC.getTreeNext();

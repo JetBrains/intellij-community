@@ -7,6 +7,7 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -38,6 +39,33 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
     return this;
   }
 
+  public void setValue(String value) throws IncorrectOperationException {
+    StringBuffer escapedName = new StringBuffer(value.length());
+    for (int i=0; i<value.length();i++) {
+      char c = value.charAt(i);
+      if (c == '\n' && (i == 0 || value.charAt(i-1) != '\\')) {
+        escapedName.append('\\');
+      }
+      escapedName.append(c);
+    }
+    ASTNode node = getValueNode();
+    PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx",escapedName.toString());
+    ASTNode valueNode = property.getValueNode();
+    if (node == null) {
+      if (valueNode != null) {
+        getNode().addChild(valueNode);
+      }
+    }
+    else {
+      if (valueNode == null) {
+        getNode().removeChild(node);
+      }
+      else {
+        getNode().replaceChild(node, valueNode);
+      }
+    }
+  }
+
   public String getName() {
     return getKey();
   }
@@ -50,8 +78,11 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
     return node.getText();
   }
 
-  public ASTNode getKeyNode() {
+  public @Nullable ASTNode getKeyNode() {
     return getNode().findChildByType(PropertiesTokenTypes.KEY_CHARACTERS);
+  }
+  private @Nullable ASTNode getValueNode() {
+    return getNode().findChildByType(PropertiesTokenTypes.VALUE_CHARACTERS);
   }
 
   public String getValue() {
@@ -62,7 +93,7 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
     return node.getText();
   }
 
-  public String getKeyValueSeparator() {
+  public @Nullable String getKeyValueSeparator() {
     final ASTNode node = getNode().findChildByType(PropertiesTokenTypes.KEY_VALUE_SEPARATOR);
     if (node == null) {
       return null;

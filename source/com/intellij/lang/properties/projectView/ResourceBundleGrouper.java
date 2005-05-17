@@ -41,19 +41,22 @@ public class ResourceBundleGrouper implements TreeStructureProvider, ProjectComp
   }
 
   public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
-    if (DataConstantsEx.VIRTUAL_FILE.equals(dataName)){
-      for (AbstractTreeNode selectedElement : selected) {
-        Object element = selectedElement.getValue();
+    if (selected == null) return null;
+    for (AbstractTreeNode selectedElement : selected) {
+      Object element = selectedElement.getValue();
+      if (DataConstantsEx.VIRTUAL_FILE.equals(dataName)) {
         if (element instanceof ResourceBundle) {
           return new ResourceBundleAsVirtualFile((ResourceBundle)element);
         }
       }
-    }
-    if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataName)){
-      for (AbstractTreeNode selectedElement : selected) {
-        Object element = selectedElement.getValue();
+      if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataName)) {
         if (element instanceof ResourceBundle) {
           return ((ResourceBundle)element).getPropertiesFiles().toArray(new PsiElement[0]);
+        }
+      }
+      if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataName)) {
+        if (element instanceof ResourceBundle) {
+          return new ResourceBundleDeleteProvider((ResourceBundle)element);
         }
       }
     }
@@ -78,4 +81,5 @@ public class ResourceBundleGrouper implements TreeStructureProvider, ProjectComp
   public void projectClosed() {
 
   }
+
 }

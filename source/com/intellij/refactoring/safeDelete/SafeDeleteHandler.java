@@ -41,9 +41,8 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     invoke(project, elements, true);
   }
 
-  public void invoke(final Project project, PsiElement[] elements, boolean checkSuperMethods) {
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
+  public static void invoke(final Project project, PsiElement[] elements, boolean checkSuperMethods) {
+    for (PsiElement element : elements) {
       if (!SafeDeleteProcessor.validElement(element)) {
         return;
       }
@@ -66,8 +65,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
       }
     }
 
-    for (int i = 0; i < elementsToDelete.length; i++) {
-      PsiElement psiElement = elementsToDelete[i];
+    for (PsiElement psiElement : elementsToDelete) {
       if (!RefactoringMessageUtil.checkReadOnlyStatusRecursively(project, psiElement)) return;
     }
 

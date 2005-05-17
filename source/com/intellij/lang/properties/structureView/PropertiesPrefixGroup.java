@@ -72,4 +72,19 @@ public class PropertiesPrefixGroup implements Group {
   public String getPrefix() {
     return myPrefix;
   }
+
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final PropertiesPrefixGroup group = (PropertiesPrefixGroup)o;
+
+    if (!myPrefix.equals(group.myPrefix)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return myPrefix.hashCode();
+  }
 }

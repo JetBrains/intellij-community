@@ -12,11 +12,12 @@ public class PresentationData implements ItemPresentation{
   private String myPresentableText;
   private TextAttributesKey myAttributesKey;
 
-  public PresentationData(String presentableText, String locationString, Icon openIcon, Icon closedIcon) {
+  public PresentationData(String presentableText, String locationString, Icon openIcon, Icon closedIcon,TextAttributesKey attributesKey) {
     myClosedIcon = closedIcon;
     myLocationString = locationString;
     myOpenIcon = openIcon;
     myPresentableText = presentableText;
+    myAttributesKey = attributesKey;
   }
 
   public PresentationData() {

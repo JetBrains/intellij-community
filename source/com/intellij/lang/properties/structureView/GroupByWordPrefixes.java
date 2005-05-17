@@ -2,11 +2,11 @@ package com.intellij.lang.properties.structureView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.lang.properties.psi.Property;
 
 import java.util.*;
 
@@ -33,10 +33,10 @@ public class GroupByWordPrefixes implements Grouper {
     for (TreeElement element : children) {
       if (element instanceof PropertiesStructureViewElement) {
         Property property = ((PropertiesStructureViewElement)element).getValue();
-        String key = property.getKey();
-        if (key == null) continue;
-        LOG.assertTrue(key.startsWith(parentPrefix));
-        List<String> words = Arrays.asList(key.split("\\."));
+        String text = property.getKey();
+        if (text == null) continue;
+        LOG.assertTrue(text.startsWith(parentPrefix));
+        List<String> words = Arrays.asList(text.split("\\."));
         keys.add(new Key(words, (PropertiesStructureViewElement)element));
       }
     }
@@ -61,7 +61,7 @@ public class GroupByWordPrefixes implements Grouper {
         continue;
       }
       // find longest group prefix
-      List<String> firstKey = keys.get(groupStart).words;
+      List<String> firstKey = groupStart == keys.size() ? Collections.EMPTY_LIST :  keys.get(groupStart).words;
       int prefixLen = firstKey.size();
       for (int j = groupStart+1; j < i; j++) {
         List<String> prevKey = keys.get(j-1).words;
@@ -82,7 +82,7 @@ public class GroupByWordPrefixes implements Grouper {
       if (i - groupStart > 1) {
         groups.add(new PropertiesPrefixGroup(children, prefix, presentableName));
       }
-      else {
+      else if (groupStart != keys.size()) {
         PropertiesStructureViewElement node = keys.get(groupStart).node;
         node.setPresentableName(presentableName);
       }
@@ -91,7 +91,7 @@ public class GroupByWordPrefixes implements Grouper {
     return groups;
   }
 
-  private boolean isEndOfGroup(final int i,
+  private static boolean isEndOfGroup(final int i,
                                final List<Key> keys,
                                final int parentPrefixLength) {
     if (i == keys.size()) return true;
@@ -105,7 +105,7 @@ public class GroupByWordPrefixes implements Grouper {
   public ActionPresentation getPresentation() {
     return new ActionPresentationData("Group By Prefixes",
                                       "Groups properties by common key prefixes separated by dots",
-                                      IconLoader.getIcon("/nodes/addLocalWeblogicInstance.png"));
+                                      IconLoader.getIcon("/actions/fileStatus.png"));
   }
 
   public String getName() {

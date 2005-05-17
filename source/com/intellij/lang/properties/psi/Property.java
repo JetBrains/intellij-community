@@ -7,9 +7,14 @@
 package com.intellij.lang.properties.psi;
 
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public interface Property extends PsiNamedElement {
-  String getKey();
-  String getValue();
-  String getKeyValueSeparator();
+  @Nullable String getKey();
+  @Nullable String getValue();
+  @Nullable String getKeyValueSeparator();
+
+  void setValue(@NotNull String value) throws IncorrectOperationException;
 }

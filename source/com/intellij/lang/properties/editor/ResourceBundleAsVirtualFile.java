@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.lang.properties.ResourceBundle;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,6 +24,10 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
     return myResourceBundle;
   }
 
+  public Icon getIcon() {
+    return ResourceBundle.ICON;
+  }
+
   public VirtualFileSystem getFileSystem() {
     return DummyFileSystem.getInstance();
   }
@@ -35,12 +40,26 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
     return myResourceBundle.getBaseName();
   }
 
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final ResourceBundleAsVirtualFile resourceBundleAsVirtualFile = (ResourceBundleAsVirtualFile)o;
+
+    if (!myResourceBundle.equals(resourceBundleAsVirtualFile.myResourceBundle)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    return myResourceBundle.hashCode();
+  }
+
   public void rename(Object requestor, String newName) throws IOException {
-    //todo
   }
 
   public boolean isWritable() {
-    return false;
+    return true;
   }
 
   public boolean isDirectory() {

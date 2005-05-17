@@ -30,6 +30,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashSet;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -38,8 +39,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
 
 public class StructureViewComponent extends JPanel implements TreeActionsOwner, DataProvider, StructureView {
   private static Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
@@ -71,7 +70,13 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     myFileEditor = editor;
     myTreeModel = structureViewModel;
     myTreeModelWrapper = new TreeModelWrapper(myTreeModel, this);
-    SmartTreeStructure treeStructure = new SmartTreeStructure(project, myTreeModelWrapper);
+    SmartTreeStructure treeStructure = new SmartTreeStructure(project, myTreeModelWrapper){
+      public void rebuildTree() {
+        storeState();
+        super.rebuildTree();
+        restoreState();
+      }
+    };
     JTree tree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement())));
     myAbstractTreeBuilder = new StructureTreeBuilder(project, tree,
                                                     (DefaultTreeModel)tree.getModel(),treeStructure,myTreeModelWrapper);
@@ -119,17 +124,15 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   }
 
-  private PsiElement[] filterPsiElements(Object[] selectedElements) {
+  private static PsiElement[] filterPsiElements(Object[] selectedElements) {
     ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
 
     if (selectedElements == null)
     {
       return null;
     }
-    for (int i = 0; i < selectedElements.length; i++) {
-      Object selectedElement = selectedElements[i];
-      if (selectedElement instanceof PsiElement)
-      {
+    for (Object selectedElement : selectedElements) {
+      if (selectedElement instanceof PsiElement) {
         psiElements.add((PsiElement)selectedElement);
       }
     }
@@ -145,7 +148,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
 
-  private Object[] convertPathsToValues(TreePath[] selectionPaths) {
+  private static Object[] convertPathsToValues(TreePath[] selectionPaths) {
     if (selectionPaths != null) {
       Object[] result = new Object[selectionPaths.length];
 
@@ -164,7 +167,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     }
   }
 
-  private Object[] convertPathsToTreeElements(TreePath[] selectionPaths) {
+  private static Object[] convertPathsToTreeElements(TreePath[] selectionPaths) {
     if (selectionPaths != null) {
       Object[] result = new Object[selectionPaths.length];
 
@@ -245,10 +248,8 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       getTree().setSelectionPath(new TreePath(getRootNode().getPath()));
     }
     else {
-      for (int i = 0; i < selectedPsiElements.length; i++) {
-        Object element = selectedPsiElements[i];
-        if (element instanceof PsiElement && !((PsiElement)element).isValid())
-        {
+      for (Object element : selectedPsiElements) {
+        if (element instanceof PsiElement && !((PsiElement)element).isValid()) {
           continue;
         }
         DefaultMutableTreeNode node = myAbstractTreeBuilder.getNodeForElement(element);
@@ -274,10 +275,8 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       getTree().expandPath(new TreePath(getRootNode().getPath()));
     }
     else {
-      for (int i = 0; i < expandedPsiElements.length; i++) {
-        Object element = expandedPsiElements[i];
-        if (element instanceof PsiElement && !((PsiElement)element).isValid())
-        {
+      for (Object element : expandedPsiElements) {
+        if (element instanceof PsiElement && !((PsiElement)element).isValid()) {
           continue;
         }
         expandPathToElement(element);
@@ -288,8 +287,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   private ActionGroup createActionGroup() {
     DefaultActionGroup result = new DefaultActionGroup();
     Sorter[] sorters = myTreeModel.getSorters();
-    for (int i = 0; i < sorters.length; i++) {
-      final Sorter sorter = sorters[i];
+    for (final Sorter sorter : sorters) {
       if (shouldBeShown(sorter)) {
         result.add(new TreeActionWrapper(sorter, this));
       }
@@ -300,12 +298,12 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     }
 
     Grouper[] groupers = myTreeModel.getGroupers();
-    for (int i = 0; i < groupers.length; i++) {
-      result.add(new TreeActionWrapper(groupers[i], this));
+    for (Grouper grouper : groupers) {
+      result.add(new TreeActionWrapper(grouper, this));
     }
     Filter[] filters = myTreeModel.getFilters();
-    for (int i = 0; i < filters.length; i++) {
-      result.add(new TreeActionWrapper(filters[i], this));
+    for (Filter filter : filters) {
+      result.add(new TreeActionWrapper(filter, this));
     }
 
     result.addSeparator();
@@ -317,7 +315,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     return result;
   }
 
-  private boolean shouldBeShown(final Sorter sorter) {
+  private static boolean shouldBeShown(final Sorter sorter) {
     return !sorter.getName().equals(KindSorter.ID);
   }
 
@@ -334,7 +332,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     }
 
     JTree tree = myAbstractTreeBuilder.getTree();
-    DefaultMutableTreeNode currentTreeNode = ((DefaultMutableTreeNode)tree.getModel().getRoot());
+    DefaultMutableTreeNode currentTreeNode = (DefaultMutableTreeNode)tree.getModel().getRoot();
     pathToElement.remove(0);
     DefaultMutableTreeNode result = null;
     while (currentTreeNode != null) {
@@ -376,32 +374,28 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   private ArrayList<AbstractTreeNode> getPathToElement(Object element) {
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-    addToPath((AbstractTreeNode)myAbstractTreeBuilder.getTreeStructure().getRootElement(), element, result, new HashSet());
+    addToPath((AbstractTreeNode)myAbstractTreeBuilder.getTreeStructure().getRootElement(), element, result, new THashSet<Object>());
     return result;
   }
 
-  private boolean addToPath(AbstractTreeNode rootElement, Object element, ArrayList<AbstractTreeNode> result, Collection processedElements) {
+  private boolean addToPath(AbstractTreeNode rootElement, Object element, ArrayList<AbstractTreeNode> result, Collection<Object> processedElements) {
 
-    final Object rootValue = rootElement.getValue();
-    if (rootValue instanceof TreeElement) {
-      Object value = ((StructureViewTreeElement) rootValue).getValue();
-      if (processedElements.contains(value)){
-          return false;
-      }
-      else {
-          processedElements.add(value);
-      }
-        
-      if (Comparing.equal(value, element)){
-        result.add(0, rootElement);
-        return true;
-      }
+    Object value = rootElement.getValue();
+    if (value instanceof TreeElement) {
+      value = ((StructureViewTreeElement) value).getValue();
+    }
+    if (!processedElements.add(value)){
+        return false;
+    }
+
+    if (Comparing.equal(value, element)){
+      result.add(0, rootElement);
+      return true;
     }
 
     Collection<AbstractTreeNode> children = rootElement.getChildren();
-    for (Iterator<AbstractTreeNode> iterator = children.iterator(); iterator.hasNext();) {
-      AbstractTreeNode child = iterator.next();
-      if (addToPath(child, element, result, new HashSet())) {
+    for (AbstractTreeNode child : children) {
+      if (addToPath(child, element, result, processedElements)) {
         result.add(0, rootElement);
         return true;
       }
@@ -653,15 +647,14 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     return null;
   }
 
-  private PsiElement[] convertToPsiElementsArray(final Object[] selectedElements) {
+  private static PsiElement[] convertToPsiElementsArray(final Object[] selectedElements) {
     if (selectedElements == null)
     {
       return null;
     }
     ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
-    for (int i = 0; i < selectedElements.length; i++) {
-      Object selectedElement = selectedElements[i];
-      if (selectedElement instanceof PsiElement && ((PsiElement)selectedElement).isValid()){
+    for (Object selectedElement : selectedElements) {
+      if (selectedElement instanceof PsiElement && ((PsiElement)selectedElement).isValid()) {
         psiElements.add((PsiElement)selectedElement);
       }
     }

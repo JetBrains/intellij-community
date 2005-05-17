@@ -6,6 +6,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -41,15 +42,15 @@ public interface ASTNode extends UserDataHolder {
 
   ASTNode[] getChildren(TokenSet filter);
 
-  void addChild(ASTNode child);
+  void addChild(@NotNull ASTNode child);
 
-  void addChild(ASTNode child, ASTNode anchorBefore);
+  void addChild(@NotNull ASTNode child, ASTNode anchorBefore);
 
-  void removeChild(ASTNode child);
+  void removeChild(@NotNull ASTNode child);
 
-  void removeRange(ASTNode first, ASTNode firstWhichStayInTree);
+  void removeRange(@NotNull ASTNode first, ASTNode firstWhichStayInTree);
 
-  void replaceChild(ASTNode oldChild, ASTNode newChild);
+  void replaceChild(@NotNull ASTNode oldChild, @NotNull ASTNode newChild);
 
   void replaceAllChildrenToChildrenOf(ASTNode anotherParent);
 

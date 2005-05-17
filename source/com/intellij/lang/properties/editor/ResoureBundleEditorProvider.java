@@ -1,14 +1,12 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
@@ -31,13 +29,14 @@ public class ResoureBundleEditorProvider implements FileEditorProvider, Applicat
     }
     ResourceBundle resourceBundle = ((ResourceBundleAsVirtualFile)file).getResourceBundle();
 
-    PropertiesFile propertiesFile = resourceBundle.getPropertiesFiles().get(0);
+    //PropertiesFile propertiesFile = resourceBundle.getPropertiesFiles().get(0);
     //todo
-    return TextEditorProvider.getInstance().createEditor(project, project.getProjectFile());
+    //return TextEditorProvider.getInstance().createEditor(project, project.getProjectFile());
+    return new ResourceBundleEditor(project, resourceBundle);
   }
 
   public void disposeEditor(FileEditor editor) {
-    TextEditorProvider.getInstance().disposeEditor(editor);
+    ((ResourceBundleEditor)editor).dispose();
   }
 
   public FileEditorState readState(Element element, Project project, VirtualFile file){
