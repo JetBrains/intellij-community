@@ -1,0 +1,37 @@
+<?xml version='1.0'?>
+<!DOCTYPE idea-plugin SYSTEM "http://plugins.intellij.net/plugin.dtd">
+
+<idea-plugin>
+  <vendor url="http://www.intellij.org/twiki/bin/view/Main/AlexeyEfimov"
+          email="aefimov@tengry.com">Alexey Efimov</vendor>
+  <name>Images</name>
+  <description>Enables image files viewing in IDEA editors</description>
+  <version>1.0</version>
+  <idea-version since-build="3340"/>
+
+  <application-components>
+    <component>
+      <interface-class>org.intellij.imagesSupport.options.OptionsManager</interface-class>
+      <implementation-class>org.intellij.imagesSupport.options.impl.OptionsManagerImpl</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.intellij.imagesSupport.options.impl.OptionsConfigurabe</implementation-class>
+    </component>
+    <component>
+      <interface-class>org.intellij.imagesSupport.editor.layers.LayerManager</interface-class>
+      <implementation-class>org.intellij.imagesSupport.editor.layers.impl.LayerManagerImpl</implementation-class>
+    </component>
+    <component>
+      <interface-class>org.intellij.imagesSupport.fileTypes.ImageFileTypeManager</interface-class>
+      <implementation-class>org.intellij.imagesSupport.fileTypes.impl.ImageFileTypeManagerImpl</implementation-class>
+    </component>
+    <component>
+      <interface-class>org.intellij.imagesSupport.editor.ImageEditorManager</interface-class>
+      <implementation-class>org.intellij.imagesSupport.editor.impl.ImageEditorManagerImpl</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.intellij.imagesSupport.editor.impl.ImageFileEditorProvider</implementation-class>
+    </component>
+  </application-components>
+</idea-plugin>
+
