@@ -194,9 +194,11 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider {
       final HierarchyNodeDescriptor baseDescriptor = structure.getBaseDescriptor();
       builder.buildNodeForElement(baseDescriptor);
       final DefaultMutableTreeNode node = builder.getNodeForElement(baseDescriptor);
-      final TreePath path = new TreePath(node.getPath());
-      tree.expandPath(path);
-      TreeUtil.selectPath(tree, path);
+      if (node != null) {
+        final TreePath path = new TreePath(node.getPath());
+        tree.expandPath(path);
+        TreeUtil.selectPath(tree, path);
+      }
 
       restoreCursor();
     }

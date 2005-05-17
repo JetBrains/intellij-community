@@ -96,7 +96,9 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     if (selectableElement != null) {
       buildNodeForElement(selectableElement);
       DefaultMutableTreeNode node = getNodeForElement(selectableElement);
-      myTree.getSelectionModel().setSelectionPath(new TreePath(node.getPath()));
+      if (node != null) {
+        myTree.getSelectionModel().setSelectionPath(new TreePath(node.getPath()));
+      }
     }
 
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);

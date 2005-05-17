@@ -23,6 +23,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 public abstract class AbstractTreeBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeBuilder");
 
@@ -118,7 +120,7 @@ public abstract class AbstractTreeBuilder {
     return myTree;
   }
 
-  public final DefaultMutableTreeNode getNodeForElement(Object element) {
+  public final @Nullable DefaultMutableTreeNode getNodeForElement(Object element) {
     //DefaultMutableTreeNode node = (DefaultMutableTreeNode)myElementToNodeMap.get(element);
     DefaultMutableTreeNode node = getFirstNode(element);
     if (node != null) {
