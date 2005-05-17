@@ -27,6 +27,9 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -42,7 +45,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class FindManagerImpl extends FindManager implements ProjectComponent {
+import org.jdom.Element;
+
+public class FindManagerImpl extends FindManager implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindManagerImpl");
 
   private FindUsagesManager myFindUsagesManager;
@@ -76,6 +81,19 @@ public class FindManagerImpl extends FindManager implements ProjectComponent {
   }
 
   public void projectOpened() {
+  }
+
+  public void readExternal(Element element) throws InvalidDataException {
+    final Element findUsages = element.getChild("FindUsagesManager");
+    if (findUsages != null) {
+      myFindUsagesManager.readExternal(findUsages);
+    }
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    final Element findUsages = new Element("FindUsagesManager");
+    element.addContent(findUsages);
+    myFindUsagesManager.writeExternal(findUsages);
   }
 
   public int showPromptDialog(final FindModel model, String title) {
@@ -263,8 +281,9 @@ public class FindManagerImpl extends FindManager implements ProjectComponent {
   }
 
   public String getStringToReplace(String foundString, FindModel model) {
-    if (model == null)
+    if (model == null) {
       return null;
+    }
     String toReplace = model.getStringToReplace();
     if (!model.isRegularExpressions()) {
       if (model.isPreserveCase()) {

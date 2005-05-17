@@ -23,8 +23,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -51,7 +50,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class FindUsagesManager {
+import org.jdom.Element;
+
+public class FindUsagesManager implements JDOMExternalizable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findParameterUsages.FindUsagesManager");
 
   enum FileSearchScope {
@@ -126,6 +127,14 @@ public class FindUsagesManager {
 
   public boolean findPreviousUsageInFile(FileEditor editor) {
     return findUsageInFile(editor, BEFORE_CARET);
+  }
+
+  public void readExternal(Element element) throws InvalidDataException {
+    myToOpenInNewTab = JDOMExternalizer.readBoolean(element, "OPEN_NEW_TAB");
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    JDOMExternalizer.write(element, "OPEN_NEW_TAB", myToOpenInNewTab? Boolean.TRUE : Boolean.FALSE);
   }
 
   private boolean findUsageInFile(FileEditor editor, FileSearchScope direction) {

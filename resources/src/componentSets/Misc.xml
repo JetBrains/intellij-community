@@ -65,6 +65,7 @@
     <component>
       <interface-class>com.intellij.find.FindManager</interface-class>
       <implementation-class>com.intellij.find.impl.FindManagerImpl</implementation-class>
+      <option name="workspace" value="true"/>
     </component>
     <component>
       <interface-class>com.intellij.usages.UsageViewManager</interface-class>
