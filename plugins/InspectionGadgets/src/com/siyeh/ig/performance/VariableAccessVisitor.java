@@ -12,7 +12,7 @@ public class VariableAccessVisitor extends PsiRecursiveElementVisitor {
     private static final Integer ONE = 1;
     private static final Integer TWO = 2;
 
-    VariableAccessVisitor() {
+    public VariableAccessVisitor() {
         super();
     }
 
