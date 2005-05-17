@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.IconUtilEx;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,6 +25,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.module.Module;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ArrayUtil;
@@ -356,6 +359,8 @@ public class LibraryTableEditor {
     }
 
     public void actionPerformed(ActionEvent e) {
+      final Module contextModule = (Module)DataManager.getInstance().getDataContext(myAddLibraryButton).getData(DataConstantsEx.MODULE_CONTEXT);
+      myFileChooserDescriptor.setContextModule(contextModule);
       final VirtualFile[] files;
       final String name;
       if (myEditingModuleLibraries) {

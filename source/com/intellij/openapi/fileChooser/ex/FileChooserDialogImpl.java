@@ -9,15 +9,13 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.FileSystemTree;
-import com.intellij.openapi.fileChooser.actions.FileDeleteAction;
-import com.intellij.openapi.fileChooser.actions.GotoHomeAction;
-import com.intellij.openapi.fileChooser.actions.GotoProjectDirectory;
-import com.intellij.openapi.fileChooser.actions.NewFolderAction;
+import com.intellij.openapi.fileChooser.actions.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.module.Module;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -85,6 +83,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new GotoHomeAction(myFileSystemTree));
     group.add(new GotoProjectDirectory(myFileSystemTree));
+    group.add(new GotoModuleDirectory(myFileSystemTree, myChooserDescriptor.getContextModule()));
     group.addSeparator();
     group.add(new NewFolderAction(myFileSystemTree));
     group.add(new FileDeleteAction(myFileSystemTree));

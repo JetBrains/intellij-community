@@ -11,6 +11,8 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.EventDispatcher;
 
@@ -120,7 +122,7 @@ public class ModuleEditor {
       getClass().getClassLoader(), new Class[]{ModifiableRootModel.class}, new ModifiableRootModelInvocationHandler(myModifiableRootModel)
     );
 
-    myPanel = new JPanel(new BorderLayout());
+    myPanel = new ModuleEditorPanel();
 
     createEditors(getModule());
 
@@ -419,4 +421,17 @@ public class ModuleEditor {
     return moduleElementsEditor.getHelpTopic();
   }
 
+  private class ModuleEditorPanel extends JPanel implements DataProvider{
+    public ModuleEditorPanel() {
+      super(new BorderLayout());
+    }
+
+    public Object getData(String dataId) {
+      if (dataId.equals(DataConstantsEx.MODULE_CONTEXT)) {
+        return getModule();
+      }
+      return null;
+    }
+
+  }
 }
