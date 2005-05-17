@@ -1,8 +1,6 @@
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -25,20 +23,14 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
         return "Call to simple getter '#ref()' from within class #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new CallToSimpleGetterInClassVisitor(this, inspectionManager,
-                                                    onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new CallToSimpleGetterInClassVisitor();
     }
 
 
     private class CallToSimpleGetterInClassVisitor
             extends BaseInspectionVisitor{
-        private CallToSimpleGetterInClassVisitor(BaseInspection inspection,
-                                                 InspectionManager inspectionManager,
-                                                 boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);

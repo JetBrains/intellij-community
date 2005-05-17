@@ -61,19 +61,13 @@ public class MissingOverrideAnnotationInspection extends MethodInspection{
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new MissingOverrideAnnotationVisitor(this, inspectionManager,
-                                                    onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new MissingOverrideAnnotationVisitor();
     }
 
     private static class MissingOverrideAnnotationVisitor
             extends BaseInspectionVisitor{
-        private MissingOverrideAnnotationVisitor(BaseInspection inspection,
-                                                 InspectionManager inspectionManager,
-                                                 boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitMethod(@NotNull PsiMethod method){
             if(method.isConstructor()){

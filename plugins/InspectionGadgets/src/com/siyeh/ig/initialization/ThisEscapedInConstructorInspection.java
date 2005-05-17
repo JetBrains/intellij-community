@@ -29,22 +29,13 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
         return "Escape of '#ref' during object construction #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new ThisExposedInConstructorInspectionVisitor(this,
-                                                             inspectionManager,
-                                                             onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new ThisExposedInConstructorInspectionVisitor();
     }
 
     private static class ThisExposedInConstructorInspectionVisitor
             extends BaseInspectionVisitor{
         private boolean m_inClass = false;
-
-        private ThisExposedInConstructorInspectionVisitor(BaseInspection inspection,
-                                                          InspectionManager inspectionManager,
-                                                          boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass){
             final boolean wasInClass = m_inClass;

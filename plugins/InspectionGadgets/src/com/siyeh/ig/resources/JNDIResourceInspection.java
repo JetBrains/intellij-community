@@ -1,9 +1,7 @@
 package com.siyeh.ig.resources;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -31,17 +29,11 @@ public class JNDIResourceInspection extends ExpressionInspection{
                        " should be opened in a try block, and closed in a finally block #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new JNDIResourceVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new JNDIResourceVisitor();
     }
 
     private static class JNDIResourceVisitor extends BaseInspectionVisitor{
-        private JNDIResourceVisitor(BaseInspection inspection,
-                                  InspectionManager inspectionManager,
-                                  boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
@@ -156,9 +148,9 @@ public class JNDIResourceInspection extends ExpressionInspection{
         private boolean containsClose = false;
         private PsiVariable socketToClose;
 
-        private CloseVisitor(PsiVariable elementToClose){
+        private CloseVisitor(PsiVariable socketToCLose){
             super();
-            this.socketToClose = elementToClose;
+            this.socketToClose = socketToCLose;
         }
 
         public void visitElement(@NotNull PsiElement element){

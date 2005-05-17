@@ -1,9 +1,11 @@
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 
 public class ThrowCaughtLocallyInspection extends StatementInspection {
 
@@ -19,14 +21,11 @@ public class ThrowCaughtLocallyInspection extends StatementInspection {
         return "'#ref' caught by containing 'try' statement #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ThrowCaughtLocallyVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ThrowCaughtLocallyVisitor();
     }
 
     private static class ThrowCaughtLocallyVisitor extends StatementInspectionVisitor {
-        private ThrowCaughtLocallyVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitThrowStatement(PsiThrowStatement statement) {
             super.visitThrowStatement(statement);

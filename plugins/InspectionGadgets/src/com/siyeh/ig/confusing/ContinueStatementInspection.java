@@ -1,9 +1,11 @@
 package com.siyeh.ig.confusing;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiContinueStatement;
 import com.intellij.psi.PsiElement;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class ContinueStatementInspection extends StatementInspection {
@@ -20,15 +22,12 @@ public class ContinueStatementInspection extends StatementInspection {
         return "#ref statement #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ContinueStatementVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ContinueStatementVisitor();
     }
 
     private static class ContinueStatementVisitor extends StatementInspectionVisitor {
-        private ContinueStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+       
         public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
             super.visitContinueStatement(statement);
             registerStatementError(statement);

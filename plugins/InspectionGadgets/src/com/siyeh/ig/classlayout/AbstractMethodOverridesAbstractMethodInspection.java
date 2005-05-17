@@ -43,15 +43,11 @@ public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspe
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new AbstractMethodOverridesAbstractMethodVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new AbstractMethodOverridesAbstractMethodVisitor();
     }
 
     private static class AbstractMethodOverridesAbstractMethodVisitor extends BaseInspectionVisitor {
-        private AbstractMethodOverridesAbstractMethodVisitor(BaseInspection inspection,
-                                                             InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes

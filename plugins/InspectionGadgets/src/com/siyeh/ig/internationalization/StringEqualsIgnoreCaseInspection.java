@@ -1,8 +1,6 @@
 package com.siyeh.ig.internationalization;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -25,14 +23,12 @@ public class StringEqualsIgnoreCaseInspection extends ExpressionInspection {
         return "String.#ref() in an internationalized context #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new StringEqualsIgnoreCaseVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new StringEqualsIgnoreCaseVisitor();
     }
 
     private static class StringEqualsIgnoreCaseVisitor extends BaseInspectionVisitor {
-        private StringEqualsIgnoreCaseVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+    
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);

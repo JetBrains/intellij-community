@@ -1,8 +1,6 @@
 package com.siyeh.ig.portability;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -24,14 +22,11 @@ public class RuntimeExecInspection extends ExpressionInspection {
         return "Call to Runtime.#ref() is non-portable #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new RuntimeExecVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new RuntimeExecVisitor();
     }
 
     private static class RuntimeExecVisitor extends BaseInspectionVisitor {
-        private RuntimeExecVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);

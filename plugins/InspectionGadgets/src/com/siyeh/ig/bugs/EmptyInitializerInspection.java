@@ -1,10 +1,12 @@
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.psi.*;
 import com.intellij.openapi.project.Project;
-import com.siyeh.ig.*;
+import com.intellij.psi.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.StatementInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptyInitializerInspection extends StatementInspection{
@@ -41,17 +43,12 @@ public class EmptyInitializerInspection extends StatementInspection{
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new EmptyInitializerVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new EmptyInitializerVisitor();
     }
 
     private static class EmptyInitializerVisitor extends BaseInspectionVisitor{
-        private EmptyInitializerVisitor(BaseInspection inspection,
-                                        InspectionManager inspectionManager,
-                                        boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitClassInitializer(@NotNull PsiClassInitializer initializer){
             super.visitClassInitializer(initializer);

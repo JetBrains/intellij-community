@@ -1,8 +1,6 @@
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -25,14 +23,11 @@ public class TeardownIsPublicVoidNoArgInspection extends MethodInspection {
         return "#ref() has incorrect signature";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new TeardownIsPublicVoidNoArgVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new TeardownIsPublicVoidNoArgVisitor();
     }
 
     private static class TeardownIsPublicVoidNoArgVisitor extends BaseInspectionVisitor {
-        private TeardownIsPublicVoidNoArgVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;

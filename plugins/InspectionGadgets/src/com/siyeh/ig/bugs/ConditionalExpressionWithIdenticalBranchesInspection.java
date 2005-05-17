@@ -1,10 +1,14 @@
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 
 public class ConditionalExpressionWithIdenticalBranchesInspection extends ExpressionInspection{
@@ -42,17 +46,12 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends Expres
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new ConditionalExpressionWithIdenticalBranchesVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new ConditionalExpressionWithIdenticalBranchesVisitor();
     }
 
     private static class ConditionalExpressionWithIdenticalBranchesVisitor extends BaseInspectionVisitor{
-        private ConditionalExpressionWithIdenticalBranchesVisitor(BaseInspection inspection,
-                                   InspectionManager inspectionManager,
-                                   boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitConditionalExpression(PsiConditionalExpression expression){
             super.visitConditionalExpression(expression);

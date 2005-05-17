@@ -1,14 +1,13 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
@@ -40,9 +39,8 @@ public class ForCanBeForeachInspection extends StatementInspection{
         return "'#ref' loop replaceable by 'for each'";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new ForCanBeForeachVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new ForCanBeForeachVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -432,11 +430,6 @@ public class ForCanBeForeachInspection extends StatementInspection{
     }
 
     private class ForCanBeForeachVisitor extends StatementInspectionVisitor{
-        private ForCanBeForeachVisitor(BaseInspection inspection,
-                                       InspectionManager inspectionManager,
-                                       boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitForStatement(@NotNull PsiForStatement forStatement){
             super.visitForStatement(forStatement);

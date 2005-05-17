@@ -22,14 +22,11 @@ public class TodoCommentInspection extends ClassInspection {
         return "TODO comment #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ClassWithoutToStringVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ClassWithoutToStringVisitor();
     }
 
     private static class ClassWithoutToStringVisitor extends BaseInspectionVisitor {
-        private ClassWithoutToStringVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitComment(PsiComment comment){
             super.visitComment(comment);

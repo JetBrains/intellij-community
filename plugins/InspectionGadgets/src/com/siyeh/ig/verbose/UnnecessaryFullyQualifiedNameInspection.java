@@ -1,27 +1,24 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
     public boolean m_ignoreJavadoc = false;
@@ -47,10 +44,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
         return "Fully qualified name #ref is unnecessary, and can be replaced with an import #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new UnnecessaryFullyQualifiedNameVisitor(this, inspectionManager,
-                                                        onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new UnnecessaryFullyQualifiedNameVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -96,12 +91,6 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
     private class UnnecessaryFullyQualifiedNameVisitor
             extends BaseInspectionVisitor{
         private boolean m_inClass = false;
-
-        private UnnecessaryFullyQualifiedNameVisitor(BaseInspection inspection,
-                                                     InspectionManager inspectionManager,
-                                                     boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass){
             final boolean wasInClass = m_inClass;

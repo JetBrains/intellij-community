@@ -1,10 +1,12 @@
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class StringToStringInspection extends ExpressionInspection {
@@ -29,8 +31,8 @@ public class StringToStringInspection extends ExpressionInspection {
         return "#ref is redundant #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new StringToStringVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new StringToStringVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -53,9 +55,6 @@ public class StringToStringInspection extends ExpressionInspection {
     }
 
     private static class StringToStringVisitor extends BaseInspectionVisitor {
-        private StringToStringVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);

@@ -1,6 +1,5 @@
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiBinaryExpression;
@@ -8,7 +7,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +34,8 @@ public class ConstantOnRHSOfComparisonInspection extends ExpressionInspection {
         return "#ref: constant on right side of comparison #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ConstantOnRHSOfComparisonVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ConstantOnRHSOfComparisonVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -61,9 +63,7 @@ public class ConstantOnRHSOfComparisonInspection extends ExpressionInspection {
     }
 
     private static class ConstantOnRHSOfComparisonVisitor extends BaseInspectionVisitor {
-        private ConstantOnRHSOfComparisonVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);

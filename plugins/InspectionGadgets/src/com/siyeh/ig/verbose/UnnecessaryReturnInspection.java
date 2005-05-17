@@ -1,6 +1,5 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -40,9 +39,8 @@ public class UnnecessaryReturnInspection extends StatementInspection{
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new UnnecessaryReturnVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new UnnecessaryReturnVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -65,11 +63,6 @@ public class UnnecessaryReturnInspection extends StatementInspection{
     }
 
     private static class UnnecessaryReturnVisitor extends StatementInspectionVisitor{
-        private UnnecessaryReturnVisitor(BaseInspection inspection,
-                                         InspectionManager inspectionManager,
-                                         boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);

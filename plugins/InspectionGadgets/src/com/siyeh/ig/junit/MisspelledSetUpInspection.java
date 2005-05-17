@@ -1,10 +1,12 @@
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +29,8 @@ public class MisspelledSetUpInspection extends MethodInspection {
         return "#ref() probably be setUp() #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new MisspelledSetUpVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new MisspelledSetUpVisitor();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
@@ -36,10 +38,6 @@ public class MisspelledSetUpInspection extends MethodInspection {
     }
 
     private static class MisspelledSetUpVisitor extends BaseInspectionVisitor {
-
-        private MisspelledSetUpVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super

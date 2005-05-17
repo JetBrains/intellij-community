@@ -1,13 +1,15 @@
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameParameterFix;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
@@ -95,20 +97,13 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
         return "";// this can't happen
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new ParameterNameDiffersFromOverriddenParameterVisitor(this,
-                                                                      inspectionManager,
-                                                                      onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new ParameterNameDiffersFromOverriddenParameterVisitor();
     }
 
     private class ParameterNameDiffersFromOverriddenParameterVisitor
             extends BaseInspectionVisitor{
-        private ParameterNameDiffersFromOverriddenParameterVisitor(BaseInspection inspection,
-                                                                   InspectionManager inspectionManager,
-                                                                   boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitMethod(@NotNull PsiMethod method){
             final PsiParameterList parameterList = method.getParameterList();

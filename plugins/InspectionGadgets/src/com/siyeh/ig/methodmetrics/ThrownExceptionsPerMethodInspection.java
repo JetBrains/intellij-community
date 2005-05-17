@@ -37,14 +37,11 @@ public class ThrownExceptionsPerMethodInspection extends MethodMetricInspection 
         return "Exceptions thrown limit:";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ParametersPerMethodVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ParametersPerMethodVisitor();
     }
 
     private class ParametersPerMethodVisitor extends BaseInspectionVisitor {
-        private ParametersPerMethodVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super

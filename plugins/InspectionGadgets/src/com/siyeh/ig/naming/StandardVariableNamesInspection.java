@@ -54,15 +54,11 @@ public class StandardVariableNamesInspection extends VariableInspection {
         return "Variable name '#ref' doesn't have type " + expectedType + " #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ExceptionNameDoesntEndWithExceptionVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ExceptionNameDoesntEndWithExceptionVisitor();
     }
 
     private static class ExceptionNameDoesntEndWithExceptionVisitor extends BaseInspectionVisitor {
-        private ExceptionNameDoesntEndWithExceptionVisitor(BaseInspection inspection,
-                                                           InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitVariable(@NotNull PsiVariable var) {
             super.visitVariable(var);

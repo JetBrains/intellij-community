@@ -1,10 +1,12 @@
 package com.siyeh.ig.encapsulation;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.FieldInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.EncapsulateVariableFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,14 +33,12 @@ public class PackageVisibleFieldInspection extends FieldInspection {
         return true;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ProtectedFieldVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ProtectedFieldVisitor();
     }
 
     private static class ProtectedFieldVisitor extends BaseInspectionVisitor {
-        private ProtectedFieldVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitField(@NotNull PsiField field) {
             if (field.hasModifierProperty(PsiModifier.PROTECTED) ||

@@ -26,14 +26,11 @@ public class ConfusingOctalEscapeInspection extends ExpressionInspection {
         return "String #ref contains potentially confusing octal escape sequence #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ConfusingOctalEscapeVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ConfusingOctalEscapeVisitor();
     }
 
     private static class ConfusingOctalEscapeVisitor extends BaseInspectionVisitor {
-        private ConfusingOctalEscapeVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitLiteralExpression(@NotNull PsiLiteralExpression exp) {
             super.visitLiteralExpression(exp);

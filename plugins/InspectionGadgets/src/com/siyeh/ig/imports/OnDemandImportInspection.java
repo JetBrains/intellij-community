@@ -22,14 +22,12 @@ public class OnDemandImportInspection extends ClassInspection {
         return "Importing package #ref.*  #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new PackageImportVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new PackageImportVisitor();
     }
 
     private static class PackageImportVisitor extends BaseInspectionVisitor {
-        private PackageImportVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down

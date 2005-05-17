@@ -1,8 +1,10 @@
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class InstanceofChainInspection extends StatementInspection {
@@ -23,15 +25,11 @@ public class InstanceofChainInspection extends StatementInspection {
         return "Chain of 'instanceof' checks indicates abstraction failure #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new InstanceofChainVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new InstanceofChainVisitor();
     }
 
     private static class InstanceofChainVisitor extends StatementInspectionVisitor {
-        private InstanceofChainVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
         public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiElement parent = statement.getParent();

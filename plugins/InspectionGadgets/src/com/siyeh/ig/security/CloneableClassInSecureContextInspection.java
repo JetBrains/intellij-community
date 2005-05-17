@@ -26,15 +26,12 @@ public class CloneableClassInSecureContextInspection extends ClassInspection {
         return "Class #ref may be cloned, compromising security #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new CloneableClassInSecureContextVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new CloneableClassInSecureContextVisitor();
     }
 
     private static class CloneableClassInSecureContextVisitor extends BaseInspectionVisitor {
-        private CloneableClassInSecureContextVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+    
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
             if (aClass.isInterface() || aClass.isAnnotationType()) {

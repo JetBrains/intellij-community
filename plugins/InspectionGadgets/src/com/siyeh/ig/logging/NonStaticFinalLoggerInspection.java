@@ -1,8 +1,10 @@
 package com.siyeh.ig.logging;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.RegExInputVerifier;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -82,15 +84,11 @@ public class NonStaticFinalLoggerInspection extends ClassInspection {
         return "Non-constant logger field #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ClassWithoutLoggerVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ClassWithoutLoggerVisitor();
     }
 
     private class ClassWithoutLoggerVisitor extends BaseInspectionVisitor {
-
-        private ClassWithoutLoggerVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
             //no recursion to avoid drilldown

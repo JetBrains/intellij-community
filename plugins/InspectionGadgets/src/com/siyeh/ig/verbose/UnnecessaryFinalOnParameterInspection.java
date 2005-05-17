@@ -27,8 +27,8 @@ public class UnnecessaryFinalOnParameterInspection extends MethodInspection {
         return "Unnecessary #ref for parameter " + parameterName + " #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnnecessaryFinalOnParameterVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryFinalOnParameterVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -36,9 +36,6 @@ public class UnnecessaryFinalOnParameterInspection extends MethodInspection {
     }
 
     private static class UnnecessaryFinalOnParameterVisitor extends BaseInspectionVisitor {
-        private UnnecessaryFinalOnParameterVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);

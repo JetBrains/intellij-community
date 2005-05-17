@@ -1,10 +1,12 @@
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,8 +24,8 @@ public class FinalClassInspection extends MethodInspection {
         return "Class declared '#ref' #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new FinalStaticMethodVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new FinalStaticMethodVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -31,9 +33,6 @@ public class FinalClassInspection extends MethodInspection {
     }
 
     private static class FinalStaticMethodVisitor extends BaseInspectionVisitor {
-        private FinalStaticMethodVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
             //no call to super, so we don't drill into inner classes

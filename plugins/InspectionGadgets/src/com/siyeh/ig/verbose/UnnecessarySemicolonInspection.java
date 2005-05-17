@@ -1,11 +1,13 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,10 +30,8 @@ public class UnnecessarySemicolonInspection extends ClassInspection{
         return "Unnecessary semicolon #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new UnnecessarySemicolonVisitor(this, inspectionManager,
-                                               onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new UnnecessarySemicolonVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -54,11 +54,7 @@ public class UnnecessarySemicolonInspection extends ClassInspection{
 
     private static class UnnecessarySemicolonVisitor
                                                      extends BaseInspectionVisitor{
-        private UnnecessarySemicolonVisitor(BaseInspection inspection,
-                                            InspectionManager inspectionManager,
-                                            boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitClass(@NotNull PsiClass aClass){
             PsiElement sibling = skipForwardWhiteSpacesAndComments(aClass);

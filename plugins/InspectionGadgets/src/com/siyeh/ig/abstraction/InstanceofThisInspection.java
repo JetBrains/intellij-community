@@ -1,8 +1,6 @@
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -22,14 +20,11 @@ public class InstanceofThisInspection extends ExpressionInspection {
         return "'instanceof' check for #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new InstanceofThisVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new InstanceofThisVisitor();
     }
 
     private static class InstanceofThisVisitor extends BaseInspectionVisitor {
-        private InstanceofThisVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitThisExpression(@NotNull PsiThisExpression thisValue) {
             super.visitThisExpression(thisValue);

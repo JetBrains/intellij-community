@@ -1,6 +1,5 @@
 package com.siyeh.ig.jdk;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -112,17 +111,11 @@ public class ForeachStatementInspection extends StatementInspection{
     }
 
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new ForeachStatementVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new ForeachStatementVisitor();
     }
 
     private static class ForeachStatementVisitor extends StatementInspectionVisitor{
-        private ForeachStatementVisitor(BaseInspection inspection,
-                                        InspectionManager inspectionManager,
-                                        boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitForeachStatement(@NotNull PsiForeachStatement statement){
             super.visitForeachStatement(statement);

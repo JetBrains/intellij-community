@@ -38,15 +38,11 @@ public class NonCommentSourceStatementsInspection extends MethodMetricInspection
         return "#ref is too long (# Non-comment source statements = " + statementCount + ") #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NonCommentSourceStatementsMethodVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NonCommentSourceStatementsMethodVisitor();
     }
 
     private class NonCommentSourceStatementsMethodVisitor extends BaseInspectionVisitor {
-
-        private NonCommentSourceStatementsMethodVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super

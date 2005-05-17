@@ -1,11 +1,13 @@
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class NestedTryStatementInspection extends StatementInspection {
@@ -22,14 +24,11 @@ public class NestedTryStatementInspection extends StatementInspection {
         return "Nested '#ref' statement #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NestedTryStatementVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NestedTryStatementVisitor();
     }
 
     private static class NestedTryStatementVisitor extends StatementInspectionVisitor {
-        private NestedTryStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);

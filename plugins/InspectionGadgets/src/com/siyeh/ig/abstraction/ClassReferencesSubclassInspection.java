@@ -1,8 +1,6 @@
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
@@ -28,17 +26,14 @@ public class ClassReferencesSubclassInspection extends ClassInspection {
         return "Class " + containingClassName + " references subclass #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ClassReferencesSubclassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ClassReferencesSubclassVisitor();
     }
 
     private static class ClassReferencesSubclassVisitor extends BaseInspectionVisitor {
         private boolean m_inClass = false;
         private PsiClass containingClass = null;
 
-        private ClassReferencesSubclassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
             final boolean wasInClass = m_inClass;

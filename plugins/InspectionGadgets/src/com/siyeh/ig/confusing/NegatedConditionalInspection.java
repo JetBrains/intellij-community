@@ -1,11 +1,13 @@
 package com.siyeh.ig.confusing;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 
@@ -28,9 +30,8 @@ public class NegatedConditionalInspection extends ExpressionInspection{
         return GroupNames.CONFUSING_GROUP_NAME;
     }
 
-    protected BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                                  boolean onTheFly){
-        return new NegatedConditionalVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new NegatedConditionalVisitor();
     }
 
     public String buildErrorString(PsiElement location){
@@ -71,11 +72,6 @@ public class NegatedConditionalInspection extends ExpressionInspection{
     }
 
     private class NegatedConditionalVisitor extends BaseInspectionVisitor{
-        private NegatedConditionalVisitor(BaseInspection inspection,
-                                          InspectionManager inspectionManager,
-                                          boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitConditionalExpression(PsiConditionalExpression expression){
             super.visitConditionalExpression(expression);

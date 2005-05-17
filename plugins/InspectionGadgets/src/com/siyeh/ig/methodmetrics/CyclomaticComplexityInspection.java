@@ -37,14 +37,11 @@ public class CyclomaticComplexityInspection
         return "#ref is overly complex (cyclomatic complexity = " + coupling + ") #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new MethodComplexityVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new MethodComplexityVisitor();
     }
 
     private class MethodComplexityVisitor extends BaseInspectionVisitor {
-        private MethodComplexityVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super

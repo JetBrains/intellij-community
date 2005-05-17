@@ -1,9 +1,7 @@
 package com.siyeh.ig.confusing;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -41,15 +39,12 @@ public class IncrementDecrementUsedAsExpressionInspection extends ExpressionInsp
         return "Value of " + expressionType + " expression #ref is used #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new IncrementDecrementUsedAsExpressionVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new IncrementDecrementUsedAsExpressionVisitor();
     }
 
     private static class IncrementDecrementUsedAsExpressionVisitor extends BaseInspectionVisitor {
-        private IncrementDecrementUsedAsExpressionVisitor(BaseInspection inspection,
-                                                          InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitPostfixExpression(@NotNull PsiPostfixExpression expression) {
             super.visitPostfixExpression(expression);

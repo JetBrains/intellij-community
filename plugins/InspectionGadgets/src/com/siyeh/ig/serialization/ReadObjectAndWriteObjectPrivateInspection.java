@@ -1,11 +1,13 @@
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.MakePrivateFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
@@ -28,8 +30,8 @@ public class ReadObjectAndWriteObjectPrivateInspection extends MethodInspection 
         return "#ref not declared 'private' #loc ";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ReadObjectWriteObjectPrivateVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ReadObjectWriteObjectPrivateVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -37,9 +39,7 @@ public class ReadObjectAndWriteObjectPrivateInspection extends MethodInspection 
     }
 
     private static class ReadObjectWriteObjectPrivateVisitor extends BaseInspectionVisitor {
-        private ReadObjectWriteObjectPrivateVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitMethod(@NotNull PsiMethod method) {
             // no call to super, so it doesn't drill down

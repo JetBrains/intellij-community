@@ -1,8 +1,6 @@
 package com.siyeh.ig.initialization;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.GroupNames;
@@ -38,18 +36,12 @@ public class StaticVariableUninitializedUseInspection extends FieldInspection {
                 this, "m_ignorePrimitives");
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new StaticVariableInitializationVisitor(this, inspectionManager,
-                onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new StaticVariableInitializationVisitor();
     }
 
     private class StaticVariableInitializationVisitor
             extends BaseInspectionVisitor {
-        private StaticVariableInitializationVisitor(BaseInspection inspection,
-                                                    InspectionManager inspectionManager,
-                                                    boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitField(@NotNull PsiField field) {
             if (!field.hasModifierProperty(PsiModifier.STATIC)) {

@@ -1,9 +1,7 @@
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.*;
 import com.intellij.pom.java.LanguageLevel;
-import com.siyeh.ig.BaseInspection;
+import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
@@ -34,17 +32,12 @@ public class ExtendsAnnotationInspection extends ClassInspection{
         return "Class "+ containingClass.getName()+" explicitly extends annotation interface '#ref' #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new ExtendsAnnotationVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new ExtendsAnnotationVisitor();
     }
 
     private static class ExtendsAnnotationVisitor extends BaseInspectionVisitor{
-        private ExtendsAnnotationVisitor(BaseInspection inspection,
-                                     InspectionManager inspectionManager,
-                                     boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitClass(@NotNull PsiClass aClass){
             final PsiManager manager = aClass.getManager();

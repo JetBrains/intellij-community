@@ -1,8 +1,6 @@
 package com.siyeh.ig.classmetrics;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -47,14 +45,11 @@ public class AnonymousClassComplexityInspection
         return "Overly complex anonymous inner class (cyclomatic complexity = " + totalComplexity + ") #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ClassComplexityVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ClassComplexityVisitor();
     }
 
     private class ClassComplexityVisitor extends BaseInspectionVisitor {
-        private ClassComplexityVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass psiClass) {
             // no call to super, to prevent double counting

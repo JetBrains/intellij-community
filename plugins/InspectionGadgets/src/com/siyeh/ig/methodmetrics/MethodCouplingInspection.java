@@ -1,9 +1,7 @@
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
@@ -125,14 +123,12 @@ public class MethodCouplingInspection
         return "#ref is overly coupled (# referenced classes = " + coupling + ") #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new MethodCouplingVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new MethodCouplingVisitor();
     }
 
     private class MethodCouplingVisitor extends BaseInspectionVisitor {
-        private MethodCouplingVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super

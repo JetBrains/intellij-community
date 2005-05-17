@@ -50,8 +50,8 @@ public class OverlyComplexArithmeticExpressionInspection extends ExpressionInspe
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
     }
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new SwitchStatementWithTooManyBranchesVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new SwitchStatementWithTooManyBranchesVisitor();
     }
 
     private class SwitchStatementWithTooManyBranchesVisitor extends BaseInspectionVisitor {
@@ -62,10 +62,6 @@ public class OverlyComplexArithmeticExpressionInspection extends ExpressionInspe
             arithmeticTokens.add(JavaTokenType.ASTERISK);
             arithmeticTokens.add(JavaTokenType.DIV);
             arithmeticTokens.add(JavaTokenType.PERC);
-        }
-
-        private SwitchStatementWithTooManyBranchesVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
         }
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {

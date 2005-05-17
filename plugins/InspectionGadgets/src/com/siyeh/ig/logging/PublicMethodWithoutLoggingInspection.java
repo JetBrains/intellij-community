@@ -14,8 +14,8 @@ import java.awt.*;
 
 public class PublicMethodWithoutLoggingInspection extends MethodInspection{
     /**
-         * @noinspection PublicField
-         */
+     * @noinspection PublicField
+     */
     public String loggerClassName = "java.util.logging.Logger";
 
     public String getDisplayName(){
@@ -81,19 +81,12 @@ public class PublicMethodWithoutLoggingInspection extends MethodInspection{
         return "Public method without logging #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new PublicMethodWithoutLoggingVisitor(this, inspectionManager,
-                                                     onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new PublicMethodWithoutLoggingVisitor();
     }
 
     private class PublicMethodWithoutLoggingVisitor
             extends BaseInspectionVisitor{
-        private PublicMethodWithoutLoggingVisitor(BaseInspection inspection,
-                                                  InspectionManager inspectionManager,
-                                                  boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method){
             //no drilldown

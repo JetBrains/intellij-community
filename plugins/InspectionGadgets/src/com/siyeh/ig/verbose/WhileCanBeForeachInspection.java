@@ -1,14 +1,13 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -42,9 +41,8 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         return "'#ref' loop replaceable by 'for each'";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new WhileBeForeachVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new WhileBeForeachVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -302,11 +300,6 @@ public class WhileCanBeForeachInspection extends StatementInspection{
 
     private static class WhileBeForeachVisitor
             extends StatementInspectionVisitor{
-        private WhileBeForeachVisitor(BaseInspection inspection,
-                                      InspectionManager inspectionManager,
-                                      boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitWhileStatement(@NotNull PsiWhileStatement whileStatement){
             super.visitWhileStatement(whileStatement);

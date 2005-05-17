@@ -24,17 +24,13 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends StatementInsp
                        "' misses cases #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnnecessaryDefaultVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryDefaultVisitor();
     }
 
     private static class UnnecessaryDefaultVisitor
             extends StatementInspectionVisitor {
-        private UnnecessaryDefaultVisitor(BaseInspection inspection,
-                                          InspectionManager inspectionManager,
-                                          boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+     
 
         public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);

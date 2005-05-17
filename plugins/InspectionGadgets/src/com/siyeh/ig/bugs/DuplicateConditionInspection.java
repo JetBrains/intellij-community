@@ -1,9 +1,7 @@
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -27,18 +25,12 @@ public class DuplicateConditionInspection extends ExpressionInspection{
         return "Duplicate condition #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new DuplicateConditionVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new DuplicateConditionVisitor();
     }
 
     private static class DuplicateConditionVisitor
             extends BaseInspectionVisitor{
-        private DuplicateConditionVisitor(BaseInspection inspection,
-                                          InspectionManager inspectionManager,
-                                          boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitIfStatement(@NotNull PsiIfStatement statement){
             super.visitIfStatement(statement);

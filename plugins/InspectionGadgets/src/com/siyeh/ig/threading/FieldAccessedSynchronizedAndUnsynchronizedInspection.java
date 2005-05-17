@@ -1,11 +1,9 @@
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
@@ -30,15 +28,11 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection extends ClassI
         return "Field #ref is accessed in both synchronized and unsynchronized contexts #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new FieldAccessedSynchronizedAndUnsynchronizedVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new FieldAccessedSynchronizedAndUnsynchronizedVisitor();
     }
 
     private static class FieldAccessedSynchronizedAndUnsynchronizedVisitor extends BaseInspectionVisitor {
-        private FieldAccessedSynchronizedAndUnsynchronizedVisitor(BaseInspection inspection,
-                                                                  InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
             final VariableAccessVisitor visitor = new VariableAccessVisitor();

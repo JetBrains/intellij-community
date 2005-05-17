@@ -1,12 +1,14 @@
 package com.siyeh.ig.jdk;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -60,9 +62,8 @@ public class AutoUnboxingInspection extends ExpressionInspection{
         return "Auto-unboxing #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new AutoUnboxingVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new AutoUnboxingVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -103,11 +104,6 @@ public class AutoUnboxingInspection extends ExpressionInspection{
     }
 
     private static class AutoUnboxingVisitor extends BaseInspectionVisitor{
-        private AutoUnboxingVisitor(BaseInspection inspection,
-                                    InspectionManager inspectionManager,
-                                    boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitExpression(PsiExpression expression){
             super.visitExpression(expression);

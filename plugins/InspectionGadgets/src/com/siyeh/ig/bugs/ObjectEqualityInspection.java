@@ -70,8 +70,8 @@ public class ObjectEqualityInspection extends ExpressionInspection {
         return "Object values are compared using '#ref', not '.equals()' #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ObjectEqualityVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ObjectEqualityVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -125,9 +125,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
     }
 
     private class ObjectEqualityVisitor extends BaseInspectionVisitor {
-        private ObjectEqualityVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);

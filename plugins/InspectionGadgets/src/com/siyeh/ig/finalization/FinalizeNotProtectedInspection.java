@@ -1,12 +1,14 @@
 package com.siyeh.ig.finalization;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class FinalizeNotProtectedInspection extends MethodInspection {
@@ -26,8 +28,8 @@ public class FinalizeNotProtectedInspection extends MethodInspection {
         return "#ref() not declared 'protected' #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new FinalizeDeclaredProtectedVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new FinalizeDeclaredProtectedVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -55,10 +57,7 @@ public class FinalizeNotProtectedInspection extends MethodInspection {
     }
 
     private static class FinalizeDeclaredProtectedVisitor extends BaseInspectionVisitor {
-        private FinalizeDeclaredProtectedVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+        
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;
             final String methodName = method.getName();

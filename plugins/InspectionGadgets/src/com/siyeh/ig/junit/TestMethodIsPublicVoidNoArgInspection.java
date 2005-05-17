@@ -1,8 +1,6 @@
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -25,14 +23,11 @@ public class TestMethodIsPublicVoidNoArgInspection extends MethodInspection {
         return "#ref() is not declared 'public void " + location.getText() + "()";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new TestMethodIsPublicVoidNoArgVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new TestMethodIsPublicVoidNoArgVisitor();
     }
 
     private static class TestMethodIsPublicVoidNoArgVisitor extends BaseInspectionVisitor {
-        private TestMethodIsPublicVoidNoArgVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;

@@ -1,8 +1,6 @@
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -26,14 +24,11 @@ public class SynchronizeOnNonFinalFieldInspection extends MethodInspection {
         return "Synchronization on a non-final field #ref is unlikely to have useful semantics #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new SynchronizeOnNonFinalFieldVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new SynchronizeOnNonFinalFieldVisitor();
     }
 
     private static class SynchronizeOnNonFinalFieldVisitor extends BaseInspectionVisitor {
-        private SynchronizeOnNonFinalFieldVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement){
             super.visitSynchronizedStatement(statement);

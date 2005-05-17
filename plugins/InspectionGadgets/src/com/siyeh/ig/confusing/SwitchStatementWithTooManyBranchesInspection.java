@@ -40,14 +40,11 @@ public class SwitchStatementWithTooManyBranchesInspection extends StatementInspe
         return "'#ref' has too many branches (" + numBranches + ") #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new SwitchStatementWithTooManyBranchesVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new SwitchStatementWithTooManyBranchesVisitor();
     }
 
     private class SwitchStatementWithTooManyBranchesVisitor extends StatementInspectionVisitor {
-        private SwitchStatementWithTooManyBranchesVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             final PsiCodeBlock body = statement.getBody();

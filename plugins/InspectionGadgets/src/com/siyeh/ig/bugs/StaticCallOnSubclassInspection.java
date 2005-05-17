@@ -61,14 +61,11 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new StaticCallOnSubclassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new StaticCallOnSubclassVisitor();
     }
 
     private static class StaticCallOnSubclassVisitor extends BaseInspectionVisitor {
-        private StaticCallOnSubclassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);

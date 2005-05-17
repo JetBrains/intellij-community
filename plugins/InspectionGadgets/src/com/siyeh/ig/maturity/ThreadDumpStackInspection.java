@@ -25,14 +25,11 @@ public class ThreadDumpStackInspection extends ExpressionInspection {
         return "Call to Thread.#ref() should probably be replaced with more robust logging #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ThreadDumpStackVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ThreadDumpStackVisitor();
     }
 
     private static class ThreadDumpStackVisitor extends BaseInspectionVisitor {
-        private ThreadDumpStackVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);

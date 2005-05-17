@@ -1,11 +1,13 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 
 public class UnnecessaryParenthesesInspection extends ExpressionInspection {
@@ -23,8 +25,8 @@ public class UnnecessaryParenthesesInspection extends ExpressionInspection {
         return "Parentheses around #ref are unnecessary #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnnecessaryParenthesesVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryParenthesesVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -47,9 +49,6 @@ public class UnnecessaryParenthesesInspection extends ExpressionInspection {
     }
 
     private static class UnnecessaryParenthesesVisitor extends BaseInspectionVisitor {
-        private UnnecessaryParenthesesVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
             final PsiElement parent = expression.getParent();

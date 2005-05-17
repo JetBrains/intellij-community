@@ -39,15 +39,11 @@ public class MagicCharacterInspection extends ExpressionInspection {
         return true;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new CharacterLiteralsShouldBeExplicitlyDeclaredVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new CharacterLiteralsShouldBeExplicitlyDeclaredVisitor();
     }
 
     private static class CharacterLiteralsShouldBeExplicitlyDeclaredVisitor extends BaseInspectionVisitor {
-        private CharacterLiteralsShouldBeExplicitlyDeclaredVisitor(BaseInspection inspection,
-                                                                   InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);

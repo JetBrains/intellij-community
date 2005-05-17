@@ -1,13 +1,15 @@
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticInheritanceInspection extends ClassInspection{
@@ -54,12 +56,7 @@ public class StaticInheritanceInspection extends ClassInspection{
                 for(PsiReference reference1 : references){
                     final PsiReferenceExpression reference =
                             (PsiReferenceExpression) reference1;
-                    if(!reference.isQualified()){
-                        final String referenceText = reference.getText();
-                        replaceExpression(reference,
-                                          referencedClassName + '.' +
-                                                  referenceText);
-                    } else{
+                    if(reference.isQualified()){
                         final PsiExpression qualifier =
                                 reference.getQualifierExpression();
                         final String referenceName =
@@ -77,6 +74,11 @@ public class StaticInheritanceInspection extends ClassInspection{
                                               referencedClassName + '.' +
                                                       referenceName);
                         }
+                    } else{
+                        final String referenceText = reference.getText();
+                        replaceExpression(reference,
+                                          referencedClassName + '.' +
+                                                  referenceText);
                     }
                 }
             }
@@ -84,17 +86,11 @@ public class StaticInheritanceInspection extends ClassInspection{
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new StaticInheritanceVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new StaticInheritanceVisitor();
     }
 
     private static class StaticInheritanceVisitor extends BaseInspectionVisitor{
-        private StaticInheritanceVisitor(BaseInspection inspection,
-                                         InspectionManager inspectionManager,
-                                         boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so it doesn't drill down

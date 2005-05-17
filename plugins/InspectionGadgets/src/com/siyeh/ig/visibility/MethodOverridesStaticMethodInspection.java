@@ -1,8 +1,10 @@
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,18 +37,12 @@ public class MethodOverridesStaticMethodInspection extends MethodInspection {
         return "Method '#ref' overrides a static method of a superclass #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new MethodOverridesStaticMethodVisitor(this, inspectionManager,
-                onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new MethodOverridesStaticMethodVisitor();
     }
 
     private static class MethodOverridesStaticMethodVisitor
             extends BaseInspectionVisitor {
-        private MethodOverridesStaticMethodVisitor(BaseInspection inspection,
-                                                   InspectionManager inspectionManager,
-                                                   boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             final PsiClass aClass = method.getContainingClass();

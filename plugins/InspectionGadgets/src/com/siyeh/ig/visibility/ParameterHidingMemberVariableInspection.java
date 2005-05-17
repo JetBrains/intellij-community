@@ -1,18 +1,19 @@
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class ParameterHidingMemberVariableInspection extends MethodInspection{
     /** @noinspection PublicField*/
@@ -51,19 +52,12 @@ public class ParameterHidingMemberVariableInspection extends MethodInspection{
         return "Parameter '#ref' hides member variable #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new ParameterHidingMemberVariableVisitor(this, inspectionManager,
-                                                        onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new ParameterHidingMemberVariableVisitor();
     }
 
     private class ParameterHidingMemberVariableVisitor
             extends BaseInspectionVisitor{
-        private ParameterHidingMemberVariableVisitor(BaseInspection inspection,
-                                                     InspectionManager inspectionManager,
-                                                     boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitParameter(@NotNull PsiParameter variable){
             super.visitParameter(variable);

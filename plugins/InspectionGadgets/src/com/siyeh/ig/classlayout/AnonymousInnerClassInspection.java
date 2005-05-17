@@ -32,14 +32,11 @@ public class AnonymousInnerClassInspection extends ClassInspection {
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
     }
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new AnonymousInnerClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new AnonymousInnerClassVisitor();
     }
 
     private static class AnonymousInnerClassVisitor extends BaseInspectionVisitor {
-        private AnonymousInnerClassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
            //no call to super here, to avoid double counting

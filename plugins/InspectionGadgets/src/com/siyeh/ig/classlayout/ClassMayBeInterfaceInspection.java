@@ -107,14 +107,11 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ClassMayBeInterfaceVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ClassMayBeInterfaceVisitor();
     }
 
     private static class ClassMayBeInterfaceVisitor extends BaseInspectionVisitor {
-        private ClassMayBeInterfaceVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes

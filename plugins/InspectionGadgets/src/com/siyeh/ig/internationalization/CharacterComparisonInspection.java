@@ -1,10 +1,8 @@
 package com.siyeh.ig.internationalization;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -29,14 +27,11 @@ public class CharacterComparisonInspection extends ExpressionInspection {
         return "Character comparison #ref in an internationalized context #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new CharacterComparisonVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new CharacterComparisonVisitor();
     }
 
     private static class CharacterComparisonVisitor extends BaseInspectionVisitor {
-        private CharacterComparisonVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);

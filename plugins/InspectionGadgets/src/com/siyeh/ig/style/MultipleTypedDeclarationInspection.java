@@ -1,9 +1,11 @@
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.fixes.NormalizeDeclarationFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,9 +30,8 @@ public class MultipleTypedDeclarationInspection extends VariableInspection {
         return "Variables of different types in one declaration #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new MultiplyTypedDeclarationVisitor(this, inspectionManager,
-                onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new MultiplyTypedDeclarationVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -39,11 +40,6 @@ public class MultipleTypedDeclarationInspection extends VariableInspection {
 
     private static class MultiplyTypedDeclarationVisitor
             extends BaseInspectionVisitor {
-        private MultiplyTypedDeclarationVisitor(BaseInspection inspection,
-                                                InspectionManager inspectionManager,
-                                                boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitDeclarationStatement(PsiDeclarationStatement statement) {
             super.visitDeclarationStatement(statement);

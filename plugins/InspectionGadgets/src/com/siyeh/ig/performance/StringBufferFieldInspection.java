@@ -1,10 +1,8 @@
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.GroupNames;
@@ -27,14 +25,11 @@ public class StringBufferFieldInspection extends FieldInspection {
         return typeName+ " field '#ref' #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new StringBufferFieldVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new StringBufferFieldVisitor();
     }
 
     private static class StringBufferFieldVisitor extends BaseInspectionVisitor {
-        private StringBufferFieldVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitField(@NotNull PsiField field) {
             super.visitField(field);

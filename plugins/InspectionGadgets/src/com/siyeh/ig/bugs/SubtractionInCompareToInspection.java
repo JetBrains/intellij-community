@@ -1,10 +1,8 @@
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -26,15 +24,11 @@ public class SubtractionInCompareToInspection extends ExpressionInspection {
         return "Subtraction (#ref) in compareTo() may result in overflow errors #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new SubtractionInCompareToVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new SubtractionInCompareToVisitor();
     }
 
     private static class SubtractionInCompareToVisitor extends BaseInspectionVisitor {
-        private SubtractionInCompareToVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
         public void visitBinaryExpression(@NotNull PsiBinaryExpression exp) {
             super.visitBinaryExpression(exp);
             if(!WellFormednessUtils.isWellFormed(exp)){

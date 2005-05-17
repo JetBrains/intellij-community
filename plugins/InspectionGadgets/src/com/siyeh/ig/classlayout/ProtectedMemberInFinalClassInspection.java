@@ -1,9 +1,11 @@
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,8 +23,8 @@ public class ProtectedMemberInFinalClassInspection extends MethodInspection {
         return "Class member declared '#ref' in 'final' class #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ProtectedMemberInFinalClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ProtectedMemberInFinalClassVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -30,9 +32,6 @@ public class ProtectedMemberInFinalClassInspection extends MethodInspection {
     }
 
     private static class ProtectedMemberInFinalClassVisitor extends BaseInspectionVisitor {
-        private ProtectedMemberInFinalClassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes

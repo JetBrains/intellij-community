@@ -75,14 +75,11 @@ public class ClassWithoutConstructorInspection extends ClassInspection {
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ClassWithoutConstructorVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ClassWithoutConstructorVisitor();
     }
 
     private static class ClassWithoutConstructorVisitor extends BaseInspectionVisitor {
-        private ClassWithoutConstructorVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down

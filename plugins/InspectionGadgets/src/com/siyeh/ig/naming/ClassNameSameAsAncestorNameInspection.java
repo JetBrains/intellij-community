@@ -1,9 +1,11 @@
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,20 +35,12 @@ public class ClassNameSameAsAncestorNameInspection extends ClassInspection{
         return "Class name '#ref' is the same as one of its superclass' names #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new ClassNameSameAsAncestorNameVisitor(this, inspectionManager,
-                                                      onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new ClassNameSameAsAncestorNameVisitor();
     }
 
     private static class ClassNameSameAsAncestorNameVisitor
-                                                            extends BaseInspectionVisitor{
-        private ClassNameSameAsAncestorNameVisitor(BaseInspection inspection,
-                                                   InspectionManager inspectionManager,
-                                                   boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+            extends BaseInspectionVisitor{
         public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so it doesn't drill down into inner classes
             final String className = aClass.getName();

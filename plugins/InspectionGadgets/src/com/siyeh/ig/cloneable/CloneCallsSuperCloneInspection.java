@@ -1,8 +1,6 @@
 package com.siyeh.ig.cloneable;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -27,14 +25,11 @@ public class CloneCallsSuperCloneInspection extends MethodInspection {
     public boolean isEnabledByDefault(){
         return true;
     }
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NoExplicitCloneCallsVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NoExplicitCloneCallsVisitor();
     }
 
     private static class NoExplicitCloneCallsVisitor extends BaseInspectionVisitor {
-        private NoExplicitCloneCallsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;

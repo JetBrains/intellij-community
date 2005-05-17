@@ -6,7 +6,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -57,8 +56,8 @@ public class StaticMethodNamingConventionInspection extends ConventionInspection
         return DEFAULT_MAX_LENGTH;
     }
 
-    protected BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NamingConventionsVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NamingConventionsVisitor();
     }
 
     public ProblemDescriptor[] doCheckMethod(PsiMethod method, InspectionManager mgr, boolean isOnTheFly) {
@@ -75,9 +74,6 @@ public class StaticMethodNamingConventionInspection extends ConventionInspection
     }
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
-        private NamingConventionsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);

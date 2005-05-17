@@ -1,11 +1,13 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
@@ -48,11 +50,8 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
         return lhs.getText() + ' ' + signText + "= " + rhsRhs.getText();
     }
 
-    public BaseInspectionVisitor createVisitor(
-            InspectionManager inspectionManager, boolean onTheFly){
-        return new ReplaceAssignmentWithOperatorAssignmentVisitor(this,
-                                                                  inspectionManager,
-                                                                  onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new ReplaceAssignmentWithOperatorAssignmentVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -97,11 +96,6 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
 
     private static class ReplaceAssignmentWithOperatorAssignmentVisitor
             extends BaseInspectionVisitor{
-        private ReplaceAssignmentWithOperatorAssignmentVisitor(
-                BaseInspection inspection,
-                InspectionManager inspectionManager, boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitAssignmentExpression(@NotNull
                 PsiAssignmentExpression assignment){

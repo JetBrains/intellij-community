@@ -28,8 +28,8 @@ public class StringConstructorInspection extends ExpressionInspection {
         return "#ref is redundant #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new StringConstructorVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new StringConstructorVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -72,9 +72,7 @@ public class StringConstructorInspection extends ExpressionInspection {
     }
 
     private static class StringConstructorVisitor extends BaseInspectionVisitor {
-        private StringConstructorVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);

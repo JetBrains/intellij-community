@@ -78,15 +78,11 @@ public class ClassWithMultipleLoggersInspection extends ClassInspection {
         return "Class #ref declares multiple loggers #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ClassWithoutLoggerVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ClassWithoutLoggerVisitor();
     }
 
     private class ClassWithoutLoggerVisitor extends BaseInspectionVisitor {
-
-        private ClassWithoutLoggerVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
             //no recursion to avoid drilldown

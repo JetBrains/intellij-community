@@ -27,8 +27,8 @@ public class MisspelledTearDownInspection extends MethodInspection {
         return "#ref() method should probably be tearDown() #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new MisspelledSetUpVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new MisspelledSetUpVisitor();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
@@ -36,10 +36,6 @@ public class MisspelledTearDownInspection extends MethodInspection {
     }
 
     private static class MisspelledSetUpVisitor extends BaseInspectionVisitor {
-
-        private MisspelledSetUpVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super

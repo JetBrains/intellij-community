@@ -47,15 +47,11 @@ public class InnerClassVariableHidesOuterClassVariableInspection extends FieldIn
         return "Inner class field '#ref' hides outer class field #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new InnerClassVariableHidesOuterClassVariableVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new InnerClassVariableHidesOuterClassVariableVisitor();
     }
 
     private class InnerClassVariableHidesOuterClassVariableVisitor extends BaseInspectionVisitor {
-        private InnerClassVariableHidesOuterClassVariableVisitor(BaseInspection inspection,
-                                                                 InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitField(@NotNull PsiField field) {
             final PsiClass aClass = field.getContainingClass();

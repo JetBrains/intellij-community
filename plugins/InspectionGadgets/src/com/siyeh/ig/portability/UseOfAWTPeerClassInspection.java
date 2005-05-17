@@ -1,8 +1,6 @@
 package com.siyeh.ig.portability;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.VariableInspection;
@@ -23,14 +21,12 @@ public class UseOfAWTPeerClassInspection extends VariableInspection {
         return "Use of AWT peer class #ref is non-portable #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UseOfAWTPeerClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UseOfAWTPeerClassVisitor();
     }
 
     private static class UseOfAWTPeerClassVisitor extends BaseInspectionVisitor {
-        private UseOfAWTPeerClassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);

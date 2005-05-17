@@ -63,14 +63,12 @@ public class EmptyCatchBlockInspection extends StatementInspection {
         return panel;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new EmptyCatchBlockVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new EmptyCatchBlockVisitor();
     }
 
     private class EmptyCatchBlockVisitor extends StatementInspectionVisitor {
-        private EmptyCatchBlockVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);

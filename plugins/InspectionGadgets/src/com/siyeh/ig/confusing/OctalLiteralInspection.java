@@ -31,17 +31,11 @@ public class OctalLiteralInspection extends ExpressionInspection{
         return "Octal integer #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new OctalLiteralVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new OctalLiteralVisitor();
     }
 
     private static class OctalLiteralVisitor extends BaseInspectionVisitor{
-        private OctalLiteralVisitor(BaseInspection inspection,
-                                    InspectionManager inspectionManager,
-                                    boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitLiteralExpression(@NotNull PsiLiteralExpression literal){
             super.visitLiteralExpression(literal);

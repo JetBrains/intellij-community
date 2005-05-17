@@ -26,14 +26,11 @@ public class CloneInNonCloneableClassInspection extends MethodInspection {
         return fix;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new CloneInNonCloneableClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new CloneInNonCloneableClassVisitor();
     }
 
     private static class CloneInNonCloneableClassVisitor extends BaseInspectionVisitor {
-        private CloneInNonCloneableClassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method){
             final PsiClass containingClass = method.getContainingClass();

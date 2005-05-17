@@ -42,14 +42,11 @@ public class ThreeNegationsPerMethodInspection extends MethodInspection {
         return "#ref contains " + negationCount + " negations #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ThreeNegationsPerMethodVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ThreeNegationsPerMethodVisitor();
     }
 
     private class ThreeNegationsPerMethodVisitor extends BaseInspectionVisitor {
-        private ThreeNegationsPerMethodVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super

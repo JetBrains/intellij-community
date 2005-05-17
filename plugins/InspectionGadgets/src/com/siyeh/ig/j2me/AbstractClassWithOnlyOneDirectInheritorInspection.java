@@ -24,15 +24,12 @@ public class AbstractClassWithOnlyOneDirectInheritorInspection extends ClassInsp
         return "Abstract class #ref has has only one direct inheritor #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new InterfaceNeverImplementedVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new InterfaceNeverImplementedVisitor();
     }
 
     private static class InterfaceNeverImplementedVisitor extends BaseInspectionVisitor {
-        private InterfaceNeverImplementedVisitor(BaseInspection inspection,
-                                                           InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes

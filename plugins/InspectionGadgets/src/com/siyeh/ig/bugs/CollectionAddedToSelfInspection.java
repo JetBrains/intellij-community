@@ -25,16 +25,12 @@ public class CollectionAddedToSelfInspection extends ExpressionInspection {
         return "Collection '#ref' is added to self #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new CollectionAddedToSelfVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new CollectionAddedToSelfVisitor();
     }
 
     private static class CollectionAddedToSelfVisitor extends BaseInspectionVisitor {
         private boolean inClass = false;
-
-        private CollectionAddedToSelfVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass){
             if(!inClass)

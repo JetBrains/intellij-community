@@ -1,6 +1,5 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -8,11 +7,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
-
-import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryBlockStatementInspection extends StatementInspection{
     private final UnnecessaryBlockFix fix = new UnnecessaryBlockFix();
@@ -33,10 +31,8 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
         return "Braces around this statement are unnecessary #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new UnnecessaryBlockStatementVisitor(this, inspectionManager,
-                                                    onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new UnnecessaryBlockStatementVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -81,11 +77,6 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
 
     private static class UnnecessaryBlockStatementVisitor
             extends StatementInspectionVisitor{
-        private UnnecessaryBlockStatementVisitor(BaseInspection inspection,
-                                                 InspectionManager inspectionManager,
-                                                 boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitBlockStatement(PsiBlockStatement blockStatement){
             super.visitBlockStatement(blockStatement);

@@ -1,6 +1,5 @@
 package com.siyeh.ig.initialization;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -9,7 +8,6 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -29,20 +27,12 @@ public class OverriddenMethodCallInConstructorInspection
         return "Call to overridden method #ref during object construction #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new AbstractMethodCallInConstructorVisitor(this,
-                                                          inspectionManager,
-                                                          onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new AbstractMethodCallInConstructorVisitor();
     }
 
     private static class AbstractMethodCallInConstructorVisitor
                                                                 extends BaseInspectionVisitor{
-        private AbstractMethodCallInConstructorVisitor(BaseInspection inspection,
-                                                       InspectionManager inspectionManager,
-                                                       boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);

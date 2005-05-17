@@ -1,8 +1,10 @@
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
@@ -30,14 +32,12 @@ public class ConfusingMainMethodInspection extends MethodInspection {
         return "Method named '#ref' without signature 'public static void main(String[])' #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ConfusingMainMethodVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ConfusingMainMethodVisitor();
     }
 
     private static class ConfusingMainMethodVisitor extends BaseInspectionVisitor {
-        private ConfusingMainMethodVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitMethod(@NotNull PsiMethod aMethod) {
             // no call to super, so it doesn't drill down into inner classes

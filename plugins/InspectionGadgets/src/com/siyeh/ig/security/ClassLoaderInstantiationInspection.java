@@ -1,10 +1,8 @@
 package com.siyeh.ig.security;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.siyeh.ig.BaseInspection;
+import com.intellij.psi.PsiNewExpression;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -26,14 +24,11 @@ public class ClassLoaderInstantiationInspection extends ExpressionInspection {
         return "Instantiation of #ref may pose security concerns #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ClassLoaderInstantiationVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ClassLoaderInstantiationVisitor();
     }
 
     private static class ClassLoaderInstantiationVisitor extends BaseInspectionVisitor {
-        private ClassLoaderInstantiationVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);

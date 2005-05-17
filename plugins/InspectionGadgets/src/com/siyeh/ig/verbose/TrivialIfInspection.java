@@ -1,6 +1,5 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -26,9 +25,8 @@ public class TrivialIfInspection extends StatementInspection{
         return GroupNames.VERBOSE_GROUP_NAME;
     }
 
-    protected BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                                  boolean onTheFly){
-        return new TrivialIfVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new TrivialIfVisitor();
     }
 
     public boolean isEnabledByDefault(){
@@ -207,11 +205,6 @@ public class TrivialIfInspection extends StatementInspection{
     }
 
     private static class TrivialIfVisitor extends StatementInspectionVisitor{
-        private TrivialIfVisitor(BaseInspection inspection,
-                                 InspectionManager inspectionManager,
-                                 boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitIfStatement(@NotNull PsiIfStatement ifStatement){
             super.visitIfStatement(ifStatement);

@@ -1,10 +1,8 @@
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -119,17 +117,11 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
         return "result of " + className + ".#ref() is ignored. #loc ";
     }
 
-    public BaseInspectionVisitor createVisitor(
-            InspectionManager inspectionManager, boolean onTheFly){
-        return new IgnoreResultOfCallVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new IgnoreResultOfCallVisitor();
     }
 
     private class IgnoreResultOfCallVisitor extends BaseInspectionVisitor{
-        private IgnoreResultOfCallVisitor(BaseInspection inspection,
-                                          InspectionManager inspectionManager,
-                                          boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitExpressionStatement(@NotNull PsiExpressionStatement statement){
             super.visitExpressionStatement(statement);

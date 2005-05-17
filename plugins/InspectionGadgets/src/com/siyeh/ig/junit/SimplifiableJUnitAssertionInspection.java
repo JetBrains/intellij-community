@@ -1,11 +1,13 @@
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -225,20 +227,13 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new SimplifiableJUnitAssertionVisitor(this,
-                                                     inspectionManager,
-                                                     onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new SimplifiableJUnitAssertionVisitor();
     }
 
     private static class SimplifiableJUnitAssertionVisitor
             extends BaseInspectionVisitor{
-        private SimplifiableJUnitAssertionVisitor(BaseInspection inspection,
-                                                  InspectionManager inspectionManager,
-                                                  boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);

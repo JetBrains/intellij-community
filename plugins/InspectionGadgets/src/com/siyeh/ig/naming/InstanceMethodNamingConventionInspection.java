@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiSuperMethodUtil;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -59,27 +58,26 @@ public class InstanceMethodNamingConventionInspection extends ConventionInspecti
         return DEFAULT_MAX_LENGTH;
     }
 
-    protected BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NamingConventionsVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NamingConventionsVisitor();
     }
 
-    public ProblemDescriptor[] doCheckMethod(PsiMethod method, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckMethod(PsiMethod method,
+                                             InspectionManager manager,
+                                             boolean isOnTheFly) {
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) {
-            return super.doCheckMethod(method, mgr, isOnTheFly);
+            return super.doCheckMethod(method, manager, isOnTheFly);
         }
         if (!containingClass.isPhysical()) {
-            return super.doCheckMethod(method, mgr, isOnTheFly);
+            return super.doCheckMethod(method, manager, isOnTheFly);
         }
-        final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
+        final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
         method.accept(visitor);
         return visitor.getErrors();
     }
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
-        private NamingConventionsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);

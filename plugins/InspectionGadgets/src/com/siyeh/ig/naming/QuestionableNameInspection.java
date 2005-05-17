@@ -1,13 +1,15 @@
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiVariable;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -90,18 +92,13 @@ public class QuestionableNameInspection extends ClassInspection{
         return "Questionable name '#ref'. #loc ";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new QuestionableNameVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new QuestionableNameVisitor();
     }
 
     private class QuestionableNameVisitor extends BaseInspectionVisitor{
         private boolean inClass = false;
-        private QuestionableNameVisitor(BaseInspection inspection,
-                                        InspectionManager inspectionManager,
-                                        boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitVariable(@NotNull PsiVariable variable){
             super.visitVariable(variable);

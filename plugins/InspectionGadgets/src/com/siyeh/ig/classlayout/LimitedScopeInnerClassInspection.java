@@ -1,10 +1,12 @@
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.PsiElement;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,15 +32,11 @@ public class LimitedScopeInnerClassInspection extends ClassInspection {
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
     }
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new LimitedScopeInnerClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new LimitedScopeInnerClassVisitor();
     }
 
     private static class LimitedScopeInnerClassVisitor extends BaseInspectionVisitor {
-        private LimitedScopeInnerClassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
         public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.getParent() instanceof PsiDeclarationStatement) {
                 registerClassError(aClass);

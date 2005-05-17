@@ -1,8 +1,6 @@
 package com.siyeh.ig.security;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -21,17 +19,11 @@ public class NonFinalCloneInspection extends MethodInspection{
         return "Non-final '#ref()' method, compromising security #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new NonFinalCloneVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new NonFinalCloneVisitor();
     }
 
     private static class NonFinalCloneVisitor extends BaseInspectionVisitor{
-        private NonFinalCloneVisitor(BaseInspection inspection,
-                                     InspectionManager inspectionManager,
-                                     boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);

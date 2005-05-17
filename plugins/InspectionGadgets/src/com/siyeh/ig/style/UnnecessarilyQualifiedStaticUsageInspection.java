@@ -68,8 +68,8 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
         return panel;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnnecessarilyQualifiedStaticCallVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessarilyQualifiedStaticCallVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -91,10 +91,6 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends ExpressionInspe
     }
 
     private class UnnecessarilyQualifiedStaticCallVisitor extends BaseInspectionVisitor {
-
-        private UnnecessarilyQualifiedStaticCallVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);

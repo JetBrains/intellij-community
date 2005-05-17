@@ -25,15 +25,12 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
         return "Assignment to for-loop parameter #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new AssignmentToForLoopParameterVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new AssignmentToForLoopParameterVisitor();
     }
 
     private static class AssignmentToForLoopParameterVisitor extends BaseInspectionVisitor {
-        private AssignmentToForLoopParameterVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+     
         public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){

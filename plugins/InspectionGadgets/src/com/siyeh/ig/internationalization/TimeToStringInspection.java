@@ -24,14 +24,12 @@ public class TimeToStringInspection extends ExpressionInspection {
         return "Time.#ref() in an internationalized context #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new TimeToStringVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new TimeToStringVisitor();
     }
 
     private static class TimeToStringVisitor extends BaseInspectionVisitor {
-        private TimeToStringVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);

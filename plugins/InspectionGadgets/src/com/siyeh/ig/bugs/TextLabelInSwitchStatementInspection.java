@@ -19,14 +19,11 @@ public class TextLabelInSwitchStatementInspection extends StatementInspection {
         return "Text label #ref: in 'switch' statement #loc ";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new TextLabelInSwitchStatementVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new TextLabelInSwitchStatementVisitor();
     }
 
     private static class TextLabelInSwitchStatementVisitor extends StatementInspectionVisitor {
-        private TextLabelInSwitchStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);

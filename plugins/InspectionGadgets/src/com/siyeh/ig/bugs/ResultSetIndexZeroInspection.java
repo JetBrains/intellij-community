@@ -27,14 +27,11 @@ public class ResultSetIndexZeroInspection extends ExpressionInspection {
         return "Use on index 0 with JDBC ResultSet #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ResultSetIndexZeroVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ResultSetIndexZeroVisitor();
     }
 
     private static class ResultSetIndexZeroVisitor extends BaseInspectionVisitor {
-        private ResultSetIndexZeroVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);

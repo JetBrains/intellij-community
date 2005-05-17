@@ -23,16 +23,12 @@ public class CloneCallsConstructorsInspection extends ExpressionInspection {
         return "clone() instantiates objects with constructor new #ref() #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new CloneCallsConstructorVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new CloneCallsConstructorVisitor();
     }
 
     private static class CloneCallsConstructorVisitor extends BaseInspectionVisitor {
         private boolean m_inClone = false;
-
-        private CloneCallsConstructorVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             boolean wasInClone = m_inClone;

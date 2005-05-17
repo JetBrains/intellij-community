@@ -1,8 +1,6 @@
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -22,14 +20,11 @@ public class SynchronizeOnThisInspection extends MethodInspection {
         return "Lock operations on 'this' may have unforseen side-effects #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new SynchronizeOnThisVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new SynchronizeOnThisVisitor();
     }
 
     private static class SynchronizeOnThisVisitor extends BaseInspectionVisitor {
-        private SynchronizeOnThisVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement){
             super.visitSynchronizedStatement(statement);

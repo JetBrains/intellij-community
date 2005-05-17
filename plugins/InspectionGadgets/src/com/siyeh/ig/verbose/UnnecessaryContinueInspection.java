@@ -1,6 +1,5 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -27,10 +26,8 @@ public class UnnecessaryContinueInspection extends StatementInspection{
         return "#ref is unnecessary as the last statement in a loop #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new UnnecessaryContinueVisitor(this, inspectionManager,
-                                              onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new UnnecessaryContinueVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -55,11 +52,7 @@ public class UnnecessaryContinueInspection extends StatementInspection{
 
     private static class UnnecessaryContinueVisitor
             extends StatementInspectionVisitor{
-        private UnnecessaryContinueVisitor(BaseInspection inspection,
-                                           InspectionManager inspectionManager,
-                                           boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitContinueStatement(@NotNull PsiContinueStatement statement){
             final PsiStatement continuedStatement =

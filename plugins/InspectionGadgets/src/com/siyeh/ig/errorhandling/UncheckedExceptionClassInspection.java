@@ -24,14 +24,11 @@ public class UncheckedExceptionClassInspection extends ClassInspection {
         return "Unchecked exception class #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UncheckedExceptionClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UncheckedExceptionClassVisitor();
     }
 
     private static class UncheckedExceptionClassVisitor extends BaseInspectionVisitor {
-        private UncheckedExceptionClassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
             if (!ClassUtils.isSubclass(aClass, "java.lang.Throwable")) {

@@ -1,9 +1,7 @@
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -40,18 +38,13 @@ public class StringConcatenationInLoopsInspection extends ExpressionInspection {
                 this, "m_ignoreUnlessAssigned");
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new StringConcatenationInLoopsVisitor(this, inspectionManager,
-                onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new StringConcatenationInLoopsVisitor();
     }
 
     private class StringConcatenationInLoopsVisitor
             extends BaseInspectionVisitor {
-        private StringConcatenationInLoopsVisitor(BaseInspection inspection,
-                                                  InspectionManager inspectionManager,
-                                                  boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);

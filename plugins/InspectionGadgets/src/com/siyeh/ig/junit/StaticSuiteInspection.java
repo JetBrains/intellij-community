@@ -1,8 +1,6 @@
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -25,15 +23,11 @@ public class StaticSuiteInspection extends MethodInspection {
         return "JUnit #ref() methods not declared 'static' #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new StaticSuiteVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new StaticSuiteVisitor();
     }
 
     private static class StaticSuiteVisitor extends BaseInspectionVisitor {
-
-        private StaticSuiteVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super

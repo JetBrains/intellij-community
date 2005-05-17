@@ -27,14 +27,12 @@ public class InfiniteLoopStatementInspection extends StatementInspection {
         return "#ref statement cannot complete without throwing an exception #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new InfiniteLoopStatementsVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new InfiniteLoopStatementsVisitor();
     }
 
     private static class InfiniteLoopStatementsVisitor extends StatementInspectionVisitor {
-        private InfiniteLoopStatementsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);

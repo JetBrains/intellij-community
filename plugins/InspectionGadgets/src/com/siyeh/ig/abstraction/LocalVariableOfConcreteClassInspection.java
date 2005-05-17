@@ -1,9 +1,7 @@
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiTypeElement;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -23,14 +21,11 @@ public class LocalVariableOfConcreteClassInspection extends ExpressionInspection
         return "Local variable " + arg + " of concrete class #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new LocalVariableOfConcreteClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new LocalVariableOfConcreteClassVisitor();
     }
 
     private static class LocalVariableOfConcreteClassVisitor extends BaseInspectionVisitor {
-        private LocalVariableOfConcreteClassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);

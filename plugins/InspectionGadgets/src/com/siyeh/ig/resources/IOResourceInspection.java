@@ -1,9 +1,7 @@
 package com.siyeh.ig.resources;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -30,17 +28,11 @@ public class IOResourceInspection extends ExpressionInspection{
         return text + " should be opened in a try block, and closed in a finally block #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new IOResourceVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new IOResourceVisitor();
     }
 
     private static class IOResourceVisitor extends BaseInspectionVisitor{
-        private IOResourceVisitor(BaseInspection inspection,
-                                  InspectionManager inspectionManager,
-                                  boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);

@@ -60,10 +60,8 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection{
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new UnnecessaryInterfaceModifierVisitor(this, inspectionManager,
-                                                       onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new UnnecessaryInterfaceModifierVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -112,11 +110,6 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection{
 
     private static class UnnecessaryInterfaceModifierVisitor
             extends BaseInspectionVisitor{
-        private UnnecessaryInterfaceModifierVisitor(BaseInspection inspection,
-                                                    InspectionManager inspectionManager,
-                                                    boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass){
             if(!aClass.isEnum()){

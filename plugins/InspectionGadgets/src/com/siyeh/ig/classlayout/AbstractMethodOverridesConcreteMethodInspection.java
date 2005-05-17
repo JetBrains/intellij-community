@@ -1,12 +1,10 @@
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiSuperMethodUtil;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -26,15 +24,11 @@ public class AbstractMethodOverridesConcreteMethodInspection extends MethodInspe
         return "Abstract method '#ref' overrides concrete method #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new AbstractMethodOverridesConcreteMethodVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new AbstractMethodOverridesConcreteMethodVisitor();
     }
 
     private static class AbstractMethodOverridesConcreteMethodVisitor extends BaseInspectionVisitor {
-        private AbstractMethodOverridesConcreteMethodVisitor(BaseInspection inspection,
-                                                             InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes

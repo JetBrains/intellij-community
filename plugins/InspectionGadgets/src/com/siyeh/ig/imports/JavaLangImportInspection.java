@@ -26,14 +26,11 @@ public class JavaLangImportInspection extends ClassInspection {
         return fix;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new JavaLangImportVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new JavaLangImportVisitor();
     }
 
     private static class JavaLangImportVisitor extends BaseInspectionVisitor {
-        private JavaLangImportVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down

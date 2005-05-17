@@ -24,16 +24,12 @@ public class CompareToUsesNonFinalVariableInspection extends ExpressionInspectio
         return "Non-final field #ref accessed in compareTo() #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new CompareToUsesNonFinalVariableVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new CompareToUsesNonFinalVariableVisitor();
     }
 
     private static class CompareToUsesNonFinalVariableVisitor extends BaseInspectionVisitor {
         private boolean m_inCompareTo = false;
-
-        private CompareToUsesNonFinalVariableVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);

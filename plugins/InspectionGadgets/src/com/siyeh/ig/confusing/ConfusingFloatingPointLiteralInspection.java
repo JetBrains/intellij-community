@@ -1,18 +1,19 @@
 package com.siyeh.ig.confusing;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.jetbrains.annotations.NotNull;
 
 public class ConfusingFloatingPointLiteralInspection extends ExpressionInspection {
     private static final Pattern pickyFloatingPointPattern =
@@ -91,14 +92,12 @@ public class ConfusingFloatingPointLiteralInspection extends ExpressionInspectio
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ConfusingFloatingPointLiteralVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ConfusingFloatingPointLiteralVisitor();
     }
 
     private static class ConfusingFloatingPointLiteralVisitor extends BaseInspectionVisitor {
-        private ConfusingFloatingPointLiteralVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitLiteralExpression(@NotNull PsiLiteralExpression literal) {
             super.visitLiteralExpression(literal);

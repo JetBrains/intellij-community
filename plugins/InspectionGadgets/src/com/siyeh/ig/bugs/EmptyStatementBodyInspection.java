@@ -37,14 +37,12 @@ public class EmptyStatementBodyInspection extends StatementInspection {
                                               this, "m_reportEmptyBlocks");
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new EmptyStatementVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new EmptyStatementVisitor();
     }
 
     private class EmptyStatementVisitor extends StatementInspectionVisitor {
-        private EmptyStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);

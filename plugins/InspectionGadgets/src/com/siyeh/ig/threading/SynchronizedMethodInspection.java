@@ -1,11 +1,13 @@
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,8 +42,8 @@ public class SynchronizedMethodInspection extends MethodInspection {
         return fix;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new SynchronizedMethodVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new SynchronizedMethodVisitor();
     }
 
     public JComponent createOptionsPanel() {
@@ -89,9 +91,7 @@ public class SynchronizedMethodInspection extends MethodInspection {
     }
 
     private class SynchronizedMethodVisitor extends BaseInspectionVisitor {
-        private SynchronizedMethodVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes

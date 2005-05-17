@@ -43,15 +43,11 @@ public class IntegerDivisionInFloatingPointContextInspection extends ExpressionI
         return "#ref: integer division in floating-point context #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new FloatingPointEqualityComparisonVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new FloatingPointEqualityComparisonVisitor();
     }
 
     private static class FloatingPointEqualityComparisonVisitor extends BaseInspectionVisitor {
-
-        private FloatingPointEqualityComparisonVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);

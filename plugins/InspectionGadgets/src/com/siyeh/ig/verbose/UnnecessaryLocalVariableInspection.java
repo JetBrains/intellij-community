@@ -37,8 +37,8 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
         return "Local variable #ref is redundant #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnnecessaryLocalVariableVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryLocalVariableVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -50,10 +50,7 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
     }
 
     private  class UnnecessaryLocalVariableVisitor extends BaseInspectionVisitor {
-        private UnnecessaryLocalVariableVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+    
         public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             if (isCopyVariable(variable)) {

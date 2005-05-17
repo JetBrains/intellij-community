@@ -67,8 +67,8 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new PointlessArithmeticVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new PointlessArithmeticVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -101,10 +101,6 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
             arithmeticTokens.add(JavaTokenType.MINUS);
             arithmeticTokens.add(JavaTokenType.ASTERISK);
             arithmeticTokens.add(JavaTokenType.DIV);
-        }
-
-        private PointlessArithmeticVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
         }
 
         public void visitClass(@NotNull PsiClass aClass) {

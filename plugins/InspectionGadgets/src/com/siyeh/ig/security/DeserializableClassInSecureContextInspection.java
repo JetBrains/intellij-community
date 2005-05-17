@@ -26,14 +26,11 @@ public class DeserializableClassInSecureContextInspection extends ClassInspectio
         return "Class #ref may be deserialized, compromising security #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new DeserializableClassInSecureContextVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new DeserializableClassInSecureContextVisitor();
     }
 
     private static class DeserializableClassInSecureContextVisitor extends BaseInspectionVisitor {
-        private DeserializableClassInSecureContextVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down

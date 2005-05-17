@@ -74,16 +74,13 @@ public class AssertAsNameInspection extends BaseInspection {
         return visitor.getErrors();
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new AssertAsNameVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new AssertAsNameVisitor();
     }
 
     private static class AssertAsNameVisitor extends BaseInspectionVisitor {
         private static final String ASSERT_STRING = "assert";
 
-        private AssertAsNameVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);

@@ -94,15 +94,12 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection extends Expres
 
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnnecessaryTemporaryObjectVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryTemporaryObjectVisitor();
     }
 
     private static class UnnecessaryTemporaryObjectVisitor extends BaseInspectionVisitor {
-        private UnnecessaryTemporaryObjectVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+    
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

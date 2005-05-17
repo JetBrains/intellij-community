@@ -1,9 +1,11 @@
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,8 +28,8 @@ public class ZeroLengthArrayInitializationInspection extends ExpressionInspectio
         return "Allocation of zero length array #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ZeroLengthArrayInitializationVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ZeroLengthArrayInitializationVisitor();
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location) {
@@ -39,10 +41,6 @@ public class ZeroLengthArrayInitializationInspection extends ExpressionInspectio
     }
 
     private static class ZeroLengthArrayInitializationVisitor extends BaseInspectionVisitor {
-        private ZeroLengthArrayInitializationVisitor(BaseInspection inspection,
-                                                     InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);

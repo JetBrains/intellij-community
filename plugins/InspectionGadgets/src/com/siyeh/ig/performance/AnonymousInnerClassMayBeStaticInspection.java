@@ -1,8 +1,13 @@
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,19 +31,13 @@ public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
     }
 
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new AnonymousInnerClassCanBeStaticVisitor(this, inspectionManager,
-                onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new AnonymousInnerClassCanBeStaticVisitor();
     }
 
     private static class AnonymousInnerClassCanBeStaticVisitor
             extends BaseInspectionVisitor {
-        private AnonymousInnerClassCanBeStaticVisitor(BaseInspection inspection,
-                                             InspectionManager inspectionManager,
-                                             boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+     
         public void visitClass(@NotNull PsiClass aClass){
             if(aClass instanceof PsiAnonymousClass)
             {

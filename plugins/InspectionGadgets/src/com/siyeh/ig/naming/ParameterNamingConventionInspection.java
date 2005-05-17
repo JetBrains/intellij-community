@@ -3,7 +3,6 @@ package com.siyeh.ig.naming;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -58,27 +57,24 @@ public class ParameterNamingConventionInspection extends ConventionInspection {
         return DEFAULT_MAX_LENGTH;
     }
 
-    protected BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NamingConventionsVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NamingConventionsVisitor();
     }
 
-    public ProblemDescriptor[] doCheckMethod(PsiMethod method, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) {
-            return super.doCheckMethod(method, mgr, isOnTheFly);
+            return super.doCheckMethod(method, manager, isOnTheFly);
         }
         if (!containingClass.isPhysical()) {
-            return super.doCheckMethod(method, mgr, isOnTheFly);
+            return super.doCheckMethod(method, manager, isOnTheFly);
         }
-        final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
+        final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
         method.accept(visitor);
         return visitor.getErrors();
     }
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
-        private NamingConventionsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitParameter(@NotNull PsiParameter variable) {
             if (variable.getDeclarationScope() instanceof PsiCatchSection) {

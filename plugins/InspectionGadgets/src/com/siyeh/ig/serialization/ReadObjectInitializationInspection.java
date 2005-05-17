@@ -1,8 +1,6 @@
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.GroupNames;
@@ -26,14 +24,11 @@ public class ReadObjectInitializationInspection extends FieldInspection {
         return "Instance variable #ref may not be initialized during call to readObject #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ReadObjectInitializationVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ReadObjectInitializationVisitor();
     }
 
     private static class ReadObjectInitializationVisitor extends BaseInspectionVisitor {
-        private ReadObjectInitializationVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             // no call to super, so it doesn't drill down

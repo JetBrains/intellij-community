@@ -1,9 +1,7 @@
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -24,23 +22,14 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
         return "Assignment to static field '#ref' from an instance method #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new AssignmentToStaticFieldFromInstanceMethod(this,
-                                                             inspectionManager,
-                                                             onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new AssignmentToStaticFieldFromInstanceMethod();
     }
 
     private static class AssignmentToStaticFieldFromInstanceMethod
             extends BaseInspectionVisitor{
         private boolean inClass = false;
         private boolean inInstanceMethod = false;
-
-        private AssignmentToStaticFieldFromInstanceMethod(BaseInspection inspection,
-                                                          InspectionManager inspectionManager,
-                                                          boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass){
             if(!inClass){

@@ -37,8 +37,8 @@ public class NonProtectedConstructorInAbstractClassInspection extends MethodInsp
                 this, "m_ignoreNonPublicClasses");
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NonProtectedConstructorInAbstractClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NonProtectedConstructorInAbstractClassVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -46,10 +46,6 @@ public class NonProtectedConstructorInAbstractClassInspection extends MethodInsp
     }
 
     private class NonProtectedConstructorInAbstractClassVisitor extends BaseInspectionVisitor {
-        private NonProtectedConstructorInAbstractClassVisitor(BaseInspection inspection,
-                                                              InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes

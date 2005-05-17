@@ -23,8 +23,8 @@ public class UnnecessaryThisInspection extends ExpressionInspection {
         return "'#ref' is unnecessary in this context #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnnecessaryThisVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryThisVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -47,9 +47,6 @@ public class UnnecessaryThisInspection extends ExpressionInspection {
     }
 
     private static class UnnecessaryThisVisitor extends BaseInspectionVisitor {
-        private UnnecessaryThisVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);

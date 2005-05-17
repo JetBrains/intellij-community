@@ -1,8 +1,6 @@
 package com.siyeh.ig.cloneable;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
@@ -36,14 +34,12 @@ public class CloneableImplementsCloneInspection extends ClassInspection {
                 this, "m_ignoreCloneableDueToInheritance");
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new CloneableDefinesCloneVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new CloneableDefinesCloneVisitor();
     }
 
     private class CloneableDefinesCloneVisitor extends BaseInspectionVisitor {
-        private CloneableDefinesCloneVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down

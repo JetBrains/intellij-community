@@ -3,7 +3,6 @@ package com.siyeh.ig.naming;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -55,8 +54,8 @@ public class StaticVariableNamingConventionInspection extends ConventionInspecti
         return DEFAULT_MAX_LENGTH;
     }
 
-    protected BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NamingConventionsVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NamingConventionsVisitor();
     }
 
     public ProblemDescriptor[] doCheckField(PsiField field, InspectionManager mgr, boolean isOnTheFly) {
@@ -73,9 +72,6 @@ public class StaticVariableNamingConventionInspection extends ConventionInspecti
     }
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
-        private NamingConventionsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitField(@NotNull PsiField field) {
             if (!field.hasModifierProperty(PsiModifier.STATIC)) {

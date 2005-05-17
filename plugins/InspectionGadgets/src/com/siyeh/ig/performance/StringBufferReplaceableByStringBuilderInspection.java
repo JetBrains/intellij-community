@@ -52,14 +52,11 @@ public class StringBufferReplaceableByStringBuilderInspection extends Expression
             replaceStatement(declarationStatement, newStatement);
         }
     }
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new StringBufferReplaceableByStringBuilderVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new StringBufferReplaceableByStringBuilderVisitor();
     }
 
     private static class StringBufferReplaceableByStringBuilderVisitor extends BaseInspectionVisitor {
-        private StringBufferReplaceableByStringBuilderVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);

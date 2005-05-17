@@ -41,17 +41,13 @@ public class TransientFieldInNonSerializableClassInspection extends ClassInspect
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new TransientFieldInNonSerializableClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new TransientFieldInNonSerializableClassVisitor();
     }
 
     private static class TransientFieldInNonSerializableClassVisitor extends BaseInspectionVisitor {
         private boolean m_inClass = false;
 
-        private TransientFieldInNonSerializableClassVisitor(BaseInspection inspection,
-                                                            InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
             final boolean wasInClass = m_inClass;

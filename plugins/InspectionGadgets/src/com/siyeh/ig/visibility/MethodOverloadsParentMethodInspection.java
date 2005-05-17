@@ -1,9 +1,11 @@
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,14 +38,11 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection {
         return "Method '#ref' overloads a compatible method of a superclass, when overriding might have been intended #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new MethodOverloadsParentMethodVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new MethodOverloadsParentMethodVisitor();
     }
 
     private static class MethodOverloadsParentMethodVisitor extends BaseInspectionVisitor {
-        private MethodOverloadsParentMethodVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             final PsiClass aClass = method.getContainingClass();

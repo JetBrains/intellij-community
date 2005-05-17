@@ -22,15 +22,12 @@ public class NestedSynchronizedStatementInspection extends StatementInspection {
         return "Nested #ref statement #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NestedSynchronizedStatementVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NestedSynchronizedStatementVisitor();
     }
 
     private static class NestedSynchronizedStatementVisitor extends StatementInspectionVisitor {
-        private NestedSynchronizedStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+       
         public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
             super.visitSynchronizedStatement(statement);
             final PsiElement containingSynchronizedStatement =

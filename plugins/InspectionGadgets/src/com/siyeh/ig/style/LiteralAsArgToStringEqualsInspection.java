@@ -1,10 +1,12 @@
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +29,8 @@ public class LiteralAsArgToStringEqualsInspection extends ExpressionInspection {
         return "#ref: String literal is argument of ." + methodName + "(), instead of the target.";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new LiteralAsArgToEqualsVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new LiteralAsArgToEqualsVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -64,9 +66,6 @@ public class LiteralAsArgToStringEqualsInspection extends ExpressionInspection {
     }
 
     private static class LiteralAsArgToEqualsVisitor extends BaseInspectionVisitor {
-        private LiteralAsArgToEqualsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);

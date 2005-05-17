@@ -1,11 +1,12 @@
 package com.siyeh.ig.jdk;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class VarargParameterInspection extends MethodInspection {
@@ -24,14 +25,11 @@ public class VarargParameterInspection extends MethodInspection {
         return "Variable argument method '#ref' #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new VarargParameterVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new VarargParameterVisitor();
     }
 
     private static class VarargParameterVisitor extends BaseInspectionVisitor {
-        private VarargParameterVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             final PsiParameterList parameterList = method.getParameterList();

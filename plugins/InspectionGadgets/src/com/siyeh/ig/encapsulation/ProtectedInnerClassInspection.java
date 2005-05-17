@@ -32,14 +32,12 @@ public class ProtectedInnerClassInspection extends ClassInspection {
         return true;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new PackageVisibleInnerClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new PackageVisibleInnerClassVisitor();
     }
 
     private static class PackageVisibleInnerClassVisitor extends BaseInspectionVisitor {
-        private PackageVisibleInnerClassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitClass(@NotNull PsiClass aClass) {
             if (!aClass.hasModifierProperty(PsiModifier.PROTECTED)) {

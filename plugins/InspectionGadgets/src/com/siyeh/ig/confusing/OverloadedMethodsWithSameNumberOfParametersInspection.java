@@ -22,15 +22,11 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection extends Metho
         return "Multiple methods names '#ref' with the same number of parameters";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new OverloadedMethodsWithSameNumberOfParametersVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new OverloadedMethodsWithSameNumberOfParametersVisitor();
     }
 
     private static class OverloadedMethodsWithSameNumberOfParametersVisitor extends BaseInspectionVisitor {
-        private OverloadedMethodsWithSameNumberOfParametersVisitor(BaseInspection inspection,
-                                                                   InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             if (method.isConstructor()) {

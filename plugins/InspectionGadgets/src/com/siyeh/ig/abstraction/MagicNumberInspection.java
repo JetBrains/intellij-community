@@ -60,14 +60,11 @@ public class MagicNumberInspection extends ExpressionInspection {
         return fix;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new MagicNumberVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new MagicNumberVisitor();
     }
 
     private  class MagicNumberVisitor extends BaseInspectionVisitor {
-        private MagicNumberVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);

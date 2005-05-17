@@ -1,11 +1,13 @@
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiBreakStatement;
 import com.intellij.psi.PsiContinueStatement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiStatement;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,14 +28,11 @@ public class ContinueOrBreakFromFinallyBlockInspection extends StatementInspecti
         return "'#ref' inside 'finally' block #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ContinueOrBreakFromFinallyBlockVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ContinueOrBreakFromFinallyBlockVisitor();
     }
 
     private static class ContinueOrBreakFromFinallyBlockVisitor extends StatementInspectionVisitor {
-        private ContinueOrBreakFromFinallyBlockVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
             super.visitContinueStatement(statement);

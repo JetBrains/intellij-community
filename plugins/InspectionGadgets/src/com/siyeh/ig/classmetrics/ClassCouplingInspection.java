@@ -1,9 +1,7 @@
 package com.siyeh.ig.classmetrics;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
@@ -123,14 +121,11 @@ public class ClassCouplingInspection
         return "#ref is overly coupled (dependencies = " + totalDependencies + ") #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ClassCouplingVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ClassCouplingVisitor();
     }
 
     private class ClassCouplingVisitor extends BaseInspectionVisitor {
-        private ClassCouplingVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super

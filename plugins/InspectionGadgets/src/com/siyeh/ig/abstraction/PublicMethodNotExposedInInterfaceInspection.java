@@ -1,12 +1,10 @@
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiSuperMethodUtil;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -26,14 +24,11 @@ public class PublicMethodNotExposedInInterfaceInspection extends MethodInspectio
         return "Public method '#ref' is not exposed via an interface #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new PublicMethodNotExposedInInterface(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new PublicMethodNotExposedInInterface();
     }
 
     private static class PublicMethodNotExposedInInterface extends BaseInspectionVisitor {
-        private PublicMethodNotExposedInInterface(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);

@@ -1,10 +1,12 @@
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -64,8 +66,8 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
         return panel;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnqualifiedStaticCallVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnqualifiedStaticCallVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -106,9 +108,7 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
     }
 
     private class UnqualifiedStaticCallVisitor extends BaseInspectionVisitor {
-        private UnqualifiedStaticCallVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);

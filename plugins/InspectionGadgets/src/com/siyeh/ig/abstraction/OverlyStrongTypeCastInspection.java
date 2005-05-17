@@ -50,14 +50,11 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new OverlyStrongTypeCastVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new OverlyStrongTypeCastVisitor();
     }
 
     private static class OverlyStrongTypeCastVisitor extends BaseInspectionVisitor {
-        private OverlyStrongTypeCastVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);

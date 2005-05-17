@@ -68,8 +68,8 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
         return DEFAULT_MAX_LENGTH;
     }
 
-    protected BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NamingConventionsVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NamingConventionsVisitor();
     }
 
     public ProblemDescriptor[] doCheckMethod(PsiMethod method, InspectionManager mgr, boolean isOnTheFly) {
@@ -86,9 +86,7 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
     }
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
-        private NamingConventionsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);

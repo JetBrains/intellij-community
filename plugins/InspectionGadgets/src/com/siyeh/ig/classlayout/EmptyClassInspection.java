@@ -22,14 +22,11 @@ public class EmptyClassInspection extends ClassInspection {
         return "Class #ref is empty #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new EmptyClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new EmptyClassVisitor();
     }
 
     private static class EmptyClassVisitor extends BaseInspectionVisitor {
-        private EmptyClassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
             //don't call super, to prevent drilldown

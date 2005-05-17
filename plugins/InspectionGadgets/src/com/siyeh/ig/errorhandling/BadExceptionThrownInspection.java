@@ -1,13 +1,11 @@
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiThrowStatement;
 import com.intellij.psi.PsiType;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -96,14 +94,11 @@ public class BadExceptionThrownInspection extends ExpressionInspection {
         return "Prohibited exception '" + exceptionName + "' thrown. #loc ";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new BadExceptionThrownVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new BadExceptionThrownVisitor();
     }
 
     private class BadExceptionThrownVisitor extends BaseInspectionVisitor {
-        private BadExceptionThrownVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitThrowStatement(PsiThrowStatement statement) {
             super.visitThrowStatement(statement);

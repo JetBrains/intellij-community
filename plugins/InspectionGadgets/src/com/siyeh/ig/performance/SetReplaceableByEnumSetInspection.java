@@ -1,8 +1,6 @@
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -23,17 +21,12 @@ public class SetReplaceableByEnumSetInspection extends ExpressionInspection{
         return "#ref replaceable by EnumSet #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new SetReplaceableByEnumSetVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new SetReplaceableByEnumSetVisitor();
     }
     private static class SetReplaceableByEnumSetVisitor
             extends BaseInspectionVisitor{
-        private SetReplaceableByEnumSetVisitor(BaseInspection inspection,
-                                          InspectionManager inspectionManager,
-                                          boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);

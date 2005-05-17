@@ -1,6 +1,5 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -43,16 +42,12 @@ public class UnnecessaryLabelOnBreakStatementInspection extends StatementInspect
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnnecessaryLabelOnBreakStatementVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryLabelOnBreakStatementVisitor();
     }
 
     private static class UnnecessaryLabelOnBreakStatementVisitor extends StatementInspectionVisitor {
         private PsiStatement currentContainer = null;
-
-        private UnnecessaryLabelOnBreakStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitForStatement(@NotNull PsiForStatement statement) {
             final PsiStatement prevContainer = currentContainer;

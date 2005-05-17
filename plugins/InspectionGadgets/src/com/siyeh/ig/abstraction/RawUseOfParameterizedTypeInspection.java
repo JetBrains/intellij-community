@@ -1,8 +1,6 @@
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.VariableInspection;
@@ -22,14 +20,12 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
         return "Raw use of parameterized class #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new RawUseOfParameterizedTypeVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new RawUseOfParameterizedTypeVisitor();
     }
 
     private static class RawUseOfParameterizedTypeVisitor extends BaseInspectionVisitor {
-        private RawUseOfParameterizedTypeVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);

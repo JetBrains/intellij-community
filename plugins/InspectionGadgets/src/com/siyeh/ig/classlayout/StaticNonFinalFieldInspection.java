@@ -24,14 +24,11 @@ public class StaticNonFinalFieldInspection extends FieldInspection {
         return "Static non-final field #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new StaticNonFinalFieldVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new StaticNonFinalFieldVisitor();
     }
 
     private static class StaticNonFinalFieldVisitor extends BaseInspectionVisitor {
-        private StaticNonFinalFieldVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitField(@NotNull PsiField field) {
             if (!field.hasModifierProperty(PsiModifier.STATIC) ||

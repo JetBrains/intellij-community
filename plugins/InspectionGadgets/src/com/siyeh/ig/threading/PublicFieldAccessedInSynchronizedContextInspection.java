@@ -1,8 +1,6 @@
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -26,22 +24,13 @@ public class PublicFieldAccessedInSynchronizedContextInspection
         return "Non-private field #ref accessed in synchronized context  #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new PublicFieldAccessedInSynchronizedContextVisitor(this,
-                                                                   inspectionManager,
-                                                                   onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new PublicFieldAccessedInSynchronizedContextVisitor();
     }
 
     private static class PublicFieldAccessedInSynchronizedContextVisitor
             extends BaseInspectionVisitor{
         private boolean m_inSynchronizedContext = false;
-
-        private PublicFieldAccessedInSynchronizedContextVisitor(BaseInspection inspection,
-                                                                InspectionManager inspectionManager,
-                                                                boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitReferenceExpression(@NotNull PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);

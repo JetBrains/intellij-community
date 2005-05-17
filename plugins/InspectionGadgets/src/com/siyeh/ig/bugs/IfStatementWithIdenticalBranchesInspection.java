@@ -1,10 +1,14 @@
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiStatement;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,17 +46,11 @@ public class IfStatementWithIdenticalBranchesInspection extends StatementInspect
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new IfStatementWithIdenticalBranchesVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new IfStatementWithIdenticalBranchesVisitor();
     }
 
     private static class IfStatementWithIdenticalBranchesVisitor extends BaseInspectionVisitor{
-        private IfStatementWithIdenticalBranchesVisitor(BaseInspection inspection,
-                                   InspectionManager inspectionManager,
-                                   boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitIfStatement(@NotNull PsiIfStatement statement){
             super.visitIfStatement(statement);

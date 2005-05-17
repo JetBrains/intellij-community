@@ -1,11 +1,13 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -43,8 +45,8 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
         return "Unnecessary boxing #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnnecessaryBoxingVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryBoxingVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -85,10 +87,7 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
     }
 
     private static class UnnecessaryBoxingVisitor extends BaseInspectionVisitor {
-        private UnnecessaryBoxingVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+      
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiManager manager = expression.getManager();

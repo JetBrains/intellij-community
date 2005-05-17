@@ -1,8 +1,10 @@
 package com.siyeh.ig.encapsulation;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,17 +24,11 @@ public class ReturnOfDateFieldInspection extends StatementInspection{
         return "'return' of " + type.getPresentableText() + " field #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new ReturnOfDateFieldVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new ReturnOfDateFieldVisitor();
     }
 
     private static class ReturnOfDateFieldVisitor extends StatementInspectionVisitor{
-        private ReturnOfDateFieldVisitor(BaseInspection inspection,
-                                         InspectionManager inspectionManager,
-                                         boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);

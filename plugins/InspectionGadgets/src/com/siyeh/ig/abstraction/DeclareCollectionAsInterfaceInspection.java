@@ -29,14 +29,11 @@ public class DeclareCollectionAsInterfaceInspection extends VariableInspection {
         return "Declaration of #ref should probably be weakened to " + interfaceName + " #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new DeclareCollectionAsInterfaceVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new DeclareCollectionAsInterfaceVisitor();
     }
 
     private static class DeclareCollectionAsInterfaceVisitor extends BaseInspectionVisitor {
-        private DeclareCollectionAsInterfaceVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitVariable(@NotNull PsiVariable variable) {
             final PsiType type = variable.getType();

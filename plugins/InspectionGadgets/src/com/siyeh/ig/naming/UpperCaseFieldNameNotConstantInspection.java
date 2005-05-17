@@ -1,10 +1,12 @@
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.FieldInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,15 +37,12 @@ public class UpperCaseFieldNameNotConstantInspection extends FieldInspection {
         return "Non-constant field '#ref' with constant-style name #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ExceptionNameDoesntEndWithExceptionVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ExceptionNameDoesntEndWithExceptionVisitor();
     }
 
     private static class ExceptionNameDoesntEndWithExceptionVisitor extends BaseInspectionVisitor {
-        private ExceptionNameDoesntEndWithExceptionVisitor(BaseInspection inspection,
-                                                           InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitField(@NotNull PsiField field) {
             super.visitField(field);

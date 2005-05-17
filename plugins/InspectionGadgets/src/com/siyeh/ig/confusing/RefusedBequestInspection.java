@@ -1,9 +1,7 @@
 package com.siyeh.ig.confusing;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -22,17 +20,12 @@ public class RefusedBequestInspection extends MethodInspection{
         return "Method #ref ignores defined method in superclass #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new RefusedBequestVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new RefusedBequestVisitor();
     }
 
     private static class RefusedBequestVisitor extends BaseInspectionVisitor{
-        private RefusedBequestVisitor(BaseInspection inspection,
-                                      InspectionManager inspectionManager,
-                                      boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);

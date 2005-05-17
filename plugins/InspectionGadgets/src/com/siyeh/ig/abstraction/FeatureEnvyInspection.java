@@ -29,15 +29,11 @@ public class FeatureEnvyInspection extends MethodInspection {
     }
 
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new FeatureEnvyVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new FeatureEnvyVisitor();
     }
 
     private static class FeatureEnvyVisitor extends BaseInspectionVisitor {
-        private FeatureEnvyVisitor(BaseInspection inspection,
-                                                          InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             final PsiIdentifier nameIdentifier = method.getNameIdentifier();

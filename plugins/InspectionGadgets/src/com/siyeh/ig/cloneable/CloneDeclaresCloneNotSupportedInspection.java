@@ -56,14 +56,11 @@ public class CloneDeclaresCloneNotSupportedInspection extends MethodInspection {
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new CloneDeclaresCloneNotSupportedExceptionVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new CloneDeclaresCloneNotSupportedExceptionVisitor();
     }
 
     private static class CloneDeclaresCloneNotSupportedExceptionVisitor extends BaseInspectionVisitor {
-        private CloneDeclaresCloneNotSupportedExceptionVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;

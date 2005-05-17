@@ -17,30 +17,36 @@ public class AnnotationInspection extends BaseInspection {
         return GroupNames.JDK_GROUP_NAME;
     }
 
-    public ProblemDescriptor[] doCheckClass(PsiClass aClass, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckClass(PsiClass aClass,
+                                            InspectionManager manager,
+                                            boolean isOnTheFly) {
         if (!aClass.isPhysical()) {
-            return super.doCheckClass(aClass, mgr, isOnTheFly);
+            return super.doCheckClass(aClass, manager, isOnTheFly);
         }
-        final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
+        final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
         aClass.accept(visitor);
 
         return visitor.getErrors();
     }
 
-    public ProblemDescriptor[] doCheckMethod(PsiMethod method, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckMethod(PsiMethod method,
+                                             InspectionManager manager,
+                                             boolean isOnTheFly) {
         if (!method.isPhysical()) {
-            return super.doCheckMethod(method, mgr, isOnTheFly);
+            return super.doCheckMethod(method, manager, isOnTheFly);
         }
-        final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
+        final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
         method.accept(visitor);
         return visitor.getErrors();
     }
 
-    public ProblemDescriptor[] doCheckField(PsiField field, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckField(PsiField field,
+                                            InspectionManager manager,
+                                            boolean isOnTheFly) {
         if (!field.isPhysical()) {
-            return super.doCheckField(field, mgr, isOnTheFly);
+            return super.doCheckField(field, manager, isOnTheFly);
         }
-        final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
+        final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
         field.accept(visitor);
         return visitor.getErrors();
     }
@@ -49,15 +55,12 @@ public class AnnotationInspection extends BaseInspection {
         return "Annotation '#ref' #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnnecessaryInterfaceModifierVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryInterfaceModifierVisitor();
     }
 
     private static class UnnecessaryInterfaceModifierVisitor extends BaseInspectionVisitor {
 
-        private UnnecessaryInterfaceModifierVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitAnnotation(PsiAnnotation annotation) {
             super.visitAnnotation(annotation);

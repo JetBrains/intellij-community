@@ -71,8 +71,8 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new PointlessBitwiseVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new PointlessBitwiseVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -107,10 +107,6 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
             bitwiseTokens.add(JavaTokenType.LTLT);
             bitwiseTokens.add(JavaTokenType.GTGT);
             bitwiseTokens.add(JavaTokenType.GTGTGT);
-        }
-
-        private PointlessBitwiseVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
         }
 
         public void visitClass(@NotNull PsiClass aClass) {

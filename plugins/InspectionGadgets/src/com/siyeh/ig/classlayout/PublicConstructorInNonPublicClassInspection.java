@@ -21,8 +21,8 @@ public class PublicConstructorInNonPublicClassInspection extends MethodInspectio
         return "Constructor is declared '#ref' in non-'public' class " + meth.getName() + " #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new PublicConstructorInNonPublicClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new PublicConstructorInNonPublicClassVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -31,10 +31,6 @@ public class PublicConstructorInNonPublicClassInspection extends MethodInspectio
 
 
     private static class PublicConstructorInNonPublicClassVisitor extends BaseInspectionVisitor {
-        private PublicConstructorInNonPublicClassVisitor(BaseInspection inspection,
-                                                         InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes

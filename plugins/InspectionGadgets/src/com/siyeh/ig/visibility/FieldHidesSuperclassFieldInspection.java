@@ -1,10 +1,12 @@
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.FieldInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
@@ -48,14 +50,12 @@ public class FieldHidesSuperclassFieldInspection extends FieldInspection {
                 this, "m_ignoreInvisibleFields");
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new FieldHidesSuperclassFieldVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new FieldHidesSuperclassFieldVisitor();
     }
 
     private class FieldHidesSuperclassFieldVisitor extends BaseInspectionVisitor {
-        private FieldHidesSuperclassFieldVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitField(@NotNull PsiField field) {
             final PsiClass aClass = field.getContainingClass();

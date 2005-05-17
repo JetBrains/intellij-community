@@ -75,8 +75,8 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
         return expString;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ConstantShiftVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ConstantShiftVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -98,9 +98,6 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
     }
 
     private static class ConstantShiftVisitor extends BaseInspectionVisitor {
-        private ConstantShiftVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);

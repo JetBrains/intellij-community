@@ -50,14 +50,11 @@ public class InstantiatingObjectToGetClassObjectInspection extends ExpressionIns
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new SystemGCVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new SystemGCVisitor();
     }
 
     private static class SystemGCVisitor extends BaseInspectionVisitor {
-        private SystemGCVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);

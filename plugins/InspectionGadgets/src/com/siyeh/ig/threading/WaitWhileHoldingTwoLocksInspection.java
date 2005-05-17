@@ -19,16 +19,12 @@ public class WaitWhileHoldingTwoLocksInspection extends ExpressionInspection {
         return "Call to '#ref()' is made while holding two locks #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new WaitWhileHoldingTwoLocksVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new WaitWhileHoldingTwoLocksVisitor();
     }
 
     private static class WaitWhileHoldingTwoLocksVisitor extends BaseInspectionVisitor {
         private int m_numLocksHeld = 0;
-
-        private WaitWhileHoldingTwoLocksVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);

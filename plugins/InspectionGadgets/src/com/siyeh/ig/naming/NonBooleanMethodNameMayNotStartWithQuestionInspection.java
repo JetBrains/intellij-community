@@ -1,6 +1,5 @@
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
@@ -8,7 +7,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiSuperMethodUtil;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jdom.Element;
@@ -92,20 +94,12 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends Metho
         return "Non-boolean method name '#ref' start with a question word #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new QuestionableNameVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new QuestionableNameVisitor();
     }
 
     private class QuestionableNameVisitor extends BaseInspectionVisitor{
         private boolean inClass = false;
-
-
-        private QuestionableNameVisitor(BaseInspection inspection,
-                                        InspectionManager inspectionManager,
-                                        boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);

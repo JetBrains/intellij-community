@@ -1,10 +1,8 @@
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -27,17 +25,12 @@ public class SynchronizeOnLockInspection extends MethodInspection{
         return "Synchronization on a java.util.concurrent.locks.Lock object is unlikely to be intentional #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new SynchronizeOnLockVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new SynchronizeOnLockVisitor();
     }
 
     private static class SynchronizeOnLockVisitor extends BaseInspectionVisitor{
-        private SynchronizeOnLockVisitor(BaseInspection inspection,
-                                         InspectionManager inspectionManager,
-                                         boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement){
             super.visitSynchronizedStatement(statement);

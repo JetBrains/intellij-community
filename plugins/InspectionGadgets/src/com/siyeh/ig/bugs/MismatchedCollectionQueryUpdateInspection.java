@@ -1,13 +1,12 @@
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.VariableInspection;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CollectionUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class MismatchedCollectionQueryUpdateInspection
@@ -44,20 +43,12 @@ public class MismatchedCollectionQueryUpdateInspection
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new MismatchedCollectionQueryUpdateVisitor(this,
-                                                          inspectionManager,
-                                                          onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new MismatchedCollectionQueryUpdateVisitor();
     }
 
     private static class MismatchedCollectionQueryUpdateVisitor
             extends BaseInspectionVisitor{
-        private MismatchedCollectionQueryUpdateVisitor(BaseInspection inspection,
-                                                       InspectionManager inspectionManager,
-                                                       boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitField(@NotNull PsiField field){
             super.visitField(field);

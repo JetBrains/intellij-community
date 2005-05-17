@@ -28,14 +28,12 @@ public class StringTokenizerInspection extends VariableInspection {
         return "#ref in an internationalized context #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new StringTokenizerVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new StringTokenizerVisitor();
     }
 
     private static class StringTokenizerVisitor extends BaseInspectionVisitor {
-        private StringTokenizerVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);

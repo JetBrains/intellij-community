@@ -1,8 +1,10 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryDefaultInspection extends StatementInspection {
@@ -19,18 +21,12 @@ public class UnnecessaryDefaultInspection extends StatementInspection {
         return "'#ref' branch is unnecessary #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnnecessaryDefaultVisitor(this, inspectionManager,
-                onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryDefaultVisitor();
     }
 
     private static class UnnecessaryDefaultVisitor
             extends StatementInspectionVisitor {
-        private UnnecessaryDefaultVisitor(BaseInspection inspection,
-                                          InspectionManager inspectionManager,
-                                          boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);

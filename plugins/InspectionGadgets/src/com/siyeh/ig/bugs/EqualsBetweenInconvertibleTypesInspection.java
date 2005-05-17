@@ -36,14 +36,11 @@ public class EqualsBetweenInconvertibleTypesInspection extends ExpressionInspect
                 + comparedType.getPresentableText() + " #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new EqualsBetweenInconvertibleTypesVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new EqualsBetweenInconvertibleTypesVisitor();
     }
 
     private static class EqualsBetweenInconvertibleTypesVisitor extends BaseInspectionVisitor {
-        private EqualsBetweenInconvertibleTypesVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);

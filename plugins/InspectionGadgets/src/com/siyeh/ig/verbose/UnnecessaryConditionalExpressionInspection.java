@@ -1,12 +1,14 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
 
 public class UnnecessaryConditionalExpressionInspection
@@ -29,9 +31,8 @@ public class UnnecessaryConditionalExpressionInspection
         return true;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnnecessaryConditionalExpressionVisitor(this, inspectionManager,
-                onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryConditionalExpressionVisitor();
     }
 
     public String buildErrorString(PsiElement location) {
@@ -72,11 +73,6 @@ public class UnnecessaryConditionalExpressionInspection
 
     private static class UnnecessaryConditionalExpressionVisitor
             extends BaseInspectionVisitor {
-        private UnnecessaryConditionalExpressionVisitor(BaseInspection inspection,
-                                                        InspectionManager inspectionManager,
-                                                        boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitConditionalExpression(PsiConditionalExpression exp) {
             super.visitConditionalExpression(exp);

@@ -1,8 +1,10 @@
 package com.siyeh.ig.imports;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteImportFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,14 +27,12 @@ public class UnusedImportInspection extends ClassInspection {
         return fix;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnusedImportVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnusedImportVisitor();
     }
 
     private static class UnusedImportVisitor extends BaseInspectionVisitor {
-        private UnusedImportVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitClass(@NotNull PsiClass aClass) {
             if (!(aClass.getParent() instanceof PsiJavaFile)) {

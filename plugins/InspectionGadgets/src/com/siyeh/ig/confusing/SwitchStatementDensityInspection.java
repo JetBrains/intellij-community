@@ -1,8 +1,10 @@
 package com.siyeh.ig.confusing;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.NotNull;
@@ -39,14 +41,12 @@ public class SwitchStatementDensityInspection extends StatementInspection {
         return "'#ref' has too low of branch density (" + intDensity + "%) #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new SwitchStatementWithTooFewBranchesVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new SwitchStatementWithTooFewBranchesVisitor();
     }
 
     private class SwitchStatementWithTooFewBranchesVisitor extends StatementInspectionVisitor {
-        private SwitchStatementWithTooFewBranchesVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             final PsiCodeBlock body = statement.getBody();

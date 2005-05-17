@@ -24,14 +24,12 @@ public class EmptyFinallyBlockInspection extends StatementInspection {
         return "Empty #ref block #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new EmptyFinallyBlockVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new EmptyFinallyBlockVisitor();
     }
 
     private static class EmptyFinallyBlockVisitor extends StatementInspectionVisitor {
-        private EmptyFinallyBlockVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);

@@ -1,15 +1,17 @@
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class MissingDeprecatedAnnotationInspection extends ClassInspection{
@@ -62,21 +64,13 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
             }
         }
     }
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new MissingDeprecatedAnnotationVisitor(this, inspectionManager,
-                                                      onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new MissingDeprecatedAnnotationVisitor();
     }
 
     private static class MissingDeprecatedAnnotationVisitor
             extends BaseInspectionVisitor{
         private boolean inClass = false;
-
-        private MissingDeprecatedAnnotationVisitor(BaseInspection inspection,
-                                                   InspectionManager inspectionManager,
-                                                   boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass){
             super.visitClass(aClass);

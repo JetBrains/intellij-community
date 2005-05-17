@@ -11,18 +11,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
-    private final BaseInspection m_inspection;
-    private final InspectionManager m_inspectionManager;
-    private final boolean m_onTheFly;
-    private List<ProblemDescriptor> m_errors = null;
+    private BaseInspection inspection = null;
+    private InspectionManager inspectionManager = null;
+    private boolean onTheFly = false;
+    private List<ProblemDescriptor> errors = null;
 
-    protected BaseInspectionVisitor(BaseInspection inspection,
-                                    InspectionManager inspectionManager,
-                                    boolean onTheFly){
-        super();
-        m_inspection = inspection;
-        m_inspectionManager = inspectionManager;
-        m_onTheFly = onTheFly;
+    public void setInspection(BaseInspection inspection){
+        this.inspection = inspection;
+    }
+
+    public void setInspectionManager(InspectionManager inspectionManager){
+        this.inspectionManager = inspectionManager;
+    }
+
+    public void setOnTheFly(boolean onTheFly){
+        this.onTheFly = onTheFly;
     }
 
     protected void registerMethodCallError(PsiMethodCallExpression expression){
@@ -82,7 +85,7 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
             return;
         }
         final LocalQuickFix fix = createFix(location);
-        final String description = m_inspection.buildErrorString(location);
+        final String description = inspection.buildErrorString(location);
         registerError(location, description, fix);
     }
 
@@ -90,40 +93,38 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
                                LocalQuickFix fix){
         final ProblemDescriptor problem
                 =
-                m_inspectionManager.createProblemDescriptor(location,
-                                                            description, fix,
-                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                inspectionManager.createProblemDescriptor(location,
+                                                          description, fix,
+                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         addError(problem);
     }
 
     private void addError(ProblemDescriptor problem){
-        if(m_errors == null){
-            m_errors = new ArrayList<ProblemDescriptor>(5);
+        if(errors == null){
+            errors = new ArrayList<ProblemDescriptor>(5);
         }
-        m_errors.add(problem);
+        errors.add(problem);
     }
 
     protected void registerError(PsiElement location, Object arg){
         final LocalQuickFix fix = createFix(location);
-        final String description = m_inspection.buildErrorString(arg);
+        final String description = inspection.buildErrorString(arg);
         registerError(location, description, fix);
     }
 
     private @Nullable LocalQuickFix createFix(PsiElement location){
         final LocalQuickFix fix;
-        if(!m_onTheFly &&
-                   m_inspection.buildQuickFixesOnlyForOnTheFlyErrors()){
+        if(!onTheFly &&
+                inspection.buildQuickFixesOnlyForOnTheFlyErrors()){
             fix = null;
         } else{
-            fix = m_inspection.buildFix(location);
+            fix = inspection.buildFix(location);
         }
         return fix;
     }
 
     @Nullable
-    public ProblemDescriptor[] getErrors()
-    {
-        final List<ProblemDescriptor> errors = m_errors;
+            public ProblemDescriptor[] getErrors(){
         if(errors == null){
             return null;
         } else{

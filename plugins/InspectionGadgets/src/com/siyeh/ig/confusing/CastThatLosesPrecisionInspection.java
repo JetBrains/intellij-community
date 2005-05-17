@@ -1,8 +1,6 @@
 package com.siyeh.ig.confusing;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -44,15 +42,12 @@ public class CastThatLosesPrecisionInspection extends ExpressionInspection {
         return "Cast to #ref from " + operandType.getPresentableText() + " may result in loss of precision #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new CastThatLosesPrecisionVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new CastThatLosesPrecisionVisitor();
     }
 
     private static class CastThatLosesPrecisionVisitor extends BaseInspectionVisitor {
-        private CastThatLosesPrecisionVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+     
         public void visitTypeCastExpression(@NotNull PsiTypeCastExpression exp) {
             final PsiType castType = exp.getType();
             if (!ClassUtils.isPrimitiveNumericType(castType)) {

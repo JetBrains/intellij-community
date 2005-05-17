@@ -21,14 +21,11 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends StatementInspec
         return "'#ref' inside 'catch' block ignores the caught exception #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ExceptionFromCatchWhichDoesntWrapVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ExceptionFromCatchWhichDoesntWrapVisitor();
     }
 
     private static class ExceptionFromCatchWhichDoesntWrapVisitor extends StatementInspectionVisitor {
-        private ExceptionFromCatchWhichDoesntWrapVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitThrowStatement(PsiThrowStatement statement){
             super.visitThrowStatement(statement);

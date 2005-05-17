@@ -19,16 +19,12 @@ public class NotifyNotInSynchronizedContextInspection extends ExpressionInspecti
         return "Call to #ref() is made outside of a synchronized context  #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new WaitNotInSynchronizedContextVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new WaitNotInSynchronizedContextVisitor();
     }
 
     private static class WaitNotInSynchronizedContextVisitor extends BaseInspectionVisitor {
         private boolean m_inSynchronizedContext = false;
-
-        private WaitNotInSynchronizedContextVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);

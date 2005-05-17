@@ -1,8 +1,6 @@
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -37,20 +35,13 @@ public class OverlyLargePrimitiveArrayInitializerInspection
                                                   this, "m_limit");
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new OverlyLargePrimitiveArrayInitializerVisitor(this,
-                                                               inspectionManager,
-                                                               onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new OverlyLargePrimitiveArrayInitializerVisitor();
     }
 
     private class OverlyLargePrimitiveArrayInitializerVisitor
             extends BaseInspectionVisitor{
-        private OverlyLargePrimitiveArrayInitializerVisitor(BaseInspection inspection,
-                                                            InspectionManager inspectionManager,
-                                                            boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression){
             super.visitArrayInitializerExpression(expression);

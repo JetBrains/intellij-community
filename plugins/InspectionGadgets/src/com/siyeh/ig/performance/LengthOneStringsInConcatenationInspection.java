@@ -30,8 +30,8 @@ public class LengthOneStringsInConcatenationInspection extends ExpressionInspect
         return "#ref can be replaced by " + transformedText + " #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new LengthOneStringsInConcatenationVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new LengthOneStringsInConcatenationVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -60,9 +60,6 @@ public class LengthOneStringsInConcatenationInspection extends ExpressionInspect
     }
 
     private static class LengthOneStringsInConcatenationVisitor extends BaseInspectionVisitor {
-        private LengthOneStringsInConcatenationVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);

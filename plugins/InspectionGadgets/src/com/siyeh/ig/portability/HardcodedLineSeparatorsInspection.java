@@ -1,10 +1,8 @@
 package com.siyeh.ig.portability;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -31,15 +29,11 @@ public class HardcodedLineSeparatorsInspection extends ExpressionInspection {
         return "Hardcoded line separator #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new HardcodedLineSeparatorsVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new HardcodedLineSeparatorsVisitor();
     }
 
     private static class HardcodedLineSeparatorsVisitor extends BaseInspectionVisitor {
-
-        private HardcodedLineSeparatorsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);

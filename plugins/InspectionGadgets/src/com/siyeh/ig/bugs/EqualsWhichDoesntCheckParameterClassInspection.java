@@ -1,8 +1,6 @@
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -23,22 +21,14 @@ public class EqualsWhichDoesntCheckParameterClassInspection
         return "#ref should check the class of its parameter #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new EqualsWhichDoesntCheckParameterClassVisitor(this,
-                                                               inspectionManager,
-                                                               onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new EqualsWhichDoesntCheckParameterClassVisitor();
     }
 
     private static class EqualsWhichDoesntCheckParameterClassVisitor
             extends BaseInspectionVisitor{
         private static final String EQUALS_METHOD_NAME = "equals";
 
-        private EqualsWhichDoesntCheckParameterClassVisitor(BaseInspection inspection,
-                                                            InspectionManager inspectionManager,
-                                                            boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method){
             // note: no call to super

@@ -1,9 +1,7 @@
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
@@ -36,15 +34,12 @@ public class NestingDepthInspection extends MethodMetricInspection {
         return "#ref is overly nested (maximum nesting depth = " + nestingDepth + ") #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NestingDepthMethodVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NestingDepthMethodVisitor();
     }
 
     private class NestingDepthMethodVisitor extends BaseInspectionVisitor {
-        private NestingDepthMethodVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+     
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             final NestingDepthVisitor visitor = new NestingDepthVisitor();

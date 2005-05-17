@@ -1,10 +1,8 @@
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -31,20 +29,12 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
         return "Iterator.#ref() which can't throw NoSuchElementException #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new IteratorNextDoesNotThrowNoSuchElementExceptionVisitor(this,
-                                                                         inspectionManager,
-                                                                         onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new IteratorNextDoesNotThrowNoSuchElementExceptionVisitor();
     }
 
     private static class IteratorNextDoesNotThrowNoSuchElementExceptionVisitor
             extends BaseInspectionVisitor{
-        private IteratorNextDoesNotThrowNoSuchElementExceptionVisitor(BaseInspection inspection,
-                                                                      InspectionManager inspectionManager,
-                                                                      boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method){
             // note: no call to super

@@ -89,14 +89,11 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
         return "Prohibited exception '#ref' declared. #loc ";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new BadExceptionDeclaredVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new BadExceptionDeclaredVisitor();
     }
 
     private class BadExceptionDeclaredVisitor extends BaseInspectionVisitor {
-        private BadExceptionDeclaredVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);

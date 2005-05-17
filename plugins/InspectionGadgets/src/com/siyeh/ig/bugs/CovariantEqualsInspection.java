@@ -23,16 +23,12 @@ public class CovariantEqualsInspection extends MethodInspection {
         return "#ref should take Object as its argument #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new CovariantEqualsVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new CovariantEqualsVisitor();
     }
 
     private static class CovariantEqualsVisitor extends BaseInspectionVisitor {
         private static final String EQUALS_METHOD_NAME = "equals";
-
-        private CovariantEqualsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super

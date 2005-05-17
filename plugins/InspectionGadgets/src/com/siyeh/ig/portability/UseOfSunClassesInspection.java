@@ -1,8 +1,6 @@
 package com.siyeh.ig.portability;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.VariableInspection;
@@ -22,14 +20,11 @@ public class UseOfSunClassesInspection extends VariableInspection {
         return "Use of Sun-supplied class #ref is non-portable #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ObsoleteCollectionVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ObsoleteCollectionVisitor();
     }
 
     private static class ObsoleteCollectionVisitor extends BaseInspectionVisitor {
-        private ObsoleteCollectionVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);

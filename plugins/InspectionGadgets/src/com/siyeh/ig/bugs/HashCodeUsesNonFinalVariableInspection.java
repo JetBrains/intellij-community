@@ -25,16 +25,12 @@ public class HashCodeUsesNonFinalVariableInspection extends ExpressionInspection
         return "Non-final field #ref accessed in hashCode()  #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new HashCodeUsesNonFinalVariableVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new HashCodeUsesNonFinalVariableVisitor();
     }
 
     private static class HashCodeUsesNonFinalVariableVisitor extends BaseInspectionVisitor {
         private boolean m_inHashcode = false;
-
-        private HashCodeUsesNonFinalVariableVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);

@@ -1,8 +1,10 @@
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class ArrayLengthInLoopConditionInspection extends StatementInspection {
@@ -19,14 +21,12 @@ public class ArrayLengthInLoopConditionInspection extends StatementInspection {
         return "Check of array .#ref in loop condition #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ArrayLengthInLoopConditionVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ArrayLengthInLoopConditionVisitor();
     }
 
     private static class ArrayLengthInLoopConditionVisitor extends StatementInspectionVisitor {
-        private ArrayLengthInLoopConditionVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+        
 
         public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);

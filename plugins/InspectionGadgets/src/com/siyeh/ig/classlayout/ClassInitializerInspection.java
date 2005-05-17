@@ -26,15 +26,11 @@ public class ClassInitializerInspection extends ClassInspection {
         return "Non-static initializer #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ClassInitializerVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ClassInitializerVisitor();
     }
 
     private static class ClassInitializerVisitor extends BaseInspectionVisitor {
-        private ClassInitializerVisitor(BaseInspection inspection,
-                                        InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes

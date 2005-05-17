@@ -1,10 +1,12 @@
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class StringBufferToStringInConcatenationInspection extends ExpressionInspection {
@@ -22,8 +24,8 @@ public class StringBufferToStringInConcatenationInspection extends ExpressionIns
         return "Calls to StringBuffer.#ref() in concatenation #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new StringBufferToStringVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new StringBufferToStringVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -49,9 +51,6 @@ public class StringBufferToStringInConcatenationInspection extends ExpressionIns
     }
 
     private static class StringBufferToStringVisitor extends BaseInspectionVisitor {
-        private StringBufferToStringVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);

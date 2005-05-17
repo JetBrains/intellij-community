@@ -24,15 +24,11 @@ public class CastToConcreteClassInspection extends ExpressionInspection {
         return "Cast to concrete class #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new CastToConcreteClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new CastToConcreteClassVisitor();
     }
 
     private static class CastToConcreteClassVisitor extends BaseInspectionVisitor {
-
-        private CastToConcreteClassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);

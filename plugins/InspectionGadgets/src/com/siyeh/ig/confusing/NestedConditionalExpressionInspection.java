@@ -23,15 +23,12 @@ public class NestedConditionalExpressionInspection extends ExpressionInspection 
         return "Nested conditional expression #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NestedConditionalExpressionVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NestedConditionalExpressionVisitor();
     }
 
     private static class NestedConditionalExpressionVisitor extends BaseInspectionVisitor {
-        private NestedConditionalExpressionVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+     
         public void visitConditionalExpression(PsiConditionalExpression exp) {
             super.visitConditionalExpression(exp);
             if (PsiTreeUtil.getParentOfType(exp, PsiConditionalExpression.class) != null) {

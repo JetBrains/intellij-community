@@ -2,81 +2,81 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.PsiAnonymousClass;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassNamingConventionInspection extends ConventionInspection {
+public class ClassNamingConventionInspection extends ConventionInspection{
     private static final int DEFAULT_MIN_LENGTH = 8;
     private static final int DEFAULT_MAX_LENGTH = 64;
     private final RenameFix fix = new RenameFix();
 
-    public String getDisplayName() {
+    public String getDisplayName(){
         return "Class naming convention";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
 
-    protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         final PsiClass aClass = (PsiClass) location.getParent();
         final String className = aClass.getName();
-        if (className.length() < getMinLength()) {
+        if(className.length() < getMinLength()){
             return "Class name '#ref' is too short #loc";
-        } else if (className.length() > getMaxLength()) {
+        } else if(className.length() > getMaxLength()){
             return "Class name '#ref' is too long #loc";
         }
-        return "Class name '#ref' doesn't match regex '" + getRegex() + "' #loc";
+        return "Class name '#ref' doesn't match regex '" + getRegex() +
+                "' #loc";
     }
 
-    protected String getDefaultRegex() {
+    protected String getDefaultRegex(){
         return "[A-Z][A-Za-z]*";
     }
 
-    protected int getDefaultMinLength() {
+    protected int getDefaultMinLength(){
         return DEFAULT_MIN_LENGTH;
     }
 
-    protected int getDefaultMaxLength() {
+    protected int getDefaultMaxLength(){
         return DEFAULT_MAX_LENGTH;
     }
 
-    protected BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NamingConventionsVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new NamingConventionsVisitor();
     }
 
-    public ProblemDescriptor[] doCheckClass(PsiClass aClass, InspectionManager mgr, boolean isOnTheFly) {
-        if (!aClass.isPhysical()) {
-            return super.doCheckClass(aClass, mgr, isOnTheFly);
+    public ProblemDescriptor[] doCheckClass(PsiClass aClass,
+                                            InspectionManager manager,
+                                            boolean isOnTheFly){
+        if(!aClass.isPhysical()){
+            return super.doCheckClass(aClass, manager, isOnTheFly);
         }
-        final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
+        final BaseInspectionVisitor visitor = createVisitor(manager,
+                                                            isOnTheFly);
         aClass.accept(visitor);
         return visitor.getErrors();
     }
 
-    private class NamingConventionsVisitor extends BaseInspectionVisitor {
-        private NamingConventionsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
-        public void visitClass(@NotNull PsiClass aClass) {
-            if (aClass.isInterface() || aClass.isAnnotationType()|| aClass.isEnum()) {
+    private class NamingConventionsVisitor extends BaseInspectionVisitor{
+        public void visitClass(@NotNull PsiClass aClass){
+            if(aClass.isInterface() || aClass.isAnnotationType() || aClass
+                    .isEnum()){
                 return;
             }
             if(aClass instanceof PsiTypeParameter ||
@@ -84,14 +84,13 @@ public class ClassNamingConventionInspection extends ConventionInspection {
                 return;
             }
             final String name = aClass.getName();
-            if (name == null) {
+            if(name == null){
                 return;
             }
-            if (isValid(name)) {
+            if(isValid(name)){
                 return;
             }
             registerClassError(aClass);
         }
-
     }
 }

@@ -47,14 +47,11 @@ public class AnonymousClassMethodCountInspection
         return "Anonymous inner class with too many methods (method count = " + count + ") #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new MethodCountVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new MethodCountVisitor();
     }
 
     private class MethodCountVisitor extends BaseInspectionVisitor {
-        private MethodCountVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass psiClass) {
             // no call to super, to prevent double counting

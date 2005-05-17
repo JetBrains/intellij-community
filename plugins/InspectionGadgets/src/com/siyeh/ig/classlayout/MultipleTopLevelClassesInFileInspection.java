@@ -1,10 +1,12 @@
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,16 +33,11 @@ public class MultipleTopLevelClassesInFileInspection extends ClassInspection {
         return true;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new MultipleTopLevelClassesInFileVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new MultipleTopLevelClassesInFileVisitor();
     }
 
     private static class MultipleTopLevelClassesInFileVisitor extends BaseInspectionVisitor {
-
-        private MultipleTopLevelClassesInFileVisitor(BaseInspection inspection,
-                                                     InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes

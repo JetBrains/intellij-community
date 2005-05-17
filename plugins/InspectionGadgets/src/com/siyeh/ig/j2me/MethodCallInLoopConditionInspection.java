@@ -19,15 +19,11 @@ public class MethodCallInLoopConditionInspection extends StatementInspection {
         return "Call to method '#ref()' in loop condition #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new MethodCallInLoopConditionVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new MethodCallInLoopConditionVisitor();
     }
 
     private static class MethodCallInLoopConditionVisitor extends StatementInspectionVisitor {
-        private MethodCallInLoopConditionVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
         public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiExpression condition = statement.getCondition();

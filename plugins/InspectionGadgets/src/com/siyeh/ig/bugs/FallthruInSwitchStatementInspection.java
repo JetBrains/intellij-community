@@ -22,14 +22,11 @@ public class FallthruInSwitchStatementInspection extends StatementInspection {
         return "#ref fallthrough in 'switch' statement #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new FallthroughInSwitchStatementVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new FallthroughInSwitchStatementVisitor();
     }
 
     private static class FallthroughInSwitchStatementVisitor extends StatementInspectionVisitor {
-        private FallthroughInSwitchStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);

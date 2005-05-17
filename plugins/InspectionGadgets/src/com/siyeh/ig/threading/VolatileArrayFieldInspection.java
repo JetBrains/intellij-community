@@ -27,15 +27,12 @@ public class VolatileArrayFieldInspection extends FieldInspection {
         return "Volatile field #ref of type " + typeString + " #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new VolatileArrayFieldVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new VolatileArrayFieldVisitor();
     }
 
     private static class VolatileArrayFieldVisitor extends BaseInspectionVisitor {
-        private VolatileArrayFieldVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+     
         public void visitField(@NotNull PsiField field) {
             super.visitField(field);
             if(!field.hasModifierProperty(PsiModifier.VOLATILE)    )

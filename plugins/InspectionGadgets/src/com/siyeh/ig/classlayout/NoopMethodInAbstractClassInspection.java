@@ -22,16 +22,12 @@ public class NoopMethodInAbstractClassInspection extends MethodInspection {
         return "No-op Method '#ref' should be made abstract #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NoopMethodInAbstractClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NoopMethodInAbstractClassVisitor();
     }
 
     private static class NoopMethodInAbstractClassVisitor extends BaseInspectionVisitor {
-        private NoopMethodInAbstractClassVisitor(BaseInspection inspection,
-                                                 InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+     
         public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes
             if (method.isConstructor()) {

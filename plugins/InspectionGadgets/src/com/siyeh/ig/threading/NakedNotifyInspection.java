@@ -22,15 +22,12 @@ public class NakedNotifyInspection extends MethodInspection {
         return "Call to #ref() without corresponding state change #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NakedNotifyVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NakedNotifyVisitor();
     }
 
     private static class NakedNotifyVisitor extends BaseInspectionVisitor {
-        private NakedNotifyVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+      
         public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (!method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {

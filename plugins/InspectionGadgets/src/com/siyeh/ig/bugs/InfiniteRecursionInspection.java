@@ -1,10 +1,8 @@
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -28,14 +26,12 @@ public class InfiniteRecursionInspection extends MethodInspection {
         return "Method #ref recurses infinitely, and can only end by throw an exception #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new InfiniteRecursionVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new InfiniteRecursionVisitor();
     }
 
     private static class InfiniteRecursionVisitor extends BaseInspectionVisitor {
-        private InfiniteRecursionVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+  
 
         public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);

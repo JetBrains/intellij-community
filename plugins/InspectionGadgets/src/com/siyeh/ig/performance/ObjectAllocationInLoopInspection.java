@@ -24,14 +24,12 @@ public class ObjectAllocationInLoopInspection extends ExpressionInspection {
         return "Object allocation (#ref) in loop #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ObjectAllocationInLoopsVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ObjectAllocationInLoopsVisitor();
     }
 
     private static class ObjectAllocationInLoopsVisitor extends BaseInspectionVisitor {
-        private ObjectAllocationInLoopsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);

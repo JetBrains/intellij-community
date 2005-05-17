@@ -1,10 +1,12 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessarySuperConstructorInspection extends ExpressionInspection {
@@ -26,8 +28,8 @@ public class UnnecessarySuperConstructorInspection extends ExpressionInspection 
         return "#ref is unnecessary #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnnecessarySuperConstructorVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessarySuperConstructorVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -49,9 +51,6 @@ public class UnnecessarySuperConstructorInspection extends ExpressionInspection 
     }
 
     private static class UnnecessarySuperConstructorVisitor extends BaseInspectionVisitor {
-        private UnnecessarySuperConstructorVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);

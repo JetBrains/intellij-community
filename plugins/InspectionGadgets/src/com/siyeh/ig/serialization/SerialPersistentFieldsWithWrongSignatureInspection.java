@@ -1,8 +1,6 @@
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
@@ -23,15 +21,11 @@ public class SerialPersistentFieldsWithWrongSignatureInspection extends ClassIns
         return "#ref field of a Serializable class is not declared 'private static final ObjectStreamField[]' #loc ";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new SerializableDefinesSerialVersionUIDVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new SerializableDefinesSerialVersionUIDVisitor();
     }
 
     private static class SerializableDefinesSerialVersionUIDVisitor extends BaseInspectionVisitor {
-        private SerializableDefinesSerialVersionUIDVisitor(BaseInspection inspection,
-                                                           InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down

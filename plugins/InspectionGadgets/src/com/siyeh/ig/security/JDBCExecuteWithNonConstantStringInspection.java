@@ -1,9 +1,7 @@
 package com.siyeh.ig.security;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -37,17 +35,12 @@ public class JDBCExecuteWithNonConstantStringInspection extends ExpressionInspec
         return "Call to Statement.#ref() with non-constant argument #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new RuntimeExecVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new RuntimeExecVisitor();
     }
 
     private static class RuntimeExecVisitor extends BaseInspectionVisitor{
-        private RuntimeExecVisitor(BaseInspection inspection,
-                                   InspectionManager inspectionManager,
-                                   boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);

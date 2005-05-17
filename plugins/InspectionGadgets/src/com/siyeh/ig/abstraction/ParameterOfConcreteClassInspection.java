@@ -26,14 +26,11 @@ public class ParameterOfConcreteClassInspection extends MethodInspection {
         return "Parameter " + arg + " of concrete class #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ParameterOfConcreteClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ParameterOfConcreteClassVisitor();
     }
 
     private static class ParameterOfConcreteClassVisitor extends BaseInspectionVisitor {
-        private ParameterOfConcreteClassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitParameter(@NotNull PsiParameter parameter) {
             super.visitParameter(parameter);

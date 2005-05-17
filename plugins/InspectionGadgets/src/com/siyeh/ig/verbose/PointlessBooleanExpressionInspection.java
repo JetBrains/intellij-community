@@ -1,12 +1,14 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,10 +32,8 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
         return true;
     }
 
-    protected BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                                  boolean onTheFly){
-        return new PointlessBooleanExpressionVisitor(this, inspectionManager,
-                                                     onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new PointlessBooleanExpressionVisitor();
     }
 
     public String buildErrorString(PsiElement location){
@@ -151,11 +151,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
             booleanTokens.add(JavaTokenType.EQEQ);
             booleanTokens.add(JavaTokenType.NE);
         }
-        private PointlessBooleanExpressionVisitor(BaseInspection inspection,
-                                                  InspectionManager inspectionManager,
-                                                  boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitClass(@NotNull PsiClass aClass){
             //to avoid drilldown

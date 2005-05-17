@@ -1,10 +1,8 @@
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -37,20 +35,12 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
                                                   this, "m_limit");
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new CheckForOutOfMemoryOnLargeArrayAllocationVisitor(this,
-                                                                    inspectionManager,
-                                                                    onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new CheckForOutOfMemoryOnLargeArrayAllocationVisitor();
     }
 
     private class CheckForOutOfMemoryOnLargeArrayAllocationVisitor
             extends BaseInspectionVisitor{
-        private CheckForOutOfMemoryOnLargeArrayAllocationVisitor(BaseInspection inspection,
-                                                                 InspectionManager inspectionManager,
-                                                                 boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);

@@ -1,8 +1,10 @@
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 
 public class TypeParameterHidesVisibleTypeInspection extends ClassInspection{
@@ -41,20 +43,13 @@ public class TypeParameterHidesVisibleTypeInspection extends ClassInspection{
                 aClass .getQualifiedName() + "'#loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new TypeParameterHidesVisibleTypeVisitor(this, inspectionManager,
-                                                        onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new TypeParameterHidesVisibleTypeVisitor();
     }
 
     private static class TypeParameterHidesVisibleTypeVisitor
             extends BaseInspectionVisitor{
-        private TypeParameterHidesVisibleTypeVisitor(BaseInspection inspection,
-                                                     InspectionManager inspectionManager,
-                                                     boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+     
         public void visitTypeParameter(PsiTypeParameter parameter){
             super.visitTypeParameter(parameter);
             final String unqualifiedClassName = parameter.getName();

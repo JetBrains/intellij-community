@@ -1,9 +1,11 @@
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReturnStatement;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,19 +30,12 @@ public class ReturnFromFinallyBlockInspection extends StatementInspection{
         return "'#ref' inside 'finally' block #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new ReturnFromFinallyBlockVisitor(this, inspectionManager,
-                                                 onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new ReturnFromFinallyBlockVisitor();
     }
 
     private static class ReturnFromFinallyBlockVisitor
             extends StatementInspectionVisitor{
-        private ReturnFromFinallyBlockVisitor(BaseInspection inspection,
-                                              InspectionManager inspectionManager,
-                                              boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);

@@ -26,14 +26,11 @@ public class SystemOutErrInspection extends ExpressionInspection {
         return "Uses of System.out and System.err should probably be replaced with more robust logging #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new SystemOutErrVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new SystemOutErrVisitor();
     }
 
     private static class SystemOutErrVisitor extends BaseInspectionVisitor {
-        private SystemOutErrVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);

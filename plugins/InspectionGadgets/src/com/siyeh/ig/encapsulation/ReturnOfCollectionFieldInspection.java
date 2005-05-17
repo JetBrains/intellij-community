@@ -1,8 +1,10 @@
 package com.siyeh.ig.encapsulation;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,19 +32,13 @@ public class ReturnOfCollectionFieldInspection extends StatementInspection{
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new ReturnOfCollectionFieldVisitor(this, inspectionManager,
-                                                  onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new ReturnOfCollectionFieldVisitor();
     }
 
     private static class ReturnOfCollectionFieldVisitor
             extends StatementInspectionVisitor{
-        private ReturnOfCollectionFieldVisitor(BaseInspection inspection,
-                                               InspectionManager inspectionManager,
-                                               boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);

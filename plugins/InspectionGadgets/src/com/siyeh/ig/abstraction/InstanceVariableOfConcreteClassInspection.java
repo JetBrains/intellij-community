@@ -24,14 +24,11 @@ public class InstanceVariableOfConcreteClassInspection extends FieldInspection {
         return "Instance variable " + arg + " of concrete class #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new InstanceVariableOfConcreteClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new InstanceVariableOfConcreteClassVisitor();
     }
 
     private static class InstanceVariableOfConcreteClassVisitor extends BaseInspectionVisitor {
-        private InstanceVariableOfConcreteClassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitField(@NotNull PsiField field) {
             super.visitField(field);

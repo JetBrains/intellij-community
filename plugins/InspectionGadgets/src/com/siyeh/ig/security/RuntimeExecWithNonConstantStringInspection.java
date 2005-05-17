@@ -25,15 +25,12 @@ public class RuntimeExecWithNonConstantStringInspection extends ExpressionInspec
         return "Call to Runtime.#ref() is non-constant argument #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new RuntimeExecVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new RuntimeExecVisitor();
     }
 
     private static class RuntimeExecVisitor extends BaseInspectionVisitor {
-        private RuntimeExecVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+      
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();

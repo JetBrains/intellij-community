@@ -35,15 +35,12 @@ public class SwitchStatementsWithoutDefaultInspection extends StatementInspectio
                 this, "m_ignoreFullyCoveredEnums");
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new SwitchStatementsWithoutDefaultVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new SwitchStatementsWithoutDefaultVisitor();
     }
 
     private class SwitchStatementsWithoutDefaultVisitor extends StatementInspectionVisitor {
-        private SwitchStatementsWithoutDefaultVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+      
         public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             if (switchStatementHasDefault(statement)) {

@@ -1,9 +1,7 @@
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -23,17 +21,12 @@ public class SleepWhileHoldingLockInspection extends ExpressionInspection{
         return "Call to Thread.#ref() while synchronized #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new sleepWhileHoldingLock(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new SleepWhileHoldingLockVisitor();
     }
 
-    private static class sleepWhileHoldingLock extends BaseInspectionVisitor{
-        private sleepWhileHoldingLock(BaseInspection inspection,
-                                      InspectionManager inspectionManager,
-                                      boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+    private static class SleepWhileHoldingLockVisitor extends BaseInspectionVisitor{
+
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);

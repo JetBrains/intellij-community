@@ -1,8 +1,10 @@
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,14 +28,12 @@ public class LoopStatementsThatDontLoopInspection extends StatementInspection {
         return "#ref statement doesn't loop #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new LoopStatementsThatDontLoopVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new LoopStatementsThatDontLoopVisitor();
     }
 
     private static class LoopStatementsThatDontLoopVisitor extends StatementInspectionVisitor {
-        private LoopStatementsThatDontLoopVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);

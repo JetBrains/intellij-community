@@ -1,10 +1,8 @@
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -86,15 +84,12 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
         return "Prohibited exception '#ref' caught. #loc ";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new BadExceptionCaughtVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new BadExceptionCaughtVisitor();
     }
 
     private class BadExceptionCaughtVisitor extends BaseInspectionVisitor {
-        private BadExceptionCaughtVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+ 
         public void visitTryStatement(@NotNull PsiTryStatement statement) {
 
             super.visitTryStatement(statement);

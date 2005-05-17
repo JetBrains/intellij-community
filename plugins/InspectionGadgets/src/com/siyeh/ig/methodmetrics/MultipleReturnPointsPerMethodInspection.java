@@ -1,8 +1,6 @@
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -34,14 +32,11 @@ public class MultipleReturnPointsPerMethodInspection extends MethodMetricInspect
         return "#ref has " + numReturnPoints + " return points #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new MultipleReturnPointsVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new MultipleReturnPointsVisitor();
     }
 
     private class MultipleReturnPointsVisitor extends BaseInspectionVisitor {
-        private MultipleReturnPointsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super

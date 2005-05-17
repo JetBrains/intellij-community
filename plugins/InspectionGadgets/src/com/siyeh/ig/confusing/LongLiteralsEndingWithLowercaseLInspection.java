@@ -1,13 +1,15 @@
 package com.siyeh.ig.confusing;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class LongLiteralsEndingWithLowercaseLInspection extends ExpressionInspection {
@@ -29,8 +31,8 @@ public class LongLiteralsEndingWithLowercaseLInspection extends ExpressionInspec
         return "Long literal #ref ends with lowercase 'l' #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new LongLiteralWithLowercaseLVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new LongLiteralWithLowercaseLVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -52,9 +54,6 @@ public class LongLiteralsEndingWithLowercaseLInspection extends ExpressionInspec
     }
 
     private static class LongLiteralWithLowercaseLVisitor extends BaseInspectionVisitor {
-        private LongLiteralWithLowercaseLVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);

@@ -24,15 +24,11 @@ public class CovariantCompareToInspection extends MethodInspection {
         return "#ref should take Object as its argument #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new CovariantCompareToVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new CovariantCompareToVisitor();
     }
 
     private static class CovariantCompareToVisitor extends BaseInspectionVisitor {
-
-        private CovariantCompareToVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super

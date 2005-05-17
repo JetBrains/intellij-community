@@ -1,9 +1,7 @@
 package com.siyeh.ig.classmetrics;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
@@ -37,15 +35,12 @@ public class ClassNestingDepthInspection
         return "#ref is too deeply nested (nesting level = " + count + ") #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ClassNestingLevel(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ClassNestingLevel();
     }
 
     private class ClassNestingLevel extends BaseInspectionVisitor {
-        private ClassNestingLevel(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+     
         public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
 

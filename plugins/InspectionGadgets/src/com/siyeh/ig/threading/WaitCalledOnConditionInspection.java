@@ -1,8 +1,6 @@
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -22,19 +20,12 @@ public class WaitCalledOnConditionInspection extends ExpressionInspection{
         return "Call to '#ref()' on Condition object #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new WaitCalledOnConditionVisitor(this, inspectionManager,
-                                                onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new WaitCalledOnConditionVisitor();
     }
 
     private static class WaitCalledOnConditionVisitor
                                                       extends BaseInspectionVisitor{
-        private WaitCalledOnConditionVisitor(BaseInspection inspection,
-                                             InspectionManager inspectionManager,
-                                             boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);

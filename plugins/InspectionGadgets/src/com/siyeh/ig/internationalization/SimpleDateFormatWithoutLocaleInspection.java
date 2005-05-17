@@ -1,8 +1,6 @@
 package com.siyeh.ig.internationalization;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -23,14 +21,11 @@ public class SimpleDateFormatWithoutLocaleInspection extends ExpressionInspectio
         return "Instantiating a #ref without specifying a Locale in an internationalized context #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new SimpleDateFormatWithoutLocaleVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new SimpleDateFormatWithoutLocaleVisitor();
     }
 
     private static class SimpleDateFormatWithoutLocaleVisitor extends BaseInspectionVisitor {
-        private SimpleDateFormatWithoutLocaleVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);

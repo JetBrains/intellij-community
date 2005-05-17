@@ -1,10 +1,8 @@
 package com.siyeh.ig.finalization;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameterList;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -29,14 +27,12 @@ public class FinalizeCallsSuperFinalizeInspection extends MethodInspection {
         return "#ref() doesn't call super.finalize()";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NoExplicitFinalizeCallsVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NoExplicitFinalizeCallsVisitor();
     }
 
     private static class NoExplicitFinalizeCallsVisitor extends BaseInspectionVisitor {
-        private NoExplicitFinalizeCallsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;

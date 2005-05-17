@@ -1,9 +1,7 @@
 package com.siyeh.ig.resources;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -31,17 +29,12 @@ public class HibernateResourceInspection extends ExpressionInspection{
                        " should be opened in a try block, and closed in a finally block #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new HibernateResourceVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new HibernateResourceVisitor();
     }
 
     private static class HibernateResourceVisitor extends BaseInspectionVisitor{
-        private HibernateResourceVisitor(BaseInspection inspection,
-                                  InspectionManager inspectionManager,
-                                  boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);

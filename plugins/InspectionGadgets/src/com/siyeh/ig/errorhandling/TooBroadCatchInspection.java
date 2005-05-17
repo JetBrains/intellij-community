@@ -1,9 +1,11 @@
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,18 +73,12 @@ public class TooBroadCatchInspection extends StatementInspection{
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new TooBroadCatchVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new TooBroadCatchVisitor();
     }
 
     private static class TooBroadCatchVisitor
             extends StatementInspectionVisitor{
-        private TooBroadCatchVisitor(BaseInspection inspection,
-                                     InspectionManager inspectionManager,
-                                     boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitTryStatement(@NotNull PsiTryStatement statement){
             super.visitTryStatement(statement);

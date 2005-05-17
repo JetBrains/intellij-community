@@ -28,9 +28,8 @@ public class FieldMayBeStaticInspection extends FieldInspection{
         return "Field #ref may be 'static' #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new FieldMayBeStaticVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new FieldMayBeStaticVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -59,11 +58,6 @@ public class FieldMayBeStaticInspection extends FieldInspection{
     }
 
     private static class FieldMayBeStaticVisitor extends BaseInspectionVisitor{
-        private FieldMayBeStaticVisitor(BaseInspection inspection,
-                                        InspectionManager inspectionManager,
-                                        boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitField(@NotNull PsiField field){
             if(field.hasModifierProperty(PsiModifier.STATIC)){

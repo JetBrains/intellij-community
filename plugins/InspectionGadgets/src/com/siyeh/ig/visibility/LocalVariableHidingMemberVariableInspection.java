@@ -76,16 +76,12 @@ public class LocalVariableHidingMemberVariableInspection extends MethodInspectio
         return panel;
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new LocalVariableHidingMemberVariableVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new LocalVariableHidingMemberVariableVisitor();
     }
 
     private class LocalVariableHidingMemberVariableVisitor extends BaseInspectionVisitor {
-        private LocalVariableHidingMemberVariableVisitor(BaseInspection inspection,
-                                                         InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+     
         public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             if (m_ignoreStaticMethods) {

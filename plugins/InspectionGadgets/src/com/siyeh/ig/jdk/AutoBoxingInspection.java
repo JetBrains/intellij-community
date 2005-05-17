@@ -41,8 +41,8 @@ public class AutoBoxingInspection extends ExpressionInspection {
         return "Auto-boxing #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new AutoBoxingVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new AutoBoxingVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -73,9 +73,6 @@ public class AutoBoxingInspection extends ExpressionInspection {
     }
 
     private static class AutoBoxingVisitor extends BaseInspectionVisitor {
-        private AutoBoxingVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitExpression(PsiExpression expression) {
             super.visitExpression(expression);

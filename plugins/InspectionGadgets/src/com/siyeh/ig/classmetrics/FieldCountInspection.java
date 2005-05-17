@@ -108,15 +108,12 @@ public class FieldCountInspection
         return "#ref has too many fields (field count = " + count + ") #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new FieldCountVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new FieldCountVisitor();
     }
 
     private class FieldCountVisitor extends BaseInspectionVisitor {
-        private FieldCountVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+    
         public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
             final int totalFields = countFields(aClass);

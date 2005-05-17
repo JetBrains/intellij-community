@@ -1,9 +1,11 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import com.siyeh.ig.psiutils.VariableUsedInInnerClassVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -24,8 +26,8 @@ public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection 
         return "Unnecessary #ref for variable " + parameterName + " #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnnecessaryFinalOnLocalVariableVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryFinalOnLocalVariableVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -33,9 +35,6 @@ public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection 
     }
 
     private static class UnnecessaryFinalOnLocalVariableVisitor extends BaseInspectionVisitor {
-        private UnnecessaryFinalOnLocalVariableVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitDeclarationStatement(PsiDeclarationStatement statement) {
             super.visitDeclarationStatement(statement);

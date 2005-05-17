@@ -26,15 +26,11 @@ public class TestCaseWithConstructorInspection extends ClassInspection {
         return "Initialization logic in constructor #ref() instead of setUp()";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new TestCaseWithConstructorVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new TestCaseWithConstructorVisitor();
     }
 
     private static class TestCaseWithConstructorVisitor extends BaseInspectionVisitor {
-
-        private TestCaseWithConstructorVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super

@@ -1,9 +1,7 @@
 package com.siyeh.ig.encapsulation;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -33,15 +31,11 @@ public class AssignmentToDateFieldFromParameterInspection extends ExpressionInsp
         return "assignment to " + type.getPresentableText() + " field #ref from parameter " + rhs.getText() + "#loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new AssignmentToDateFieldFromParameterVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new AssignmentToDateFieldFromParameterVisitor();
     }
 
     private static class AssignmentToDateFieldFromParameterVisitor extends BaseInspectionVisitor {
-        private AssignmentToDateFieldFromParameterVisitor(BaseInspection inspection,
-                                                                InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);

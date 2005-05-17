@@ -1,10 +1,8 @@
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.InspectionManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.openapi.project.Project;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.GroupNames;
@@ -24,15 +22,12 @@ public class FieldHasSetterButNoGetterInspection extends FieldInspection {
         return "Field '#ref' has setter but no getter #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new StaticNonFinalFieldVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new StaticNonFinalFieldVisitor();
     }
 
     private static class StaticNonFinalFieldVisitor extends BaseInspectionVisitor {
-        private StaticNonFinalFieldVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+ 
         public void visitField(@NotNull PsiField field) {
             final PsiManager psiManager = field.getManager();
             final Project project = psiManager.getProject();

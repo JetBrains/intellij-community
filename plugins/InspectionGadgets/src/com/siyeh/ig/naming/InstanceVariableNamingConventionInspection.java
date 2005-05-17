@@ -6,7 +6,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -57,27 +56,26 @@ public class InstanceVariableNamingConventionInspection extends ConventionInspec
         return DEFAULT_MAX_LENGTH;
     }
 
-    protected BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NamingConventionsVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NamingConventionsVisitor();
     }
 
-    public ProblemDescriptor[] doCheckField(PsiField field, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckField(PsiField field,
+                                            InspectionManager manager,
+                                            boolean isOnTheFly) {
         final PsiClass containingClass = field.getContainingClass();
         if (containingClass == null) {
-            return super.doCheckField(field, mgr, isOnTheFly);
+            return super.doCheckField(field, manager, isOnTheFly);
         }
         if (!containingClass.isPhysical()) {
-            return super.doCheckField(field, mgr, isOnTheFly);
+            return super.doCheckField(field, manager, isOnTheFly);
         }
-        final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
+        final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
         field.accept(visitor);
         return visitor.getErrors();
     }
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
-        private NamingConventionsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitField(@NotNull PsiField field) {
             super.visitField(field);

@@ -1,6 +1,5 @@
 package com.siyeh.ig.confusing;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -8,10 +7,9 @@ import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class NegatedIfElseInspection extends StatementInspection {
     /** @noinspection PublicField*/
@@ -30,8 +28,8 @@ public class NegatedIfElseInspection extends StatementInspection {
         return GroupNames.CONFUSING_GROUP_NAME;
     }
 
-    protected BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new NegatedIfElseVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new NegatedIfElseVisitor();
     }
 
     public String buildErrorString(PsiElement location) {
@@ -68,9 +66,6 @@ public class NegatedIfElseInspection extends StatementInspection {
         }
     }
     private class NegatedIfElseVisitor extends StatementInspectionVisitor {
-        private NegatedIfElseVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);

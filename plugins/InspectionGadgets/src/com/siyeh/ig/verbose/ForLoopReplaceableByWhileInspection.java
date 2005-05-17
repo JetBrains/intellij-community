@@ -1,6 +1,5 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -61,14 +60,12 @@ public class ForLoopReplaceableByWhileInspection extends StatementInspection {
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new ForLoopReplaceableByWhileVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new ForLoopReplaceableByWhileVisitor();
     }
 
     private  class ForLoopReplaceableByWhileVisitor extends StatementInspectionVisitor {
-        private ForLoopReplaceableByWhileVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);

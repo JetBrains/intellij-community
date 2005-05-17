@@ -1,11 +1,13 @@
 package com.siyeh.ig.confusing;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,8 +29,8 @@ public class MethodNamesDifferOnlyByCaseInspection extends MethodInspection {
         return "Method names '#ref' and '" + arg + "' differ only by case";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new OverloadedMethodsWithSameNumberOfParametersVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new OverloadedMethodsWithSameNumberOfParametersVisitor();
     }
 
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
@@ -40,10 +42,6 @@ public class MethodNamesDifferOnlyByCaseInspection extends MethodInspection {
     }
 
     private static class OverloadedMethodsWithSameNumberOfParametersVisitor extends BaseInspectionVisitor {
-        private OverloadedMethodsWithSameNumberOfParametersVisitor(BaseInspection inspection,
-                                                                   InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             if (method.isConstructor()) {

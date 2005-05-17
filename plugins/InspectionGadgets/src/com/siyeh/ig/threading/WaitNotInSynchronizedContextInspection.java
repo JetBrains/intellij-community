@@ -1,8 +1,9 @@
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
 
 public class WaitNotInSynchronizedContextInspection extends ExpressionInspection{
@@ -22,21 +23,13 @@ public class WaitNotInSynchronizedContextInspection extends ExpressionInspection
         return "Call to #ref() is made outside of a synchronized context  #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new WaitNotInSynchronizedContextVisitor(this, inspectionManager,
-                                                       onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new WaitNotInSynchronizedContextVisitor();
     }
 
     private static class WaitNotInSynchronizedContextVisitor
             extends BaseInspectionVisitor{
         private boolean m_inSynchronizedContext = false;
-
-        private WaitNotInSynchronizedContextVisitor(BaseInspection inspection,
-                                                    InspectionManager inspectionManager,
-                                                    boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);

@@ -1,8 +1,6 @@
 package com.siyeh.ig.portability;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.VariableInspection;
@@ -23,15 +21,12 @@ public class UseOfJDBCDriverClassInspection extends VariableInspection {
         return "Use of concrete JDBC driver class #ref is non-portable #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UseOfJDBCDriverClassVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UseOfJDBCDriverClassVisitor();
     }
 
     private static class UseOfJDBCDriverClassVisitor extends BaseInspectionVisitor {
-        private UseOfJDBCDriverClassVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+       
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final PsiType type = variable.getType();

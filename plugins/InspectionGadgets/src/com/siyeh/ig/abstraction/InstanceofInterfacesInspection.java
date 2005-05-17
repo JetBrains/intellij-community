@@ -1,10 +1,8 @@
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInstanceOfExpression;
 import com.intellij.psi.PsiTypeElement;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -24,14 +22,11 @@ public class InstanceofInterfacesInspection extends ExpressionInspection {
         return "'instanceof' concrete class #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new InstanceofInterfacesVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new InstanceofInterfacesVisitor();
     }
 
     private static class InstanceofInterfacesVisitor extends BaseInspectionVisitor {
-        private InstanceofInterfacesVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
             super.visitInstanceOfExpression(expression);

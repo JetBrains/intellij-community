@@ -1,13 +1,15 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiReferenceList;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class RedundantImplementsInspection extends ClassInspection{
@@ -47,19 +49,12 @@ public class RedundantImplementsInspection extends ClassInspection{
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new RedundantImplementsVisitor(this, inspectionManager,
-                                              onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new RedundantImplementsVisitor();
     }
 
     private static class RedundantImplementsVisitor
             extends BaseInspectionVisitor{
-        private RedundantImplementsVisitor(BaseInspection inspection,
-                                           InspectionManager inspectionManager,
-                                           boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitClass(@NotNull PsiClass aClass){
             if(aClass.isAnnotationType()){

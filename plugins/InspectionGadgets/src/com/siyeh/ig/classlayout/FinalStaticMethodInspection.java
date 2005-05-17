@@ -25,8 +25,8 @@ public class FinalStaticMethodInspection extends MethodInspection {
         return "'static' method declared '#ref' #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new FinalStaticMethodVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new FinalStaticMethodVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location) {
@@ -34,9 +34,6 @@ public class FinalStaticMethodInspection extends MethodInspection {
     }
 
     private static class FinalStaticMethodVisitor extends BaseInspectionVisitor {
-        private FinalStaticMethodVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes

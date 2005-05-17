@@ -1,8 +1,6 @@
 package com.siyeh.ig.security;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -35,15 +33,12 @@ public class UnsecureRandomNumberGenerationInspection extends ExpressionInspecti
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new InsecureRandomNumberGenerationVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new InsecureRandomNumberGenerationVisitor();
     }
 
     private static class InsecureRandomNumberGenerationVisitor extends BaseInspectionVisitor {
-        private InsecureRandomNumberGenerationVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
-
+      
         public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
             if(!TypeUtils.expressionHasTypeOrSubtype("java.util.Random", expression )){

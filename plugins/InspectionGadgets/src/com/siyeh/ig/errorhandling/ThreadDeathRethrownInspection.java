@@ -23,19 +23,13 @@ public class ThreadDeathRethrownInspection extends StatementInspection{
         return "#ref not rethrown #loc";
     }
 
-    protected BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                                  boolean onTheFly){
-        return new ThreadDeathRethrownVisitor(this, inspectionManager,
-                                              onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new ThreadDeathRethrownVisitor();
     }
 
     private static class ThreadDeathRethrownVisitor
             extends StatementInspectionVisitor{
-        private ThreadDeathRethrownVisitor(BaseInspection inspection,
-                                           InspectionManager inspectionManager,
-                                           boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitTryStatement(@NotNull PsiTryStatement statement){
             super.visitTryStatement(statement);

@@ -43,16 +43,13 @@ public class UnnecessaryLabelOnContinueStatementInspection extends StatementInsp
         }
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new UnnecessaryLabelOnContinueStatementVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new UnnecessaryLabelOnContinueStatementVisitor();
     }
 
     private static class UnnecessaryLabelOnContinueStatementVisitor extends StatementInspectionVisitor {
         private PsiStatement currentContainer = null;
 
-        private UnnecessaryLabelOnContinueStatementVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitForStatement(@NotNull PsiForStatement statement) {
             final PsiStatement prevContainer = currentContainer;

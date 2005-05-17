@@ -1,13 +1,15 @@
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class BooleanConstructorInspection extends ExpressionInspection{
@@ -33,9 +35,8 @@ public class BooleanConstructorInspection extends ExpressionInspection{
         return "Boolean constructor call #ref #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new BooleanConstructorVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new BooleanConstructorVisitor();
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
@@ -86,11 +87,6 @@ public class BooleanConstructorInspection extends ExpressionInspection{
 
     private static class BooleanConstructorVisitor
             extends BaseInspectionVisitor{
-        private BooleanConstructorVisitor(BaseInspection inspection,
-                                          InspectionManager inspectionManager,
-                                          boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);

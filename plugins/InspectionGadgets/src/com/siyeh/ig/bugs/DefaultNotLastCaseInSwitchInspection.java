@@ -19,14 +19,11 @@ public class DefaultNotLastCaseInSwitchInspection extends StatementInspection {
         return "'#ref' branch not last case in 'switch' #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new DefaultNotLastCaseInSwitchVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new DefaultNotLastCaseInSwitchVisitor();
     }
 
     private static class DefaultNotLastCaseInSwitchVisitor extends StatementInspectionVisitor {
-        private DefaultNotLastCaseInSwitchVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);

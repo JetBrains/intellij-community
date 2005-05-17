@@ -1,8 +1,10 @@
 package com.siyeh.ig.confusing;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -26,20 +28,13 @@ public class SwitchStatementWithConfusingDeclarationInspection
         return "Local variable #ref declared in one switch branch and used in another #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager,
-                                               boolean onTheFly){
-        return new SwitchStatementWithConfusingDeclarationVisitor(this,
-                                                                  inspectionManager,
-                                                                  onTheFly);
+    public BaseInspectionVisitor buildVisitor(){
+        return new SwitchStatementWithConfusingDeclarationVisitor();
     }
 
     private static class SwitchStatementWithConfusingDeclarationVisitor
             extends StatementInspectionVisitor{
-        private SwitchStatementWithConfusingDeclarationVisitor(BaseInspection inspection,
-                                                               InspectionManager inspectionManager,
-                                                               boolean isOnTheFly){
-            super(inspection, inspectionManager, isOnTheFly);
-        }
+
 
         public void visitSwitchStatement(@NotNull PsiSwitchStatement statement){
             final Set<PsiLocalVariable> variablesInCurrentBranch = new HashSet<PsiLocalVariable>(10);

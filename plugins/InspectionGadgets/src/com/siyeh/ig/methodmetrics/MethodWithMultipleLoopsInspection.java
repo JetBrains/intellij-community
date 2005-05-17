@@ -1,9 +1,7 @@
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -27,14 +25,11 @@ public class MethodWithMultipleLoopsInspection extends MethodInspection {
         return "#ref contains " + negationCount + " loops #loc";
     }
 
-    public BaseInspectionVisitor createVisitor(InspectionManager inspectionManager, boolean onTheFly) {
-        return new MethodWithMultipleLoopsVisitor(this, inspectionManager, onTheFly);
+    public BaseInspectionVisitor buildVisitor() {
+        return new MethodWithMultipleLoopsVisitor();
     }
 
     private static class MethodWithMultipleLoopsVisitor extends BaseInspectionVisitor {
-        private MethodWithMultipleLoopsVisitor(BaseInspection inspection, InspectionManager inspectionManager, boolean isOnTheFly) {
-            super(inspection, inspectionManager, isOnTheFly);
-        }
 
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
