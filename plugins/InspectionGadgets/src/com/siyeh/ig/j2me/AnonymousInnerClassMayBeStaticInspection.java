@@ -1,4 +1,4 @@
-package com.siyeh.ig.performance;
+package com.siyeh.ig.j2me;
 
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -8,6 +8,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.performance.InnerClassReferenceVisitor;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +20,7 @@ public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.PERFORMANCE_GROUP_NAME;
+        return GroupNames.J2ME_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {
@@ -37,7 +38,7 @@ public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
 
     private static class AnonymousInnerClassCanBeStaticVisitor
             extends BaseInspectionVisitor {
-     
+
         public void visitClass(@NotNull PsiClass aClass){
             if(aClass instanceof PsiAnonymousClass)
             {

@@ -1,4 +1,4 @@
-package com.siyeh.ig.performance;
+package com.siyeh.ig.memory;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -23,7 +23,7 @@ public class StaticCollectionInspection extends VariableInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.PERFORMANCE_GROUP_NAME;
+        return GroupNames.MEMORY_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {

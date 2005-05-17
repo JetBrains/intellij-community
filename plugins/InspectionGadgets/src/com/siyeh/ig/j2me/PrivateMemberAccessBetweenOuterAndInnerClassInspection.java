@@ -1,4 +1,4 @@
-package com.siyeh.ig.performance;
+package com.siyeh.ig.j2me;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +19,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.PERFORMANCE_GROUP_NAME;
+        return GroupNames.J2ME_GROUP_NAME;
     }
 
     protected String buildErrorString(Object arg){

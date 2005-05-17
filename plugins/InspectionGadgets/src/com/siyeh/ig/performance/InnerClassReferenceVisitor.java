@@ -5,11 +5,11 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
+public class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
     private PsiClass innerClass;
     private boolean referencesStaticallyAccessible = true;
 
-    InnerClassReferenceVisitor(PsiClass innerClass) {
+    public InnerClassReferenceVisitor(PsiClass innerClass) {
         super();
         this.innerClass = innerClass;
     }

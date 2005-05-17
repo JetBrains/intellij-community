@@ -39,6 +39,10 @@ import com.siyeh.ig.verbose.*;
 import com.siyeh.ig.visibility.*;
 import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
 import com.siyeh.ig.j2me.*;
+import com.siyeh.ig.memory.StaticCollectionInspection;
+import com.siyeh.ig.memory.SystemGCInspection;
+import com.siyeh.ig.memory.StringBufferFieldInspection;
+import com.siyeh.ig.memory.ZeroLengthArrayInitializationInspection;
 
 import java.io.*;
 import java.util.*;

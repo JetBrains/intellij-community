@@ -16,8 +16,7 @@
     Use of non-final static field during class initialization
     Incorrect lazy initialization of static field
     lock not acquired in try block and freed in finally block
-    Set replaceable by EnumSet
-    Map replaceable by EnumMap
+
 
     Move stuff to "J2ME" or "Memory" categories
 

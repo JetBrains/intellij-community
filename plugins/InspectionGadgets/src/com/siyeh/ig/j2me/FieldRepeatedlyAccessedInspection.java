@@ -1,9 +1,10 @@
-package com.siyeh.ig.performance;
+package com.siyeh.ig.j2me;
 
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.ig.performance.VariableAccessVisitor;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +24,7 @@ public class FieldRepeatedlyAccessedInspection extends MethodInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.PERFORMANCE_GROUP_NAME;
+        return GroupNames.J2ME_GROUP_NAME;
     }
 
     public String buildErrorString(Object arg) {

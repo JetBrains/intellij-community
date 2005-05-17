@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-class VariableAccessVisitor extends PsiRecursiveElementVisitor {
+public class VariableAccessVisitor extends PsiRecursiveElementVisitor {
     private final Map<PsiElement,Integer> m_accessCounts = new HashMap<PsiElement, Integer>(2);
     private final Set<PsiElement> m_overAccessedFields = new HashSet<PsiElement>(2);
     private static final Integer ONE = 1;
