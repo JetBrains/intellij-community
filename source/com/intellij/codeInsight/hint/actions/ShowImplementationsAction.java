@@ -48,6 +48,6 @@ public class ShowImplementationsAction extends BaseCodeInsightAction {
   }
 
   protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
-    return file.canContainJavaCode();
+    return true;
   }
 }
