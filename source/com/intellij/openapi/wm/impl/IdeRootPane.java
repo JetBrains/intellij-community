@@ -84,7 +84,7 @@ public class IdeRootPane extends JRootPane{
    * the current tool windows pane.
    */
   final void setToolWindowsPane(final ToolWindowsPane toolWindowsPane) {
-    final Container contentPane = getContentPane();
+    final JComponent contentPane = (JComponent)getContentPane();
     if(myToolWindowsPane != null){
       contentPane.remove(myToolWindowsPane);
     }
@@ -102,6 +102,8 @@ public class IdeRootPane extends JRootPane{
       myWelcomePane = WelcomeScreen.createWelcomePanel();
       contentPane.add(myWelcomePane);
     }
+
+    contentPane.revalidate();
   }
 
   protected final Container createContentPane(){
