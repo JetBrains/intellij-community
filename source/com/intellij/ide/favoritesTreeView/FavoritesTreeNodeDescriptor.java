@@ -10,8 +10,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
@@ -75,6 +75,7 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
       if (parent instanceof PsiClass){
         return ClassPresentationUtil.getNameForClass((PsiClass)parent, true);
       }
+      if (parent == null) return "";
       final Module module = ModuleUtil.findModuleForPsiElement(parent);
       final PsiFile containingFile = parent.getContainingFile();
       return module != null && containingFile != null ? (module.getName() + ":" + containingFile.getName()) : "";

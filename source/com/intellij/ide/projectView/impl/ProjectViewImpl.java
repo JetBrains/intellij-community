@@ -704,7 +704,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         final Object paneSpecificData = currentProjectViewPane.getData(dataId);
         if (paneSpecificData != null) return paneSpecificData;
       }
-
+      if (DataConstantsEx.RESOURCE_BUNDLE_ARRAY.equals(dataId)){
+        final List<ResourceBundle> selectedElements = getSelectedElements(ResourceBundle.class);
+        return selectedElements.isEmpty() ? null : selectedElements.toArray(new ResourceBundle[selectedElements.size()]);
+      }
       if (DataConstants.PSI_ELEMENT.equals(dataId)) {
         final PsiElement psiElement;
         Object element = getSelectedNodeElement();

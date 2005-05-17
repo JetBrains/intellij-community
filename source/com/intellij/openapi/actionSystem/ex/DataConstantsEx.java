@@ -100,4 +100,9 @@ public interface DataConstantsEx extends DataConstants {
    * returns com.intellij.openapi.fileEditor.impl.EditorWindow
    */
   String EDITOR_WINDOW = "editorWindow";
+
+  /**
+   * returns array of com.intellij.lang.properties.ResourceBundle
+   */
+  String RESOURCE_BUNDLE_ARRAY = "resource.bundle.array";
 }

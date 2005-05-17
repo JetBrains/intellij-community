@@ -1,5 +1,8 @@
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.ClassSmartPointerNode;
+import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.FieldSmartPointerNode;
+import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.MethodSmartPointerNode;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
@@ -8,6 +11,8 @@ import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.PackageViewPane;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.projectView.ResourceBundleNode;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uiDesigner.compiler.Utils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -83,13 +89,22 @@ public class AddToFavoritesAction extends AnAction {
     return createNodes(dataContext, inProjectView, favoritesConfig);
   }
 
-  public static AbstractTreeNode[] createNodes(DataContext dataContext, boolean inProjectView, ViewSettings favoritesConfig) {
+  public static @Nullable AbstractTreeNode[] createNodes(DataContext dataContext, boolean inProjectView, ViewSettings favoritesConfig) {
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     final PsiManager psiManager = PsiManager.getInstance(project);
 
     final String currentViewId = ProjectView.getInstance(project).getCurrentViewId();
     AbstractProjectViewPane pane = ProjectView.getInstance(project).getProjectViewPaneById(currentViewId);
+
+    //on bundles nodes
+    final ResourceBundle[] bundles = (ResourceBundle[])dataContext.getData(DataConstantsEx.RESOURCE_BUNDLE_ARRAY);
+    if (bundles != null) {
+      for (ResourceBundle bundle : bundles) {
+        result.add(new ResourceBundleNode(project, bundle, favoritesConfig));
+      }
+      return result.isEmpty() ? null : result.toArray(new AbstractTreeNode[result.size()]);
+    }
 
     //on psi element
     PsiElement psiElement = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
@@ -264,13 +279,13 @@ public class AddToFavoritesAction extends AnAction {
   private static Class<? extends AbstractTreeNode> getPsiElementNodeClass(PsiElement psiElement) {
     Class<? extends AbstractTreeNode> klass = null;
     if (psiElement instanceof PsiClass) {
-      klass = ClassTreeNode.class;
+      klass = ClassSmartPointerNode.class;
     }
     else if (psiElement instanceof PsiMethod) {
-      klass = PsiMethodNode.class;
+      klass = MethodSmartPointerNode.class;
     }
     else if (psiElement instanceof PsiField) {
-      klass = PsiFieldNode.class;
+      klass = FieldSmartPointerNode.class;
     }
     else if (psiElement instanceof PsiFile) {
       klass = PsiFileNode.class;

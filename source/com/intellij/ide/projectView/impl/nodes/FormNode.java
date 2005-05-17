@@ -68,9 +68,8 @@ public class FormNode extends ProjectViewNode<Form>{
     final PsiFile[] formsBoundToClass = psiManager.getSearchHelper().findFormsBoundToClass(classToBind.getQualifiedName());
     final HashSet<AbstractTreeNode> children = new HashSet<AbstractTreeNode>();
     for (int i = 0; i < formsBoundToClass.length; i++) {
-      PsiFile formsBoundToClas = formsBoundToClass[i];
-      children.add(new FormNode(project, new Form(classToBind, Arrays.asList(new PsiFile[]{formsBoundToClas})), settings,
-                                new HashSet<AbstractTreeNode>()));
+      PsiFile formBoundToClass = formsBoundToClass[i];
+      children.add(new PsiFileNode(project, formBoundToClass, settings));
     }
     children.add(new ClassTreeNode(project, classToBind, settings));
     return new FormNode(project, new Form(classToBind, Arrays.asList(formsBoundToClass)), settings, children);

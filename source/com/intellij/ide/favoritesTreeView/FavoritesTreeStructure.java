@@ -7,14 +7,8 @@ import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.j2ee.module.components.J2EEModuleUrl;
-import com.intellij.j2ee.module.view.ejb.CmpFieldUrl;
-import com.intellij.j2ee.module.view.ejb.CmrFieldUrl;
-import com.intellij.j2ee.module.view.ejb.EjbClassUrl;
-import com.intellij.j2ee.module.view.ejb.EjbUrl;
-import com.intellij.j2ee.module.view.web.FilterUrl;
-import com.intellij.j2ee.module.view.web.ListenerUrl;
-import com.intellij.j2ee.module.view.web.ServletUrl;
-import com.intellij.j2ee.module.view.web.WebRootFileUrl;
+import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -22,12 +16,10 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -46,16 +38,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
 
     ourAbstractUrlProviders.add(new ModuleGroupUrl(null));
     ourAbstractUrlProviders.add(new FormUrl(null, null));
-
-    ourAbstractUrlProviders.add(new EjbUrl(null, null));
-    ourAbstractUrlProviders.add(new EjbClassUrl(null, null));
-    ourAbstractUrlProviders.add(new CmpFieldUrl(null, null));
-    ourAbstractUrlProviders.add(new CmrFieldUrl(null, null));
-
-    ourAbstractUrlProviders.add(new ServletUrl(null, null));
-    ourAbstractUrlProviders.add(new FilterUrl(null, null));
-    ourAbstractUrlProviders.add(new ListenerUrl(null, null));
-    ourAbstractUrlProviders.add(new WebRootFileUrl(null, null));
+    ourAbstractUrlProviders.add(new ResourceBundleUrl(null));
 
     ourAbstractUrlProviders.add(new J2EEModuleUrl(null));
 
@@ -108,7 +91,36 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
         for (Iterator<AbstractTreeNode> iterator = myFavorites.iterator(); iterator.hasNext();) {
           AbstractTreeNode abstractTreeNode = iterator.next();
           final Object val = abstractTreeNode.getValue();
-          if (val != null && (!(val instanceof PsiElement) || ((PsiElement)val).isValid())){
+          if (val != null){
+            if (val instanceof PsiElement && !((PsiElement)val).isValid()){
+              continue;
+            }
+            if (val instanceof SmartPsiElementPointer &&
+               (((SmartPsiElementPointer)val).getElement() == null || !((SmartPsiElementPointer)val).getElement().isValid())){
+              continue;
+            }
+            if (val instanceof Form){
+              final Collection<AbstractTreeNode> children = abstractTreeNode.getChildren();
+              boolean toContinue = false;
+              for (AbstractTreeNode node : children) {
+                final Object value = node.getValue();
+                if (!(value instanceof PsiElement) || !((PsiElement)value).isValid()){
+                  toContinue = true;
+                  break;
+                }
+              }
+              if (toContinue) continue;
+            }
+            if (val instanceof ResourceBundle){
+              final List<PropertiesFile> propertiesFiles = ((ResourceBundle)val).getPropertiesFiles();
+              if (propertiesFiles == null || propertiesFiles.isEmpty()){
+                continue;
+              }
+              if (propertiesFiles.size() == 1){
+                result.add(new PsiFileNode(myProject, propertiesFiles.iterator().next(), getFavoritesConfiguration()));
+                continue;
+              }
+            }
             result.add(abstractTreeNode);
           }
         }
@@ -256,7 +268,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     return myFavoritesConfiguration;
   }
 
-  private static AbstractUrl createUrlByElement(Object element) {
+  private static @Nullable AbstractUrl createUrlByElement(Object element) {
     for (Iterator<AbstractUrl> iterator = ourAbstractUrlProviders.iterator(); iterator.hasNext();) {
       AbstractUrl urlProvider = iterator.next();
       AbstractUrl url = urlProvider.createUrlByElement(element);
@@ -295,7 +307,8 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     for (Iterator<AbstractTreeNode> iterator = myFavorites.iterator(); iterator.hasNext();) {
       AbstractTreeNode favoritesTreeElement = iterator.next();
       Element favorite = new Element("favorite_root");
-      createUrlByElement(favoritesTreeElement.getValue()).write(favorite);
+      final Object value = favoritesTreeElement.getValue();
+      createUrlByElement(value instanceof SmartPsiElementPointer ? ((SmartPsiElementPointer)value).getElement() : value ).write(favorite);
       favorite.setAttribute("klass", favoritesTreeElement.getClass().getName());
       element.addContent(favorite);
     }

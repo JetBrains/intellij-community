@@ -3,30 +3,35 @@
  */
 package com.intellij.lang.properties.projectView;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
-import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.ArrayList;
 
-class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
+public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
   public ResourceBundleNode(Project project, ResourceBundle resourceBundle, final ViewSettings settings) {
     super(project, resourceBundle, settings);
   }
+
+  public ResourceBundleNode(Project project, Object value, final ViewSettings viewSettings) {
+    super(project, (ResourceBundle)value, viewSettings);
+  }
+
   public Collection<AbstractTreeNode> getChildren() {
     List<PropertiesFile> propertiesFiles = getValue().getPropertiesFiles();
     List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
