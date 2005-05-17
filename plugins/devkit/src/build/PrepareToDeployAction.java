@@ -169,6 +169,6 @@ public class PrepareToDeployAction extends AnAction {
   public void update(AnActionEvent e) {
     final Module module = (Module)e.getDataContext().getData(DataConstants.MODULE);
     e.getPresentation().setVisible(module != null && module.getModuleType() instanceof PluginModuleType);
-    e.getPresentation().setText("_Prepare Plugin Module \'" + (module != null ? module.getName() : "") + "\' to Deploy");
+    e.getPresentation().setText("_Prepare Plugin Module \'" + (module != null ? module.getName() : "") + "\' for Deployment");
   }
 }
