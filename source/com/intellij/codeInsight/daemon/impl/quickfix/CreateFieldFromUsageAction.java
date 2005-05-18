@@ -71,8 +71,6 @@ public class CreateFieldFromUsageAction extends CreateVarFromUsageAction {
         field = (PsiField)targetClass.add(field);
       }
 
-      Editor newEditor = positionCursor(project, targetFile, field);
-
       setupVisibility(parentClass, targetClass, field.getModifierList());
 
       if (shouldCreateStaticMember(myReferenceExpression, enclosingContext, targetClass)) {
@@ -96,6 +94,7 @@ public class CreateFieldFromUsageAction extends CreateVarFromUsageAction {
 
       Template template = builder.buildTemplate();
 
+      Editor newEditor = positionCursor(project, targetFile, field);
       TextRange range = field.getTextRange();
       newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
 

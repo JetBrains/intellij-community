@@ -40,7 +40,6 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
             setupInheritance(myNewExpression, psiClass);
             setupGenericParameters(myNewExpression, psiClass);
 
-            Editor editor = positionCursor(project, psiClass.getContainingFile(), psiClass);
             PsiExpressionList argList = myNewExpression.getArgumentList();
             if (argList != null && argList.getExpressions().length > 0) {
               PsiMethod constructor = elementFactory.createConstructor();
@@ -55,10 +54,13 @@ public class CreateClassFromNewAction extends CreateFromUsageBaseAction {
 
               Template template = templateBuilder.buildTemplate();
 
+              Editor editor = positionCursor(project, psiClass.getContainingFile(), psiClass);
               TextRange textRange = psiClass.getTextRange();
               editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
 
               startTemplate(editor, template, project);
+            } else {
+              positionCursor(project, psiClass.getContainingFile(), psiClass);
             }
           }
           catch (IncorrectOperationException e) {

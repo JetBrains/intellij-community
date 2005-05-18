@@ -78,8 +78,6 @@ public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
       var.getModifierList().setModifierProperty(PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS &&
                                                                    !PsiUtil.isAccessedForWriting(myReferenceExpression));
 
-      Editor newEditor = positionCursor(project, targetFile, var);
-
       TemplateBuilder builder = new TemplateBuilder(var);
       builder.replaceElement(var.getTypeElement(), expression);
 
@@ -87,6 +85,7 @@ public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
 
       Template template = builder.buildTemplate();
 
+      Editor newEditor = positionCursor(project, targetFile, var);
       TextRange range = var.getTextRange();
       newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
 

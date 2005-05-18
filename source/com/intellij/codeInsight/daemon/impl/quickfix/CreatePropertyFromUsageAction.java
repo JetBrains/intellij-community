@@ -187,7 +187,6 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
       accessor.setName(callText);
       accessor.getModifierList().setModifierProperty(PsiModifier.STATIC, isStatic);
 
-      final Editor editor = positionCursor(project, targetClass.getContainingFile(), accessor);
       TemplateBuilder builder = new TemplateBuilder(accessor);
       builder.replaceElement(typeReference, TYPE_VARIABLE, new TypeExpression(project, expectedTypes), true);
       builder.replaceElement(fieldReference, FIELD_VARIABLE, new FieldExpression(field, targetClass, expectedTypes), true);
@@ -196,6 +195,7 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
       Template template = builder.buildTemplate();
       TextRange textRange = accessor.getTextRange();
       final PsiFile file = targetClass.getContainingFile();
+      final Editor editor = positionCursor(project, targetClass.getContainingFile(), accessor);
       editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
       editor.getCaretModel().moveToOffset(textRange.getStartOffset());
 

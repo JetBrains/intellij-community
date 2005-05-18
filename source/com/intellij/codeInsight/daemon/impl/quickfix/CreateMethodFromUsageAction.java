@@ -88,8 +88,6 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
         }
       }
 
-      final Editor newEditor = positionCursor(project, targetFile, method);
-
       TemplateBuilder builder = new TemplateBuilder(method);
 
       setupVisibility(parentClass, targetClass, method.getModifierList());
@@ -113,6 +111,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
 
       Template template = builder.buildTemplate();
 
+      final Editor newEditor = positionCursor(project, targetFile, method);
       TextRange range = method.getTextRange();
       newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
 
