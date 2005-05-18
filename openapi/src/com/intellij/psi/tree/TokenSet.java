@@ -43,7 +43,7 @@ public class TokenSet {
     return mySet.toArray(new IElementType[mySet.size()]);
   }
 
-  public static TokenSet create(IElementType[] types) {
+  public static TokenSet create(IElementType... types) {
     TokenSet set = new TokenSet();
     set.mySet.addAll(Arrays.asList(types));
     return set;

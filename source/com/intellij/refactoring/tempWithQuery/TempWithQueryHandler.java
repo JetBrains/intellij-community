@@ -97,7 +97,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
     }
 
     final ExtractMethodProcessor processor = new ExtractMethodProcessor(
-            project, editor, file,
+            project, editor,
             new PsiElement[]{initializer}, local.getType(),
             REFACTORING_NAME, localName, HelpID.REPLACE_TEMP_WITH_QUERY
     );

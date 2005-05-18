@@ -6,6 +6,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.IncorrectOperationException;
 
 public class FormatterImpl extends Formatter implements ApplicationComponent {
@@ -106,11 +108,15 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     }
     final Pair<String, Integer> newWS = whiteSpace.generateWhiteSpace(indentOptions, offset, indent);
     model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS.getFirst(), block.getTextRange().getLength());
-    
+
     return newWS.getSecond().intValue();
   }
 
-  
+  public FormattingModel createFormattingModelForPsiFile(PsiFile file, Block rootBlock, CodeStyleSettings settings) {
+    return new PsiBasedFormattingModel(file, settings, rootBlock); 
+  }
+
+
   public Indent createSpaceIndent(final int spaces) {
     return new IndentImpl(IndentImpl.Type.SPACES, false, spaces);
   }

@@ -40,7 +40,6 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private final Project myProject;
   private final Editor myEditor;
-  private final PsiFile myFile;
   private final PsiElement[] myElements;
   private final PsiBlockStatement myEnclosingBlockStatement;
   private final PsiType myForcedReturnType;
@@ -88,12 +87,11 @@ public class ExtractMethodProcessor implements MatchProvider {
   private DuplicatesFinder myDuplicatesFinder;
   private String myMethodVisibility = PsiModifier.PRIVATE;
 
-  public ExtractMethodProcessor(Project project, Editor editor, PsiFile file, PsiElement[] elements,
+  public ExtractMethodProcessor(Project project, Editor editor, PsiElement[] elements,
                                 PsiType forcedReturnType, String refactoringName,
                                 String initialMethodName, String helpId) {
     myProject = project;
     myEditor = editor;
-    myFile = file;
     if (elements.length != 1 || (elements.length == 1 && !(elements[0] instanceof PsiBlockStatement))) {
       myElements = elements;
       myEnclosingBlockStatement = null;
@@ -431,8 +429,8 @@ public class ExtractMethodProcessor implements MatchProvider {
       declareNecessaryVariablesInsideBody(myFlowStart, myFlowEnd, body);
 
       if (myNeedChangeContext) {
-        for (int i = 0; i < myElements.length; i++) {
-          ChangeContextUtil.encodeContextInfo(myElements[i], false);
+        for (PsiElement element : myElements) {
+          ChangeContextUtil.encodeContextInfo(element, false);
         }
       }
 
@@ -523,8 +521,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     final PsiExpression[] expressions = methodCallExpression.getArgumentList().getExpressions();
 
     ArrayList<ParameterTablePanel.VariableData> datas = new ArrayList<ParameterTablePanel.VariableData>();
-    for (int i = 0; i < myVariableDatas.length; i++) {
-      final ParameterTablePanel.VariableData variableData = myVariableDatas[i];
+    for (final ParameterTablePanel.VariableData variableData : myVariableDatas) {
       if (variableData.passAsParameter) {
         datas.add(variableData);
       }
@@ -540,8 +537,8 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private void deleteExtracted() throws IncorrectOperationException {
     if (myEnclosingBlockStatement == null) {
-      for (int i = 0; i < myElements.length; i++) {
-        myElements[i].delete();
+      for (PsiElement element : myElements) {
+        element.delete();
       }
     }
     else {
@@ -587,12 +584,10 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void renameInputVariables() throws IncorrectOperationException {
-    for (int i = 0; i < myVariableDatas.length; i++) {
-      ParameterTablePanel.VariableData data = myVariableDatas[i];
+    for (ParameterTablePanel.VariableData data : myVariableDatas) {
       PsiVariable variable = data.variable;
       if (!data.name.equals(variable.getName())) {
-        for (int j = 0; j < myElements.length; j++) {
-          PsiElement element = myElements[j];
+        for (PsiElement element : myElements) {
           RefactoringUtil.renameVariableReferences(variable, data.name, new LocalSearchScope(element));
         }
       }
@@ -614,8 +609,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     PsiCodeBlock body = newMethod.getBody();
 
     PsiParameterList list = newMethod.getParameterList();
-    for (int i = 0; i < myVariableDatas.length; i++) {
-      ParameterTablePanel.VariableData data = myVariableDatas[i];
+    for (ParameterTablePanel.VariableData data : myVariableDatas) {
       boolean isFinal = data.variable.hasModifierProperty(PsiModifier.FINAL);
       if (data.passAsParameter) {
         PsiParameter parm = myElementFactory.createParameter(data.name, data.variable.getType());
@@ -648,8 +642,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     PsiReferenceList throwsList = newMethod.getThrowsList();
-    for (int i = 0; i < exceptions.length; i++) {
-      PsiClassType exception = exceptions[i];
+    for (PsiClassType exception : exceptions) {
       throwsList.add(myManager.getElementFactory().createReferenceElementByType(exception));
     }
 
@@ -687,8 +680,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     buffer.append(myMethodName);
     buffer.append("(");
     int count = 0;
-    for (int i = 0; i < myVariableDatas.length; i++) {
-      ParameterTablePanel.VariableData data = myVariableDatas[i];
+    for (ParameterTablePanel.VariableData data : myVariableDatas) {
       if (data.passAsParameter) {
         if (count > 0) {
           buffer.append(",");
@@ -710,8 +702,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private void declareNecessaryVariablesInsideBody(int start, int end, PsiCodeBlock body) throws IncorrectOperationException {
     PsiVariable[] usedVariables = ControlFlowUtil.getUsedVariables(myControlFlow, start, end);
-    for (int i = 0; i < usedVariables.length; i++) {
-      PsiVariable variable = usedVariables[i];
+    for (PsiVariable variable : usedVariables) {
       boolean toDeclare = !isDeclaredInside(variable) && !contains(myInputVariables, variable);
       if (toDeclare) {
         String name = variable.getName();
@@ -725,8 +716,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private void declareNecessaryVariablesAfterCall(int end, PsiVariable outputVariable) throws IncorrectOperationException {
     PsiVariable[] usedVariables = ControlFlowUtil.getUsedVariables(myControlFlow, end, myControlFlow.getSize());
-    for (int i = 0; i < usedVariables.length; i++) {
-      PsiVariable variable = usedVariables[i];
+    for (PsiVariable variable : usedVariables) {
       boolean toDeclare = isDeclaredInside(variable) && !variable.equals(outputVariable);
       if (toDeclare) {
         String name = variable.getName();
@@ -746,8 +736,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private String getNewVariableName(PsiVariable variable) {
-    for (int i = 0; i < myVariableDatas.length; i++) {
-      ParameterTablePanel.VariableData data = myVariableDatas[i];
+    for (ParameterTablePanel.VariableData data : myVariableDatas) {
       if (data.variable.equals(variable)) {
         return data.name;
       }
@@ -756,8 +745,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private static boolean contains(Object[] array, Object object) {
-    for (int i = 0; i < array.length; i++) {
-      if (Comparing.equal(array[i], object)) return true;
+    for (Object elem : array) {
+      if (Comparing.equal(elem, object)) return true;
     }
     return false;
   }
@@ -778,8 +767,8 @@ public class ExtractMethodProcessor implements MatchProvider {
         PsiClass newTargetClass = (PsiClass)target;
         List<PsiVariable> array = new ArrayList<PsiVariable>();
         boolean success = true;
-        for (int i = 0; i < myElements.length; i++) {
-          if (!ControlFlowUtil.collectOuterLocals(array, myElements[i], myCodeFragementMember, targetMember)) {
+        for (PsiElement element : myElements) {
+          if (!ControlFlowUtil.collectOuterLocals(array, element, myCodeFragementMember, targetMember)) {
             success = false;
             break;
           }

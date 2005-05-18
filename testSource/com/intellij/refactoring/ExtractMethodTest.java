@@ -138,7 +138,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     }
     assertTrue(elements != null && elements.length > 0);
 
-    final ExtractMethodProcessor processor = new ExtractMethodProcessor(project, editor, file, elements,
+    final ExtractMethodProcessor processor = new ExtractMethodProcessor(project, editor, elements,
             null, "Extract Method", "newMethod", null
     );
     processor.setShowErrorDialogs(false);

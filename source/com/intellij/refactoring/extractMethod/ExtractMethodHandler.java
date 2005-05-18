@@ -74,7 +74,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
       }
     }
 
-    final ExtractMethodProcessor processor = new ExtractMethodProcessor(project, editor, file, elements, null, REFACTORING_NAME, "", HelpID.EXTRACT_METHOD);
+    final ExtractMethodProcessor processor = new ExtractMethodProcessor(project, editor, elements, null, REFACTORING_NAME, "", HelpID.EXTRACT_METHOD);
 
     try {
       if (!processor.prepare()) return;
