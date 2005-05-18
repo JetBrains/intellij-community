@@ -125,19 +125,19 @@ public class ClassElement extends RepositoryTreeElement {
     return findChildByRole(ChildRole.AT) != null;
   }
 
-  private static final TokenSet MODIFIERS_TO_REMOVE_IN_INTERFACE_BIT_SET = TokenSet.create(new IElementType[]{
+  private static final TokenSet MODIFIERS_TO_REMOVE_IN_INTERFACE_BIT_SET = TokenSet.create(
     PUBLIC_KEYWORD, ABSTRACT_KEYWORD,
     STATIC_KEYWORD, FINAL_KEYWORD,
     NATIVE_KEYWORD
-  });
+  );
 
-  private static final TokenSet MODIFIERS_TO_REMOVE_IN_ENUM_BIT_SET = TokenSet.create(new IElementType[]{
+  private static final TokenSet MODIFIERS_TO_REMOVE_IN_ENUM_BIT_SET = TokenSet.create(
     PUBLIC_KEYWORD, FINAL_KEYWORD
-  });
+  );
 
-  private static final TokenSet ENUM_CONSTANT_LIST_ELEMENTS_BIT_SET = TokenSet.create(new IElementType[]{
+  private static final TokenSet ENUM_CONSTANT_LIST_ELEMENTS_BIT_SET = TokenSet.create(
     ENUM_CONSTANT, COMMA, SEMICOLON
-  });
+  );
 
 
   public ASTNode findChildByRole(int role) {
