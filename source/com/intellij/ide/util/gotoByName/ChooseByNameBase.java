@@ -22,6 +22,7 @@ import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ListScrollingUtilEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.diff.Diff;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -61,6 +62,9 @@ public abstract class ChooseByNameBase{
   protected ChooseByNamePopupComponent.Callback myActionListener;
 
   protected final Alarm myAlarm = new Alarm();
+
+  private final ListUpdater myListUpdater = new ListUpdater();
+
   protected boolean myListIsUpToDate = false;
   protected boolean myDisposedFlag = false;
 
@@ -523,24 +527,132 @@ public abstract class ChooseByNameBase{
 
   private void setElementsToList(int pos, List<?> elements) {
     if (myDisposedFlag) return;
-    myListModel.clear();
     if (elements.size() == 0) {
+      myListModel.clear();
       myTextField.setForeground(Color.red);
+      myListUpdater.cancelAll();
       hideList();
       return;
     }
 
-    myTextField.setForeground(UIManager.getColor("TextField.foreground"));
-    for (int i = 0; i < elements.size(); i++) {
-      myListModel.addElement(elements.get(i));
+    Object[] oldElements = myListModel.toArray();
+    Object[] newElements = elements.toArray();
+    Diff.Change change = Diff.buildChanges(oldElements, newElements);
+
+    if (change == null) return; // Nothing changed
+
+    List<Cmd> commands = new ArrayList<Cmd>();
+    int inserted = 0;
+    int deleted = 0;
+    while (change != null) {
+      if (change.deleted > 0) {
+        final int start = change.line0 + inserted - deleted;
+        commands.add(new RemoveCmd(start, start + change.deleted - 1));
+      }
+
+      if (change.inserted > 0) {
+        for (int i = 0; i < change.inserted; i++) {
+          commands.add(new InsertCmd(change.line0 + i + inserted - deleted, newElements[change.line1 + i]));
+        }
+      }
+
+      deleted += change.deleted;
+      inserted += change.inserted;
+      change = change.link;
     }
 
-    ListScrollingUtil.selectItem(myList, Math.min (pos, myListModel.size () - 1));
-    myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
-    showList();
+    myTextField.setForeground(UIManager.getColor("TextField.foreground"));
+    int itemsToAppendImmediately = Math.min(Math.max(pos, 1), elements.size());
+
+    while (myListModel.size() < itemsToAppendImmediately && commands.size() > 0) {
+      commands.remove(0).apply();
+    }
+
+    if (!commands.isEmpty()) {
+      showList(false);
+      myListUpdater.appendToModel(commands, pos);
+    }
+    else {
+      ListScrollingUtil.selectItem(myList, Math.min (pos, myListModel.size () - 1));
+      myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
+      showList(true);
+    }
   }
 
-  protected abstract void showList();
+  private interface Cmd {
+    void apply();
+  }
+
+  private class RemoveCmd implements Cmd {
+    private int start;
+    private int end;
+
+    public RemoveCmd(final int start, final int end) {
+      this.start = start;
+      this.end = end;
+    }
+
+    public void apply() {
+      myListModel.removeRange(start, end);
+    }
+  }
+
+  private class InsertCmd implements Cmd {
+    private int idx;
+    private Object element;
+
+    public InsertCmd(final int idx, final Object element) {
+      this.idx = idx;
+      this.element = element;
+    }
+
+    public void apply() {
+      if (idx < myListModel.size()) {
+        myListModel.add(idx, element);
+      }
+      else {
+        myListModel.addElement(element);
+      }
+    }
+  }
+
+  private class ListUpdater {
+    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    private static final int DELAY = 10;
+    private static final int MAX_BLOCKING_TIME = 30;
+
+    public void cancelAll() {
+      myAlarm.cancelAllRequests();
+    }
+
+    public void appendToModel(final List<Cmd> commands, final int selectionPos) {
+      myAlarm.cancelAllRequests();
+      if (commands.isEmpty() || myDisposedFlag) return;
+      myAlarm.addRequest(new Runnable() {
+        public void run() {
+          if (myDisposedFlag) return;
+          final long startTime = System.currentTimeMillis();
+          do {
+            final Cmd cmd = commands.remove(0);
+            cmd.apply();
+          }
+          while (!commands.isEmpty() && System.currentTimeMillis() - startTime < MAX_BLOCKING_TIME);
+
+          myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
+          ListScrollingUtil.selectItem(myList, Math.min (selectionPos, myListModel.size () - 1));
+          if (!commands.isEmpty()) {
+            showList(false);
+            myAlarm.addRequest(this, DELAY);
+          }
+          else {
+            showList(true);
+          }
+        }
+      }, DELAY);
+    }
+  }
+
+  protected abstract void showList(final boolean truncateSize);
 
   protected abstract void hideList();
 
