@@ -97,6 +97,11 @@ public class RefField extends RefElement {
     PsiField psiField = (PsiField) getElement();
     if (psiField != null) {
       RefUtil.addReferences(psiField, this, psiField.getInitializer());
+
+      if (psiField instanceof PsiEnumConstant) {
+        RefUtil.addReferences(psiField, this, psiField);
+      }
+
       if (psiField.getInitializer() != null || psiField instanceof PsiEnumConstant) {
         if (!checkFlag(USED_FOR_WRITING_MASK)) {
           setFlag(true, ASSIGNED_ONLY_IN_INITIALIZER);

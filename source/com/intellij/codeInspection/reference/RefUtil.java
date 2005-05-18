@@ -12,13 +12,16 @@ import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class RefUtil {
-  private RefUtil() {}
+  private RefUtil() {
+  }
 
   public static void addReferences(final PsiModifierListOwner psiFrom, final RefElement refFrom, PsiElement findIn) {
     if (findIn != null) {
@@ -67,31 +70,17 @@ public class RefUtil {
             refFrom.setCanBeStatic(false);
           }
 
+          @Override public void visitEnumConstant(PsiEnumConstant enumConstant) {
+            super.visitEnumConstant(enumConstant);
+            processNewLikeConstruct(enumConstant.resolveConstructor(), enumConstant.getArgumentList());
+          }
+
           public void visitNewExpression(PsiNewExpression newExpr) {
             super.visitNewExpression(newExpr);
             PsiMethod psiConstructor = newExpr.resolveConstructor();
+            final PsiExpressionList argumentList = newExpr.getArgumentList();
 
-            if (psiConstructor != null) {
-              updateCanBeStatic(refFrom, psiFrom, psiConstructor.getContainingClass());
-              if (isDeprecated(psiConstructor)) refFrom.setUsesDeprecatedApi(true);
-            }
-
-            RefMethod refConstructor = (RefMethod)refFrom.getRefManager().getReference(
-              psiConstructor
-            );
-            refFrom.addReference(refConstructor, psiConstructor, psiFrom, false, true, null);
-
-            if (newExpr.getArgumentList() != null) {
-              PsiExpression[] psiParams = newExpr.getArgumentList().getExpressions();
-              for (int i = 0; i < psiParams.length; i++) {
-                PsiExpression param = psiParams[i];
-                param.accept(this);
-              }
-
-              if (refConstructor != null) {
-                refConstructor.updateParameterValues(psiParams);
-              }
-            }
+            RefMethod refConstructor = processNewLikeConstruct(psiConstructor, argumentList);
 
             if (refConstructor == null) {  // No explicit constructor referenced. Should use default one.
               PsiType newType = newExpr.getType();
@@ -117,6 +106,32 @@ public class RefUtil {
                 }
               }
             }
+          }
+
+          @Nullable
+          private RefMethod processNewLikeConstruct(final PsiMethod psiConstructor, final PsiExpressionList argumentList) {
+            if (psiConstructor != null) {
+              updateCanBeStatic(refFrom, psiFrom, psiConstructor.getContainingClass());
+              if (isDeprecated(psiConstructor)) refFrom.setUsesDeprecatedApi(true);
+            }
+
+            RefMethod refConstructor = (RefMethod)refFrom.getRefManager().getReference(
+              psiConstructor
+            );
+            refFrom.addReference(refConstructor, psiConstructor, psiFrom, false, true, null);
+
+            if (argumentList != null) {
+              PsiExpression[] psiParams = argumentList.getExpressions();
+              for (int i = 0; i < psiParams.length; i++) {
+                PsiExpression param = psiParams[i];
+                param.accept(this);
+              }
+
+              if (refConstructor != null) {
+                refConstructor.updateParameterValues(psiParams);
+              }
+            }
+            return refConstructor;
           }
 
           public void visitAnonymousClass(PsiAnonymousClass psiClass) {
@@ -227,7 +242,7 @@ public class RefUtil {
     if (!PsiType.VOID.equals(psiMethod.getReturnType())) return false;
 
     PsiMethod appMainPattern = refMethod.getRefManager().getAppMainPattern();
-    if(MethodSignatureUtil.areSignaturesEqual(psiMethod, appMainPattern)) return true;
+    if (MethodSignatureUtil.areSignaturesEqual(psiMethod, appMainPattern)) return true;
 
     PsiMethod appPremainPattern = refMethod.getRefManager().getAppPremainPattern();
     return MethodSignatureUtil.areSignaturesEqual(psiMethod, appPremainPattern);
@@ -260,8 +275,7 @@ public class RefUtil {
   public static boolean isInheritor(RefClass subClass, RefClass superClass) {
     if (subClass == superClass) return true;
 
-    for (Iterator<RefClass> iterator = subClass.getBaseClasses().iterator(); iterator.hasNext();) {
-      RefClass baseClass = iterator.next();
+    for (RefClass baseClass : subClass.getBaseClasses()) {
       if (isInheritor(baseClass, superClass)) return true;
     }
 
@@ -337,7 +351,7 @@ public class RefUtil {
     return result;
   }
 
-  public static RefClass getOwnerClass(RefManager refManager, PsiElement psiElement) {
+  @Nullable public static RefClass getOwnerClass(RefManager refManager, PsiElement psiElement) {
     while (psiElement != null && !(psiElement instanceof PsiClass)) {
       psiElement = psiElement.getParent();
     }
@@ -345,7 +359,7 @@ public class RefUtil {
     return psiElement != null ? (RefClass)refManager.getReference(psiElement) : null;
   }
 
-  public static RefClass getOwnerClass(RefElement refElement) {
+  @Nullable public static RefClass getOwnerClass(RefElement refElement) {
     RefEntity parent = refElement.getOwner();
 
     while (!(parent instanceof RefClass) && parent instanceof RefElement) {
@@ -357,7 +371,7 @@ public class RefUtil {
     return null;
   }
 
-  public static PsiClass getPsiOwnerClass(PsiElement psiElement) {
+  @Nullable public static PsiClass getPsiOwnerClass(PsiElement psiElement) {
     PsiElement parent = psiElement.getParent();
 
     while (!(parent instanceof PsiClass) && !(parent instanceof PsiFile) && parent != null) {
@@ -388,9 +402,7 @@ public class RefUtil {
     PsiCodeBlock body = method.getBody();
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
-      for (int i = 0; i < statements.length; i++) {
-        PsiStatement statement = statements[i];
-
+      for (PsiStatement statement : statements) {
         boolean isCallToSameSuper = false;
         if (statement instanceof PsiExpressionStatement) {
           isCallToSameSuper = isCallToSuperMethod(((PsiExpressionStatement)statement).getExpression(), method);
@@ -441,7 +453,8 @@ public class RefUtil {
     return 1;
   }
 
-  private static int getAccessNumber(String a) {
+  @SuppressWarnings("StringEquality")
+    private static int getAccessNumber(String a) {
     if (a == PsiModifier.PRIVATE) {
       return 0;
     }
@@ -464,8 +477,7 @@ public class RefUtil {
     ArrayList children = refElement.getChildren();
     if (children != null) {
       RefElement[] refElements = (RefElement[])children.toArray(new RefElement[children.size()]);
-      for (int i = 0; i < refElements.length; i++) {
-        RefElement refChild = refElements[i];
+      for (RefElement refChild : refElements) {
         removeRefElement(refChild, deletedRefs);
       }
     }

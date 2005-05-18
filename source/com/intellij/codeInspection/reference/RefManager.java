@@ -17,10 +17,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Set;
 
 public class RefManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefManager");
@@ -28,9 +28,8 @@ public class RefManager {
   private final Project myProject;
   private final AnalysisScope myScope;
   private final RefProject myRefProject;
-  private final PsiManager myPsiManager;
   private HashMap<PsiElement, RefElement> myRefTable;
-  private HashMap<String,RefPackage> myPackages;
+  private HashMap<String, RefPackage> myPackages;
   private final ProjectIterator myProjectIterator;
   private boolean myDeclarationsFound;
   private PsiMethod myAppMainPattern;
@@ -49,11 +48,12 @@ public class RefManager {
     myScope = scope;
     myRefProject = new RefProject(this);
     myRefTable = new HashMap<PsiElement, RefElement>();
-    myPsiManager = PsiManager.getInstance(project);
+
+    final PsiManager psiManager = PsiManager.getInstance(project);
 
     myProjectIterator = new ProjectIterator();
 
-    PsiElementFactory factory = myPsiManager.getElementFactory();
+    PsiElementFactory factory = psiManager.getElementFactory();
     try {
       myAppMainPattern = factory.createMethodFromText("void main(String[] args);", null);
       myAppPremainPattern = factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null);
@@ -62,14 +62,13 @@ public class RefManager {
       LOG.error(e);
     }
 
-    myApplet = myPsiManager.findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
-    myServlet = myPsiManager.findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
+    myApplet = psiManager.findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
+    myServlet = psiManager.findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
   }
 
   public void iterate(RefIterator iterator) {
     final HashMap<PsiElement, RefElement> refTable = getRefTable();
-    for (Iterator<RefElement> refIterator = refTable.values().iterator(); refIterator.hasNext();) {
-      RefElement refElement = refIterator.next();
+    for (RefElement refElement : refTable.values()) {
       iterator.accept(refElement);
       if (refElement instanceof RefClass) {
         RefClass refClass = (RefClass)refElement;
@@ -108,7 +107,7 @@ public class RefManager {
     myIsInProcess = false;
   }
 
-  public PsiElement getPsiAtOffset(VirtualFile vFile, int textOffset) {
+  @Nullable public PsiElement getPsiAtOffset(VirtualFile vFile, int textOffset) {
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(vFile);
     if (psiFile == null) return null;
 
@@ -168,17 +167,15 @@ public class RefManager {
     if (refElem instanceof RefMethod) {
       RefMethod refMethod = (RefMethod)refElem;
       RefParameter[] params = refMethod.getParameters();
-      for (int i = 0; i < params.length; i++) {
-        removeReference(params[i]);
+      for (RefParameter param : params) {
+        removeReference(param);
       }
     }
 
     if (refTable.remove(refElem.getElement()) != null) return;
 
     //PsiElement may have been invalidated and new one returned by getElement() is different so we need to do this stuff.
-    Set<PsiElement> keys = refTable.keySet();
-    for (Iterator<PsiElement> iterator = keys.iterator(); iterator.hasNext();) {
-      PsiElement psiElement = iterator.next();
+    for (PsiElement psiElement : refTable.keySet()) {
       if (refTable.get(psiElement) == refElem) {
         refTable.remove(psiElement);
         return;
@@ -188,9 +185,8 @@ public class RefManager {
 
   private class ProjectIterator extends PsiElementVisitor {
     public void visitElement(PsiElement element) {
-      PsiElement[] children = element.getChildren();
-      for (int i = 0; i < children.length; i++) {
-        children[i].accept(this);
+      for (PsiElement aChildren : element.getChildren()) {
+        aChildren.accept(this);
       }
     }
 
@@ -266,7 +262,7 @@ public class RefManager {
     return myServlet;
   }
 
-  public RefElement getReference(PsiElement elem) {
+  @Nullable public RefElement getReference(PsiElement elem) {
     LOG.assertTrue(isValidPointForReference(), "References may become invalid after process is finished");
     if (elem != null && !(elem instanceof PsiPackage) && RefUtil.belongsToScope(elem, this)) {
       if (!elem.isValid()) return null;
