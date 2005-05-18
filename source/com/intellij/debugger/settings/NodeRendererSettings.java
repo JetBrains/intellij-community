@@ -28,6 +28,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
   private static final String RENDERER_ID = "ID";
 
   private final EventDispatcher<NodeRendererSettingsListener> myDispatcher = EventDispatcher.create(NodeRendererSettingsListener.class);
+  private List<NodeRenderer> myPluginRenderers = new ArrayList<NodeRenderer>();
   private RendererConfiguration myCustomRenderers = new RendererConfiguration(this);
 
   // base renderers
@@ -38,37 +39,45 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
   private final ToStringRenderer myToStringRenderer = new ToStringRenderer();
   // alternate collections
   private final NodeRenderer[] myAlternateCollectionRenderers = new NodeRenderer[]{
-      createCompoundReferenceRenderer(
-        "Map", "java.util.Map",
-        createLabelRenderer(" size = ", "size()", null),
-        createExpressionChildrenRenderer("entrySet().toArray()", "!isEmpty()")
-      ),
-      createCompoundReferenceRenderer(
-        "Map.Entry", "java.util.Map$Entry",
-        createLabelRenderer(null, "\" \" + getKey() + \" -> \" + getValue()", null),
-        createEnumerationChildrenRenderer(new String[][]{{"key", "getKey()"}, {"value", "getValue()"}})
-      ),
-      createCompoundReferenceRenderer(
-        "Collection", "java.util.Collection",
-        createLabelRenderer(" size = ", "size()", null),
-        createExpressionChildrenRenderer("toArray()", "!isEmpty()")
-      )
-    };
+    createCompoundReferenceRenderer(
+      "Map", "java.util.Map",
+      createLabelRenderer(" size = ", "size()", null),
+      createExpressionChildrenRenderer("entrySet().toArray()", "!isEmpty()")
+    ),
+    createCompoundReferenceRenderer(
+      "Map.Entry", "java.util.Map$Entry",
+      createLabelRenderer(null, "\" \" + getKey() + \" -> \" + getValue()", null),
+      createEnumerationChildrenRenderer(new String[][]{{"key", "getKey()"}, {"value", "getValue()"}})
+    ),
+    createCompoundReferenceRenderer(
+      "Collection", "java.util.Collection",
+      createLabelRenderer(" size = ", "size()", null),
+      createExpressionChildrenRenderer("toArray()", "!isEmpty()")
+    )
+  };
   private static final String HEX_VIEW_ENABLED = "HEX_VIEW_ENABLED";
   private static final String ALTERNATIVE_COLLECTION_VIEW_ENABLED = "ALTERNATIVE_COLLECTION_VIEW_ENABLED";
   private static final String CUSTOM_RENDERERS_TAG_NAME = "CustomRenderers";
-
+  
   public NodeRendererSettings() {
     // default configuration
     myHexRenderer.setEnabled(false);
     myToStringRenderer.setEnabled(true);
     setAlternateCollectionViewsEnabled(true);
   }
-
+  
   public static NodeRendererSettings getInstance() {
     return ApplicationManager.getApplication().getComponent(NodeRendererSettings.class);
   }
+  
+  public void addPluginRenderer(NodeRenderer renderer) {
+    myPluginRenderers.add(renderer);
+  }
 
+  public void removePluginRenderer(NodeRenderer renderer) {
+    myPluginRenderers.remove(renderer);
+  }
+  
   public void setAlternateCollectionViewsEnabled(boolean enabled) {
     for (int idx = 0; idx < myAlternateCollectionRenderers.length; idx++) {
       myAlternateCollectionRenderers[idx].setEnabled(enabled);
@@ -168,6 +177,10 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
     }
   }
 
+  public List<NodeRenderer> getPluginRenderers() {
+    return new ArrayList<NodeRenderer>(myPluginRenderers);
+  }
+  
   public PrimitiveRenderer getPrimitiveRenderer() {
     return myPrimitiveRenderer;
   }
@@ -201,6 +214,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
     final List<NodeRenderer> allRenderers = new ArrayList<NodeRenderer>();
     allRenderers.add(myHexRenderer);
     allRenderers.add(myPrimitiveRenderer);
+    allRenderers.addAll(myPluginRenderers);
     myCustomRenderers.iterateRenderers(new InternalIterator<NodeRenderer>() {
       public boolean visit(final NodeRenderer renderer) {
         allRenderers.add(renderer);
