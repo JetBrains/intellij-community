@@ -19,7 +19,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.light.*;
 import com.intellij.psi.impl.source.*;
-import com.intellij.psi.impl.source.parsing.*;
+import com.intellij.psi.impl.source.parsing.DeclarationParsing;
+import com.intellij.psi.impl.source.parsing.ExpressionParsing;
+import com.intellij.psi.impl.source.parsing.JavaParsingContext;
+import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -836,4 +839,5 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     TreeUtil.addChildren(holderElement, treeElement);
     return (PsiTypeParameter)SourceTreeToPsiMap.treeElementToPsi(treeElement);
   }
+
 }

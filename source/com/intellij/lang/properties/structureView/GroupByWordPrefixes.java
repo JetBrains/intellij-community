@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
 
 import java.util.*;
 
@@ -31,14 +32,18 @@ public class GroupByWordPrefixes implements Grouper {
       parentPrefixLength = 0;
     }
     for (TreeElement element : children) {
+      String text = null;
       if (element instanceof PropertiesStructureViewElement) {
         Property property = ((PropertiesStructureViewElement)element).getValue();
-        String text = property.getKey();
-        if (text == null) continue;
-        LOG.assertTrue(text.startsWith(parentPrefix));
-        List<String> words = Arrays.asList(text.split("\\."));
-        keys.add(new Key(words, (PropertiesStructureViewElement)element));
+        text = property.getKey();
       }
+      else if (element instanceof ResourceBundlePropertyStructureViewElement) {
+        text = ((ResourceBundlePropertyStructureViewElement)element).getValue();
+      }
+      if (text == null) continue;
+      LOG.assertTrue(text.startsWith(parentPrefix));
+        List<String> words = Arrays.asList(text.split("\\."));
+        keys.add(new Key(words, element));
     }
     Collections.sort(keys, new Comparator<Key>() {
       public int compare(final Key k1, final Key k2) {
@@ -83,8 +88,13 @@ public class GroupByWordPrefixes implements Grouper {
         groups.add(new PropertiesPrefixGroup(children, prefix, presentableName));
       }
       else if (groupStart != keys.size()) {
-        PropertiesStructureViewElement node = keys.get(groupStart).node;
-        node.setPresentableName(presentableName);
+        TreeElement node = keys.get(groupStart).node;
+        if (node instanceof PropertiesStructureViewElement) {
+          ((PropertiesStructureViewElement)node).setPresentableName(presentableName);
+        }
+        else {
+          ((ResourceBundlePropertyStructureViewElement)node).setPresentableName(presentableName);
+        }
       }
       groupStart = i;
     }
@@ -114,9 +124,9 @@ public class GroupByWordPrefixes implements Grouper {
 
   private static class Key {
     List<String> words;
-    PropertiesStructureViewElement node;
+    TreeElement node;
 
-    public Key(final List<String> words, final PropertiesStructureViewElement node) {
+    public Key(final List<String> words, final TreeElement node) {
       this.words = words;
       this.node = node;
     }

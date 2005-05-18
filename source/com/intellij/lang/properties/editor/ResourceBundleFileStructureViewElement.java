@@ -4,16 +4,18 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.PropertiesFileType;
-import com.intellij.lang.properties.structureView.PropertiesStructureViewElement;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ResourceBundleFileStructureViewElement implements StructureViewTreeElement<ResourceBundle> {
   private final ResourceBundle myResourceBundle;
@@ -39,8 +41,9 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
       }
     }
     List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>(propertyNames.size());
-    for (Property property : propertyNames.values()) {
-      result.add(new PropertiesStructureViewElement(property));
+    for (String property : propertyNames.keySet()) {
+      //result.add(new PropertiesStructureViewElement(property));
+      result.add(new ResourceBundlePropertyStructureViewElement(myResourceBundle, property));
     }
     return result.toArray(new StructureViewTreeElement[result.size()]);
   }

@@ -2,15 +2,21 @@ package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
+import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.source.tree.ChangeUtil;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -94,6 +100,20 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
       name = name.substring(0, name.length() - 3);
     }
     return name;
+  }
+
+  public PsiElement add(PsiElement element) throws IncorrectOperationException {
+    final List<Property> properties = getProperties();
+    if (properties.size() != 0) {
+      Property lastProperty = properties.get(properties.size() - 1);
+      final PsiElement nextSibling = lastProperty.getNextSibling();
+      if (nextSibling == null || nextSibling.getText().indexOf("\n") == -1) {
+        String text = "\n";
+        LeafElement ws = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text.toCharArray(), 0, text.length(), getTreeElement().getCharTable(), myManager);
+        ChangeUtil.addChild(calcTreeElement(), ws, null);
+      }
+    }
+    return super.add(element);
   }
 
   public void subtreeChanged() {

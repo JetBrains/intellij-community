@@ -16,13 +16,14 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
   private final String myPropertyName;
   private final ResourceBundle myResourceBundle;
   private final ItemPresentation myItemPresentation;
+  private String myPresentableName;
 
   public ResourceBundlePropertyStructureViewElement(final ResourceBundle resourceBundle, String propertyName) {
     myResourceBundle = resourceBundle;
     myPropertyName = propertyName;
     myItemPresentation = new ItemPresentation() {
       public String getPresentableText() {
-        return myPropertyName;
+        return myPresentableName == null ? myPropertyName : myPresentableName;
       }
 
       public String getLocationString() {
@@ -37,6 +38,10 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
         return PropertiesHighlighter.PROPERTY_KEY;
       }
     };
+  }
+
+  public void setPresentableName(final String presentableName) {
+    myPresentableName = presentableName;
   }
 
   public String getValue() {
@@ -62,4 +67,5 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
   public boolean canNavigateToSource() {
     return false;
   }
+
 }

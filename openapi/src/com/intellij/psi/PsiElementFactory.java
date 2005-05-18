@@ -5,6 +5,7 @@
 package com.intellij.psi;
 
 import com.intellij.aspects.psi.PsiTypePattern;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -12,7 +13,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.pom.java.LanguageLevel;
 
 import java.util.Map;
 
@@ -135,4 +135,5 @@ public interface PsiElementFactory {
   XmlText createDisplayText(String s) throws IncorrectOperationException;
 
   XmlTag createXHTMLTagFromText(String s) throws IncorrectOperationException;
+
 }
