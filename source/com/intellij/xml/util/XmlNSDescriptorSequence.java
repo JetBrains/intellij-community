@@ -68,6 +68,10 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
     return null;
   }
 
+  public List<XmlNSDescriptor> getSequence(){
+    return sequence;
+  }
+
   public boolean isHierarhyEnabled() {
     final Iterator iterator = sequence.iterator();
     while(iterator.hasNext()){

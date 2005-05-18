@@ -14,6 +14,8 @@ import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.util.XmlNSDescriptorSequence;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,8 +43,9 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor {
     final ElementClassHint hint = processor.getHint(ElementClassHint.class);
     final XmlTag tag = (XmlTag)context;
     final PsiMetaData meta = tag.getMetaData();
-    if(meta == null)
+    if (meta == null) {
       return true;
+    }
     if(hint == null || hint.shouldProcess(XmlAttributeDecl.class)){
       final XmlAttlistDecl[] decls = getAttlistDecls();
       for(int i = 0; i < decls.length; i++){
@@ -89,14 +92,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor {
     if(!(file instanceof XmlFile)) return null;
     final XmlDocument document = ((XmlFile)file).getDocument();
     XmlNSDescriptor descriptor = (XmlNSDescriptor) document.getMetaData();
-    if(descriptor == null){
-      final XmlDoctype doctype = document.getProlog().getDoctype();
-      if(doctype != null){
-        if(doctype.getMarkupDecl() != null){
-          descriptor = (XmlNSDescriptor)doctype.getMarkupDecl().getMetaData();
-        }
-      }
-    }
+    if(descriptor == null) descriptor = document.getDefaultNSDescriptor(XmlUtil.EMPTY_URI, false);
     return descriptor;
   }
 
@@ -107,7 +103,6 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor {
 
     final XmlElementContentSpec contentSpecElement = myElementDecl.getContentSpecElement();
     final XmlNSDescriptor NSDescriptor = getNSDescriptor();
-    if(!(NSDescriptor instanceof XmlNSDescriptorImpl)) return XmlElementDescriptor.EMPTY_ARRAY;
     contentSpecElement.processElements(new PsiElementProcessor(){
       public boolean execute(PsiElement child){
         if (child instanceof XmlToken) {
@@ -115,7 +110,22 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor {
 
           if (token.getTokenType() == XmlTokenType.XML_NAME) {
             final String text = child.getText();
-            final XmlElementDescriptor element = ((XmlNSDescriptorImpl)NSDescriptor).getElementDescriptor(text);
+            XmlElementDescriptor element = null;
+            if (NSDescriptor instanceof XmlNSDescriptorImpl) {
+              element = ((XmlNSDescriptorImpl)NSDescriptor).getElementDescriptor(text);
+            }
+            else if (NSDescriptor instanceof XmlNSDescriptorSequence) {
+              final List<XmlNSDescriptor> sequence = ((XmlNSDescriptorSequence)NSDescriptor).getSequence();
+              for (XmlNSDescriptor xmlNSDescriptor : sequence) {
+                if (xmlNSDescriptor instanceof XmlNSDescriptorImpl) {
+                  element = ((XmlNSDescriptorImpl)xmlNSDescriptor).getElementDescriptor(text);
+                  if(element != null) break;
+                }
+              }
+            }
+            else {
+              element = null;
+            }
 
             if (element != null) {
               result.add(element);
