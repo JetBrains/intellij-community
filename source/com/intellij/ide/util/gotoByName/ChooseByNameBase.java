@@ -361,7 +361,6 @@ public abstract class ChooseByNameBase{
       LookAndFeel.installBorder(myTextFieldPanel, "PopupMenu.border");
     }
     LookAndFeel.installColorsAndFont(myTextFieldPanel, "PopupMenu.background", "PopupMenu.foreground", "PopupMenu.font");
-    LookAndFeel.installColorsAndFont(myCheckBox, "PopupMenu.background", "PopupMenu.foreground", "PopupMenu.font");
 
     showTextFieldPanel();
 
@@ -535,9 +534,7 @@ public abstract class ChooseByNameBase{
     for (int i = 0; i < elements.size(); i++) {
       myListModel.addElement(elements.get(i));
     }
-    //if (isTooLong){
-    //  myListModel.addElement("...");
-    //}
+
     ListScrollingUtil.selectItem(myList, Math.min (pos, myListModel.size () - 1));
     myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
     showList();
