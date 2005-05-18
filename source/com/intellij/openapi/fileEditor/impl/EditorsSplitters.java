@@ -11,8 +11,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import com.intellij.util.containers.ArrayListSet;
 import org.jdom.Element;
 
@@ -495,7 +498,7 @@ public class EditorsSplitters extends JPanel {
   }
 
   private final class MyFocusWatcher extends FocusWatcher {
-    private final Alarm myAlarm = new Alarm();
+    private final MergingUpdateQueue myQueue = new MergingUpdateQueue("EditorsSplitters.MyFocusWatcherQueue", 50, true, ModalityState.NON_MMODAL);
     protected void focusedComponentChanged(final Component component) {
       if (myInsideChange > 0) {
         return;
@@ -504,10 +507,9 @@ public class EditorsSplitters extends JPanel {
       final EditorWindow newActiveWindow = findWindowWith(component);
       final boolean currentFileChanged = getCurrentFile() != myCurrentFile;
       if (oldActiveWindow != newActiveWindow || currentFileChanged) {
-        // alarm here is to prevent title flickering when tab is being closed and two events arriving: with component==null and component==next focused tab
+        // Queue here is to prevent title flickering when tab is being closed and two events arriving: with component==null and component==next focused tab
         // only the last event makes sense to handle
-        myAlarm.cancelAllRequests();
-        myAlarm.addRequest(new Runnable(){
+        myQueue.queue(new Update("SelectionChanged") {
           public void run() {
             getManager().updateFileName(newActiveWindow == null ? null : newActiveWindow.getSelectedFile());
             if (component == null && !currentFileChanged) {
@@ -520,7 +522,7 @@ public class EditorsSplitters extends JPanel {
             EditorWithProviderComposite newSelected = newActiveWindow == null ? null : newActiveWindow.getSelectedEditor();
             getManager().fireSelectionChanged(oldSelected, newSelected);
           }
-        },50);
+        });
       }
     }
   }
