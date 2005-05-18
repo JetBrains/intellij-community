@@ -6,15 +6,14 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 public class ClassesTreeStructureProvider implements TreeStructureProvider, ProjectComponent {
   private final Project myProject;
@@ -25,18 +24,17 @@ public class ClassesTreeStructureProvider implements TreeStructureProvider, Proj
 
   public Collection<AbstractTreeNode> modify(AbstractTreeNode parent, Collection<AbstractTreeNode> children, ViewSettings settings) {
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-    for (Iterator<AbstractTreeNode> iterator = children.iterator(); iterator.hasNext();) {
-      ProjectViewNode treeNode = (ProjectViewNode)iterator.next();
+    for (final AbstractTreeNode aChildren : children) {
+      ProjectViewNode treeNode = (ProjectViewNode)aChildren;
       Object o = treeNode.getValue();
       if (o instanceof PsiJavaFile) {
         PsiJavaFile psiJavaFile = (PsiJavaFile)o;
         PsiClass[] classes = psiJavaFile.getClasses();
         final VirtualFile virtualFile = psiJavaFile.getVirtualFile();
-        if (classes.length != 0 && virtualFile.getFileType() == StdFileTypes.JAVA || virtualFile.getFileType() == StdFileTypes.CLASS) {
-          for (int i = 0; i < classes.length; i++) {
-            PsiClass aClass = classes[i];
+        if (classes.length != 0 && (virtualFile.getFileType() == StdFileTypes.JAVA || virtualFile.getFileType() == StdFileTypes.CLASS)) {
+          for (PsiClass aClass : classes) {
             if (aClass.isValid()) {
-              result.add(new ClassTreeNode(myProject,aClass, ((ProjectViewNode)parent).getSettings()));
+              result.add(new ClassTreeNode(myProject, aClass, ((ProjectViewNode)parent).getSettings()));
             }
           }
         }
