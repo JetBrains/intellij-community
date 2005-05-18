@@ -121,6 +121,7 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
     Iterator<PsiClass> iterator = processor.getCollection().iterator();
     while(iterator.hasNext()){
       PsiClass derivedClass = iterator.next();
+      if (derivedClass instanceof PsiAnonymousClass) continue;
       PsiType derivedType = manager.getElementFactory().createType(derivedClass);
       set.add(derivedType);
     }
