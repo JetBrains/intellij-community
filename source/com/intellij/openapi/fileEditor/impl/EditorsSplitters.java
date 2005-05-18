@@ -502,15 +502,20 @@ public class EditorsSplitters extends JPanel {
       }
       final EditorWindow oldActiveWindow = getCurrentWindow();
       final EditorWindow newActiveWindow = findWindowWith(component);
-      if (oldActiveWindow != newActiveWindow || getCurrentFile() != myCurrentFile) {
+      final boolean currentFileChanged = getCurrentFile() != myCurrentFile;
+      if (oldActiveWindow != newActiveWindow || currentFileChanged) {
         // alarm here is to prevent title flickering when tab is being closed and two events arriving: with component==null and component==next focused tab
         // only the last event makes sense to handle
         myAlarm.cancelAllRequests();
         myAlarm.addRequest(new Runnable(){
           public void run() {
-            setCurrentWindow(newActiveWindow, false);
             getManager().updateFileName(newActiveWindow == null ? null : newActiveWindow.getSelectedFile());
+            if (component == null && !currentFileChanged) {
+              // focused component has changed, but active window not 
+              return;
+            }
             myCurrentFile = getCurrentFile();
+            setCurrentWindow(newActiveWindow, false);
             EditorWithProviderComposite oldSelected = oldActiveWindow == null ? null : oldActiveWindow.getSelectedEditor();
             EditorWithProviderComposite newSelected = newActiveWindow == null ? null : newActiveWindow.getSelectedEditor();
             getManager().fireSelectionChanged(oldSelected, newSelected);
