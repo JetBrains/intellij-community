@@ -177,4 +177,7 @@ public interface IdeActions {
   String ACTION_GOTO_FORWARD = "Forward";
 
   String MODULE_SETTINGS = "ModuleSettings";
+
+  String GROUP_WELCOME_SCREEN_QUICKSTART = "WelcomeScreen.QuickStart";
+  String GROUP_WELCOME_SCREEN_DOC = "WelcomeScreen.Documentation";
 }

@@ -68,6 +68,7 @@ public abstract class ActionPlaces {
 
   public static final String RUN_CONFIGURATIONS_COMBOBOX = "RunConfigurationsCombobox";
   public static final String CREATE_EJB_POPUP = "CreateEjbPopup";
+  public static final String WELCOME_SCREEN = "WelcomeScreen";
 
   private static final String[] ourToolbarPlaces = new String[]{
      PROJECT_VIEW_TOOLBAR, TESTTREE_VIEW_TOOLBAR, MAIN_TOOLBAR, ANT_EXPLORER_TOOLBAR, ANT_MESSAGES_TOOLBAR, COMPILER_MESSAGES_TOOLBAR, TODO_VIEW_TOOLBAR,

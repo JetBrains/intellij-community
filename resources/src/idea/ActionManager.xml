@@ -1270,5 +1270,12 @@
       </action>
     </group>
 
+    <group id="WelcomeScreen.QuickStart">
+
+    </group>
+    <group id="WelcomeScreen.Documentation">
+
+    </group>
+
   </actions>
 </component>

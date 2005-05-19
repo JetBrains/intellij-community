@@ -2,6 +2,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.help.impl.HelpManagerImpl;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -19,7 +20,10 @@ import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
@@ -62,17 +66,18 @@ public class WelcomeScreen {
   private static final Dimension LEARN_MORE_SIZE = new Dimension(26, 26);
   private static final Dimension OPEN_PLUGIN_MANAGER_SIZE = new Dimension(166, 31);
 
-  private static final String LEARN_MORE_ICON = "/general/learnMore.png";
-  private static final String OPEN_PLUGINS_ICON = "/general/openPluginManager.png";
-  private static final String CAPTION_IMAGE = "/general/welcomeCaption.png";
-  private static final String DEVELOP_SLOGAN = "/general/developSlogan.png";
-  private static final String NEW_PROJECT_ICON = "/general/createNewProject.png";
-  private static final String REOPEN_RECENT_ICON = "/general/reopenRecentProject.png";
-  private static final String FROM_VCS_ICON = "/general/getProjectfromVCS.png";
-  private static final String READ_HELP_ICON = "/general/readHelp.png";
-  private static final String KEYMAP_ICON = "/general/defaultKeymap.png";
-  private static final String KEYMAP_URL = PathManager.getHomePath() + "/help/4.5_ReferenceCard.pdf";
-  private static final String DEFAULT_ICON_PATH = "/general/configurableDefault.png";
+  private static final Icon LEARN_MORE_ICON = IconLoader.getIcon("/general/learnMore.png");
+  private static final Icon OPEN_PLUGINS_ICON = IconLoader.getIcon("/general/openPluginManager.png");
+  private static final Icon CAPTION_IMAGE = IconLoader.getIcon("/general/welcomeCaption.png");
+  private static final Icon DEVELOP_SLOGAN = IconLoader.getIcon("/general/developSlogan.png");
+  private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/general/createNewProject.png");
+  private static final Icon REOPEN_RECENT_ICON = IconLoader.getIcon("/general/reopenRecentProject.png");
+  private static final Icon FROM_VCS_ICON = IconLoader.getIcon("/general/getProjectfromVCS.png");
+  private static final Icon READ_HELP_ICON = IconLoader.getIcon("/general/readHelp.png");
+  private static final Icon KEYMAP_ICON = IconLoader.getIcon("/general/defaultKeymap.png");
+  private static final Icon DEFAULT_ICON = IconLoader.getIcon("/general/configurableDefault.png");
+
+  private static final String KEYMAP_URL         = PathManager.getHomePath() + "/help/4.5_ReferenceCard.pdf";
 
   private static final Font TEXT_FONT = new Font("Tahoma", Font.PLAIN, 11);
   private static final Font LINK_FONT = new Font("Tahoma", Font.BOLD, 12);
@@ -84,19 +89,104 @@ public class WelcomeScreen {
   private static final Color BUTTON_PUSHED_COLOR = new Color(130, 146, 185);
   private static final Color BUTTON_POPPED_COLOR = new Color(181, 190, 214);
   private static final Color MAIN_PANEL_BACKGROUND = new Color(238, 238, 238);
-  private static final Color LEAR_MORE_BUTTON_COLOR = new Color(238, 238, 238);
+  private static final Color LEARN_MORE_BUTTON_COLOR = new Color(238, 238, 238);
   private static final Color GRAY_BORDER_COLOR = new Color(177, 177, 177);
   private static final Color CAPTION_BACKGROUND = new Color(24, 52, 146);
   private static final Color ACTION_BUTTON_COLOR = new Color(201, 205, 217);
   private static final Color ACTION_BUTTON_BORDER_COLOR = new Color(166, 170, 182);
   private static final Color WHITE_BORDER_COLOR = new Color(255, 255, 255);
 
-  private int myQuickStartCount = 0;
-  private int myQuickStartIdx = -1;
-  private int myDocsCount = 0;
-  private int myDocsIdx = -1;
   private int myPluginsButtonsCount = 0;
   private int myPluginsIdx = -1;
+
+  private class ActionGroupDescriptor {
+    private int myIdx = -1;
+    private int myCount = 0;
+    private JPanel myPanel;
+    private final int myColumnIdx;
+
+    public ActionGroupDescriptor(final String caption, final int columnIndex) {
+      JPanel panel = new JPanel(new GridBagLayout());
+      panel.setBackground(MAIN_PANEL_COLOR);
+
+      JLabel quickStartCaption = new JLabel(caption);
+      quickStartCaption.setFont(CAPTION_FONT);
+      quickStartCaption.setForeground(CAPTION_COLOR);
+
+      GridBagConstraints gBC = new GridBagConstraints(0, 0, 2, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(20, 0, 5, 0), 0, 0);
+      panel.add(quickStartCaption, gBC);
+      myPanel = panel;
+      myColumnIdx = columnIndex;
+    }
+
+    public void addButton(final MyActionButton button, String commandLink, String description) {
+      final int y = myIdx += 2;
+      GridBagConstraints gBC =
+        new GridBagConstraints(0, y, 1, 2, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, ICON_INSETS, 5, 5);
+
+      button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      myPanel.add(button, gBC);
+      button.setupWithinPanel(myMainPanel, MAIN_GROUP, myCount, myColumnIdx);
+      myCount++;
+
+      JLabel name = new JLabel("<html><nobr><u>" + commandLink + "</u></nobr></html>");
+      name.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent e) {
+          button.onPress(e);
+        }
+
+      });
+      name.setForeground(CAPTION_COLOR);
+      name.setFont(LINK_FONT);
+      name.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+      gBC = new GridBagConstraints(1, y, 1, 1, 0, 0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(15, 15, 0, 0), 5, 0);
+      myPanel.add(name, gBC);
+
+      description = "<HTML>" + description + "</html>";
+      JLabel shortDescription = new JLabel(description);
+      shortDescription.setFont(TEXT_FONT);
+
+      gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(7, 15, 0, 30), 5, 0);
+      myPanel.add(shortDescription, gBC);
+    }
+
+    private void appendActionsFromGroup(final DefaultActionGroup group) {
+      final AnAction[] actions = group.getChildren(null);
+      for (final AnAction action : actions) {
+        final Presentation presentation = action.getTemplatePresentation();
+        final Icon icon = presentation.getIcon();
+        final String text = presentation.getText();
+        MyActionButton button = new ButtonWithExtension(icon, "") {
+          protected void onPress(InputEvent e, MyActionButton button) {
+            final ActionManager actionManager = ActionManager.getInstance();
+            AnActionEvent evt = new AnActionEvent(
+              null,
+              DataManager.getInstance().getDataContext(this),
+              ActionPlaces.WELCOME_SCREEN,
+              action.getTemplatePresentation(),
+              actionManager,
+              0
+            );
+            action.update(evt);
+            if (evt.getPresentation().isEnabled()) {
+              action.actionPerformed(evt);
+            }
+          }
+        };
+
+        addButton(button, text, presentation.getDescription());
+      }
+    }
+
+    public JPanel getPanel() {
+      return myPanel;
+    }
+
+    public int getIdx() {
+      return myIdx;
+    }
+  }
 
   private WelcomeScreen() {
 
@@ -141,7 +231,7 @@ public class WelcomeScreen {
     topPluginsPanel.add(emptyLabel_1, gBC);
 
     gBC = new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(13, 0, 0, 10), 0, 0);
-    MyActionButton openPluginManager = new PluginsActionButton(null, OPEN_PLUGINS_ICON, null) {
+    MyActionButton openPluginManager = new PluginsActionButton(OPEN_PLUGINS_ICON, null) {
       protected void onPress(InputEvent e) {
         ShowSettingsUtil.getInstance().editConfigurable(myPluginsPanel, PluginManagerConfigurable.getInstance());
       }
@@ -193,28 +283,19 @@ public class WelcomeScreen {
     myMainPanel = new JPanel(new GridBagLayout());
     myMainPanel.setBackground(MAIN_PANEL_COLOR);
 
-    // Create Quick Start sub-panel
-    JPanel quickStartPanel = new JPanel(new GridBagLayout());
-    quickStartPanel.setBackground(MAIN_PANEL_COLOR);
+    ActionGroupDescriptor quickStarts = new ActionGroupDescriptor("Quick Start", 0);
 
-    JLabel quickStartCaption = new JLabel("Quick Start");
-    quickStartCaption.setFont(CAPTION_FONT);
-    quickStartCaption.setForeground(CAPTION_COLOR);
-
-    gBC = new GridBagConstraints(0, 0, 2, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(20, 0, 5, 0), 0, 0);
-    quickStartPanel.add(quickStartCaption, gBC);
-
-    MyActionButton newProject = new MyActionButton(null, NEW_PROJECT_ICON, null) {
+    MyActionButton newProject = new MyActionButton(NEW_PROJECT_ICON, null) {
       protected void onPress(InputEvent e) {
         ProjectUtil.createNewProject(null);
       }
     };
-    addButtonToQuickStart(quickStartPanel, newProject, "Create New Project", "Start the \"New Project\" Wizard that will guide you through " +
-                                                                             "the steps that are necessary to create a new project.");
+    quickStarts.addButton(newProject, "Create New Project", "Start the \"New Project\" Wizard that will guide you through " +
+                                                            "the steps that are necessary to create a new project.");
 
-    MyActionButton openRecentProject = new ButtonWithExtension(null, REOPEN_RECENT_ICON, null) {
+    final ActionManager actionManager = ActionManager.getInstance();
+    MyActionButton openRecentProject = new ButtonWithExtension(REOPEN_RECENT_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
-        final ActionManager actionManager = ActionManager.getInstance();
         final AnAction action = new RecentProjectsAction();
         action.actionPerformed(new AnActionEvent(e, new DataContext() {
           public Object getData(String dataId) {
@@ -226,13 +307,12 @@ public class WelcomeScreen {
         }, ActionPlaces.UNKNOWN, new PresentationFactory().getPresentation(action), actionManager, 0));
       }
     };
-    addButtonToQuickStart(quickStartPanel, openRecentProject, "Reopen Recent Project...", "You can open one of the most recent " +
-                                                                                          "projects you were working with. Click the icon " +
-                                                                                          "or link to select a project from the list.");
+    quickStarts.addButton(openRecentProject, "Reopen Recent Project...", "You can open one of the most recent " +
+                                                                         "projects you were working with. Click the icon " +
+                                                                         "or link to select a project from the list.");
 
-    MyActionButton getFromVCS = new ButtonWithExtension(null, FROM_VCS_ICON, null) {
+    MyActionButton getFromVCS = new ButtonWithExtension(FROM_VCS_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
-        final ActionManager actionManager = ActionManager.getInstance();
         final AnAction action = new GetFromVcsAction();
         action.actionPerformed(new AnActionEvent(e, new DataContext() {
           public Object getData(String dataId) {
@@ -244,29 +324,23 @@ public class WelcomeScreen {
         }, ActionPlaces.UNKNOWN, new PresentationFactory().getPresentation(action), actionManager, 0));
       }
     };
-    addButtonToQuickStart(quickStartPanel, getFromVCS, "Get Project From Version Control...", "You can check out an entire project from " +
-                                                                                              "a Version Control System. Click the icon to " +
-                                                                                              "select CVS or Subversion.");
 
-    // Create Documentation panel
-    JPanel docsPanel = new JPanel(new GridBagLayout());
-    docsPanel.setBackground(MAIN_PANEL_COLOR);
+    quickStarts.addButton(getFromVCS, "Get Project From Version Control...", "You can check out an entire project from " +
+                                                                               "a Version Control System. Click the icon to " +
+                                                                               "select CVS or Subversion.");
 
-    JLabel docsCaption = new JLabel("Documentation");
-    docsCaption.setFont(CAPTION_FONT);
-    docsCaption.setForeground(CAPTION_COLOR);
+    quickStarts.appendActionsFromGroup((DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART));
 
-    gBC = new GridBagConstraints(0, 0, 2, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(20, 0, 5, 0), 0, 0);
-    docsPanel.add(docsCaption, gBC);
+     ActionGroupDescriptor docsGroup = new ActionGroupDescriptor("Documentation", 1);
 
-    MyActionButton readHelp = new MyActionButton(null, READ_HELP_ICON, null) {
+    MyActionButton readHelp = new MyActionButton(READ_HELP_ICON, null) {
       protected void onPress(InputEvent e) {
         HelpManagerImpl.getInstance().invokeHelp("");
       }
     };
-    addButtonToDocs(docsPanel, readHelp, "Read Help", "Open IntelliJ IDEA \"Help Topics\" in a new window.");
+    docsGroup.addButton(readHelp, "Read Help", "Open IntelliJ IDEA \"Help Topics\" in a new window.");
 
-    MyActionButton defaultKeymap = new MyActionButton(null, KEYMAP_ICON, null) {
+    MyActionButton defaultKeymap = new MyActionButton(KEYMAP_ICON, null) {
       protected void onPress(InputEvent e) {
         try {
           BrowserUtil.launchBrowser(KEYMAP_URL);
@@ -276,21 +350,25 @@ public class WelcomeScreen {
         }
       }
     };
-    addButtonToDocs(docsPanel, defaultKeymap, "Default Keymap", "Open PDF file with the default keymap reference card.");
+    docsGroup.addButton(defaultKeymap, "Default Keymap", "Open PDF file with the default keymap reference card.");
+
+    docsGroup.appendActionsFromGroup((DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_DOC));
 
 // TODO[pti]: before adding Quick Start and Documentation panes to the main panel, check for plugins with welcome actions and add them to the appropriate panes
 
     JPanel emptyPanel_2 = new JPanel();
     emptyPanel_2.setBackground(MAIN_PANEL_COLOR);
 
+    final JPanel quickStartPanel = quickStarts.getPanel();
     quickStartPanel.add(emptyPanel_2,
-                        new GridBagConstraints(0, myQuickStartIdx + 2, 2, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+                        new GridBagConstraints(0, quickStarts.getIdx() + 2, 2, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     JPanel emptyPanel_3 = new JPanel();
     emptyPanel_3.setBackground(MAIN_PANEL_COLOR);
 
+    final JPanel docsPanel = docsGroup.getPanel();
     docsPanel.add(emptyPanel_3,
-              new GridBagConstraints(0, myDocsIdx + 2, 2, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+              new GridBagConstraints(0, docsGroup.getIdx() + 2, 2, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     // Fill Main Panel with Quick Start and Documentation lists
     gBC = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 30, 0, 0), 0, 0);
@@ -309,7 +387,7 @@ public class WelcomeScreen {
     // Create caption pane
     JPanel topPanel = new JPanel(new GridBagLayout()) {
       public void paint(Graphics g) {
-        Icon welcome = IconLoader.getIcon(CAPTION_IMAGE);
+        Icon welcome = CAPTION_IMAGE;
         welcome.paintIcon(null, g, 0, 0);
         g.setColor(CAPTION_BACKGROUND);
         g.fillRect(welcome.getIconWidth(), 0, this.getWidth() - welcome.getIconWidth(), welcome.getIconHeight());
@@ -323,7 +401,7 @@ public class WelcomeScreen {
 
     topPanel.add(transparentTopPanel,
                             new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    topPanel.add(new JLabel(IconLoader.getIcon(DEVELOP_SLOGAN)),
+    topPanel.add(new JLabel(DEVELOP_SLOGAN),
                             new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
 
     // Create the base welcome panel
@@ -342,70 +420,6 @@ public class WelcomeScreen {
 
   public static JPanel createWelcomePanel() {
     return new WelcomeScreen().myWelcomePanel;
-  }
-
-  public void addButtonToQuickStart(JPanel panel, final MyActionButton button, String commandLink, String description) {
-    final int y = myQuickStartIdx += 2;
-    GridBagConstraints gBC =
-      new GridBagConstraints(0, y, 1, 2, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, ICON_INSETS, 5, 5);
-
-    button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    panel.add(button, gBC);
-    button.setupWithinPanel(myMainPanel, MAIN_GROUP, myQuickStartCount, 0);
-    myQuickStartCount++;
-
-    JLabel name = new JLabel("<html><nobr><u>" + commandLink + "</u></nobr></html>");
-    name.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        button.onPress(e);
-      }
-
-    });
-    name.setForeground(CAPTION_COLOR);
-    name.setFont(LINK_FONT);
-    name.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-    gBC = new GridBagConstraints(1, y, 1, 1, 0, 0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(15, 15, 0, 0), 5, 0);
-    panel.add(name, gBC);
-
-    description = "<HTML>" + description + "</html>";
-    JLabel shortDescription = new JLabel(description);
-    shortDescription.setFont(TEXT_FONT);
-
-    gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(7, 15, 0, 30), 5, 0);
-    panel.add(shortDescription, gBC);
-  }
-
-  public void addButtonToDocs(JPanel panel, final MyActionButton button, String commandLink, String description) {
-    final int y = myDocsIdx += 2;
-    GridBagConstraints gBC =
-      new GridBagConstraints(0, y, 1, 2, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, ICON_INSETS, 5, 5);
-
-    button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    panel.add(button, gBC);
-    button.setupWithinPanel(myMainPanel, MAIN_GROUP, myDocsCount, 1);
-    myDocsCount++;
-
-    JLabel name = new JLabel("<html><nobr><u>" + commandLink + "</u></nobr></html>");
-    name.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        button.onPress(e);
-      }
-
-    });
-    name.setForeground(CAPTION_COLOR);
-    name.setFont(LINK_FONT);
-    name.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-    gBC = new GridBagConstraints(1, y, 1, 1, 0, 0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(15, 15, 0, 0), 5, 0);
-    panel.add(name, gBC);
-
-    description = "<HTML>" + description + "</html>";
-    JLabel shortDescription = new JLabel(description);
-    shortDescription.setFont(TEXT_FONT);
-
-    gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(7, 15, 0, 30), 5, 0);
-    panel.add(shortDescription, gBC);
   }
 
   public void addListItemToPlugins(JPanel panel, String name, String description, String iconPath, ClassLoader pluginClassLoader, final String url) {
@@ -486,7 +500,7 @@ public class WelcomeScreen {
       panel.add(label, gBC);
 
       gBC = new GridBagConstraints(3, y, 1, 2, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 7, 0, 10), 0, 0);
-      MyActionButton learnMore = new PluginsActionButton(null, LEARN_MORE_ICON, null) {
+      MyActionButton learnMore = new PluginsActionButton(LEARN_MORE_ICON, null) {
         protected void onPress(InputEvent e) {
           try {
             BrowserUtil.launchBrowser(url);
@@ -585,16 +599,12 @@ public class WelcomeScreen {
     private int myGroupIdx;
     private int myRowIdx;
     private int myColumnIdx;
-    private String myIconPath;
     private String myDisplayName;
     private Icon myIcon;
-    private KeyStroke myShortcut;
 
-    private MyActionButton(KeyStroke shortcut, String iconPath, String displayName) {
-      myShortcut = shortcut;
-      myIconPath = iconPath;
+    private MyActionButton(Icon icon, String displayName) {
       myDisplayName = displayName;
-      myIcon = createIcon();
+      myIcon = new LabeledIcon(icon != null ? icon : DEFAULT_ICON, getDisplayName(), null);
     }
 
     private void setupWithinPanel(JPanel panel, int groupIdx, int rowIdx, int columnIdx) {
@@ -611,13 +621,6 @@ public class WelcomeScreen {
       setupListeners(panel);
     }
 
-    private Icon createIcon() {
-      return new LabeledIcon(getIcon(), getDisplayName(),
-                             myShortcut == null
-                             ? null
-                             : " (" + KeyEvent.getKeyText(myShortcut.getKeyCode()) + ")");
-    }
-
     protected int getColumnIdx() {
       return myColumnIdx;
     }
@@ -632,16 +635,6 @@ public class WelcomeScreen {
 
     protected String getDisplayName() {
       return myDisplayName != null ? myDisplayName : "";
-    }
-
-    protected Icon getIcon() {
-      if (myIconPath == null) myIconPath = DEFAULT_ICON_PATH;
-      Icon icon = IconLoader.getIcon(myIconPath);
-      return icon != null ? icon : IconLoader.getIcon(DEFAULT_ICON_PATH);
-    }
-
-    protected KeyStroke getShortcut() {
-      return myShortcut;
     }
 
     public Dimension getMaximumSize() {
@@ -664,6 +657,10 @@ public class WelcomeScreen {
       paintBorder(g);
     }
 
+    protected Color getNormalButtonColor() {
+      return ACTION_BUTTON_COLOR;
+    }
+
     protected void paintBackground(Graphics g) {
       Dimension dimension = getSize();
       int state = getPopState();
@@ -678,7 +675,7 @@ public class WelcomeScreen {
         }
       }
       else {
-        g.setColor(ACTION_BUTTON_COLOR);
+        g.setColor(getNormalButtonColor());
         g.fillRect(0, 0, dimension.width, dimension.height);
       }
       if (state == ActionButtonComponent.PUSHED) {
@@ -751,12 +748,11 @@ public class WelcomeScreen {
     }
 
     protected abstract void onPress(InputEvent e);
-
   }
 
   private abstract class ButtonWithExtension extends MyActionButton {
-    private ButtonWithExtension(KeyStroke shortcut, String iconPath, String displayName) {
-      super(shortcut, iconPath, displayName);
+    private ButtonWithExtension(Icon icon, String displayName) {
+      super(icon, displayName);
     }
 
     protected void onPress(InputEvent e) {
@@ -767,8 +763,8 @@ public class WelcomeScreen {
   }
 
   private abstract class PluginsActionButton extends MyActionButton {
-    protected PluginsActionButton(KeyStroke shortcut, String iconPath, String displayName) {
-      super(shortcut, iconPath, displayName);
+    protected PluginsActionButton(Icon icon, String displayName) {
+      super(icon, displayName);
     }
 
     public Dimension getMaximumSize() {
@@ -783,27 +779,8 @@ public class WelcomeScreen {
       return LEARN_MORE_SIZE;
     }
 
-    protected void paintBackground(Graphics g) {
-      Dimension dimension = getSize();
-      int state = getPopState();
-      if (state != ActionButtonComponent.NORMAL) {
-        if (state == ActionButtonComponent.POPPED) {
-          g.setColor(BUTTON_POPPED_COLOR);
-          g.fillRect(0, 0, dimension.width, dimension.height);
-        }
-        else {
-          g.setColor(BUTTON_PUSHED_COLOR);
-          g.fillRect(0, 0, dimension.width, dimension.height);
-        }
-      }
-      else {
-        g.setColor(LEAR_MORE_BUTTON_COLOR);
-        g.fillRect(0, 0, dimension.width, dimension.height);
-      }
-      if (state == ActionButtonComponent.PUSHED) {
-        g.setColor(BUTTON_PUSHED_COLOR);
-        g.fillRect(0, 0, dimension.width, dimension.height);
-      }
+    @Override protected Color getNormalButtonColor() {
+      return LEARN_MORE_BUTTON_COLOR;
     }
 
     protected void paintBorder(Graphics g) {
