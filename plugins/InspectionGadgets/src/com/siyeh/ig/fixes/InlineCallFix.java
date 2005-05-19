@@ -15,8 +15,7 @@ public class InlineCallFix extends InspectionGadgetsFix {
         return "Inline call";
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
-        if(isQuickFixOnReadOnlyFile(descriptor)) return;
+    public void doFix(Project project, ProblemDescriptor descriptor) {
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiReferenceExpression methodExpression =
                 (PsiReferenceExpression) nameElement.getParent();

@@ -13,8 +13,7 @@ public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
         return "Make named inner class";
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
-        if(isQuickFixOnReadOnlyFile(descriptor)) return;
+    public void doFix(Project project, ProblemDescriptor descriptor) {
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiAnonymousClass aClass = (PsiAnonymousClass) nameElement.getParent();
         final RefactoringActionHandlerFactory factory =

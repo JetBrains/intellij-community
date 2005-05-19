@@ -3,6 +3,7 @@ package com.siyeh.ig.verbose;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
@@ -40,8 +41,8 @@ public class UnnecessaryConstructorInspection extends ClassInspection {
             return "Remove redundant constructor";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiElement nameIdentifier = descriptor.getPsiElement();
             final PsiElement constructor = nameIdentifier.getParent();
             deleteElement(constructor);

@@ -1,10 +1,8 @@
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiTypeElement;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
 import com.siyeh.ig.GroupNames;

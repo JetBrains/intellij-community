@@ -4,6 +4,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
@@ -52,9 +53,9 @@ public class NegatedIfElseInspection extends StatementInspection {
             return "Invert If Condition";
         }
 
-        public void applyFix(Project project,
-                             ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project,
+                             ProblemDescriptor descriptor)
+                                                           throws IncorrectOperationException{
             final PsiElement ifToken = descriptor.getPsiElement();
             final PsiIfStatement ifStatement = (PsiIfStatement) ifToken.getParent();
             final PsiStatement elseBranch = ifStatement.getElseBranch();

@@ -14,12 +14,11 @@ public class ExtractMethodFix extends InspectionGadgetsFix {
         return "Extract method";
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
-        if(isQuickFixOnReadOnlyFile(descriptor)) return;
+    public void doFix(Project project, ProblemDescriptor descriptor) {
         final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
         final RefactoringActionHandlerFactory factory =
                 RefactoringActionHandlerFactory.getInstance();
-        final RefactoringActionHandler inlineHandler = factory.createExtractMethodHandler();
-        inlineHandler.invoke(project, new PsiElement[]{expression}, null);
+        final RefactoringActionHandler extractHandler = factory.createExtractMethodHandler();
+        extractHandler.invoke(project, new PsiElement[]{expression}, null);
     }
 }

@@ -3,6 +3,7 @@ package com.siyeh.ig.verbose;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,10 +39,8 @@ public class UnusedLabelInspection extends StatementInspection{
             return "Remove unused label";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)){
-                return;
-            }
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiElement label = descriptor.getPsiElement();
             final PsiLabeledStatement statement =
                     (PsiLabeledStatement) label.getParent();

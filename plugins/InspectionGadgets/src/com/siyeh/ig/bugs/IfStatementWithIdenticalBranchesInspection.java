@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiStatement;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -36,8 +37,8 @@ public class IfStatementWithIdenticalBranchesInspection extends StatementInspect
             return "Collapse 'if' statement";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiElement identifier = descriptor.getPsiElement();
             final PsiIfStatement statement =
                     (PsiIfStatement) identifier.getParent();

@@ -4,6 +4,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
@@ -52,10 +53,8 @@ public class UnnecessaryReturnInspection extends StatementInspection{
             return "Remove unnecessary return";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)){
-                return;
-            }
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiElement returnKeywordElement = descriptor.getPsiElement();
             final PsiElement returnStatement = returnKeywordElement.getParent();
             deleteElement(returnStatement);

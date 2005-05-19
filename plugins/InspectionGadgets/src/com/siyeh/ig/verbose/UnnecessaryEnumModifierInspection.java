@@ -2,7 +2,6 @@ package com.siyeh.ig.verbose;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -81,11 +80,9 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection{
             return m_name;
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)){
-                return;
-            }
-            try{
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
+
                 final PsiElement element = descriptor.getPsiElement();
                 final PsiModifierList modifierList;
                 if(element instanceof PsiModifierList){
@@ -99,12 +96,7 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection{
                     modifierList.setModifierProperty(PsiModifier.PRIVATE,
                                                      false);
                 }
-            } catch(IncorrectOperationException e){
-                final Class aClass = getClass();
-                final String className = aClass.getName();
-                final Logger logger = Logger.getInstance(className);
-                logger.error(e);
-            }
+
         }
     }
 

@@ -42,9 +42,8 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
             return "Extract parameter as local variable";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
-            try{
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
                 final PsiExpression variable =
                         (PsiExpression) descriptor.getPsiElement();
                 final PsiMethod method =
@@ -92,8 +91,7 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
                                                                null);
                 body.replace(block);
                 codeStyleManager.reformat(method);
-            } catch(IncorrectOperationException e){
-            }
+
         }
 
         private void replaceVariableName(PsiElement element,

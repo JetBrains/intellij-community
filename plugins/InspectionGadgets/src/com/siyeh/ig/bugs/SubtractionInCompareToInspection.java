@@ -6,83 +6,62 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class SubtractionInCompareToInspection extends ExpressionInspection {
-
-    public String getDisplayName() {
+public class SubtractionInCompareToInspection extends ExpressionInspection{
+    public String getDisplayName(){
         return "Subtraction in compareTo()";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.BUGS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "Subtraction (#ref) in compareTo() may result in overflow errors #loc";
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+    public BaseInspectionVisitor buildVisitor(){
         return new SubtractionInCompareToVisitor();
     }
 
-    private static class SubtractionInCompareToVisitor extends BaseInspectionVisitor {
-        public void visitBinaryExpression(@NotNull PsiBinaryExpression exp) {
+    private static class SubtractionInCompareToVisitor
+                                                       extends BaseInspectionVisitor{
+        public void visitBinaryExpression(@NotNull PsiBinaryExpression exp){
             super.visitBinaryExpression(exp);
             if(!WellFormednessUtils.isWellFormed(exp)){
                 return;
             }
-            if (!isSubtraction(exp)) {
+            if(!isSubtraction(exp)){
                 return;
             }
             final PsiMethod method =
-                    PsiTreeUtil.getParentOfType(exp,
-                                                            PsiMethod.class);
-            if(!isCompareTo(method)) {
+                    PsiTreeUtil.getParentOfType(exp, PsiMethod.class);
+            if(!MethodUtils.isCompareTo(method)){
                 return;
             }
             registerError(exp);
         }
 
-        private static boolean isCompareTo(PsiMethod method) {
-            if (method == null) {
-                return false;
-            }
-            final String methodName = method.getName();
-            if (!"compareTo".equals(methodName)) {
-                return false;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if (parameterList == null) {
-                return false;
-            }
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if (parameters.length != 1) {
-                return false;
-            }
-            final PsiType returnType = method.getReturnType();
-            return TypeUtils.typeEquals("int", returnType);
-        }
 
-        private static boolean isSubtraction(PsiBinaryExpression exp) {
+        private static boolean isSubtraction(PsiBinaryExpression exp){
             final PsiExpression lhs = exp.getLOperand();
-            if (lhs == null) {
+            if(lhs == null){
                 return false;
             }
             final PsiExpression rhs = exp.getROperand();
-            if (rhs == null) {
+            if(rhs == null){
                 return false;
             }
             final PsiJavaToken sign = exp.getOperationSign();
-            if (sign == null) {
+            if(sign == null){
                 return false;
             }
             final IElementType tokenType = sign.getTokenType();
             return tokenType.equals(JavaTokenType.MINUS);
         }
-
     }
 
 }

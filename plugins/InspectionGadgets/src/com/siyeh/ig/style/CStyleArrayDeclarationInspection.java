@@ -1,7 +1,6 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -35,18 +34,11 @@ public class CStyleArrayDeclarationInspection extends ClassInspection {
             return "Replace with Java-style array declaration";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiElement nameElement = descriptor.getPsiElement();
             final PsiVariable var = (PsiVariable) nameElement.getParent();
-            try {
                 var.normalizeDeclaration();
-            } catch (IncorrectOperationException e) {
-                final Class aClass = getClass();
-                final String className = aClass.getName();
-                final Logger logger = Logger.getInstance(className);
-                logger.error(e);
-            }
         }
     }
 

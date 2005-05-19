@@ -1,7 +1,6 @@
 package com.siyeh.ig.verbose;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -44,16 +43,13 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
             return "Unwrap block";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)){
-                return;
-            }
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiElement leftBrace = descriptor.getPsiElement();
             final PsiCodeBlock block = (PsiCodeBlock) leftBrace.getParent();
             final PsiBlockStatement blockStatement =
                     (PsiBlockStatement) block.getParent();
             final PsiElement containingElement = blockStatement.getParent();
-            try{
                 final PsiElement[] children = block.getChildren();
                 if(children.length > 2){
                     final PsiElement added =
@@ -66,12 +62,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
                     codeStyleManager.reformat(added);
                 }
                 blockStatement.delete();
-            } catch(IncorrectOperationException e){
-                final Class aClass = getClass();
-                final String className = aClass.getName();
-                final Logger logger = Logger.getInstance(className);
-                logger.error(e);
-            }
+
         }
     }
 

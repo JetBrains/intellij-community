@@ -1,10 +1,13 @@
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,8 +47,8 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
             return "Rationalize static method call";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiIdentifier name = (PsiIdentifier) descriptor.getPsiElement();
             final PsiReferenceExpression expression = (PsiReferenceExpression) name.getParent();
             final PsiMethodCallExpression call = (PsiMethodCallExpression) expression.getParent();

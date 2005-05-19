@@ -43,9 +43,8 @@ public class AssignmentToCatchBlockParameterInspection
             return "Extract parameter as local variable";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
-            try{
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
                 final PsiExpression variable =
                         (PsiExpression) descriptor.getPsiElement();
                 final PsiCatchSection catchSection =
@@ -97,8 +96,7 @@ public class AssignmentToCatchBlockParameterInspection
                                                                null);
                 body.replace(block);
                 codeStyleManager.reformat(catchSection);
-            } catch(IncorrectOperationException e){
-            }
+
         }
 
         private void replaceVariableName(PsiElement element,

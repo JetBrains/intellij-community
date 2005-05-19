@@ -1,18 +1,20 @@
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.*;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
-
-import org.jetbrains.annotations.NotNull;
 
 public class MagicNumberInspection extends ExpressionInspection {
 
@@ -89,17 +91,11 @@ public class MagicNumberInspection extends ExpressionInspection {
                 final PsiMethod containingMethod =
                         PsiTreeUtil.getParentOfType(expression,
                                                     PsiMethod.class);
-                if(containingMethod != null && "hashCode"
-                        .equals(containingMethod.getName())){
-                    final PsiParameterList parameterList =
-                            containingMethod.getParameterList();
-                    if(parameterList != null){
-                        final PsiParameter[] parameters = parameterList.getParameters();
-                        if(parameters != null && parameters.length == 0){
-                            return;
-                        }
-                    }
+                if(MethodUtils.isHashCode(containingMethod))
+                {
+                    return;
                 }
+                
             }
             registerError(expression);
         }

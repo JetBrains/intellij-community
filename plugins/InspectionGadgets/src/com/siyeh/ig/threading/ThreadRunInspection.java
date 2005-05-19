@@ -3,6 +3,7 @@ package com.siyeh.ig.threading;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -37,8 +38,8 @@ public class ThreadRunInspection extends ExpressionInspection {
             return "Replace with start()";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiElement methodNameIdentifier = descriptor.getPsiElement();
             final PsiReferenceExpression methodExpression =
                     (PsiReferenceExpression) methodNameIdentifier.getParent();

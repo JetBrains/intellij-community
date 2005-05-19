@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiThisExpression;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -14,7 +15,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryQualifierForThisInspection extends ExpressionInspection {
-    private final UnnecessaryThisFix fix = new UnnecessaryThisFix();
+    private final UnnecessaryQualifierForThisFix fix = new UnnecessaryQualifierForThisFix();
 
     public String getDisplayName() {
         return "Unnecessary qualifier for 'this'";
@@ -36,13 +37,13 @@ public class UnnecessaryQualifierForThisInspection extends ExpressionInspection 
         return fix;
     }
 
-    private static class UnnecessaryThisFix extends InspectionGadgetsFix {
+    private static class UnnecessaryQualifierForThisFix extends InspectionGadgetsFix {
         public String getName() {
             return "Remove unnecessary qualifier ";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiElement qualifier = descriptor.getPsiElement();
             final PsiThisExpression thisExpression = (PsiThisExpression) qualifier.getParent();
             replaceExpression(thisExpression, "this");

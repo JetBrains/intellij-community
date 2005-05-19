@@ -1,7 +1,6 @@
 package com.siyeh.ig.verbose;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -58,8 +57,8 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             return "Replace with import";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final CodeStyleSettingsManager settingsManager =
                     CodeStyleSettingsManager.getInstance(project);
             final CodeStyleSettings settings =
@@ -76,11 +75,6 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
                 final CodeStyleManager styleManager =
                         psiManager.getCodeStyleManager();
                 styleManager.shortenClassReferences(reference);
-            } catch(IncorrectOperationException e){
-                final Class thisClass = getClass();
-                final String className = thisClass.getName();
-                final Logger logger = Logger.getInstance(className);
-                logger.error(e);
             } finally{
                 settings.USE_FQ_CLASS_NAMES_IN_JAVADOC = oldUseFQNamesInJavadoc;
                 settings.USE_FQ_CLASS_NAMES = oldUseFQNames;

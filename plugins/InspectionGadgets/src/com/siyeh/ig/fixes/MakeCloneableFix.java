@@ -10,14 +10,12 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 
 public class MakeCloneableFix extends InspectionGadgetsFix {
-    private static final Logger s_logger =
-            Logger.getInstance("MakeCloneableFix");
     public String getName() {
         return "Make class Cloneable";
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
-        if(isQuickFixOnReadOnlyFile(descriptor)) return;
+    public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                     throws IncorrectOperationException{
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiClass containingClass = ClassUtils.getContainingClass(nameElement);
         assert containingClass != null;
@@ -25,12 +23,9 @@ public class MakeCloneableFix extends InspectionGadgetsFix {
         final PsiElementFactory elementFactory = psiManager.getElementFactory();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
         final PsiJavaCodeReferenceElement ref = elementFactory.createReferenceElementByFQClassName("java.lang.Cloneable", scope);
-        try{
             final PsiReferenceList implementsList = containingClass.getImplementsList();
             assert implementsList != null;
             implementsList.add(ref);
-        } catch(IncorrectOperationException e){
-            s_logger.error(e);
-        }
+
     }
 }

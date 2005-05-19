@@ -52,10 +52,9 @@ public class ForCanBeForeachInspection extends StatementInspection{
             return "Replace with 'for each'";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)){
-                return;
-            }
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
+
             final PsiElement forElement = descriptor.getPsiElement();
             final PsiForStatement forStatement =
                     (PsiForStatement) forElement.getParent();
@@ -71,7 +70,8 @@ public class ForCanBeForeachInspection extends StatementInspection{
         }
 
         private String createCollectionIterationText(PsiForStatement forStatement,
-                                                     Project project){
+                                                     Project project)
+                                                                      throws IncorrectOperationException{
             final int length = forStatement.getText().length();
             final StringBuffer out = new StringBuffer(length);
             final PsiStatement body = forStatement.getBody();
@@ -109,13 +109,8 @@ public class ForCanBeForeachInspection extends StatementInspection{
             final PsiElementFactory elementFactory =
                     psiManager.getElementFactory();
             PsiType contentType;
-            try{
-                contentType = elementFactory.createTypeFromText(contentTypeString,
-                                                                forStatement);
-            } catch(IncorrectOperationException e){
-                contentType = null;
-            }
-
+            contentType = elementFactory.createTypeFromText(contentTypeString,
+                                                            forStatement);
             final String iteratorName = iterator.getName();
             final boolean isDeclaration =
                     isIteratorNextDeclaration(firstStatement, iteratorName, contentTypeString);

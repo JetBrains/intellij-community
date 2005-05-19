@@ -4,6 +4,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -38,9 +39,8 @@ public class UnnecessaryParenthesesInspection extends ExpressionInspection {
             return "Remove unnecessary parentheses";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
-
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiExpression exp = (PsiExpression) descriptor.getPsiElement();
             final String newExpression = ParenthesesUtils.removeParentheses(exp);
             replaceExpression(exp, newExpression);

@@ -1,6 +1,5 @@
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -8,7 +7,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiSuperMethodUtil;
-import com.siyeh.ig.*;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspection {
@@ -35,8 +38,8 @@ public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspe
             return "Remove redundant abstract method declaration";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiElement methodNameIdentifier = descriptor.getPsiElement();
             final PsiElement method = methodNameIdentifier.getParent();
             deleteElement(method);

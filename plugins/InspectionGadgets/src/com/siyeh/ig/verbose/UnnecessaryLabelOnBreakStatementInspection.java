@@ -3,6 +3,7 @@ package com.siyeh.ig.verbose;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,8 +34,8 @@ public class UnnecessaryLabelOnBreakStatementInspection extends StatementInspect
             return "Remove label";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiElement breakKeywordElement = descriptor.getPsiElement();
             final PsiBreakStatement breakStatement =
                     (PsiBreakStatement) breakKeywordElement.getParent();

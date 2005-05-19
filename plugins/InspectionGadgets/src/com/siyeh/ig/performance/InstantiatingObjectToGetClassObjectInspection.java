@@ -1,10 +1,13 @@
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class InstantiatingObjectToGetClassObjectInspection extends ExpressionInspection {
@@ -37,8 +40,8 @@ public class InstantiatingObjectToGetClassObjectInspection extends ExpressionIns
             return "Replace with direct class object access";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiMethodCallExpression expression =
                     (PsiMethodCallExpression) descriptor.getPsiElement();
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();

@@ -1,15 +1,16 @@
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassMayBeInterfaceInspection extends ClassInspection {
@@ -36,20 +37,14 @@ public class ClassMayBeInterfaceInspection extends ClassInspection {
             return "Convert class to interface";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiIdentifier classNameIdentifier = (PsiIdentifier) descriptor.getPsiElement();
             final PsiClass interfaceClass = (PsiClass) classNameIdentifier.getParent();
-            try {
                 moveSubClassExtendsToImplements(interfaceClass);
                 changeClassToInterface(interfaceClass);
                 moveImplementsToExtends(interfaceClass);
-            } catch (IncorrectOperationException e) {
-                final Class aClass = getClass();
-                final String className = aClass.getName();
-                final Logger logger = Logger.getInstance(className);
-                logger.error(e);
-            }
+
         }
 
         private static void changeClassToInterface(PsiClass aClass)

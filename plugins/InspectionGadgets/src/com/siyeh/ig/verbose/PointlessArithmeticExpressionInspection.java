@@ -1,19 +1,21 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
-import com.siyeh.ig.*;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.WellFormednessUtils;
-
-import java.util.Set;
-import java.util.HashSet;
-
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class PointlessArithmeticExpressionInspection extends ExpressionInspection {
 
@@ -80,8 +82,8 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
             return "Simplify";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
             final String newExpression = calculateReplacementExpression(expression);
             replaceExpression(expression, newExpression);

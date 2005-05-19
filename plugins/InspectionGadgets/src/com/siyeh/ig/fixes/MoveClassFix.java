@@ -13,8 +13,7 @@ public class MoveClassFix extends InspectionGadgetsFix {
         return "Move class";
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
-        if(isQuickFixOnReadOnlyFile(descriptor)) return;
+    public void doFix(Project project, ProblemDescriptor descriptor) {
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiClass aClass = (PsiClass) nameElement.getParent();
         final RefactoringActionHandlerFactory factory =

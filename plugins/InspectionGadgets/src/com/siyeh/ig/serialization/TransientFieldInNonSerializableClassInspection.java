@@ -1,10 +1,13 @@
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,8 +37,8 @@ public class TransientFieldInNonSerializableClassInspection extends ClassInspect
             return "Remove 'transient'";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiElement transientModifier = descriptor.getPsiElement();
             deleteElement(transientModifier);
         }

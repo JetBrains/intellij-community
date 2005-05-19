@@ -1,13 +1,14 @@
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassWithoutConstructorInspection extends ClassInspection {
@@ -34,9 +35,8 @@ public class ClassWithoutConstructorInspection extends ClassInspection {
             return "Create empty constructor";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
-            try {
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
                 final PsiElement classIdentifier = descriptor.getPsiElement();
                 final PsiClass psiClass = (PsiClass) classIdentifier.getParent();
                 final PsiManager psiManager = PsiManager.getInstance(project);
@@ -66,12 +66,7 @@ public class ClassWithoutConstructorInspection extends ClassInspection {
                 psiClass.add(constructor);
                 final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
                 styleManager.reformat(constructor);
-            } catch (IncorrectOperationException e) {
-                final Class aClass = getClass();
-                final String className = aClass.getName();
-                final Logger logger = Logger.getInstance(className);
-                logger.error(e);
-            }
+
         }
     }
 

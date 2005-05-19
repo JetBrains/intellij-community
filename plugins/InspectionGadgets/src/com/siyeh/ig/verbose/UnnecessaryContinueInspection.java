@@ -3,6 +3,7 @@ package com.siyeh.ig.verbose;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
@@ -39,10 +40,8 @@ public class UnnecessaryContinueInspection extends StatementInspection{
             return "Remove unnecessary continue";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)){
-                return;
-            }
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiElement returnKeywordElement = descriptor.getPsiElement();
             final PsiElement continueStatement =
                     returnKeywordElement.getParent();

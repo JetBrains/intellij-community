@@ -8,12 +8,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,10 +52,8 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             return "Replace with 'for each'";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)){
-                return;
-            }
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiElement whileElement = descriptor.getPsiElement();
             final PsiWhileStatement whileStatement =
                     (PsiWhileStatement) whileElement.getParent();
@@ -70,7 +66,8 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         }
 
         private String createCollectionIterationText(PsiWhileStatement whileStatement,
-                                                     Project project){
+                                                     Project project)
+                                                                      throws IncorrectOperationException{
             final int length = whileStatement.getText().length();
             final StringBuffer out = new StringBuffer(length);
             final PsiStatement body = whileStatement.getBody();
@@ -113,13 +110,8 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             final PsiElementFactory elementFactory =
                     psiManager.getElementFactory();
             PsiType contentType;
-            try{
-                contentType = elementFactory.createTypeFromText(contentTypeString,
-                                                                whileStatement);
-            } catch(IncorrectOperationException e){
-                contentType = null;
-            }
-
+            contentType = elementFactory.createTypeFromText(contentTypeString,
+                                                            whileStatement);
             final String iteratorName = iterator.getName();
             final boolean isDeclaration =
                     isIteratorNextDeclaration(firstStatement, iteratorName, contentTypeString);
@@ -317,23 +309,6 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         }
     }
 
-    private static boolean isArrayAssigned(String arrayReference,
-                                           PsiStatement body){
-        final ArrayAssignmentVisitor visitor =
-                new ArrayAssignmentVisitor(arrayReference);
-        body.accept(visitor);
-        return visitor.isArrayAssigned();
-    }
-
-    private static boolean indexVarOnlyUsedAsIndex(String arrayName,
-                                                   PsiLocalVariable indexVar,
-                                                   PsiStatement body){
-        final IndexOnlyUsedAsIndexVisitor visitor =
-                new IndexOnlyUsedAsIndexVisitor(arrayName, indexVar);
-        body.accept(visitor);
-        return visitor.isIndexVariableUsedOnlyAsIndex();
-    }
-
     private static boolean isCollectionLoopStatement(PsiWhileStatement whileStatement){
         final PsiStatement initialization =
                 getPreviousStatement(whileStatement);
@@ -497,94 +472,6 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         return iterator.equals(target);
     }
 
-    private static PsiReferenceExpression getArrayFromCondition(PsiExpression condition){
-        final PsiExpression strippedCondition =
-                ParenthesesUtils.stripParentheses(condition);
-        final PsiBinaryExpression binaryExp =
-                (PsiBinaryExpression) strippedCondition;
-        final PsiExpression rhs = binaryExp.getROperand();
-        final PsiReferenceExpression strippedRhs =
-                (PsiReferenceExpression) ParenthesesUtils.stripParentheses(rhs);
-        return (PsiReferenceExpression) strippedRhs.getQualifierExpression();
-    }
-
-    private static boolean isIncrement(PsiStatement statement,
-                                       PsiLocalVariable var){
-        if(!(statement instanceof PsiExpressionStatement)){
-            return false;
-        }
-        PsiExpression exp =
-                ((PsiExpressionStatement) statement).getExpression();
-        exp = ParenthesesUtils.stripParentheses(exp);
-        if(exp instanceof PsiPrefixExpression){
-            final PsiPrefixExpression prefixExp = (PsiPrefixExpression) exp;
-            final PsiJavaToken sign = prefixExp.getOperationSign();
-            if(sign == null){
-                return false;
-            }
-            final IElementType tokenType = sign.getTokenType();
-            if(!tokenType.equals(JavaTokenType.PLUSPLUS)){
-                return false;
-            }
-            final PsiExpression operand = prefixExp.getOperand();
-            return expressionIsVariableLookup(operand, var);
-        } else if(exp instanceof PsiPostfixExpression){
-            final PsiPostfixExpression postfixExp = (PsiPostfixExpression) exp;
-            final PsiJavaToken sign = postfixExp.getOperationSign();
-            if(sign == null){
-                return false;
-            }
-            final IElementType tokenType = sign.getTokenType();
-            if(!tokenType.equals(JavaTokenType.PLUSPLUS)){
-                return false;
-            }
-            final PsiExpression operand = postfixExp.getOperand();
-            return expressionIsVariableLookup(operand, var);
-        }
-        return false;
-    }
-
-    private static boolean expressionIsVariableLookup(PsiExpression expression,
-                                                      PsiLocalVariable var){
-        final PsiExpression strippedExpression =
-                ParenthesesUtils.stripParentheses(expression);
-
-        final String expressionText = strippedExpression.getText();
-        final String varText = var.getName();
-        return expressionText.equals(varText);
-    }
-
-    private static class ArrayAssignmentVisitor
-            extends PsiRecursiveElementVisitor{
-        private boolean arrayAssigned = false;
-        private final String arrayName;
-
-        ArrayAssignmentVisitor(String arrayName){
-            super();
-            this.arrayName = arrayName;
-        }
-
-        public void visitElement(@NotNull PsiElement element){
-            if(!arrayAssigned){
-                super.visitElement(element);
-            }
-        }
-
-        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression exp){
-            super.visitAssignmentExpression(exp);
-            final PsiExpression lhs = exp.getLExpression();
-            if(lhs != null){
-                if(arrayName.equals(lhs.getText())){
-                    arrayAssigned = true;
-                }
-            }
-        }
-
-        public boolean isArrayAssigned(){
-            return arrayAssigned;
-        }
-    }
-
     private static class NumCallsToIteratorNextVisitor
             extends PsiRecursiveElementVisitor{
         private int numCallsToIteratorNext = 0;
@@ -733,64 +620,4 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         }
     }
 
-    private static class IndexOnlyUsedAsIndexVisitor
-            extends PsiRecursiveElementVisitor{
-        private boolean indexVariableUsedOnlyAsIndex = true;
-        private final String arrayName;
-        private final PsiLocalVariable indexVariable;
-
-        IndexOnlyUsedAsIndexVisitor(String arrayName,
-                                    PsiLocalVariable indexVariable){
-            super();
-            this.arrayName = arrayName;
-            this.indexVariable = indexVariable;
-        }
-
-        public void visitElement(@NotNull PsiElement element){
-            if(indexVariableUsedOnlyAsIndex){
-                super.visitElement(element);
-            }
-        }
-
-        public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
-            if(!indexVariableUsedOnlyAsIndex){
-                return;
-            }
-            super.visitReferenceExpression(ref);
-
-            final PsiElement element = ref.resolve();
-            if(!indexVariable.equals(element)){
-                return;
-            }
-            final PsiElement parent = ref.getParent();
-            if(!(parent instanceof PsiArrayAccessExpression)){
-                indexVariableUsedOnlyAsIndex = false;
-                return;
-            }
-            final PsiArrayAccessExpression arrayAccess =
-                    (PsiArrayAccessExpression) parent;
-            final PsiExpression arrayExpression =
-                    arrayAccess.getArrayExpression();
-            if(arrayExpression == null){
-                return;
-            }
-            if(!arrayExpression.getText().equals(arrayName)){
-                indexVariableUsedOnlyAsIndex = false;
-                return;
-            }
-            final PsiElement arrayExpressionContext = arrayAccess.getParent();
-            if(arrayExpressionContext instanceof PsiAssignmentExpression){
-                final PsiAssignmentExpression assignment =
-                        (PsiAssignmentExpression) arrayExpressionContext;
-                final PsiExpression lhs = assignment.getLExpression();
-                if(lhs.equals(arrayAccess)){
-                    indexVariableUsedOnlyAsIndex = false;
-                }
-            }
-        }
-
-        public boolean isIndexVariableUsedOnlyAsIndex(){
-            return indexVariableUsedOnlyAsIndex;
-        }
-    }
 }

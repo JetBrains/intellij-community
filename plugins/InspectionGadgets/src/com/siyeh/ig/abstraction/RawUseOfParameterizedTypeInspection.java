@@ -73,9 +73,6 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
                 return;
             }
             final PsiType type = typeElement.getType();
-            if(type == null){
-                return;
-            }
             if(!(type instanceof PsiClassType)){
                 return;
             }

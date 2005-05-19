@@ -1,7 +1,6 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -37,10 +36,9 @@ public class InnerClassMayBeStaticInspection extends ClassInspection {
             return "Make static";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiJavaToken classNameToken = (PsiJavaToken) descriptor.getPsiElement();
-            try {
                 final PsiClass innerClass = (PsiClass) classNameToken.getParent();
                 final PsiManager manager = innerClass.getManager();
                 final PsiSearchHelper searchHelper = manager.getSearchHelper();
@@ -59,12 +57,7 @@ public class InnerClassMayBeStaticInspection extends ClassInspection {
                 }
                 final PsiModifierList modifiers = innerClass.getModifierList();
                 modifiers.setModifierProperty(PsiModifier.STATIC, true);
-            } catch (IncorrectOperationException e) {
-                final Class aClass = getClass();
-                final String className = aClass.getName();
-                final Logger logger = Logger.getInstance(className);
-                logger.error(e);
-            }
+
         }
     }
 

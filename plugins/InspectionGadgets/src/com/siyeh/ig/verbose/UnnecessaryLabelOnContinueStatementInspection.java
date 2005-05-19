@@ -1,9 +1,9 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,8 +34,8 @@ public class UnnecessaryLabelOnContinueStatementInspection extends StatementInsp
             return "Remove label";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiElement continueKeywordElement = descriptor.getPsiElement();
             final PsiContinueStatement continueStatement =
                     (PsiContinueStatement) continueKeywordElement.getParent();

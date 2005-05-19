@@ -1,19 +1,18 @@
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.FieldInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 
 public class FieldMayBeStaticInspection extends FieldInspection{
-    private static final Logger s_logger =
-            Logger.getInstance("FieldMayBeStaticInspection");
     private final MakeStaticFix fix = new MakeStaticFix();
 
     public String getDisplayName(){
@@ -41,19 +40,13 @@ public class FieldMayBeStaticInspection extends FieldInspection{
             return "Make static";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)){
-                return;
-            }
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiJavaToken m_fieldNameToken =
                     (PsiJavaToken) descriptor.getPsiElement();
-            try{
                 final PsiField field = (PsiField) m_fieldNameToken.getParent();
                 final PsiModifierList modifiers = field.getModifierList();
                 modifiers.setModifierProperty(PsiModifier.STATIC, true);
-            } catch(IncorrectOperationException e){
-                s_logger.error(e);
-            }
         }
     }
 

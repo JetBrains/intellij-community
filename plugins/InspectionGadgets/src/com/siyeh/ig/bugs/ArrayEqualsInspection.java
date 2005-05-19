@@ -1,7 +1,6 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -36,8 +35,8 @@ public class ArrayEqualsInspection extends ExpressionInspection{
             return "replace with Arrays.equals";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiIdentifier name =
                     (PsiIdentifier) descriptor.getPsiElement();
             final PsiReferenceExpression expression =
@@ -58,8 +57,8 @@ public class ArrayEqualsInspection extends ExpressionInspection{
 
         private void replaceExpressionAndShorten(Project project,
                                                  PsiMethodCallExpression call,
-                                                 String newExpressionText){
-            try{
+                                                 String newExpressionText)
+                throws IncorrectOperationException{
                 final PsiManager manager = PsiManager.getInstance(project);
                 final PsiElementFactory factory = manager.getElementFactory();
                 final PsiExpression newExp =
@@ -70,12 +69,7 @@ public class ArrayEqualsInspection extends ExpressionInspection{
                         manager.getCodeStyleManager();
                 styleManager.shortenClassReferences(replacementExp);
                 styleManager.reformat(replacementExp);
-            } catch(IncorrectOperationException e){
-                final Class aClass = getClass();
-                final String className = aClass.getName();
-                final Logger logger = Logger.getInstance(className);
-                logger.error(e);
-            }
+
         }
     }
 
@@ -87,26 +81,15 @@ public class ArrayEqualsInspection extends ExpressionInspection{
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
+            if(!IsEqualsUtil.isEquals(expression))
+            {
+                return;
+            }
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
-            if(methodExpression == null){
-                return;
-            }
-            final String methodName = methodExpression.getReferenceName();
-            if(!"equals".equals(methodName)){
-                return;
-            }
             final PsiExpressionList argumentList = expression.getArgumentList();
-            if(argumentList == null){
-                return;
-            }
+            assert argumentList != null;
             final PsiExpression[] args = argumentList.getExpressions();
-            if(args == null){
-                return;
-            }
-            if(args.length != 1){
-                return;
-            }
             final PsiExpression arg = args[0];
             if(arg == null){
                 return;

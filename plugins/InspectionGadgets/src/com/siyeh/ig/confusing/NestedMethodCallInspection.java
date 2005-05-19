@@ -54,8 +54,7 @@ public class NestedMethodCallInspection extends ExpressionInspection {
             return "Introduce variable";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor) {
             final RefactoringActionHandlerFactory factory = RefactoringActionHandlerFactory.getInstance();
             final RefactoringActionHandler introduceHandler =
                     factory.createIntroduceVariableHandler();

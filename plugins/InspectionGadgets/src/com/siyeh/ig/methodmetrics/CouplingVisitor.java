@@ -11,24 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 class CouplingVisitor extends PsiRecursiveElementVisitor {
-    private static final Set<String> s_primitiveTypes = new HashSet<String>(8);
     private boolean m_inClass = false;
-
-    static {
-        s_primitiveTypes.add("boolean");
-        s_primitiveTypes.add("byte");
-        s_primitiveTypes.add("char");
-        s_primitiveTypes.add("short");
-        s_primitiveTypes.add("int");
-        s_primitiveTypes.add("long");
-        s_primitiveTypes.add("float");
-        s_primitiveTypes.add("double");
-    }
-
-    private static boolean isPrimitiveType(String typeName) {
-        return s_primitiveTypes.contains(typeName);
-    }
-
     private final PsiMethod m_method;
     private final boolean m_includeJavaClasses;
     private final boolean m_includeLibraryClasses;

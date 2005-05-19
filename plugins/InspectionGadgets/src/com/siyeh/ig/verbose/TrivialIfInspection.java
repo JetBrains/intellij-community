@@ -4,6 +4,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
@@ -46,10 +47,8 @@ public class TrivialIfInspection extends StatementInspection{
             return "Simplify";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)){
-                return;
-            }
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiElement ifKeywordElement = descriptor.getPsiElement();
             final PsiIfStatement statement =
                     (PsiIfStatement) ifKeywordElement.getParent();
@@ -72,7 +71,8 @@ public class TrivialIfInspection extends StatementInspection{
             }
         }
 
-        private void replaceSimplifiableImplicitReturn(PsiIfStatement statement){
+        private void replaceSimplifiableImplicitReturn(PsiIfStatement statement)
+                throws IncorrectOperationException{
             final PsiExpression condition = statement.getCondition();
             final String conditionText = condition.getText();
             final PsiElement nextStatement =
@@ -85,14 +85,16 @@ public class TrivialIfInspection extends StatementInspection{
             deleteElement(nextStatement);
         }
 
-        private void repaceSimplifiableReturn(PsiIfStatement statement){
+        private void repaceSimplifiableReturn(PsiIfStatement statement)
+                                                                        throws IncorrectOperationException{
             final PsiExpression condition = statement.getCondition();
             final String conditionText = condition.getText();
             final String newStatement = "return " + conditionText + ';';
             replaceStatement(statement, newStatement);
         }
 
-        private void replaceSimplifiableAssignment(PsiIfStatement statement){
+        private void replaceSimplifiableAssignment(PsiIfStatement statement)
+                throws IncorrectOperationException{
             final PsiExpression condition = statement.getCondition();
             final String conditionText = condition.getText();
             final PsiStatement thenBranch = statement.getThenBranch();
@@ -109,7 +111,8 @@ public class TrivialIfInspection extends StatementInspection{
                              lhsText + operand + conditionText + ';');
         }
 
-        private void replaceSimplifiableImplicitAssignment(PsiIfStatement statement){
+        private void replaceSimplifiableImplicitAssignment(PsiIfStatement statement)
+                throws IncorrectOperationException{
             final PsiElement prevStatement =
                     PsiTreeUtil.skipSiblingsBackward(statement,
                                                      new Class[]{
@@ -131,10 +134,11 @@ public class TrivialIfInspection extends StatementInspection{
             final String lhsText = lhs.getText();
             replaceStatement(statement,
                              lhsText + operand + conditionText + ';');
-            deleteElement(prevStatement);
+                deleteElement(prevStatement);
         }
 
-        private void replaceSimplifiableImplicitAssignmentNegated(PsiIfStatement statement){
+        private void replaceSimplifiableImplicitAssignmentNegated(PsiIfStatement statement)
+                throws IncorrectOperationException{
             final PsiElement prevStatement =
                     PsiTreeUtil.skipSiblingsBackward(statement,
                                                      new Class[]{
@@ -160,7 +164,7 @@ public class TrivialIfInspection extends StatementInspection{
         }
 
         private void replaceSimplifiableImplicitReturnNegated(PsiIfStatement statement)
-                {
+                throws IncorrectOperationException{
             final PsiExpression condition = statement.getCondition();
 
             final String conditionText =
@@ -177,7 +181,8 @@ public class TrivialIfInspection extends StatementInspection{
            deleteElement(nextStatement);
         }
 
-        private void repaceSimplifiableReturnNegated(PsiIfStatement statement){
+        private void repaceSimplifiableReturnNegated(PsiIfStatement statement)
+                throws IncorrectOperationException{
             final PsiExpression condition = statement.getCondition();
             final String conditionText =
                     BoolUtils.getNegatedExpressionText(condition);
@@ -185,7 +190,8 @@ public class TrivialIfInspection extends StatementInspection{
             replaceStatement(statement, newStatement);
         }
 
-        private void replaceSimplifiableAssignmentNegated(PsiIfStatement statement){
+        private void replaceSimplifiableAssignmentNegated(PsiIfStatement statement)
+                throws IncorrectOperationException{
             final PsiExpression condition = statement.getCondition();
             final String conditionText =
                     BoolUtils.getNegatedExpressionText(condition);
@@ -432,71 +438,4 @@ public class TrivialIfInspection extends StatementInspection{
         }
     }
 
-    private static boolean isReturn(PsiStatement statement, String value){
-        if(statement == null){
-            return false;
-        }
-        if(!(statement instanceof PsiReturnStatement)){
-            return false;
-        }
-        final PsiReturnStatement returnStatement =
-                (PsiReturnStatement) statement;
-        final PsiExpression returnValue = returnStatement.getReturnValue();
-        if(returnValue == null){
-            return false;
-        }
-        final String returnValueString = returnValue.getText();
-        return value.equals(returnValueString);
-    }
-
-    private static boolean isAssignment(PsiStatement statement, String value){
-        if(statement == null){
-            return false;
-        }
-        if(!(statement instanceof PsiExpressionStatement)){
-            return false;
-        }
-        final PsiExpression expression =
-                ((PsiExpressionStatement) statement).getExpression();
-        if(!(expression instanceof PsiAssignmentExpression)){
-            return false;
-        }
-        final PsiExpression rhs =
-                ((PsiAssignmentExpression) expression).getRExpression();
-        if(rhs == null){
-            return false;
-        }
-        final String rhsText = rhs.getText();
-        return value.equals(rhsText);
-    }
-
-    private static boolean areCompatibleAssignments(PsiStatement statement1,
-                                                    PsiStatement statement2){
-        final PsiExpressionStatement expressionStatement1 =
-                (PsiExpressionStatement) statement1;
-        final PsiAssignmentExpression expression1 =
-                (PsiAssignmentExpression) expressionStatement1.getExpression();
-        final PsiExpressionStatement expressionStatement2 =
-                (PsiExpressionStatement) statement2;
-        final PsiAssignmentExpression expression2 =
-                (PsiAssignmentExpression) expressionStatement2.getExpression();
-
-        final PsiJavaToken sign2 = expression2.getOperationSign();
-        if(sign2 == null){
-            return false;
-        }
-        final String operand2 = sign2.getText();
-        final PsiJavaToken sign1 = expression1.getOperationSign();
-        if(sign1 == null){
-            return false;
-        }
-        final String operand1 = sign1.getText();
-        if(!operand2.equals(operand1)){
-            return false;
-        }
-        final PsiExpression lhs1 = expression1.getLExpression();
-        final PsiExpression lhs2 = expression2.getLExpression();
-        return EquivalenceChecker.expressionsAreEquivalent(lhs1,
-                                                           lhs2);
-    }
 }

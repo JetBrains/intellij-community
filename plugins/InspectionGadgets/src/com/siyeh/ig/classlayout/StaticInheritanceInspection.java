@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
@@ -34,7 +35,8 @@ public class StaticInheritanceInspection extends ClassInspection{
             return "Replace inheritance with qualified references";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiJavaCodeReferenceElement referenceElement =
                     (PsiJavaCodeReferenceElement) descriptor.getPsiElement();
             final String referencedClassName = referenceElement.getText();

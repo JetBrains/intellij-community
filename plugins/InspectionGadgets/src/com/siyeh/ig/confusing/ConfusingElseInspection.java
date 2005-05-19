@@ -1,17 +1,19 @@
 package com.siyeh.ig.confusing;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIfStatement;
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.StatementInspection;
-import com.siyeh.ig.StatementInspectionVisitor;
+import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ConfusingElseInspection extends StatementInspection {
+    private final ConfusingElseFix fix = new ConfusingElseFix();
+
     public String getID(){
         return "ConfusingElseBranch";
     }
@@ -24,14 +26,64 @@ public class ConfusingElseInspection extends StatementInspection {
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new UnnecessaryElseVisitor();
+        return new ConfusingElseVisitor();
+    }
+
+    @Nullable protected InspectionGadgetsFix buildFix(PsiElement location){
+        return fix;
+    }
+
+    private static class ConfusingElseFix extends InspectionGadgetsFix{
+        public String getName(){
+            return "Unwrap else branchy";
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
+            final PsiElement ifKeyword = descriptor.getPsiElement();
+            final PsiIfStatement ifStatement = (PsiIfStatement) ifKeyword.getParent();
+            final PsiExpression condition = ifStatement.getCondition();
+            final PsiStatement thenBranch = ifStatement.getThenBranch();
+            final String text = "if(" + condition.getText() + ')' + thenBranch.getText();
+            final PsiStatement elseBranch = ifStatement.getElseBranch();
+            if(elseBranch instanceof PsiBlockStatement)
+            {
+                final PsiBlockStatement elseBlock = (PsiBlockStatement) elseBranch;
+                final PsiCodeBlock block = elseBlock.getCodeBlock();
+                final PsiElement[] children = block.getChildren();
+                if(children.length > 2){
+                    final PsiElement containingElement = ifStatement.getParent();
+                    final PsiElement added =
+                            containingElement.addRangeAfter(children[1],
+                                                             children[children
+                                                                     .length -
+                                                                     2],
+                                                             ifStatement);
+                    final CodeStyleManager codeStyleManager =
+                            CodeStyleManager.getInstance(project);
+                    codeStyleManager.reformat(added);
+                }
+            }
+            else
+            {
+                final PsiElement containingElement = ifStatement.getParent();
+
+                final PsiElement added =
+                        containingElement.addAfter(elseBranch,
+                                                        ifStatement);
+                final CodeStyleManager codeStyleManager =
+                        CodeStyleManager.getInstance(project);
+                codeStyleManager.reformat(added);
+            }
+            replaceStatement(ifStatement, text);
+        }
     }
 
     public String buildErrorString(PsiElement location) {
-        return "#ref branch may be unwrapped, or the following statements placed in the else branch, as the if branch never completes #loc";
+        return "#ref branch may be unwrapped, as the if branch never completes #loc";
     }
 
-    private static class UnnecessaryElseVisitor extends StatementInspectionVisitor {
+    private static class ConfusingElseVisitor extends StatementInspectionVisitor {
 
         public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);

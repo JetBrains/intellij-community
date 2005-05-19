@@ -1,10 +1,13 @@
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -67,8 +70,8 @@ public class UnnecessaryTemporaryOnConversionToStringInspection extends Expressi
             return m_name;
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiMethodCallExpression expression = (PsiMethodCallExpression) descriptor.getPsiElement();
             final String newExpression = calculateReplacementExpression(expression);
             replaceExpression(expression, newExpression);
@@ -81,7 +84,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection extends Expressi
     }
 
     private static class UnnecessaryTemporaryObjectVisitor extends BaseInspectionVisitor {
-     
+
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);

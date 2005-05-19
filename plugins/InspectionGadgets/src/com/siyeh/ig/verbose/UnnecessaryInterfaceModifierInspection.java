@@ -113,8 +113,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
       return m_name;
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
-      if (isQuickFixOnReadOnlyFile(descriptor)) return;
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       try {
         final PsiElement element = descriptor.getPsiElement();
         final PsiModifierList modifierList;

@@ -33,19 +33,12 @@ public class ObjectEqualsNullInspection extends ExpressionInspection {
 
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
-            final PsiReferenceExpression methodExpression = call.getMethodExpression();
-            final String methodName = methodExpression.getReferenceName();
-            if (!"equals".equals(methodName)) {
+            if(!IsEqualsUtil.isEquals(call)){
                 return;
             }
             final PsiExpressionList argumentList = call.getArgumentList();
-            if (argumentList == null) {
-                return;
-            }
+            assert argumentList != null;
             final PsiExpression[] args = argumentList.getExpressions();
-            if (args.length != 1) {
-                return;
-            }
             if (!isNull(args[0])) {
                 return;
             }

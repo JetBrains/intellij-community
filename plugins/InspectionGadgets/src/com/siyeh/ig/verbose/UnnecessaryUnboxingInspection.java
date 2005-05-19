@@ -4,6 +4,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -58,8 +59,8 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
             return "Remove unboxing";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiMethodCallExpression methodCall = (PsiMethodCallExpression) descriptor.getPsiElement();
             final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
             final PsiExpression qualifier = methodExpression.getQualifierExpression();

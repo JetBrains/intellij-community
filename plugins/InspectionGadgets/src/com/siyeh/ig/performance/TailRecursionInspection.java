@@ -59,10 +59,9 @@ public class TailRecursionInspection extends ExpressionInspection{
             return "Replace tail recursion with iteration";
         }
 
-        public void applyFix(Project project,
-                             ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
-            try{
+        public void doFix(Project project,
+                             ProblemDescriptor descriptor)
+                                                           throws IncorrectOperationException{
                 final PsiElement methodNameToken =
                         descriptor.getPsiElement();
                 final PsiMethod method =
@@ -101,8 +100,7 @@ public class TailRecursionInspection extends ExpressionInspection{
                                                                null);
                 body.replace(block);
                 codeStyleManager.reformat(method);
-            } catch(IncorrectOperationException e){
-            }
+
         }
 
 

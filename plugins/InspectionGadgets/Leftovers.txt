@@ -18,8 +18,6 @@
     lock not acquired in try block and freed in finally block
 
 
-    Move stuff to "J2ME" or "Memory" categories
-
     Move and restructure categories
     Quickfixes for "confusing else"
     Static import quickfix

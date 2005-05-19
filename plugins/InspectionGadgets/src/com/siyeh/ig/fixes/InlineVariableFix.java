@@ -14,8 +14,7 @@ public class InlineVariableFix extends InspectionGadgetsFix {
         return "Inline variable";
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
-        if(isQuickFixOnReadOnlyFile(descriptor)) return;
+    public void doFix(Project project, ProblemDescriptor descriptor) {
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiLocalVariable variable = (PsiLocalVariable) nameElement.getParent();
         final RefactoringActionHandlerFactory factory =

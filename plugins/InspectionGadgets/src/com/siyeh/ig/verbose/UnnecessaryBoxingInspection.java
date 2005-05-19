@@ -4,6 +4,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -58,8 +59,8 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
             return "Remove boxing";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
             final PsiNewExpression expression = (PsiNewExpression) descriptor.getPsiElement();
             final PsiType boxedType = expression.getType();
             final PsiExpressionList argList = expression.getArgumentList();
@@ -87,7 +88,7 @@ public class UnnecessaryBoxingInspection extends ExpressionInspection {
     }
 
     private static class UnnecessaryBoxingVisitor extends BaseInspectionVisitor {
-      
+
         public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiManager manager = expression.getManager();

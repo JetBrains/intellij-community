@@ -1,7 +1,6 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class MissortedModifiersInspection extends ClassInspection {
-    private static final Logger s_logger = Logger.getInstance("MissortedModifiersInspection");
 
     private static final int NUM_MODIFIERS = 11;
     /** @noinspection StaticCollection*/
@@ -60,10 +58,9 @@ public class MissortedModifiersInspection extends ClassInspection {
             return "Sort modifers";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)){
-                return;
-            }
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
+
             final PsiModifierList modifierList = (PsiModifierList) descriptor.getPsiElement();
             final List<String> simpleModifiers = new ArrayList<String>();
             final PsiElement[] children = modifierList.getChildren();
@@ -80,28 +77,23 @@ public class MissortedModifiersInspection extends ClassInspection {
         }
 
         private static void addModifiersInOrder(List<String> modifiers,
-                                                PsiModifierList modifierList) {
+                                                PsiModifierList modifierList)
+                throws IncorrectOperationException{
             final PsiManager psiManager = modifierList.getManager();
             final PsiElementFactory factory = psiManager.getElementFactory();
             for(String modifier : modifiers){
-                try{
-                    final PsiKeyword keyword = factory.createKeyword(modifier);
+                   // final PsiKeyword keyword = factory.createKeyword(modifier);
                   //  modifierList.getParent().addAfter(keyword, modifierList);
                     modifierList.setModifierProperty(modifier, true);
-                } catch(IncorrectOperationException e){
-                    s_logger.error(e);
-                }
             }
         }
 
         private static void clearModifiers(List<String> modifiers,
-                                           PsiModifierList modifierList) {
+                                           PsiModifierList modifierList)
+                                                                         throws IncorrectOperationException{
             for(final String modifier : modifiers){
-                try{
                     modifierList.setModifierProperty(modifier, false);
-                } catch(IncorrectOperationException e){
-                    s_logger.error(e);
-                }
+
             }
         }
     }

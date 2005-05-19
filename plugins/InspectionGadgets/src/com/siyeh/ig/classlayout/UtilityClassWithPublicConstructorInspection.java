@@ -1,7 +1,6 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -51,9 +50,8 @@ public class UtilityClassWithPublicConstructorInspection extends ClassInspection
             }
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
-            try {
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
                 final PsiElement classNameIdentifer = descriptor.getPsiElement();
                 final PsiClass psiClass = (PsiClass) classNameIdentifer.getParent();
                 final PsiMethod[] constructors = psiClass.getConstructors();
@@ -61,12 +59,6 @@ public class UtilityClassWithPublicConstructorInspection extends ClassInspection
                     final PsiModifierList modifierList = constructor.getModifierList();
                     modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
                 }
-            } catch (IncorrectOperationException e) {
-                final Class aClass = getClass();
-                final String className = aClass.getName();
-                final Logger logger = Logger.getInstance(className);
-                logger.error(e);
-            }
         }
     }
 

@@ -2,8 +2,6 @@ package com.siyeh.ig;
 
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.siyeh.ig.abstraction.*;
 import com.siyeh.ig.bugs.*;
@@ -20,12 +18,17 @@ import com.siyeh.ig.finalization.NoExplicitFinalizeCallsInspection;
 import com.siyeh.ig.imports.*;
 import com.siyeh.ig.initialization.*;
 import com.siyeh.ig.internationalization.*;
+import com.siyeh.ig.j2me.*;
 import com.siyeh.ig.jdk.*;
 import com.siyeh.ig.junit.*;
 import com.siyeh.ig.logging.ClassWithMultipleLoggersInspection;
 import com.siyeh.ig.logging.ClassWithoutLoggerInspection;
 import com.siyeh.ig.logging.NonStaticFinalLoggerInspection;
 import com.siyeh.ig.maturity.*;
+import com.siyeh.ig.memory.StaticCollectionInspection;
+import com.siyeh.ig.memory.StringBufferFieldInspection;
+import com.siyeh.ig.memory.SystemGCInspection;
+import com.siyeh.ig.memory.ZeroLengthArrayInitializationInspection;
 import com.siyeh.ig.methodmetrics.*;
 import com.siyeh.ig.naming.*;
 import com.siyeh.ig.performance.*;
@@ -34,22 +37,17 @@ import com.siyeh.ig.resources.*;
 import com.siyeh.ig.security.*;
 import com.siyeh.ig.serialization.*;
 import com.siyeh.ig.style.*;
+import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
 import com.siyeh.ig.threading.*;
 import com.siyeh.ig.verbose.*;
 import com.siyeh.ig.visibility.*;
-import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
-import com.siyeh.ig.j2me.*;
-import com.siyeh.ig.memory.StaticCollectionInspection;
-import com.siyeh.ig.memory.SystemGCInspection;
-import com.siyeh.ig.memory.StringBufferFieldInspection;
-import com.siyeh.ig.memory.ZeroLengthArrayInitializationInspection;
 
 import java.io.*;
 import java.util.*;
 
 public class InspectionGadgetsPlugin implements ApplicationComponent,
                                                 InspectionToolProvider{
-    private static final int NUM_INSPECTIONS = 420;
+    private static final int NUM_INSPECTIONS = 500;
     private final List<Class> m_inspectionClasses = new ArrayList<Class>(NUM_INSPECTIONS);
     private static final String DESCRIPTION_DIRECTORY_NAME =
             "C:/My Open Source Projects/InspectionGadgetsSVN/src/inspectionDescriptions/";
@@ -196,11 +194,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             }
         }
         return numQuickFixes;
-    }
-
-    public static InspectionGadgetsPlugin getInstance(){
-        final Application application = ApplicationManager.getApplication();
-        return application.getComponent(InspectionGadgetsPlugin.class);
     }
 
     public String getComponentName(){

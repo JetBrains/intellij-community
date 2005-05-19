@@ -1,7 +1,6 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -39,14 +38,12 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
             return "Add @Deprecated annotation";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)){
-                return;
-            }
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
+
             final PsiElement identifier = descriptor.getPsiElement();
             final PsiModifierListOwner parent =
                     (PsiModifierListOwner) identifier.getParent();
-            try{
                 final PsiManager psiManager = parent.getManager();
                 final PsiElementFactory factory = psiManager
                                 .getElementFactory();
@@ -56,12 +53,7 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
 
                 final PsiModifierList modifierList = parent.getModifierList();
                 modifierList.addAfter(annotation, null);
-            } catch(IncorrectOperationException e){
-                final Class aClass = getClass();
-                final String className = aClass.getName();
-                final Logger logger = Logger.getInstance(className);
-                logger.error(e);
-            }
+
         }
     }
     public BaseInspectionVisitor buildVisitor(){

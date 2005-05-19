@@ -14,8 +14,7 @@ public class EncapsulateVariableFix extends InspectionGadgetsFix {
         return "Encapsulate variable";
     }
 
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
-        if(isQuickFixOnReadOnlyFile(descriptor)) return;
+    public void doFix(Project project, ProblemDescriptor descriptor) {
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiField field = (PsiField) nameElement.getParent();
         final RefactoringActionHandlerFactory factory =

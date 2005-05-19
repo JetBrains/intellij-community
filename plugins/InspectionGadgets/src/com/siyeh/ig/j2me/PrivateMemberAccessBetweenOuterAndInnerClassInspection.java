@@ -1,7 +1,6 @@
 package com.siyeh.ig.j2me;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -49,8 +48,8 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
             return "Make '" + elementName + "' package local";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            try{
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
                 final PsiReferenceExpression reference =
                         (PsiReferenceExpression) descriptor.getPsiElement();
                 final PsiModifierListOwner member =
@@ -60,12 +59,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
                 modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
                 modifiers.setModifierProperty(PsiModifier.PROTECTED, false);
                 modifiers.setModifierProperty(PsiModifier.PRIVATE, false);
-            } catch(IncorrectOperationException e){
-                final Class aClass = getClass();
-                final String className = aClass.getName();
-                final Logger logger = Logger.getInstance(className);
-                logger.error(e);
-            }
+
         }
     }
 

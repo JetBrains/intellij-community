@@ -1,7 +1,6 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -37,9 +36,9 @@ public class UtilityClassWithoutPrivateConstructorInspection extends ClassInspec
             return "Create empty private constructor";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor) {
-            if(isQuickFixOnReadOnlyFile(descriptor)) return;
-            try {
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
+
                 final PsiElement classNameIdentifier = descriptor.getPsiElement();
                 final PsiClass psiClass = (PsiClass) classNameIdentifier.getParent();
                 final PsiManager psiManager = PsiManager.getInstance(project);
@@ -50,12 +49,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends ClassInspec
                 psiClass.add(constructor);
                 final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
                 styleManager.reformat(constructor);
-            } catch (IncorrectOperationException e) {
-                final Class aClass = getClass();
-                final String className = aClass.getName();
-                final Logger logger = Logger.getInstance(className);
-                logger.error(e);
-            }
+
         }
     }
 

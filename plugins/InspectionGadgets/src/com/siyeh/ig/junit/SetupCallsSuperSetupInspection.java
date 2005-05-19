@@ -1,7 +1,6 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -37,11 +36,8 @@ public class SetupCallsSuperSetupInspection extends MethodInspection{
             return "add call to super.setUp()";
         }
 
-        public void applyFix(Project project, ProblemDescriptor descriptor){
-            if(isQuickFixOnReadOnlyFile(descriptor)){
-                return;
-            }
-            try{
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                                                                         throws IncorrectOperationException{
                 final PsiElement methodName = descriptor.getPsiElement();
                 final PsiMethod method = (PsiMethod) methodName.getParent();
                 final PsiCodeBlock body = method.getBody();
@@ -55,12 +51,6 @@ public class SetupCallsSuperSetupInspection extends MethodInspection{
                 final PsiJavaToken brace = body.getLBrace();
                 body.addAfter(newStatement, brace);
                 styleManager.reformat(body);
-            } catch(IncorrectOperationException e){
-                final Class aClass = getClass();
-                final String className = aClass.getName();
-                final Logger logger = Logger.getInstance(className);
-                logger.error(e);
-            }
         }
     }
 

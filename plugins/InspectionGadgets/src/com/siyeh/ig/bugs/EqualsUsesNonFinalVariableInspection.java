@@ -4,6 +4,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class EqualsUsesNonFinalVariableInspection extends ExpressionInspection{
@@ -48,35 +49,15 @@ public class EqualsUsesNonFinalVariableInspection extends ExpressionInspection{
         }
 
         public void visitMethod(@NotNull PsiMethod method){
-            final boolean isEquals = isEqualsMethod(method);
+            final boolean isEquals = MethodUtils.isEquals(method);
             if(isEquals){
                 m_inEquals = true;
             }
-
             super.visitMethod(method);
             if(isEquals){
                 m_inEquals = false;
             }
         }
 
-        private static boolean isEqualsMethod(PsiMethod method){
-            final String methodName = method.getName();
-            if(!"equals".equals(methodName)){
-                return false;
-            }
-            final PsiParameterList parameterList = method.getParameterList();
-            if(parameterList == null){
-                return false;
-            }
-            final PsiParameter[] parameters = parameterList.getParameters();
-            if(parameters == null || parameters.length != 1){
-                return false;
-            }
-            final PsiType returnType = method.getReturnType();
-            if(returnType == null){
-                return false;
-            }
-            return returnType.equals(PsiType.BOOLEAN);
-        }
     }
 }
