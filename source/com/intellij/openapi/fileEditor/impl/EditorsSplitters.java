@@ -37,6 +37,7 @@ public class EditorsSplitters extends JPanel {
   private final FileEditorManagerImpl myManager;
   private Element mySplittersElement;  // temporarily used during initialization
   protected int myInsideChange;
+  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("EditorsSplittersQueue", 50, true, ModalityState.NON_MMODAL);
 
   public EditorsSplitters(final FileEditorManagerImpl manager) {
     super(new BorderLayout());
@@ -367,13 +368,21 @@ public class EditorsSplitters extends JPanel {
 
   public void setCurrentWindow(final EditorWindow window, final boolean requestFocus) {
     myCurrentWindow = window;
+    // Queue here is to prevent title flickering when tab is being closed and two events arriving: with component==null and component==next focused tab
+    // only the last event makes sense to handle
+    myQueue.queue(new Update("UpdateFileName") {
+      public void run() {
+        getManager().updateFileName(window == null ? null : window.getSelectedFile());
+      }
+    });
     if (window != null) {
       final EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
       if (selectedEditor != null) {
         final boolean focusEditor = ToolWindowManager.getInstance(myManager.myProject).isEditorComponentActive() &&
                                     !window.getManager().isFocusingBlocked();
-        if (focusEditor || requestFocus)
-          selectedEditor.getComponent().requestFocus ();
+        if (focusEditor || requestFocus) {
+          selectedEditor.getComponent().requestFocus();
+        }
       }
     }
   }
@@ -498,7 +507,6 @@ public class EditorsSplitters extends JPanel {
   }
 
   private final class MyFocusWatcher extends FocusWatcher {
-    private final MergingUpdateQueue myQueue = new MergingUpdateQueue("EditorsSplitters.MyFocusWatcherQueue", 50, true, ModalityState.NON_MMODAL);
     protected void focusedComponentChanged(final Component component) {
       if (myInsideChange > 0) {
         return;
@@ -507,22 +515,19 @@ public class EditorsSplitters extends JPanel {
       final EditorWindow newActiveWindow = findWindowWith(component);
       final boolean currentFileChanged = getCurrentFile() != myCurrentFile;
       if (oldActiveWindow != newActiveWindow || currentFileChanged) {
-        // Queue here is to prevent title flickering when tab is being closed and two events arriving: with component==null and component==next focused tab
-        // only the last event makes sense to handle
-        myQueue.queue(new Update("SelectionChanged") {
-          public void run() {
-            getManager().updateFileName(newActiveWindow == null ? null : newActiveWindow.getSelectedFile());
-            if (component == null && !currentFileChanged) {
-              // focused component has changed, but active window not 
-              return;
-            }
-            myCurrentFile = getCurrentFile();
-            setCurrentWindow(newActiveWindow, false);
-            EditorWithProviderComposite oldSelected = oldActiveWindow == null ? null : oldActiveWindow.getSelectedEditor();
-            EditorWithProviderComposite newSelected = newActiveWindow == null ? null : newActiveWindow.getSelectedEditor();
-            getManager().fireSelectionChanged(oldSelected, newSelected);
-          }
-        });
+        if (currentFileChanged) {
+          myCurrentFile = getCurrentFile();
+        }
+        if (oldActiveWindow != newActiveWindow) {
+          setCurrentWindow(newActiveWindow, false);
+        }
+        if (component == null && !currentFileChanged) {
+          // focused component has changed, but active window not 
+          return;
+        }
+        EditorWithProviderComposite oldSelected = oldActiveWindow == null ? null : oldActiveWindow.getSelectedEditor();
+        EditorWithProviderComposite newSelected = newActiveWindow == null ? null : newActiveWindow.getSelectedEditor();
+        getManager().fireSelectionChanged(oldSelected, newSelected);
       }
     }
   }
