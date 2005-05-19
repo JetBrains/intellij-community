@@ -10,16 +10,17 @@
     JDBC close order
     JDBC connection createStatement()
     Look for ArrayIndexOutOfBounds errors statically
-    Non-final field of exception class
     Static initializer which creates an instance before all static variables are initialized
     Initializing a static final field with a static non-final field
     Use of non-final static field during class initialization
     Incorrect lazy initialization of static field
     lock not acquired in try block and freed in finally block
+    Read or write on non-buffered stream
+    Public static array field
+    Public static collection field
 
 
     Move and restructure categories
-    Quickfixes for "confusing else"
     Static import quickfix
     Fix the "variable accessed in synchronized and unsynchronized contexts"
        to deal with unsynchronized private methods called only from synchronized contexts

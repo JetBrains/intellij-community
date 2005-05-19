@@ -605,6 +605,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(NestedTryStatementInspection.class);
         inspectionClasses.add(ExceptionFromCatchWhichDoesntWrapInspection.class);
         inspectionClasses.add(InstanceofCatchParameterInspection.class);
+        inspectionClasses.add(NonFinalFieldOfExceptionInspection.class);
     }
 
     private void registerFinalizationInspections(){

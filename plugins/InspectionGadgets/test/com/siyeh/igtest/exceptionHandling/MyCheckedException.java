@@ -2,6 +2,7 @@ package com.siyeh.igtest.exceptionHandling;
 
 public class MyCheckedException extends Exception
 {
+    
     public MyCheckedException()
     {
     }
