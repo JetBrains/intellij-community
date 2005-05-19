@@ -8,6 +8,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.j2ee.module.components.J2EEModuleUrl;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -112,10 +113,8 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
               if (toContinue) continue;
             }
             if (val instanceof ResourceBundle){
-              final List<PropertiesFile> propertiesFiles = ((ResourceBundle)val).getPropertiesFiles();
-              if (propertiesFiles == null || propertiesFiles.isEmpty()){
-                continue;
-              }
+              ResourceBundle resourceBundle = (ResourceBundle)val;
+              List<PropertiesFile> propertiesFiles = PropertiesUtil.virtualFilesToProperties(myProject, resourceBundle.getPropertiesFiles());
               if (propertiesFiles.size() == 1){
                 result.add(new PsiFileNode(myProject, propertiesFiles.iterator().next(), getFavoritesConfiguration()));
                 continue;

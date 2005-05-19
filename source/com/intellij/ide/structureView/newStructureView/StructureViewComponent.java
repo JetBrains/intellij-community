@@ -284,7 +284,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     }
   }
 
-  private ActionGroup createActionGroup() {
+  protected ActionGroup createActionGroup() {
     DefaultActionGroup result = new DefaultActionGroup();
     Sorter[] sorters = myTreeModel.getSorters();
     for (final Sorter sorter : sorters) {
@@ -306,16 +306,20 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       result.add(new TreeActionWrapper(filter, this));
     }
 
-    result.addSeparator();
+    if (showScrollToFromSourceActions()) {
+      result.addSeparator();
 
-    result.add(myAutoScrollToSourceHandler.createToggleAction());
-    result.add(myAutoScrollFromSourceHandler.createToggleAction());
-
-
+      result.add(myAutoScrollToSourceHandler.createToggleAction());
+      result.add(myAutoScrollFromSourceHandler.createToggleAction());
+    }
     return result;
   }
 
-  private static boolean shouldBeShown(final Sorter sorter) {
+  protected boolean showScrollToFromSourceActions() {
+    return true;
+  }
+
+  private static boolean shouldBeShown(Sorter sorter) {
     return !sorter.getName().equals(KindSorter.ID);
   }
 
@@ -667,6 +671,10 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   public StructureViewModel getTreeModel() {
     return myTreeModel;
+  }
+
+  protected AbstractTreeBuilder getTreeBuilder() {
+    return myAbstractTreeBuilder;
   }
 
   public boolean navigateToSelectedElement(boolean requestFocus) {

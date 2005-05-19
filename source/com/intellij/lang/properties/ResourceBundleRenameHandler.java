@@ -72,7 +72,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
       return doRename(inputString);
     }
     private boolean doRename(final String inputString) {
-      final List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles();
+      final List<PropertiesFile> propertiesFiles = PropertiesUtil.virtualFilesToProperties(myProject, myResourceBundle.getPropertiesFiles());
       for (PropertiesFile propertiesFile : propertiesFiles) {
         if (!CodeInsightUtil.prepareFileForWrite(propertiesFile)) return false;
       }
@@ -86,7 +86,8 @@ public class ResourceBundleRenameHandler implements RenameHandler {
               String baseName = myResourceBundle.getBaseName();
               for (PropertiesFile propertiesFile : propertiesFiles) {
                 final VirtualFile virtualFile = propertiesFile.getVirtualFile();
-                final String newName = inputString + virtualFile.getNameWithoutExtension().substring(baseName.length()) + "." + virtualFile.getExtension();
+                final String newName = inputString + virtualFile.getNameWithoutExtension().substring(baseName.length()) + "." + virtualFile
+                  .getExtension();
                 try {
                   virtualFile.rename(this, newName);
                 }
@@ -95,9 +96,9 @@ public class ResourceBundleRenameHandler implements RenameHandler {
                     public void run() {
                       String path = FileUtil.toSystemDependentName(virtualFile.getPath());
                       Messages.showErrorDialog(myProject,
-                                                          "Error renaming file '" + path + "' to '" + newName + "'\n" +
-                                                          e.getLocalizedMessage(),
-                                                          "Rename Resource Bundle");
+                                               "Error renaming file '" + path + "' to '" + newName + "'\n" +
+                                               e.getLocalizedMessage(),
+                                               "Rename Resource Bundle");
                     }
                   });
                   success.set(Boolean.FALSE);

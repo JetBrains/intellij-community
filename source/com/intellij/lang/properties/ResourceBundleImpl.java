@@ -3,20 +3,21 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class ResourceBundleImpl implements ResourceBundle {
-  private final PsiDirectory myBaseDirectory;
-  private final String myBaseName;
+  private final @NotNull VirtualFile myBaseDirectory;
+  private final @NotNull String myBaseName;
 
-  public ResourceBundleImpl(PsiDirectory baseDirectory, String baseName) {
+  public ResourceBundleImpl(@NotNull VirtualFile baseDirectory, @NotNull String baseName) {
     myBaseDirectory = baseDirectory;
     myBaseName = baseName;
   }
@@ -25,22 +26,15 @@ public class ResourceBundleImpl implements ResourceBundle {
     RenameHandlerRegistry.getInstance().registerHandler(ResourceBundleRenameHandler.INSTANCE);
   }
 
-  public List<PropertiesFile> getPropertiesFiles() {
-    PsiFile[] children = myBaseDirectory.getFiles();
-    List<PropertiesFile> result = new SmartList<PropertiesFile>();
-    for (PsiFile file : children) {
-      if (file instanceof PropertiesFile && ((PropertiesFile)file).getResourceBundle().equals(this)) {
-        result.add((PropertiesFile)file);
+  public List<VirtualFile> getPropertiesFiles() {
+    VirtualFile[] children = myBaseDirectory.getChildren();
+    List<VirtualFile> result = new SmartList<VirtualFile>();
+    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    for (VirtualFile file : children) {
+      if (fileTypeManager.getFileTypeByFile(file) != PropertiesFileType.FILE_TYPE) continue;
+      if (Comparing.strEqual(PropertiesUtil.getBaseName(file), myBaseName)) {
+        result.add(file);
       }
-    }
-    return result;
-  }
-
-  public List<Property> findProperties(String key) {
-    List<Property> result = new SmartList<Property>();
-    List<PropertiesFile> propertiesFiles = getPropertiesFiles();
-    for (PropertiesFile propertiesFile : propertiesFiles) {
-      result.addAll(propertiesFile.findPropertiesByKey(key));
     }
     return result;
   }
@@ -66,5 +60,25 @@ public class ResourceBundleImpl implements ResourceBundle {
     result = myBaseDirectory.hashCode();
     result = 29 * result + myBaseName.hashCode();
     return result;
+  }
+
+  public static ResourceBundle createByUrl(String url) {
+    if (!url.startsWith("resourceBundle:")) return null;
+
+    String defaultPropertiesUrl = url.substring("resourceBundle:".length());
+    VirtualFile defaultProperties = VirtualFileManager.getInstance().findFileByUrl(defaultPropertiesUrl);
+    if (defaultProperties != null && FileTypeManager.getInstance().getFileTypeByFile(defaultProperties) == PropertiesFileType.FILE_TYPE) {
+      ResourceBundleImpl resourceBundle = new ResourceBundleImpl(defaultProperties.getParent(),
+                                                                 PropertiesUtil.getBaseName(defaultProperties));
+      return resourceBundle;
+
+    }
+    return null;
+  }
+
+  public String getUrl() {
+    final String url;
+    url = "resourceBundle:"+getPropertiesFiles().get(0).getUrl();
+    return url;
   }
 }

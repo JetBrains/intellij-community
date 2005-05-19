@@ -1,18 +1,18 @@
 package com.intellij.lang.properties;
 
+import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.properties.findUsages.PropertiesFindUsagesProvider;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.structureView.PropertiesStructureViewModel;
 import com.intellij.lang.properties.parsing.PropertiesParserDefinition;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.structureView.PropertiesFileStructureViewComponent;
+import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -56,9 +56,9 @@ public class PropertiesLanguage extends Language {
   }
 
   public StructureViewBuilder getStructureViewBuilder(final PsiElement psiElement) {
-    return new TreeBasedStructureViewBuilder() {
-      public StructureViewModel createStructureViewModel() {
-        return new PropertiesStructureViewModel((PropertiesFile)psiElement);
+    return new StructureViewBuilder() {
+      public StructureView createStructureView(FileEditor fileEditor, Project project) {
+        return new PropertiesFileStructureViewComponent(project, (PropertiesFile)psiElement, fileEditor);
       }
     };
   }

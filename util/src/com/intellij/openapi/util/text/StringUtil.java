@@ -12,6 +12,7 @@ import java.io.StringWriter;
 import java.util.StringTokenizer;
 import java.util.List;
 import java.util.Collection;
+import java.util.ArrayList;
 
 public class StringUtil {
   private static final String VOWELS = "aeiouy";
@@ -536,6 +537,21 @@ public class StringUtil {
     final StringBuffer buffer = new StringBuffer();
     repeatSymbol(buffer,aChar, count);
     return buffer.toString();
+  }
+
+  public static List<String> split(String s, String separator) {
+    ArrayList<String> result = new ArrayList<String>();
+    int pos = 0;
+    while (true) {
+      int index = s.indexOf(separator, pos);
+      if (index == -1) break;
+      result.add(s.substring(pos, index));
+      pos = index + separator.length();
+    }
+    if (pos < s.length()) {
+      result.add(s.substring(pos, s.length()));
+    }
+    return result;
   }
 
   public static List<String> getWordsIn(String text) {

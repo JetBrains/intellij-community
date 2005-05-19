@@ -17,6 +17,19 @@ import java.util.*;
 public class GroupByWordPrefixes implements Grouper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.structureView.GroupByWordPrefixes");
   public static final String ID = "GROUP_BY_PREFIXES";
+  private String mySeparator;
+
+  public GroupByWordPrefixes(String separator) {
+    mySeparator = separator;
+  }
+
+  public void setSeparator(final String separator) {
+    mySeparator = separator;
+  }
+
+  public String getSeparator() {
+    return mySeparator;
+  }
 
   public Collection<Group> group(final AbstractTreeNode parent, Collection<TreeElement> children) {
     List<Key> keys = new ArrayList<Key>();
@@ -25,7 +38,7 @@ public class GroupByWordPrefixes implements Grouper {
     int parentPrefixLength;
     if (parent.getValue() instanceof PropertiesPrefixGroup) {
       parentPrefix = ((PropertiesPrefixGroup)parent.getValue()).getPrefix();
-      parentPrefixLength = parentPrefix.split("\\.").length;
+      parentPrefixLength = StringUtil.split(parentPrefix, mySeparator).size();
     }
     else {
       parentPrefix = "";
@@ -42,8 +55,8 @@ public class GroupByWordPrefixes implements Grouper {
       }
       if (text == null) continue;
       LOG.assertTrue(text.startsWith(parentPrefix));
-        List<String> words = Arrays.asList(text.split("\\."));
-        keys.add(new Key(words, element));
+      List<String> words = StringUtil.split(text, mySeparator);
+      keys.add(new Key(words, element));
     }
     Collections.sort(keys, new Comparator<Key>() {
       public int compare(final Key k1, final Key k2) {
@@ -81,11 +94,11 @@ public class GroupByWordPrefixes implements Grouper {
         }
       }
       String[] strings = firstKey.subList(0,prefixLen).toArray(new String[prefixLen]);
-      String prefix = StringUtil.join(strings, ".");
+      String prefix = StringUtil.join(strings, mySeparator);
       String presentableName = prefix.substring(parentPrefix.length());
-      presentableName = StringUtil.trimStart(presentableName, ".");
+      presentableName = StringUtil.trimStart(presentableName, mySeparator);
       if (i - groupStart > 1) {
-        groups.add(new PropertiesPrefixGroup(children, prefix, presentableName));
+        groups.add(new PropertiesPrefixGroup(children, prefix, presentableName, mySeparator));
       }
       else if (groupStart != keys.size()) {
         TreeElement node = keys.get(groupStart).node;
@@ -114,7 +127,7 @@ public class GroupByWordPrefixes implements Grouper {
 
   public ActionPresentation getPresentation() {
     return new ActionPresentationData("Group By Prefixes",
-                                      "Groups properties by common key prefixes separated by dots",
+                                      "Groups properties by common key prefixes",
                                       IconLoader.getIcon("/actions/fileStatus.png"));
   }
 

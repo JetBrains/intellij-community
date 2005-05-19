@@ -3,6 +3,7 @@ package com.intellij.lang.properties.structureView;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.PropertiesHighlighter;
+import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -20,11 +21,13 @@ public class PropertiesPrefixGroup implements Group {
   private final Collection<TreeElement> myProperties;
   private final String myPrefix;
   private final String myPresentableName;
+  private final String mySeparator;
 
-  public PropertiesPrefixGroup(final Collection<TreeElement> properties, String prefix, String presentableName) {
+  public PropertiesPrefixGroup(final Collection<TreeElement> properties, String prefix, String presentableName, final String separator) {
     myProperties = properties;
     myPrefix = prefix;
     myPresentableName = presentableName;
+    mySeparator = separator;
   }
 
   public ItemPresentation getPresentation() {
@@ -50,11 +53,19 @@ public class PropertiesPrefixGroup implements Group {
   public Collection<TreeElement> getChildren() {
     Collection<TreeElement> result = new ArrayList<TreeElement>();
     for (TreeElement treeElement : myProperties) {
-      if (!(treeElement instanceof PropertiesStructureViewElement)) continue;
-      PropertiesStructureViewElement propertiesElement = (PropertiesStructureViewElement)treeElement;
-      Property property = propertiesElement.getValue();
+      String key;
+      if (treeElement instanceof PropertiesStructureViewElement) {
+        PropertiesStructureViewElement propertiesElement = (PropertiesStructureViewElement)treeElement;
+        Property property = propertiesElement.getValue();
 
-      String key = property.getKey();
+        key = property.getKey();
+      }
+      else if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
+        key = ((ResourceBundlePropertyStructureViewElement)treeElement).getValue();
+      }
+      else {
+        continue;
+      }
 
       if (key == null || key.equals(myPrefix)) {
         continue;
@@ -62,8 +73,13 @@ public class PropertiesPrefixGroup implements Group {
       if (key.startsWith(myPrefix)) {
         result.add(treeElement);
         String presentableName = key.substring(myPrefix.length());
-        presentableName = StringUtil.trimStart(presentableName, ".");
-        propertiesElement.setPresentableName(presentableName);
+        presentableName = StringUtil.trimStart(presentableName, mySeparator);
+        if (treeElement instanceof PropertiesStructureViewElement) {
+          ((PropertiesStructureViewElement)treeElement).setPresentableName(presentableName);
+        }
+        if (treeElement instanceof ResourceBundlePropertyStructureViewElement) {
+          ((ResourceBundlePropertyStructureViewElement)treeElement).setPresentableName(presentableName);
+        }
       }
     }
     return result;

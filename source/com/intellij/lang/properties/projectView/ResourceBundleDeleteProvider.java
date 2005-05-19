@@ -2,6 +2,7 @@ package com.intellij.lang.properties.projectView;
 
 import com.intellij.ide.DeleteProvider;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -22,7 +23,7 @@ class ResourceBundleDeleteProvider implements DeleteProvider {
 
   public void deleteElement(DataContext dataContext) {
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles();
+    List<PropertiesFile> propertiesFiles = PropertiesUtil.virtualFilesToProperties(project, myResourceBundle.getPropertiesFiles());
     PropertiesFile[] array = propertiesFiles.toArray(new PropertiesFile[propertiesFiles.size()]);
     new SafeDeleteHandler().invoke(project, array, dataContext);
   }

@@ -6,10 +6,12 @@ package com.intellij.lang.properties.editor;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -18,9 +20,11 @@ import java.util.List;
 import java.util.Map;
 
 public class ResourceBundleFileStructureViewElement implements StructureViewTreeElement<ResourceBundle> {
+  private final Project myProject;
   private final ResourceBundle myResourceBundle;
 
-  public ResourceBundleFileStructureViewElement(final ResourceBundle resourceBundle) {
+  public ResourceBundleFileStructureViewElement(final Project project, final ResourceBundle resourceBundle) {
+    myProject = project;
     myResourceBundle = resourceBundle;
   }
 
@@ -29,7 +33,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
   }
 
   public StructureViewTreeElement[] getChildren() {
-    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles();
+    List<PropertiesFile> propertiesFiles = PropertiesUtil.virtualFilesToProperties(myProject, myResourceBundle.getPropertiesFiles());
     Map<String, Property> propertyNames = new LinkedHashMap<String, Property>();
     for (PropertiesFile propertiesFile : propertiesFiles) {
       List<Property> properties = propertiesFile.getProperties();
@@ -43,7 +47,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
     List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>(propertyNames.size());
     for (String property : propertyNames.keySet()) {
       //result.add(new PropertiesStructureViewElement(property));
-      result.add(new ResourceBundlePropertyStructureViewElement(myResourceBundle, property));
+      result.add(new ResourceBundlePropertyStructureViewElement(myProject, myResourceBundle, property));
     }
     return result.toArray(new StructureViewTreeElement[result.size()]);
   }

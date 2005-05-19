@@ -5,6 +5,7 @@ import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.Grouper;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.lang.properties.editor.PropertiesGroupingStructureViewModel;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.PsiFile;
@@ -16,12 +17,24 @@ import com.intellij.psi.PsiFile;
  * Time: 3:13:23 PM
  * To change this template use File | Settings | File Templates.
  */
-public class PropertiesStructureViewModel extends TextEditorBasedStructureViewModel {
+public class PropertiesFileStructureViewModel extends TextEditorBasedStructureViewModel implements PropertiesGroupingStructureViewModel {
   private PropertiesFile myPropertiesFile;
+  private final GroupByWordPrefixes myGroupByWordPrefixes;
 
-  public PropertiesStructureViewModel(final PropertiesFile root) {
+  public PropertiesFileStructureViewModel(final PropertiesFile root) {
     super(root);
     myPropertiesFile = root;
+    String separator = PropertiesSeparatorManager.getInstance().getSeparator(root.getProject(), root.getVirtualFile());
+    myGroupByWordPrefixes = new GroupByWordPrefixes(separator);
+  }
+
+  public void setSeparator(String separator) {
+    myGroupByWordPrefixes.setSeparator(separator);
+    PropertiesSeparatorManager.getInstance().setSeparator(myPropertiesFile.getVirtualFile(), separator);
+  }
+
+  public String getSeparator() {
+    return myGroupByWordPrefixes.getSeparator();
   }
 
   public StructureViewTreeElement getRoot() {
@@ -29,7 +42,7 @@ public class PropertiesStructureViewModel extends TextEditorBasedStructureViewMo
   }
 
   public Grouper[] getGroupers() {
-    return new Grouper[]{new GroupByWordPrefixes()};
+    return new Grouper[]{myGroupByWordPrefixes};
   }
 
   public Sorter[] getSorters() {

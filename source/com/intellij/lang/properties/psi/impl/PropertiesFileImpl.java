@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -87,19 +88,8 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   @NotNull public ResourceBundle getResourceBundle() {
-    String baseName = getBaseName();
-    return new ResourceBundleImpl(getContainingFile().getContainingDirectory(), baseName);
-  }
-
-  private String getBaseName() {
-    String name = getVirtualFile().getNameWithoutExtension();
-    if (name.length() > 3 && name.charAt(name.length()-3) == '_') {
-      name = name.substring(0, name.length() - 3);
-    }
-    if (name.length() > 3 && name.charAt(name.length()-3) == '_') {
-      name = name.substring(0, name.length() - 3);
-    }
-    return name;
+    String baseName = PropertiesUtil.getBaseName(getVirtualFile());
+    return new ResourceBundleImpl(getContainingFile().getContainingDirectory().getVirtualFile(), baseName);
   }
 
   public PsiElement add(PsiElement element) throws IncorrectOperationException {

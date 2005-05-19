@@ -4,10 +4,12 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import gnu.trove.THashSet;
 
@@ -17,6 +19,12 @@ import java.util.List;
 import java.util.Set;
 
 public class ResourceBundleGrouper implements TreeStructureProvider, ProjectComponent {
+  private final Project myProject;
+
+  public ResourceBundleGrouper(Project project) {
+    myProject = project;
+  }
+
   public Collection<AbstractTreeNode> modify(AbstractTreeNode parent, Collection<AbstractTreeNode> children, ViewSettings settings) {
     if (parent instanceof ResourceBundleNode) return children;
 
@@ -51,7 +59,8 @@ public class ResourceBundleGrouper implements TreeStructureProvider, ProjectComp
       }
       if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataName)) {
         if (element instanceof ResourceBundle) {
-          return ((ResourceBundle)element).getPropertiesFiles().toArray(new PsiElement[0]);
+          List<PropertiesFile> propertiesFiles = PropertiesUtil.virtualFilesToProperties(myProject, ((ResourceBundle)element).getPropertiesFiles());
+          return propertiesFiles.toArray(new PsiElement[0]);
         }
       }
       if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataName)) {
