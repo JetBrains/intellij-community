@@ -774,7 +774,8 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   // ProjectComponent methods
   public void projectOpened() {
     //myFocusWatcher.install(myWindows.getComponent ());
-
+    mySplitters.startListeningFocus();
+    
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {
       fileStatusManager.addFileStatusListener(myFileStatusListener);
@@ -808,6 +809,8 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   public void projectClosed() {
     //myFocusWatcher.deinstall(myWindows.getComponent ());
+    mySplitters.stopListeningFocus();
+    
     // Remove application level listeners
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {

@@ -34,15 +34,15 @@ public class EditorsSplitters extends JPanel {
   private final FileEditorManagerImpl myManager;
   private Element mySplittersElement;  // temporarily used during initialization
   protected int myInsideChange;
+  private MyFocusWatcher myFocusWatcher;
 
   public EditorsSplitters(final FileEditorManagerImpl manager) {
     super(new BorderLayout());
     setOpaque(true);
     setBackground(Color.GRAY);
     myInsideChange = 0;
-    final MyFocusWatcher focusWatcher = new MyFocusWatcher();
-    focusWatcher.install(this);
     myManager = manager;
+    myFocusWatcher = new MyFocusWatcher();
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
     clear();
   }
@@ -60,6 +60,15 @@ public class EditorsSplitters extends JPanel {
     repaint (); // revalidate doesn't repaint correctly after "Close All"
   }
 
+  public void startListeningFocus() {
+    myFocusWatcher.install(this);
+    clear();
+  }
+
+  public void stopListeningFocus() {
+    myFocusWatcher.deinstall(this);
+  }
+  
   public VirtualFile getCurrentFile() {
     if (myCurrentWindow != null) {
       return myCurrentWindow.getSelectedFile();
