@@ -3,7 +3,7 @@ class Foreign {
      * @param test1
      */
     void foo(Test1 test1) {
-        test1.bar();
+      test1.bar();
     }
 }
 

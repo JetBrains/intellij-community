@@ -123,7 +123,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     }
     if (current != null && current.getElementType() == DOC_COMMENT_LEADING_ASTERISKS) return;
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(tag);
-    final ASTNode newLine = Factory.createSingleLeafElement(/*DOC_COMMENT_DATA*/WHITE_SPACE, new char[]{'\n'}, 0, 1, treeCharTab, SharedImplUtil.getManagerByTree(tag));
+    final ASTNode newLine = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{'\n'}, 0, 1, treeCharTab, SharedImplUtil.getManagerByTree(tag));
     tag.addChild(newLine, null);
     final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, new char[]{'*'}, 0, 1, treeCharTab,
                                                                         SharedImplUtil.getManagerByTree(tag));

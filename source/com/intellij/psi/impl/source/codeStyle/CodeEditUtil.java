@@ -39,6 +39,8 @@ public class CodeEditUtil {
 
   public static TreeElement addChildren(CompositeElement parent, ASTNode first, ASTNode last, ASTNode anchorBefore) {
     
+    checkAllWhiteSpaces(parent);
+    
     ASTNode lastChild = last != null ? last.getTreeNext() : null;
     first = trimWhiteSpaces(first, lastChild);
 
@@ -63,7 +65,8 @@ public class CodeEditUtil {
     if (nextElement != null) {
       adjustWhiteSpaces(nextElement, nextElement.getTreeNext());
     }
-    System.out.println("CodeEditUtil.addChildren"+ parent.getPsi().getContainingFile().getText());
+    System.out.println("CodeEditUtil.addChildren\n"+ parent.getPsi().getContainingFile().getText());
+    checkAllWhiteSpaces(parent);
     if (treePrev == null) {
       return (TreeElement)parent.getFirstChildNode();
     } else {
@@ -76,20 +79,26 @@ public class CodeEditUtil {
     } 
   }
 
+  private static void checkAllWhiteSpaces(final ASTNode parent) {
+    ASTNode node = parent.getPsi().getContainingFile().getNode();
+    ASTNode leaf = TreeUtil.findFirstLeaf(node);
+    while (leaf != null) {
+      if (isWS(leaf) && whiteSpaceHasInvalidPosition(leaf)) {
+        LOG.assertTrue(false);
+      }
+      leaf = TreeUtil.nextLeaf(leaf);
+    }    
+  }
+
   public static void removeChild(CompositeElement parent, ASTNode child) {
     removeChildren(parent, child, child);
   }
 
   public static void removeChildren(CompositeElement parent, ASTNode first, ASTNode last) {
-    removeChildrenNew(first, last, parent);
-    //removeChildrenOld(parent,first, last);
-  }
-
-
-  private static void removeChildrenNew(ASTNode first, final ASTNode last, final CompositeElement parent) {
+    checkAllWhiteSpaces(parent);
     boolean doNotAdjust = first == parent.getFirstChildNode(); 
     ASTNode lastChild = last == null ? null : last.getTreeNext();
-    ASTNode prevElement = findElementBefore(first);
+    ASTNode prevElement = TreeUtil.prevLeaf(first);
     ASTNode nextElement = findElementAfter(last == null ? parent : last, false);
     if (nextElement != null) {
       saveIndents(nextElement);
@@ -109,7 +118,7 @@ public class CodeEditUtil {
     
     if (nextElement != null) {
       
-      ASTNode elementBeforeNext = findElementBefore(nextElement);
+      ASTNode elementBeforeNext = TreeUtil.prevLeaf(nextElement);
       
       if (isWS(prevElement) && isWS(elementBeforeNext) && prevElement != elementBeforeNext) {
         //adjustWSBefore |= !elementBeforeNext.textContains('\n');
@@ -134,28 +143,16 @@ public class CodeEditUtil {
       }
       
       
+      elementBeforeNext = TreeUtil.prevLeaf(nextElement);
       
-      if (isWS(parent.getFirstChildNode())) {
-        final String text = parent.getFirstChildNode().getText();
-        final ASTNode element = findElementAfter(parent.getFirstChildNode(), false);
-        delete(parent.getFirstChildNode());
-        if (element!= null) {
-          FormatterUtil.replaceWhiteSpace(text,
-                                          element,
-                                          ElementType.WHITE_SPACE);
-        }
-
-      } else if (isWS(parent.getLastChildNode())) {
-        final String text = parent.getLastChildNode().getText();
-        final ASTNode element = findElementAfter(parent.getLastChildNode(), false);
-        delete(parent.getLastChildNode());
-        if (element != null) {
-          FormatterUtil.replaceWhiteSpace(text,
-                                          element,
-                                          ElementType.WHITE_SPACE);
-        }
-
-      } 
+      if (isWS(elementBeforeNext) && whiteSpaceHasInvalidPosition(elementBeforeNext)) {
+        final String text = elementBeforeNext.getText();
+        delete(elementBeforeNext);
+        FormatterUtil.replaceWhiteSpace(text,
+                                        nextElement,
+                                        ElementType.WHITE_SPACE);
+      }
+      
       
       final boolean keepFormatting = parent.getFirstChildNode() != null;
       if (!keepFormatting) {
@@ -173,7 +170,50 @@ public class CodeEditUtil {
         delete(lastLeaf);
       }
     }
-    System.out.println("CodeEditUtil.removeChildrenNew " + parent.getPsi().getContainingFile().getText());
+    System.out.println("CodeEditUtil.removeChildrenNew\n" + parent.getPsi().getContainingFile().getText());
+    checkAllWhiteSpaces(parent);
+    //removeChildrenOld(parent,first, last);
+  }
+
+
+  private static boolean hasNonEmptyNext(final ASTNode element) {
+    ASTNode current = element.getTreeNext();
+    while (current != null) {
+      if (current.getTextLength() > 0) {
+        return true;
+      }
+      if (current.getElementType() == ElementType.WHITE_SPACE) {
+        return false;
+      }
+      current = current.getTreeNext();
+    }
+    if (element.getTextRange().getEndOffset() == element.getPsi().getContainingFile().getTextLength()) 
+      return element.getTreeNext() == null;    
+    return false;
+  }
+
+  private static boolean hasNonEmptyPrev(ASTNode element) {
+    ASTNode current = element.getTreePrev();
+    while (current != null) {
+      if (current.getTextLength() > 0) {
+        return true;
+      }
+      if (current.getElementType() == ElementType.WHITE_SPACE) {
+        return false;
+      }
+      current = current.getTreePrev();
+    }
+    if (element.getTextRange().getStartOffset() == 0) return element.getTreePrev() == null;    
+    return false;    
+  }
+  
+  private static boolean whiteSpaceHasInvalidPosition(final ASTNode element) {
+    final ASTNode treeParent = element.getTreeParent();
+    if (isWS(element) && treeParent.getElementType() == ElementType.XML_TEXT) return false;
+    if (!hasNonEmptyPrev(element)) return true;
+    if (treeParent.getPsi().getUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY) != null) return false;
+    if (treeParent.getElementType() == ElementType.XML_PROLOG) return false;
+    return !hasNonEmptyNext(element);
   }
 
   private static boolean containLineBreaks(final ASTNode first, final ASTNode last) {
@@ -316,20 +356,6 @@ public class CodeEditUtil {
     prevElement.getTreeParent().removeRange(prevElement, prevElement.getTreeNext());
   }
 
-  private static ASTNode findElementBefore(final ASTNode parent) {
-    ASTNode treePrev = parent.getTreePrev();
-    while (treePrev !=null) {
-      if (treePrev.getTextLength() > 0) return treePrev;
-      treePrev =  treePrev.getTreePrev();
-    }
-    final ASTNode treeParent = parent.getTreeParent();
-    if (treeParent != null) {
-      return findElementBefore(treeParent);
-    } else {
-      return null;
-    }
-  }
-
   private static ASTNode findElementAfter(final ASTNode parent, boolean canBeWhiteSpace) {
     ASTNode candidate = parent.getTreeNext();
     while (candidate !=null) {
@@ -350,11 +376,12 @@ public class CodeEditUtil {
   }
 
   public static ASTNode replaceChild(CompositeElement parent, ASTNode oldChild, ASTNode newChild) {
+    checkAllWhiteSpaces(parent);
     final ASTNode elementAfter = findElementAfter(oldChild, true);
     
     boolean changeFirstWS = newChild.textContains('\n') || oldChild.textContains('\n');
     
-    if (!canStickChildrenTogether(findElementBefore(oldChild), newChild)) {
+    if (!canStickChildrenTogether(TreeUtil.prevLeaf(oldChild), newChild)) {
       changeFirstWS = true;
     }
 
@@ -373,7 +400,8 @@ public class CodeEditUtil {
     if (elementAfter != null && !isWS(elementAfter)) {
       adjustWhiteSpaceBefore(elementAfter, true, true, true, false);
     }
-    System.out.println("CodeEditUtil.replaceChild"+ parent.getPsi().getContainingFile().getText());
+    System.out.println("CodeEditUtil.replaceChild\n"+ parent.getPsi().getContainingFile().getText());
+    checkAllWhiteSpaces(parent);
     if (treePrev == null) {
       return (TreeElement)parent.getFirstChildNode();
     } else {

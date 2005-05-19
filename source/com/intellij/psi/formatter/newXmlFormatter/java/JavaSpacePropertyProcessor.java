@@ -639,6 +639,8 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
       createSpaceInCode(false);
     } else if (myRole1 == ChildRole.COMMA && myRole2 == ChildRole.TYPE_IN_REFERENCE_PARAMETER_LIST) {
       createSpaceInCode(true);
+    } else if (myRole2 == ChildRole.GT_IN_TYPE_LIST) {
+      createSpaceInCode(false);
     }
 
 

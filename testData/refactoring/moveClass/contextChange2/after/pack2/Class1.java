@@ -4,6 +4,6 @@ import pack1.Class2;
 
 public class Class1 {
   void foo(){
-      Class2.xxx();
+    Class2.xxx();
   }
 }

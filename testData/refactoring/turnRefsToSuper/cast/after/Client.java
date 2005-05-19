@@ -2,7 +2,7 @@ class Client {
    I getI() { return null; };
 
    void method() {
-       I a = getI();
+        I a = getI();
    }
 
    int anotherMethod() {
