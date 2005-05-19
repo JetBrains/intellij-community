@@ -109,8 +109,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
     TreeElement treeElement = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.FALSE);
-    treeElement = ChangeUtil.decodeInformation(treeElement);
-    return SharedPsiElementImplUtil.findFirstChildAfterAddition(treeElement, elementCopy);
+    return SharedPsiElementImplUtil.findAndDecodeFirstChildAfterAddition(treeElement, elementCopy);
 
   }
 
@@ -255,7 +254,6 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
     TreeElement treeElement = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
-    treeElement = ChangeUtil.decodeInformation(treeElement); 
-    return SharedPsiElementImplUtil.findFirstChildAfterAddition(treeElement, elementCopy);
+    return SharedPsiElementImplUtil.findAndDecodeFirstChildAfterAddition(treeElement, elementCopy);
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -40,13 +41,13 @@ public class SharedPsiElementImplUtil {
 
     final PsiReference[] references = element.getReferences();
     LOG.assertTrue(references != null, element.toString());
-    for (int i = 0; i < references.length; i++) {
-      final PsiReference reference = references[i];
+    for (final PsiReference reference : references) {
       if (reference == null) {
         LOG.error(element.toString());
       }
       final TextRange range = reference.getRangeInElement();
-      if (range.getStartOffset() <= offsetInElement && (offsetInElement < range.getEndOffset() || (offsetInElement == range.getEndOffset() && range.getLength() == 0))) {
+      if (range.getStartOffset() <= offsetInElement &&
+          (offsetInElement < range.getEndOffset() || (offsetInElement == range.getEndOffset() && range.getLength() == 0))) {
         referencesList.add(reference);
       }
     }
@@ -96,13 +97,13 @@ public class SharedPsiElementImplUtil {
   }
 
   //Hack, but no better idea comes to my mind
-  public static PsiElement findFirstChildAfterAddition(TreeElement firstAdded, final TreeElement toFind) {
+  public static PsiElement findAndDecodeFirstChildAfterAddition(TreeElement firstAdded, final TreeElement toFind) {
     final PsiElement psi = toFind.getPsi();
-    if(psi.isValid()) return psi;
+    if(psi.isValid()) return ChangeUtil.decodeInformation(toFind).getPsi();
 
     final IElementType elementType = toFind.getElementType();
     while(firstAdded != null) {
-      if (firstAdded.getElementType() == elementType) return firstAdded.getPsi();
+      if (firstAdded.getElementType() == elementType) return ChangeUtil.decodeInformation(firstAdded).getPsi();
       firstAdded = firstAdded.getTreeNext();
     }
     
