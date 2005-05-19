@@ -35,7 +35,7 @@ public class ConfusingElseInspection extends StatementInspection {
 
     private static class ConfusingElseFix extends InspectionGadgetsFix{
         public String getName(){
-            return "Unwrap else branchy";
+            return "Unwrap else branch";
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
