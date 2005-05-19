@@ -724,7 +724,10 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
   }
 
   public void visitReturnStatement(PsiReturnStatement statement) {
-    if (myRole1 == ChildRole.RETURN_KEYWORD) {
+    if (myChild2.getElementType() == ElementType.SEMICOLON) {
+      createSpaceInCode(false);
+    }
+    else if (myRole1 == ChildRole.RETURN_KEYWORD) {
       createSpaceInCode(true);
     } else {
       super.visitReturnStatement(statement);

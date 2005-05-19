@@ -505,8 +505,10 @@ public class Helper {
                                           ? LanguageLevel.HIGHEST
                                           : PsiManager.getInstance(getProject()).getEffectiveLanguageLevel();
       Lexer lexer = new JavaLexer(languageLevel);
-      lexer.start(text.toCharArray(), 0, text.length());
+      lexer.start(text.toCharArray(), 0, text.length());      
       boolean canMerge = lexer.getTokenType() == type1;
+      lexer.advance();
+      canMerge = canMerge && lexer.getTokenType() == type2; 
       res = Boolean.valueOf(canMerge);
       myCanStickJavaTokensMatrix.put(pair, res);
     }

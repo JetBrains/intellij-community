@@ -48,6 +48,16 @@ public class CodeEditUtil {
       return null;
     }
 
+    boolean keepFirstIndent = false;
+    
+    final ASTNode elemBeforeAnchor = getElementBeforeAnchor(parent, anchorBefore);
+    
+    if (elemBeforeAnchor != null) {
+      if (canKeepFirstIndent(elemBeforeAnchor, first, parent)){
+        keepFirstIndent = true;
+      }
+    }
+    
     saveIndents(first, lastChild);
     ASTNode nextElement = anchorBefore;
     if (nextElement == null) {
@@ -61,9 +71,9 @@ public class CodeEditUtil {
 
     parent.addChildren(first, lastChild, anchorBefore);
     final List<ASTNode> treePrev = getPreviousElements(first);
-    adjustWhiteSpaces(first, anchorBefore);
+    adjustWhiteSpaces(first, anchorBefore, keepFirstIndent);
     if (nextElement != null) {
-      adjustWhiteSpaces(nextElement, nextElement.getTreeNext());
+      adjustWhiteSpaces(nextElement, nextElement.getTreeNext(), false);
     }
     System.out.println("CodeEditUtil.addChildren\n"+ parent.getPsi().getContainingFile().getText());
     checkAllWhiteSpaces(parent);
@@ -77,6 +87,31 @@ public class CodeEditUtil {
         return (TreeElement)firstValid.getTreeNext();
       }
     } 
+  }
+
+  private static boolean canKeepFirstIndent(final ASTNode elemBeforeAnchor, final ASTNode first, final CompositeElement parent) {
+    if (elemBeforeAnchor.getElementType() != ElementType.WHITE_SPACE && !canStickChildrenTogether(elemBeforeAnchor, first)) {
+      return false;
+    }
+    return elemBeforeAnchor.getTextRange().getStartOffset() < parent.getTextRange().getStartOffset();
+  }
+
+  private static ASTNode getElementBeforeAnchor(final CompositeElement parent, final ASTNode anchorBefore) {
+    if (anchorBefore != null) {
+      return TreeUtil.prevLeaf(anchorBefore); 
+    }
+
+    final ASTNode lastChild = parent.getLastChildNode();
+    if (lastChild != null) {
+      if (lastChild.getTextLength() > 0) {
+        return lastChild;
+      } else {
+        return TreeUtil.prevLeaf(lastChild);
+      }
+    } else {
+      return TreeUtil.prevLeaf(parent);
+    }
+
   }
 
   private static void checkAllWhiteSpaces(final ASTNode parent) {
@@ -280,11 +315,11 @@ public class CodeEditUtil {
     return result;
   }
 
-  private static void adjustWhiteSpaces(final ASTNode first, final ASTNode last) {
+  private static void adjustWhiteSpaces(final ASTNode first, final ASTNode last, final boolean keepFirstIndent) {
     ASTNode current = first;
     while (current != null && current != last) {
       if (notIsSpace(current)) {
-        adjustWhiteSpaceBefore(current, true, false, true, true);
+        adjustWhiteSpaceBefore(current, true, false, !keepFirstIndent || current != first, true);
       }
       current = current.getTreeNext();
     }    
