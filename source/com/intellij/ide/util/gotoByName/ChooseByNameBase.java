@@ -468,6 +468,7 @@ public abstract class ChooseByNameBase{
   protected void rebuildList(final int pos, final int delay, final Runnable postRunnable, final ModalityState modalityState) {
     myListIsUpToDate = false;
     myAlarm.cancelAllRequests();
+    myListUpdater.cancelAll();
     choosenElementMightChange();
     tryToCancel();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -526,6 +527,7 @@ public abstract class ChooseByNameBase{
   }
 
   private void setElementsToList(int pos, List<?> elements) {
+    myListUpdater.cancelAll();
     if (myDisposedFlag) return;
     if (elements.size() == 0) {
       myListModel.clear();
