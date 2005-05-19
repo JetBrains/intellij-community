@@ -11,7 +11,7 @@ class Client
     //------------------------------------
  
     class C  {
-    L method() {L res = new V ();  return res; }
+	L method() {L res = new V ();  return res; }
     }
     
     interface I {L method(); }
