@@ -149,8 +149,8 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         localName = RefactoringUtil.suggestUniqueVariableName(localName, anchorBlock, myField);
         try {
           final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), null);
-          final PsiElement firstBodyElement = getAnchorElement(anchorBlock);
-          final PsiElement newVariable = anchorBlock.addBefore(decl, firstBodyElement);
+          final PsiElement anchor = getAnchorElement(anchorBlock, refs);
+          final PsiElement newVariable = anchorBlock.addAfter(decl, anchor);
           if (newCaretPosition == null) {
             newCaretPosition = newVariable;
           }
@@ -188,18 +188,20 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
     }
 
-    private static PsiElement getAnchorElement(final PsiCodeBlock anchorBlock) {
-      PsiElement firstBodyElement = anchorBlock.getFirstBodyElement();
-      LOG.assertTrue(firstBodyElement != null);
-      firstBodyElement = PsiTreeUtil.skipSiblingsForward(firstBodyElement, new Class[]{PsiWhiteSpace.class, PsiComment.class});
-      if (firstBodyElement instanceof PsiExpressionStatement) {
-        final PsiExpression expression = ((PsiExpressionStatement)firstBodyElement).getExpression();
-        if (expression instanceof PsiMethodCallExpression) {
-          final String refName = ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceName();
-          if ("this".equals(refName) || "super".equals(refName)) firstBodyElement = firstBodyElement.getNextSibling();
+    private static PsiElement getAnchorElement(final PsiCodeBlock anchorBlock, final PsiReference[] refs) {
+      PsiElement firstElement = null;
+      for (PsiReference reference : refs) {
+        final PsiElement element = reference.getElement();
+        if (firstElement == null || firstElement.getTextRange().getStartOffset() > element.getTextRange().getStartOffset()) {
+          firstElement = element;
         }
       }
-      return firstBodyElement;
+      LOG.assertTrue(firstElement != null);
+      while (firstElement.getParent() != anchorBlock) {
+        firstElement = firstElement.getParent();
+      }
+
+      return PsiTreeUtil.skipSiblingsBackward(firstElement, new Class[]{PsiWhiteSpace.class, PsiComment.class});
     }
 
     private static PsiCodeBlock findAnchorBlock(final PsiReference[] refs) {
