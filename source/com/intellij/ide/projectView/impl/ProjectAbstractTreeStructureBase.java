@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public abstract class ProjectAbstractTreeStructureBase extends AbstractTreeStructureBase {
-
   private List<TreeStructureProvider> myProviders;
 
   protected ProjectAbstractTreeStructureBase(Project project) {
@@ -17,16 +16,12 @@ public abstract class ProjectAbstractTreeStructureBase extends AbstractTreeStruc
 
   public List<TreeStructureProvider> getProviders() {
     if (myProviders == null) {
-      return (List<TreeStructureProvider>)myProject.getPicoContainer().getComponentInstancesOfType(TreeStructureProvider.class);
+      myProviders = (List<TreeStructureProvider>)myProject.getPicoContainer().getComponentInstancesOfType(TreeStructureProvider.class);
     }
-    else {
-      return myProviders;
-    }
+    return myProviders;
   }
 
   public void setProviders(TreeStructureProvider[] treeStructureProviders) {
     myProviders = treeStructureProviders == null ? null : Arrays.asList(treeStructureProviders);
   }
-
-
 }

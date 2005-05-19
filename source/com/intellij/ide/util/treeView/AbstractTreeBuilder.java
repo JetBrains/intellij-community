@@ -14,6 +14,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.enumeration.EnumerationCopy;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -22,8 +23,6 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractTreeBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeBuilder");
@@ -591,23 +590,24 @@ public abstract class AbstractTreeBuilder {
 
   private void insertNodesInto(ArrayList<TreeNode> nodes, DefaultMutableTreeNode parentNode) {
     if (nodes.size() == 0) return;
-    nodes = (ArrayList<TreeNode>)nodes.clone();
-    Collections.sort(nodes, myNodeComparator);
-    int[] indices = new int[nodes.size()];
-    for (int i = 0; i < nodes.size(); i++) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodes.get(i);
-      int index = getIndexToInsert(node, parentNode);
-      indices[i] = index;
-      parentNode.insert(node, index);
-    }
-    myTreeModel.nodesWereInserted(parentNode, indices);
-  }
 
-  private int getIndexToInsert(DefaultMutableTreeNode node, DefaultMutableTreeNode parentNode) {
-    ArrayList<TreeNode> arrayList = TreeUtil.childrenToArray(parentNode);
-    arrayList.add(node);
-    Collections.sort(arrayList, myNodeComparator);
-    return arrayList.indexOf(node);
+    nodes = new ArrayList<TreeNode>(nodes);
+    Collections.sort(nodes, myNodeComparator);
+
+    ArrayList<TreeNode> all = TreeUtil.childrenToArray(parentNode);
+    all.addAll(nodes);
+    Collections.sort(all, myNodeComparator);
+
+    int[] indices = new int[nodes.size()];
+    int idx = 0;
+    for (int i = 0; i < nodes.size(); i++) {
+      TreeNode node = nodes.get(i);
+      while (all.get(idx) != node) idx++;
+      indices[i] = idx;
+      parentNode.insert((MutableTreeNode)node, idx);
+    }
+
+    myTreeModel.nodesWereInserted(parentNode, indices);
   }
 
   private void disposeNode(DefaultMutableTreeNode node) {

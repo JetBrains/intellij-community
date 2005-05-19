@@ -17,11 +17,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
@@ -170,8 +174,29 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static final int FLAGS_EXCLUDED = 0x1000;
   private static final int FLAGS_JUNIT_TEST = 0x2000;
 
-  public static final int getClassKind(PsiClass aClass) {
-    if (!aClass.isValid()) return CLASS_KIND_CLASS; // TODO[cdr] review.
+  private static final Key<CachedValue<Integer>> CLASS_KIND_KEY = new Key<CachedValue<Integer>>("CLASS_KIND_KEY");
+
+  public static final int getClassKind(final PsiClass aClass) {
+    if (!aClass.isValid()) {
+      aClass.putUserData(CLASS_KIND_KEY, null);
+      return CLASS_KIND_CLASS;
+    }
+
+    CachedValue<Integer> value = aClass.getUserData(CLASS_KIND_KEY);
+    if (value == null) {
+      value = aClass.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<Integer>() {
+        public Result<Integer> compute() {
+          return new Result<Integer>(new Integer(getClassKindImpl(aClass)),
+                                     new Object[] {PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT});
+        }
+      }, false);
+      aClass.putUserData(CLASS_KIND_KEY, value);
+    }
+    return value.getValue().intValue();
+  }
+
+  private static final int getClassKindImpl(PsiClass aClass) {
+    if (!aClass.isValid()) return CLASS_KIND_CLASS;
 
     final EjbClassRole role = J2EERolesUtil.getEjbRole(aClass);
     if (role != null) return role.getType();
