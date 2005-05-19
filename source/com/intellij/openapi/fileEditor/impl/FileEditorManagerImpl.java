@@ -176,6 +176,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     // only the last event makes sense to handle
     myQueue.queue(new Update("UpdateFileName") {
       public boolean isExpired() {
+        if (myProject.isDisposed() || !myProject.isOpen()) return true;
         return file == null? super.isExpired() : !file.isValid();
       }
 

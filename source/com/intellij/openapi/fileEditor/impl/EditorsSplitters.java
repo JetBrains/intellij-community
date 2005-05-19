@@ -62,7 +62,6 @@ public class EditorsSplitters extends JPanel {
 
   public void startListeningFocus() {
     myFocusWatcher.install(this);
-    clear();
   }
 
   public void stopListeningFocus() {
