@@ -11,11 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import com.intellij.util.containers.ArrayListSet;
 import org.jdom.Element;
 
@@ -37,7 +34,6 @@ public class EditorsSplitters extends JPanel {
   private final FileEditorManagerImpl myManager;
   private Element mySplittersElement;  // temporarily used during initialization
   protected int myInsideChange;
-  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("EditorsSplittersQueue", 50, true, ModalityState.NON_MMODAL);
 
   public EditorsSplitters(final FileEditorManagerImpl manager) {
     super(new BorderLayout());
@@ -368,13 +364,7 @@ public class EditorsSplitters extends JPanel {
 
   public void setCurrentWindow(final EditorWindow window, final boolean requestFocus) {
     myCurrentWindow = window;
-    // Queue here is to prevent title flickering when tab is being closed and two events arriving: with component==null and component==next focused tab
-    // only the last event makes sense to handle
-    myQueue.queue(new Update("UpdateFileName") {
-      public void run() {
-        getManager().updateFileName(window == null ? null : window.getSelectedFile());
-      }
-    });
+    getManager().updateFileName(window == null ? null : window.getSelectedFile());
     if (window != null) {
       final EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
       if (selectedEditor != null) {
@@ -516,6 +506,7 @@ public class EditorsSplitters extends JPanel {
       final boolean currentFileChanged = getCurrentFile() != myCurrentFile;
       if (oldActiveWindow != newActiveWindow || currentFileChanged) {
         if (currentFileChanged) {
+          getManager().updateFileName(newActiveWindow == null ? null : newActiveWindow.getSelectedFile());
           myCurrentFile = getCurrentFile();
         }
         if (oldActiveWindow != newActiveWindow) {

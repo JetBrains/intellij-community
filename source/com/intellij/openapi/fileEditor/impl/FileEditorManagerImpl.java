@@ -38,7 +38,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -62,6 +65,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   public Project myProject;
 
   private final EventListenerList myListenerList;
+  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true, ModalityState.NON_MMODAL);
 
   /**
    * Updates tabs colors
@@ -167,12 +171,22 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   /**
    * Updates tab title and tab tool tip for the specified <code>file</code>
    */
-  protected void updateFileName(final VirtualFile file) {
-    final WindowManagerEx windowManagerEx = WindowManagerEx.getInstanceEx();
-    final IdeFrame frame = windowManagerEx.getFrame(myProject);
-    LOG.assertTrue(frame != null);
-    mySplitters.updateFileName (file);
-    frame.setFileTitle(file);
+  protected void updateFileName(final @Nullable VirtualFile file) {
+    // Queue here is to prevent title flickering when tab is being closed and two events arriving: with component==null and component==next focused tab
+    // only the last event makes sense to handle
+    myQueue.queue(new Update("UpdateFileName") {
+      public boolean isExpired() {
+        return file == null? super.isExpired() : !file.isValid();
+      }
+
+      public void run() {
+        final WindowManagerEx windowManagerEx = WindowManagerEx.getInstanceEx();
+        final IdeFrame frame = windowManagerEx.getFrame(myProject);
+        LOG.assertTrue(frame != null);
+        mySplitters.updateFileName (file);
+        frame.setFileTitle(file);
+      }
+    });
   }
 
   //-------------------------------------------------------
