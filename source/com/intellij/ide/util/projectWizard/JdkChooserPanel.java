@@ -3,10 +3,7 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
-import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
 import gnu.trove.TIntArrayList;
 
 import javax.swing.*;
@@ -27,7 +24,7 @@ public class JdkChooserPanel extends JPanel {
     myListModel = new DefaultListModel();
     myList = new JList(myListModel);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setCellRenderer(new ProjectJdkRenderer());
+    myList.setCellRenderer(new ProjectJdkListRenderer());
     myList.setPrototypeCellValue("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
     fillList();
 
@@ -87,13 +84,11 @@ public class JdkChooserPanel extends JPanel {
     return myList;
   }
 
-  void fillList() {
+  private void fillList() {
     myListModel.clear();
-    ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
-    ProjectJdk[] jdks = jdkTable.getAllJdks();
+    final ProjectJdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
     for (int i = 0; i < jdks.length; i++) {
-      ProjectJdk projectJdk = jdks[i];
-      myListModel.addElement(projectJdk);
+      myListModel.addElement(jdks[i]);
     }
   }
 
@@ -105,20 +100,6 @@ public class JdkChooserPanel extends JPanel {
     final int index = myListModel.indexOf(defaultJdk);
     if (index >= 0) {
       myList.setSelectedIndex(index);
-    }
-  }
-
-  public static class ProjectJdkRenderer extends ColoredListCellRenderer {
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      if (value instanceof ProjectJdk) {
-        CellAppearanceUtils.forJdk((ProjectJdk)value, false).customize(this);
-      }
-      else if (value != null) {
-        final String str = value.toString();
-        if (str != null) {
-          append(str, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-        }
-      }
     }
   }
 
