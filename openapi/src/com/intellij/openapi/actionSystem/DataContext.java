@@ -4,6 +4,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.Nullable;
+
 public interface DataContext {
-  Object getData(String dataId);
+  @Nullable Object getData(String dataId);
 }

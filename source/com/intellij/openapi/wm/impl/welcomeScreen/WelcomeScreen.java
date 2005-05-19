@@ -209,8 +209,8 @@ public class WelcomeScreen {
         ProjectUtil.createNewProject(null);
       }
     };
-    addButtonToQuickStart(quickStartPanel, newProject, "Create New Project", "Start the \"New Project\" Wizard that will lead you through " +
-                                                                             "the steps necessary for new project creation.");
+    addButtonToQuickStart(quickStartPanel, newProject, "Create New Project", "Start the \"New Project\" Wizard that will guide you through " +
+                                                                             "the steps that are necessary to create a new project.");
 
     MyActionButton openRecentProject = new ButtonWithExtension(null, REOPEN_RECENT_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
@@ -228,7 +228,7 @@ public class WelcomeScreen {
     };
     addButtonToQuickStart(quickStartPanel, openRecentProject, "Reopen Recent Project...", "You can open one of the most recent " +
                                                                                           "projects you were working with. Click the icon " +
-                                                                                          "or link to select project from the list.");
+                                                                                          "or link to select a project from the list.");
 
     MyActionButton getFromVCS = new ButtonWithExtension(null, FROM_VCS_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
@@ -244,8 +244,8 @@ public class WelcomeScreen {
         }, ActionPlaces.UNKNOWN, new PresentationFactory().getPresentation(action), actionManager, 0));
       }
     };
-    addButtonToQuickStart(quickStartPanel, getFromVCS, "Get Project From Version Control...", "You can check out the entire project from " +
-                                                                                              "Version Control System. Click the icon to " +
+    addButtonToQuickStart(quickStartPanel, getFromVCS, "Get Project From Version Control...", "You can check out an entire project from " +
+                                                                                              "a Version Control System. Click the icon to " +
                                                                                               "select CVS or Subversion.");
 
     // Create Documentation panel
@@ -264,7 +264,7 @@ public class WelcomeScreen {
         HelpManagerImpl.getInstance().invokeHelp("");
       }
     };
-    addButtonToDocs(docsPanel, readHelp, "Read Help", "Open IntelliJ IDEA \"Help Topics\" in the devoted window.");
+    addButtonToDocs(docsPanel, readHelp, "Read Help", "Open IntelliJ IDEA \"Help Topics\" in a new window.");
 
     MyActionButton defaultKeymap = new MyActionButton(null, KEYMAP_ICON, null) {
       protected void onPress(InputEvent e) {
