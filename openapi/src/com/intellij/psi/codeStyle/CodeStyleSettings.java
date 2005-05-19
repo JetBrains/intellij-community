@@ -18,7 +18,7 @@ import java.util.List;
 /**
  *
  */
-public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
+public class CodeStyleSettings implements Cloneable, JDOMExternalizable {  
 
   public CodeStyleSettings() {
     initTypeToName();
@@ -561,6 +561,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean SPACE_AFTER_QUEST = true;
   public boolean SPACE_BEFORE_COLON = true;
   public boolean SPACE_AFTER_COLON = true;
+  public boolean SPACE_BEFORE_TYPE_PARAMETER_LIST = true;
 
 //----------------- NAMING CONVENTIONS --------------------
 
@@ -787,6 +788,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public String HTML_KEEP_WHITESPACES_INSIDE = "span";
 
 
+  public boolean HTML_WRAP_TAG_BEGIN = false;
   // ---------------------------------------------------------------------------------------
 
   //-----------------------------------JSPX formatting settings-----------------------------

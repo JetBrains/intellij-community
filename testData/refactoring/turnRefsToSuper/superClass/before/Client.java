@@ -1,6 +1,6 @@
 public class Client {
-  {
-    AClass b = new AClass();
-    b.sayFoo();
-  }
+    {
+        AClass b = new AClass();
+        b.sayFoo();
+    }
 }

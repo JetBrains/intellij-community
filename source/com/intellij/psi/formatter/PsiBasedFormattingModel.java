@@ -2,9 +2,10 @@ package com.intellij.psi.formatter;
 
 import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.newCodeFormatting.FormattingModel;
-import com.intellij.newCodeFormatting.FormattingDocumentModel;
 import com.intellij.newCodeFormatting.Block;
+import com.intellij.newCodeFormatting.FormattingDocumentModel;
+import com.intellij.newCodeFormatting.FormattingModel;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -15,7 +16,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.jsp.JspxFileImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.util.IncorrectOperationException;
 
 import java.io.IOException;
 import java.io.LineNumberReader;
@@ -28,6 +28,8 @@ public class PsiBasedFormattingModel implements FormattingModel {
   private final CodeStyleSettings mySettings;
   private final FormattingDocumentModelImpl myDocumentModel;
   private final Block myRootBlock;
+  
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.PsiBasedFormattingModel");
 
   public PsiBasedFormattingModel(final PsiFile file,
                                  CodeStyleSettings settings, 
@@ -41,12 +43,12 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
   public int replaceWhiteSpace(TextRange textRange,
                                String whiteSpace,
-                               final int blockLength) throws IncorrectOperationException {
+                               final int blockLength){
     return replaceWithPSI(textRange, blockLength, whiteSpace);
   }
 
   private int replaceWithPSI(final TextRange textRange, int blockLength, final String whiteSpace)
-    throws IncorrectOperationException {
+    {
     final int offset = textRange.getEndOffset();
     final ASTNode leafElement = findElementAt(offset);
     final int oldElementLength = leafElement.getTextRange().getLength();
@@ -101,7 +103,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
     }
   }
 
-  private int getSpaceCount(final String whiteSpace) throws IncorrectOperationException {
+  private int getSpaceCount(final String whiteSpace) {
     try {
       final String lastLine = getLastLine(whiteSpace);
       if (lastLine != null) {
@@ -112,7 +114,8 @@ public class PsiBasedFormattingModel implements FormattingModel {
       }
     }
     catch (IOException e) {
-      throw new IncorrectOperationException(e.getLocalizedMessage());
+      LOG.error(e);
+      return 0;
     }
   }
 

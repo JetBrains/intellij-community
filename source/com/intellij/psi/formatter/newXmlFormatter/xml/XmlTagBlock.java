@@ -48,7 +48,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
           localResult = new ArrayList<Block>();
         }
         else if (isJspxJavaContainingNode(child)) {
-          localResult.add(new JspTextBlock(child, null, null, myXmlFormattingPolicy));      
+          localResult.add(new JspTextBlock(child, null, null, myXmlFormattingPolicy, JspTextBlock.findJavaElementAt(child)));      
         }                
         else if (child.getElementType() == ElementType.XML_TEXT) {
           createXmlTextBlocks(localResult, child, wrap, alignment);
@@ -99,6 +99,10 @@ public class XmlTagBlock extends AbstractXmlBlock{
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
     final AbstractSyntheticBlock syntheticBlock1 = ((AbstractSyntheticBlock)child1);
     final AbstractSyntheticBlock syntheticBlock2 = ((AbstractSyntheticBlock)child2);
+    
+    if (syntheticBlock2.isJspTextBlock()) {
+      return getFormatter().createSpaceProperty(0, 0, 1, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());      
+    }
 
     if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag())) return getFormatter().getReadOnlySpace();
 

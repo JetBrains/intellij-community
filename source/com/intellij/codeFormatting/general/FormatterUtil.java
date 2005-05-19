@@ -43,7 +43,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.CharTable;
 
 public class FormatterUtil {
-
   public static String getWhiteSpaceBefore(ASTNode element) {
     ASTNode wsCandidate = getWsCandidate(element);
     final StringBuffer result = new StringBuffer();
@@ -55,16 +54,16 @@ public class FormatterUtil {
     }
     return result.toString();
   }
+
   private static ASTNode getWsCandidate(ASTNode element) {
     if (element == null) return null;
     ASTNode treePrev = element.getTreePrev();
     if (treePrev != null) {
-      ASTNode candidate = getLastChildOf(treePrev);
-      if (candidate != null && isSpaceTextElement(candidate)) {
-        return candidate;
+      if (isSpaceTextElement(treePrev)) {
+        return treePrev;
       }
-      else if (candidate != null && candidate.getTextLength() == 0) {
-        return getWsCandidate(candidate);
+      else if (treePrev.getTextLength() == 0) {
+        return getWsCandidate(treePrev);
       }
       else {
         return element;
@@ -74,7 +73,8 @@ public class FormatterUtil {
 
     if (treeParent == null || treeParent.getTreeParent() == null) {
       return element;
-    } else {
+    }
+    else {
       return getWsCandidate(treeParent);
     }
   }
@@ -113,31 +113,79 @@ public class FormatterUtil {
                                          final ASTNode leafElement,
                                          final IElementType whiteSpaceToken) {
     final CharTable charTable = SharedImplUtil.findCharTableByTree(leafElement);
-    LeafElement whiteSpaceElement = Factory.createSingleLeafElement(whiteSpaceToken,
-                                                                    whiteSpace.toCharArray(), 0, whiteSpace.length(),
-                                                                    charTable, SharedImplUtil.getManagerByTree(leafElement));
 
     ASTNode treePrev = findPreviousWhiteSpace(leafElement);
     if (treePrev == null) {
-      treePrev = getWsCandidate(leafElement);      
-    }
-    if (treePrev == null) {
-      if (whiteSpace.length() > 0) {
-        final ASTNode treeParent = leafElement.getTreeParent();
-        treeParent.addChild(whiteSpaceElement, leafElement);
-      }
-    } else if (!isSpaceTextElement(treePrev)) {
-      final ASTNode treeParent = treePrev.getTreeParent();
-      treeParent.addChild(whiteSpaceElement, treePrev);
-    } else if (!isWhiteSpaceElement(treePrev)){
-      return getWhiteSpaceBefore(leafElement);
-    } else {
-      final CompositeElement treeParent = (CompositeElement)treePrev.getTreeParent();
-      treeParent.replaceChild(treePrev, whiteSpaceElement);
-      //treeParent.subtreeChanged();
+      treePrev = getWsCandidate(leafElement);
     }
 
+    if (treePrev != null &&
+        treePrev.getText().trim().length() == 0 &&
+        treePrev.getElementType() != whiteSpaceToken &&
+        treePrev.getTextLength() > 0 &&
+        whiteSpace.length() >
+                    0) {
+      LeafElement whiteSpaceElement = Factory.createSingleLeafElement(treePrev.getElementType(), whiteSpace.toCharArray(), 0, whiteSpace.length(),
+                                                          charTable, SharedImplUtil.getManagerByTree(leafElement));
+
+      ASTNode treeParent = treePrev.getTreeParent();
+      treeParent.replaceChild(treePrev, whiteSpaceElement);
+    }
+    else {
+      LeafElement whiteSpaceElement = Factory.createSingleLeafElement(whiteSpaceToken, whiteSpace.toCharArray(), 0, whiteSpace.length(),
+                                                                      charTable, SharedImplUtil.getManagerByTree(leafElement));
+
+      if (treePrev == null) {
+        if (whiteSpace.length() > 0) {
+          addWhiteSpace(leafElement, whiteSpaceElement, leafElement, charTable);
+        }
+      }
+      else if (!isSpaceTextElement(treePrev)) {
+        if (whiteSpace.length() > 0) {
+          addWhiteSpace(treePrev, whiteSpaceElement, leafElement, charTable);
+        }
+      }
+      else if (!isWhiteSpaceElement(treePrev)) {
+        return getWhiteSpaceBefore(leafElement);
+      }
+      else {
+        final CompositeElement treeParent = (CompositeElement)treePrev.getTreeParent();
+        if (whiteSpace.length() > 0) {
+          treeParent.replaceChild(treePrev, whiteSpaceElement);
+        }
+        else {
+          treeParent.removeChild(treePrev);
+        }
+        //treeParent.subtreeChanged();
+      }
+
+    }
     return getWhiteSpaceBefore(leafElement);
+  }
+
+  private static void addWhiteSpace(final ASTNode treePrev, final LeafElement whiteSpaceElement,
+                                    ASTNode leafAfter, final CharTable charTable) {
+    final ASTNode treeParent = treePrev.getTreeParent();
+    if (treePrev.getTreePrev() != null && treePrev.getTreePrev().getElementType() == ElementType.XML_TEXT) {
+      treePrev.getTreePrev().addChild(whiteSpaceElement);
+    } else {
+      if (isTag(treeParent) && leafAfter.getElementType() == ElementType.XML_START_TAG_START ||
+          leafAfter.getElementType() == ElementType.XML_END_TAG_START) {
+        CompositeElement xmlTextElement = Factory.createCompositeElement(ElementType.XML_TEXT, 
+                                                                         charTable, 
+                                                                         SharedImplUtil.getManagerByTree(treePrev));
+        xmlTextElement.addChild(whiteSpaceElement);
+        treeParent.addChild(xmlTextElement, treePrev);
+        
+      } else {
+        treeParent.addChild(whiteSpaceElement, treePrev);
+      }
+    }
+  }
+  
+  private static boolean isTag(final ASTNode treeParent) {
+    return treeParent.getElementType() == ElementType.XML_TAG 
+        || treeParent.getElementType() == ElementType.HTML_TAG;
   }
 
   private static ASTNode findPreviousWhiteSpace(final ASTNode leafElement) {
@@ -151,9 +199,9 @@ public class FormatterUtil {
   }
 
   public static ASTNode shiftTokenIndent(final Project project,
-                                      final FileType fileType,
-                                      final TreeElement leafElement,
-                                      final int currentTokenPosShift) {
+                                         final FileType fileType,
+                                         final TreeElement leafElement,
+                                         final int currentTokenPosShift) {
     return new Helper(fileType, project).shiftIndentInside(leafElement, currentTokenPosShift);
   }
 
@@ -162,7 +210,7 @@ public class FormatterUtil {
     ASTNode treePrev = element.getTreePrev();
     if (treePrev != null) {
       ASTNode candidate = getLastChildOf(treePrev);
-      if (candidate != null && !isSpaceTextElement(candidate) && candidate.getTextLength()  >0) {
+      if (candidate != null && !isSpaceTextElement(candidate) && candidate.getTextLength() > 0) {
         return candidate;
       }
       else {
@@ -173,7 +221,8 @@ public class FormatterUtil {
 
     if (treeParent == null || treeParent.getTreeParent() == null) {
       return null;
-    } else {
+    }
+    else {
       return getLeafNonSpaceBefore(treeParent);
     }
 
@@ -193,12 +242,14 @@ public class FormatterUtil {
       else {
         return getElementBefore(candidate, type);
       }
-    } else {
+    }
+    else {
       final ASTNode treeParent = element.getTreeParent();
 
       if (treeParent == null || treeParent.getTreeParent() == null) {
         return null;
-      } else {
+      }
+      else {
         return getElementBefore(treeParent, type);
       }
     }
@@ -219,9 +270,10 @@ public class FormatterUtil {
     while (current != null) {
       if (current.getElementType() == ElementType.ERROR_ELEMENT) return true;
       if (current.getElementType() == ElementType.EMPTY_EXPRESSION) return true;
-      if (current.getElementType() == ElementType.WHITE_SPACE || current.getTextLength() == 0){
+      if (current.getElementType() == ElementType.WHITE_SPACE || current.getTextLength() == 0) {
         current = current.getTreePrev();
-      } else {
+      }
+      else {
         return false;
       }
     }

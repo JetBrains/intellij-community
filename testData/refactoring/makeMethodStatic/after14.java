@@ -1,5 +1,5 @@
 public class Test {
-   static Test <caret>method(final Test anObject) {
+    static Test <caret>method(final Test anObject) {
      final Test[] result = new int[1];
      new Runnable() {
          public void run() {

@@ -5,7 +5,6 @@ public class Foo {
                     return <selection>"a" + "b"</selection>;
                 }
             },
-            f2 = new Foo(){}
-    ;
+            f2 = new Foo(){};
 
 }

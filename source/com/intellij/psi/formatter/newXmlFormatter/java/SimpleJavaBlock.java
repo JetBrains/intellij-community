@@ -27,10 +27,12 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     if (comments.isEmpty()) {
       return blocks;
     } else {
-      final SynteticCodeBlock resultWrapper = new SynteticCodeBlock(blocks, myAlignment, mySettings, myIndent, myWrap);
       final ArrayList<Block> result = new ArrayList<Block>();
       result.addAll(comments);
-      result.add(resultWrapper);
+      if (!blocks.isEmpty()) {
+        final SynteticCodeBlock resultWrapper = new SynteticCodeBlock(blocks, myAlignment, mySettings, myIndent, myWrap);        
+        result.add(resultWrapper);
+      }
       myAlignment = null;
       myWrap = null;
       myIndent = Formatter.getInstance().getNoneIndent();

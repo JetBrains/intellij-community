@@ -3,6 +3,7 @@ package com.intellij.psi.formatter.newXmlFormatter.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.newXmlFormatter.AbstractBlock;
 
@@ -16,6 +17,8 @@ public class SynteticCodeBlock implements Block, JavaBlock{
   private final Wrap myWrap;
   private Indent myChildIndent;
   private Alignment myChildAlignment;
+  
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.newXmlFormatter.java.SynteticCodeBlock");
 
   public SynteticCodeBlock(final List<Block> subBlocks,
                            final Alignment alignment,
@@ -23,7 +26,10 @@ public class SynteticCodeBlock implements Block, JavaBlock{
                            Indent indent,
                            Wrap wrap) {
     myIndentContent = indent;
-    mySubBlocks = subBlocks;
+    if (subBlocks.isEmpty()) {
+      LOG.assertTrue(false);
+    }
+    mySubBlocks = subBlocks;    
     myAlignment = alignment;
     mySettings = settings;
     myWrap = wrap;

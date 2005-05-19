@@ -3,7 +3,9 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -91,5 +93,20 @@ public class SharedPsiElementImplUtil {
     PsiElementFactory factory = manager.getElementFactory();
     PsiIdentifier newNameIdentifier = factory.createIdentifier(name);
     return element.replace(newNameIdentifier);
+  }
+
+  //Hack, but no better idea comes to my mind
+  public static PsiElement findFirstChildAfterAddition(TreeElement firstAdded, final TreeElement toFind) {
+    final PsiElement psi = toFind.getPsi();
+    if(psi.isValid()) return psi;
+
+    final IElementType elementType = toFind.getElementType();
+    while(firstAdded != null) {
+      if (firstAdded.getElementType() == elementType) return firstAdded.getPsi();
+      firstAdded = firstAdded.getTreeNext();
+    }
+    
+    LOG.assertTrue(false, "Could not find element of added class");
+    return null;
   }
 }

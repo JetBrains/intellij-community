@@ -1,5 +1,6 @@
 public class Foo {
     public int myData;
+
     static int method(int i) {
         return myData + i;
     }

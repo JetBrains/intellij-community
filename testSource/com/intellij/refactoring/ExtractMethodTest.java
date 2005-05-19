@@ -4,6 +4,8 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.util.duplicates.Match;
@@ -17,6 +19,7 @@ import java.util.List;
 
 public class ExtractMethodTest extends LightCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/extractMethod/";
+  private boolean myCatchOnNewLine = true;
 
   public void testExitPoints1() throws Exception {
     doExitPointsTest(true);
@@ -68,13 +71,18 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
 
   public void testSCR15815() throws Exception { doTest(); }
 
-  public void testSCR27887() throws Exception { doTest(); }
+  public void testSCR27887() throws Exception {
+    doTest(); 
+  }
   public void testSCR28427() throws Exception { doTest(); }
   public void testTryFinallyInsideFor() throws Exception { doTest(); }
 
   public void testExtractFromTryFinally() throws Exception { doTest(); }
 
-  public void testLesyaBug() throws Exception { doTest(); }
+  public void testLesyaBug() throws Exception {
+    myCatchOnNewLine = false;    
+    doTest(); 
+  }
 
   public void testForEach() throws Exception { doTest(); }
 
@@ -108,6 +116,9 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   void doTest() throws Exception {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.ELSE_ON_NEW_LINE = true;
+    settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     doTest(true);
   }
 

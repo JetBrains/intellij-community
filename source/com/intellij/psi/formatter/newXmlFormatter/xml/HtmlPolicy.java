@@ -90,7 +90,11 @@ public class HtmlPolicy implements XmlFormattingPolicy{
   }
 
   public int getWrappingTypeForTagBegin() {
-    return Wrap.NORMAL;
+    if (mySettings.HTML_WRAP_TAG_BEGIN) {
+      return Wrap.ALWAYS;
+    } else {
+      return Wrap.NORMAL;
+    }
   }
 
   public boolean isTextElement(XmlTag tag) {

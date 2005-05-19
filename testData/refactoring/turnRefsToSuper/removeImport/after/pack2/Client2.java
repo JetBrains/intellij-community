@@ -5,7 +5,7 @@ import pack1.AClass;
 import pack1.AnInterface;
 
 public class Client {
-  {
-    AnInterface aClass = new AClass();
-  }
+    {
+        AnInterface aClass = new AClass();
+    }
 }

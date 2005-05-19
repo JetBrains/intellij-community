@@ -98,27 +98,20 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public PsiElement add(PsiElement element) throws IncorrectOperationException {
-    CheckUtil.checkWritable(this);
-    TreeElement elementCopy = ChangeUtil.copyToElement(element);
-    elementCopy = addInternal(elementCopy, elementCopy, null, null);
-    elementCopy = ChangeUtil.decodeInformation(elementCopy);
-    return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
+    return addInnerBefore(element, null);
   }
 
   public PsiElement addBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
-    CheckUtil.checkWritable(this);
-    TreeElement elementCopy = ChangeUtil.copyToElement(element);
-    elementCopy = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
-    elementCopy = ChangeUtil.decodeInformation(elementCopy);
-    return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
+    return addInnerBefore(element, anchor);
   }
 
   public PsiElement addAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     TreeElement elementCopy = ChangeUtil.copyToElement(element);
-    elementCopy = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.FALSE);
-    elementCopy = ChangeUtil.decodeInformation(elementCopy);
-    return SourceTreeToPsiMap.treeElementToPsi(elementCopy);
+    TreeElement treeElement = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.FALSE);
+    treeElement = ChangeUtil.decodeInformation(treeElement);
+    return SharedPsiElementImplUtil.findFirstChildAfterAddition(treeElement, elementCopy);
+
   }
 
   public final void checkAdd(PsiElement element) throws IncorrectOperationException {
@@ -256,5 +249,13 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   public PsiElement getPsi() {
     ProgressManager.getInstance().checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
     return this;
+  }
+  
+  private PsiElement addInnerBefore(final PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
+    CheckUtil.checkWritable(this);
+    TreeElement elementCopy = ChangeUtil.copyToElement(element);
+    TreeElement treeElement = addInternal(elementCopy, elementCopy, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
+    treeElement = ChangeUtil.decodeInformation(treeElement); 
+    return SharedPsiElementImplUtil.findFirstChildAfterAddition(treeElement, elementCopy);
   }
 }

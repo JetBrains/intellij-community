@@ -10,7 +10,6 @@ public class Foo {
         return "a" + "b";
     }
 
-    static Foo f2 = new Foo(){}
-    ;
+    static Foo f2 = new Foo(){};
 
 }

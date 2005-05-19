@@ -1,5 +1,5 @@
 
 public class AClass extends ASuper2 {
-  public void foo() {
-  }
+    public void foo() {
+    }
 }

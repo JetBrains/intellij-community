@@ -1,12 +1,15 @@
 package com.intellij.newCodeFormatting;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 public class IndentInfo {
   private final int mySpaces;
   private final int myIndentSpaces;
   private final int myLineFeeds;
+  private boolean myIsChanged = true;
+  private TextRange myInitialTextRange;
 
   public IndentInfo(final int lineFeeds, final int indentSpaces, final int spaces) {
     mySpaces = spaces;
@@ -16,6 +19,10 @@ public class IndentInfo {
 
   public int getSpaces() {
     return mySpaces;
+  }
+
+  public void setInitialTextRange(final TextRange initialTextRange) {
+    myInitialTextRange = initialTextRange;
   }
 
   public int getIndentSpaces() {
@@ -71,5 +78,17 @@ public class IndentInfo {
     final int indentSpaces = getIndentCount(indentOptions);
     return myIndentSpaces - indentSpaces * indentOptions.INDENT_SIZE + mySpaces;
 
+  }
+
+  public boolean isChanged() {
+    return myIsChanged;
+  }
+
+  public void setIsChanged(final boolean value) {
+    myIsChanged = value;
+  }
+
+  public TextRange getInitialTextRange() {
+    return myInitialTextRange;
   }
 }

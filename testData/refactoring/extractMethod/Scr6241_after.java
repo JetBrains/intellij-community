@@ -6,6 +6,6 @@ class Test extends GregorianCalendar {
     }
 
     private int newMethod() {
-        return get( Calendar.DAY_OF_WEEK );
+        return get(Calendar.DAY_OF_WEEK );
     }
 }

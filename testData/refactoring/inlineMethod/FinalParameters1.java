@@ -6,10 +6,10 @@ class Test {
     }
     void toIn<caret>line(final int i) {
         Runnable r = new Runnable() {
-                public void run() {
-                    System.out.println(i);
-                }
-            };
+            public void run() {
+                System.out.println(i);
+            }
+        };
         System.out.println(i);
     }
 }

@@ -1,13 +1,13 @@
 import java.util.ArrayList;
 
 class B {
-   A getA() { return new A(); };
-   void test(A a) {
-   }
+    A getA() { return new A(); };
+    void test(A a) {
+    }
 
-   int method(ArrayList list) {
-         A a = getA();
+    int method(ArrayList list) {
+        A a = getA();
 
-         test(a);
+        test(a);
    }
 }

@@ -592,7 +592,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
             treeElement = addInternalHack(child, child, anchor, Boolean.valueOf(before), fileType);
           }
           final ASTNode treePrev = treeElement.getTreePrev();
-          if(treePrev.getElementType() != XmlTokenType.XML_WHITE_SPACE){
+          if(treeElement.getElementType() != XmlTokenType.XML_WHITE_SPACE && treePrev.getElementType() != XmlTokenType.XML_WHITE_SPACE){
             final LeafElement singleLeafElement = Factory.createSingleLeafElement(XmlTokenType.XML_WHITE_SPACE, new char[]{' '}, 0, 1,
                                                                                   SharedImplUtil.findCharTableByTree(XmlTagImpl.this), getManager());
             addChild(singleLeafElement, treeElement);

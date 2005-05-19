@@ -81,7 +81,12 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected XmlTag getTag(final ASTNode node) {
-    return (XmlTag)SourceTreeToPsiMap.treeElementToPsi(node);
+    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
+    if (element instanceof XmlTag) {
+      return (XmlTag)element;
+    } else {
+      return null;
+    }
   }
 
   protected Wrap createTagBeginWrapping(final Formatter formatter) {
@@ -90,7 +95,10 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   protected Block createChildBlock(final ASTNode child, final Wrap wrap, final Alignment alignment) {
     if (child.getElementType() == ElementType.JSP_XML_TEXT) {
-      return new JspTextBlock(child, null, null, myXmlFormattingPolicy);
+      final ASTNode javaElement = JspTextBlock.findJavaElementAt(child);
+      if (javaElement != null) {
+        return new JspTextBlock(child, null, null, myXmlFormattingPolicy, javaElement);
+      }
     }
     if (child.getElementType() == getTagType()) {
       return new XmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy);
@@ -110,7 +118,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
            || Comparing.equal(name, JSPX_DECLARATION_TAG_NAME))){
       return false;
     }
-    return child.getText().trim().length() > 0;
+    if (child.getText().trim().length() == 0) return false;
+    return JspTextBlock.findJavaElementAt(child) != null;
   }
 
   public ASTNode getTreeNode() {

@@ -3,7 +3,7 @@ public class Foo {
   
   void <caret>tryMakeMeStatic(boolean b) {
     if (b) {
-      getAnotherFoo().tryMakeMeStatic(!b);
+        getAnotherFoo().tryMakeMeStatic(!b);
     }
   }
 }

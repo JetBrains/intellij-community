@@ -6,7 +6,6 @@ class Base {
 }
 
 class Derived extends Base {
-
     static void usage(Derived element) {
         StringBuffer buffer = new StringBuffer();
         buffer.add(element.getID());

@@ -15,7 +15,6 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
 
@@ -328,9 +327,9 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   public void normalizeDeclaration() throws IncorrectOperationException{
     CheckUtil.checkWritable(this);
 
-    ASTNode type = SourceTreeToPsiMap.psiElementToTree(getTypeElement());
-    ASTNode modifierList = SourceTreeToPsiMap.psiElementToTree(getModifierList());
-    ASTNode field = type.getTreeParent();
+    final PsiTypeElement type = getTypeElement();
+    PsiElement modifierList = getModifierList();
+    ASTNode field = SourceTreeToPsiMap.psiElementToTree(type.getParent());
     while(true){
       ASTNode comma = TreeUtil.skipElements(field.getTreeNext(), ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (comma == null || comma.getElementType() != JavaTokenType.COMMA) break;
@@ -342,14 +341,12 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
 
       CodeEditUtil.removeChild((CompositeElement)comma.getTreeParent(), comma);
 
-      TreeElement typeClone = (TreeElement)type.clone();
-      final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(type);
-      typeClone.putUserData(CharTable.CHAR_TABLE_KEY, charTableByTree);
-      CodeEditUtil.addChild((CompositeElement)nextField, typeClone, nextField.getFirstChildNode());
+      PsiElement typeClone = type.copy();
+      CodeEditUtil.addChild((CompositeElement)nextField, (TreeElement)SourceTreeToPsiMap.psiElementToTree(typeClone), 
+                            nextField.getFirstChildNode());
 
-      TreeElement modifierListClone = (TreeElement)modifierList.clone();
-      modifierListClone.putUserData(CharTable.CHAR_TABLE_KEY, charTableByTree);
-      CodeEditUtil.addChild((CompositeElement)nextField, modifierListClone, nextField.getFirstChildNode());
+      PsiElement modifierListClone = modifierList.copy();
+      CodeEditUtil.addChild((CompositeElement)nextField, SourceTreeToPsiMap.psiElementToTree(modifierListClone), nextField.getFirstChildNode());
 
       field = nextField;
     }

@@ -3,6 +3,7 @@ package com.intellij.psi.formatter.newXmlFormatter.xml;
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -111,7 +112,11 @@ public class XmlBlock extends AbstractXmlBlock {
       return getFormatter().createNormalIndent();
     }
     if (myNode.getElementType() == ElementType.XML_TEXT) {
-      return null;
+      if (myNode.getPsi().getParent() instanceof JspXmlRootTag) {
+        return getFormatter().getNoneIndent();
+      } else {
+        return null;
+      }
     }
     else if (myNode.getElementType() == ElementType.XML_PROLOG || SourceTreeToPsiMap.treeElementToPsi(myNode) instanceof XmlDocument) {
       return getFormatter().getNoneIndent();
@@ -119,6 +124,12 @@ public class XmlBlock extends AbstractXmlBlock {
     else if (myNode.getElementType() == ElementType.XML_COMMENT && myNode.textContains('\n')) {
       return getFormatter().createAbsoluteNoneIndent();
     }
+    else if (myNode.getElementType() == ElementType.XML_DOCUMENT) {
+      return getFormatter().getNoneIndent();
+    }
+    else if (myNode.getElementType() == ElementType.XML_TAG) {
+      return getFormatter().getNoneIndent();
+    }    
     else {
       return null;
     }

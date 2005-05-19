@@ -3,6 +3,7 @@ package com.intellij.refactoring;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
 
 public class TurnRefsToSuperTest extends MultiFileTestCase {

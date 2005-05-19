@@ -113,6 +113,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
 
       final Editor newEditor = positionCursor(project, targetFile, method);
       TextRange range = method.getTextRange();
+      newEditor.getCaretModel().moveToOffset(range.getStartOffset());
       newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
 
       final PsiFile file = method.getContainingFile();

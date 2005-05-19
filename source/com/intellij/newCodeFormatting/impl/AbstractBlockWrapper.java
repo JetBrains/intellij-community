@@ -1,9 +1,6 @@
 package com.intellij.newCodeFormatting.impl;
 
-import com.intellij.newCodeFormatting.Block;
-import com.intellij.newCodeFormatting.ChildAttributes;
-import com.intellij.newCodeFormatting.Formatter;
-import com.intellij.newCodeFormatting.Indent;
+import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
@@ -22,6 +19,11 @@ public class AbstractBlockWrapper {
   protected final AbstractBlockWrapper myParent;
   protected TextRange myTextRange;
   protected boolean myCanUseFirstChildIndentAsBlockIndent = true;
+  
+  
+  protected IndentInfo myIndentFromParent = null;
+  
+  
 
   public AbstractBlockWrapper(final Block block, final WhiteSpace whiteSpace, final AbstractBlockWrapper parent, final TextRange textRange) {
     myBlock = block;
@@ -201,4 +203,20 @@ public class AbstractBlockWrapper {
 
   }
 
+  public void setIndentFromParent(final IndentInfo indentFromParent) {
+    myIndentFromParent = indentFromParent;
+    if (myIndentFromParent != null) {
+      AbstractBlockWrapper parent = myParent;
+      if (myParent != null && myParent.getTextRange().getStartOffset() == getTextRange().getStartOffset()) {
+        parent.setIndentFromParent(myIndentFromParent);
+      }
+    }    
+  }
+  
+  protected AbstractBlockWrapper findFirstIndentedParent() {
+    if (myParent == null) return null;
+    if (getStartOffset() != myParent.getStartOffset() && myParent.getWhiteSpace().containsLineFeeds()) return myParent;
+    return myParent.findFirstIndentedParent();
+  }
+  
 }

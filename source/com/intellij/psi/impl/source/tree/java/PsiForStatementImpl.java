@@ -1,14 +1,17 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.util.CharTable;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.util.CharTable;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.util.IncorrectOperationException;
 
 public class PsiForStatementImpl extends CompositePsiElement implements PsiForStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiForStatementImpl");
@@ -139,11 +142,13 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
     final boolean isForInitialization = getChildRole(child) == ChildRole.FOR_INITIALIZATION;
 
     if (isForInitialization) {
-      final CompositeElement emptyStatement = Factory.createCompositeElement(EMPTY_STATEMENT);
-      final LeafElement comma = Factory.createSingleLeafElement(SEMICOLON, new char[]{';'}, 0, 1, SharedImplUtil.findCharTableByTree(this), getManager());
-      emptyStatement.putUserData(CharTable.CHAR_TABLE_KEY, SharedImplUtil.findCharTableByTree(comma));
-      TreeUtil.addChildren(emptyStatement, comma);
-      super.replaceChildInternal(child, emptyStatement);
+      try {
+        final PsiStatement emptyStatement = getManager().getElementFactory().createStatementFromText(";", null);
+        super.replaceChildInternal(child, (TreeElement)SourceTreeToPsiMap.psiElementToTree(emptyStatement));
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
     }
     else {
       super.deleteChildInternal(child);

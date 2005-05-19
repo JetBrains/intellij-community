@@ -4,8 +4,6 @@ import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.newCodeFormatting.IndentInfo;
-import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TIntObjectHashMap;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -121,7 +119,7 @@ class FormatProcessor {
     return result;
   }
 
-  public void format(FormattingModel model) throws IncorrectOperationException {
+  public void format(FormattingModel model){
     formatWithoutRealModifications();
     performModifications(model);
   }
@@ -148,7 +146,7 @@ class FormatProcessor {
     }
   }
 
-  public void performModifications(FormattingModel model) throws IncorrectOperationException {
+  public void performModifications(FormattingModel model){
     int shift = 0;
     WhiteSpace prev = null;
     for (LeafBlockWrapper block = myFirstTokenBlock; block != null; block = block.getNextBlock()) {
@@ -581,5 +579,9 @@ class FormatProcessor {
       if (!myAlignAgain) return;
       reset();
     }
+  }
+
+  public LeafBlockWrapper getFirstTokenBlock() {
+    return myFirstTokenBlock;
   }
 }

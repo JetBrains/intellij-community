@@ -1,13 +1,13 @@
 import java.util.ArrayList;
 
 class B {
-   I[] getA() { return null; };
+    I[] getA() { return null; };
 
-   int method(ArrayList list) {
-         I[] a = getA();
+    int method(ArrayList list) {
+        I[] a = getA();
 
-         for(i = 0; i < a.length; i++) {
-             I item = a[i];
-         }
-   }
+        for(i = 0; i < a.length; i++) {
+            I item = a[i];
+        }
+    }
 }

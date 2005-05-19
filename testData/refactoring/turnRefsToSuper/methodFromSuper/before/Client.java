@@ -1,7 +1,7 @@
 
 public class Client {
-  {
-    AClass aClass;
-    aClass.foo();
-  }
+    {
+        AClass aClass;
+        aClass.foo();
+    }
 }

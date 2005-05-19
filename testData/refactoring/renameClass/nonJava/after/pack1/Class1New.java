@@ -1,3 +1,3 @@
 package pack1;
 
-class Class1New{}
+class Class1New {}

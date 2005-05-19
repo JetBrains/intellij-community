@@ -138,4 +138,9 @@ public abstract class AbstractSyntheticBlock implements Block{
   public boolean endsWithTag() {
     return myEndTreeNode.getElementType() == getTagType();
   }
+  
+  public boolean isJspTextBlock() {
+    final List<Block> subBlocks = getSubBlocks();
+    return subBlocks.size() == 1 && subBlocks.get(0) instanceof JspTextBlock;
+  }  
 }

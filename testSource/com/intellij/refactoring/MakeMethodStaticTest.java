@@ -12,6 +12,7 @@ import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.makeMethodStatic.MakeMethodStaticProcessor;
 import com.intellij.refactoring.makeMethodStatic.MakeMethodStaticUtil;
 import com.intellij.refactoring.makeMethodStatic.Settings;

@@ -1,6 +1,4 @@
-
 class Test {
-
     void u() {
 
     }

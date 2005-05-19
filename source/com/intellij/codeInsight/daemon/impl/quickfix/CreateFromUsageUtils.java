@@ -278,6 +278,7 @@ public class CreateFromUsageUtils {
               }
               else {
                 aClass = factory.createClass(name);
+                aClass = (PsiClass)CodeStyleManager.getInstance(manager).reformat(aClass);
               }
               targetClass = (PsiClass) sourceFile.add(aClass);
             }

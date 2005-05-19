@@ -1,5 +1,6 @@
 public class Foo {
     public int myData;
+
     static int method(final Foo anObject, int i) {
         new Runnable () {
             void f() {};

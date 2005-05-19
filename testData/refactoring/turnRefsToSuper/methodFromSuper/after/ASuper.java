@@ -1,4 +1,4 @@
 
 public class ASuper {
-  public void foo(){}
+    public void foo(){}
 }

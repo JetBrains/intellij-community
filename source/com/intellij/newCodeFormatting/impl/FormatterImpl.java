@@ -112,8 +112,75 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     return newWS.getSecond().intValue();
   }
 
-  public FormattingModel createFormattingModelForPsiFile(PsiFile file, Block rootBlock, CodeStyleSettings settings) {
-    return new PsiBasedFormattingModel(file, settings, rootBlock); 
+  public void adjustTextRange(final FormattingModel model,
+                              final CodeStyleSettings settings,
+                              final CodeStyleSettings.IndentOptions indentOptions,
+                              final TextRange affectedRange,
+                              final boolean keepBlankLines,
+                              final boolean keepLineBreaks,
+                              final boolean changeWSBeforeFirstElement,
+                              final boolean changeLineFeedsBeforeFirstElement, final IndentInfoStorage indentInfoStorage) {
+    Block block = model.getRootBlock();
+    final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), block, settings, indentOptions, affectedRange);
+    LeafBlockWrapper current = processor.getFirstTokenBlock();
+    while (current != null) {
+      WhiteSpace whiteSpace = current.getWhiteSpace();
+      
+      if (!whiteSpace.isReadOnly()) {
+        if (whiteSpace.getTextRange().getStartOffset() > affectedRange.getStartOffset()) {
+          if (whiteSpace.containsLineFeeds()) {
+            whiteSpace.setLineFeedsAreReadOnly(true);
+            current.setIndentFromParent(indentInfoStorage.getIndentInfo(current.getStartOffset()));
+          } else {
+            whiteSpace.setReadOnly(true);
+          }
+        } else {
+          if (!changeWSBeforeFirstElement) {
+            whiteSpace.setReadOnly(true);
+          } else {
+            if (!changeLineFeedsBeforeFirstElement) {
+              whiteSpace.setLineFeedsAreReadOnly(true);
+            }
+            final SpacePropertyImpl spaceProperty = current.getSpaceProperty();
+            if (spaceProperty != null) {
+              if (!keepLineBreaks) {
+                spaceProperty.setKeepLineBreaks(false);
+              }
+              if (!keepBlankLines) {              
+                spaceProperty.setKeepLineBreaks(0);          
+              }
+            }
+          }
+        }        
+      }
+      current = current.getNextBlock();
+    }
+    processor.format(model);
+  }
+
+  public void saveIndents(final FormattingModel model, final TextRange affectedRange,
+                          IndentInfoStorage storage,
+                          final CodeStyleSettings settings,
+                          final CodeStyleSettings.IndentOptions indentOptions) {
+    final Block block = model.getRootBlock();
+    final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), block, settings, indentOptions, affectedRange);
+    LeafBlockWrapper current = processor.getFirstTokenBlock();
+    while (current != null) {
+      WhiteSpace whiteSpace = current.getWhiteSpace();
+      
+      if (!whiteSpace.isReadOnly() && whiteSpace.containsLineFeeds()) {
+        if (whiteSpace.getTextRange().getStartOffset() > affectedRange.getStartOffset()) {
+          storage.saveIndentInfo(current.calcIndentFromParent(), current.getTextRange().getStartOffset());
+        }        
+      }
+      current = current.getNextBlock();
+    }
+  }
+
+  public FormattingModel createFormattingModelForPsiFile(final PsiFile file,
+                                                         final Block rootBlock,
+                                                         final CodeStyleSettings settings) {
+    return new PsiBasedFormattingModel(file, settings, rootBlock);
   }
 
 

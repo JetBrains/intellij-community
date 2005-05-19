@@ -3,12 +3,12 @@ package com.intellij.refactoring.migration;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 /**
  * @author dsl
  */
 public class MigrationTest extends MultiFileTestCase {
-
   public void testUnexistingClassInUnexistingPackage() throws Exception {
     doTest(createAction(new MigrationMap(new MigrationMapEntry[]{
       new MigrationMapEntry("qqq.aaa.Yahoo", "java.lang.String", MigrationMapEntry.CLASS, false)

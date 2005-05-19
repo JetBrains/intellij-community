@@ -1,5 +1,4 @@
 public class Test {
-
     public void use1() {
         int p2 = y;
         p2++;
