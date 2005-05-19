@@ -11,6 +11,6 @@ class X {
     
     int yyy(int z) {
         Test t;
-        return t.method(z, z+Test.i);
+        return t.method(z, z + Test.i);
     }
 }

@@ -7,7 +7,7 @@ public class InnerOuter {
 
   Inner instance = new Inner() {
     public void exec(final String myField) {
-        myField.charAt(1);
+      myField.charAt(1);
     }
   };
 
