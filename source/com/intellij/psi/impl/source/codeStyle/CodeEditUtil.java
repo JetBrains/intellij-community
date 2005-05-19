@@ -93,7 +93,7 @@ public class CodeEditUtil {
   public static void removeChild(CompositeElement parent, ASTNode child) {
     removeChildren(parent, child, child);
   }
-
+  
   public static void removeChildren(CompositeElement parent, ASTNode first, ASTNode last) {
     checkAllWhiteSpaces(parent);
     boolean doNotAdjust = first == parent.getFirstChildNode(); 
@@ -121,25 +121,28 @@ public class CodeEditUtil {
       ASTNode elementBeforeNext = TreeUtil.prevLeaf(nextElement);
       
       if (isWS(prevElement) && isWS(elementBeforeNext) && prevElement != elementBeforeNext) {
-        //adjustWSBefore |= !elementBeforeNext.textContains('\n');
-        if (adjustWSBefore) {
-          String text = composeNewWS(prevElement.getText(), elementBeforeNext.getText(), options);
-          if (prevElement == parent.getFirstChildNode()) {
-            delete(prevElement);
-          } else {
-            delete(elementBeforeNext);            
-          }
-          FormatterUtil.replaceWhiteSpace(text,
-                                          nextElement,
-                                          ElementType.WHITE_SPACE);                      
+        if (!elementBeforeNext.textContains('\n') && prevElement.textContains('\n')) { 
+          /*
+              void foo1(){}
+              static void foo2(){} 
+              remove static
+          */
+          delete(elementBeforeNext);
         } else {
-          if (elementBeforeNext.textContains('\n')) {
-            delete(prevElement);
-          } else {
-            delete(elementBeforeNext);
+          String text = composeNewWS(prevElement.getText(), elementBeforeNext.getText(), options);
+          delete(prevElement);
+          if (!text.equals(elementBeforeNext.getText())){
+            final CharTable charTable = SharedImplUtil.findCharTableByTree(elementBeforeNext);          
+            LeafElement newWhiteSpace = Factory.createSingleLeafElement(elementBeforeNext.getElementType(), 
+                                                                        text.toCharArray(), 0, text.length(),
+                                                                        charTable, 
+                                                                        SharedImplUtil.getManagerByTree(elementBeforeNext));
+            
+            elementBeforeNext.getTreeParent().replaceChild(elementBeforeNext, 
+                                                           newWhiteSpace);
           }
+          
         }
-        
       }
       
       
@@ -315,18 +318,12 @@ public class CodeEditUtil {
   private static String composeNewWS(final String firstText,
                                      final String secondText,
                                      final CodeStyleSettings.IndentOptions options) {
-    if (firstText == null) {
-      return secondText;      
-    } else if (secondText == null) {
-      return firstText;
-    } else {
-      IndentInfo first = createInfo(firstText, options);
-      IndentInfo second = createInfo(secondText, options);
-      final int lineFeeds = Math.max(first.getLineFeeds(), second.getLineFeeds());
-      return new IndentInfo(lineFeeds,
-                            0,
-                            second.getSpaces()).generateNewWhiteSpace(options);
-    }
+    IndentInfo first = createInfo(firstText, options);
+    IndentInfo second = createInfo(secondText, options);
+    final int lineFeeds = Math.max(first.getLineFeeds(), second.getLineFeeds());
+    return new IndentInfo(lineFeeds,
+                          0,
+                          second.getSpaces()).generateNewWhiteSpace(options);
   }
 
   private static IndentInfo createInfo(final String text, final CodeStyleSettings.IndentOptions options) {
@@ -336,8 +333,8 @@ public class CodeEditUtil {
       final char c = text.charAt(i);
       switch(c) {
         case ' ': spaces++; break;
-        case '\t': spaces += options.TAB_SIZE;
-        case '\n': lf++;
+        case '\t': spaces += options.TAB_SIZE; break;
+        case '\n': lf++; spaces = 0; break;
       }
     }
     return new IndentInfo(lf, 0, spaces);

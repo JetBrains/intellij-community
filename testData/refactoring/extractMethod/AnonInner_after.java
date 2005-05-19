@@ -14,7 +14,7 @@ class Foo {
     private JButton createOKButton() {
         return new MyButton( "OK" ) {
             public void actionPerformed( ActionEvent e ) {
-                newMethod(); 
+                newMethod();
             }
         };
     }
