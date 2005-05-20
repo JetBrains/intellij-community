@@ -91,7 +91,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   public void visitXmlToken(XmlToken token) {
     if (token.getTokenType() == XmlTokenType.XML_NAME) {
       PsiElement element = token.getPrevSibling();
-
+      while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
+      
       if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_START_TAG_START) {
         PsiElement parent = element.getParent();
 
