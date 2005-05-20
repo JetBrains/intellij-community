@@ -26,7 +26,6 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 class ParameterInfoController {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.ParameterInfoController");
@@ -263,10 +262,9 @@ class ParameterInfoController {
   }
 
   public static void nextParameter (Editor editor, int lbraceOffset) {
-    ArrayList controllers = getAllControllers(editor);
-    for (Iterator iterator = controllers.iterator(); iterator.hasNext();) {
-      ParameterInfoController controller = (ParameterInfoController)iterator.next();
-      if (!controller.myHint.isVisible()){
+    ArrayList<ParameterInfoController> controllers = getAllControllers(editor);
+    for (final ParameterInfoController controller : controllers) {
+      if (!controller.myHint.isVisible()) {
         controller.dispose();
         continue;
       }
@@ -278,10 +276,9 @@ class ParameterInfoController {
   }
 
   public static void prevParameter (Editor editor, int lbraceOffset) {
-    ArrayList controllers = getAllControllers(editor);
-    for (Iterator iterator = controllers.iterator(); iterator.hasNext();) {
-      ParameterInfoController controller = (ParameterInfoController)iterator.next();
-      if (!controller.myHint.isVisible()){
+    ArrayList<ParameterInfoController> controllers = getAllControllers(editor);
+    for (ParameterInfoController controller : controllers) {
+      if (!controller.myHint.isVisible()) {
         controller.dispose();
         continue;
       }
@@ -325,8 +322,7 @@ class ParameterInfoController {
     int curOffset = argList.getTextRange().getStartOffset();
     PsiElement[] children = argList.getChildren();
     int index = 0;
-    for(int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
+    for (PsiElement child : children) {
       curOffset += child.getTextLength();
       if (offset < curOffset) break;
       if (child instanceof PsiJavaToken && ((PsiJavaToken)child).getTokenType() == JavaTokenType.COMMA) {
@@ -418,7 +414,7 @@ class ParameterInfoController {
   public static PsiExpressionList findArgumentList(PsiFile file, int offset, int lbraceOffset){
     char[] chars = file.textToCharArray();
     if (chars == null) return null;
-    if (offset == chars.length) offset--;
+    if (offset >= chars.length) offset = chars.length - 1;
     int offset1 = CharArrayUtil.shiftBackward(chars, offset, " \t\n\r");
     if (offset1 < 0) return null;
     boolean acceptRparenth = true;
@@ -488,9 +484,7 @@ class ParameterInfoController {
 
         if (offset <= children[0].getTextRange().getStartOffset()) return null;
 
-        for (int i = 0; i < children.length; i++) {
-          PsiElement child = children[i];
-
+        for (PsiElement child : children) {
           final TextRange range = child.getTextRange();
           if (range.getStartOffset() <= offset && range.getEndOffset() > offset) return tag;
 
