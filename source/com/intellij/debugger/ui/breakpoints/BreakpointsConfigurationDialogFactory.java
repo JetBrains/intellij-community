@@ -4,23 +4,21 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.HelpID;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.TabbedPaneWrapper;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -97,91 +95,62 @@ public class BreakpointsConfigurationDialogFactory {
     protected JComponent createCenterPanel() {
       myTabbedPane = new TabbedPaneWrapper();
       myPanel = new JPanel(new BorderLayout());
-      myLineBreakpointsPanel = new BreakpointPanel(new BreakpointTableModel(), new LineBreakpointPropertiesPanel(myProject));
-      myLineBreakpointsPanel.getAddBreakpointButton().setVisible(false);
-      initPanel(myLineBreakpointsPanel);
+      myLineBreakpointsPanel = new BreakpointPanel(new BreakpointTableModel(), new LineBreakpointPropertiesPanel(myProject), new BreakpointPanel.BreakpointPanelAction[] {
+        new BreakpointPanel.GotoSourceAction(myProject) {
+          public void actionPerformed(ActionEvent e) {
+            super.actionPerformed(e);
+            close(OK_EXIT_CODE);
+          }
+        },
+        new BreakpointPanel.ViewSourceAction(myProject),
+        new BreakpointPanel.RemoveAction(myProject)
+      });
 
-      myExceptionBreakpointsPanel = new BreakpointPanel(new BreakpointTableModel(), new ExceptionBreakpointPropertiesPanel(myProject)) {
-        public void updateButtons() {
-          super.updateButtons();
-          if(getRemoveBreakpointButton().isEnabled()) {
-            Breakpoint[] selectedBreakpoints = getSelectedBreakpoints();
-            for (int i = 0; i < selectedBreakpoints.length; i++) {
-              Breakpoint bp = selectedBreakpoints[i];
-              if (bp instanceof AnyExceptionBreakpoint) {
-                getRemoveBreakpointButton().setEnabled(false);
+      myExceptionBreakpointsPanel = new BreakpointPanel(new BreakpointTableModel(), new ExceptionBreakpointPropertiesPanel(myProject), new BreakpointPanel.BreakpointPanelAction[] {
+        new AddExceptionBreakpointAction(),
+        new BreakpointPanel.RemoveAction(myProject) {
+          protected void update() {
+            super.update();
+            if(getButton().isEnabled()) {
+              Breakpoint[] selectedBreakpoints = getPanel().getSelectedBreakpoints();
+              for (int i = 0; i < selectedBreakpoints.length; i++) {
+                Breakpoint bp = selectedBreakpoints[i];
+                if (bp instanceof AnyExceptionBreakpoint) {
+                  getButton().setEnabled(false);
+                }
               }
             }
           }
-        }
-      };
-      AddExceptionBreakpointAction addExceptionBreakpointAction = new AddExceptionBreakpointAction();
-      myExceptionBreakpointsPanel.getAddBreakpointButton().addActionListener(addExceptionBreakpointAction);
-      myExceptionBreakpointsPanel.getTable().registerKeyboardAction(
-        addExceptionBreakpointAction,
-        KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0),
-        JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
-      );
-      myExceptionBreakpointsPanel.getViewSourceButton().setVisible(false);
-      myExceptionBreakpointsPanel.getGotoSourceButton().setVisible(false);
-      RemoveBreakpointAction removeExceptionBreakpointAction = new RemoveBreakpointAction(myExceptionBreakpointsPanel);
-      final JButton removeExceptionBreakpointButton = myExceptionBreakpointsPanel.getRemoveBreakpointButton();
-      removeExceptionBreakpointButton.addActionListener(removeExceptionBreakpointAction);
-      myExceptionBreakpointsPanel.getTable().registerKeyboardAction(
-        removeExceptionBreakpointAction,
-        KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
-        JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
-      );
-      myExceptionBreakpointsPanel.addListSelectionListener(new ListSelectionListener() {
-        public void valueChanged(ListSelectionEvent e) {
-          JTable table = myExceptionBreakpointsPanel.getTable();
-          boolean shouldEnable = (table.getModel().getRowCount() > 0) && (table.getSelectedRow() >= 0);
-          if (shouldEnable) {
-            BreakpointTableModel model = (BreakpointTableModel)table.getModel();
-            int[] rows = table.getSelectedRows();
-            for (int idx = 0; idx < rows.length; idx++) {
-              Breakpoint breakpoint = model.getBreakpoint(rows[idx]);
-              if (breakpoint instanceof AnyExceptionBreakpoint) {
-                shouldEnable = false;
-                break;
-              }
-            }
-          }
-          removeExceptionBreakpointButton.setEnabled(shouldEnable);
         }
       });
-      removeExceptionBreakpointButton.setEnabled(false);
+      
+      myFieldBreakpointsPanel = new BreakpointPanel(new BreakpointTableModel(), new FieldBreakpointPropertiesPanel(myProject), new BreakpointPanel.BreakpointPanelAction[] {
+        new AddFieldBreakpointAction(),
+        new BreakpointPanel.GotoSourceAction(myProject) {
+          public void actionPerformed(ActionEvent e) {
+            super.actionPerformed(e);
+            close(OK_EXIT_CODE);
+          }
+        },
+        new BreakpointPanel.ViewSourceAction(myProject),
+        new BreakpointPanel.RemoveAction(myProject)
+      });
 
-      myFieldBreakpointsPanel = new BreakpointPanel(new BreakpointTableModel(), new FieldBreakpointPropertiesPanel(myProject));
-      AddFieldBreakpointAction addFieldBreakpointAction = new AddFieldBreakpointAction();
-      myFieldBreakpointsPanel.getAddBreakpointButton().addActionListener(addFieldBreakpointAction);
-      myFieldBreakpointsPanel.getTable().registerKeyboardAction(
-        addFieldBreakpointAction,
-        KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0),
-        JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
-      );
-      initPanel(myFieldBreakpointsPanel);
-
-      myMethodBreakpointsPanel = new BreakpointPanel(new BreakpointTableModel(), new MethodBreakpointPropertiesPanel(myProject));
-      myMethodBreakpointsPanel.getAddBreakpointButton().setVisible(false);
-      initPanel(myMethodBreakpointsPanel);
+      myMethodBreakpointsPanel = new BreakpointPanel(new BreakpointTableModel(), new MethodBreakpointPropertiesPanel(myProject), new BreakpointPanel.BreakpointPanelAction[] {
+        new BreakpointPanel.GotoSourceAction(myProject) {
+          public void actionPerformed(ActionEvent e) {
+            super.actionPerformed(e);
+            close(OK_EXIT_CODE);
+          }
+        },
+        new BreakpointPanel.ViewSourceAction(myProject),
+        new BreakpointPanel.RemoveAction(myProject)
+      });
 
       addPanel(myLineBreakpointsPanel, LINE_BREAKPOINTS_NAME);
       addPanel(myExceptionBreakpointsPanel, EXCEPTION_BREAKPOINTS_NAME);
       addPanel(myFieldBreakpointsPanel, FIELD_WATCHPOINTS_NAME);
       addPanel(myMethodBreakpointsPanel, METHOD_BREAKPOINTS_NAME);
-
-      ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet();
-      new AnAction() {
-        public void actionPerformed(AnActionEvent e){
-          gotoSource();
-        }
-      }.registerCustomShortcutSet(shortcutSet, myLineBreakpointsPanel.getPanel());
-      new AnAction() {
-        public void actionPerformed(AnActionEvent e){
-          gotoSource();
-        }
-      }.registerCustomShortcutSet(shortcutSet, myMethodBreakpointsPanel.getPanel());
 
       myTabbedPane.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -230,19 +199,7 @@ public class BreakpointsConfigurationDialogFactory {
       JComponent selectedComponent = myTabbedPane.getSelectedComponent();
       return selectedComponent != null ? (BreakpointPanel)selectedComponent.getClientProperty(BREAKPOINT_PANEL) : null;
     }
-
-    private void initPanel(final BreakpointPanel panel) {
-      panel.getGotoSourceButton().addActionListener(myGotoSourceAction);
-      panel.getViewSourceButton().addActionListener(myViewSourceAction);
-      RemoveBreakpointAction removeBreakpointAction = new RemoveBreakpointAction(panel);
-      panel.getRemoveBreakpointButton().addActionListener(removeBreakpointAction);
-      panel.getTable().registerKeyboardAction(
-        removeBreakpointAction,
-        KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
-        JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
-      );
-    }
-
+    
     public JComponent getPreferredFocusedComponent() {
       return myPreferredComponent != null ? myPreferredComponent : IdeFocusTraversalPolicy.getPreferredFocusedComponent(myTabbedPane.getComponent());
     }
@@ -327,27 +284,6 @@ public class BreakpointsConfigurationDialogFactory {
       }
     }
 
-    private AbstractAction myGotoSourceAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        gotoSource();
-      }
-    };
-
-    private void gotoSource(){
-      OpenFileDescriptor editSourceDescriptor = createEditSourceDescriptor();
-      if (editSourceDescriptor == null) return;
-      FileEditorManager.getInstance(myProject).openTextEditor(editSourceDescriptor, true);
-      close(OK_EXIT_CODE);
-    }
-
-    private AbstractAction myViewSourceAction = new AbstractAction () {
-      public void actionPerformed(ActionEvent e) {
-        OpenFileDescriptor editSourceDescriptor = createEditSourceDescriptor();
-        if (editSourceDescriptor == null) return;
-        FileEditorManager.getInstance(myProject).openTextEditor(editSourceDescriptor, false);
-      }
-    };
-
     private void updateAllTabTitles() {
       for (int idx = 0; idx < myTabbedPane.getTabCount(); idx++) {
         updateTabTitle(idx);
@@ -380,7 +316,7 @@ public class BreakpointsConfigurationDialogFactory {
       return false;
     }
 
-    private class AddExceptionBreakpointAction implements ActionListener {
+    private class AddExceptionBreakpointAction extends BreakpointPanel.AddAction {
       public void actionPerformed(ActionEvent e) {
         final PsiClass throwableClass = PsiManager.getInstance(myProject).findClass("java.lang.Throwable", GlobalSearchScope.allScope(myProject));
         TreeClassChooser chooser =
@@ -399,7 +335,7 @@ public class BreakpointsConfigurationDialogFactory {
       }
     }
 
-    private class AddFieldBreakpointAction implements ActionListener {
+    private class AddFieldBreakpointAction extends BreakpointPanel.AddAction {
       public void actionPerformed(ActionEvent e) {
         AddFieldBreakpointDialog dialog = new AddFieldBreakpointDialog(myProject) {
           protected boolean validateData() {
@@ -452,60 +388,7 @@ public class BreakpointsConfigurationDialogFactory {
         dialog.show();
       }
     }
-
-    private class RemoveBreakpointAction implements ActionListener {
-      private BreakpointPanel myPanel;
-
-      public RemoveBreakpointAction(BreakpointPanel panel) {
-        myPanel = panel;
-      }
-
-      public void actionPerformed(ActionEvent e) {
-        Breakpoint[] breakpoints = myPanel.getSelectedBreakpoints();
-        if (breakpoints != null) {
-          for (int idx = 0; idx < breakpoints.length; idx++) {
-            if (breakpoints[idx] instanceof AnyExceptionBreakpoint) {
-              return;
-            }
-          }
-          myPanel.removeSelectedBreakpoints();
-          BreakpointManager manager = getBreakpointManager();
-          for (int idx = 0; idx < breakpoints.length; idx++) {
-            manager.removeBreakpoint(breakpoints[idx]);
-          }
-        }
-        myPanel.getTable().requestFocus();
-        updateAllTabTitles();
-      }
-    }
-
-    private OpenFileDescriptor createEditSourceDescriptor() {
-      BreakpointPanel breakpointsPanel = getSelectedPanel();
-      if (breakpointsPanel == null) return null;
-      Breakpoint[] breakpoints = breakpointsPanel.getSelectedBreakpoints();
-      if (breakpoints == null || breakpoints.length == 0) return null;
-      Breakpoint br = breakpoints[0];
-      int line;
-      Document doc;
-      if (br instanceof BreakpointWithHighlighter) {
-        BreakpointWithHighlighter breakpoint = (BreakpointWithHighlighter)br;
-        doc = breakpoint.getDocument();
-        line = breakpoint.getLineIndex();
-      }
-      else {
-        return null;
-      }
-      if (line < 0 || line >= doc.getLineCount()) return null;
-      int offset = doc.getLineStartOffset(line);
-      if(br instanceof FieldBreakpoint) {
-        PsiField field = ((FieldBreakpoint) br).getPsiField();
-        if(field != null) {
-          offset = field.getTextOffset();
-        }
-      }
-      VirtualFile vFile = FileDocumentManager.getInstance().getFile(doc);
-      return new OpenFileDescriptor(myProject, vFile, offset);
-    }
+    
   }
 
 }

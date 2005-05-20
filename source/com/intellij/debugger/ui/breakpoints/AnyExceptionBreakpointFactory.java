@@ -15,6 +15,10 @@ public class AnyExceptionBreakpointFactory extends BreakpointFactory{
     return new AnyExceptionBreakpoint(project);
   }
 
+  public BreakpointPanel createBreakpointPanel(Project project) {
+    return null;
+  }
+
   public String getBreakpointCategory() {
     return AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT;
   }

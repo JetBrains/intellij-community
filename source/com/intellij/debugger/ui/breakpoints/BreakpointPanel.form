@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.debugger.ui.breakpoints.BreakpointPanel">
-  <grid id="800c4" binding="myPanel" row-count="2" column-count="1" hgap="-1" vgap="-1">
+  <grid id="800c4" binding="myPanel" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="42" y="71" width="300" height="181"/>
+      <xy x="42" y="71" width="312" height="181"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="9a369" binding="myBreakPointsPanel" row-count="1" column-count="2" hgap="7" vgap="-1">
+      <grid id="9a369" binding="myBreakPointsPanel" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="7" vgap="-1">
         <margin top="0" left="5" bottom="5" right="5"/>
         <constraints>
-          <xy x="0" y="0" width="300" height="136"/>
+          <xy x="0" y="0" width="312" height="136"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -21,72 +21,29 @@
           <xy id="c9dc2" binding="myTablePlace" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="5" y="0" width="191" height="131"/>
+              <xy x="5" y="0" width="275" height="131"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children/>
           </xy>
-          <grid id="73b7b" row-count="5" column-count="1" hgap="-1" vgap="-1">
+          <xy id="73b7b" binding="myButtonsPanel" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="203" y="0" width="92" height="131"/>
+              <xy x="287" y="0" width="20" height="131"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
             <border type="none"/>
-            <children>
-              <component id="2e320" class="javax.swing.JButton" binding="myAddBreakpointButton">
-                <constraints>
-                  <xy x="0" y="0" width="92" height="24"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
-                </constraints>
-                <properties>
-                  <text value="&amp;Add..."/>
-                </properties>
-              </component>
-              <component id="ca310" class="javax.swing.JButton" binding="myGotoSourceButton">
-                <constraints>
-                  <xy x="0" y="29" width="92" height="24"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
-                </constraints>
-                <properties>
-                  <text value="&amp;Go to"/>
-                </properties>
-              </component>
-              <component id="4edff" class="javax.swing.JButton" binding="myViewSourceButton">
-                <constraints>
-                  <xy x="0" y="58" width="92" height="24"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
-                </constraints>
-                <properties>
-                  <text value="View &amp;Source"/>
-                </properties>
-              </component>
-              <component id="4be1d" class="javax.swing.JButton" binding="myRemoveBreakpointButton">
-                <constraints>
-                  <xy x="0" y="87" width="92" height="24"/>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
-                </constraints>
-                <properties>
-                  <text value="&amp;Remove"/>
-                </properties>
-              </component>
-              <vspacer id="4be9b">
-                <constraints>
-                  <xy x="40" y="111" width="11" height="20"/>
-                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
-                </constraints>
-              </vspacer>
-            </children>
-          </grid>
+            <children/>
+          </xy>
         </children>
       </grid>
       <xy id="96060" binding="myPropertiesPanelPlace" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="141" width="300" height="40"/>
+          <xy x="0" y="141" width="312" height="40"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>

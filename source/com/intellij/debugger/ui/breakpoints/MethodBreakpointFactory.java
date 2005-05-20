@@ -15,6 +15,10 @@ public class MethodBreakpointFactory extends BreakpointFactory{
     return new MethodBreakpoint(project);
   }
 
+  public BreakpointPanel createBreakpointPanel(Project project) {
+    return null;
+  }
+
   public String getBreakpointCategory() {
     return MethodBreakpoint.CATEGORY;
   }
