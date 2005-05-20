@@ -385,6 +385,8 @@ public abstract class GenericsHighlightUtil {
 
   private static boolean isGenericToRaw(PsiType lType, PsiType rType) {
     if (lType == null || rType == null) return false;
+    if (lType instanceof PsiArrayType && rType instanceof PsiArrayType) return isGenericToRaw(((PsiArrayType)lType).getComponentType(),
+                                                                                              ((PsiArrayType)rType).getComponentType());
     if (!(lType instanceof PsiClassType) || !(rType instanceof PsiClassType)) return false;
     if (!((PsiClassType)rType).isRaw()) return false;
     final PsiClassType lClassType = (PsiClassType)lType;
