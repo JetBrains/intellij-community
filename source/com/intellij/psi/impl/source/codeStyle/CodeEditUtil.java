@@ -125,6 +125,7 @@ public class CodeEditUtil {
   }
 
   private static boolean mustKeepFirstIndent(final ASTNode elementBeforeChange, final CompositeElement parent) {
+    if (elementBeforeChange == null) return true;
     if (elementBeforeChange.getElementType() != ElementType.WHITE_SPACE) {
       return false;
     }

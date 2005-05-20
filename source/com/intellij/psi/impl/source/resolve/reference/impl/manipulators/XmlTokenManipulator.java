@@ -23,6 +23,6 @@ public class XmlTokenManipulator implements ElementManipulator<XmlToken> {
     FileElement holder = new DummyHolder(xmlToken.getManager(), null).getTreeElement();
     LeafElement leaf = Factory.createLeafElement(tokenType, buffer, 0, buffer.length, -1, holder.getCharTable());
     TreeUtil.addChildren(holder, leaf);
-    return (XmlToken)xmlToken.getParent().replace(leaf.getPsi());
+    return (XmlToken)xmlToken.replace(leaf.getPsi());
   }
 }
