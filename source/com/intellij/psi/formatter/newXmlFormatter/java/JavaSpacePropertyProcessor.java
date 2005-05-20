@@ -757,5 +757,10 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
       createSpaceInCode(false);
     }
   }
-  
+
+  public void visitTypeParameterList(PsiTypeParameterList list) {
+    if (myRole2 == ChildRole.GT_IN_TYPE_LIST) {
+      createSpaceInCode(false);
+    }
+  }
 }
