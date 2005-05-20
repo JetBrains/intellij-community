@@ -25,11 +25,10 @@ class JavaWithCastSurrounder extends JavaExpressionSurrounder {
     final Template template = generateTemplate(project, expr.getText(), types);
     TextRange range = expr.getTextRange();
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-    int offset = range.getStartOffset();
-    editor.getCaretModel().moveToOffset(offset);
+    editor.getCaretModel().moveToOffset(range.getStartOffset());
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     TemplateManager.getInstance(project).startTemplate(editor, template);
-    return new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
+    return null;
   }
 
   private Template generateTemplate(Project project, String exprText, final PsiType[] suggestedTypes) {
