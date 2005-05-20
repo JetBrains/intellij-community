@@ -3,9 +3,9 @@ package com.intellij.lang.properties.psi.impl;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
-import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -55,11 +55,16 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return myProperties;
   }
 
+  private ASTNode getPropertiesList() {
+    return getNode().getFirstChildNode();
+  }
+
   private void ensurePropertiesLoaded() {
     if (myPropertiesMap != null) {
       return;
     }
-    final ASTNode[] props = getNode().findChildrenByFilter(PropertiesElementTypes.PROPERTIES);
+
+    final ASTNode[] props = getPropertiesList().findChildrenByFilter(PropertiesElementTypes.PROPERTIES);
     myPropertiesMap = new LinkedHashMap<String, List<Property>>();
     myProperties = new ArrayList<Property>(props.length);
     for (final ASTNode prop : props) {

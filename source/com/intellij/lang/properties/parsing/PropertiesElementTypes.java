@@ -2,7 +2,6 @@ package com.intellij.lang.properties.parsing;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.lang.properties.parsing.PropertiesElementType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,6 +13,6 @@ import com.intellij.lang.properties.parsing.PropertiesElementType;
 public interface PropertiesElementTypes {
   IElementType FILE = new PropertiesElementType("FILE");
   IElementType PROPERTY = new PropertiesElementType("PROPERTY");
-
+  IElementType PROPERTIES_LIST = new PropertiesElementType("PROPERTIES_LIST");
   TokenSet PROPERTIES = TokenSet.create(new IElementType[]{PROPERTY});
 }

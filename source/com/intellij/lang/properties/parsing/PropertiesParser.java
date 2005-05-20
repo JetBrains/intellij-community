@@ -15,9 +15,11 @@ import com.intellij.psi.tree.IElementType;
 public class PropertiesParser implements PsiParser {
   public ASTNode parse(IElementType root, PsiBuilder builder) {
     final PsiBuilder.Marker rootMarker = builder.mark();
+    final PsiBuilder.Marker propertiesList = builder.mark();
     while (!builder.eof()) {
       Parsing.parseProperty(builder);
     }
+    propertiesList.done(PropertiesElementTypes.PROPERTIES_LIST);
     rootMarker.done(root);
     return builder.getTreeBuilt();
   }

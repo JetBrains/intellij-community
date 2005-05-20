@@ -4,8 +4,8 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
-import com.intellij.lang.properties.parsing.PropertiesParser;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
+import com.intellij.lang.properties.psi.impl.PropertiesListImpl;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,6 +58,9 @@ public class PropertiesParserDefinition implements ParserDefinition {
     final IElementType type = node.getElementType();
     if (type == PropertiesElementTypes.PROPERTY) {
       return new PropertyImpl(node);
+    }
+    else if (type == PropertiesElementTypes.PROPERTIES_LIST) {
+      return new PropertiesListImpl(node);
     }
 
     LOG.error("Alien element type [" + type + "]. Can't create Property PsiElement for that.");
