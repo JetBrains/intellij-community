@@ -18,11 +18,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.pom.impl.PomTransactionBase;
-import com.intellij.pom.event.PomModelEvent;
-import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.PomModel;
+import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.impl.PomTransactionBase;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -30,8 +29,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IChameleonElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -214,14 +213,8 @@ public class CodeEditUtil {
           delete(elementBeforeNext);
         } else {
           final String text = composeNewWS(prevElement.getText(), elementBeforeNext.getText(), options);
-          final ASTNode elementBeforeNext1 = elementBeforeNext;
-
-          runTransaction(prevElement, elementBeforeNext1, new Runnable() {
-            public void run() {
-              delete(elementBeforeNext1);
-              replace(prevElement, text);
-            }
-          });
+          delete(prevElement);
+          replace(elementBeforeNext, text);
         }
       }
 
@@ -230,15 +223,11 @@ public class CodeEditUtil {
 
       if (isWS(elementBeforeNext) && whiteSpaceHasInvalidPosition(elementBeforeNext)) {
         final ASTNode elementBeforeNext2 = elementBeforeNext;
-        runTransaction(elementBeforeNext, FormatterUtil.getWsCandidate(nextElement), new Runnable() {
-          public void run() {
-            final String text = elementBeforeNext2.getText();
-            delete(elementBeforeNext2);
-            FormatterUtil.replaceWhiteSpace(text,
-                                            nextElement,
-                                            ElementType.WHITE_SPACE);
-          }
-        });
+        final String text = elementBeforeNext2.getText();        
+        delete(elementBeforeNext2);
+        FormatterUtil.replaceWhiteSpace(text,
+                                        nextElement,
+                                        ElementType.WHITE_SPACE);
       }
 
 
