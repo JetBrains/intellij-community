@@ -170,8 +170,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     myNameSuggestionLabel.setLabelFor(myNameField.getFocusableComponent());
 
     Set<String> possibleClassNames = new LinkedHashSet<String>();
-    for (int i = 0; i < myOccurrences.length; i++) {
-      final PsiExpression occurrence = myOccurrences[i];
+    for (final PsiExpression occurrence : myOccurrences) {
       final PsiClass parentClass = new IntroduceConstantHandler().getParentClass(occurrence);
       if (parentClass != null && parentClass.getQualifiedName() != null) {
         possibleClassNames.add(parentClass.getQualifiedName());
@@ -328,8 +327,7 @@ class IntroduceConstantDialog extends DialogWrapper {
       visible.add(PsiModifier.PROTECTED);
       visible.add(PsiModifier.PACKAGE_LOCAL);
       visible.add(PsiModifier.PUBLIC);
-      for (int i = 0; i < myOccurrences.length; i++) {
-        PsiExpression occurrence = myOccurrences[i];
+      for (PsiExpression occurrence : myOccurrences) {
         final PsiManager psiManager = PsiManager.getInstance(myProject);
         for (Iterator<String> iterator = visible.iterator(); iterator.hasNext();) {
           String modifier = iterator.next();
@@ -415,7 +413,9 @@ class IntroduceConstantDialog extends DialogWrapper {
           return aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC);
         }
       }, null);
-      chooser.selectDirectory(myTargetClass.getContainingFile().getContainingDirectory());
+      if (myTargetClass != null) {
+        chooser.selectDirectory(myTargetClass.getContainingFile().getContainingDirectory());
+      }
       chooser.showDialog();
       PsiClass aClass = chooser.getSelectedClass();
       if (aClass != null) {
