@@ -15,6 +15,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ForCanBeForeachInspection extends StatementInspection{
     private final ForCanBeForeachFix fix = new ForCanBeForeachFix();
@@ -53,7 +54,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
 
             final PsiElement forElement = descriptor.getPsiElement();
             final PsiForStatement forStatement =
@@ -71,7 +72,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
 
         private String createCollectionIterationText(PsiForStatement forStatement,
                                                      Project project)
-                                                                      throws IncorrectOperationException{
+                throws IncorrectOperationException{
             final int length = forStatement.getText().length();
             final StringBuffer out = new StringBuffer(length);
             final PsiStatement body = forStatement.getBody();
@@ -108,15 +109,16 @@ public class ForCanBeForeachInspection extends StatementInspection{
             final PsiManager psiManager = PsiManager.getInstance(project);
             final PsiElementFactory elementFactory =
                     psiManager.getElementFactory();
-            PsiType contentType;
-            contentType = elementFactory.createTypeFromText(contentTypeString,
-                                                            forStatement);
+            final PsiType contentType =
+                    elementFactory.createTypeFromText(contentTypeString, forStatement);
             final String iteratorName = iterator.getName();
             final boolean isDeclaration =
-                    isIteratorNextDeclaration(firstStatement, iteratorName, contentTypeString);
+                    isIteratorNextDeclaration(firstStatement, iteratorName,
+                                              contentTypeString);
             if(isDeclaration){
                 final PsiDeclarationStatement decl =
                         (PsiDeclarationStatement) firstStatement;
+                assert decl != null;
                 final PsiElement[] declaredElements =
                         decl.getDeclaredElements();
                 final PsiLocalVariable localVar =
@@ -183,6 +185,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             if(isDeclaration){
                 final PsiDeclarationStatement decl =
                         (PsiDeclarationStatement) firstStatement;
+                assert decl != null;
                 final PsiElement[] declaredElements =
                         decl.getDeclaredElements();
                 final PsiLocalVariable localVar =
@@ -344,17 +347,14 @@ public class ForCanBeForeachInspection extends StatementInspection{
             if(element == null){
                 return false;
             }
-            if(element instanceof PsiTypeCastExpression)
-            {
+            if(element instanceof PsiTypeCastExpression){
 
-                final PsiTypeCastExpression castExpression = ((PsiTypeCastExpression) element);
+                final PsiTypeCastExpression castExpression = (PsiTypeCastExpression) element;
                 final PsiType type = castExpression.getType();
-                if(type == null)
-                {
+                if(type == null){
                     return false;
                 }
-                if(!type.getPresentableText().equals(contentType))
-                {
+                if(!type.getPresentableText().equals(contentType)){
                     return false;
                 }
                 final PsiExpression operand =
@@ -414,10 +414,16 @@ public class ForCanBeForeachInspection extends StatementInspection{
                                                               true);
         }
 
-        private PsiStatement getFirstStatement(PsiStatement body){
+        @Nullable private PsiStatement getFirstStatement(PsiStatement body){
             if(body instanceof PsiBlockStatement){
                 final PsiBlockStatement block = (PsiBlockStatement) body;
-                return block.getCodeBlock().getStatements()[0];
+                final PsiCodeBlock codeBlock = block.getCodeBlock();
+                final PsiStatement[] statements = codeBlock.getStatements();
+                if(statements.length > 0){
+                    return statements[0];
+                } else{
+                    return null;
+                }
             } else{
                 return body;
             }
@@ -425,7 +431,6 @@ public class ForCanBeForeachInspection extends StatementInspection{
     }
 
     private class ForCanBeForeachVisitor extends StatementInspectionVisitor{
-
         public void visitForStatement(@NotNull PsiForStatement forStatement){
             super.visitForStatement(forStatement);
             final PsiManager manager = forStatement.getManager();
@@ -588,11 +593,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
         if(isIteratorHasNextCalled(iteratorName, body)){
             return false;
         }
-        if(isIteratorAssigned(iteratorName, body)){
-            return false;
-        } else{
-            return true;
-        }
+        return !isIteratorAssigned(iteratorName, body);
     }
 
     private static int calculateCallsToIteratorNext(String iteratorName,
