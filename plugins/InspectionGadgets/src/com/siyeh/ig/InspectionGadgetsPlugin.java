@@ -271,6 +271,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(ClassLoaderInstantiationInspection.class);
         inspectionClasses.add(UnsecureRandomNumberGenerationInspection.class);
         inspectionClasses.add(SystemPropertiesInspection.class);
+        inspectionClasses.add(PublicStaticArrayFieldInspection.class);
+        inspectionClasses.add(PublicStaticCollectionFieldInspection.class);
     }
 
     private void registerImportInspections(){
@@ -488,6 +490,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(ThisEscapedInConstructorInspection.class);
         inspectionClasses.add(StaticVariableUninitializedUseInspection.class);
         inspectionClasses.add(InstanceVariableUninitializedUseInspection.class);
+        inspectionClasses.add(NonThreadSafeLazyInitializationInspection.class);
+        inspectionClasses.add(NonFinalStaticVariableUsedInClassInitializationInspection.class);
     }
 
     private void registerConfusingInspections(){

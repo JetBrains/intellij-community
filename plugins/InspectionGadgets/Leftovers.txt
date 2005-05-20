@@ -11,14 +11,9 @@
     JDBC connection createStatement()
     Look for ArrayIndexOutOfBounds errors statically
     Static initializer which creates an instance before all static variables are initialized
-    Initializing a static final field with a static non-final field
-    Use of non-final static field during class initialization
-    Incorrect lazy initialization of static field
     lock not acquired in try block and freed in finally block
     Read or write on non-buffered stream
-    Public static array field
-    Public static collection field
-
+    Malformed XPath
 
     Move and restructure categories
     Static import quickfix

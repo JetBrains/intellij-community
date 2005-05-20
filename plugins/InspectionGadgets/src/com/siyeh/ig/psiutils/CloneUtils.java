@@ -10,15 +10,17 @@ public class CloneUtils{
     }
 
     public static boolean isCloneable(@NotNull PsiClass aClass){
-       return ClassUtils.isSubclass(aClass, "java.lang.Cloneable");
+        return ClassUtils.isSubclass(aClass, "java.lang.Cloneable");
     }
 
     public static boolean isDirectlyCloneable(@NotNull PsiClass aClass){
         final PsiClass[] interfaces = aClass.getInterfaces();
-        for(PsiClass aInterfaces : interfaces){
-            final String qualifiedName = aInterfaces.getQualifiedName();
-            if("java.lang.Cloneable".equals(qualifiedName)){
-                return true;
+        for(PsiClass anInterface : interfaces){
+            if(anInterface != null){
+                final String qualifiedName = anInterface.getQualifiedName();
+                if("java.lang.Cloneable".equals(qualifiedName)){
+                    return true;
+                }
             }
         }
         return false;
