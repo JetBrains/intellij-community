@@ -173,30 +173,39 @@ public class ReplaceIfWithSwitchIntention extends Intention{
     private PsiExpression[] getValuesFromCondition(PsiExpression condition,
                                                    PsiExpression caseExpression){
         final List<PsiExpression> values = new ArrayList<PsiExpression>(10);
-        final PsiBinaryExpression binaryCond = (PsiBinaryExpression) condition;
-        getValuesFromExpression(binaryCond, caseExpression, values);
+        getValuesFromExpression(condition, caseExpression, values);
         return values.toArray(new PsiExpression[values.size()]);
     }
 
-    private void getValuesFromExpression(PsiBinaryExpression binaryCond,
+    private void getValuesFromExpression(PsiExpression expression,
                                          PsiExpression caseExpression,
                                          List<PsiExpression> values){
-        final PsiExpression lhs = binaryCond.getLOperand();
-        final PsiExpression rhs = binaryCond.getROperand();
-        final PsiJavaToken sign = binaryCond.getOperationSign();
-        final IElementType tokenType = sign.getTokenType();
-        if(JavaTokenType.OROR.equals(tokenType)){
-            getValuesFromExpression((PsiBinaryExpression) lhs, caseExpression,
-                                    values);
-            getValuesFromExpression((PsiBinaryExpression) rhs, caseExpression,
-                                    values);
-        } else{
-            if(EquivalenceChecker.expressionsAreEquivalent(caseExpression,
-                                                           rhs)){
-                values.add(lhs);
+        if(expression instanceof PsiBinaryExpression){
+            final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) expression;
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            final PsiExpression rhs = binaryExpression.getROperand();
+            final PsiJavaToken sign = binaryExpression.getOperationSign();
+            final IElementType tokenType = sign.getTokenType();
+            if(JavaTokenType.OROR.equals(tokenType)){
+                getValuesFromExpression( lhs, caseExpression,
+                                        values);
+                getValuesFromExpression( rhs, caseExpression,
+                                        values);
             } else{
-                values.add(rhs);
+                if(EquivalenceChecker.expressionsAreEquivalent(caseExpression,
+                                                               rhs)){
+                    values.add(lhs);
+                } else{
+                    values.add(rhs);
+                }
             }
+        }
+        else if (expression instanceof PsiParenthesizedExpression)
+        {
+            final PsiParenthesizedExpression parenExpression =
+                    (PsiParenthesizedExpression) expression;
+            final PsiExpression contents = parenExpression.getExpression();
+            getValuesFromExpression(contents, caseExpression, values);
         }
     }
 

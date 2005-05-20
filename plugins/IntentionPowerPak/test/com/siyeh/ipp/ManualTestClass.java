@@ -1035,12 +1035,12 @@ public class ManualTestClass
     public void testIfToSwitchEnum()
     {
         final MyEnum x = MyEnum.Red;
-        if(x == MyEnum.Red)
+        if((x == MyEnum.Red))
         {
             // test comment
             System.out.println("1");
         }
-        else if(x == MyEnum.Blue || x == MyEnum.Green)
+        else if((x == MyEnum.Blue) || x == MyEnum.Green)
         {
             System.out.println("2");
         }
