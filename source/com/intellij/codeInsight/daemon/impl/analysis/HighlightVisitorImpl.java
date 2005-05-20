@@ -219,6 +219,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkInterfaceMultipleInheritance(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkMissingPackageStatement(aClass));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkDuplicateTopLevelClass(aClass));
+    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumMustNotBeLocal(aClass));
   }
 
   public void visitClassInitializer(PsiClassInitializer initializer) {

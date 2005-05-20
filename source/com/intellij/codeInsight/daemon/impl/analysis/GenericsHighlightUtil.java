@@ -645,7 +645,7 @@ public abstract class GenericsHighlightUtil {
     if (type instanceof PsiArrayType) {
       PsiType componentType = type.getDeepComponentType();
       if (componentType instanceof PsiClassType) {
-        final PsiClassType classType = ((PsiClassType)componentType);
+        final PsiClassType classType = (PsiClassType)componentType;
         PsiType[] parameters = classType.getParameters();
         for (PsiType parameter : parameters) {
           if (!(parameter instanceof PsiWildcardType) || ((PsiWildcardType)parameter).getBound() != null) {
@@ -905,6 +905,18 @@ public abstract class GenericsHighlightUtil {
 
         return highlightInfo;
       }
+    }
+    return null;
+  }
+
+  public static HighlightInfo checkEnumMustNotBeLocal(final PsiClass aClass) {
+    if (!aClass.isEnum()) return null;
+    PsiElement parent = aClass.getParent();
+    if (!(parent instanceof PsiClass || parent instanceof PsiFile)) {
+      HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
+                                                                      ClassUtil.getClassDeclarationTextRange(aClass),
+                                                                      "Enum must not be local");
+      return highlightInfo;
     }
     return null;
   }

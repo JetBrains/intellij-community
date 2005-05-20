@@ -18,10 +18,10 @@ import com.intellij.util.ArrayUtil;
 public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCase {
   protected void doTest(String filePath, boolean checkWarnings, boolean checkInfos) throws Exception {
     configureByFile(filePath);
-    doDoTest(checkWarnings, checkInfos);
+    doTestConfiguredFile(checkWarnings, checkInfos);
   }
 
-  private void doDoTest(boolean checkWarnings, boolean checkInfos) {
+  protected void doTestConfiguredFile(boolean checkWarnings, boolean checkInfos) {
     ((PsiManagerImpl) getPsiManager()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
     ExpectedHighlightingData expectedData = new ExpectedHighlightingData(getEditor().getDocument(),checkWarnings, checkInfos);
