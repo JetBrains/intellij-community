@@ -62,8 +62,11 @@ public class AddNoInspectionCommentAction implements IntentionAction {
         return;
       }
     }
-
+    boolean caretWasBeforeStatement = editor.getCaretModel().getOffset() == container.getTextRange().getStartOffset();
     container.getParent().addBefore(factory.createCommentFromText(COMMENT_START_TEXT +  myID, null), container);
+    if (caretWasBeforeStatement) {
+      editor.getCaretModel().moveToOffset(container.getTextRange().getStartOffset());
+    }
     QuickFixAction.markDocumentForUndo(file);
   }
 
