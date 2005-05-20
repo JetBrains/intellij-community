@@ -100,6 +100,8 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
       createSpaceInCode(mySettings.SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE);
     } else if (myRole1 == ChildRole.NEW_KEYWORD) {
       createSpaceInCode(true);
+    } else if (myRole2 == ChildRole.ARGUMENT_LIST) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
     }
   }
 
@@ -190,8 +192,14 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
     else if (myRole2 == ChildRole.TYPE_PARAMETER_LIST) {
       createSpaceInCode(mySettings.SPACE_BEFORE_TYPE_PARAMETER_LIST);
     }
+    
+    else if (myRole2 == ChildRole.ARGUMENT_LIST) {
+      createSpaceInCode(false);
+    }
   }
 
+  
+  
   public void visitImportList(PsiImportList list) {
     if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.isInSet(myChild1.getElementType()) &&
         ElementType.IMPORT_STATEMENT_BASE_BIT_SET.isInSet(myChild2.getElementType())) {

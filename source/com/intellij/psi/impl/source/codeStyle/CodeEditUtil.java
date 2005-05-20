@@ -65,7 +65,7 @@ public class CodeEditUtil {
 
     if (elemBeforeAnchor != null) {
       ASTNode firstNonEmpty = findFirstNonEmpty(first, lastChild, parent, anchorBefore);
-      if (firstNonEmpty == null || mustKeepFirstIndent(elemBeforeAnchor, firstNonEmpty, parent)){
+      if (firstNonEmpty == null || mustKeepFirstIndent(elemBeforeAnchor, parent)){
         keepFirstIndent = true;
       }
     }
@@ -124,11 +124,11 @@ public class CodeEditUtil {
     return firstNonEmpty;
   }
 
-  private static boolean mustKeepFirstIndent(final ASTNode elemBeforeAnchor, final ASTNode first, final CompositeElement parent) {
-    if (elemBeforeAnchor.getElementType() != ElementType.WHITE_SPACE) {
+  private static boolean mustKeepFirstIndent(final ASTNode elementBeforeChange, final CompositeElement parent) {
+    if (elementBeforeChange.getElementType() != ElementType.WHITE_SPACE) {
       return false;
     }
-    return elemBeforeAnchor.getTextRange().getStartOffset() < parent.getTextRange().getStartOffset();
+    return elementBeforeChange.getTextRange().getStartOffset() < parent.getTextRange().getStartOffset();
   }
 
   private static ASTNode getElementBeforeAnchor(final CompositeElement parent, final ASTNode anchorBefore) {
@@ -169,7 +169,6 @@ public class CodeEditUtil {
       System.out.println("CodeEditUtil.removeChildrenBefore\n" + parent.getPsi().getContainingFile().getText());
     }
     checkAllWhiteSpaces(parent);
-    boolean doNotAdjust = first == parent.getFirstChildNode();
     ASTNode lastChild = last == null ? null : last.getTreeNext();
     ASTNode prevElement = TreeUtil.prevLeaf(first);
     ASTNode nextElement = findElementAfter(last == null ? parent : last, false);
@@ -179,11 +178,21 @@ public class CodeEditUtil {
 
     boolean adjustWSBefore = containLineBreaks(first, lastChild);
 
-    if (!isWS(prevElement) || (prevElement != null && !prevElement.textContains('\n'))) {
+    if (!mustKeepFirstIndent(prevElement, parent)) {
+      adjustWSBefore = true; 
+    }
+    
+    /*
+    if ((prevElement != null && !prevElement.textContains('\n'))) {
       adjustWSBefore = true;
     }
 
+    */
     parent.removeRange(first, lastChild);
+    
+    if (!adjustWSBefore && parent.getTextLength() == 0 && prevElement != null && isWS(prevElement) && !prevElement.textContains('\n')) {
+      adjustWSBefore = true;
+    }
 
     final PsiFile file = parent.getPsi().getContainingFile();
     final CodeStyleSettings.IndentOptions options = CodeStyleSettingsManager.getSettings(file.getProject())
@@ -230,13 +239,8 @@ public class CodeEditUtil {
       }
 
 
-      final boolean keepFormatting = parent.getFirstChildNode() != null;
-      if (!keepFormatting) {
-        doNotAdjust = false;
-      }
-
       if (adjustWSBefore) {
-        adjustWhiteSpaceBefore(nextElement, keepFormatting, keepFormatting, true, !doNotAdjust);
+        adjustWhiteSpaceBefore(nextElement, true, true, true, false);
       }
 
     } else {
