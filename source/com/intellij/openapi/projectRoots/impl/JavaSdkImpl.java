@@ -97,6 +97,13 @@ public class JavaSdkImpl extends JavaSdk {
     return path;
   }
 
+  public String suggestHomePath() {
+    if (SystemInfo.isMac) {
+      return "/System/Library/Frameworks/JavaVM.framework/Versions/";
+    }
+    return null;
+  }
+
   public boolean isValidSdkHome(String path) {
     return checkForJdk(new File(path));
   }
@@ -116,8 +123,33 @@ public class JavaSdkImpl extends JavaSdk {
       }
     }
     else {
-      final String versionString = getVersionString(sdkHome);
-      suggestedName = (versionString == null)? "Unknown" : versionString;
+      String versionString = getVersionString(sdkHome);
+      if (versionString != null) {
+        if (versionString.startsWith("java version ")) {
+          versionString = versionString.substring("java version ".length());
+          if (versionString.startsWith("\"") && versionString.endsWith("\"")) {
+            versionString = versionString.substring(1, versionString.length() - 1);
+          }
+          int dotIdx = versionString.indexOf('.');
+          if (dotIdx > 0) {
+            try {
+              int major = Integer.parseInt(versionString.substring(0, dotIdx));
+              int minorDot = versionString.indexOf('.', dotIdx + 1);
+              if (minorDot > 0) {
+                int minor = Integer.parseInt(versionString.substring(dotIdx + 1, minorDot));
+                versionString = String.valueOf(major) + "." + String.valueOf(minor);
+              }
+            }
+            catch (NumberFormatException e) {
+              // Do nothing. Use original version string if failed to parse according to major.minor pattern.
+            }
+          }
+        }
+        suggestedName = versionString;
+      }
+      else {
+        suggestedName = "Unknown";
+      }
     }
     return suggestedName;
   }
@@ -129,14 +161,24 @@ public class JavaSdkImpl extends JavaSdk {
     VirtualFile docs = findDocs(jdkHome);
 
     final SdkModificator sdkModificator = sdk.getSdkModificator();
-    for (int i = 0; i < classes.length; i++){
-      sdkModificator.addRoot(classes[i], ProjectRootType.CLASS);
+    for (VirtualFile aClass : classes) {
+      sdkModificator.addRoot(aClass, ProjectRootType.CLASS);
     }
     if(sources != null){
       sdkModificator.addRoot(sources, ProjectRootType.SOURCE);
     }
     if(docs != null){
       sdkModificator.addRoot(docs, ProjectRootType.JAVADOC);
+    }
+    else if (SystemInfo.isMac) {
+      VirtualFile commonDocs = findInJar(new File(jdkHome, "docs.jar"), "doc/api");
+      if (commonDocs != null) {
+        sdkModificator.addRoot(commonDocs, ProjectRootType.JAVADOC);
+      }
+      VirtualFile appleDocs = findInJar(new File(jdkHome, "appledocs.jar"), "appledoc/api");
+      if (appleDocs != null) {
+        sdkModificator.addRoot(appleDocs, ProjectRootType.JAVADOC);
+      }
     }
     sdkModificator.commitChanges();
   }
@@ -245,8 +287,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   private static void addClasses(File file, SdkModificator sdkModificator, final boolean isJre, JarFileSystem jarFileSystem) {
     VirtualFile[] classes = findClasses(file, isJre, jarFileSystem);
-    for (int i = 0; i < classes.length; i++) {
-      VirtualFile virtualFile = classes[i];
+    for (VirtualFile virtualFile : classes) {
       sdkModificator.addRoot(virtualFile, ProjectRootType.CLASS);
     }
   }
@@ -323,15 +364,10 @@ public class JavaSdkImpl extends JavaSdk {
     }
 
     if (jarfile.exists()) {
-      JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-      String path = jarfile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR + "src";
-      jarFileSystem.setNoCopyJarForPath(path);
-      VirtualFile vFile = jarFileSystem.findFileByPath(path);
+      VirtualFile vFile = findInJar(jarfile, "src");
       if (vFile != null) return vFile;
       // try 1.4 format
-      path = jarfile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
-      jarFileSystem.setNoCopyJarForPath(path);
-      vFile = jarFileSystem.findFileByPath(path);
+      vFile = findInJar(jarfile, "");
       return vFile;
     }
     else {
@@ -347,6 +383,14 @@ public class JavaSdkImpl extends JavaSdk {
     if (vFile != null) {
       rootContainer.addRoot(vFile, ProjectRootType.JAVADOC);
     }
+  }
+
+  private static VirtualFile findInJar(File jarFile, String relativePath) {
+    if (!jarFile.exists()) return null;
+    JarFileSystem jarFileSystem = JarFileSystem.getInstance();
+    String path = jarFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR + relativePath;
+    jarFileSystem.setNoCopyJarForPath(path);
+    return jarFileSystem.findFileByPath(path);
   }
 
   public static VirtualFile findDocs(File file) {

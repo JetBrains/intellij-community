@@ -4,14 +4,18 @@
  */
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.openapi.util.IconLoader;
 import org.jdom.Element;
 
 import javax.swing.*;
 
-import com.intellij.openapi.util.IconLoader;
-
 public abstract class SdkType {
   private final String myName;
+
+  /**
+   * @return path to set up filechooser to or null if not applicable
+   */
+  public abstract String suggestHomePath();
 
   public abstract boolean isValidSdkHome(String path);
 

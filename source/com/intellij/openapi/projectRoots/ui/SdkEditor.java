@@ -9,6 +9,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -294,11 +295,17 @@ public class SdkEditor implements Configurable{
       }
     };
     descriptor.setTitle("Select Home Directory for " + sdkType.getPresentableName());
-    VirtualFile[] files = FileChooser.chooseFiles(parentComponent, descriptor);
+    VirtualFile[] files = FileChooser.chooseFiles(parentComponent, descriptor, getSuggestedSdkRoot(sdkType));
     if (files.length != 0){
       return files[0].getPath();
     }
     return null;
+  }
+
+  public static VirtualFile getSuggestedSdkRoot(SdkType sdkType) {
+    final String homepath = sdkType.suggestHomePath();
+    if (homepath == null) return null;
+    return LocalFileSystem.getInstance().findFileByPath(homepath);
   }
 
   private class MyPathsEditor extends PathEditor {

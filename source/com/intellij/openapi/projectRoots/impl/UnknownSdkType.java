@@ -5,15 +5,12 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.IconLoader;
 import org.jdom.Element;
 
 import javax.swing.*;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Used as a plug for all SDKs which type cannot be determined (for example, plugin that registered a custom type has been deinstalled)
@@ -39,6 +36,10 @@ public class UnknownSdkType extends SdkType{
       ourTypeNameToInstanceMap.put(typeName, instance);
     }                                                                  
     return instance;
+  }
+
+  public String suggestHomePath() {
+    return null;
   }
 
   public boolean isValidSdkHome(String path) {
