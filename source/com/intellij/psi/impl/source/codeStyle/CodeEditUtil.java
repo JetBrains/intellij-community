@@ -59,11 +59,7 @@ public class CodeEditUtil {
     final ASTNode elemBeforeAnchor = getElementBeforeAnchor(parent, anchorBefore);
 
     if (elemBeforeAnchor != null) {
-      ASTNode firstNonEmpty = first;
-      while (firstNonEmpty != lastChild && firstNonEmpty.getTextLength() == 0) {
-        firstNonEmpty = firstNonEmpty.getTreeNext();
-      }
-
+      ASTNode firstNonEmpty = findFirstNonEmpty(first, lastChild, parent, anchorBefore);
       if (firstNonEmpty == null || canKeepFirstIndent(elemBeforeAnchor, firstNonEmpty, parent)){
         keepFirstIndent = true;
       }
@@ -98,6 +94,26 @@ public class CodeEditUtil {
         return (TreeElement)firstValid.getTreeNext();
       }
     }
+  }
+
+  private static ASTNode findFirstNonEmpty(final ASTNode first,
+                                           final ASTNode last,
+                                           final CompositeElement parent,
+                                           final ASTNode anchorBefore) {
+    ASTNode firstNonEmpty = first;
+    while (firstNonEmpty != null && firstNonEmpty != last && firstNonEmpty.getTextLength() == 0) {
+      firstNonEmpty = firstNonEmpty.getTreeNext();
+    }
+    if (firstNonEmpty == null && anchorBefore != null) {
+      firstNonEmpty = TreeUtil.findFirstLeaf(anchorBefore);
+      while (firstNonEmpty != null && firstNonEmpty.getTextLength() == 0) {
+        firstNonEmpty = firstNonEmpty.getTreeNext();
+      }        
+    }
+    if (firstNonEmpty == null) {
+      firstNonEmpty = TreeUtil.nextLeaf(parent);
+    }
+    return firstNonEmpty;
   }
 
   private static boolean canKeepFirstIndent(final ASTNode elemBeforeAnchor, final ASTNode first, final CompositeElement parent) {
@@ -424,7 +440,9 @@ public class CodeEditUtil {
 
     boolean changeFirstWS = newChild.textContains('\n') || oldChild.textContains('\n');
 
-    if (!canStickChildrenTogether(TreeUtil.prevLeaf(oldChild), newChild)) {
+    ASTNode firstNonEmpty = findFirstNonEmpty(newChild, newChild.getTreeNext(), parent, newChild.getTreeNext());
+    
+    if (!canStickChildrenTogether(TreeUtil.prevLeaf(oldChild), firstNonEmpty)) {
       changeFirstWS = true;
     }
 
