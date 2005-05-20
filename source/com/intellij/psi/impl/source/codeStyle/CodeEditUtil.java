@@ -55,10 +55,12 @@ public class CodeEditUtil {
   public static TreeElement addChildren(CompositeElement parent, ASTNode first, ASTNode last, ASTNode anchorBefore) {
 
     checkAllWhiteSpaces(parent);
+    
     if (DO_OUTPUT) {
       System.out.println("CodeEditUtil.addChildrenBefore\n" + parent.getPsi().getContainingFile().getText());
     }
     ASTNode lastChild = last != null ? last.getTreeNext() : null;
+    
     first = trimWhiteSpaces(first, lastChild);
 
     if (first == null) {
@@ -366,12 +368,23 @@ public class CodeEditUtil {
     }
   }
 
-  private static ASTNode trimWhiteSpaces(ASTNode first, final ASTNode lastChild) {
-    while(first != null && first != lastChild) {
-      if (first.getElementType() != ElementType.WHITE_SPACE) return first;
-      first = first.getTreeNext();
+  private static ASTNode trimWhiteSpaces(final ASTNode first, final ASTNode lastChild) {
+    ASTNode current = first;
+    ASTNode result = first;
+    while(current != null && current != lastChild) {
+      LeafElement leaf = TreeUtil.findFirstLeaf(current);
+      if (leaf != null && leaf.getElementType() == ElementType.WHITE_SPACE) {
+        if (leaf == result) result = leaf.getTreeNext();
+        delete(leaf);
+      }
+      leaf = TreeUtil.findLastLeaf(current);
+      if (leaf != null && leaf.getElementType() == ElementType.WHITE_SPACE) {
+        if (leaf == result) result = leaf.getTreeNext();
+        delete(leaf);
+      }
+      current = current.getTreeNext();
     }
-    return null;
+    return result;
   }
 
   private static ASTNode findFirstValid(final List<ASTNode> treePrev) {
