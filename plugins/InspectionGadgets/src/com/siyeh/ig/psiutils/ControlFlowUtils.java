@@ -337,7 +337,7 @@ public class ControlFlowUtils{
                                 element instanceof PsiForStatement;
     }
 
-    private static @Nullable PsiElement getContainingStatementOrBlock(@NotNull PsiElement statement){
+    @Nullable private static PsiElement getContainingStatementOrBlock(@NotNull PsiElement statement){
         return PsiTreeUtil.getParentOfType(statement, new Class[]{PsiStatement.class, PsiCodeBlock.class});
     }
 
