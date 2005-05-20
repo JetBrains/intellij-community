@@ -8,6 +8,7 @@ public class Y {
     }
 }
 public class X {
+
     {
       Y y = new Y();
       y.method();

@@ -18,6 +18,7 @@ class JImpl implements J {
 }
 
 class X {
+
     {
         J j = new JImpl();
         j.method(0);
