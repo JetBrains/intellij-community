@@ -58,7 +58,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
   private boolean myHaveNamespaceDeclarations = false;
   private BidirectionalMap<String, String> myNamespaceMap = null;
-  private String myNamespace = null;
 
   public XmlTagImpl() {
     this(XML_TAG);
@@ -71,7 +70,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   public void clearCaches() {
     myName = null;
     myNamespaceMap = null;
-    myNamespace = null;
     myAttributes = null;
     myAttributeValueMap = null;
     myHaveNamespaceDeclarations = false;
@@ -373,9 +371,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
   }
 
   public String getNamespace() {
-    if(myNamespace != null) return myNamespace;
-    final String namespace = getNamespaceByPrefix(getNamespacePrefix());
-    return myNamespace = (namespace != null ? namespace : XmlUtil.EMPTY_URI);
+    return getNamespaceByPrefix(getNamespacePrefix());
   }
 
   public String getNamespacePrefix() {
