@@ -8,6 +8,7 @@ class Foreign {
 }
 
 public abstract class Test1 {
+
     /**
      * @see Foreign#foo(Test1)
      */
