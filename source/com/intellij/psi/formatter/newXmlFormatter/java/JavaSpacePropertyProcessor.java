@@ -1,21 +1,20 @@
 package com.intellij.psi.formatter.newXmlFormatter.java;
 
+import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.Formatter;
 import com.intellij.newCodeFormatting.SpaceProperty;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
-import com.intellij.psi.impl.source.codeStyle.Helper;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.codeFormatting.general.FormatterUtil;
 
 
 public class JavaSpacePropertyProcessor extends PsiElementVisitor{
@@ -26,7 +25,6 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
   private final CodeStyleSettings mySettings;
 
   private SpaceProperty myResult;
-  private final Helper myHelper;
   private ASTNode myChild1;
   private ASTNode myChild2;
   private final ImportHelper myImportHelper;
@@ -34,7 +32,6 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
   public JavaSpacePropertyProcessor(ASTNode child, final CodeStyleSettings settings) {
     init(child);
     mySettings = settings;
-    myHelper = new Helper(StdFileTypes.JAVA, myParent.getProject());
     myImportHelper = new ImportHelper(mySettings);
 
     if (myChild2 != null && mySettings.KEEP_FIRST_COLUMN_COMMENT && ElementType.COMMENT_BIT_SET.isInSet(myChild2.getElementType())) {
@@ -43,6 +40,14 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
 
       if (myParent != null) {
         myParent.accept(this);
+        if (myResult == null) {
+          final ASTNode prev = getPrevElementType(myChild2);
+          if (prev != null && prev.getElementType() == ElementType.END_OF_LINE_COMMENT) {
+            myResult = Formatter.getInstance().createSpaceProperty(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+          } else if (!CodeEditUtil.canStickChildrenTogether(myChild1, myChild2)) {
+            myResult = Formatter.getInstance().createSpaceProperty(1, Integer.MIN_VALUE, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+          }          
+        }
       }
     }
 
@@ -672,7 +677,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
     if (prev != null && prev.getElementType() == ElementType.END_OF_LINE_COMMENT) {
       myResult = Formatter.getInstance().createSpaceProperty(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     } else {
-      if (!space && !myHelper.canStickChildrenTogether(myChild1, myChild2)) {
+      if (!space && !CodeEditUtil.canStickChildrenTogether(myChild1, myChild2)) {
         space = true;
       }
       

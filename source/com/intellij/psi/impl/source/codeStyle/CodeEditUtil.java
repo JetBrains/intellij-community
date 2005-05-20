@@ -229,8 +229,8 @@ public class CodeEditUtil {
           delete(elementBeforeNext);
         } else {
           final String text = composeNewWS(prevElement.getText(), elementBeforeNext.getText(), options);
-          delete(prevElement);
-          replace(elementBeforeNext, text);
+          delete(elementBeforeNext);
+          replace(prevElement, text);
         }
       }
 
@@ -573,7 +573,7 @@ public class CodeEditUtil {
     saveIndents(newChild, newChild.getTreeNext());
   }
 
-  private static boolean canStickChildrenTogether(final ASTNode child1, final ASTNode child2) {
+  public static boolean canStickChildrenTogether(final ASTNode child1, final ASTNode child2) {
     if (child1 == null || child2 == null) return true;
     if (isWS(child1) || isWS(child2)) return true;
 
