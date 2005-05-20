@@ -169,9 +169,9 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
       WhiteSpace whiteSpace = current.getWhiteSpace();
       
       if (!whiteSpace.isReadOnly() && whiteSpace.containsLineFeeds()) {
-        if (whiteSpace.getTextRange().getStartOffset() > affectedRange.getStartOffset()) {
+        //if (whiteSpace.getTextRange().getStartOffset() > affectedRange.getStartOffset()) {
           storage.saveIndentInfo(current.calcIndentFromParent(), current.getTextRange().getStartOffset());
-        }        
+        //}        
       }
       current = current.getNextBlock();
     }
