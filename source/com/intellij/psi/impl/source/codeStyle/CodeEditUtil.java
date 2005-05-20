@@ -36,6 +36,9 @@ import java.util.List;
 import java.util.Map;
 
 public class CodeEditUtil {
+  
+  private static final boolean DO_OUTPUT = false;
+  
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeEditUtil");
   public static final Key<IndentInfo> INDENT_INFO_KEY = new Key<IndentInfo>("IndentInfo");
 
@@ -46,7 +49,9 @@ public class CodeEditUtil {
   public static TreeElement addChildren(CompositeElement parent, ASTNode first, ASTNode last, ASTNode anchorBefore) {
 
     checkAllWhiteSpaces(parent);
-
+    if (DO_OUTPUT) {
+      System.out.println("CodeEditUtil.addChildrenBefore\n" + parent.getPsi().getContainingFile().getText());
+    }
     ASTNode lastChild = last != null ? last.getTreeNext() : null;
     first = trimWhiteSpaces(first, lastChild);
 
@@ -60,7 +65,7 @@ public class CodeEditUtil {
 
     if (elemBeforeAnchor != null) {
       ASTNode firstNonEmpty = findFirstNonEmpty(first, lastChild, parent, anchorBefore);
-      if (firstNonEmpty == null || canKeepFirstIndent(elemBeforeAnchor, firstNonEmpty, parent)){
+      if (firstNonEmpty == null || mustKeepFirstIndent(elemBeforeAnchor, firstNonEmpty, parent)){
         keepFirstIndent = true;
       }
     }
@@ -84,6 +89,9 @@ public class CodeEditUtil {
     }
 
     checkAllWhiteSpaces(parent);
+    if (DO_OUTPUT) {
+      System.out.println("CodeEditUtil.addChildren\n" + parent.getPsi().getContainingFile().getText());
+    }
     if (treePrev == null) {
       return (TreeElement)parent.getFirstChildNode();
     } else {
@@ -116,8 +124,8 @@ public class CodeEditUtil {
     return firstNonEmpty;
   }
 
-  private static boolean canKeepFirstIndent(final ASTNode elemBeforeAnchor, final ASTNode first, final CompositeElement parent) {
-    if (elemBeforeAnchor.getElementType() != ElementType.WHITE_SPACE && !canStickChildrenTogether(elemBeforeAnchor, first)) {
+  private static boolean mustKeepFirstIndent(final ASTNode elemBeforeAnchor, final ASTNode first, final CompositeElement parent) {
+    if (elemBeforeAnchor.getElementType() != ElementType.WHITE_SPACE) {
       return false;
     }
     return elemBeforeAnchor.getTextRange().getStartOffset() < parent.getTextRange().getStartOffset();
@@ -157,6 +165,9 @@ public class CodeEditUtil {
   }
 
   public static void removeChildren(CompositeElement parent, ASTNode first, ASTNode last) {
+    if (DO_OUTPUT) {
+      System.out.println("CodeEditUtil.removeChildrenBefore\n" + parent.getPsi().getContainingFile().getText());
+    }
     checkAllWhiteSpaces(parent);
     boolean doNotAdjust = first == parent.getFirstChildNode();
     ASTNode lastChild = last == null ? null : last.getTreeNext();
@@ -237,6 +248,9 @@ public class CodeEditUtil {
     }
 
     checkAllWhiteSpaces(parent);
+    if (DO_OUTPUT) {
+      System.out.println("CodeEditUtil.removeChildren\n" + parent.getPsi().getContainingFile().getText());
+    }
     //removeChildrenOld(parent,first, last);
   }
 
@@ -252,8 +266,9 @@ public class CodeEditUtil {
       }
       current = current.getTreeNext();
     }
-    if (element.getTextRange().getEndOffset() == element.getPsi().getContainingFile().getTextLength())
+    if (element.getTextRange().getEndOffset() == element.getPsi().getContainingFile().getTextLength()) {
       return element.getTreeNext() == null;
+    }
     return false;
   }
 
@@ -435,6 +450,10 @@ public class CodeEditUtil {
   }
 
   public static ASTNode replaceChild(CompositeElement parent, ASTNode oldChild, ASTNode newChild) {
+    if (DO_OUTPUT) {
+      System.out.println("CodeEditUtil.replaceChildrenBefore\n" + parent.getPsi().getContainingFile().getText());
+    }
+
     checkAllWhiteSpaces(parent);
     final ASTNode elementAfter = findElementAfter(oldChild, true);
 
@@ -463,6 +482,9 @@ public class CodeEditUtil {
     }
 
     checkAllWhiteSpaces(parent);
+    if (DO_OUTPUT) {
+      System.out.println("CodeEditUtil.replaceChildren\n" + parent.getPsi().getContainingFile().getText());
+    }
     if (treePrev == null) {
       return (TreeElement)parent.getFirstChildNode();
     } else {
