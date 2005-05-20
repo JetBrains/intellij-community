@@ -179,7 +179,7 @@ public class CodeEditUtil {
     checkAllWhiteSpaces(parent);
     ASTNode lastChild = last == null ? null : last.getTreeNext();
     final ASTNode prevElement = TreeUtil.prevLeaf(first);
-    ASTNode nextElement = findElementAfter(last == null ? parent : last, false);
+    final ASTNode nextElement = findElementAfter(last == null ? parent : last, false);
     if (nextElement != null) {
       saveIndents(nextElement);
     }
@@ -215,27 +215,13 @@ public class CodeEditUtil {
         } else {
           final String text = composeNewWS(prevElement.getText(), elementBeforeNext.getText(), options);
           final ASTNode elementBeforeNext1 = elementBeforeNext;
-          
-          final Runnable action = new Runnable() {
+
+          runTransaction(prevElement, elementBeforeNext1, new Runnable() {
             public void run() {
               delete(elementBeforeNext1);
               replace(prevElement, text);
             }
-          };
-          
-          final PomModel model = prevElement.getPsi().getProject().getModel();
-          try {
-            
-            model.runTransaction(
-              new PomTransactionBase(TreeUtil.findCommonParent(elementBeforeNext1, prevElement).getPsi()) {
-                public PomModelEvent runInner() {
-                  action.run();
-                  return null;
-                }
-              }, model.getModelAspect(TreeAspect.class));
-          } catch (IncorrectOperationException e){
-            
-          }
+          });
         }
       }
 
@@ -243,11 +229,16 @@ public class CodeEditUtil {
       elementBeforeNext = TreeUtil.prevLeaf(nextElement);
 
       if (isWS(elementBeforeNext) && whiteSpaceHasInvalidPosition(elementBeforeNext)) {
-        final String text = elementBeforeNext.getText();
-        delete(elementBeforeNext);
-        FormatterUtil.replaceWhiteSpace(text,
-                                        nextElement,
-                                        ElementType.WHITE_SPACE);
+        final ASTNode elementBeforeNext2 = elementBeforeNext;
+        runTransaction(elementBeforeNext, FormatterUtil.getWsCandidate(nextElement), new Runnable() {
+          public void run() {
+            final String text = elementBeforeNext2.getText();
+            delete(elementBeforeNext2);
+            FormatterUtil.replaceWhiteSpace(text,
+                                            nextElement,
+                                            ElementType.WHITE_SPACE);
+          }
+        });
       }
 
 
@@ -270,6 +261,22 @@ public class CodeEditUtil {
     //removeChildrenOld(parent,first, last);
   }
 
+  private static void runTransaction(final ASTNode prevElement, final ASTNode elementBeforeNext1, final Runnable action) {
+    final PomModel model = prevElement.getPsi().getProject().getModel();
+    try {
+
+      model.runTransaction(
+        new PomTransactionBase(TreeUtil.findCommonParent(elementBeforeNext1, prevElement).getPsi()) {
+          public PomModelEvent runInner() {
+            action.run();
+            return null;
+          }
+        }, model.getModelAspect(TreeAspect.class));
+    } catch (IncorrectOperationException e){
+
+    }
+  }
+
   private static void replace(final ASTNode element, final String text) {
     if (!text.equals(element.getText())){
       final CharTable charTable = SharedImplUtil.findCharTableByTree(element);
@@ -279,8 +286,8 @@ public class CodeEditUtil {
                                                                   SharedImplUtil.getManagerByTree(element));
 
       element.getTreeParent().replaceChild(element,
-                                                     newWhiteSpace);
-    }    
+                                           newWhiteSpace);
+    }
   }
 
 

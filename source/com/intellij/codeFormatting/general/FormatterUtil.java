@@ -55,7 +55,7 @@ public class FormatterUtil {
     return result.toString();
   }
 
-  private static ASTNode getWsCandidate(ASTNode element) {
+  public static ASTNode getWsCandidate(ASTNode element) {
     if (element == null) return null;
     ASTNode treePrev = element.getTreePrev();
     if (treePrev != null) {
