@@ -1,9 +1,10 @@
 package com.intellij.openapi.editor.impl;
 
+import gnu.trove.TIntHashSet;
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 
 /**
@@ -13,6 +14,10 @@ public class ComplementaryFontsRegistry {
   private static ArrayList<String> ourFontNames;
   private static LinkedHashMap<FontKey, FontInfo> ourUsedFonts;
   private static FontKey ourSharedKeyInstance = new FontKey(null, 0, 0);
+  private static TIntHashSet ourUndisplayableChars = new TIntHashSet();
+
+  private ComplementaryFontsRegistry() {
+  }
 
   private static class FontKey {
     public String myFamilyName;
@@ -71,9 +76,10 @@ public class ComplementaryFontsRegistry {
       return defaultFont;
     }
 
+    if (ourUndisplayableChars.contains(c)) return defaultFont;
+
     final Collection<FontInfo> descriptors = ourUsedFonts.values();
-    for (Iterator<FontInfo> iterator = descriptors.iterator(); iterator.hasNext();) {
-      FontInfo font = iterator.next();
+    for (FontInfo font : descriptors) {
       if (font.getSize() == size && font.getStyle() == style && font.canDisplay(c)) {
         return font;
       }
@@ -88,6 +94,8 @@ public class ComplementaryFontsRegistry {
         return font;
       }
     }
+
+    ourUndisplayableChars.add(c);
 
     return defaultFont;
   }
