@@ -1212,6 +1212,14 @@ public class ManualTestClass
 
     }
 
+    public void testConstantExpression()
+    {
+        int x = 60 * 60;
+    }
+    public void testConstantSubExpression()
+    {
+        int x = 3 * 60 * 60;
+    }
     public void testConditionalDeclaration()
     {
         boolean foo = bar()?true:false;

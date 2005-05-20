@@ -3,7 +3,7 @@ package com.siyeh.ipp.concatenation;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 
-class ConcatenationUtils{
+public class ConcatenationUtils{
     private ConcatenationUtils(){
         super();
     }
