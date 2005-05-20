@@ -1,6 +1,5 @@
 public class Foo {
     public int myData;
-
     static int <caret>method(Foo anObject, int i) {
         return anObject.myData + i;
     }

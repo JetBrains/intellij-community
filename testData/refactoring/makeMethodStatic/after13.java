@@ -1,5 +1,5 @@
 class Foo {
-    static Foo bar(Foo anObject) {
+   static Foo bar(Foo anObject) {
        return anObject;
    }
 }
