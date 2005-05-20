@@ -196,7 +196,7 @@
       <module fileurl="file://$PROJECT_DIR$/IntentionPowerPackSVN.iml" filepath="$PROJECT_DIR$/IntentionPowerPackSVN.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 3339" />
+  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 3341" />
   <component name="RmicSettings">
     <option name="IS_EANABLED" value="false" />
     <option name="DEBUGGING_INFO" value="true" />
@@ -204,6 +204,7 @@
     <option name="GENERATE_IIOP_STUBS" value="false" />
     <option name="ADDITIONAL_OPTIONS_STRING" value="" />
   </component>
+  <component name="WebServicesPlugin" />
   <component name="com.siyeh.metrics.MetricsReloaded">
     <option name="selectedProfile" value="Default" />
     <option name="autoscroll" value="false" />

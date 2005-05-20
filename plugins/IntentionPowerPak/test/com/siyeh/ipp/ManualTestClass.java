@@ -1227,6 +1227,7 @@ public class ManualTestClass
         System.out.println("foo" + "bar" + "baz");
         final String fooString = "foo";
         System.out.println(fooString + "bar" + "baz");
+        System.out.println(fooString + "bar" + 'b');
         System.out.println(fooString + 1 + 2);
         System.out.println((fooString + 1) + 2);
         System.out.println(fooString + (1 + 2));

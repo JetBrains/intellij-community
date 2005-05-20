@@ -1,8 +1,11 @@
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.Nullable;
 
 class StringConcatPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -29,27 +32,39 @@ class StringConcatPredicate implements PsiElementPredicate{
         if(!tokenType.equals(JavaTokenType.PLUS)){
             return false;
         }
-        final PsiExpression rOperand = binaryExpression.getROperand();
-        if(!(rOperand instanceof PsiLiteralExpression)){
+        final PsiType type = binaryExpression.getType();
+        if(type == null){
             return false;
         }
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        return expressionContainsStringLiteral(lhs);
+        if(!type.equalsToText("java.lang.String")){
+            return false;
+        }
+        final PsiExpression subexpression = getSubexpression(binaryExpression);
+        return PsiUtil.isConstantExpression(subexpression);
     }
 
-    private static boolean expressionContainsStringLiteral(PsiExpression expression){
-        if(expression instanceof PsiBinaryExpression){
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression) expression;
-            final PsiExpression rhs = binaryExpression.getROperand();
-            final PsiExpression lhs = binaryExpression.getLOperand();
-            return expressionContainsStringLiteral(lhs) ||
-                    expressionContainsStringLiteral(rhs);
+    /**
+     * Returns the smallest subexpression (if precendence allows it). example:
+     * variable + 2 + 3 normally gets evaluated left to right -> (variable + 2) +
+     * 3 this method returns the right most legal subexpression -> 2 + 3
+     */
+    @Nullable private static PsiBinaryExpression getSubexpression(PsiBinaryExpression expression){
+        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) expression.copy();
+        final PsiExpression rhs = binaryExpression.getROperand();
+        if(rhs == null){
+            return null;
         }
-        if(!(expression instanceof PsiLiteralExpression)){
-            return false;
+        final PsiExpression lhs = binaryExpression.getLOperand();
+        if(!(lhs instanceof PsiBinaryExpression)){
+            return expression;
         }
-        final PsiType expressionType = expression.getType();
-        return expressionType.equalsToText("java.lang.String");
+        final PsiBinaryExpression lhsBinaryExpression = (PsiBinaryExpression) lhs;
+        final PsiExpression leftSide = lhsBinaryExpression.getROperand();
+        try{
+            lhs.replace(leftSide);
+        } catch(IncorrectOperationException e){
+            throw new RuntimeException(e);
+        }
+        return binaryExpression;
     }
 }
