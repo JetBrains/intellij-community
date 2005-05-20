@@ -1,7 +1,7 @@
-
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -36,7 +36,9 @@ public class ExtractIncludeAction extends BaseRefactoringAction {
     PsiFile file = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
     if (file instanceof JspFile) {
       return new ExtractJspIncludeFileHandler(file);
-    } else if (Language.findInstance(HTMLLanguage.class).equals(file.getLanguage())) {
+    }
+    else if (Language.findInstance(HTMLLanguage.class).equals(file.getLanguage()) ||
+             Language.findInstance(XHTMLLanguage.class).equals(file.getLanguage())) {
       return new ExtractIncludeFromHTMLHandler(file);
     }
     return null;
