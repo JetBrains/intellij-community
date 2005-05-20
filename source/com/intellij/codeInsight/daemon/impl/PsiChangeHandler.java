@@ -1,5 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
@@ -51,10 +53,14 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
   }
 
   private void updateByChange(PsiElement child) {
-    Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+    final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
     if (editor != null) {
-      EditorMarkupModel markupModel = (EditorMarkupModel) editor.getMarkupModel();
-      markupModel.setErrorStripeRenderer(markupModel.getErrorStripeRenderer());
+      ApplicationManager.getApplication().invokeLater(new Runnable(){
+        public void run() {
+          EditorMarkupModel markupModel = (EditorMarkupModel) editor.getMarkupModel();
+          markupModel.setErrorStripeRenderer(markupModel.getErrorStripeRenderer());
+        }
+      },ModalityState.stateForComponent(editor.getComponent()));
     }
 
     PsiFile file = child.getContainingFile();

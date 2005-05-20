@@ -6,6 +6,7 @@ package com.intellij.lang.properties.editor;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.PropertiesFilesManager;
@@ -124,8 +125,13 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     gc.weighty = 10;
 
     valuesPanelComponent.add(new JPanel(), gc);
-    selectionChanged();
+    //selectionChanged();
     installPropertiesChangeListener();
+    StructureViewTreeElement[] children = myStructureViewComponent.getTreeModel().getRoot().getChildren();
+    if (children.length != 0) {
+      String propName = ((ResourceBundlePropertyStructureViewElement)children[0]).getValue();
+      setState(new ResourceBundleEditorState(propName));
+    }
   }
 
   private void installPropertiesChangeListener() {
@@ -328,13 +334,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   public void setState(FileEditorState state) {
     String propertyName = ((ResourceBundleEditorState)state).myPropertyName;
     if (propertyName != null) {
-      List<PropertiesFile> propertiesFiles = PropertiesUtil.virtualFilesToProperties(myProject, myResourceBundle.getPropertiesFiles());
-      for (PropertiesFile propertiesFile : propertiesFiles) {
-        Property property = propertiesFile.findPropertyByKey(propertyName);
-        if (property != null) {
-          myStructureViewComponent.select(property, true);
-        }
-      }
+      myStructureViewComponent.select(propertyName, false);
     }
   }
 

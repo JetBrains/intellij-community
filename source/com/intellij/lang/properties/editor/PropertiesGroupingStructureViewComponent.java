@@ -12,8 +12,8 @@ import com.intellij.ui.GuiUtils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * @author cdr
@@ -33,14 +33,18 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
 
   private class ChangeGroupSeparatorAction extends ComboBoxAction {
     private DefaultActionGroup myActionGroup;
-    private Collection<String> myPredefindedSeparators = new LinkedHashSet<String>();
+    // separator -> presentable text
+    private Map<String,String> myPredefindedSeparators = new LinkedHashMap<String, String>();
     private JPanel myPanel;
 
     public ChangeGroupSeparatorAction() {
-      myPredefindedSeparators.add(getCurrentSeparator());
-      myPredefindedSeparators.add(".");
-      myPredefindedSeparators.add("__");
-      myPredefindedSeparators.add("/");
+      myPredefindedSeparators.put(".",".");
+      myPredefindedSeparators.put("_","__");
+      myPredefindedSeparators.put("/","/");
+      String currentSeparator = getCurrentSeparator();
+      if (!myPredefindedSeparators.containsKey(currentSeparator)) {
+        myPredefindedSeparators.put(currentSeparator, currentSeparator);
+      }
     }
 
     public final void update(AnActionEvent e) {
@@ -70,42 +74,43 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
 
     private void refillActionGroup() {
       myActionGroup.removeAll();
-      for (String separator : myPredefindedSeparators) {
-        myActionGroup.add(new SelectSeparatorAction(separator));
+      for (String separator : myPredefindedSeparators.keySet()) {
+        String presentableText = myPredefindedSeparators.get(separator);
+        myActionGroup.add(new SelectSeparatorAction(separator, presentableText));
       }
-      myActionGroup.add(new SelectSeparatorAction(null));
+      myActionGroup.add(new SelectSeparatorAction(null, null));
     }
 
     public final JComponent createCustomComponent(Presentation presentation) {
       myPanel = new JPanel(new GridBagLayout());
       myPanel.add(new JLabel("Group by:"),
-                new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                       new Insets(0, 5, 0, 0), 0, 0));
+                  new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
+                                         new Insets(0, 5, 0, 0), 0, 0));
       myPanel.add(super.createCustomComponent(presentation),
-                new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                       new Insets(0, 0, 0, 0), 0, 0));
+                  new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
+                                         new Insets(0, 0, 0, 0), 0, 0));
       return myPanel;
     }
 
     private final class SelectSeparatorAction extends AnAction {
       private final String myActionSeparator;
 
-      public SelectSeparatorAction(String separator) {
-        super(separator == null ? "other..." : separator);
+      public SelectSeparatorAction(String separator, final String presentableText) {
+        super(separator == null ? "other..." : presentableText);
         myActionSeparator = separator;
       }
 
       public final void actionPerformed(AnActionEvent e) {
         String separator;
         if (myActionSeparator == null) {
-          String[] strings = myPredefindedSeparators.toArray(new String[myPredefindedSeparators.size()]);
+          String[] strings = myPredefindedSeparators.keySet().toArray(new String[myPredefindedSeparators.size()]);
           String current = getCurrentSeparator();
           separator = Messages.showEditableChooseDialog("Select separator", "Property Keys Separator", Messages.getQuestionIcon(),
                                                         strings, current, null);
           if (separator == null) {
             return;
           }
-          myPredefindedSeparators.add(separator);
+          myPredefindedSeparators.put(separator,separator);
           refillActionGroup();
         }
         else {
