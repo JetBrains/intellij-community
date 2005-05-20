@@ -93,8 +93,8 @@ public class TypeConversionUtil {
 
     if (fromType instanceof PsiIntersectionType) {
       final PsiType[] conjuncts = ((PsiIntersectionType)fromType).getConjuncts();
-      for (int i = 0; i < conjuncts.length; i++) {
-        if (isNarrowingReferenceConversionAllowed(conjuncts[i], toType)) return true;
+      for (PsiType conjunct : conjuncts) {
+        if (isNarrowingReferenceConversionAllowed(conjunct, toType)) return true;
       }
       return false;
     } else if (toType instanceof PsiIntersectionType) return false;
@@ -162,8 +162,7 @@ public class TypeConversionUtil {
             .values();
           final MethodSignatureUtil.MethodSignatureToMethods toClassAllMethods = MethodSignatureUtil.getOverrideEquivalentMethods(toClass);
 
-          for (Iterator<List<MethodSignatureBackedByPsiMethod>> iterator = fromClassAllMethods.iterator(); iterator.hasNext();) {
-            List<MethodSignatureBackedByPsiMethod> sameSignatureMethods = iterator.next();
+          for (List<MethodSignatureBackedByPsiMethod> sameSignatureMethods : fromClassAllMethods) {
             final MethodSignatureBackedByPsiMethod fromMethodSignature = sameSignatureMethods.get(0);
             PsiMethod fromClassMethod = fromMethodSignature.getMethod();
             List<MethodSignatureBackedByPsiMethod> toClassMethods = toClassAllMethods.get(fromClassMethod.getSignature(PsiSubstitutor.EMPTY));
@@ -211,9 +210,7 @@ public class TypeConversionUtil {
       if (areDistinctArgumentTypes(derived, baseSubstitutor, derivedSubstitutor)) return false;
     }
 
-    for (int i = 0; i < supers.length; i++) {
-      PsiClass aSuper = supers[i];
-      if (aSuper.isInheritor(base, true)) continue;
+    for (PsiClass aSuper : supers) {
       PsiSubstitutor s = getSuperClassSubstitutor(aSuper, derived, derivedSubstitutor);
       if (!checkSuperTypesWithDifferentTypeArguments(baseResult, aSuper, manager, s)) return false;
     }
@@ -503,7 +500,7 @@ public class TypeConversionUtil {
   }
 
 
-  private static boolean isAssignable(PsiType left, PsiType right, boolean allowUncheckedConversion) {
+  public static boolean isAssignable(PsiType left, PsiType right, boolean allowUncheckedConversion) {
     LOG.assertTrue(left != null, "left is null");
     LOG.assertTrue(right != null, "right is null");
     if (isNullType(right)) {
@@ -512,14 +509,14 @@ public class TypeConversionUtil {
 
     if (left instanceof PsiIntersectionType) {
       PsiType[] conjuncts = ((PsiIntersectionType)left).getConjuncts();
-      for (int i = 0; i < conjuncts.length; i++) {
-        if (!isAssignable(conjuncts[i], right, allowUncheckedConversion)) return false;
+      for (PsiType conjunct : conjuncts) {
+        if (!isAssignable(conjunct, right, allowUncheckedConversion)) return false;
       }
       return true;
     } else if (right instanceof PsiIntersectionType) {
       PsiType[] conjuncts = ((PsiIntersectionType)right).getConjuncts();
-      for (int i = 0; i < conjuncts.length; i++) {
-        if (isAssignable(left, conjuncts[i], allowUncheckedConversion)) return true;
+      for (PsiType conjunct : conjuncts) {
+        if (isAssignable(left, conjunct, allowUncheckedConversion)) return true;
       }
       return false;
     }
@@ -822,8 +819,7 @@ public class TypeConversionUtil {
                                                    Set<PsiClass> set,
                                                    PsiManager manager) {
     final PsiClassType[] extendsReferences = types;
-    for (int i = 0; i < extendsReferences.length; i++) {
-      final PsiClassType type = extendsReferences[i];
+    for (final PsiClassType type : extendsReferences) {
       final PsiType substitutedType = candidateSubstitutor.substitute(type);
       //if (!(substitutedType instanceof PsiClassType)) return null;
       LOG.assertTrue(substitutedType instanceof PsiClassType);

@@ -153,7 +153,7 @@ public class RedundantCastUtil {
         if (castOperand != null) {
           PsiType operandType = castOperand.getType();
           if (operandType != null) {
-            if (lType != null && lType.isAssignableFrom(operandType)) {
+            if (lType != null && TypeConversionUtil.isAssignable(lType, operandType, false)) {
               addToResults((PsiTypeCastExpression)rExpr);
             }
           }
@@ -358,7 +358,7 @@ public class RedundantCastUtil {
         }
       }
 
-      if (toType.isAssignableFrom(fromType)) {
+      if (TypeConversionUtil.isAssignable(toType, fromType, false)) {
         addToResults(typeCast);
       }
     }
