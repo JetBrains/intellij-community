@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.HashMap;
@@ -294,11 +295,22 @@ public class CodeEditUtil {
 
   private static boolean whiteSpaceHasInvalidPosition(final ASTNode element) {
     final ASTNode treeParent = element.getTreeParent();
-    if (isWS(element) && treeParent.getElementType() == ElementType.XML_TEXT) return false;
-    if (!hasNonEmptyPrev(element)) return true;
+    if (isWS(element) && treeParent.getElementType() == ElementType.XML_TEXT) return false;    
     if (treeParent.getPsi().getUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY) != null) return false;
+    if (hasNonEmptyPrev(element)) return false;
     if (treeParent.getElementType() == ElementType.XML_PROLOG) return false;
-    return !hasNonEmptyNext(element);
+    if (hasNonEmptyNext(element)) {
+      return false;
+    }
+    if (treeParent.getElementType() instanceof IChameleonElementType) {
+      if (((IChameleonElementType)treeParent.getElementType()).isParsable(treeParent.getText(), element.getPsi().getProject())){
+        return false;
+      } else {
+        return true;
+      }
+    } else {
+      return true;
+    }
   }
 
   private static boolean containLineBreaks(final ASTNode first, final ASTNode last) {
