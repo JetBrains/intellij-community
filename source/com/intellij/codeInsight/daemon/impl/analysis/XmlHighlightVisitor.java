@@ -484,7 +484,20 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           }
 
           public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+            PsiElement next = findNextAttribute(attribute);
             attribute.delete();
+            if (next != null) {
+              editor.getCaretModel().moveToOffset(next.getTextRange().getStartOffset());
+            }
+          }
+
+          private PsiElement findNextAttribute(final XmlAttribute attribute) {
+            PsiElement nextSibling = attribute.getNextSibling();
+            while (nextSibling != null) {
+              if (nextSibling instanceof XmlAttribute) return nextSibling;
+              nextSibling =  nextSibling.getNextSibling();
+            }
+            return null;
           }
 
           public boolean startInWriteAction() {
