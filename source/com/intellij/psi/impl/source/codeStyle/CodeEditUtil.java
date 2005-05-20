@@ -19,6 +19,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.impl.PomTransactionBase;
+import com.intellij.pom.event.PomModelEvent;
+import com.intellij.pom.PomModelAspect;
+import com.intellij.pom.PomModel;
+import com.intellij.pom.tree.TreeAspect;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -29,6 +34,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.CharTable;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
@@ -172,7 +178,7 @@ public class CodeEditUtil {
     }
     checkAllWhiteSpaces(parent);
     ASTNode lastChild = last == null ? null : last.getTreeNext();
-    ASTNode prevElement = TreeUtil.prevLeaf(first);
+    final ASTNode prevElement = TreeUtil.prevLeaf(first);
     ASTNode nextElement = findElementAfter(last == null ? parent : last, false);
     if (nextElement != null) {
       saveIndents(nextElement);
@@ -184,12 +190,6 @@ public class CodeEditUtil {
       adjustWSBefore = true; 
     }
     
-    /*
-    if ((prevElement != null && !prevElement.textContains('\n'))) {
-      adjustWSBefore = true;
-    }
-
-    */
     parent.removeRange(first, lastChild);
     
     if (!adjustWSBefore && parent.getTextLength() == 0 && prevElement != null && isWS(prevElement) && !prevElement.textContains('\n')) {
@@ -213,19 +213,29 @@ public class CodeEditUtil {
           */
           delete(elementBeforeNext);
         } else {
-          String text = composeNewWS(prevElement.getText(), elementBeforeNext.getText(), options);
-          delete(prevElement);
-          if (!text.equals(elementBeforeNext.getText())){
-            final CharTable charTable = SharedImplUtil.findCharTableByTree(elementBeforeNext);
-            LeafElement newWhiteSpace = Factory.createSingleLeafElement(elementBeforeNext.getElementType(),
-                                                                        text.toCharArray(), 0, text.length(),
-                                                                        charTable,
-                                                                        SharedImplUtil.getManagerByTree(elementBeforeNext));
-
-            elementBeforeNext.getTreeParent().replaceChild(elementBeforeNext,
-                                                           newWhiteSpace);
+          final String text = composeNewWS(prevElement.getText(), elementBeforeNext.getText(), options);
+          final ASTNode elementBeforeNext1 = elementBeforeNext;
+          
+          final Runnable action = new Runnable() {
+            public void run() {
+              delete(elementBeforeNext1);
+              replace(prevElement, text);
+            }
+          };
+          
+          final PomModel model = prevElement.getPsi().getProject().getModel();
+          try {
+            
+            model.runTransaction(
+              new PomTransactionBase(TreeUtil.findCommonParent(elementBeforeNext1, prevElement).getPsi()) {
+                public PomModelEvent runInner() {
+                  action.run();
+                  return null;
+                }
+              }, model.getModelAspect(TreeAspect.class));
+          } catch (IncorrectOperationException e){
+            
           }
-
         }
       }
 
@@ -258,6 +268,19 @@ public class CodeEditUtil {
       System.out.println("CodeEditUtil.removeChildren\n" + parent.getPsi().getContainingFile().getText());
     }
     //removeChildrenOld(parent,first, last);
+  }
+
+  private static void replace(final ASTNode element, final String text) {
+    if (!text.equals(element.getText())){
+      final CharTable charTable = SharedImplUtil.findCharTableByTree(element);
+      LeafElement newWhiteSpace = Factory.createSingleLeafElement(element.getElementType(),
+                                                                  text.toCharArray(), 0, text.length(),
+                                                                  charTable,
+                                                                  SharedImplUtil.getManagerByTree(element));
+
+      element.getTreeParent().replaceChild(element,
+                                                     newWhiteSpace);
+    }    
   }
 
 
