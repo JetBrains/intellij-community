@@ -247,8 +247,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     refactoringSettings.MOVE_SEARCH_IN_COMMENTS = searchInComments;
     refactoringSettings.MOVE_SEARCH_IN_NONJAVA_FILES = searchInNonJavaFiles;
     PsiManager manager = PsiManager.getInstance(getProject());
-    for (int i = 0; i < myElementsToMove.length; i++) {
-      final PsiElement element = myElementsToMove[i];
+    for (final PsiElement element : myElementsToMove) {
       String message = verifyDestinationForElement(element, destination);
       if (message != null) {
         String helpId = HelpID.getMoveHelpID(myElementsToMove[0]);
@@ -257,16 +256,18 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       }
     }
     try {
-      for (int idx = 0; idx < myElementsToMove.length; idx++) {
-        PsiElement psiElement = myElementsToMove[idx];
-        if (psiElement instanceof PsiClass) {
-          final PsiClass aClass = ((PsiClass)psiElement);
+      for (PsiElement element : myElementsToMove) {
+        if (element instanceof PsiClass) {
+          final PsiClass aClass = ((PsiClass)element);
           PsiElement toAdd;
           if (aClass.getContainingFile() instanceof PsiJavaFile && ((PsiJavaFile)aClass.getContainingFile()).getClasses().length > 1) {
             toAdd = aClass;
-          } else toAdd = aClass.getContainingFile();
+          }
+          else {
+            toAdd = aClass.getContainingFile();
+          }
 
-          final PsiDirectory targetDirectory = destination.getTargetIfExists(psiElement.getContainingFile());
+          final PsiDirectory targetDirectory = destination.getTargetIfExists(element.getContainingFile());
           if (targetDirectory != null) {
             manager.checkMove(toAdd, targetDirectory);
           }
@@ -308,20 +309,12 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       return new MultipleRootsMoveDestination(targetPackage);
     }
 
-    /*
-    if (myTargetDirectoryFixed) {
-      final VirtualFile sourceRootForFile = ProjectRootManager.getInstance(myProject).getFileIndex().getSourceRootForFile(myInitialTargetDirectory.getVirtualFile());
-      if(sourceRootForFile != null) {
-        return new AutocreatingSingleSourceRootMoveDestination(targetPackage, sourceRootForFile);
-      }
-    }
-    */
-
     final VirtualFile[] contentSourceRoots = getSourceRoots();
     if (contentSourceRoots.length == 1) {
       return new AutocreatingSingleSourceRootMoveDestination(targetPackage, contentSourceRoots[0]);
     }
     final VirtualFile sourceRootForFile = MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, contentSourceRoots, myInitialTargetDirectory);
+    if (sourceRootForFile == null) return null;
     return new AutocreatingSingleSourceRootMoveDestination(targetPackage, sourceRootForFile);
   }
 
