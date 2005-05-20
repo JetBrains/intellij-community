@@ -29,7 +29,8 @@ public class ExtractIncludeAction extends BaseRefactoringAction {
   }
 
   protected boolean isAvailableForFile(PsiFile file) {
-    return file instanceof JspFile || Language.findInstance(HTMLLanguage.class).equals(file.getLanguage());
+    return file instanceof JspFile || Language.findInstance(HTMLLanguage.class).equals(file.getLanguage()) ||
+      Language.findInstance(XHTMLLanguage.class).equals(file.getLanguage());
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {
