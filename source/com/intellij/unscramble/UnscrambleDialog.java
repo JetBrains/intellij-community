@@ -337,7 +337,7 @@ public class UnscrambleDialog extends DialogWrapper{
     String unscrambledTrace = unscrambleSupport == null ? textToUnscramble : unscrambleSupport.unscramble(project,textToUnscramble, logName);
     if (unscrambledTrace == null) return false;
     final ConsoleView consoleView = addConsole(project);
-    consoleView.print(unscrambledTrace, ConsoleViewContentType.ERROR_OUTPUT);
+    consoleView.print(unscrambledTrace+"\n", ConsoleViewContentType.ERROR_OUTPUT);
     consoleView.performWhenNoDeferredOutput(
       new Runnable() {
         public void run() {
