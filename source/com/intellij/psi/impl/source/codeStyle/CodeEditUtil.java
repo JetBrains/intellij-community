@@ -60,7 +60,9 @@ public class CodeEditUtil {
       System.out.println("CodeEditUtil.addChildrenBefore\n" + parent.getPsi().getContainingFile().getText());
     }
     ASTNode lastChild = last != null ? last.getTreeNext() : null;
-    
+
+    ASTNode nextElement = saveIndentsBeforeAdd(first, lastChild, anchorBefore, parent);
+
     first = trimWhiteSpaces(first, lastChild);
 
     if (first == null) {
@@ -78,16 +80,6 @@ public class CodeEditUtil {
       }
     }
 
-    saveIndents(first, lastChild);
-    ASTNode nextElement = anchorBefore;
-    if (nextElement == null) {
-      nextElement = findElementAfter(parent, false);
-    } else if (isWS(nextElement)) {
-      nextElement = findElementAfter(anchorBefore, false);
-    }
-    if (nextElement != null) {
-      saveIndents(nextElement);
-    }
 
     parent.addChildren(first, lastChild, anchorBefore);
     final List<ASTNode> treePrev = getPreviousElements(first);
@@ -112,6 +104,23 @@ public class CodeEditUtil {
     }
   }
 
+  private static ASTNode saveIndentsBeforeAdd(final ASTNode first,
+                                              final ASTNode lastChild,
+                                              final ASTNode anchorBefore,
+                                              final CompositeElement parent) {
+    saveIndents(first, lastChild);
+    ASTNode nextElement = anchorBefore;
+    if (nextElement == null) {
+      nextElement = findElementAfter(parent, false);
+    } else if (isWS(nextElement)) {
+      nextElement = findElementAfter(anchorBefore, false);
+    }
+    if (nextElement != null) {
+      saveIndents(nextElement);
+    }
+    return nextElement;
+  }
+
   private static ASTNode findFirstNonEmpty(final ASTNode first,
                                            final ASTNode last,
                                            final CompositeElement parent,
@@ -124,7 +133,7 @@ public class CodeEditUtil {
       firstNonEmpty = TreeUtil.findFirstLeaf(anchorBefore);
       while (firstNonEmpty != null && firstNonEmpty.getTextLength() == 0) {
         firstNonEmpty = firstNonEmpty.getTreeNext();
-      }        
+      }
     }
     if (firstNonEmpty == null) {
       firstNonEmpty = TreeUtil.nextLeaf(parent);
