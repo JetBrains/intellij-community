@@ -1,10 +1,8 @@
 package com.siyeh.ig.confusing;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.BaseInspection;
+import com.intellij.psi.util.PsiTreeUtil;                    
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -30,7 +28,7 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
     }
 
     private static class AssignmentToForLoopParameterVisitor extends BaseInspectionVisitor {
-     
+
         public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
