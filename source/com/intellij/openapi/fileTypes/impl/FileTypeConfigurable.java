@@ -163,6 +163,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
     if (!canBeModified(fileType)) return;
     UserFileType ftToEdit = myOriginalToEditedMap.get(fileType);
     if (ftToEdit == null) ftToEdit = ((UserFileType)fileType).clone();
+    if (ftToEdit.getEditor() == null) return;
     TypeEditor editor = new TypeEditor(myRecognizedFileType.myEditButton, ftToEdit);
     editor.show();
     if (editor.isOK()) {
@@ -191,7 +192,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
   }
 
   private boolean canBeModified(FileType fileType) {
-    return fileType instanceof UserFileType;
+    return fileType instanceof UserFileType && ((UserFileType)fileType).getEditor() != null;
   }
 
   private void addFileType() {
