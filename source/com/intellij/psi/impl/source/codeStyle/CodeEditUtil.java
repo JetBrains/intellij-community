@@ -224,12 +224,21 @@ public class CodeEditUtil {
       elementBeforeNext = TreeUtil.prevLeaf(nextElement);
 
       if (isWS(elementBeforeNext) && whiteSpaceHasInvalidPosition(elementBeforeNext)) {
-        final ASTNode elementBeforeNext2 = elementBeforeNext;
-        final String text = elementBeforeNext2.getText();        
-        delete(elementBeforeNext2);
+        final String text = elementBeforeNext.getText();        
+        delete(elementBeforeNext);
         FormatterUtil.replaceWhiteSpace(text,
                                         nextElement,
                                         ElementType.WHITE_SPACE);
+      }
+      
+      elementBeforeNext = TreeUtil.prevLeaf(nextElement);
+      
+      if (elementBeforeNext != null && isWS(elementBeforeNext) && elementBeforeNext.getTextRange().getStartOffset() == 0) {
+        final IndentInfo info = createInfo(elementBeforeNext.getText(), options);
+        if (info.getLineFeeds() > 0) {
+          final String text = new IndentInfo(0,info.getIndentSpaces(), info.getSpaces()).generateNewWhiteSpace(options);
+          replace(elementBeforeNext, text);
+        }
       }
 
 
