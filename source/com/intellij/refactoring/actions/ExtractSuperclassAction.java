@@ -26,7 +26,8 @@ public class ExtractSuperclassAction extends BaseRefactoringAction {
     }
     return false;
     */
-    return elements.length == 1 && elements[0] instanceof PsiClass && !((PsiClass) elements[0]).isInterface();
+    return elements.length == 1 && elements[0] instanceof PsiClass && !((PsiClass) elements[0]).isInterface()
+      &&!((PsiClass)elements[0]).isEnum();
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {

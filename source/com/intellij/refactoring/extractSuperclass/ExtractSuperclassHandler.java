@@ -72,6 +72,14 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
       return;
     }
 
+    if (mySubclass.isEnum()) {
+      String message =
+              "Cannot perform the refactoring.\n" +
+              "Superclass cannot be extracted from an enum.";
+      RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_SUPERCLASS, project);
+      return;
+    }
+
 
     final MemberInfo[] memberInfos = MemberInfo.extractClassMembers(mySubclass, new MemberInfo.Filter() {
       public boolean includeMember(PsiMember element) {
