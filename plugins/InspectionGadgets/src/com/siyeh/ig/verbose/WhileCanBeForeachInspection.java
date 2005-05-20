@@ -109,8 +109,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             final PsiManager psiManager = PsiManager.getInstance(project);
             final PsiElementFactory elementFactory =
                     psiManager.getElementFactory();
-            PsiType contentType;
-            contentType = elementFactory.createTypeFromText(contentTypeString,
+            final PsiType contentType = elementFactory.createTypeFromText(contentTypeString,
                                                             whileStatement);
             final String iteratorName = iterator.getName();
             final boolean isDeclaration =
@@ -118,6 +117,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             if(isDeclaration){
                 final PsiDeclarationStatement decl =
                         (PsiDeclarationStatement) firstStatement;
+                assert decl != null;
                 final PsiElement[] declaredElements =
                         decl.getDeclaredElements();
                 final PsiLocalVariable localVar =
@@ -215,7 +215,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             }
             if(element instanceof PsiTypeCastExpression){
 
-                final PsiTypeCastExpression castExpression = ((PsiTypeCastExpression) element);
+                final PsiTypeCastExpression castExpression = (PsiTypeCastExpression) element;
                 final PsiType type = castExpression.getType();
                 if(type == null){
                     return false;
@@ -280,10 +280,16 @@ public class WhileCanBeForeachInspection extends StatementInspection{
                                                               true);
         }
 
-        private PsiStatement getFirstStatement(PsiStatement body){
+        @Nullable private PsiStatement getFirstStatement(PsiStatement body){
             if(body instanceof PsiBlockStatement){
                 final PsiBlockStatement block = (PsiBlockStatement) body;
-                return block.getCodeBlock().getStatements()[0];
+                final PsiCodeBlock codeBlock = block.getCodeBlock();
+                final PsiStatement[] statements = codeBlock.getStatements();
+                if(statements.length > 0){
+                    return statements[0];
+                } else{
+                    return null;
+                }
             } else{
                 return body;
             }
@@ -399,7 +405,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         return !isIteratorAssigned(iteratorName, body);
     }
 
-    private static @Nullable PsiStatement getPreviousStatement(PsiWhileStatement statement){
+    @Nullable private static PsiStatement getPreviousStatement(PsiWhileStatement statement){
         final PsiElement prevStatement =
                 PsiTreeUtil.skipSiblingsBackward(statement,
                                                  new Class[]{PsiWhiteSpace.class});
@@ -477,7 +483,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         private int numCallsToIteratorNext = 0;
         private final String iteratorName;
 
-        NumCallsToIteratorNextVisitor(String iteratorName){
+        private NumCallsToIteratorNextVisitor(String iteratorName){
             super();
             this.iteratorName = iteratorName;
         }
@@ -506,7 +512,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             numCallsToIteratorNext++;
         }
 
-        public int getNumCallsToIteratorNext(){
+        private int getNumCallsToIteratorNext(){
             return numCallsToIteratorNext;
         }
     }
@@ -516,7 +522,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         private boolean iteratorAssigned = false;
         private final String iteratorName;
 
-        IteratorAssignmentVisitor(String iteratorName){
+        private IteratorAssignmentVisitor(String iteratorName){
             super();
             this.iteratorName = iteratorName;
         }
@@ -538,7 +544,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             }
         }
 
-        public boolean isIteratorAssigned(){
+        private boolean isIteratorAssigned(){
             return iteratorAssigned;
         }
     }
@@ -548,7 +554,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         private boolean removeCalled = false;
         private final String iteratorName;
 
-        IteratorRemoveVisitor(String iteratorName){
+        private IteratorRemoveVisitor(String iteratorName){
             super();
             this.iteratorName = iteratorName;
         }
@@ -577,7 +583,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             }
         }
 
-        public boolean isRemoveCalled(){
+        private boolean isRemoveCalled(){
             return removeCalled;
         }
     }
@@ -586,7 +592,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         private boolean hasNextCalled = false;
         private final String iteratorName;
 
-        IteratorHasNextVisitor(String iteratorName){
+        private IteratorHasNextVisitor(String iteratorName){
             super();
             this.iteratorName = iteratorName;
         }
@@ -615,7 +621,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             }
         }
 
-        public boolean isHasNextCalled(){
+        private boolean isHasNextCalled(){
             return hasNextCalled;
         }
     }
