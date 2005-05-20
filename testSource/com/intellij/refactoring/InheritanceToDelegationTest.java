@@ -1,12 +1,9 @@
 package com.intellij.refactoring;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationProcessor;
 import com.intellij.util.ArrayUtil;
 
@@ -92,12 +89,8 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
   }
 
   public void testScr20557() throws Exception {
-    final CodeStyleSettings currentSettings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
-    final int oldIndentSize = currentSettings.getIndentSize(StdFileTypes.JAVA);
-    currentSettings.JAVA_INDENT_OPTIONS.INDENT_SIZE = 2;
     doTest(createPerformAction2("xxx.SCR20557", "myResultSet", "MyResultSet", "java.sql.ResultSet",
         new String[]{"getDate"}, ArrayUtil.EMPTY_STRING_ARRAY, false, false));
-    currentSettings.JAVA_INDENT_OPTIONS.INDENT_SIZE = oldIndentSize;
   }
 
 

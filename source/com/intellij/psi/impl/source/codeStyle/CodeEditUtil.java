@@ -159,6 +159,11 @@ public class CodeEditUtil {
   }
 
   private static void checkAllWhiteSpaces(final ASTNode parent) {
+    /*
+    if (CodeStyleSettingsManager.getSettings(parent.getPsi().getProject()).JAVA_INDENT_OPTIONS.INDENT_SIZE == 2) {
+      LOG.assertTrue(false);
+    }
+    */
     ASTNode node = parent.getPsi().getContainingFile().getNode();
     ASTNode leaf = TreeUtil.findFirstLeaf(node);
     while (leaf != null) {

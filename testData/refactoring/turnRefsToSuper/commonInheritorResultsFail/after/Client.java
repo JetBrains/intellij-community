@@ -14,7 +14,7 @@ class Client
 	L method() { V res = new V ();  res.q(); return res; }
     }
     
-    interface I {L method(); }
+    interface I { L method(); }
 
     class D extends C implements I { }
 }

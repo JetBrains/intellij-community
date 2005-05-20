@@ -5,7 +5,6 @@ class OuterClass {
 
     class InnerClass {
         int i;
-
         private InnerClass(int _i) {
             i = _i;
         }
