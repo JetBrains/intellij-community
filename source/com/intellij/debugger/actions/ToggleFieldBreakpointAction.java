@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
@@ -150,7 +151,8 @@ public class ToggleFieldBreakpointAction extends AnAction {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (file != null) {
         FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-        FileType fileType = fileTypeManager.getFileTypeByFile(file.getVirtualFile());
+        final VirtualFile virtualFile = file.getVirtualFile();
+        FileType fileType = virtualFile != null ? fileTypeManager.getFileTypeByFile(virtualFile) : null;
         if (StdFileTypes.JAVA == fileType || StdFileTypes.CLASS  == fileType) {
           final PsiField field = FieldBreakpoint.findField(project, document, editor.getCaretModel().getOffset());
           if(field != null){

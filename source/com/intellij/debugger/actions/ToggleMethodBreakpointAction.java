@@ -18,6 +18,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -78,7 +79,8 @@ public class ToggleMethodBreakpointAction extends AnAction {
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
         if (file != null) {
           FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-          FileType fileType = fileTypeManager.getFileTypeByFile(file.getVirtualFile());
+          final VirtualFile virtualFile = file.getVirtualFile();
+          FileType fileType = virtualFile != null ? fileTypeManager.getFileTypeByFile(virtualFile) : null;
           if (StdFileTypes.JAVA == fileType || StdFileTypes.CLASS  == fileType) {
             method = findMethod(project, editor);
           }
