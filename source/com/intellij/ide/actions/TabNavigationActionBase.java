@@ -67,7 +67,12 @@ abstract class TabNavigationActionBase extends AnAction {
   }
 
   private void doNavigate(ContentManager contentManager) {
-    contentManager.selectPreviousContent();
+    if (myDir == -1) {
+      contentManager.selectPreviousContent();
+    }
+    else {
+      contentManager.selectNextContent();
+    }
   }
 
   private void doNavigate(DataContext dataContext, Project project) {
