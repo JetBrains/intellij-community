@@ -91,7 +91,7 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
         }
         if(!(possibleAssignment instanceof PsiAssignmentExpression))
         {
-           return false;
+            return false;
         }
         final PsiAssignmentExpression assignment =
                 (PsiAssignmentExpression) possibleAssignment;
@@ -130,7 +130,7 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
             return false;
         }
         final PsiReferenceExpression rReference = (PsiReferenceExpression) rhs;
-        final PsiExpression rQualifier = reference.getQualifierExpression();
+        final PsiExpression rQualifier = rReference.getQualifierExpression();
         if(rQualifier != null){
             return false;
         }
@@ -138,7 +138,14 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
         if(rReferent == null){
             return false;
         }
-        return rReferent instanceof PsiParameter;
-
+        if(!(rReferent instanceof PsiParameter)){
+            return false;
+        }
+        final PsiType fieldType = field.getType();
+        final PsiType parameterType = ((PsiVariable) rReferent).getType();
+        if(fieldType == null || parameterType == null){
+            return false;
+        }
+        return fieldType.getCanonicalText().equals(parameterType.getCanonicalText());
     }
 }

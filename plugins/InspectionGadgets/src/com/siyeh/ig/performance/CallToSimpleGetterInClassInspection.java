@@ -112,6 +112,16 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
             return false;
         }
         final PsiField field = (PsiField) referent;
+        final PsiType fieldType = field.getType();
+        final PsiType returnType = method.getReturnType();
+        if(fieldType == null ||returnType == null)
+        {
+            return false;
+        }
+        if(!fieldType.getCanonicalText().equals(returnType.getCanonicalText()))
+        {
+            return false;
+        }
         return field.getContainingClass().equals(method.getContainingClass());
     }
 }

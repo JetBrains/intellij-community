@@ -97,7 +97,7 @@ public class StringUtils{
         return strippedName;
     }
 
-    public static @NotNull String createSingularFromName(@NotNull String name){
+    @NotNull public static String createSingularFromName(@NotNull String name){
         final String singularName;
         final int nameLength = name.length();
         if(name.endsWith("ies")){
