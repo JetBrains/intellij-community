@@ -142,16 +142,15 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
     ArrayList<PsiType> array1 = new ArrayList<PsiType>();
     ArrayList<PsiType> array2 = new ArrayList<PsiType>();
     int exprOffset = expr.getTextOffset();
-    for(int i = 0; i < expressions.length; i++){
-      PsiExpression expression = expressions[i];
+    for (PsiExpression expression : expressions) {
       PsiElement parent = expression.getParent();
-      if (parent instanceof PsiInstanceOfExpression){
+      if (parent instanceof PsiInstanceOfExpression) {
         PsiTypeElement typeElement = ((PsiInstanceOfExpression)parent).getCheckType();
-        if (typeElement != null){
-          if (parent.getTextOffset() < exprOffset){
+        if (typeElement != null) {
+          if (parent.getTextOffset() < exprOffset) {
             array1.add(typeElement.getType());
           }
-          else{
+          else {
             array2.add(typeElement.getType());
           }
         }
@@ -176,8 +175,7 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
         PsiExpression qualifier = methodExpr.getQualifierExpression();
         if (qualifier != null) {
           PsiType[] types = guessContainerElementType(qualifier, null);
-          for(int i = 0; i < types.length; i++){
-            PsiType type = types[i];
+          for (PsiType type : types) {
             if (type instanceof PsiClassType) {
               if (((PsiClassType)type).resolve() instanceof PsiAnonymousClass) continue;
             }
@@ -206,24 +204,24 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
 
     if ((flags & (CHECK_USAGE | CHECK_DOWN)) != 0){
       PsiReference[] varRefs = helper.findReferences(var, searchScope, false);
-      for(int i = 0; i < varRefs.length; i++) {
-        PsiElement ref = varRefs[i].getElement();
+      for (PsiReference varRef : varRefs) {
+        PsiElement ref = varRef.getElement();
 
-        if ((flags & CHECK_USAGE) != 0){
+        if ((flags & CHECK_USAGE) != 0) {
           PsiType type = guessElementTypeFromReference(myMethodPatternMap, ref, rangeToIgnore);
-          if (type != null && !(type instanceof PsiPrimitiveType)){
+          if (type != null && !(type instanceof PsiPrimitiveType)) {
             typesSet.add(type);
           }
         }
 
-        if ((flags & CHECK_DOWN) != 0){
-          if (ref.getParent() instanceof PsiExpressionList && ref.getParent().getParent() instanceof PsiMethodCallExpression){ //TODO : new
+        if ((flags & CHECK_DOWN) != 0) {
+          if (ref.getParent() instanceof PsiExpressionList && ref.getParent().getParent() instanceof PsiMethodCallExpression) { //TODO : new
             PsiExpressionList list = (PsiExpressionList)ref.getParent();
             PsiExpression[] args = list.getExpressions();
             int argIndex = -1;
-            for(int j = 0; j < args.length; j++){
+            for (int j = 0; j < args.length; j++) {
               PsiExpression arg = args[j];
-              if (arg.equals(ref)){
+              if (arg.equals(ref)) {
                 argIndex = j;
                 break;
               }
@@ -231,10 +229,11 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
 
             PsiMethodCallExpression methodCall = (PsiMethodCallExpression)list.getParent();
             PsiMethod method = (PsiMethod)methodCall.getMethodExpression().resolve();
-            if (method != null){
+            if (method != null) {
               PsiParameter[] parameters = method.getParameterList().getParameters();
-              if (argIndex < parameters.length){
-                addTypesByVariable(typesSet, parameters[argIndex], method.getContainingFile(), checkedVariables, flags | CHECK_USAGE, rangeToIgnore);
+              if (argIndex < parameters.length) {
+                addTypesByVariable(typesSet, parameters[argIndex], method.getContainingFile(), checkedVariables, flags | CHECK_USAGE,
+                                   rangeToIgnore);
               }
             }
           }
@@ -258,16 +257,16 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
         PsiMethod method = (PsiMethod)var.getParent().getParent();
         //System.out.println("analyzing usages of " + method + " in file " + scopeFile);
         PsiReference[] methodRefs = helper.findReferences(method, searchScope, false);
-        for(int i = 0; i < methodRefs.length; i++){
-          PsiElement ref = methodRefs[i].getElement();
-          if (ref.getParent() instanceof PsiMethodCallExpression){
+        for (PsiReference methodRef : methodRefs) {
+          PsiElement ref = methodRef.getElement();
+          if (ref.getParent() instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression methodCall = (PsiMethodCallExpression)ref.getParent();
             PsiExpression[] args = methodCall.getArgumentList().getExpressions();
             if (args.length <= argIndex) continue;
             PsiExpression arg = args[argIndex];
-            if (arg instanceof PsiReferenceExpression){
+            if (arg instanceof PsiReferenceExpression) {
               PsiElement refElement = ((PsiReferenceExpression)arg).resolve();
-              if (refElement instanceof PsiVariable){
+              if (refElement instanceof PsiVariable) {
                 addTypesByVariable(typesSet, (PsiVariable)refElement, scopeFile, checkedVariables, flags | CHECK_USAGE, rangeToIgnore);
               }
             }
