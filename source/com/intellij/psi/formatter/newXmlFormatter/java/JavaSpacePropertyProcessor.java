@@ -743,4 +743,11 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
   public void visitTypeParameter(PsiTypeParameter classParameter) {
     createSpaceInCode(true);
   }
+  
+  public void visitDeclarationStatement(PsiDeclarationStatement declarationStatement) {
+    if (myRole2 == ChildRole.COMMA) {
+      createSpaceInCode(false);
+    }
+  }
+  
 }
