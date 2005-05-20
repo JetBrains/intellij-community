@@ -90,7 +90,7 @@ public class ClassUtils {
             return false;
         }
         final PsiClassType classType = (PsiClassType) type;
-        final String className = classType.getClassName();
+        final String className = classType.getCanonicalText();
         return immutableTypes.contains(className);
     }
 

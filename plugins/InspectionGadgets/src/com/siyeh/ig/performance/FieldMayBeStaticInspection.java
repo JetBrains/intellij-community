@@ -3,6 +3,7 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
@@ -76,6 +77,14 @@ public class FieldMayBeStaticInspection extends FieldInspection{
 
             if(!ClassUtils.isImmutable(type)){
                 return;
+            }
+            PsiClass containingClass = field.getContainingClass();
+            if (containingClass != null
+                && !containingClass.hasModifierProperty(PsiModifier.STATIC)
+                && containingClass.getContainingClass() != null
+                && !PsiUtil.isCompileTimeConstant(field)) {
+              // inner class cannot have static declarations
+              return;
             }
             registerFieldError(field);
         }

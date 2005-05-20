@@ -67,19 +67,22 @@ public class InnerClassMayBeStaticInspection extends ClassInspection {
 
     private static class InnerClassCanBeStaticVisitor
             extends BaseInspectionVisitor {
-
-        public void visitClass(@NotNull PsiClass aClass) {
-            // no call to super, so that it doesn't drill down to inner classes
-            final PsiClass[] innerClasses = aClass.getInnerClasses();
-            for(final PsiClass innerClass : innerClasses){
-                if(!innerClass.hasModifierProperty(PsiModifier.STATIC)){
-                    final InnerClassReferenceVisitor visitor = new InnerClassReferenceVisitor(innerClass);
-                    innerClass.accept(visitor);
-                    if(visitor.areReferenceStaticallyAccessible()){
-                        registerClassError(innerClass);
-                    }
-                }
-            }
+      public void visitClass(@NotNull PsiClass aClass) {
+        // no call to super, so that it doesn't drill down to inner classes
+        if (aClass.getContainingClass() != null && !aClass.hasModifierProperty(PsiModifier.STATIC)) {
+          // inner class cannot have static declarations
+          return;
         }
+        final PsiClass[] innerClasses = aClass.getInnerClasses();
+        for (final PsiClass innerClass : innerClasses) {
+          if (!innerClass.hasModifierProperty(PsiModifier.STATIC)) {
+            final InnerClassReferenceVisitor visitor = new InnerClassReferenceVisitor(innerClass);
+            innerClass.accept(visitor);
+            if (visitor.areReferenceStaticallyAccessible()) {
+              registerClassError(innerClass);
+            }
+          }
+        }
+      }
     }
 }
