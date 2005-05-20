@@ -100,8 +100,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         highlighters.addAll(markSpot.highlighters);
       }
       List<HighlightInfo> infos = new SmartList<HighlightInfo>();
-      for (Iterator<RangeHighlighter> iterator = highlighters.iterator(); iterator.hasNext();) {
-        RangeHighlighter marker = iterator.next();
+      for (RangeHighlighter marker : highlighters) {
         final Object tooltipObject = marker.getErrorStripeTooltip();
         if (tooltipObject == null) continue;
         if (tooltipObject instanceof HighlightInfo) {
@@ -261,8 +260,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private void spitOutMarkSpot(final MarkSpot currentSpot, final Queue<PositionedRangeHighlighter> startQueue) {
       mySpots.add(currentSpot);
       currentSpot.highlighters = new SmartList<RangeHighlighter>();
-      for (Iterator<PositionedRangeHighlighter> iterator = startQueue.iterator(); iterator.hasNext();) {
-        PositionedRangeHighlighter positioned = iterator.next();
+      for (PositionedRangeHighlighter positioned : startQueue) {
         currentSpot.highlighters.add(positioned.highlighter);
       }
       Collections.sort(currentSpot.highlighters, new Comparator<RangeHighlighter>() {
@@ -415,6 +413,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   public void repaint() {
+    markDirtied();
     EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
     myScrollBarHeight = scrollBar.getSize().height;
 
@@ -427,17 +426,17 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     if (myCachedSortedHighlighters == null) {
       myCachedSortedHighlighters = new ArrayList<RangeHighlighter>();
       RangeHighlighter[] highlighters = getAllHighlighters();
-      for (int i = 0; i < highlighters.length; i++) {
-        if (highlighters[i].getErrorStripeMarkColor() != null) {
-          myCachedSortedHighlighters.add(highlighters[i]);
+      for (RangeHighlighter highlighter : highlighters) {
+        if (highlighter.getErrorStripeMarkColor() != null) {
+          myCachedSortedHighlighters.add(highlighter);
         }
       }
       final MarkupModel docMarkup = getDocument().getMarkupModel(myEditor.myProject);
       if (docMarkup != null) {
         highlighters = docMarkup.getAllHighlighters();
-        for (int i = 0; i < highlighters.length; i++) {
-          if (highlighters[i].getErrorStripeMarkColor() != null) {
-            myCachedSortedHighlighters.add(highlighters[i]);
+        for (RangeHighlighter highlighter : highlighters) {
+          if (highlighter.getErrorStripeMarkColor() != null) {
+            myCachedSortedHighlighters.add(highlighter);
           }
         }
       }
@@ -599,8 +598,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private void fireErrorMarkerClicked(RangeHighlighter marker, MouseEvent e) {
     ErrorStripeEvent event = new ErrorStripeEvent(getEditor(), e, marker);
     ErrorStripeListener[] listeners = getCachedErrorMarkerListeners();
-    for (int i = 0; i < listeners.length; i++) {
-      ErrorStripeListener listener = listeners[i];
+    for (ErrorStripeListener listener : listeners) {
       listener.errorMarkerClicked(event);
     }
   }

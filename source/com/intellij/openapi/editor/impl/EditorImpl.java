@@ -448,7 +448,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     });
 
 //    myBorderEffect.reset();
-
     try {
       myEditorComponent.getDropTarget().addDropTargetListener(new DropTargetAdapter() {
         public void drop(DropTargetDropEvent dtde) {
@@ -464,6 +463,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     }
     catch (TooManyListenersException e) {
     }
+
+    myPanel.addComponentListener(new ComponentAdapter() {
+      public void componentResized(ComponentEvent e) {
+        myMarkupModel.repaint();
+      }
+    });
   }
 
   public void setFontSize(final int fontSize) {
