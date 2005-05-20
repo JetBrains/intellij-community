@@ -1,9 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher.iterators;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 
 import java.util.ArrayList;
@@ -40,7 +37,9 @@ public class HierarchyNodeIterator extends NodeIterator {
         }
 
         if (acceptClasses) {
-          final PsiElement[] extendsList = clazz.getExtendsList().getReferenceElements();
+          final PsiReferenceList clazzExtendsList = clazz.getExtendsList();
+          final PsiElement[] extendsList = (clazzExtendsList != null)?clazzExtendsList.getReferenceElements():null;
+          
           if (extendsList!=null) {
             for(int i=0;i<extendsList.length;++i) {
               build(extendsList[i]);
