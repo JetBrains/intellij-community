@@ -45,6 +45,10 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     return ADD_SDK;
   }
 
+  public String suggestHomePath() {
+    return null;
+  }
+
   public boolean isValidSdkHome(String path) {
     if (isFromIDEAProject(path)) {
       return true;
