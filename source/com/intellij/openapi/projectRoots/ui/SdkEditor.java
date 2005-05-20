@@ -9,6 +9,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -288,8 +289,14 @@ public class SdkEditor implements Configurable{
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       public void validateSelectedFiles(VirtualFile[] files) throws Exception {
         if (files.length != 0){
-          if (!sdkType.isValidSdkHome(files[0].getPath())){
-            throw new Exception("The directory selected is not a valid home for " + sdkType.getPresentableName());
+          boolean valid = sdkType.isValidSdkHome(files[0].getPath());
+          if (!valid){
+            if (SystemInfo.isMac) {
+              valid = sdkType.isValidSdkHome(files[0].getPath() + "/Home");
+            }
+            if (!valid) {
+              throw new Exception("The directory selected is not a valid home for " + sdkType.getPresentableName());
+            }
           }
         }
       }
@@ -297,7 +304,9 @@ public class SdkEditor implements Configurable{
     descriptor.setTitle("Select Home Directory for " + sdkType.getPresentableName());
     VirtualFile[] files = FileChooser.chooseFiles(parentComponent, descriptor, getSuggestedSdkRoot(sdkType));
     if (files.length != 0){
-      return files[0].getPath();
+      final String path = files[0].getPath();
+      if (sdkType.isValidSdkHome(path)) return path;
+      return SystemInfo.isMac && sdkType.isValidSdkHome(path + "/Home") ? path + "/Home" : null;
     }
     return null;
   }
