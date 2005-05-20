@@ -4,14 +4,13 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.PropertiesFilesManager;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.PropertiesUtil;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -29,10 +28,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
-import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -129,7 +125,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     installPropertiesChangeListener();
     StructureViewTreeElement[] children = myStructureViewComponent.getTreeModel().getRoot().getChildren();
     if (children.length != 0) {
-      String propName = ((ResourceBundlePropertyStructureViewElement)children[0]).getValue();
+      StructureViewTreeElement child = children[0];
+      String propName = ((ResourceBundlePropertyStructureViewElement)child).getValue();
       setState(new ResourceBundleEditorState(propName));
     }
   }
@@ -268,7 +265,14 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
-                if (!CodeInsightUtil.prepareFileForWrite(propertiesFile)) {
+                Project project = propertiesFile.getProject();
+                PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+                documentManager.commitDocument(document);
+                Document propertiesFileDocument = documentManager.getDocument(propertiesFile);
+                documentManager.commitDocument(propertiesFileDocument);
+
+                if (!propertiesFile.isWritable() &&
+                    !FileDocumentManager.fileForDocumentCheckedOutSuccessfully(propertiesFileDocument, project)) {
                   uninstallDocumentListeners();
                   try {
                     document.replaceString(0, document.getTextLength(), oldText);
@@ -281,10 +285,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
                 String propertyName = getSelectedPropertyName();
                 if (propertyName == null) return;
                 Property property = propertiesFile.findPropertyByKey(propertyName);
-                Project project = propertiesFile.getProject();
-                PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-                documentManager.commitDocument(document);
-                documentManager.commitDocument(documentManager.getDocument(propertiesFile));
                 try {
                   if (property == null) {
                     property = PropertiesElementFactory.createProperty(project, propertyName, text);
