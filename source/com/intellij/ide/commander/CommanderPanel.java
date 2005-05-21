@@ -27,8 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.ui.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -356,6 +355,12 @@ public class CommanderPanel extends JPanel {
       myTitlePanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED, color.brighter(), color.darker()));
       myParentTitle.setForeground(Color.black);
     }
+    if (myList.getSelectedIndices().length == 0 && myList.getModel().getSize() > 0) {
+      myList.setSelectedIndex(0);
+      if (!myList.hasFocus()) {
+        myList.requestFocus();
+      }
+    }
   }
 
   public final Commander getCommander() {
@@ -374,7 +379,6 @@ public class CommanderPanel extends JPanel {
       }
     }
 
-    final ActionManager actionManager = ActionManager.getInstance();
     final ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_COMMANDER_POPUP);
     final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.COMMANDER_POPUP, group);
     popupMenu.getComponent().show(c, x, y);
@@ -403,7 +407,8 @@ public class CommanderPanel extends JPanel {
       return filterInvalidElements(getSelectedElements());
     }
     else if (DataConstantsEx.PASTE_TARGET_PSI_ELEMENT.equals(dataId)) {
-      final Object element = myBuilder.getParentElement();
+      final AbstractTreeNode parentNode = myBuilder.getParentNode();
+      final Object element = parentNode != null? parentNode.getValue() : null;
       return (element instanceof PsiElement) && ((PsiElement)element).isValid() ? element : null;
     }
     else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
@@ -534,7 +539,7 @@ public class CommanderPanel extends JPanel {
 
     private PsiDirectory getDirectory() {
       if (myBuilder == null) return null;
-      final Object parentElement = myBuilder.getParentElement();
+      final Object parentElement = myBuilder.getParentNode();
       if (parentElement instanceof AbstractTreeNode) {
         final AbstractTreeNode parentNode = ((AbstractTreeNode)parentElement);
         if (!(parentNode.getValue() instanceof PsiDirectory)) return null;

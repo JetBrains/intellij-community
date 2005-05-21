@@ -142,8 +142,13 @@ public class CheckboxTree extends Tree {
       boolean hasFocus
     );
 
-    public ColoredTreeCellRenderer getTextRenderer    () { return myTextRenderer; }
-    public JCheckBox               getCheckbox()         { return myCheckbox; }
+    public ColoredTreeCellRenderer getTextRenderer() { 
+      return myTextRenderer; 
+    }
+    
+    public JCheckBox getCheckbox() { 
+      return myCheckbox; 
+    }
   }
 
 

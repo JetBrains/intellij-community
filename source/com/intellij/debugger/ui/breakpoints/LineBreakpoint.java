@@ -29,6 +29,8 @@ import com.sun.jdi.request.BreakpointRequest;
 import javax.swing.*;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 public class LineBreakpoint extends BreakpointWithHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
 
@@ -152,7 +154,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       if(!matches) {
         return false;
       }
-      
+
       ClassFilter [] ifilters = getClassExclusionFilters();
       for (int i = 0; i < ifilters.length; i++) {
         ClassFilter classFilter = ifilters[i];
@@ -178,7 +180,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
         buffer.append(".");
         buffer.append(myMethodName);
       }
-    } 
+    }
     else {
       buffer.append("INVALID");
     }
@@ -239,7 +241,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     }
     return super.canMoveTo(position);
   }
-  
+
   public static boolean canAddLineBreakpoint(Project project, final Document document, final int lineIndex) {
     if (lineIndex < 0 || lineIndex >= document.getLineCount()) {
       return false;
@@ -289,5 +291,9 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     });
 
     return canAdd[0];
+  }
+
+  public @Nullable String getMethodName() {
+    return myMethodName;
   }
 }

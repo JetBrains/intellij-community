@@ -222,8 +222,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
   private CommanderPanel createPanel() {
     final CommanderPanel panel = new CommanderPanel(myProject, this);
     final ProjectAbstractTreeStructureBase treeStructure = createProjectTreeStructure();
-    final ProjectListBuilder builder = new ProjectListBuilder(myProject, panel, treeStructure, AlphaComparator.INSTANCE, true);
-    panel.setBuilder(builder);
+    panel.setBuilder(new ProjectListBuilder(myProject, panel, treeStructure, AlphaComparator.INSTANCE, true));
 
     panel.getList().addFocusListener(new FocusAdapter() {
       public void focusGained(final FocusEvent e) {
@@ -274,49 +273,10 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
 
   protected void updateToolWindowTitle(final CommanderPanel activePanel) {
     final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.COMMANDER);
-    if (toolWindow == null) return;
-
-    String title = null;
-    final PsiElement element = activePanel.getSelectedElement();
-    if (element != null) {
-      // todo!!!
-      if (!element.isValid()) return;
-      if (element instanceof PsiDirectory) {
-        final PsiDirectory directory = (PsiDirectory) element;
-        title = UsageViewUtil.getPackageName(directory, true);
-      } else if (element instanceof PsiFile) {
-        final PsiFile file = (PsiFile) element;
-        title = file.getVirtualFile().getPresentableUrl();
-      } else if (element instanceof PsiClass) {
-        final PsiClass psiClass = (PsiClass) element;
-        title = psiClass.getQualifiedName();
-      } else if (element instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod) element;
-        final PsiClass aClass = method.getContainingClass();
-        if (aClass != null) {
-          title = aClass.getQualifiedName();
-        } else {
-          title = method.toString();
-        }
-      } else if (element instanceof PsiField) {
-        final PsiField field = (PsiField) element;
-        final PsiClass aClass = field.getContainingClass();
-        if (aClass != null) {
-          title = aClass.getQualifiedName();
-        } else {
-          title = field.toString();
-        }
-      } else {
-        final PsiFile file = element.getContainingFile();
-        if (file != null) {
-          title = file.getVirtualFile().getPresentableUrl();
-        } else {
-          title = element.toString();
-        }
-      }
+    if (toolWindow != null) {
+      final PsiElement element = activePanel.getSelectedElement();
+      toolWindow.setTitle(getTitle(element));
     }
-
-    toolWindow.setTitle(title);
   }
 
   public boolean isLeftPanelActive() {
@@ -377,7 +337,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
       activePanel = myRightPanel;
       passivePanel = myLeftPanel;
     }
-    ProjectViewNode element = (ProjectViewNode)activePanel.getBuilder().getParentElement();
+    ProjectViewNode element = (ProjectViewNode)activePanel.getBuilder().getParentNode();
     passivePanel.getBuilder().enterElement(element);
   }
 
@@ -395,7 +355,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     } else if (DataConstantsEx.PROJECT.equals(dataId)) {
       return myProject;
     } else if (DataConstantsEx.TARGET_PSI_ELEMENT.equals(dataId)) {
-      final AbstractTreeNode parentElement = getInactivePanel().getBuilder().getParentElement();
+      final AbstractTreeNode parentElement = getInactivePanel().getBuilder().getParentNode();
       if (parentElement == null) return null;
       final Object element = parentElement.getValue();
       return (element instanceof PsiElement) && ((PsiElement)element).isValid()? element : null;
@@ -433,7 +393,8 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     final AbstractListBuilder builder = panel.getBuilder();
     if (builder == null) return;
 
-    final Object parentElement = builder.getParentElement();
+    final AbstractTreeNode parentNode = builder.getParentNode();
+    final Object parentElement = parentNode != null? parentNode.getValue() : null;
     if (parentElement instanceof PsiDirectory) {
       final PsiDirectory directory = (PsiDirectory) parentElement;
       element.setAttribute("url", directory.getVirtualFile().getUrl());
@@ -488,6 +449,40 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
 
   public CommanderPanel getLeftPanel() {
     return myLeftPanel;
+  }
+
+  public static String getTitle(final PsiElement element) {
+    String title = null;
+    if (element == null || !element.isValid()) {
+      title = null;
+    }
+    else if (element instanceof PsiDirectory) {
+      final PsiDirectory directory = (PsiDirectory) element;
+      title = UsageViewUtil.getPackageName(directory, true);
+    }
+    else if (element instanceof PsiFile) {
+      final PsiFile file = (PsiFile) element;
+      title = file.getVirtualFile().getPresentableUrl();
+    }
+    else if (element instanceof PsiClass) {
+      final PsiClass psiClass = (PsiClass) element;
+      title = psiClass.getQualifiedName();
+    }
+    else if (element instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod) element;
+      final PsiClass aClass = method.getContainingClass();
+      title = aClass != null? aClass.getQualifiedName() : method.toString();
+    }
+    else if (element instanceof PsiField) {
+      final PsiField field = (PsiField) element;
+      final PsiClass aClass = field.getContainingClass();
+      title = aClass != null? aClass.getQualifiedName() : field.toString();
+    }
+    else {
+      final PsiFile file = element.getContainingFile();
+      title = file != null? file.getVirtualFile().getPresentableUrl() : element.toString();
+    }
+    return title;
   }
 }
 

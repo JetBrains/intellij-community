@@ -4,6 +4,7 @@ import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.ide.bookmarks.EditorBookmark;
 import com.intellij.ide.commander.Commander;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -45,7 +46,8 @@ public class ToggleBookmarkAction extends AnAction {
       return;
     }
     if (id.equals(ToolWindowId.COMMANDER)) {
-      Object element = Commander.getInstance(project).getActivePanel().getBuilder().getParentElement();
+      AbstractTreeNode parentNode = Commander.getInstance(project).getActivePanel().getBuilder().getParentNode();
+      final Object element = parentNode != null? parentNode.getValue() : null;
       if (element instanceof PsiElement) {
         bookmarkManager.addCommanderBookmark((PsiElement)element);
       }
@@ -78,8 +80,9 @@ public class ToggleBookmarkAction extends AnAction {
       presentation.setEnabled(projectView.getParentOfCurrentSelection() != null);
     }
     else if (ToolWindowId.COMMANDER.equals(id)) {
-      boolean value=Commander.getInstance(project).getActivePanel().getBuilder().getParentElement() instanceof PsiElement;
-      presentation.setEnabled(value);
+      final AbstractTreeNode parentNode = Commander.getInstance(project).getActivePanel().getBuilder().getParentNode();
+      final Object parentElement = parentNode != null? parentNode.getValue() : null;
+      presentation.setEnabled(parentElement instanceof PsiElement);
     }
     else {
       presentation.setEnabled(false);

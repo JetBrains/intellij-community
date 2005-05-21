@@ -411,7 +411,7 @@ public abstract class AbstractListBuilder {
     }
   }
 
-  public final AbstractTreeNode getParentElement() {
+  public final AbstractTreeNode getParentNode() {
     return myCurrentParent;
   }
 
