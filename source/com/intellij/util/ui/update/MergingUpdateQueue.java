@@ -6,6 +6,7 @@ package com.intellij.util.ui.update;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.Disposable;
 
 import javax.swing.*;
@@ -150,9 +151,10 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
     }
   }
 
-  public final void queue(Update update) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      update.run();
+  public final void queue(final Update update) {
+    final Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode()) {
+      app.invokeLater(update);
       return;
     }
     
