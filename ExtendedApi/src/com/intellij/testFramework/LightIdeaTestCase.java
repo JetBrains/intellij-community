@@ -9,8 +9,8 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,13 +53,14 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
   private static IdeaTestApplication ourApplication;
   private static Project ourProject;
   private static Module ourModule;
+  private static ProjectJdk ourJDK;
   private static PsiManager ourPsiManager;
   private boolean myAssertionsInTestDetected;
   private static VirtualFile ourSourceRoot;
   private static TestCase ourTestCase = null;
   public static Thread ourTestThread;
   private String oldCodeStyleSettings;
- 
+
   /**
    * @return Project to be used in tests for example for project components retrieval.
    */
@@ -282,10 +284,21 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
   }
 
   protected void setUpJdk() {
-    final ProjectJdk jdk = JavaSdkImpl.getMockJdk("java 1.4");
+    ProjectJdk jdk = getProjectJDK();
+
+    if (ourJDK == null || !Comparing.equal(ourJDK.getVersionString(), jdk.getVersionString())) {
+      ourJDK = jdk;
+      setProjectJDK(jdk);
+    }
+  }
+
+  protected ProjectJdk getProjectJDK() {
+    return JavaSdkImpl.getMockJdk("java 1.4");
+  }
+
+  private void setProjectJDK(final ProjectJdk jdk) {
     if (jdk == null) return;
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(ourModule);
-
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final ModifiableRootModel rootModel = rootManager.getModifiableModel();
