@@ -341,11 +341,8 @@ public class CodeEditUtil {
     final ASTNode treeParent = element.getTreeParent();
     if (isWS(element) && treeParent.getElementType() == ElementType.XML_TEXT) return false;    
     if (treeParent.getPsi().getUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY) != null) return false;
-    if (hasNonEmptyPrev(element)) return false;
+    if (hasNonEmptyPrev(element) && hasNonEmptyNext(element)) return false;
     if (treeParent.getElementType() == ElementType.XML_PROLOG) return false;
-    if (hasNonEmptyNext(element)) {
-      return false;
-    }
     if (treeParent.getElementType() instanceof IChameleonElementType) {
       if (((IChameleonElementType)treeParent.getElementType()).isParsable(treeParent.getText(), element.getPsi().getProject())){
         return false;
