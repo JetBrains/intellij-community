@@ -192,7 +192,6 @@ public class CodeEditUtil {
       System.out.println("CodeEditUtil.removeChildrenBefore\n" + parent.getPsi().getContainingFile().getText());
     }
     checkAllWhiteSpaces(parent);
-    
     ASTNode lastChild = last == null ? null : last.getTreeNext();
     final ASTNode prevElement = TreeUtil.prevLeaf(first);
     final ASTNode nextElement = findElementAfter(last == null ? parent : last, false);
@@ -324,9 +323,6 @@ public class CodeEditUtil {
   }
 
   private static boolean hasNonEmptyPrev(ASTNode element) {
-    if (!element.getPsi().isValid()) {
-      LOG.assertTrue(false);
-    }
     ASTNode current = element.getTreePrev();
     while (current != null) {
       if (current.getTextLength() > 0) {
@@ -343,19 +339,13 @@ public class CodeEditUtil {
 
   private static boolean whiteSpaceHasInvalidPosition(final ASTNode element) {
     final ASTNode treeParent = element.getTreeParent();
-    if (treeParent != null) {
-      if (isWS(element) && treeParent.getElementType() == ElementType.XML_TEXT) return false;
-      if (treeParent.getPsi().getUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY) != null) return false;
-      if (treeParent.getElementType() == ElementType.XML_PROLOG) return false;      
-    }
+    if (isWS(element) && treeParent.getElementType() == ElementType.XML_TEXT) return false;    
+    if (treeParent.getPsi().getUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY) != null) return false;
     if (hasNonEmptyPrev(element) && hasNonEmptyNext(element)) return false;
-    if (treeParent != null) {
-      if (treeParent.getElementType() instanceof IChameleonElementType) {
-        if (((IChameleonElementType)treeParent.getElementType()).isParsable(treeParent.getText(), element.getPsi().getProject())){
-          return false;
-        } else {
-          return true;
-        }
+    if (treeParent.getElementType() == ElementType.XML_PROLOG) return false;
+    if (treeParent.getElementType() instanceof IChameleonElementType) {
+      if (((IChameleonElementType)treeParent.getElementType()).isParsable(treeParent.getText(), element.getPsi().getProject())){
+        return false;
       } else {
         return true;
       }
@@ -403,19 +393,14 @@ public class CodeEditUtil {
     ASTNode result = first;
     while(current != null && current != lastChild) {
       LeafElement leaf = TreeUtil.findFirstLeaf(current);
-      
-      if ((current == first && current.getTreeNext() != lastChild) || current.getElementType() != ElementType.WHITE_SPACE) {        
-        if (leaf != null && leaf.getElementType() == ElementType.WHITE_SPACE) {
-          if (leaf == result) result = leaf.getTreeNext();
-          delete(leaf);
-        }
+      if (leaf != null && leaf.getElementType() == ElementType.WHITE_SPACE) {
+        if (leaf == result) result = leaf.getTreeNext();
+        delete(leaf);
       }
       leaf = TreeUtil.findLastLeaf(current);
-      if (current.getElementType() != ElementType.WHITE_SPACE) {
-        if (leaf != null && leaf.getElementType() == ElementType.WHITE_SPACE) {
-          if (leaf == result) result = leaf.getTreeNext();
-          delete(leaf);
-        }
+      if (leaf != null && leaf.getElementType() == ElementType.WHITE_SPACE) {
+        if (leaf == result) result = leaf.getTreeNext();
+        delete(leaf);
       }
       current = current.getTreeNext();
     }
