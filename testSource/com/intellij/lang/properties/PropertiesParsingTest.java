@@ -23,7 +23,6 @@ public class PropertiesParsingTest extends ParsingTestCase {
   }
 
   public void testProp1() throws Exception {
-    if (!IdeaTestUtil.bombExplodes(2005, Calendar.MAY, 23, 14, 0, "cdr", "")) return;
     doTest(true);
   }
 }
