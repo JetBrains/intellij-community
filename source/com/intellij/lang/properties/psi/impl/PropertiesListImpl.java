@@ -8,4 +8,8 @@ public class PropertiesListImpl extends ASTWrapperPsiElement {
   public PropertiesListImpl(final ASTNode node) {
     super(node);
   }
+
+  @Override public String toString() {
+    return "PropertiesList";
+  }
 }
