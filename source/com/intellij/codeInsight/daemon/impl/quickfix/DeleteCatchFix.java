@@ -52,12 +52,21 @@ public class DeleteCatchFix implements IntentionAction {
         while((reformatRangeEnd = reformatRangeEnd.getNextSibling()) instanceof PsiWhiteSpace);
         if(reformatRangeEnd == null) reformatRangeEnd = tryParent;
         PsiElement firstElement = tryBlock.getFirstBodyElement();
+        PsiElement lastAddedStatement = null;
         if (firstElement != null) {
           PsiElement endElement = tryBlock.getLastBodyElement();
 
           reformatRangeStart = tryParent.addRangeBefore(firstElement, endElement, tryStatement).getPrevSibling();
+          lastAddedStatement = tryStatement.getPrevSibling();
+          while (lastAddedStatement instanceof PsiWhiteSpace) {
+            lastAddedStatement = lastAddedStatement.getPrevSibling();
+          }          
         }
         tryStatement.delete();
+        if (lastAddedStatement != null) {
+          editor.getCaretModel().moveToOffset(lastAddedStatement.getTextRange().getEndOffset());
+        }
+
         CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
         styleManager.reformatRange(tryParent, reformatRangeStart.getTextRange().getEndOffset(), reformatRangeEnd.getTextRange().getStartOffset());
         return;
@@ -65,7 +74,17 @@ public class DeleteCatchFix implements IntentionAction {
 
       // delete catch section
       LOG.assertTrue(myCatchParameter.getParent() instanceof PsiCatchSection);
-      myCatchParameter.getParent().delete();
+      final PsiElement catchSection = myCatchParameter.getParent();
+      //save previous element to move caret to
+      PsiElement previousElement = catchSection.getPrevSibling();
+      while (previousElement != null && previousElement instanceof PsiWhiteSpace) {
+        previousElement = previousElement.getPrevSibling();
+      }
+      catchSection.delete();
+      if (previousElement != null) {
+        //move caret to previous catch section
+        editor.getCaretModel().moveToOffset(previousElement.getTextRange().getEndOffset());
+      }
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }
