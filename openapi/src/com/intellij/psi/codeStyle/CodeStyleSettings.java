@@ -561,7 +561,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean SPACE_AFTER_QUEST = true;
   public boolean SPACE_BEFORE_COLON = true;
   public boolean SPACE_AFTER_COLON = true;
-  public boolean SPACE_BEFORE_TYPE_PARAMETER_LIST = true;
+  public boolean SPACE_BEFORE_TYPE_PARAMETER_LIST = false;
 
 //----------------- NAMING CONVENTIONS --------------------
 

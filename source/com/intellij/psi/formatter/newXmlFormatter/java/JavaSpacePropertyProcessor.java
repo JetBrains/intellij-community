@@ -768,4 +768,10 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
       createSpaceInCode(false);
     }
   }
+
+  public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    if (myRole2 == ChildRole.REFERENCE_PARAMETER_LIST) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_TYPE_PARAMETER_LIST);
+    }
+  }
 }

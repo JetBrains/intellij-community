@@ -81,6 +81,17 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
       }
     }
 
+    final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
+    
+    if (getFirstChildNode()== null || getFirstChildNode().getElementType() != LT){
+      TreeElement lt = Factory.createSingleLeafElement(LT, new char[]{'<'}, 0, 1, treeCharTab, getManager());
+      super.addInternal(lt, lt, getFirstChildNode(), Boolean.TRUE);
+    }
+    if (getLastChildNode() == null || getLastChildNode().getElementType() != GT){
+      TreeElement gt = Factory.createSingleLeafElement(GT, new char[]{'>'}, 0, 1, treeCharTab, getManager());
+      super.addInternal(gt, gt, getLastChildNode(), Boolean.FALSE);
+    }
+    
     if (anchor == null){
       if (before == null || before.booleanValue()){
         anchor = findChildByRole(ChildRole.GT_IN_TYPE_LIST);
@@ -93,7 +104,6 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
     }
 
     final TreeElement firstAdded = super.addInternal(first, last, anchor, before);
-    final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
 
     if (first == last && first.getElementType() == TYPE){
       ASTNode element = first;
@@ -115,14 +125,6 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
       }
     }
 
-    if (getFirstChildNode().getElementType() != LT){
-      TreeElement lt = Factory.createSingleLeafElement(LT, new char[]{'<'}, 0, 1, treeCharTab, getManager());
-      super.addInternal(lt, lt, getFirstChildNode(), Boolean.TRUE);
-    }
-    if (getLastChildNode().getElementType() != GT){
-      TreeElement gt = Factory.createSingleLeafElement(GT, new char[]{'>'}, 0, 1, treeCharTab, getManager());
-      super.addInternal(gt, gt, getLastChildNode(), Boolean.FALSE);
-    }
     return firstAdded;
   }
 

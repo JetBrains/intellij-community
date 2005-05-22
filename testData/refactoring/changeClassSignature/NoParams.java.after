@@ -1,4 +1,4 @@
-class C <T> {
+class C<T> {
 }
 
 class Usage extends C<String> {
