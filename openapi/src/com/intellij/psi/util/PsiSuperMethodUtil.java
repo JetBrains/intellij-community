@@ -7,11 +7,8 @@ package com.intellij.psi.util;
 import com.intellij.aspects.psi.PsiAspect;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.psi.*;
-import com.intellij.util.containers.HashMap;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class PsiSuperMethodUtil {
   public static PsiPointcutDef findSuperPointcut(PsiPointcutDef pointcut) {
@@ -58,7 +55,32 @@ public class PsiSuperMethodUtil {
   }
 
   public static PsiMethod findConstructorInSuper(PsiMethod constructor) {
-    return constructor.findConstructorInSuper();
+    if (constructor.getBody() != null) {
+      PsiStatement[] statements = constructor.getBody().getStatements();
+      if (statements.length > 0) {
+        PsiElement firstChild = statements[0].getFirstChild();
+        if (firstChild instanceof PsiMethodCallExpression) {
+          PsiReferenceExpression superExpr = ((PsiMethodCallExpression)firstChild).getMethodExpression();
+          if (superExpr.getText().equals("super")) {
+            PsiElement superConstructor = superExpr.resolve();
+            if (superConstructor instanceof PsiMethod) {
+              return (PsiMethod)superConstructor;
+            }
+          }
+        }
+      }
+    }
+
+    PsiClass containingClass = constructor.getContainingClass();
+    if (containingClass != null) {
+      PsiClass superClass = containingClass.getSuperClass();
+      if (superClass != null) {
+        MethodSignature defConstructor = MethodSignatureUtil.createMethodSignature(superClass.getName(), PsiType.EMPTY_ARRAY,
+                                                                                   PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+        return MethodSignatureUtil.findMethodBySignature(superClass, defConstructor, false);
+      }
+    }
+    return null;
   }
 
   public static PsiMethod findDeepestSuperMethod(PsiMethod method) {
@@ -66,66 +88,10 @@ public class PsiSuperMethodUtil {
 
   }
 
-  /**
-   * @deprecated
-   * @return all overridden methods sorted by hierarchy,
-   * i.e  Map: PsiMethod method -> List of overridden methods (access control rules are respected)
-   */
-  public static Map<PsiMethod, List<PsiMethod>> getMethodHierarchy(PsiMethod method) {
-    final PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return null;
-    return getMethodHierarchy(method, aClass);
-  }
-
-  /**
-   * @deprecated
-   * @param method
-   * @param aClass
-   * @return
-   */
-  public static Map<PsiMethod, List<PsiMethod>> getMethodHierarchy(PsiMethod method, PsiClass aClass) {
-    Map<PsiMethod, List<PsiMethod>> map = new HashMap<PsiMethod, List<PsiMethod>>();
-    List<PsiMethod> allMethods = new ArrayList<PsiMethod>();
-    getMethodHierarchy(method, aClass, map, allMethods);
-    return map;
-  }
-
-  /**
-   * @deprecated
-   * @param method
-   * @param aClass
-   * @param map
-   * @param allMethods
-   */
-  private static void getMethodHierarchy(PsiMethod method, PsiClass aClass, Map<PsiMethod, List<PsiMethod>> map, List<PsiMethod> allMethods) {
-    final PsiClass[] superTypes = aClass.getSupers();
-    final int startMethodIndex = allMethods.size();
-    for (PsiClass superType : superTypes) {
-      final PsiMethod superMethod;
-      superMethod = MethodSignatureUtil.findMethodBySignature(superType, method, false);
-      if (superMethod == null) {
-        getMethodHierarchy(method, superType, map, allMethods);
-      }
-      else {
-        if (PsiUtil.isAccessible(superMethod, aClass, aClass)) {
-          allMethods.add(superMethod);
-        }
-      }
-    }
-    final int endMethodIndex = allMethods.size();
-    map.put(method, new ArrayList<PsiMethod>(allMethods.subList(startMethodIndex, endMethodIndex)));
-    for (int i = startMethodIndex; i < endMethodIndex; i++) {
-      final PsiMethod superMethod = allMethods.get(i);
-      if (map.get(superMethod) == null) {
-        getMethodHierarchy(superMethod, superMethod.getContainingClass(), map, allMethods);
-      }
-    }
-  }
-
   // remove from list all methods overridden by contextClass or its super classes
   public static void removeOverriddenMethods(List<MethodSignatureBackedByPsiMethod> sameSignatureMethods,
-                                           PsiClass contextClass,
-                                           PsiClass place) {
+                                             PsiClass contextClass,
+                                             PsiClass place) {
     for (int i = sameSignatureMethods.size() - 1; i >= 0; i--) {
       final MethodSignatureBackedByPsiMethod methodBackedMethodSignature1 = sameSignatureMethods.get(i);
       PsiMethod method1 = methodBackedMethodSignature1.getMethod();

@@ -119,10 +119,6 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     return PsiSuperMethodImplUtil.findSuperMethodSignaturesIncludingStatic(this, checkAccess);
   }
 
-  public PsiMethod findConstructorInSuper() {
-    return PsiSuperMethodImplUtil.findConstructorInSuper(this);
-  }
-
   public PsiMethod findDeepestSuperMethod() {
     return PsiSuperMethodImplUtil.findDeepestSuperMethod(this);
   }

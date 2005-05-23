@@ -113,10 +113,6 @@ public class LightMethod extends LightElement implements PsiMethod {
     return myMethod.findSuperMethodSignaturesIncludingStatic(checkAccess);
   }
 
-  public PsiMethod findConstructorInSuper() {
-    return myMethod.findConstructorInSuper();
-  }
-
   public PsiMethod findDeepestSuperMethod() {
     return myMethod.findDeepestSuperMethod();
   }

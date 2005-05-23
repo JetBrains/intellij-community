@@ -4,21 +4,16 @@ import com.intellij.aspects.psi.PsiAspect;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.EjbUtil;
-import com.intellij.j2ee.ejb.role.EjbMethodRole;
 import com.intellij.j2ee.ejb.role.EjbImplMethodRole;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.j2ee.ejb.role.EjbMethodRole;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.Collections;
+import java.util.List;
 
 public class PsiSuperMethodImplUtil {
-  private static final Logger LOG = Logger.getInstance("com.intellij.psi.util.PsiSuperMethodImplUtil");
 
   public static PsiPointcutDef findSuperPointcut(PsiPointcutDef pointcut) {
     return findSuperPointcut(pointcut, pointcut.getContainingAspect());
@@ -87,8 +82,7 @@ public class PsiSuperMethodImplUtil {
     final EjbMethodRole role = J2EERolesUtil.getEjbRole(method);
     if (role instanceof EjbImplMethodRole) {
       final PsiMethod[] ejbDeclarations = EjbUtil.findEjbDeclarations(method);
-      for (int i = 0; i < ejbDeclarations.length; i++) {
-        PsiMethod ejbDeclaration = ejbDeclarations[i];
+      for (PsiMethod ejbDeclaration : ejbDeclarations) {
         sameSignatureMethods.add(MethodSignatureBackedByPsiMethod.create(ejbDeclaration, PsiSubstitutor.EMPTY));
       }
     }
@@ -128,41 +122,6 @@ public class PsiSuperMethodImplUtil {
     return outputMethods;
   }
 
-  public static PsiMethod findConstructorInSuper(PsiMethod constructor) {
-    if (constructor.getBody() != null) {
-      PsiStatement[] statements = constructor.getBody().getStatements();
-      if (statements.length > 0) {
-        PsiElement firstChild = statements[0].getFirstChild();
-        if (firstChild instanceof PsiMethodCallExpression) {
-          PsiReferenceExpression superExpr = ((PsiMethodCallExpression)firstChild).getMethodExpression();
-          if (superExpr.getText().equals("super")) {
-            PsiElement superConstructor = superExpr.resolve();
-            if (superConstructor instanceof PsiMethod) {
-              return (PsiMethod)superConstructor;
-            }
-          }
-        }
-      }
-    }
-
-    PsiClass containingClass = constructor.getContainingClass();
-    if (containingClass != null) {
-      PsiClass superClass = containingClass.getSuperClass();
-      if (superClass != null) {
-        PsiMethod defConstructor = constructor.getManager().getElementFactory().createConstructor();
-        try {
-          defConstructor.getNameIdentifier().replace(superClass.getNameIdentifier().copy());
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-          return null;
-        }
-        return superClass.findMethodBySignature(defConstructor, false);
-      }
-    }
-    return null;
-  }
-
   private static boolean canHaveSuperMethod(PsiMethod method, boolean checkAccess, boolean allowStaticMethod) {
     if (method.isConstructor()) return false;
     if (!allowStaticMethod && method.hasModifierProperty(PsiModifier.STATIC)) return false;
@@ -194,16 +153,15 @@ public class PsiSuperMethodImplUtil {
       allMethods = aClass.getAllMethods();
     }
     PsiMethod topSuper = null;
-    for (int i = 0; i < allMethods.length; i++) {
-      PsiMethod superMethod = allMethods[i];
+    for (PsiMethod superMethod : allMethods) {
       PsiClass superClass = superMethod.getContainingClass();
       if (superClass.equals(aClass)) continue;
       PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
       if (superClassSubstitutor == null) superClassSubstitutor = PsiSubstitutor.EMPTY;
       boolean looksLikeSuperMethod = method.getName().equals(superMethod.getName()) &&
-                !superMethod.hasModifierProperty(PsiModifier.STATIC) &&
-                PsiUtil.isAccessible(superMethod, aClass, aClass) &&
-                method.getSignature(PsiSubstitutor.EMPTY).equals(superMethod.getSignature(superClassSubstitutor));
+                                     !superMethod.hasModifierProperty(PsiModifier.STATIC) &&
+                                     PsiUtil.isAccessible(superMethod, aClass, aClass) &&
+                                     method.getSignature(PsiSubstitutor.EMPTY).equals(superMethod.getSignature(superClassSubstitutor));
       if (isEjbInherited || looksLikeSuperMethod) {
         if (topSuper != null && superClass.isInheritor(topSuper.getContainingClass(), true)) {
           continue;
@@ -213,103 +171,4 @@ public class PsiSuperMethodImplUtil {
     }
     return topSuper;
   }
-
-  /**
-   * @return all overridden methods sorted by hierarchy,
-   *         i.e  Map: PsiMethod method -> List of overridden methods (access control rules are respected)
-   */
-  public static Map getMethodHierarchy(PsiMethod method) {
-    final PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return null;
-    return getMethodHierarchy(method, aClass);
-  }
-
-  public static Map getMethodHierarchy(PsiMethod method, PsiClass aClass) {
-    Map map = new HashMap();
-    List allMethods = new ArrayList();
-    getMethodHierarchy(method, aClass, map, allMethods);
-    return map;
-  }
-
-  public static Map getMethodHierarchy(MethodSignature method, PsiClass containingClass) {
-    final Map map = new HashMap();
-    final List allMethods = new ArrayList();
-    getMethodHierarchy(method, containingClass, map, allMethods);
-    return map;
-  }
-
-  private static void getMethodHierarchy(Object method, PsiClass aClass, Map map, List allMethods) {
-    final PsiClass[] superTypes = aClass.getSupers();
-    final int startMethodIndex = allMethods.size();
-    for (int i = 0; i < superTypes.length; i++) {
-      PsiClass superType = superTypes[i];
-      final PsiMethod superMethod;
-      if (method instanceof PsiMethod) {
-        superMethod = MethodSignatureUtil.findMethodBySignature(superType, (PsiMethod)method, false);
-      }
-      else {
-        superMethod = MethodSignatureUtil.findMethodBySignature(superType, (MethodSignature)method, false);
-      }
-      if (superMethod == null) {
-        getMethodHierarchy(method, superType, map, allMethods);
-      }
-      else {
-        if (PsiUtil.isAccessible(superMethod, aClass, aClass)) {
-          allMethods.add(superMethod);
-        }
-      }
-    }
-    final int endMethodIndex = allMethods.size();
-    map.put(method, new ArrayList(allMethods.subList(startMethodIndex, endMethodIndex)));
-    for (int i = startMethodIndex; i < endMethodIndex; i++) {
-      final PsiMethod superMethod = (PsiMethod)allMethods.get(i);
-      if (map.get(superMethod) == null) {
-        getMethodHierarchy(superMethod, superMethod.getContainingClass(), map, allMethods);
-      }
-    }
-  }
-
-  // remove from list all methods overridden by contextClass or its super classes
-  // if (checkForSiblingOverride) then abstract method inherited from superClass1 and implemented in superClass2 considered to be overridden by contextClass
-  public static void removeOverriddenMethods(List<MethodSignatureBackedByPsiMethod> sameSignatureMethods,
-                                             PsiClass contextClass,
-                                             boolean checkForSiblingOverride) {
-    for (int i = sameSignatureMethods.size() - 1; i >= 0; i--) {
-      final MethodSignatureBackedByPsiMethod methodBackedMethodSignature1 = sameSignatureMethods.get(i);
-      PsiMethod method1 = methodBackedMethodSignature1.getMethod();
-      final PsiClass class1 = method1.getContainingClass();
-      if (method1.hasModifierProperty(PsiModifier.STATIC)
-          || method1.hasModifierProperty(PsiModifier.PRIVATE)) {
-        continue;
-      }
-      // check if method1 is overridden
-      boolean overridden = false;
-      for (int j = 0; j < sameSignatureMethods.size(); j++) {
-        if (i == j) continue;
-        final MethodSignatureBackedByPsiMethod methodBackedMethodSignature2 = sameSignatureMethods.get(j);
-        PsiMethod method2 = methodBackedMethodSignature2.getMethod();
-        final PsiClass class2 = method2.getContainingClass();
-        if (InheritanceUtil.isInheritorOrSelf(class2, class1, true)
-            // method from interface cannot override method from Object
-            && !("java.lang.Object".equals(class1.getQualifiedName()) && class2.isInterface())
-            && !(method1.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && !method1.getManager().arePackagesTheSame(class1, class2))) {
-          overridden = true;
-          break;
-        }
-        // check for sibling override: class Context extends Implementations implements Declarations {}
-        // see JLS 8.4.6.4
-        if (checkForSiblingOverride
-            && !method2.hasModifierProperty(PsiModifier.ABSTRACT)
-            && PsiUtil.isAccessible(method1, contextClass, contextClass)
-            && PsiUtil.isAccessible(method2, contextClass, contextClass)) {
-          overridden = true;
-          break;
-        }
-      }
-      if (overridden) {
-        sameSignatureMethods.remove(i);
-      }
-    }
-  }
-
 }

@@ -42,8 +42,6 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
 
   List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess);
 
-  PsiMethod findConstructorInSuper();
-
   PsiMethod findDeepestSuperMethod();
 
   PomMethod getPom();

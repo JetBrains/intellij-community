@@ -149,10 +149,6 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     return PsiSuperMethodImplUtil.findSuperMethodSignaturesIncludingStatic(this, checkAccess);
   }
 
-  public PsiMethod findConstructorInSuper() {
-    return PsiSuperMethodImplUtil.findConstructorInSuper(this);
-  }
-
   public PsiMethod findDeepestSuperMethod() {
     return PsiSuperMethodImplUtil.findDeepestSuperMethod(this);
   }
