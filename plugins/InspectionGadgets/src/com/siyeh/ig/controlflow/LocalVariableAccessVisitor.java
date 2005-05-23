@@ -1,4 +1,4 @@
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.controlflow;
 
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;

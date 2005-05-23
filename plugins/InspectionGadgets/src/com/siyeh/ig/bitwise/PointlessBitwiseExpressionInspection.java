@@ -1,4 +1,4 @@
-package com.siyeh.ig.verbose;
+package com.siyeh.ig.bitwise;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -24,7 +24,7 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.VERBOSE_GROUP_NAME;
+        return GroupNames.BITWISE_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault(){

@@ -44,10 +44,11 @@ import com.siyeh.ig.verbose.*;
 import com.siyeh.ig.visibility.*;
 import com.siyeh.ig.controlflow.*;
 import com.siyeh.ig.numeric.*;
-import com.siyeh.ig.jdk15.WhileCanBeForeachInspection;
-import com.siyeh.ig.jdk15.UnnecessaryBoxingInspection;
-import com.siyeh.ig.jdk15.ForCanBeForeachInspection;
-import com.siyeh.ig.jdk15.UnnecessaryUnboxingInspection;
+import com.siyeh.ig.jdk15.*;
+import com.siyeh.ig.bugs.StaticCallOnSubclassInspection;
+import com.siyeh.ig.bitwise.ShiftOutOfRangeInspection;
+import com.siyeh.ig.bitwise.PointlessBitwiseExpressionInspection;
+import com.siyeh.ig.bitwise.IncompatibleMaskInspection;
 
 import java.io.*;
 import java.util.*;

@@ -1,4 +1,4 @@
-package com.siyeh.ig.verbose;
+package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -21,7 +21,7 @@ public class UnnecessaryConstructorInspection extends ClassInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.VERBOSE_GROUP_NAME;
+        return GroupNames.STYLE_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {

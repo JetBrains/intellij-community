@@ -5,7 +5,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
-import com.siyeh.ig.confusing.LocalVariableAccessVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;

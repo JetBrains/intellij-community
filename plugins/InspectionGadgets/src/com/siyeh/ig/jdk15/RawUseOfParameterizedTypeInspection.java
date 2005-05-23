@@ -1,4 +1,4 @@
-package com.siyeh.ig.abstraction;
+package com.siyeh.ig.jdk15;
 
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -13,7 +13,7 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.ABSTRACTION_GROUP_NAME;
+        return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {

@@ -1,4 +1,4 @@
-package com.siyeh.ig.bugs;
+package com.siyeh.ig.bitwise;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -16,7 +16,7 @@ public class ShiftOutOfRangeInspection extends ExpressionInspection{
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.BUGS_GROUP_NAME;
+        return GroupNames.BITWISE_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault(){

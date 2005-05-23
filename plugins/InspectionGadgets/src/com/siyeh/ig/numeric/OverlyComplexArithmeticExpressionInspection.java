@@ -1,9 +1,11 @@
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractMethodFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
@@ -27,7 +29,7 @@ public class OverlyComplexArithmeticExpressionInspection extends ExpressionInspe
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.CONFUSING_GROUP_NAME;
+        return GroupNames.NUMERIC_GROUP_NAME;
     }
 
     private int getLimit() {

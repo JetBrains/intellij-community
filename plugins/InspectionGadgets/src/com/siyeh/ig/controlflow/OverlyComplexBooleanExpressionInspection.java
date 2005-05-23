@@ -1,4 +1,4 @@
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.controlflow;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -25,7 +25,7 @@ public class OverlyComplexBooleanExpressionInspection extends ExpressionInspecti
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.CONFUSING_GROUP_NAME;
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     private int getLimit() {
