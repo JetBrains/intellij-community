@@ -7,7 +7,7 @@ import com.intellij.psi.tree.IElementType;
 
 import java.io.Reader;
 
-public class _XmlLexer extends FlexAdapter {
+public class _XmlLexer extends FlexAdapter implements ELHostLexer {
   private int myState = __XmlLexer.YYINITIAL;
 
   public _XmlLexer() {
@@ -53,6 +53,6 @@ public class _XmlLexer extends FlexAdapter {
   }
 
   public void setElTypes(final IElementType jspElContent, final IElementType jspElContent1) {
-    ((__XmlLexer)getFlex()).setElTypes(jspElContent, jspElContent1);
+    ((ELHostLexer)getFlex()).setElTypes(jspElContent, jspElContent1);
   }
 }
