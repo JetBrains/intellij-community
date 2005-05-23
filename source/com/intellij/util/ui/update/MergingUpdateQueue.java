@@ -163,11 +163,12 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
       if (updateWasEatenByQueue) return;
 
       if (myActive) {
-        put(update);
         if (mySheduledUpdates.isEmpty()) {
           myWaiterForMerge.restart();
         }
-      } else {
+        put(update);
+      } 
+      else {
         put(update);
       }
     }
