@@ -18,7 +18,7 @@ import java.lang.ref.SoftReference;
 import java.util.*;
 
 public class StatisticsManagerImpl extends StatisticsManager implements StatisticsManagerEx, ApplicationComponent {
-
+  private static final int MAX_NAME_SUGGESTIONS_COUNT = 5;
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.statistics.impl.StatisticsManagerImpl");
 
   public String getComponentName() {
@@ -43,10 +43,12 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
 
   public int getMemberUseCount(PsiType qualifierType, PsiMember member, Map<PsiType, PsiType> normalizedItems) {
     if (qualifierType != null && normalizedItems != null) {
-      if(normalizedItems.containsKey(qualifierType))
+      if (normalizedItems.containsKey(qualifierType)) {
         qualifierType = normalizedItems.get(qualifierType);
-      else
-        normalizedItems.put(qualifierType, qualifierType =  normalizeType(qualifierType, member.getManager()));
+      }
+      else {
+        normalizedItems.put(qualifierType, qualifierType = normalizeType(qualifierType, member.getManager()));
+      }
     }
     String key1 = getMemberUseKey1(qualifierType);
     if (key1 == null) return 0;
@@ -65,8 +67,9 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
       final PsiType componentType = normalizeType(((PsiArrayType) type).getComponentType(), manager);
       final int dimension = type.getArrayDimensions();
       type = componentType;
-      for(int i = 0; i < dimension; i++)
+      for (int i = 0; i < dimension; i++) {
         type = new PsiArrayType(type);
+      }
       return type;
     }
 
@@ -84,6 +87,38 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     int count = unit.getData(key1, key2);
     unit.putData(key1, key2, count + 1);
     myModifiedUnits.add(unit);
+  }
+
+  public void incMemberUseCount(PsiType type, StatisticsManager.NameContext context, String name) {
+    final String key1 = getMemberUseKey1(type);
+    if(key1 == null) return;
+    final StatisticsUnit unit = getUnit(getUnitNumber(key1));
+    String key2 = getNameUseKey(context, name);
+    final int count = unit.getData(key1, key2);
+    unit.putData(key1, key2, count + 1);
+    myModifiedUnits.add(unit);
+  }
+
+  public String[] getNameSuggestions(PsiType type, NameContext context, String prefix) {
+    final List<String> suggestions = new ArrayList<String>(MAX_NAME_SUGGESTIONS_COUNT);
+    final String key1 = getMemberUseKey1(type);
+    if(key1 == null) return new String[0];
+    final StatisticsUnit unit = getUnit(getUnitNumber(key1));
+    final String[] possibleNames = unit.getKeys2(key1);
+    Arrays.sort(possibleNames, new Comparator<String>() {
+      public int compare(final String o1, final String o2) {
+        return - unit.getData(key1, o1) + unit.getData(key1, o2);
+      }
+    });
+
+    for (int i = 0; i < possibleNames.length && suggestions.size() < MAX_NAME_SUGGESTIONS_COUNT; i++) {
+      final String key2 = possibleNames[i];
+      if(context != getNameUsageContext(key2)) continue;
+      final String name = getName(key2);
+      if(!name.startsWith(prefix)) continue;
+      suggestions.add(name);
+    }
+    return suggestions.toArray(new String[suggestions.size()]);
   }
 
   public int getVariableNameUseCount(String name, VariableKind variableKind, String propertyName, PsiType type) {
@@ -224,6 +259,14 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     }
   }
 
+  private String getNameUseKey(final NameContext context, final String name) {
+    final StringBuffer buffer = new StringBuffer();
+    buffer.append(context.name());
+    buffer.append('#');
+    buffer.append(name);
+    return buffer.toString();
+  }
+
   private String getVariableNameUseKey1(String propertyName, PsiType type) {
     StringBuffer buffer = new StringBuffer();
     buffer.append("variableName#");
@@ -243,6 +286,19 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     buffer.append("#");
     buffer.append(name);
     return buffer.toString();
+  }
+
+  private NameContext getNameUsageContext(String key2){
+    int index = key2.indexOf("#");
+    LOG.assertTrue(index >= 0);
+    String s = key2.substring(0, index);
+    return NameContext.valueOf(s);
+  }
+
+  private String getName(String key2){
+    int index = key2.indexOf("#");
+    LOG.assertTrue(index >= 0);
+    return key2.substring(index + 1);
   }
 
   private VariableKind getVariableKindFromKey2(String key2){

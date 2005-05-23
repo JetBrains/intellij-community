@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -252,19 +253,32 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     if (lastElement instanceof PsiIdentifier) {
       final PsiElement parent = lastElement.getParent();
-      if (parent instanceof PsiVariable) {
-        final PsiVariable variable = (PsiVariable)parent;
-        if (lastElement.equals(variable.getNameIdentifier())) {
-          myPreferencePolicy = completionData.completeVariableName(lookupSet, context, variable);
-        }
-      }
-      else if (parent instanceof PsiClass) {
+      if (parent instanceof PsiClass) {
         final PsiClass psiClass = (PsiClass)parent;
         if (lastElement.equals(psiClass.getNameIdentifier())) {
           myPreferencePolicy = completionData.completeClassName(lookupSet, context, psiClass);
+          return;
         }
       }
-      else if (parent instanceof PsiMethod) {
+
+      if (parent instanceof PsiLocalVariable || parent instanceof PsiParameter) {
+        final PsiVariable variable = (PsiVariable)parent;
+        if (lastElement.equals(variable.getNameIdentifier())) {
+          myPreferencePolicy = completionData.completeLocalVariableName(lookupSet, context, variable);
+          return;
+        }
+      }
+
+      if (parent instanceof PsiField) {
+        final PsiVariable variable = (PsiVariable)parent;
+        if (lastElement.equals(variable.getNameIdentifier())) {
+          myPreferencePolicy = completionData.completeFieldName(lookupSet, context, variable);
+          if(parent.getLastChild().getNode().getElementType() != ElementType.ERROR_ELEMENT) return;
+          myPreferencePolicy = completionData.completeMethodName(lookupSet, context, variable);
+        }
+      }
+
+      if (parent instanceof PsiMethod) {
         final PsiMethod psiMethod = (PsiMethod)parent;
         if (lastElement.equals(psiMethod.getNameIdentifier())) {
           myPreferencePolicy = completionData.completeMethodName(lookupSet, context, psiMethod);

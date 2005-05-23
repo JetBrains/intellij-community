@@ -366,7 +366,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     String prefix = editorTextField.getText();
     if (prefix == null) prefix = "";
     LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
-    CompletionUtil.completeVariableName(myProject, set, prefix, type, VariableKind.PARAMETER);
+    CompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.PARAMETER);
 
     LookupItem[] lookupItems = set.toArray(new LookupItem[set.size()]);
     editor.getCaretModel().moveToOffset(prefix.length());

@@ -131,7 +131,7 @@ public class RenameDialog extends RefactoringDialog {
     PsiVariable var = (PsiVariable)myPsiElement;
     VariableKind kind = CodeStyleManager.getInstance(myProject).getVariableKind(var);
     LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
-    CompletionUtil.completeVariableName(myProject, set, prefix, var.getType(), kind);
+    CompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, var.getType(), kind);
 
     if (prefix.length() == 0) {
       String[] suggestedNames = getSuggestedNames();

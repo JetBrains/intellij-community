@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -20,6 +21,7 @@ public class RefCountHolder {
   private HashMap<PsiNamedElement,Boolean> myDclsUsedMap = new HashMap<PsiNamedElement,Boolean>();
   private HashMap<String,XmlTag> myXmlId2TagMap = new HashMap<String,XmlTag>();
   private Map<PsiElement, PsiImportStatementBase> myImportStatements = new HashMap<PsiElement, PsiImportStatementBase>();
+  private Set<PsiNamedElement> myUsedElements = new HashSet<PsiNamedElement>();
 
   public RefCountHolder(PsiFile file) {
     myFile = file;
@@ -30,6 +32,7 @@ public class RefCountHolder {
     myImportStatements.clear();
     myDclsUsedMap.clear();
     myXmlId2TagMap.clear();
+    myUsedElements.clear();
   }
 
   public void registerLocallyReferenced(PsiNamedElement result) {
@@ -38,6 +41,15 @@ public class RefCountHolder {
 
   public void registerLocalDcl(PsiNamedElement dcl) {
     myDclsUsedMap.put(dcl,Boolean.FALSE);
+    addStatistics(dcl);
+  }
+
+  private void addStatistics(final PsiNamedElement dcl) {
+    final PsiType typeByPsiElement = PsiUtil.getTypeByPsiElement(dcl);
+    final StatisticsManager.NameContext context = StatisticsManager.getContext(dcl);
+    if(typeByPsiElement != null && context != null) {
+      StatisticsManager.getInstance().incMemberUseCount(typeByPsiElement, context, dcl.getName());
+    }
   }
 
   public void registerTagWithId(String id, XmlTag tag) {
@@ -72,6 +84,10 @@ public class RefCountHolder {
     if (refElement instanceof PsiMethod && PsiTreeUtil.isAncestor(refElement, ref, true)) return; // filter self-recursive calls
     if (refElement instanceof PsiClass && PsiTreeUtil.isAncestor(refElement, ref, true)) return; // filter inner use of itself
     myLocalRefsMap.put(ref, refElement);
+    if(refElement instanceof PsiNamedElement && !myUsedElements.contains(refElement)) {
+      myUsedElements.add((PsiNamedElement)refElement);
+      addStatistics((PsiNamedElement)refElement);
+    }
   }
 
   public void removeInvalidRefs() {

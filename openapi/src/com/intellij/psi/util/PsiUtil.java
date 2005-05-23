@@ -755,6 +755,14 @@ public final class PsiUtil {
     return null;
   }
 
+  public static PsiType getTypeByPsiElement(final PsiElement element) {
+    if (element instanceof PsiVariable) {
+      return ((PsiVariable)element).getType();
+    }
+    else if (element instanceof PsiMethod) return ((PsiMethod)element).getReturnType();
+    return null;
+  }
+
   private static class TypeParameterIterator implements Iterator<PsiTypeParameter> {
     private int myIndex;
     private PsiTypeParameterListOwner myCurrentOwner;

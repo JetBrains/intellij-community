@@ -55,6 +55,12 @@ public class LookupItemUtil{
 
     LookupItem item = LookupItemUtil.objectToLookupItem(object);
     String text = item.getLookupString();
+    for (Object o : set) {
+      if(o instanceof LookupItem) {
+        final LookupItem lookupItem = (LookupItem)o;
+        if(lookupItem.getObject().equals(o)) return null;
+      }
+    }
     if (CompletionUtil.startsWith(text, prefix)) {
       item.setLookupString(text);
       if (tailType >= 0) {
@@ -128,26 +134,27 @@ public class LookupItemUtil{
     }
     else if (object instanceof PsiType) {
       final PsiType type = (PsiType) object;
-      if(type instanceof PsiPrimitiveType)
+      if (type instanceof PsiPrimitiveType) {
         s = ((PsiType)object).getPresentableText();
-      else if(type instanceof PsiArrayType){
+      }
+      else if (type instanceof PsiArrayType) {
         PsiType contentType = type;
         int dim = 0;
         final StringBuffer tail = new StringBuffer();
-        while(contentType instanceof PsiArrayType){
-          contentType = ((PsiArrayType) contentType).getComponentType();
+        while (contentType instanceof PsiArrayType) {
+          contentType = ((PsiArrayType)contentType).getComponentType();
           tail.append("[]");
           dim++;
         }
-        if(contentType instanceof PsiClassType){
+        if (contentType instanceof PsiClassType) {
           PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)contentType).resolveGenerics();
           final PsiClass psiClass = classResolveResult.getElement();
           final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
           final String text;
-          if(psiClass != null){
+          if (psiClass != null) {
             text = formatTypeName(psiClass, substitutor);
           }
-          else{
+          else {
             text = type.getPresentableText();
           }
           String typeString = text;
@@ -155,10 +162,10 @@ public class LookupItemUtil{
             typeString = text.substring(0, text.indexOf('<'));
           }
           s = text.substring(typeString.lastIndexOf('.') + 1);
-          item = psiClass != null ? new LookupItem(psiClass, s) : new LookupItem(text, s) ;
+          item = psiClass != null ? new LookupItem(psiClass, s) : new LookupItem(text, s);
           item.setAttribute(LookupItem.SUBSTITUTOR, substitutor);
         }
-        else{
+        else {
           item = new LookupItem(contentType, "");
           s = contentType.getPresentableText();
         }
@@ -166,27 +173,34 @@ public class LookupItemUtil{
         item.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
         item.setAttribute(LookupItem.BRACKETS_COUNT_ATTR, new Integer(dim));
       }
-      else if(type instanceof PsiClassType){
+      else if (type instanceof PsiClassType) {
         PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)type).resolveGenerics();
         final PsiClass psiClass = classResolveResult.getElement();
         final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
         final String text;
-        if(psiClass != null) text = formatTypeName(psiClass, substitutor);
-        else text = type.getPresentableText();
-        if(text != null){
+        if (psiClass != null) {
+          text = formatTypeName(psiClass, substitutor);
+        }
+        else {
+          text = type.getPresentableText();
+        }
+        if (text != null) {
           String typeString = text;
           if (text.indexOf('<') > 0) {
             typeString = text.substring(0, text.indexOf('<'));
           }
           s = text.substring(typeString.lastIndexOf('.') + 1);
 
-          item = psiClass != null ? new LookupItem(psiClass, s) : new LookupItem(text, s) ;
+          item = psiClass != null ? new LookupItem(psiClass, s) : new LookupItem(text, s);
           item.setAttribute(LookupItem.SUBSTITUTOR, substitutor);
         }
-        else s = type.getPresentableText();
+        else {
+          s = type.getPresentableText();
+        }
       }
-      else
+      else {
         s = type.getPresentableText();
+      }
       item.setAttribute(LookupItem.TYPE, type);
     }
     else if (object instanceof PsiMetaData) {

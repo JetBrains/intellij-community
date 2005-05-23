@@ -2,10 +2,13 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.Language;
+import com.intellij.lang.jsp.NewJspLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -13,6 +16,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -23,13 +29,8 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashMap;
-import com.intellij.lang.Language;
-import com.intellij.lang.jsp.NewJspLanguage;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Map;
+import java.util.*;
 
 public class CompletionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionUtil");
@@ -134,8 +135,9 @@ public class CompletionUtil {
     }
     if(element instanceof PsiJavaToken) {
       final PsiJavaToken token = (PsiJavaToken) element;
-      if (token.getTokenType() == JavaTokenType.STRING_LITERAL) 
+      if (token.getTokenType() == JavaTokenType.STRING_LITERAL) {
         return ourWordCompletionData;
+      }
     }
 
     final CompletionData completionDataByFileType = getCompletionDataByFileType(file.getFileType());
@@ -154,9 +156,10 @@ public class CompletionUtil {
         return element != null && element.getManager().getEffectiveLanguageLevel() == LanguageLevel.JDK_1_5 ? ourJava15CompletionData : ourJavaCompletionData;
       }
     }
-    else if(file.getLanguage() == Language.findInstance(NewJspLanguage.class))
+    else if (file.getLanguage() == Language.findInstance(NewJspLanguage.class)) {
       return ourJSPCompletionData;
-    else if(file instanceof XmlFile && file.getFileType() == StdFileTypes.XML) {
+    }
+    else if (file instanceof XmlFile && file.getFileType() == StdFileTypes.XML) {
       return ourXmlCompletionData;
     }
     return ourGenericCompletionData;
@@ -178,8 +181,9 @@ public class CompletionUtil {
   
   public static boolean checkName(String name, String prefix, boolean forceCaseInsensitive){
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    if(name == null)
+    if (name == null) {
       return false;
+    }
     boolean ret = true;
     if(prefix != null){
       int variant = settings.COMPLETION_CASE_SENSITIVE;
@@ -211,71 +215,25 @@ public class CompletionUtil {
     return ret;
   }
 
-  public static LookupItemPreferencePolicy completeVariableName(Project project, LinkedHashSet set, String prefix, PsiType varType,
-                                                                VariableKind varKind) {
+  public static LookupItemPreferencePolicy completeVariableNameForRefactoring(Project project, LinkedHashSet set, String prefix, PsiType varType,
+                                                                              VariableKind varKind) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
     CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx) CodeStyleManager.getInstance(project);
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(varKind, null, null, varType);
-    LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, prefix);
+    final String[] suggestedNames = suggestedNameInfo.names;
+    LookupItemUtil.addLookupItems(set, suggestedNames, prefix);
 
     if (set.isEmpty() && PsiType.VOID != varType) {
-      boolean isMethodPrefix = prefix.startsWith("is") || prefix.startsWith("get") || prefix.startsWith("set");
-
-      ArrayList newSuggestions = new ArrayList();
-      String[] suggestedNames = suggestedNameInfo.names;
-      int prefixLen = prefix.length();
-      int longestOverlap = 0;
-      String requiredSuffix = codeStyleManager.getSuffixByVariableKind(varKind);
-      int suffixLen = requiredSuffix.length();
-
-      for (int i = 0; i < suggestedNames.length; i++) {
-        String suggestedName = suggestedNames[i];
-        String propertyName = varKind == VariableKind.STATIC_FINAL_FIELD && !isMethodPrefix
-            ? suggestedName
-            : codeStyleManager.variableNameToPropertyName(suggestedName, varKind);
-
-        if(propertyName.toUpperCase().startsWith(prefix.toUpperCase())){
-          newSuggestions.add(propertyName);
-          longestOverlap = prefixLen;
-        }
-        propertyName = "" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
-        int overlap = 0;
-        int propertyNameLen = propertyName.length();
-        for (int j = 1; j < prefixLen && j < propertyNameLen; j++) {
-          if (prefix.substring(prefixLen - j).equals(propertyName.substring(0, j))) {
-            overlap = j;
-          }
-        }
-
-        if (overlap < longestOverlap) continue;
-
-        if (overlap > longestOverlap) {
-          newSuggestions.clear();
-          longestOverlap = overlap;
-        }
-
-        if (!isMethodPrefix && varKind == VariableKind.STATIC_FINAL_FIELD && overlap == 0 && prefix.charAt(prefixLen - 1) != '_') {
-          prefix = prefix + '_';
-          prefixLen++;
-        }
-
-        String suggestion = prefix.substring(0, prefixLen - overlap) + propertyName;
-
-        int suggestionLength = suggestion.length();
-        overlap = 0;
-        for (int j = 1; j < suggestionLength && j < suffixLen; j++) {
-          if (suggestion.substring(0, suggestionLength - j).endsWith(requiredSuffix)) {
-            overlap = j;
-          }
-        }
-        suggestion = suggestion.substring(0, suggestionLength - overlap) + requiredSuffix;
-
-        if (!newSuggestions.contains(suggestion)) {
-          newSuggestions.add(suggestion);
+      // use suggested names as suffixes
+      final String requiredSuffix = codeStyleManager.getSuffixByVariableKind(varKind);
+      final boolean isMethodPrefix = prefix.startsWith("is") || prefix.startsWith("get") || prefix.startsWith("set");
+      if(varKind != VariableKind.STATIC_FINAL_FIELD || isMethodPrefix){
+        for (int i = 0; i < suggestedNames.length; i++) {
+          suggestedNames[i] = codeStyleManager.variableNameToPropertyName(suggestedNames[i], varKind);
         }
       }
 
-      suggestedNameInfo = new SuggestedNameInfo((String[]) newSuggestions.toArray(new String[newSuggestions.size()])) {
+      suggestedNameInfo = new SuggestedNameInfo(getOverlappedNameVersions(prefix, suggestedNames, requiredSuffix)) {
         public void nameChoosen(String name) {
         }
       };
@@ -284,6 +242,54 @@ public class CompletionUtil {
     }
 
     return new NamePreferencePolicy(suggestedNameInfo);
+  }
+
+  public static String[] getOverlappedNameVersions(final String prefix, final String[] suggestedNames, String suffix) {
+    final List newSuggestions = new ArrayList();
+    int longestOverlap = 0;
+
+    for (int i = 0; i < suggestedNames.length; i++) {
+      String suggestedName = suggestedNames[i];
+
+      if(suggestedName.toUpperCase().startsWith(prefix.toUpperCase())){
+        newSuggestions.add(suggestedName);
+        longestOverlap = prefix.length();
+      }
+
+      suggestedName = "" + Character.toUpperCase(suggestedName.charAt(0)) + suggestedName.substring(1);
+      final int overlap = getOverlap(suggestedName, prefix);
+
+      if (overlap < longestOverlap) continue;
+
+      if (overlap > longestOverlap) {
+        newSuggestions.clear();
+        longestOverlap = overlap;
+      }
+
+      String suggestion = prefix.substring(0, prefix.length() - overlap) + suggestedName;
+
+      final int lastIndexOfSuffix = suggestion.lastIndexOf(suffix);
+      if (lastIndexOfSuffix >= 0 && suffix.length() < suggestion.length() - lastIndexOfSuffix) {
+        suggestion = suggestion.substring(0, lastIndexOfSuffix) + suffix;
+      }
+
+      if (!newSuggestions.contains(suggestion)) {
+        newSuggestions.add(suggestion);
+      }
+    }
+    return (String[]) newSuggestions.toArray(new String[newSuggestions.size()]);
+  }
+
+  private static int getOverlap(final String propertyName, final String prefix) {
+    int overlap = 0;
+    int propertyNameLen = propertyName.length();
+    int prefixLen = prefix.length();
+    for (int j = 1; j < prefixLen && j < propertyNameLen; j++) {
+      if (prefix.substring(prefixLen - j).equals(propertyName.substring(0, j))) {
+        overlap = j;
+      }
+    }
+    return overlap;
   }
 
   public static PsiType eliminateWildcards (PsiType type) {
@@ -311,5 +317,67 @@ public class CompletionUtil {
       }
     }
     return type;
+  }
+
+  public static String[] getUnserolvedReferences(final PsiElement parentOfType, final boolean referenceOnMethod) {
+    final List<String> unresolvedRefs = new ArrayList<String>();
+    parentOfType.accept(new PsiRecursiveElementVisitor() {
+      public void visitReferenceExpression(PsiReferenceExpression reference) {
+        final PsiElement parent = reference.getParent();
+        if(parent instanceof PsiReference) return;
+        if(referenceOnMethod && parent instanceof PsiMethodCallExpression && reference == ((PsiMethodCallExpression)parent).getMethodExpression()) {
+          if (reference.resolve() == null) unresolvedRefs.add(reference.getReferenceName());
+        }
+        else if(!referenceOnMethod && reference.resolve() == null) unresolvedRefs.add(reference.getReferenceName());
+      }
+    });
+    return unresolvedRefs.toArray(new String[unresolvedRefs.size()]);
+  }
+
+  public static String[] getOverides(final PsiClass parent, final PsiType typeByPsiElement) {
+    final List<String> overides = new ArrayList<String>();
+    final CandidateInfo[] methodsToOverrideImplement = OverrideImplementUtil.getMethodsToOverrideImplement(parent, true);
+    for (int i = 0; i < methodsToOverrideImplement.length; i++) {
+      final CandidateInfo candidateInfo = methodsToOverrideImplement[i];
+      final PsiElement element = candidateInfo.getElement();
+      if(typeByPsiElement == PsiUtil.getTypeByPsiElement(element) && element instanceof PsiNamedElement) overides.add(((PsiNamedElement)element).getName());
+    }
+    return overides.toArray(new String[overides.size()]);
+  }
+
+  public static String[] getImplements(final PsiClass parent, final PsiType typeByPsiElement) {
+    final List<String> overides = new ArrayList<String>();
+    final CandidateInfo[] methodsToOverrideImplement = OverrideImplementUtil.getMethodsToOverrideImplement(parent, false);
+    for (int i = 0; i < methodsToOverrideImplement.length; i++) {
+      final CandidateInfo candidateInfo = methodsToOverrideImplement[i];
+      final PsiElement element = candidateInfo.getElement();
+      if(typeByPsiElement == PsiUtil.getTypeByPsiElement(element) && element instanceof PsiNamedElement) overides.add(((PsiNamedElement)element).getName());
+    }
+    return overides.toArray(new String[overides.size()]);
+  }
+
+  public static String[] getPropertiesHandlersNames(final PsiClass psiClass,
+                                                    boolean staticContext,
+                                                    PsiType varType,
+                                                    final PsiElement element) {
+    final List<String> propertyHandlers = new ArrayList<String>();
+    final PsiField[] fields = psiClass.getFields();
+
+    for (int i = 0; i < fields.length; i++) {
+      final PsiField field = fields[i];
+      if(field == element) continue;
+      final PsiModifierList modifierList = field.getModifierList();
+      if(staticContext && (modifierList != null && !modifierList.hasModifierProperty("static"))) continue;
+      final PsiMethod getter = PropertyUtil.generateGetterPrototype(field);
+      if(getter.getReturnType().equals(varType) && psiClass.findMethodBySignature(getter, true) == null) {
+        propertyHandlers.add(getter.getName());
+      }
+
+      final PsiMethod setter = PropertyUtil.generateSetterPrototype(field);
+      if(setter.getReturnType().equals(varType) && psiClass.findMethodBySignature(setter, true) == null) {
+        propertyHandlers.add(setter.getName());
+      }
+    }
+    return propertyHandlers.toArray(new String[propertyHandlers.size()]);
   }
 }

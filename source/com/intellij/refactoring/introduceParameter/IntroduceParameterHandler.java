@@ -202,7 +202,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
                 public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix,
                                                                                               PsiType type) {
                   LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
-                  LookupItemPreferencePolicy policy = CompletionUtil.completeVariableName(myProject, set, prefix, type, VariableKind.PARAMETER);
+                  LookupItemPreferencePolicy policy = CompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.PARAMETER);
                   return new Pair<LookupItemPreferencePolicy, Set<LookupItem>> (policy, set);
                 }
               },

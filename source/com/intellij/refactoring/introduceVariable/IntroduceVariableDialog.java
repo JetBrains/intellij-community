@@ -147,7 +147,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
 
               public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix, PsiType type) {
                 LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
-                LookupItemPreferencePolicy policy = CompletionUtil.completeVariableName(myProject, set, prefix, type, VariableKind.LOCAL_VARIABLE);
+                LookupItemPreferencePolicy policy = CompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, type, VariableKind.LOCAL_VARIABLE);
                 return new Pair<LookupItemPreferencePolicy, Set<LookupItem>> (policy, set);
               }
             }, myProject);
