@@ -270,28 +270,28 @@ public class TreeChangeImpl implements TreeChange {
     ASTNode current = myParent.getFirstChildNode();
     final Iterator<Pair<ASTNode, Integer>> iterator = myOffsets.iterator();
     Pair<ASTNode, Integer> currentChange = iterator.hasNext() ? iterator.next() : null;
-    int currentOffset = 0;
+    int currentOldOffset = 0;
     do{
       boolean counted = false;
-      while(currentChange != null && currentOffset == currentChange.getSecond().intValue()
+      while(currentChange != null && currentOldOffset == currentChange.getSecond().intValue()
             && child.getTreeNext() != currentChange.getFirst()){
         if(current == currentChange.getFirst()){
           counted = true;
           current = current.getTreeNext();
         }
         final ChangeInfo changeInfo = myChanges.get(currentChange.getFirst());
-        currentOffset += changeInfo.getOldLength();
+        currentOldOffset += changeInfo.getOldLength();
         currentChange = iterator.hasNext() ? iterator.next() : null;
       }
       if(current == child) break;
       if(current == null) break;
       if(!counted){
-        currentOffset += current.getTextLength();
+        currentOldOffset += current.getTextLength();
         current = current.getTreeNext();
       }
     }
     while(true);
-    return currentOffset;
+    return currentOldOffset;
   }
 
   private int getOldOffset(int offset){
@@ -313,6 +313,7 @@ public class TreeChangeImpl implements TreeChange {
         currentOldOffset += changeInfo.getOldLength();
         currentChange = iterator.hasNext() ? iterator.next() : null;
       }
+      if(currentOffset == offset) break;
       if(current == null) break;
       if(!counted){
         final int textLength = current.getTextLength();
@@ -321,7 +322,7 @@ public class TreeChangeImpl implements TreeChange {
         currentOffset += textLength;
       }
     }
-    while(currentOffset < offset);
+    while(currentOffset <= offset);
     return currentOldOffset;
   }
 
