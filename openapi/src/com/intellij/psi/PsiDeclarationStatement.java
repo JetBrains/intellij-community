@@ -4,6 +4,9 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface PsiDeclarationStatement extends PsiStatement{
+  @NotNull
   PsiElement[] getDeclaredElements();
 }

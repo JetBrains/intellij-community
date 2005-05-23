@@ -4,11 +4,15 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author dsl
  */
 public interface PsiCallExpression extends PsiExpression, PsiCall {
-
+  @NotNull
   PsiReferenceParameterList getTypeArgumentList();
+
+  @NotNull
   PsiType[] getTypeArguments();
 }

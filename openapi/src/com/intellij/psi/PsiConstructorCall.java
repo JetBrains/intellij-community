@@ -4,9 +4,12 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author ven
  */
 public interface PsiConstructorCall extends PsiCall {
+  @Nullable
   PsiMethod resolveConstructor();
 }

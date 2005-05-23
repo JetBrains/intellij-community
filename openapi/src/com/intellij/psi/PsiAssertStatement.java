@@ -4,7 +4,12 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 public interface PsiAssertStatement extends PsiStatement{
+  @Nullable
   PsiExpression getAssertCondition();
+
+  @Nullable
   PsiExpression getAssertDescription();
 }

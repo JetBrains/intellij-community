@@ -5,8 +5,10 @@
 package com.intellij.psi;
 
 import com.intellij.psi.javadoc.PsiDocComment;
+import org.jetbrains.annotations.Nullable;
 
 public interface PsiDocCommentOwner extends PsiMember {
+  @Nullable
   PsiDocComment getDocComment();
   boolean isDeprecated();
 }

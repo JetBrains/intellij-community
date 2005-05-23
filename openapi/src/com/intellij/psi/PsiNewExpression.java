@@ -4,17 +4,25 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
 public interface PsiNewExpression extends PsiCallExpression, PsiConstructorCall {
+  @Nullable
   PsiExpression getQualifier();
 
+  @NotNull
   PsiExpression[] getArrayDimensions();
 
+  @Nullable
   PsiArrayInitializerExpression getArrayInitializer();
 
   /**
-   * @return class reference, or null, if it is a 'new' of an anonymous class
+   * @return class reference
    */
+  @Nullable
   PsiJavaCodeReferenceElement getClassReference();
 
+  @Nullable
   PsiAnonymousClass getAnonymousClass();
 }

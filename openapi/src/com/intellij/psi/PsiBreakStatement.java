@@ -4,10 +4,15 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  *
  */
 public interface PsiBreakStatement extends PsiStatement {
+  @Nullable
   PsiIdentifier getLabelIdentifier();
+
+  @Nullable
   PsiStatement findExitedStatement();
 }

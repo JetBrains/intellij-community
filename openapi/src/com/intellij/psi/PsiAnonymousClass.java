@@ -4,13 +4,19 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
 /**
  *
  */
 public interface PsiAnonymousClass extends PsiClass {
+  @NotNull
   PsiJavaCodeReferenceElement getBaseClassReference();
 
+  @NotNull
   PsiClassType getBaseClassType();
 
+  @Nullable
   PsiExpressionList getArgumentList();
 }

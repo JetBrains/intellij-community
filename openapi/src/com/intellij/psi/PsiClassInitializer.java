@@ -4,8 +4,11 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface PsiClassInitializer extends PsiMember, PsiModifierListOwner {
   PsiClassInitializer[] EMPTY_ARRAY = new PsiClassInitializer[0];
 
+  @NotNull
   PsiCodeBlock getBody();
 }

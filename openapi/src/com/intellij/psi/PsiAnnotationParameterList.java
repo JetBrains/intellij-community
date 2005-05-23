@@ -4,9 +4,12 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author ven
  */
 public interface PsiAnnotationParameterList extends PsiElement {
+  @NotNull
   PsiNameValuePair[] getAttributes();
 }

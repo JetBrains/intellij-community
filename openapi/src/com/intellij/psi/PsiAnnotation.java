@@ -19,7 +19,9 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue {
   @Nullable (documentation = "May return null if unresolved")
   String getQualifiedName();
 
+  @Nullable
   PsiJavaCodeReferenceElement getNameReferenceElement ();
 
+  @Nullable
   PsiAnnotationMemberValue findAttributeValue(String attributeName);
 }

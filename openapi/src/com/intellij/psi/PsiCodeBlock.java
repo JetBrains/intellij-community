@@ -4,19 +4,28 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
 /**
  *
  */
 public interface PsiCodeBlock extends PsiElement{
   PsiCodeBlock[] EMPTY_ARRAY = new PsiCodeBlock[0];
+
+  @NotNull
   PsiStatement[] getStatements();
+
+  @Nullable
   PsiElement getFirstBodyElement();
+
+  @Nullable
   PsiElement getLastBodyElement();
 
-  /** can be null */
+  @Nullable
   PsiJavaToken getLBrace();
 
-  /** can be null */
+  @Nullable
   PsiJavaToken getRBrace();
 
 }

@@ -4,11 +4,19 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  *
  */
 public interface PsiConditionalExpression extends PsiExpression {
+  @NotNull
   PsiExpression getCondition();
+
+  @Nullable
   PsiExpression getThenExpression();
+
+  @Nullable
   PsiExpression getElseExpression();
 }

@@ -4,9 +4,12 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  *
  */
 public interface PsiArrayInitializerExpression extends PsiExpression {
+  @NotNull
   PsiExpression[] getInitializers();
 }

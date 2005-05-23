@@ -4,11 +4,19 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  *
  */
 public interface PsiBinaryExpression extends PsiExpression {
+  @NotNull
   PsiExpression getLOperand();
+
+  @Nullable
   PsiExpression getROperand();
+
+  @NotNull
   PsiJavaToken getOperationSign();
 }
