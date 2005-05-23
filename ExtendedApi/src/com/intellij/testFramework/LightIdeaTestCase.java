@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -107,6 +108,9 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
   private void initProject() throws Exception {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
+        if (ourProject != null) {
+          ProjectUtil.closeProject(ourProject);
+        }
         ourProject = ProjectManagerEx.getInstanceEx().newProject("", false, false);
         ourPsiManager = null;
         ourModule = createMainModule();
