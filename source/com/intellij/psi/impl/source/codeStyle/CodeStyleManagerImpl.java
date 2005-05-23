@@ -223,7 +223,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     final PsiElement element = file.findElementAt(offset);
     if (element == null) return offset;
     if (!(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
-      return offset + 1;
+      return CharArrayUtil.shiftForward(file.textToCharArray(), offset, " \t");
     }
     final Language fileLanguage = file.getLanguage();
     LOG.assertTrue(fileLanguage != null, file.getClass().getName());
@@ -691,7 +691,9 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         substitutor = PsiSubstitutor.EMPTY;
       }
 
-      PsiTypeParameter[] typeParameters = collectionClass.getTypeParameters();
+      PsiTypeParameterList typeParameterList = collectionClass.getTypeParameterList();
+      if (typeParameterList == null) return;
+      PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
       if (typeParameters.length == 0) return;
 
       PsiType componentTypeParameter = substitutor.substitute(typeParameters[0]);
