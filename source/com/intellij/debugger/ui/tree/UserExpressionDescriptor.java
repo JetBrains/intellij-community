@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui.tree;
 
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -8,5 +9,5 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
  */
 
 public interface UserExpressionDescriptor extends ValueDescriptor {
-  TextWithImports getEvaluationText(); 
+  public void setContext(EvaluationContextImpl evaluationContext);
 }

@@ -9,12 +9,12 @@ import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.tree.LocalVariableDescriptor;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.ClassNotLoadedException;
-import com.sun.jdi.LocalVariable;
 import com.sun.jdi.PrimitiveType;
 import com.sun.jdi.Value;
 
@@ -103,7 +103,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
     myIsNewLocal = aNew;
   }
 
-  public void displayAs(NodeDescriptorImpl descriptor) {
+  public void displayAs(NodeDescriptor descriptor) {
     super.displayAs(descriptor);
     if(descriptor instanceof LocalVariableDescriptorImpl) {
       myIsNewLocal = ((LocalVariableDescriptorImpl)descriptor).myIsNewLocal;

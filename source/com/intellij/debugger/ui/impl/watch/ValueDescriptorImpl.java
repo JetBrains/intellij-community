@@ -10,12 +10,12 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.Patches;
@@ -136,7 +136,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     myIsNew = false;
   }
 
-  public void setAncestor(NodeDescriptorImpl oldDescriptor) {
+  public void setAncestor(NodeDescriptor oldDescriptor) {
     super.setAncestor(oldDescriptor);
     myIsNew = false;
     myValue = ((ValueDescriptorImpl)oldDescriptor).getValue();
@@ -220,7 +220,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
   }
 
-  public void displayAs(NodeDescriptorImpl descriptor) {
+  public void displayAs(NodeDescriptor descriptor) {
     if (descriptor instanceof ValueDescriptorImpl) {
       ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
       myRenderer = valueDescriptor.myRenderer;

@@ -1,6 +1,5 @@
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.LocalVariableProxy;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
@@ -13,7 +12,7 @@ import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
-import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.debugger.ui.tree.UserExpressionDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.*;
@@ -40,7 +39,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     myDisplayDescriptorSearcher = new DisplayDescriptorTreeSearcher(new MarkedDescriptorTree());
   }
 
-  private <T extends NodeDescriptorImpl> T getDescriptor(NodeDescriptorImpl parent, DescriptorData<T> data) {
+  private <T extends NodeDescriptor> T getDescriptor(NodeDescriptor parent, DescriptorData<T> data) {
     T descriptor = data.createDescriptor(myProject);
 
     T oldDescriptor = findDescriptor(parent, descriptor, data);
@@ -60,11 +59,11 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return descriptor;
   }
 
-  protected <T extends NodeDescriptorImpl>T findDisplayDescriptor(NodeDescriptorImpl parent, T descriptor, DisplayKey<T> key) {
+  protected <T extends NodeDescriptor>T findDisplayDescriptor(NodeDescriptor parent, T descriptor, DisplayKey<T> key) {
     return myDisplayDescriptorSearcher.search(parent, descriptor, key);
   }
 
-  protected <T extends NodeDescriptorImpl>T findDescriptor(NodeDescriptorImpl parent, T descriptor, DescriptorData<T> data) {
+  protected <T extends NodeDescriptor> T findDescriptor(NodeDescriptor parent, T descriptor, DescriptorData<T> data) {
     return myDescriptorSearcher.search(parent, descriptor, data);
   }
 
@@ -78,8 +77,8 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     final MarkedDescriptorTree displayDescriptorTree = new MarkedDescriptorTree();
 
     tree.dfst(new DescriptorTree.DFSTWalker() {
-      public void visit(NodeDescriptorImpl parent, NodeDescriptorImpl child) {
-        final DescriptorData<NodeDescriptorImpl> descriptorData = DescriptorData.getDescriptorData(child);
+      public void visit(NodeDescriptor parent, NodeDescriptor child) {
+        final DescriptorData<NodeDescriptor> descriptorData = DescriptorData.getDescriptorData(child);
         descriptorTree.addChild(parent, child, descriptorData);
         displayDescriptorTree.addChild(parent, child, descriptorData.getDisplayKey());
       }
@@ -112,7 +111,7 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
   }
 
   public ArrayElementDescriptorImpl getArrayItemDescriptor(NodeDescriptor parent, ArrayReference array, int index) {
-    return getDescriptor((NodeDescriptorImpl)parent, new ArrayItemData(array, index));
+    return getDescriptor(parent, new ArrayItemData(array, index));
   }
 
   public FieldDescriptorImpl getFieldDescriptor(NodeDescriptor parent, ObjectReference objRef, Field field) {
@@ -126,11 +125,11 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     else {
       descriptorData = new FieldData(objRef, field);
     }
-    return getDescriptor((NodeDescriptorImpl)parent, descriptorData);
+    return getDescriptor(parent, descriptorData);
   }
 
   public LocalVariableDescriptorImpl getLocalVariableDescriptor(NodeDescriptor parent, LocalVariableProxy local) {
-    return getDescriptor((NodeDescriptorImpl)parent, new LocalData((LocalVariableProxyImpl)local));
+    return getDescriptor(parent, new LocalData((LocalVariableProxyImpl)local));
   }
 
   public StackFrameDescriptorImpl getStackFrameDescriptor(NodeDescriptorImpl parent, StackFrameProxyImpl frameProxy) {
@@ -153,20 +152,20 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return getDescriptor(parent, new ThreadGroupData(group));
   }
 
-  public UserExpressionDescriptorImpl getUserExpressionDescriptor(ValueDescriptor parent, String typeName, String name, TextWithImports expression) {
-    return getDescriptor((NodeDescriptorImpl)parent, new UserExpressionData((ValueDescriptorImpl)parent, typeName, name, expression));
+  public UserExpressionDescriptor getUserExpressionDescriptor(NodeDescriptor parent, final DescriptorData<UserExpressionDescriptor> data) {
+    return getDescriptor(parent, data);
   }
 
   private static class DescriptorTreeSearcher {
     private final MarkedDescriptorTree myDescriportTree;
 
-    private final HashMap<NodeDescriptorImpl, NodeDescriptorImpl> mySearchedDescriptors = new HashMap<NodeDescriptorImpl, NodeDescriptorImpl>();
+    private final HashMap<NodeDescriptor, NodeDescriptor> mySearchedDescriptors = new HashMap<NodeDescriptor, NodeDescriptor>();
 
     public DescriptorTreeSearcher(MarkedDescriptorTree descriportTree) {
       myDescriportTree = descriportTree;
     }
 
-    public <T extends NodeDescriptorImpl> T search(NodeDescriptorImpl parent, T descriptor, DescriptorKey<T> key) {
+    public <T extends NodeDescriptor> T search(NodeDescriptor parent, T descriptor, DescriptorKey<T> key) {
       T result = searchImpl(parent, key);
       if(result != null) {
         mySearchedDescriptors.put(descriptor, result);
@@ -174,17 +173,17 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
       return result;
     }
 
-    private <T extends NodeDescriptorImpl> T searchImpl(NodeDescriptorImpl parent, DescriptorKey<T> key) {
+    private <T extends NodeDescriptor> T searchImpl(NodeDescriptor parent, DescriptorKey<T> key) {
       if(parent == null) {
         return myDescriportTree.getChild(null, key);
       }
       else {
-        NodeDescriptorImpl parentDescriptor = getSearched(parent);
+        NodeDescriptor parentDescriptor = getSearched(parent);
         return parentDescriptor != null ? myDescriportTree.getChild(parentDescriptor, key) : null;
       }
     }
 
-    protected NodeDescriptorImpl getSearched(NodeDescriptorImpl parent) {
+    protected NodeDescriptor getSearched(NodeDescriptor parent) {
       return mySearchedDescriptors.get(parent);
     }
   }
@@ -194,8 +193,8 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
       super(descriportTree);
     }
 
-    protected NodeDescriptorImpl getSearched(NodeDescriptorImpl parent) {
-      NodeDescriptorImpl searched = super.getSearched(parent);
+    protected NodeDescriptor getSearched(NodeDescriptor parent) {
+      NodeDescriptor searched = super.getSearched(parent);
       if(searched == null) {
         return myDescriptorSearcher.getSearched(parent);
       }

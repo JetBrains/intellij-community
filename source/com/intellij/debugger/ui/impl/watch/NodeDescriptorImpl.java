@@ -11,8 +11,8 @@ import com.intellij.util.containers.HashMap;
 import com.sun.jdi.InconsistentDebugInfoException;
 import com.sun.jdi.InvalidStackFrameException;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public abstract class NodeDescriptorImpl implements NodeDescriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl");
@@ -82,11 +82,14 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
     }
   }
 
-  public void displayAs(NodeDescriptorImpl descriptor) {
-    myIsExpanded = descriptor.myIsExpanded;
-    myIsSelected = descriptor.myIsSelected;
-    myIsVisible  = descriptor.myIsVisible;
-    myUserData = descriptor.myUserData != null ? new HashMap<Key, Object>(descriptor.myUserData) : null;
+  public void displayAs(NodeDescriptor descriptor) {
+    if (descriptor instanceof NodeDescriptorImpl) {
+      final NodeDescriptorImpl that = (NodeDescriptorImpl)descriptor;
+      myIsExpanded = that.myIsExpanded;
+      myIsSelected = that.myIsSelected;
+      myIsVisible  = that.myIsVisible;
+      myUserData = that.myUserData != null ? new HashMap<Key, Object>(that.myUserData) : null;
+    }
   }
 
   public abstract boolean isExpandable();
@@ -125,7 +128,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
     return myChildren;
   }
 
-  public void setAncestor(NodeDescriptorImpl oldDescriptor) {
+  public void setAncestor(NodeDescriptor oldDescriptor) {
     displayAs(oldDescriptor);
   }
 }

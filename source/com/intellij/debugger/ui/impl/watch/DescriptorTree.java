@@ -1,5 +1,7 @@
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.debugger.ui.tree.NodeDescriptor;
+
 import java.util.*;
 
 /*
@@ -8,8 +10,8 @@ import java.util.*;
  */
 
 public class DescriptorTree {
-  private HashMap<NodeDescriptorImpl, List<NodeDescriptorImpl>> myChildrenMap = new HashMap<NodeDescriptorImpl, List<NodeDescriptorImpl>>();
-  private List<NodeDescriptorImpl> myRootChildren = new ArrayList<NodeDescriptorImpl>();
+  private HashMap<NodeDescriptor, List<NodeDescriptor>> myChildrenMap = new HashMap<NodeDescriptor, List<NodeDescriptor>>();
+  private List<NodeDescriptor> myRootChildren = new ArrayList<NodeDescriptor>();
   private final boolean myInitial;
   private int myFrameCount = -1;
   private int myFrameIndex = -1;
@@ -31,8 +33,8 @@ public class DescriptorTree {
     myFrameCount = frameCount;
   }
 
-  public void addChild(NodeDescriptorImpl parent, NodeDescriptorImpl child) {
-    List<NodeDescriptorImpl> children;
+  public void addChild(NodeDescriptor parent, NodeDescriptor child) {
+    List<NodeDescriptor> children;
 
     if(parent == null) {
       children = myRootChildren;
@@ -40,7 +42,7 @@ public class DescriptorTree {
     else {
       children = myChildrenMap.get(parent);
       if(children == null) {
-        children = new ArrayList<NodeDescriptorImpl>();
+        children = new ArrayList<NodeDescriptor>();
         myChildrenMap.put(parent, children);
       }
     }
@@ -50,10 +52,12 @@ public class DescriptorTree {
     }
   }
 
-  public List<NodeDescriptorImpl> getChildren(NodeDescriptorImpl parent) {
-    if(parent == null) return myRootChildren;
+  public List<NodeDescriptor> getChildren(NodeDescriptor parent) {
+    if(parent == null) {
+      return myRootChildren;
+    }
 
-    List<NodeDescriptorImpl> children = myChildrenMap.get(parent);
+    List<NodeDescriptor> children = myChildrenMap.get(parent);
     return children != null ? children : Collections.EMPTY_LIST;
   }
 
@@ -61,10 +65,10 @@ public class DescriptorTree {
     dfstImpl(null, myRootChildren, walker);
   }
 
-  private void dfstImpl(NodeDescriptorImpl descriptor, List<NodeDescriptorImpl> children, DFSTWalker walker) {
+  private void dfstImpl(NodeDescriptor descriptor, List<NodeDescriptor> children, DFSTWalker walker) {
     if(children != null) {
-      for (Iterator<NodeDescriptorImpl> iterator = children.iterator(); iterator.hasNext();) {
-        NodeDescriptorImpl child = iterator.next();
+      for (Iterator<NodeDescriptor> iterator = children.iterator(); iterator.hasNext();) {
+        NodeDescriptor child = iterator.next();
         walker.visit(descriptor, child);
         dfstImpl(child, myChildrenMap.get(child), walker);
       }
@@ -72,6 +76,6 @@ public class DescriptorTree {
   }
 
   public interface DFSTWalker {
-    void visit(NodeDescriptorImpl parent, NodeDescriptorImpl child);
+    void visit(NodeDescriptor parent, NodeDescriptor child);
   }
 }

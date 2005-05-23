@@ -9,8 +9,8 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -81,7 +81,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     }
   }
 
-  public void setAncestor(NodeDescriptorImpl oldDescriptor) {
+  public void setAncestor(NodeDescriptor oldDescriptor) {
     super.setAncestor(oldDescriptor);
     final Boolean isPrimitive = ((FieldDescriptorImpl)oldDescriptor).myIsPrimitive;
     if (isPrimitive != null) { // was cached

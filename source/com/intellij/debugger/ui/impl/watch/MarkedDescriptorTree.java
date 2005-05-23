@@ -1,11 +1,10 @@
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.impl.descriptors.data.DescriptorData;
 import com.intellij.debugger.impl.descriptors.data.DescriptorKey;
-import com.intellij.util.containers.*;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
 
-import java.util.*;
 import java.util.HashMap;
+import java.util.Map;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -13,11 +12,11 @@ import java.util.HashMap;
  */
 
 public class MarkedDescriptorTree {
-  private HashMap<NodeDescriptorImpl, Map<DescriptorKey, NodeDescriptorImpl>> myChildrenMap = new HashMap<NodeDescriptorImpl, Map<DescriptorKey, NodeDescriptorImpl>>();
-  private Map<DescriptorKey, NodeDescriptorImpl> myRootChildren = new com.intellij.util.containers.HashMap<DescriptorKey, NodeDescriptorImpl>();
+  private HashMap<NodeDescriptor, Map<DescriptorKey, NodeDescriptor>> myChildrenMap = new HashMap<NodeDescriptor, Map<DescriptorKey, NodeDescriptor>>();
+  private Map<DescriptorKey, NodeDescriptor> myRootChildren = new com.intellij.util.containers.HashMap<DescriptorKey, NodeDescriptor>();
 
-  public <T extends NodeDescriptorImpl> void addChild(NodeDescriptorImpl parent, T child, DescriptorKey<T> key) {
-    Map<DescriptorKey, NodeDescriptorImpl> children;
+  public <T extends NodeDescriptor> void addChild(NodeDescriptor parent, T child, DescriptorKey<T> key) {
+    Map<DescriptorKey, NodeDescriptor> children;
 
     if(parent == null) {
       children = myRootChildren;
@@ -25,16 +24,18 @@ public class MarkedDescriptorTree {
     else {
       children = myChildrenMap.get(parent);
       if(children == null) {
-        children = new com.intellij.util.containers.HashMap<DescriptorKey, NodeDescriptorImpl>();
+        children = new com.intellij.util.containers.HashMap<DescriptorKey, NodeDescriptor>();
         myChildrenMap.put(parent, children);
       }
     }
     children.put(key, child);
   }
 
-  public <T extends NodeDescriptorImpl> T getChild(NodeDescriptorImpl parent, DescriptorKey<T> key) {
-    if(parent == null) return (T)myRootChildren.get(key);
-    Map<DescriptorKey, NodeDescriptorImpl> map = myChildrenMap.get(parent);
+  public <T extends NodeDescriptor> T getChild(NodeDescriptor parent, DescriptorKey<T> key) {
+    if(parent == null) {
+      return (T)myRootChildren.get(key);
+    }
+    final Map<DescriptorKey, NodeDescriptor> map = myChildrenMap.get(parent);
     return (T)(map != null ? map.get(key) : null);
   }
 

@@ -1,6 +1,7 @@
 package com.intellij.debugger.impl.descriptors.data;
 
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 
@@ -9,10 +10,10 @@ import com.intellij.openapi.util.Key;
  * Use is subject to license terms.
  */
 
-public abstract class DescriptorData <T extends NodeDescriptorImpl> implements DescriptorKey<T>{
+public abstract class DescriptorData <T extends NodeDescriptor> implements DescriptorKey<T>{
   private static final Key DESCRIPTOR_DATA = new Key("DESCRIPTOR_DATA");
 
-  private final Class<? extends NodeDescriptorImpl> myDescriptorClass;
+  private final Class<? extends NodeDescriptor> myDescriptorClass;
 
   protected DescriptorData(Class<? extends NodeDescriptorImpl> descriptorClass) {
     myDescriptorClass = descriptorClass;
@@ -32,7 +33,7 @@ public abstract class DescriptorData <T extends NodeDescriptorImpl> implements D
 
   public abstract DisplayKey<T> getDisplayKey();
 
-  public static <T extends NodeDescriptorImpl> DescriptorData<T> getDescriptorData(T descriptor) {
+  public static <T extends NodeDescriptor> DescriptorData<T> getDescriptorData(T descriptor) {
     return (DescriptorData<T>)descriptor.getUserData(DESCRIPTOR_DATA);
   }
 }

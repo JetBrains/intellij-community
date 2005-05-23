@@ -5,6 +5,8 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.impl.descriptors.data.UserExpressionData;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.*;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
@@ -82,7 +84,10 @@ public final class EnumerationChildrenRenderer extends com.intellij.debugger.ui.
     List<DebuggerTreeNode> children = new ArrayList<DebuggerTreeNode>();
     for (Iterator<Pair<String, TextWithImports>> iterator = myChildren.iterator(); iterator.hasNext();) {
       Pair<String, TextWithImports> pair = iterator.next();
-      children.add(nodeManager.createNode(descriptorFactory.getUserExpressionDescriptor(builder.getParentDescriptor(), getClassName(), pair.getFirst(),   pair.getSecond()), evaluationContext));
+      children.add(nodeManager.createNode(descriptorFactory.getUserExpressionDescriptor(
+        builder.getParentDescriptor(),
+        new UserExpressionData((ValueDescriptorImpl)builder.getParentDescriptor(), getClassName(), pair.getFirst(), pair.getSecond())), evaluationContext)
+      );
     }
     builder.setChildren(children);
   }
