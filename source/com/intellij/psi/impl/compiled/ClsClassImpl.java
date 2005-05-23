@@ -656,7 +656,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public PsiTypeParameter[] getTypeParameters() {
-    return PsiClassImplUtil.getTypeParameters(this);
+    return PsiImplUtil.getTypeParameters(this);
   }
 
   public PsiField[] getAllFields() {

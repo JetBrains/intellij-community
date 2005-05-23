@@ -52,8 +52,6 @@ public interface PsiClass extends PsiElement, PsiNamedElement, PsiModifierListOw
   PsiClass[] getInnerClasses();
   PsiClassInitializer[] getInitializers();
 
-  PsiTypeParameter[] getTypeParameters();
-
   PsiField[] getAllFields();
   PsiMethod[] getAllMethods();
   PsiClass[] getAllInnerClasses();

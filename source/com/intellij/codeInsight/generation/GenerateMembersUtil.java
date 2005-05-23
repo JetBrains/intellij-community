@@ -283,7 +283,7 @@ public class GenerateMembersUtil {
     PsiMethod newMethod;
     boolean isRaw = PsiUtil.isRawSubstitutor(method, substitutor);
 
-    PsiTypeParameter[] typeParams = method.getTypeParameterList().getTypeParameters();
+    PsiTypeParameter[] typeParams = method.getTypeParameters();
     try {
       PsiType returnType = method.getReturnType();
 
@@ -354,7 +354,7 @@ public class GenerateMembersUtil {
 
   public static PsiSubstitutor correctSubstitutor(PsiMethod method, PsiSubstitutor substitutor) {
     PsiClass hisClass = method.getContainingClass();
-    PsiTypeParameter[] typeParameters = method.getTypeParameterList().getTypeParameters();
+    PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length > 0) {
       if (PsiUtil.isRawSubstitutor(hisClass, substitutor)) {
         for (PsiTypeParameter typeParameter : typeParameters) {

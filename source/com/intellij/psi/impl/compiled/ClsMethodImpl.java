@@ -30,6 +30,8 @@ import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotationMethod, ClsModifierListOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsMethodImpl");
 
@@ -292,7 +294,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   boolean isBridge() throws ClsFormatException {
     return ClsUtil.isBridge(getAccessFlags()) ||
            //This is 2.2 spec rudiment; TODO remove it
-      myParent.getClassFileData().findAttribute(myStartOffset + 6, "Bridge") != null;
+           myParent.getClassFileData().findAttribute(myStartOffset + 6, "Bridge") != null;
   }
 
   public PsiParameterList getParameterList() {
@@ -799,6 +801,10 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
 
   public boolean hasTypeParameters() {
     return PsiImplUtil.hasTypeParameters(this);
+  }
+
+  @NotNull public PsiTypeParameter[] getTypeParameters() {
+    return PsiImplUtil.getTypeParameters(this);
   }
 
   public ClsAnnotationImpl[] getAnnotations() {

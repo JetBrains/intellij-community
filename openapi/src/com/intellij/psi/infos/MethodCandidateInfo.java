@@ -51,7 +51,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       if (myTypeArguments == null) {
         myCalcedSubstitutor = inferTypeArguments(method, incompleteSubstitutor);
       } else {
-        PsiTypeParameter[] typeParams = method.getTypeParameterList().getTypeParameters();
+        PsiTypeParameter[] typeParams = method.getTypeParameters();
         for (int i = 0; i < myTypeArguments.length && i < typeParams.length; i++) {
           incompleteSubstitutor = incompleteSubstitutor.put(typeParams[i], myTypeArguments[i]);
         }
@@ -64,7 +64,7 @@ public class MethodCandidateInfo extends CandidateInfo{
 
 
   public boolean isTypeArgumentsApplicable() {
-    PsiTypeParameter[] typeParams = getElement().getTypeParameterList().getTypeParameters();
+    PsiTypeParameter[] typeParams = getElement().getTypeParameters();
     if (myTypeArguments != null && typeParams.length != myTypeArguments.length) return false;
     PsiSubstitutor substitutor = getSubstitutor();
     return GenericsUtil.isTypeArgumentsApplicable(typeParams, substitutor);
@@ -81,25 +81,24 @@ public class MethodCandidateInfo extends CandidateInfo{
   private PsiSubstitutor inferTypeArguments(final PsiMethod method, PsiSubstitutor substitutor) {
 
     PsiExpression[] arguments = myArgumentList == null ? PsiExpression.EMPTY_ARRAY : myArgumentList.getExpressions();
-    PsiTypeParameter[] typeParameters = method.getTypeParameterList().getTypeParameters();
+    PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
     if (method.getSignature(substitutor).isRaw()) {
       return createRawSubstitutor(substitutor, typeParameters);
     }
 
     PsiResolveHelper helper = method.getManager().getResolveHelper();
-    for(int i = 0; i < typeParameters.length; i++){
-      final PsiTypeParameter typeParameter = typeParameters[i];
+    for (final PsiTypeParameter typeParameter : typeParameters) {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
 
-      PsiType substitution = helper.inferTypeForMethodTypeParameter(typeParameter, parameters, arguments, 
-                                                             substitutor, myArgumentList.getParent());
+      PsiType substitution = helper.inferTypeForMethodTypeParameter(typeParameter, parameters, arguments,
+                                                                    substitutor, myArgumentList.getParent());
 
       if (substitution == null) return createRawSubstitutor(substitutor, typeParameters);
       if (substitution == PsiType.NULL) continue;
 
       if (substitution == PsiType.NULL || substitution == PsiType.VOID) substitution = null;
-      substitutor = substitutor.put (typeParameter, substitution);
+      substitutor = substitutor.put(typeParameter, substitution);
     }
     return substitutor;
   }

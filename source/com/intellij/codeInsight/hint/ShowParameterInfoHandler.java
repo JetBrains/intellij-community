@@ -84,7 +84,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     final PsiElement psiElement = ref.resolve();
     if (!(psiElement instanceof PsiTypeParameterListOwner)) return;
 
-    final PsiTypeParameter[] typeParams = ((PsiTypeParameterListOwner)psiElement).getTypeParameterList().getTypeParameters();
+    final PsiTypeParameter[] typeParams = ((PsiTypeParameterListOwner)psiElement).getTypeParameters();
     if (typeParams.length == 0) return;
     final ParameterInfoComponent component = new ParameterInfoComponent(typeParams, editor);
     component.update();
@@ -285,16 +285,16 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
       CandidateInfo[] candidates = helper.getReferencedMethodCandidates((PsiCallExpression)call, true);
       result = new ArrayList<CandidateInfo>();
       if (!(argList.getParent() instanceof PsiAnonymousClass)) {
-        for (int i = 0; i < candidates.length; i++) {
-          CandidateInfo candidate = candidates[i];
+        for (CandidateInfo candidate : candidates) {
           if (candidate.isStaticsScopeCorrect() && candidate.isAccessible()) result.add(candidate);
         }
       }
       else {
         PsiClass aClass = (PsiAnonymousClass)argList.getParent();
-        for (int i = 0; i < candidates.length; i++) {
-          CandidateInfo candidate = candidates[i];
-          if (candidate.isStaticsScopeCorrect() && helper.isAccessible(((PsiMethod)candidate.getElement()), argList, aClass)) result.add(candidate);
+        for (CandidateInfo candidate : candidates) {
+          if (candidate.isStaticsScopeCorrect() && helper.isAccessible(((PsiMethod)candidate.getElement()), argList, aClass)) {
+            result.add(candidate);
+          }
         }
       }
       return result.toArray(new CandidateInfo[result.size()]);

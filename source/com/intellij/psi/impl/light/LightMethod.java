@@ -9,6 +9,8 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author ven
  */
@@ -25,6 +27,10 @@ public class LightMethod extends LightElement implements PsiMethod {
 
   public boolean hasTypeParameters() {
     return myMethod.hasTypeParameters();
+  }
+
+  @NotNull public PsiTypeParameter[] getTypeParameters() {
+    return myMethod.getTypeParameters();
   }
 
   public PsiTypeParameterList getTypeParameterList() {

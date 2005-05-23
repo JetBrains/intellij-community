@@ -6,18 +6,19 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.*;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.IncorrectOperationException;
 
-import javax.swing.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 abstract class OverrideImplementMethodAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.method.OverrideImplementMethodAction");
@@ -94,8 +95,7 @@ abstract class OverrideImplementMethodAction extends AnAction {
     int toImplement = 0;
     int toOverride = 0;
 
-    for (int i = 0; i < selectedDescriptors.length; i++) {
-      final MethodHierarchyNodeDescriptor descriptor = selectedDescriptors[i];
+    for (final MethodHierarchyNodeDescriptor descriptor : selectedDescriptors) {
       if (canImplementOverride(descriptor, methodHierarchyBrowser, true)) {
         if (toOverride > 0) {
           // no mixed actions allowed
@@ -133,11 +133,10 @@ abstract class OverrideImplementMethodAction extends AnAction {
     final PsiClass psiClass = descriptor.getPsiClass();
     if (psiClass == null) return false;
     final PsiMethod baseMethod = methodHierarchyBrowser.getBaseMethod();
-    final MethodSignature signature = MethodSignatureUtil.createMethodSignature(baseMethod.getName(), baseMethod.getParameterList(), baseMethod.getTypeParameterList(), PsiSubstitutor.EMPTY);
+    final MethodSignature signature = baseMethod.getSignature(PsiSubstitutor.EMPTY);
 
     final MethodSignature[] allOriginalSignatures = toImplement ? OverrideImplementUtil.getMethodSignaturesToImplement(psiClass) : OverrideImplementUtil.getMethodSignaturesToOverride(psiClass);
-    for (int i = 0; i < allOriginalSignatures.length; i++) {
-      final MethodSignature originalSignature = allOriginalSignatures[i];
+    for (final MethodSignature originalSignature : allOriginalSignatures) {
       if (originalSignature.equals(signature)) {
         return true;
       }

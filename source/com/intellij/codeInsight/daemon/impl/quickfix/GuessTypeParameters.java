@@ -117,9 +117,7 @@ public class GuessTypeParameters {
     PsiManager manager = context.getManager();
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     while (currContext != null && !manager.areElementsEquivalent(currContext, targetClass)) {
-      PsiTypeParameterList typeParameterList = currContext.getTypeParameterList();
-      if (typeParameterList == null) break;
-      PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
+      PsiTypeParameter[] typeParameters = currContext.getTypeParameters();
       for (PsiTypeParameter typeParameter : typeParameters) {
         substitutor = substitutor.put(typeParameter, null);
       }

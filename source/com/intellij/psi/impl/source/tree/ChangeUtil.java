@@ -643,9 +643,7 @@ public class ChangeUtil implements Constants {
     LOG.assertTrue(referencedClass != null);
     reference.putCopyableUserData(REFERENCED_CLASS_KEY, referencedClass);
 
-    final PsiTypeParameterList typeParameterList = referencedClass.getTypeParameterList();
-    if (typeParameterList == null) return;
-    final PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
+    final PsiTypeParameter[] typeParameters = referencedClass.getTypeParameters();
     if (typeParameters.length == 0) return;
 
     final ASTNode referenceParameterList = reference.findChildByRole(ChildRole.REFERENCE_PARAMETER_LIST);

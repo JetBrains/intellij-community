@@ -647,12 +647,8 @@ public final class PsiUtil {
   public static boolean equalOnEquivalentClasses(PsiSubstitutor s1, PsiClass aClass, PsiSubstitutor s2, PsiClass bClass) {
     // assume generic class equals to non-generic
     if (aClass.hasTypeParameters() != bClass.hasTypeParameters()) return true;
-    final PsiTypeParameterList typeParamList1 = aClass.getTypeParameterList();
-    final PsiTypeParameterList typeParamList2 = bClass.getTypeParameterList();
-    if (typeParamList1 == null && typeParamList2 == null) return true;
-    if (typeParamList1 == null || typeParamList2 == null) return false;
-    final PsiTypeParameter[] typeParameters1 = typeParamList1.getTypeParameters();
-    final PsiTypeParameter[] typeParameters2 = typeParamList2.getTypeParameters();
+    final PsiTypeParameter[] typeParameters1 = aClass.getTypeParameters();
+    final PsiTypeParameter[] typeParameters2 = bClass.getTypeParameters();
     if (typeParameters1.length != typeParameters2.length) return false;
     for (int i = 0; i < typeParameters1.length; i++) {
       if (!Comparing.equal(s1.substitute(typeParameters1[i]), s2.substitute(typeParameters2[i]))) return false;
@@ -778,13 +774,7 @@ public final class PsiUtil {
     }
 
     private void obtainCurrentParams(PsiTypeParameterListOwner owner) {
-      final PsiTypeParameterList typeParameterList = owner.getTypeParameterList();
-      if (typeParameterList != null) {
-        myCurrentParams = typeParameterList.getTypeParameters();
-      }
-      else {
-        myCurrentParams = PsiTypeParameter.EMPTY_ARRAY;
-      }
+      myCurrentParams = owner.getTypeParameters();
       myIndex = myCurrentParams.length - 1;
     }
 

@@ -386,7 +386,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   }
 
   public PsiTypeParameter[] getTypeParameters() {
-    return PsiClassImplUtil.getTypeParameters(this);
+    return PsiImplUtil.getTypeParameters(this);
   }
 
   public PsiField[] getAllFields() {

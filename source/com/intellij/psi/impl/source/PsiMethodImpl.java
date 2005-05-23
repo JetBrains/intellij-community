@@ -23,6 +23,8 @@ import com.intellij.util.PatchedSoftReference;
 
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMethod {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiMethodImpl");
 
@@ -166,6 +168,10 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
 
   public boolean hasTypeParameters() {
     return PsiImplUtil.hasTypeParameters(this);
+  }
+
+  @NotNull public PsiTypeParameter[] getTypeParameters() {
+    return PsiImplUtil.getTypeParameters(this);
   }
 
   public PsiType getReturnType() {

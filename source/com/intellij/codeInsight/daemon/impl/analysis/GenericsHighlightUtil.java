@@ -32,7 +32,7 @@ public abstract class GenericsHighlightUtil {
   public static HighlightInfo checkInferredTypeArguments(PsiMethod genericMethod,
                                                          PsiMethodCallExpression call,
                                                          PsiSubstitutor substitutor) {
-    PsiTypeParameter[] typeParameters = genericMethod.getTypeParameterList().getTypeParameters();
+    PsiTypeParameter[] typeParameters = genericMethod.getTypeParameters();
     for (PsiTypeParameter typeParameter : typeParameters) {
       PsiType substituted = substitutor.substitute(typeParameter);
       if (substituted == null) return null;
@@ -79,8 +79,8 @@ public abstract class GenericsHighlightUtil {
       }
     }
 
-    final PsiTypeParameterList typeParameterList = typeParameterListOwner.getTypeParameterList();
-    final int targetParametersNum = typeParameterList == null ? 0 : typeParameterList.getTypeParameters().length;
+    final PsiTypeParameter[] typeParameters = typeParameterListOwner.getTypeParameters();
+    final int targetParametersNum = typeParameters.length;
     final PsiReferenceParameterList referenceParameterList = referenceElement.getParameterList();
     final int refParametersNum = referenceParameterList == null ? 0 : referenceParameterList.getTypeParameterElements().length;
     if (targetParametersNum != refParametersNum && refParametersNum != 0) {
@@ -111,7 +111,6 @@ public abstract class GenericsHighlightUtil {
 
     // bounds check
     if (targetParametersNum > 0 && refParametersNum != 0) {
-      final PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
       final PsiTypeElement[] referenceElements = referenceParameterList.getTypeParameterElements();
       for (int i = 0; i < typeParameters.length; i++) {
         PsiTypeParameter classParameter = typeParameters[i];
@@ -212,7 +211,7 @@ public abstract class GenericsHighlightUtil {
 
       final PsiSubstitutor inheritedSubstitutor = inheritedClasses.get(superClass);
       if (inheritedSubstitutor != null) {
-        final PsiTypeParameter[] typeParameters = superClass.getTypeParameterList().getTypeParameters();
+        final PsiTypeParameter[] typeParameters = superClass.getTypeParameters();
         for (PsiTypeParameter typeParameter : typeParameters) {
           PsiType type1 = inheritedSubstitutor.substitute(typeParameter);
           PsiType type2 = superTypeSubstitutor.substitute(typeParameter);

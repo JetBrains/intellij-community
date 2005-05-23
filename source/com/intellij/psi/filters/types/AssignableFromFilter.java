@@ -41,24 +41,23 @@ public class AssignableFromFilter implements ElementFilter{
 
     if(element instanceof PsiMethod){
       final PsiMethod method = (PsiMethod)element;
-      final PsiTypeParameterList list = method.getTypeParameterList();
-      if(list != null && list.getTypeParameters().length > 0){
-        final PsiTypeParameter[] parameters = list.getTypeParameters();
-        for (int i = 0; i < parameters.length; i++) {
-          final PsiTypeParameter parameter = parameters[i];
-          PsiType returnType = method.getReturnType();
-          if(substitutor != null) returnType = substitutor.substitute(returnType);
-          final PsiType substitutionForParameter = method.getManager().getResolveHelper().getSubstitutionForTypeParameter(parameter, returnType, myType, false);
-          if(substitutionForParameter != PsiType.NULL){
-            return true;
-          }
+      final PsiTypeParameter[] parameters = method.getTypeParameters();
+      for (final PsiTypeParameter parameter : parameters) {
+        PsiType returnType = method.getReturnType();
+        if (substitutor != null) returnType = substitutor.substitute(returnType);
+        final PsiType substitutionForParameter = method.getManager().getResolveHelper().getSubstitutionForTypeParameter(parameter,
+                                                                                                                        returnType, myType,
+                                                                                                                        false);
+        if (substitutionForParameter != PsiType.NULL) {
+          return true;
         }
       }
     }
     final PsiType typeByElement = FilterUtil.getTypeByElement((PsiElement)element, context);
     if(substitutor != null) return myType.isAssignableFrom(substitutor.substitute(typeByElement));
-    if(typeByElement == null)
+    if (typeByElement == null) {
       return false;
+    }
     return myType.isAssignableFrom(typeByElement);
   }
 

@@ -421,7 +421,7 @@ public class HighlightMethodUtil {
           PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
           PsiReferenceParameterList typeArgumentList = methodCall.getTypeArgumentList();
           if ((typeArgumentList == null || typeArgumentList.getTypeArguments().length == 0) &&
-              resolvedMethod.getTypeParameterList().getTypeParameters().length > 0) {
+              resolvedMethod.getTypeParameters().length > 0) {
             highlightInfo = GenericsHighlightUtil.checkInferredTypeArguments(resolvedMethod, methodCall, resolveResult.getSubstitutor());
           }
           else {

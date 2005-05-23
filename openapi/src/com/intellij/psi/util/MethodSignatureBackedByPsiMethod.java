@@ -55,8 +55,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
 
   public static MethodSignatureBackedByPsiMethod create(PsiMethod method, PsiSubstitutor substitutor) {
     final boolean isRaw = PsiUtil.isRawSubstitutor(method, substitutor);
-    final PsiTypeParameterList typeParameterList = method.getTypeParameterList();
-    PsiTypeParameter[] methodTypeParameters = typeParameterList != null ? typeParameterList.getTypeParameters() : PsiTypeParameter.EMPTY_ARRAY;
+    PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiType[] parameterTypes = new PsiType[parameters.length];
     for (int i = 0; i < parameterTypes.length; i++) {

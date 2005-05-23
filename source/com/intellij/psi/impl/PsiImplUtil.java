@@ -173,6 +173,14 @@ public class PsiImplUtil {
     return null;
   }
 
+  public static PsiTypeParameter[] getTypeParameters(PsiTypeParameterListOwner owner) {
+    final PsiTypeParameterList typeParameterList = owner.getTypeParameterList();
+    if (typeParameterList != null) {
+      return typeParameterList.getTypeParameters();
+    }
+    return PsiTypeParameter.EMPTY_ARRAY;
+  }
+
   private static class FindPointcutBySignatureProcessor extends BaseScopeProcessor implements NameHint,
                                                                                               ElementClassHint {
     private final String myName;
@@ -304,12 +312,9 @@ public class PsiImplUtil {
           operandType = ((PsiPrimitiveType)operandType).getBoxedType(manager, classAccessExpression.getResolveScope());
         }
       }
-      final PsiTypeParameterList typeParameterList = classClass.getTypeParameterList();
-      if (typeParameterList != null) {
-        final PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
-        if (typeParameters.length == 1) {
-          substitutor = substitutor.put(typeParameters[0], operandType);
-        }
+      final PsiTypeParameter[] typeParameters = classClass.getTypeParameters();
+      if (typeParameters.length == 1) {
+        substitutor = substitutor.put(typeParameters[0], operandType);
       }
 
       return new PsiImmediateClassType(classClass, substitutor);

@@ -75,7 +75,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
 
         if (resolveResult.getElement() instanceof PsiMethod && resolveResult.isValidResult()) {
           PsiMethod method = (PsiMethod)resolveResult.getElement();
-          final PsiTypeParameter[] typeParameters = method.getTypeParameterList().getTypeParameters();
+          final PsiTypeParameter[] typeParameters = method.getTypeParameters();
           if (typeParameters.length == typeArguments.length) {
             final PsiParameter[] parameters = method.getParameterList().getParameters();
             PsiResolveHelper resolveHelper = expression.getManager().getResolveHelper();

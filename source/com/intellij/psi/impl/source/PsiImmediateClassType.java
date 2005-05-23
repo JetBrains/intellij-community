@@ -71,9 +71,7 @@ public class PsiImmediateClassType extends PsiClassType {
   }
   public PsiType[] getParameters() {
     List<PsiType> lst = new ArrayList<PsiType>();
-    final PsiTypeParameterList list = myClass.getTypeParameterList();
-    if(list == null) return PsiType.EMPTY_ARRAY;
-    final PsiTypeParameter[] parameters = list.getTypeParameters();
+    final PsiTypeParameter[] parameters = myClass.getTypeParameters();
     for(int i = 0; parameters != null && i < parameters.length; i++){
       lst.add(mySubstitutor.substitute(parameters[i]));
     }
@@ -150,36 +148,33 @@ public class PsiImmediateClassType extends PsiClassType {
       buffer.append(name);
     }
 
-    final PsiTypeParameterList typeParameterList = aClass.getTypeParameterList();
-    if (typeParameterList != null) {
-      final PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
-      if (typeParameters.length > 0) {
-        StringBuffer pineBuffer = new StringBuffer();
-        pineBuffer.append('<');
-        for (int i = 0; i < typeParameters.length; i++) {
-          PsiTypeParameter typeParameter = typeParameters[i];
-          if (i > 0) pineBuffer.append(',');
-          final PsiType substitutionResult = mySubstitutor.substitute(typeParameter);
-          if (substitutionResult == null) {
-            pineBuffer = null;
-            break;
-          }
-          if (!canonical) {
-            pineBuffer.append(substitutionResult.getPresentableText());
+    final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
+    if (typeParameters.length > 0) {
+      StringBuffer pineBuffer = new StringBuffer();
+      pineBuffer.append('<');
+      for (int i = 0; i < typeParameters.length; i++) {
+        PsiTypeParameter typeParameter = typeParameters[i];
+        if (i > 0) pineBuffer.append(',');
+        final PsiType substitutionResult = mySubstitutor.substitute(typeParameter);
+        if (substitutionResult == null) {
+          pineBuffer = null;
+          break;
+        }
+        if (!canonical) {
+          pineBuffer.append(substitutionResult.getPresentableText());
+        }
+        else {
+          if (internal) {
+            pineBuffer.append(substitutionResult.getInternalCanonicalText());
           }
           else {
-            if (internal) {
-              pineBuffer.append(substitutionResult.getInternalCanonicalText());
-            }
-            else {
-              pineBuffer.append(substitutionResult.getCanonicalText());
-            }
+            pineBuffer.append(substitutionResult.getCanonicalText());
           }
         }
-        if (pineBuffer != null) {
-          buffer.append(pineBuffer);
-          buffer.append('>');
-        }
+      }
+      if (pineBuffer != null) {
+        buffer.append(pineBuffer);
+        buffer.append('>');
       }
     }
   }

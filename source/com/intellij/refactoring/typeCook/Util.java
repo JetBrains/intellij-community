@@ -262,17 +262,6 @@ public class Util {
     return null;
   }
 
-  public static PsiTypeParameter[] getTypeParametersList(PsiClass a) {
-    PsiTypeParameterList list = a.getTypeParameterList();
-
-    if (list == null) {
-      return PsiTypeParameter.EMPTY_ARRAY;
-    }
-    else {
-      return list.getTypeParameters();
-    }
-  }
-
   public static PsiType createParameterizedType(final PsiType t, final PsiTypeVariableFactory factory, final PsiElement context) {
     return createParameterizedType(t, factory, true, context);
   }
@@ -389,7 +378,7 @@ public class Util {
         }
 
         final PsiSubstitutor subst = result.getSubstitutor();
-        final PsiTypeParameter[] parms = Util.getTypeParametersList(result.getElement());
+        final PsiTypeParameter[] parms = result.getElement().getTypeParameters();
 
         if (parms.length > 0 && subst.substitute(parms[0]) != null) {
           PsiJavaCodeReferenceElement classReference = newx.getClassReference();

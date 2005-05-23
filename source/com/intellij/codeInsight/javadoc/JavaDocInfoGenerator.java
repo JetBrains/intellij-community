@@ -1109,7 +1109,7 @@ class JavaDocInfoGenerator {
         StringBuffer subst = new StringBuffer();
         boolean goodSubst = true;
 
-        PsiTypeParameter[] params = psiClass.getTypeParameterList().getTypeParameters();
+        PsiTypeParameter[] params = psiClass.getTypeParameters();
 
         subst.append("&lt;");
         for (int i = 0; i < params.length; i++) {
@@ -1144,11 +1144,7 @@ class JavaDocInfoGenerator {
 
   private String generateTypeParameters(PsiTypeParameterListOwner owner) {
     if (owner.hasTypeParameters()) {
-      PsiTypeParameterList list = owner.getTypeParameterList();
-
-      if (list == null) return "";
-
-      PsiTypeParameter[] parms = list.getTypeParameters();
+      PsiTypeParameter[] parms = owner.getTypeParameters();
 
       StringBuffer buffer = new StringBuffer();
 

@@ -330,7 +330,7 @@ public class SystemBuilder {
 
           if (method != null) {
             final PsiClass aClass = method.getContainingClass();
-            final PsiTypeParameter[] methodTypeParams = method.getTypeParameterList().getTypeParameters();
+            final PsiTypeParameter[] methodTypeParams = method.getTypeParameters();
             final PsiParameter[] parameters = method.getParameterList().getParameters();
             final PsiExpression[] arguments = call.getArgumentList().getExpressions();
             final PsiExpression aQualifier = expr instanceof PsiMethodCallExpression

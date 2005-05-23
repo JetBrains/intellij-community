@@ -153,10 +153,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     }
 
     private void processClass(PsiClass resolve, PsiSubstitutor originalSubstitutor, final Map<PsiTypeParameter, PsiType> substMap) {
-      final PsiTypeParameterList list = resolve.getTypeParameterList();
-      final PsiTypeParameter[] params = list != null ? list.getTypeParameters() : null;
-      for (int i = 0; params != null && i < params.length; i++) {
-        final PsiTypeParameter param = params[i];
+      final PsiTypeParameter[] params = resolve.getTypeParameters();
+      for (final PsiTypeParameter param : params) {
         substMap.put(param, substituteInternal(originalSubstitutor.substitute(param)));
       }
       if (resolve.hasModifierProperty(PsiModifier.STATIC)) return;
@@ -252,9 +250,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
   }
 
   public synchronized PsiSubstitutor putAll(PsiClass parentClass, PsiType[] mappings){
-    final PsiTypeParameterList list = parentClass.getTypeParameterList();
-    if(list == null) return this;
-    final PsiTypeParameter[] params = list.getTypeParameters();
+    final PsiTypeParameter[] params = parentClass.getTypeParameters();
     PsiSubstitutorImpl substitutor = new PsiSubstitutorImpl(new HashMap<PsiTypeParameter, PsiType>(mySubstitutionMap));
     for(int i = 0; i < params.length; i++){
       if (mappings != null && mappings.length > i) {
@@ -340,9 +336,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
   }
 
   public PsiSubstitutor inplacePutAll(PsiClass parentClass, PsiType[] mappings) {
-    final PsiTypeParameterList list = parentClass.getTypeParameterList();
-    if(list == null) return this;
-    final PsiTypeParameter[] params = list.getTypeParameters();
+    final PsiTypeParameter[] params = parentClass.getTypeParameters();
 
     for(int i = 0; i < params.length; i++){
       if (mappings != null && mappings.length > i) {

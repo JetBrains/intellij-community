@@ -445,10 +445,9 @@ public class PsiClassImplUtil{
             PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(containingClass, candidate.getSecond(), aClass,
                                                                      substitutor);
             if (isRaw && !candidateMethod.hasModifierProperty(PsiModifier.STATIC)) { //static methods are not erased due to raw overriding
-              final PsiTypeParameterList typeParameterList = candidateMethod.getTypeParameterList();
-              PsiTypeParameter[] methodTypeParameters = typeParameterList != null ? typeParameterList.getTypeParameters() : PsiTypeParameter.EMPTY_ARRAY;
-              for (int i = 0; i < methodTypeParameters.length; i++) {
-                finalSubstitutor = ((PsiSubstitutorEx)finalSubstitutor).inplacePut(methodTypeParameters[i], null);
+              PsiTypeParameter[] methodTypeParameters = candidateMethod.getTypeParameters();
+              for (PsiTypeParameter methodTypeParameter : methodTypeParameters) {
+                finalSubstitutor = ((PsiSubstitutorEx)finalSubstitutor).inplacePut(methodTypeParameter, null);
               }
             }
             processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
@@ -513,15 +512,11 @@ public class PsiClassImplUtil{
 
     if (classHint == null || classHint.shouldProcess(PsiMethod.class)) {
       final PsiMethod[] methods = nameHint != null ? aClass.findMethodsByName(nameHint.getName(), false) : aClass.getMethods();
-      for (int i = 0; i < methods.length; i++) {
-        final PsiMethod method = methods[i];
+      for (final PsiMethod method : methods) {
         if (isRaw && !method.hasModifierProperty(PsiModifier.STATIC)) { //static methods are not erased due to raw overriding
-          final PsiTypeParameterList typeParameterList = method.getTypeParameterList();
-          PsiTypeParameter[] methodTypeParameters = typeParameterList != null
-              ? typeParameterList.getTypeParameters()
-              : PsiTypeParameter.EMPTY_ARRAY;
-          for (int j = 0; j < methodTypeParameters.length; j++) {
-            substitutor = substitutor.put(methodTypeParameters[j], null);
+          PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
+          for (PsiTypeParameter methodTypeParameter : methodTypeParameters) {
+            substitutor = substitutor.put(methodTypeParameter, null);
           }
         }
         if (!processor.execute(method, substitutor)) return false;
@@ -869,16 +864,6 @@ public class PsiClassImplUtil{
     final Map<String,List<Pair<PsiMethod,PsiSubstitutor>>> map = getMap(psiClass, PsiMethod.class);
     final List<Pair<PsiMethod,PsiSubstitutor>> list = map.get(name);
     return list == null ? Collections.EMPTY_LIST : Collections.unmodifiableList(list);
-  }
-
-  public static PsiTypeParameter[] getTypeParameters(PsiClass psiClass) {
-    final PsiTypeParameterList typeParameterList = psiClass.getTypeParameterList();
-    if (typeParameterList != null) {
-      return typeParameterList.getTypeParameters();
-    }
-    else {
-      return PsiTypeParameter.EMPTY_ARRAY;
-    }
   }
 
   public static PsiClassType[] getExtendsListTypes(PsiClass psiClass) {

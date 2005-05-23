@@ -230,9 +230,8 @@ public class LookupItemUtil{
     final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(element.getProject());
     String name = element.getName();
     if(substitutor != null){
-      final PsiTypeParameterList list = element.getTypeParameterList();
-      final PsiTypeParameter[] params = list != null ? list.getTypeParameters() : null;
-      if(params != null && params.length > 0){
+      final PsiTypeParameter[] params = element.getTypeParameters();
+      if(params.length > 0){
         boolean flag = true;
         StringBuffer buffer = new StringBuffer();
         buffer.append("<");

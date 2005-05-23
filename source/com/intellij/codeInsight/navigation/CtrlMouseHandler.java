@@ -217,7 +217,7 @@ public class CtrlMouseHandler implements ProjectComponent {
           StringBuffer subst = new StringBuffer();
           boolean goodSubst = true;
 
-          PsiTypeParameter[] params = psiClass.getTypeParameterList().getTypeParameters();
+          PsiTypeParameter[] params = psiClass.getTypeParameters();
 
           subst.append("<");
           for (int i = 0; i < params.length; i++) {
@@ -312,7 +312,7 @@ public class CtrlMouseHandler implements ProjectComponent {
       buffer.append(JavaDocUtil.getShortestClassName(aClass, aClass));
 
       if (aClass.hasTypeParameters()) {
-        PsiTypeParameter[] parms = aClass.getTypeParameterList().getTypeParameters();
+        PsiTypeParameter[] parms = aClass.getTypeParameters();
 
         buffer.append("<");
 
@@ -388,7 +388,7 @@ public class CtrlMouseHandler implements ProjectComponent {
 
       generateModifiers(buffer, method);
 
-      PsiTypeParameter[] params = method.getTypeParameterList().getTypeParameters();
+      PsiTypeParameter[] params = method.getTypeParameters();
 
       if (params.length > 0) {
         buffer.append("<");

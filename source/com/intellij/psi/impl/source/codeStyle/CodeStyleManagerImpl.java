@@ -691,9 +691,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
         substitutor = PsiSubstitutor.EMPTY;
       }
 
-      PsiTypeParameterList typeParameterList = collectionClass.getTypeParameterList();
-      if (typeParameterList == null) return;
-      PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
+      PsiTypeParameter[] typeParameters = collectionClass.getTypeParameters();
       if (typeParameters.length == 0) return;
 
       PsiType componentTypeParameter = substitutor.substitute(typeParameters[0]);
