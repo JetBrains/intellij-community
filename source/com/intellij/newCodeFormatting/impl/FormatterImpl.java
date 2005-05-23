@@ -9,6 +9,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.CharArrayUtil;
 
 public class FormatterImpl extends Formatter implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.newCodeFormatting.impl.FormatterImpl");
@@ -96,10 +97,10 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     if (whiteSpace == null) {
       return offset;
     }
-    whiteSpace.setReadOnly(false);
     whiteSpace.setLineFeedsAreReadOnly(true);
     final IndentInfo indent;
     if (docModel.getLineNumber(offset) == docModel.getLineNumber(whiteSpace.getTextRange().getEndOffset())) {
+      whiteSpace.setReadOnly(false);      
       processor.formatWithoutRealModifications();
       indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
     }
@@ -109,7 +110,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     final Pair<String, Integer> newWS = whiteSpace.generateWhiteSpace(indentOptions, offset, indent);
     model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS.getFirst(), block.getTextRange().getLength());
 
-    return newWS.getSecond().intValue();
+    return CharArrayUtil.shiftForward(model.getDocumentModel().getText().toCharArray(), offset, " \t");
   }
 
   public void adjustTextRange(final FormattingModel model,
@@ -125,7 +126,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     LeafBlockWrapper current = processor.getFirstTokenBlock();
     while (current != null) {
       WhiteSpace whiteSpace = current.getWhiteSpace();
-      
+
       if (!whiteSpace.isReadOnly()) {
         if (whiteSpace.getTextRange().getStartOffset() > affectedRange.getStartOffset()) {
           if (whiteSpace.containsLineFeeds()) {
@@ -146,12 +147,12 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
               if (!keepLineBreaks) {
                 spaceProperty.setKeepLineBreaks(false);
               }
-              if (!keepBlankLines) {              
-                spaceProperty.setKeepLineBreaks(0);          
+              if (!keepBlankLines) {
+                spaceProperty.setKeepLineBreaks(0);
               }
             }
           }
-        }        
+        }
       }
       current = current.getNextBlock();
     }
@@ -167,7 +168,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     LeafBlockWrapper current = processor.getFirstTokenBlock();
     while (current != null) {
       WhiteSpace whiteSpace = current.getWhiteSpace();
-      
+
       if (!whiteSpace.isReadOnly() && whiteSpace.containsLineFeeds()) {
         //if (whiteSpace.getTextRange().getStartOffset() > affectedRange.getStartOffset()) {
           storage.saveIndentInfo(current.calcIndentFromParent(), current.getTextRange().getStartOffset());
