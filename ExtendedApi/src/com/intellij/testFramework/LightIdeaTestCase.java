@@ -91,7 +91,7 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
     cleanupApplicationCaches();
   }
 
-  private void cleanupApplicationCaches() {
+  private static void cleanupApplicationCaches() {
     ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).cleanupForNextTest();
     if (ourProject != null) {
       UndoManager.getInstance(ourProject).dropHistory();
@@ -110,12 +110,19 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
         ourProject = ProjectManagerEx.getInstanceEx().newProject("", false, false);
         ourPsiManager = null;
         ourModule = createMainModule();
-        setUpJdk();
 
         ourSourceRoot = DummyFileSystem.getInstance().createRoot("src");
 
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(ourModule);
+
         final ModifiableRootModel rootModel = rootManager.getModifiableModel();
+
+        ProjectJdk projectJDK = getProjectJDK();
+        if (projectJDK != null) {
+          ourJDK = projectJDK;
+          rootModel.setJdk(projectJDK);
+        }
+
         final ContentEntry contentEntry = rootModel.addContentEntry(ourSourceRoot);
         contentEntry.addSourceFolder(ourSourceRoot, false);
         rootModel.commit();
@@ -178,7 +185,7 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
 
     initApplication();
 
-    if (ourProject == null) {
+    if (ourProject == null || isJDKChanged()) {
       initProject();
     }
 
@@ -283,29 +290,13 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
     }
   }
 
-  protected void setUpJdk() {
+  private boolean isJDKChanged() {
     ProjectJdk jdk = getProjectJDK();
-
-    if (ourJDK == null || !Comparing.equal(ourJDK.getVersionString(), jdk.getVersionString())) {
-      ourJDK = jdk;
-      setProjectJDK(jdk);
-    }
+    return ourJDK == null || !Comparing.equal(ourJDK.getVersionString(), jdk.getVersionString());
   }
 
   protected ProjectJdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk("java 1.4");
-  }
-
-  private void setProjectJDK(final ProjectJdk jdk) {
-    if (jdk == null) return;
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(ourModule);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        rootModel.setJdk(jdk);
-        rootModel.commit();
-      }
-    });
   }
 
   /**
