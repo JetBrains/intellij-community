@@ -35,17 +35,14 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspImplicitVariable;
-import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -369,8 +366,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           }
         };
 
-        PsiFile[] files = JspUtil.findIncludingFiles(refElement.getContainingFile(), searchScope);
-        for (PsiFile file : files) {
+        PsiReference[] refs = findReferences(refElement.getContainingFile(), searchScope, false);
+        for (PsiReference ref : refs) {
+          final PsiFile file = ref.getElement().getContainingFile();
           if (!processIdentifiers(processor2, text, new LocalSearchScope(file), UsageSearchContext.IN_CODE)) return false;
         }
       }
@@ -911,40 +909,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     return true;
-  }
-
-  public XmlTag[] findIncludeDirectives(final PsiFile file, SearchScope searchScope) {
-    LOG.assertTrue(searchScope != null);
-    if(!(file instanceof JspFile)) return XmlTag.EMPTY;
-
-    String name = file.getVirtualFile().getName();
-    final ArrayList<XmlTag> directives = new ArrayList<XmlTag>();
-    PsiElementProcessorEx processor = new PsiElementProcessorEx() {
-      public boolean execute(PsiElement element, int offsetInElement) {
-        ASTNode parent = (SourceTreeToPsiMap.psiElementToTree(element)).getTreeParent();
-        if (parent.getElementType() == ElementType.JSP_FILE_REFERENCE) {
-          ASTNode pparent = parent.getTreeParent();
-          if (SourceTreeToPsiMap.treeElementToPsi(pparent) instanceof XmlAttribute) {
-            XmlTag directive = (XmlTag)pparent.getTreeParent().getPsi();
-            if (directive.getName().equals("include")) {
-              XmlAttribute attribute = (XmlAttribute)SourceTreeToPsiMap.treeElementToPsi(pparent);
-              if (attribute.getName().equals("file")) {
-                PsiFile refFile = (PsiFile)((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(parent)).resolve();
-                if (file.equals(refFile)) {
-                  directives.add(directive);
-                }
-              }
-            }
-          }
-        }
-        return true;
-      }
-    };
-    processElementsWithWord(processor,
-                            searchScope,
-                            name,
-                            UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
-    return directives.toArray(new XmlTag[directives.size()]);
   }
 
   public PsiFile[] findFilesWithTodoItems() {

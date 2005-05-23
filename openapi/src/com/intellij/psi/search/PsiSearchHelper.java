@@ -40,8 +40,6 @@ public interface PsiSearchHelper {
   boolean processAllClasses(PsiElementProcessor<PsiClass> processor, SearchScope searchScope);
   PsiClass[] findAllClasses(SearchScope searchScope);
 
-  XmlTag[] findIncludeDirectives(PsiFile file, SearchScope searchScope);
-
   PsiFile[] findFilesWithTodoItems();
   TodoItem[] findTodoItems(PsiFile file);
   TodoItem[] findTodoItems(PsiFile file, int startOffset, int endOffset);
