@@ -4,10 +4,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiImportList;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.openapi.editor.Document;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
@@ -44,6 +42,11 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
         public void run() {
           try {
             if (newImportList != null) {
+              final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
+              final Document document = manager.getDocument(file);
+              if (document != null) {
+                manager.commitDocument(document);
+              }
               ((PsiJavaFile)file).getImportList().replace(newImportList);
             }
           }
