@@ -344,7 +344,8 @@ public class StructuralReplaceTest extends IdeaTestCase {
                  "} catch(Exception ex) {}";
     String s39 = "$Statement$;";
 
-    String expectedResult14 = "    ParamChecker.isTrue(1==1, \"!!!\");// comment we want to leave\n" +
+    String expectedResult14 = "    ParamChecker.isTrue(1==1, \"!!!\");\n" +
+                              "// comment we want to leave\n" +
                  "    ParamChecker.isTrue(2==2, \"!!!\");";
     actualResult = replacer.testReplace(s37,s38,s39,options);
     assertEquals(
@@ -515,7 +516,8 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String expectedResult23 = "int x = 42;\n" +
                                   "/**\n" +
                                   " * Stuff\n" +
-                                  " */int y = 42;";
+                                  " */\n" +
+                                  "    int y = 42;";
 
     actualResult = replacer.testReplace(s64,s65,s66,options);
 
@@ -1007,7 +1009,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s27 = "Object a;";
     String expectedResult10 = "class A {\n" +
                               "    // comment before\n" +
-                              "    protected Object a;//  comment after\n" +
+                              "      protected Object a;//  comment after\n" +
                               "}";
 
     actualResult = replacer.testReplace(s25,s26,s27,options);
@@ -1086,10 +1088,9 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String expectedResult13 = "/**\n" +
                               " * This interface stores XXX\n" +
                               " * <p/>\n" +
-                              " */\n" +
-                              "public interface X {\n" +
+                              " */public interface X {\n" +
                               "    public static final String HEADER = Headers.HEADER;\n" +
-                              "    \n" +
+                              "\n" +
                               "}";
 
     actualResult = replacer.testReplace(s34,s35,s36,options, true);
