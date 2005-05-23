@@ -29,9 +29,12 @@ class DeleteNodesAction implements Runnable {
     try {
       PsiElement first= null;
       PsiElement last = null;
-      for(int i=0;i<elements.size();++i) {
+
+      for(int i = 0;i < elements.size(); ++i) {
         final PsiElement el = (PsiElement)elements.get(i);
 
+        if (!el.isValid()) continue;
+          
         if (first==null) {
           first = last = el;
         } else if (last.getNextSibling()==el) {

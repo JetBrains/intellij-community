@@ -1,14 +1,11 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.idea.IdeaTestUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.testFramework.IdeaTestCase;
-
-import java.util.Calendar;
 
 /**
  * Created by IntelliJ IDEA.
@@ -124,7 +121,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
                             "public class Test {\n" +
                             "  public static void main(String[] args) {\n" +
                             "    if (1==1)\n" +
-                            "//FIXME provide a parent frame\n" +
+                            "    //FIXME provide a parent frame\n" +
                             "        JOptionPane.showMessageDialog(null, \"MESSAGE\");\n" +
                             "  }\n" +
                             "}";
@@ -347,8 +344,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
                  "} catch(Exception ex) {}";
     String s39 = "$Statement$;";
 
-    String expectedResult14 = "    ParamChecker.isTrue(1==1, \"!!!\");\n" +
-                 "// comment we want to leave\n" +
+    String expectedResult14 = "    ParamChecker.isTrue(1==1, \"!!!\");// comment we want to leave\n" +
                  "    ParamChecker.isTrue(2==2, \"!!!\");";
     actualResult = replacer.testReplace(s37,s38,s39,options);
     assertEquals(
@@ -394,10 +390,9 @@ public class StructuralReplaceTest extends IdeaTestCase {
                  "                drec.getWidth());";
     String s47 = "$Instance$.$MethodCall$()";
     String s48 = "OtherClass.round($Instance$.$MethodCall$(),5)";
-    String expectedResult17 = "Rectangle2D rec = new Rectangle2D.Double(OtherClass.round(drec.getX(),5),\n" +
-                              "        OtherClass.round(drec.getY(),5),\n" +
-                              "        OtherClass.round(drec.getWidth(),5),\n" +
-                              "        OtherClass.round(drec.getWidth(),5));";
+    String expectedResult17 = "Rectangle2D rec = new Rectangle2D.Double(OtherClass.round(drec.getX(),5), OtherClass.round(drec.getY(),5), " +
+                              "OtherClass.round(drec.getWidth(),5), " +
+                              "OtherClass.round(drec.getWidth(),5));";
     actualResult = replacer.testReplace(s46,s47,s48,options);
 
     assertEquals(
@@ -447,13 +442,13 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s54 = "$a$;";
     String expectedResult19 = "    aaa();\n" +
                               "    try {\n" +
-                              "  aaa2();\n" +
-                              "} catch(Exception ex) {\n" +
-                              "  aaa3();\n" +
-                              "}\n" +
-                              "finally {\n" +
-                              "  System.out.println();\n" +
-                              "}\n" +
+                              "      aaa2();\n" +
+                              "    } catch(Exception ex) {\n" +
+                              "      aaa3();\n" +
+                              "    }\n" +
+                              "    finally {\n" +
+                              "      System.out.println();\n" +
+                              "    }\n" +
                               "try {\n" +
                               "  aaa4();\n" +
                               "} catch(Exception ex) {\n" +
@@ -921,11 +916,11 @@ public class StructuralReplaceTest extends IdeaTestCase {
                  "  $Other$\n" +
                  "}";
     String expectedResult4 = "/** @example */\n" +
-                             "public class A {\n" +
-                             "  class C {}\n" +
-                             "public void b() {}\n" +
-                             "int f;\n" +
-                             "}";
+                             "    public class A {\n" +
+                             "      class C {}\n" +
+                             "    public void b() {}\n" +
+                             "    int f;\n" +
+                             "    }";
 
     actualResult = replacer.testReplace(s10,s11,s12,options);
     assertEquals("Make class public",actualResult,expectedResult4);
@@ -956,19 +951,19 @@ public class StructuralReplaceTest extends IdeaTestCase {
                  "  }\n" +
                  "}";
 
-    String expectedResult5 = "class CustomThread extends CustomThread {\n" +
-                 "  CustomThread(InputStream in,OutputStream out,boolean closeOutOnExit ) {\n" +
-                 "\t  super(\"CustomThread\");\n" +
+    String expectedResult5 = "    class CustomThread extends CustomThread {\n" +
+                 "    CustomThread(InputStream in,OutputStream out,boolean closeOutOnExit ) {\n" +
+                 "      super(\"CustomThread\");\n" +
                  "    setDaemon(true);\n" +
-                 "if (in instanceof BufferedInputStream) {\n" +
+                 "    if (in instanceof BufferedInputStream) {\n" +
                  "        bis = (BufferedInputStream)in;\n" +
                  "    } else {\n" +
                  "    bis = new BufferedInputStream(in);\n" +
                  "    }\n" +
-                 "this.out = out;\n" +
-                 "this.closeOutOnExit = closeOutOnExit;\n" +
-                 "  }\n" +
-                 "}";
+                 "    this.out = out;\n" +
+                 "    this.closeOutOnExit = closeOutOnExit;\n" +
+                 "    }\n" +
+                 "    }";
     actualResult = replacer.testReplace(s13,s14,s15,options);
     assertEquals("Constructor replacement",expectedResult5,actualResult);
 
@@ -1223,8 +1218,8 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String expectedResult = "class A {\n" +
                   "  void a() {\n" +
                   "  }\n" +
-                  "  int b = 1;\n" +
-                  "  class C {}\n" +
+                  "    int b = 1;\n" +
+                  "    class C {}\n" +
                   "  {\n" +
                   "      int a;\n" +
                   "      a = 1;\n" +
