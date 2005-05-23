@@ -336,6 +336,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(CovariantCompareToInspection.class);
         inspectionClasses.add(CovariantEqualsInspection.class);
         inspectionClasses.add(FloatingPointEqualityInspection.class);
+        inspectionClasses.add(ComparisonToNaNInspection.class);
         inspectionClasses.add(MisspelledCompareToInspection.class);
         inspectionClasses.add(MisspelledHashcodeInspection.class);
         inspectionClasses.add(MisspelledEqualsInspection.class);
@@ -352,11 +353,13 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(ResultSetIndexZeroInspection.class);
         inspectionClasses.add(LoopStatementsThatDontLoopInspection.class);
         inspectionClasses.add(MalformedRegexInspection.class);
+        inspectionClasses.add(MalformedXPathInspection.class);
         inspectionClasses.add(MismatchedArrayReadWriteInspection.class);
         inspectionClasses.add(MismatchedCollectionQueryUpdateInspection.class);
         inspectionClasses.add(TextLabelInSwitchStatementInspection.class);
         inspectionClasses.add(UseOfPropertiesAsHashtableInspection.class);
         inspectionClasses.add(AssignmentToNullInspection.class);
+        inspectionClasses.add(ArchaicSystemPropertyAccessInspection.class);
         inspectionClasses.add(ConditionalExpressionWithIdenticalBranchesInspection.class);
         inspectionClasses.add(IfStatementWithIdenticalBranchesInspection.class);
         inspectionClasses.add(DuplicateConditionInspection.class);
@@ -420,6 +423,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(UtilityClassWithPublicConstructorInspection.class);
         inspectionClasses.add(UtilityClassWithoutPrivateConstructorInspection.class);
         inspectionClasses.add(AbstractMethodOverridesConcreteMethodInspection.class);
+        inspectionClasses.add(AbstractMethodWithMissingImplementationsInspection.class);
         inspectionClasses.add(AbstractMethodOverridesAbstractMethodInspection.class);
         inspectionClasses.add(AbstractClassExtendsConcreteClassInspection.class);
         inspectionClasses.add(StaticNonFinalFieldInspection.class);
@@ -543,6 +547,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(ReplaceAssignmentWithOperatorAssignmentInspection.class);
         inspectionClasses.add(TrivialIfInspection.class);
         inspectionClasses.add(UnnecessaryConditionalExpressionInspection.class);
+        inspectionClasses.add(ConstantConditionalExpressionInspection.class);
+        inspectionClasses.add(ConstantIfStatementInspection.class);
         inspectionClasses.add(UnnecessaryParenthesesInspection.class);
         inspectionClasses.add(UnnecessaryLocalVariableInspection.class);
         inspectionClasses.add(UnnecessaryThisInspection.class);

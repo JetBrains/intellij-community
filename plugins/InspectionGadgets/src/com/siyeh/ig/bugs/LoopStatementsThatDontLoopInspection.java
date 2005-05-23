@@ -17,7 +17,7 @@ public class LoopStatementsThatDontLoopInspection extends StatementInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.BUGS_GROUP_NAME;
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault(){

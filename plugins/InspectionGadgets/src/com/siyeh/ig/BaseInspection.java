@@ -20,7 +20,7 @@ public abstract class BaseInspection extends LocalInspectionTool{
 
     public String getShortName(){
         if(m_shortName == null){
-            final Class aClass = getClass();
+            final Class<? extends BaseInspection> aClass = getClass();
             final String name = aClass.getName();
             return name.substring(name.lastIndexOf((int) '.') + 1,
                                   name.length() - "Inspection".length());
@@ -37,11 +37,11 @@ public abstract class BaseInspection extends LocalInspectionTool{
         return visitor;
     }
 
-    protected @Nullable String buildErrorString(PsiElement location){
+    @Nullable protected String buildErrorString(PsiElement location){
         return null;
     }
 
-    protected @Nullable String buildErrorString(Object arg){
+    @Nullable protected String buildErrorString(Object arg){
         return null;
     }
 
@@ -49,13 +49,11 @@ public abstract class BaseInspection extends LocalInspectionTool{
         return false;
     }
 
-    @Nullable
-            protected InspectionGadgetsFix buildFix(PsiElement location){
+    @Nullable protected InspectionGadgetsFix buildFix(PsiElement location){
         return null;
     }
 
-    @Nullable
-            public ProblemDescriptor[] checkMethod(PsiMethod method,
+    @Nullable  public ProblemDescriptor[] checkMethod(PsiMethod method,
                                                    InspectionManager manager,
                                                    boolean isOnTheFly){
         if(telemetryEnabled){
@@ -73,15 +71,13 @@ public abstract class BaseInspection extends LocalInspectionTool{
         }
     }
 
-    @Nullable
-            protected ProblemDescriptor[] doCheckMethod(PsiMethod method,
+    @Nullable  protected ProblemDescriptor[] doCheckMethod(PsiMethod method,
                                                         InspectionManager manager,
                                                         boolean isOnTheFly){
         return super.checkMethod(method, manager, isOnTheFly);
     }
 
-    @Nullable
-            public ProblemDescriptor[] checkClass(PsiClass aClass,
+    @Nullable public ProblemDescriptor[] checkClass(PsiClass aClass,
                                                   InspectionManager manager,
                                                   boolean isOnTheFly){
         initializeTelemetryIfNecessary();
@@ -134,8 +130,7 @@ public abstract class BaseInspection extends LocalInspectionTool{
         }
     }
 
-    @Nullable
-            protected ProblemDescriptor[] doCheckField(PsiField field,
+    @Nullable protected ProblemDescriptor[] doCheckField(PsiField field,
                                                        InspectionManager manager,
                                                        boolean isOnTheFly){
         return super.checkField(field, manager, isOnTheFly);

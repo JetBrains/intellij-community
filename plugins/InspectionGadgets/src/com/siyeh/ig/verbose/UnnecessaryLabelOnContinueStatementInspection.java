@@ -15,7 +15,7 @@ public class UnnecessaryLabelOnContinueStatementInspection extends StatementInsp
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.VERBOSE_GROUP_NAME;
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault(){

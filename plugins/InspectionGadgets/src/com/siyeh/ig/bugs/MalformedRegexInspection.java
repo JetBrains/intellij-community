@@ -53,6 +53,9 @@ public class MalformedRegexInspection extends ExpressionInspection{
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiExpressionList argList = expression.getArgumentList();
+            if(argList == null){
+                return;
+            }
             final PsiExpression[] args = argList.getExpressions();
             if(args.length == 0)
             {

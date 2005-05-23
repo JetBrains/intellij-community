@@ -59,7 +59,8 @@ public class UnnecessaryConditionalExpressionInspection
         return fix;
     }
 
-    private static class TrivialConditionalFix extends InspectionGadgetsFix {
+    private static class
+            TrivialConditionalFix extends InspectionGadgetsFix {
         public String getName() {
             return "Simplify";
         }

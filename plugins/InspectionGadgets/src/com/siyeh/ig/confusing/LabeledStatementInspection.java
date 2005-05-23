@@ -1,9 +1,12 @@
 package com.siyeh.ig.confusing;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiLabeledStatement;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 
 public class LabeledStatementInspection extends StatementInspection {
 
@@ -12,7 +15,7 @@ public class LabeledStatementInspection extends StatementInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.CONFUSING_GROUP_NAME;
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {
@@ -24,7 +27,7 @@ public class LabeledStatementInspection extends StatementInspection {
     }
 
     private static class LabeledStatementVisitor extends StatementInspectionVisitor {
-        
+
         public void visitLabeledStatement(PsiLabeledStatement statement) {
             super.visitLabeledStatement(statement);
             PsiIdentifier labelIdentifier = statement.getLabelIdentifier();

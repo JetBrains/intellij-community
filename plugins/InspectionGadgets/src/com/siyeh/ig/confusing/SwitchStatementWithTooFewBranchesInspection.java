@@ -24,7 +24,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends StatementInspec
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.CONFUSING_GROUP_NAME;
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     private int getLimit() {

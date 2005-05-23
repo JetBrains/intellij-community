@@ -15,7 +15,7 @@ public class BreakStatementInspection extends StatementInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.CONFUSING_GROUP_NAME;
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {
@@ -27,7 +27,7 @@ public class BreakStatementInspection extends StatementInspection {
     }
 
     private static class BreakStatementVisitor extends StatementInspectionVisitor {
-       
+
         public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
             super.visitBreakStatement(statement);
 

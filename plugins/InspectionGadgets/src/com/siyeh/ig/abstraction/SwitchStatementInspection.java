@@ -13,7 +13,7 @@ public class SwitchStatementInspection extends StatementInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.ABSTRACTION_GROUP_NAME;
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {

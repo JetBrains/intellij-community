@@ -16,7 +16,7 @@ public class ContinueStatementWithLabelInspection extends StatementInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.CONFUSING_GROUP_NAME;
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {
@@ -28,7 +28,7 @@ public class ContinueStatementWithLabelInspection extends StatementInspection {
     }
 
     private static class ContinueStatementVisitor extends StatementInspectionVisitor {
-       
+
         public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
             super.visitContinueStatement(statement);
             final PsiIdentifier label = statement.getLabelIdentifier();

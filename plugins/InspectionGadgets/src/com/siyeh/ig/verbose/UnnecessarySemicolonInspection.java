@@ -20,7 +20,7 @@ public class UnnecessarySemicolonInspection extends ClassInspection{
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.VERBOSE_GROUP_NAME;
+        return GroupNames.STYLE_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault(){

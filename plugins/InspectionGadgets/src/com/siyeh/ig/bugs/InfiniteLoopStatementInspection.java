@@ -1,11 +1,13 @@
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiDoWhileStatement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiForStatement;
 import com.intellij.psi.PsiWhileStatement;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +18,7 @@ public class InfiniteLoopStatementInspection extends StatementInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.BUGS_GROUP_NAME;
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault(){

@@ -21,7 +21,7 @@ public class SwitchStatementWithConfusingDeclarationInspection
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.CONFUSING_GROUP_NAME;
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     protected String buildErrorString(PsiElement location){

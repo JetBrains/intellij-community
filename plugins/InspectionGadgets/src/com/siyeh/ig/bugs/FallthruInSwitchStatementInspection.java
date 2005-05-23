@@ -15,7 +15,7 @@ public class FallthruInSwitchStatementInspection extends StatementInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.BUGS_GROUP_NAME;
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {

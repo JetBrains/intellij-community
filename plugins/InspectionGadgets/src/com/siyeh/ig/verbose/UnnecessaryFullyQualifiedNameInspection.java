@@ -19,7 +19,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
+public  class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
+
+    @SuppressWarnings("PublicField")
     public boolean m_ignoreJavadoc = false;
 
     private final UnnecessaryFullyQualifiedNameFix fix =
@@ -30,7 +32,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
     }
 
     public String getGroupDisplayName(){
-        return com.siyeh.ig.GroupNames.VERBOSE_GROUP_NAME;
+        return com.siyeh.ig.GroupNames.STYLE_GROUP_NAME;
     }
 
     public JComponent createOptionsPanel(){
