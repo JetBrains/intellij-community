@@ -168,6 +168,7 @@ public class CodeEditUtil {
   }
 
   private static void checkAllWhiteSpaces(final ASTNode parent) {
+    LOG.assertTrue(parent.getPsi().isValid());
     /*
     if (CodeStyleSettingsManager.getSettings(parent.getPsi().getProject()).JAVA_INDENT_OPTIONS.INDENT_SIZE == 2) {
       LOG.assertTrue(false);
