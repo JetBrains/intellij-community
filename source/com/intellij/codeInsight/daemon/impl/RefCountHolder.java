@@ -48,7 +48,7 @@ public class RefCountHolder {
     final PsiType typeByPsiElement = PsiUtil.getTypeByPsiElement(dcl);
     final StatisticsManager.NameContext context = StatisticsManager.getContext(dcl);
     if(typeByPsiElement != null && context != null) {
-      StatisticsManager.getInstance().incMemberUseCount(typeByPsiElement, context, dcl.getName());
+      StatisticsManager.getInstance().incNameUseCount(typeByPsiElement, context, dcl.getName());
     }
   }
 

@@ -36,5 +36,5 @@ public abstract class StatisticsManager implements SettingsSavingComponent {
   public abstract void incMemberUseCount(PsiType qualifierType, PsiMember member);
 
   public abstract String[] getNameSuggestions(PsiType type, NameContext context, String prefix);
-  public abstract void incMemberUseCount(PsiType type, NameContext context, String name);
+  public abstract void incNameUseCount(PsiType type, NameContext context, String name);
 }

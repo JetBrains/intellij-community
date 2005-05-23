@@ -89,7 +89,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
     myModifiedUnits.add(unit);
   }
 
-  public void incMemberUseCount(PsiType type, StatisticsManager.NameContext context, String name) {
+  public void incNameUseCount(PsiType type, StatisticsManager.NameContext context, String name) {
     final String key1 = getMemberUseKey1(type);
     if(key1 == null) return;
     final StatisticsUnit unit = getUnit(getUnitNumber(key1));
@@ -261,6 +261,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
 
   private String getNameUseKey(final NameContext context, final String name) {
     final StringBuffer buffer = new StringBuffer();
+    buffer.append("variableName#");
     buffer.append(context.name());
     buffer.append('#');
     buffer.append(name);
@@ -289,14 +290,21 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
   }
 
   private NameContext getNameUsageContext(String key2){
-    int index = key2.indexOf("#");
-    LOG.assertTrue(index >= 0);
-    String s = key2.substring(0, index);
+    final int startIndex = key2.indexOf("#");
+    LOG.assertTrue(startIndex >= 0);
+    String s = key2.substring(0, startIndex);
+    if(!"variableName".equals(s)) return null;
+    final int index = key2.indexOf("#", startIndex + 1);
+    s = key2.substring(startIndex + 1, index);
     return NameContext.valueOf(s);
   }
 
   private String getName(String key2){
-    int index = key2.indexOf("#");
+    final int startIndex = key2.indexOf("#");
+    LOG.assertTrue(startIndex >= 0);
+    String s = key2.substring(0, startIndex);
+    if(!"variableName".equals(s)) return null;
+    final int index = key2.indexOf("#", startIndex + 1);
     LOG.assertTrue(index >= 0);
     return key2.substring(index + 1);
   }
