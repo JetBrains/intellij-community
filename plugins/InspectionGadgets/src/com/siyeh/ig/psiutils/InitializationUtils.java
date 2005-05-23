@@ -2,7 +2,6 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -323,11 +322,7 @@ public class InitializationUtils {
         if (method == null) {
             return false;
         }
-        final MethodSignature methodSignature =
-                MethodSignatureUtil.createMethodSignature(method.getName(),
-                        method.getParameterList(),
-                        method.getTypeParameterList(),
-                        EmptySubstitutor.getInstance());
+        final MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
         if (!checkedMethods.add(methodSignature)) {
             return false;
         }

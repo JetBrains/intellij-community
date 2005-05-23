@@ -2,7 +2,6 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 
 import java.util.ArrayList;
@@ -412,12 +411,8 @@ public class InitializationReadUtils{
         if(method == null){
             return false;
         }
-        final MethodSignature methodSignature =
-                MethodSignatureUtil.createMethodSignature(method.getName(),
-                                                          method.getParameterList(),
-                                                          method.getTypeParameterList(),
-                                                          EmptySubstitutor.getInstance());
-        if(!checkedMethods.add(methodSignature)){
+        final MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
+        if (!checkedMethods.add(methodSignature)){
             return false;
         }
 
