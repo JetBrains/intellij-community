@@ -28,7 +28,10 @@ public interface PsiClass extends PsiElement, PsiNamedElement, PsiModifierListOw
   @Nullable(documentation = "return null for anonymous classes")
   PsiReferenceList getImplementsList();
 
+  @NotNull
   PsiClassType[] getExtendsListTypes();
+
+  @NotNull
   PsiClassType[] getImplementsListTypes();
 
   @Nullable(documentation = "May return null when jdk is not configured, so no java.lang.Object is found, or for java.lang.Object itself")
