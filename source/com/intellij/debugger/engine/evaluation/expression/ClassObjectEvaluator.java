@@ -10,7 +10,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.sun.jdi.ReferenceType;
 
-class ClassObjectEvaluator implements Evaluator {
+public class ClassObjectEvaluator implements Evaluator {
   private TypeEvaluator myTypeEvaluator;
 
   public ClassObjectEvaluator(TypeEvaluator typeEvaluator) {

@@ -16,7 +16,7 @@ import com.sun.jdi.CharValue;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 
-class TypeCastEvaluator implements Evaluator {
+public class TypeCastEvaluator implements Evaluator {
   private Evaluator myOperandEvaluator;
   private String myCastType;
   private boolean myIsPrimitive;

@@ -15,7 +15,7 @@ import com.sun.jdi.Value;
 import java.util.Iterator;
 import java.util.List;
 
-class ThisEvaluator implements Evaluator {
+public class ThisEvaluator implements Evaluator {
   private int myIterations;
 
   public ThisEvaluator() {

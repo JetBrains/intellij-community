@@ -14,7 +14,7 @@ import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.InvalidTypeException;
 import com.sun.jdi.InvocationException;
 
-class TypeEvaluator implements Evaluator {
+public class TypeEvaluator implements Evaluator {
   private JVMName myTypeName;
 
   public TypeEvaluator(JVMName typeName) {

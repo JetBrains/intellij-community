@@ -16,7 +16,7 @@ import com.sun.jdi.ObjectReference;
  * Time: 1:44:35 PM
  * To change this template use Options | File Templates.
  */
-class ExpressionEvaluatorImpl implements ExpressionEvaluator {
+public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator");
   Evaluator myEvaluator;
   Value myValue;

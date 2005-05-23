@@ -7,7 +7,7 @@ package com.intellij.debugger.engine.evaluation.expression;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 
-interface Evaluator {
+public interface Evaluator {
   /**
    * @throws com.intellij.debugger.engine.evaluation.EvaluateException
    */

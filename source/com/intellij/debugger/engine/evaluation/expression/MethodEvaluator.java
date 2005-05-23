@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-class MethodEvaluator implements Evaluator {
+public class MethodEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.MethodEvaluator");
   private JVMName myClassName;
   private JVMName myMethodSignature;

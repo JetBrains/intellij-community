@@ -17,7 +17,7 @@ import com.sun.jdi.*;
 
 import java.util.Iterator;
 
-class FieldEvaluator implements Evaluator {
+public class FieldEvaluator implements Evaluator {
   private Evaluator myObjectEvaluator;
   private String myClassName;
   private String myFieldName;
