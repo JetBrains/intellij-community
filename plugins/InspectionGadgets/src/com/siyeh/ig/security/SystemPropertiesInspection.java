@@ -55,7 +55,12 @@ public class SystemPropertiesInspection extends ExpressionInspection {
                 return false;
             }
             final String methodName = methodExpression.getReferenceName();
-            if (!"getProperty".equals(methodName) && !"getProperties".equals(methodName)) {
+            if (!"getProperty".equals(methodName)
+                    && !"getProperties".equals(methodName)
+                    && !"setProperty".equals(methodName)
+                    && !"setProperties".equals(methodName)
+                    && !"clearProperties".equals(methodName)
+                    ) {
                 return false;
             }
             final PsiMethod method = expression.resolveMethod();
