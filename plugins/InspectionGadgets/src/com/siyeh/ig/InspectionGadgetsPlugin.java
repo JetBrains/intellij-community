@@ -41,6 +41,7 @@ import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
 import com.siyeh.ig.threading.*;
 import com.siyeh.ig.verbose.*;
 import com.siyeh.ig.visibility.*;
+import com.siyeh.ig.controlflow.*;
 
 import java.io.*;
 import java.util.*;

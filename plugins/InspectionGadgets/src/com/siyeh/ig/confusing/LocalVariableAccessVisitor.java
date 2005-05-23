@@ -7,10 +7,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-class LocalVariableAccessVisitor extends PsiRecursiveElementVisitor {
+public class LocalVariableAccessVisitor extends PsiRecursiveElementVisitor {
     private final Set<PsiElement> m_accesssedVariables = new HashSet<PsiElement>(2);
 
-    LocalVariableAccessVisitor() {
+    public LocalVariableAccessVisitor() {
         super();
     }
 
