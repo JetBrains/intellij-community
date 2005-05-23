@@ -3,10 +3,9 @@ package com.intellij.newCodeFormatting.impl;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
@@ -107,10 +106,12 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     else {
       indent = processor.getIndentAt(offset);
     }
-    final Pair<String, Integer> newWS = whiteSpace.generateWhiteSpace(indentOptions, offset, indent);
-    model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS.getFirst(), block.getTextRange().getLength());
 
-    return CharArrayUtil.shiftForward(model.getDocumentModel().getText().toCharArray(), offset, " \t");
+    final String newWS = whiteSpace.generateWhiteSpace(indentOptions, offset, indent);
+    model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS, block.getTextRange().getLength());
+
+    return whiteSpace.getTextRange().getStartOffset() 
+           + CharArrayUtil.shiftForward(newWS.toCharArray(), offset - whiteSpace.getTextRange().getStartOffset(), " \t");
   }
 
   public void adjustTextRange(final FormattingModel model,
