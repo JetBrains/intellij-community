@@ -513,10 +513,9 @@ public class StructuralReplaceTest extends IdeaTestCase {
                  " */\n" +
                  "$Type$ $Variable$ = $Value$;";
     String expectedResult23 = "int x = 42;\n" +
-                                  "    /**\n" +
-                                  "     * Stuff\n" +
-                                  "     */\n" +
-                                  "    int y = 42;";
+                                  "/**\n" +
+                                  " * Stuff\n" +
+                                  " */int y = 42;";
 
     actualResult = replacer.testReplace(s64,s65,s66,options);
 
