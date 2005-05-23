@@ -394,14 +394,19 @@ public class CodeEditUtil {
     ASTNode result = first;
     while(current != null && current != lastChild) {
       LeafElement leaf = TreeUtil.findFirstLeaf(current);
-      if (leaf != null && leaf.getElementType() == ElementType.WHITE_SPACE) {
-        if (leaf == result) result = leaf.getTreeNext();
-        delete(leaf);
+      
+      if ((current == first && current.getTreeNext() != lastChild) || current.getElementType() != ElementType.WHITE_SPACE) {        
+        if (leaf != null && leaf.getElementType() == ElementType.WHITE_SPACE) {
+          if (leaf == result) result = leaf.getTreeNext();
+          delete(leaf);
+        }
       }
       leaf = TreeUtil.findLastLeaf(current);
-      if (leaf != null && leaf.getElementType() == ElementType.WHITE_SPACE) {
-        if (leaf == result) result = leaf.getTreeNext();
-        delete(leaf);
+      if (current.getElementType() != ElementType.WHITE_SPACE) {
+        if (leaf != null && leaf.getElementType() == ElementType.WHITE_SPACE) {
+          if (leaf == result) result = leaf.getTreeNext();
+          delete(leaf);
+        }
       }
       current = current.getTreeNext();
     }
