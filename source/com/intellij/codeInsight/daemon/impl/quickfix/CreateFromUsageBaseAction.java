@@ -85,13 +85,13 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     if (targetClasses == null) return;
 
     if (targetClasses.length == 1) {
-      doInvoke(project, targetClasses[0]);
+      doInvoke(project, targetClasses[0], editor, file);
     } else {
-      chooseTargetClass(targetClasses, editor);
+      chooseTargetClass(targetClasses, editor, file);
     }
   }
 
-  private void doInvoke(Project project, PsiClass targetClass) {
+  private void doInvoke(Project project, PsiClass targetClass, final Editor editor, final PsiFile file) {
     if (!prepareTargetFile(targetClass.getContainingFile())) {
       return;
     }
@@ -102,7 +102,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
 
   abstract protected PsiElement getElement();
 
-  protected void chooseTargetClass(PsiClass[] classes, Editor editor) {
+  protected void chooseTargetClass(PsiClass[] classes, final Editor editor, final PsiFile file) {
     final Project project = classes[0].getProject();
 
     String title = " Choose Target Class ";
@@ -119,7 +119,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
         final PsiClass aClass = (PsiClass) list.getSelectedValue();
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            doInvoke(project, aClass);
+            doInvoke(project, aClass, editor, file);
           }
         });
       }
@@ -135,7 +135,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     listPopup.show(x, y);
   }
 
-  protected Editor positionCursor(Project project, PsiFile targetFile, PsiElement element) {
+  protected static Editor positionCursor(Project project, PsiFile targetFile, PsiElement element) {
     TextRange range = element.getTextRange();
     int textOffset = range.getStartOffset();
 
@@ -171,11 +171,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
 
       PsiElement resolvedElement = referenceExpression.resolve();
 
-      if (resolvedElement instanceof PsiClass) {
-        return true;
-      } else {
-        return false;
-      }
+      return resolvedElement instanceof PsiClass;
     } else if (qualifierExpression instanceof PsiTypeCastExpression) {
       return false;
     } else if (qualifierExpression instanceof PsiCallExpression) {
@@ -208,7 +204,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     return false;
   }
 
-  private PsiExpression getQualifier (PsiElement element) {
+  private static PsiExpression getQualifier (PsiElement element) {
     if (element instanceof PsiNewExpression) {
       PsiJavaCodeReferenceElement ref = ((PsiNewExpression) element).getClassReference();
       if (ref instanceof PsiReferenceExpression) {
@@ -291,12 +287,12 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     }
   }
 
-  protected boolean isNonqualifiedReference(PsiElement result) {
+  protected static boolean isNonqualifiedReference(PsiElement result) {
     return result instanceof PsiJavaCodeReferenceElement &&
         !((PsiJavaCodeReferenceElement) result).isQualified();
   }
 
-  protected void startTemplate (final Editor editor, final Template template, final Project project) {
+  protected static void startTemplate (final Editor editor, final Template template, final Project project) {
     Runnable runnable = new Runnable() {
       public void run() {
         TemplateManager.getInstance(project).startTemplate(editor, template);
@@ -310,7 +306,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     }
   }
 
-  protected void startTemplate (final Editor editor, final Template template, final Project project, final TemplateStateListener listener) {
+  protected static void startTemplate (final Editor editor, final Template template, final Project project, final TemplateStateListener listener) {
     Runnable runnable = new Runnable() {
       public void run() {
         TemplateManager.getInstance(project).startTemplate(editor, template, listener);

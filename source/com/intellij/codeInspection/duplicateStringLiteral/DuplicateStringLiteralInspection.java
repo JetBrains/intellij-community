@@ -18,6 +18,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.util.occurences.BaseOccurenceManager;
 import com.intellij.refactoring.util.occurences.OccurenceFilter;
@@ -54,6 +55,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       public void visitLiteralExpression(PsiLiteralExpression expression) {
         checkStringLiteralExpression(expression, manager, allProblems);
       }
+
     });
     return allProblems;
   }

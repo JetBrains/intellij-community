@@ -79,7 +79,7 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
     return false;
   }
 
-  class FieldExpression implements Expression {
+  static class FieldExpression implements Expression {
     private LookupItem[] myItems;
     private String myDefaultFieldName;
 
@@ -238,7 +238,7 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
     }
   }
 
-  private String getVariableName(PsiMethodCallExpression methodCall, boolean isStatic) {
+  private static String getVariableName(PsiMethodCallExpression methodCall, boolean isStatic) {
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(methodCall.getProject());
     String methodName = methodCall.getMethodExpression().getReferenceName();
     String propertyName = PropertyUtil.getPropertyName(methodName);

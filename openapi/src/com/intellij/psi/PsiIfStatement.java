@@ -15,6 +15,7 @@ public interface PsiIfStatement extends PsiStatement {
   PsiStatement getElseBranch();
   PsiKeyword getElseElement();
   void setElseBranch(PsiStatement statement) throws IncorrectOperationException;
+  void setThenBranch(PsiStatement statement) throws IncorrectOperationException;
   PsiJavaToken getLParenth();
   PsiJavaToken getRParenth();
 }

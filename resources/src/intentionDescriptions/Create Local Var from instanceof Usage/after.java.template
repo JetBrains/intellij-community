@@ -1,0 +1,7 @@
+public class X {
+  void f(Object action) {
+    if (<spot>action instanceof Runnable</spot>) {
+      Runnable runnable = (Runnable)action;
+    }
+  }
+}

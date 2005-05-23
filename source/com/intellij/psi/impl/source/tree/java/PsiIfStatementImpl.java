@@ -60,6 +60,26 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
 
     addRange(ifStatement.getElseElement(), ifStatement.getLastChild());
   }
+  public void setThenBranch(PsiStatement statement) throws IncorrectOperationException {
+    PsiElementFactory elementFactory = getManager().getElementFactory();
+    ASTNode keyword = findChildByRole(ChildRole.IF_KEYWORD);
+    LOG.assertTrue(keyword != null);
+    PsiIfStatement ifStatementPattern = (PsiIfStatement)elementFactory.createStatementFromText("if (){}", this);
+    if (getLParenth() == null) {
+      addAfter(ifStatementPattern.getLParenth(), keyword.getPsi());
+    }
+    if (getRParenth() == null) {
+      PsiElement anchor = getCondition() == null ? getLParenth() : getCondition();
+      addAfter(ifStatementPattern.getRParenth(), anchor);
+    }
+    PsiStatement thenBranch = getThenBranch();
+    if (thenBranch == null) {
+      addAfter(statement, getRParenth());
+    }
+    else {
+      thenBranch.replace(statement);
+    }
+  }
 
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
