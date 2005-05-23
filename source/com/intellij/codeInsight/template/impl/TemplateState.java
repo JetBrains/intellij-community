@@ -848,7 +848,7 @@ public class TemplateState {
             int endVarOffset = mySegments.getSegmentStart(endSegmentNumber);
             marker = codeStyleManager.insertNewLineIndentMarker(file, endVarOffset);
           }
-          codeStyleManager.reformatRange(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
+          codeStyleManager.reformatRange(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset(), true);
 
           if (marker != null && marker.isValid()) { //[ven] TODO: [max] correct javadoc reformatting to eliminate isValid() check!!!
             TextRange range = marker.getTextRange();
