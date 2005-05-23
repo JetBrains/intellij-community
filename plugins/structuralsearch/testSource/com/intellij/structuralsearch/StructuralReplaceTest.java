@@ -103,7 +103,6 @@ public class StructuralReplaceTest extends IdeaTestCase {
   }
 
   public void testReplace2() {
-    if (!IdeaTestUtil.bombExplodes(2005, Calendar.MAY, 23, 14, 0, "lesya", "CodeEditUtil")) return;
     String s1 = "package com.www.xxx.yyy;\n" +
                 "\n" +
                 "import javax.swing.*;\n" +
@@ -152,7 +151,6 @@ public class StructuralReplaceTest extends IdeaTestCase {
   }
 
   public void testReplace() {
-    if (!IdeaTestUtil.bombExplodes(2005, Calendar.MAY, 23, 14, 0, "lesya", "CodeEditUtil")) return;
     String str = "// searching for several constructions\n" +
                  "    lastTest = \"several constructions match\";\n" +
                  "    matches = testMatcher.findMatches(s5,s4, options);\n" +
@@ -858,7 +856,6 @@ public class StructuralReplaceTest extends IdeaTestCase {
   }
 
   public void testClassReplacement() {
-    if (!IdeaTestUtil.bombExplodes(2005, Calendar.MAY, 23, 14, 0, "lesya", "CodeEditUtil")) return;
     boolean formatAccordingToStyle = options.isToReformatAccordingToStyle();
     options.setToReformatAccordingToStyle(true);
 
@@ -871,7 +868,6 @@ public class StructuralReplaceTest extends IdeaTestCase {
                             "        }\n" +
                             "    }";
     String actualResult;
-    if (!IdeaTestUtil.bombExplodes(2005, Calendar.MAY, 10, 12, 0, "lesya", "Java formatter")) return;
     actualResult = replacer.testReplace(s1,s2,s3,options);
     assertEquals(
       "Basic class replacement",
@@ -1203,7 +1199,6 @@ public class StructuralReplaceTest extends IdeaTestCase {
 
   /** comment */
   public void testRemove() {
-    if (!IdeaTestUtil.bombExplodes(2005, Calendar.MAY, 23, 14, 0, "lesya", "CodeEditUtil")) return;
     String s1 = "class A {\n" +
                   "  /* */\n" +
                   "  void a() {\n" +
