@@ -1,4 +1,4 @@
-package com.siyeh.ig.verbose;
+package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -25,7 +25,7 @@ public class UnnecessaryConditionalExpressionInspection
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.VERBOSE_GROUP_NAME;
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault(){

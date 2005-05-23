@@ -1,4 +1,4 @@
-package com.siyeh.ig.bugs;
+package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -20,7 +20,7 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends Expres
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.BUGS_GROUP_NAME;
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location){

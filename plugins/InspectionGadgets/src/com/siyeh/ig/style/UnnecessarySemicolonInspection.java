@@ -1,4 +1,4 @@
-package com.siyeh.ig.verbose;
+package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
