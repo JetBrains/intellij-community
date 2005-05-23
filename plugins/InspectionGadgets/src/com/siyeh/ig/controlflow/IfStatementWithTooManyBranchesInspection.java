@@ -1,4 +1,4 @@
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.controlflow;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
@@ -23,7 +23,7 @@ public class IfStatementWithTooManyBranchesInspection extends StatementInspectio
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.CONFUSING_GROUP_NAME;
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     private int getLimit() {
@@ -57,7 +57,7 @@ public class IfStatementWithTooManyBranchesInspection extends StatementInspectio
     }
 
     private class IfStatementWithTooManyBranchesVisitor extends StatementInspectionVisitor {
-      
+
         public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiElement parent = statement.getParent();

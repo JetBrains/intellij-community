@@ -1,4 +1,4 @@
-package com.siyeh.ig.verbose;
+package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -27,7 +27,7 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.VERBOSE_GROUP_NAME;
+        return GroupNames.NUMERIC_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault(){

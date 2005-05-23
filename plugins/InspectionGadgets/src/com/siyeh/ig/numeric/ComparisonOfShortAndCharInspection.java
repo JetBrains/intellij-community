@@ -1,4 +1,4 @@
-package com.siyeh.ig.bugs;
+package com.siyeh.ig.numeric;
 
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
@@ -18,7 +18,7 @@ public class ComparisonOfShortAndCharInspection extends ExpressionInspection{
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.BUGS_GROUP_NAME;
+        return GroupNames.NUMERIC_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location){

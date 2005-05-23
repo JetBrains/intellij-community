@@ -1,4 +1,4 @@
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -25,7 +25,7 @@ public class LongLiteralsEndingWithLowercaseLInspection extends ExpressionInspec
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.CONFUSING_GROUP_NAME;
+        return GroupNames.NUMERIC_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {

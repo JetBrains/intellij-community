@@ -1,4 +1,4 @@
-package com.siyeh.ig.verbose;
+package com.siyeh.ig.jdk15;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -25,11 +25,11 @@ public class ForCanBeForeachInspection extends StatementInspection{
     }
 
     public String getDisplayName(){
-        return "'for' loop replaceable by 'for each' (J2SDK 5.0 only)";
+        return "'for' loop replaceable by 'for each'";
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.VERBOSE_GROUP_NAME;
+        return GroupNames.JDK15_SPECIFIC_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault(){

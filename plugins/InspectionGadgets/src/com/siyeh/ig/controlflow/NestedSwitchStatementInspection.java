@@ -1,4 +1,4 @@
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.controlflow;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -17,7 +17,7 @@ public class NestedSwitchStatementInspection extends StatementInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.CONFUSING_GROUP_NAME;
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {

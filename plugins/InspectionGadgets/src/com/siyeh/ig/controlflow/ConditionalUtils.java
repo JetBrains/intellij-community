@@ -1,4 +1,4 @@
-package com.siyeh.ig.verbose;
+package com.siyeh.ig.controlflow;
 
 import com.intellij.psi.*;
 

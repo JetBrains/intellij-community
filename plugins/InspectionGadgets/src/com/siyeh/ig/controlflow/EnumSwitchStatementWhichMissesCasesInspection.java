@@ -1,8 +1,10 @@
-package com.siyeh.ig.bugs;
+package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class EnumSwitchStatementWhichMissesCasesInspection extends StatementInspection {
@@ -12,7 +14,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends StatementInsp
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.BUGS_GROUP_NAME;
+        return GroupNames.CONTROL_FLOW_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {
@@ -30,7 +32,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends StatementInsp
 
     private static class UnnecessaryDefaultVisitor
             extends StatementInspectionVisitor {
-     
+
 
         public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);

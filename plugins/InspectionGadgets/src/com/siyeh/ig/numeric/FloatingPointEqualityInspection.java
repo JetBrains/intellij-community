@@ -1,11 +1,9 @@
-package com.siyeh.ig.bugs;
+package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -20,7 +18,7 @@ public class FloatingPointEqualityInspection extends ExpressionInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.BUGS_GROUP_NAME;
+        return GroupNames.NUMERIC_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {

@@ -37,11 +37,17 @@ import com.siyeh.ig.resources.*;
 import com.siyeh.ig.security.*;
 import com.siyeh.ig.serialization.*;
 import com.siyeh.ig.style.*;
+import com.siyeh.ig.style.RedundantFieldInitializationInspection;
 import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
 import com.siyeh.ig.threading.*;
 import com.siyeh.ig.verbose.*;
 import com.siyeh.ig.visibility.*;
 import com.siyeh.ig.controlflow.*;
+import com.siyeh.ig.numeric.*;
+import com.siyeh.ig.jdk15.WhileCanBeForeachInspection;
+import com.siyeh.ig.jdk15.UnnecessaryBoxingInspection;
+import com.siyeh.ig.jdk15.ForCanBeForeachInspection;
+import com.siyeh.ig.jdk15.UnnecessaryUnboxingInspection;
 
 import java.io.*;
 import java.util.*;

@@ -1,4 +1,4 @@
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.numeric;
 
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -32,7 +32,7 @@ public class CastThatLosesPrecisionInspection extends ExpressionInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.CONFUSING_GROUP_NAME;
+        return GroupNames.NUMERIC_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location) {
@@ -47,7 +47,7 @@ public class CastThatLosesPrecisionInspection extends ExpressionInspection {
     }
 
     private static class CastThatLosesPrecisionVisitor extends BaseInspectionVisitor {
-     
+
         public void visitTypeCastExpression(@NotNull PsiTypeCastExpression exp) {
             final PsiType castType = exp.getType();
             if (!ClassUtils.isPrimitiveNumericType(castType)) {

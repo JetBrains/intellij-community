@@ -1,4 +1,4 @@
-package com.siyeh.ig.confusing;
+package com.siyeh.ig.naming;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -22,7 +22,7 @@ public class MethodNamesDifferOnlyByCaseInspection extends MethodInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.CONFUSING_GROUP_NAME;
+        return GroupNames.NAMING_CONVENTIONS_GROUP_NAME;
     }
 
     public String buildErrorString(Object arg) {
