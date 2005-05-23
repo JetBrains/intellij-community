@@ -7,13 +7,11 @@ import com.intellij.psi.*;
  */
 public class TypedSymbolNodeFilter extends NodeFilter {
   public void visitMethod(PsiMethod psiMethod) {
-    result = psiMethod.getTypeParameterList().getTypeParameters().length > 0;
+    result = psiMethod.getTypeParameters().length > 0;
   }
 
   public void visitClass(PsiClass psiClass) {
-    if (psiClass.getTypeParameterList()!=null) {
-      result = psiClass.getTypeParameterList().getTypeParameters().length > 0;
-    }
+    result = psiClass.getTypeParameters().length > 0;
   }
 
   public void visitReferenceElement(PsiJavaCodeReferenceElement psiJavaCodeReferenceElement) {

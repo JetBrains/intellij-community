@@ -1154,14 +1154,14 @@ public class MatchingVisitor extends PsiElementVisitor {
       else if (el2 instanceof PsiTypeParameter) {
         el2 = ((PsiTypeParameter)el2).getNameIdentifier();
       } else if (el2 instanceof PsiClass &&
-               ((PsiClass)el2).getTypeParameterList().getTypeParameters().length > 0
+               ((PsiClass)el2).getTypeParameters().length > 0
               ) {
-        typeparams = ((PsiClass)el2).getTypeParameterList().getTypeParameters();
+        typeparams = ((PsiClass)el2).getTypeParameters();
         el2 = ((PsiClass)el2).getNameIdentifier();
       } else if (el2 instanceof PsiMethod &&
-               ((PsiMethod)el2).getTypeParameterList().getTypeParameters().length > 0
+               ((PsiMethod)el2).getTypeParameters().length > 0
               ) {
-        typeparams = ((PsiMethod)type2).getTypeParameterList().getTypeParameters();
+        typeparams = ((PsiMethod)type2).getTypeParameters();
         el2 = ((PsiMethod)type2).getNameIdentifier();
       }
 
@@ -1313,9 +1313,7 @@ public class MatchingVisitor extends PsiElementVisitor {
   }
 
   public void visitClass(PsiClass clazz) {
-    final PsiElement [] typeParams = clazz.getTypeParameterList().getChildren();
-
-    if (typeParams.length>0) {
+    if (clazz.getTypeParameters().length > 0) {
       result = match(
         clazz.getTypeParameterList(),
         ((PsiClass)element).getTypeParameterList()
@@ -1361,9 +1359,7 @@ public class MatchingVisitor extends PsiElementVisitor {
   }
 
   public void visitMethod(PsiMethod method) {
-    final PsiElement [] typeParams = method.getTypeParameterList().getChildren();
-
-    if (typeParams.length>0) {
+    if (method.getTypeParameters().length > 0) {
       result = match(
         method.getTypeParameterList(),
         ((PsiMethod)element).getTypeParameterList()
