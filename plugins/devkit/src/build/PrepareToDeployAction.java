@@ -53,7 +53,8 @@ public class PrepareToDeployAction extends AnAction {
         PluginBuildUtil.getLibraries(module1, libs);
       }
 
-      final String defaultPath = new File(module.getModuleFilePath()).getParent() + File.separator + module.getName();
+      final String name = module.getName();
+      final String defaultPath = new File(module.getModuleFilePath()).getParent() + File.separator + name;
       final String zipPath = defaultPath + ".zip";
       final File zipFile = new File(zipPath);
       if (libs.size() == 0){
@@ -73,7 +74,7 @@ public class PrepareToDeployAction extends AnAction {
           }
         }
         final ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile));
-        ZipUtil.addFileToZip(zos, jarFile, "/lib/" + module.getName() + ".jar", new HashSet<String>(), new FileFilter() {
+        ZipUtil.addFileToZip(zos, jarFile, "/" + name + "/lib/" + name + ".jar", new HashSet<String>(), new FileFilter() {
           public boolean accept(File pathname) {
             return true;
           }
@@ -113,7 +114,7 @@ public class PrepareToDeployAction extends AnAction {
               }
             }
             else {
-              ZipUtil.addFileOrDirRecursively(zos, jarFile, ioFile, "/lib/" + ioFile.getName(), new FileFilter() {
+              ZipUtil.addFileOrDirRecursively(zos, jarFile, ioFile, "/" + name + "/lib/" + ioFile.getName(), new FileFilter() {
                 public boolean accept(File pathname) {
                   return true;
                 }
@@ -122,7 +123,7 @@ public class PrepareToDeployAction extends AnAction {
           }
           if (libraryName != null) {
             jar.close();
-            ZipUtil.addFileOrDirRecursively(zos, jarFile, libraryJar, "/lib/" + libraryName + ".jar", new FileFilter() {
+            ZipUtil.addFileOrDirRecursively(zos, jarFile, libraryJar, "/" + name + "/lib/" + libraryName + ".jar", new FileFilter() {
               public boolean accept(File pathname) {
                 return true;
               }
