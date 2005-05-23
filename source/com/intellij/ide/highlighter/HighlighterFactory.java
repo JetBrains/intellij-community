@@ -5,10 +5,7 @@ import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -33,12 +30,7 @@ public class HighlighterFactory {
   }
 
   public static LexerEditorHighlighter createJSPHighlighter(EditorColorsScheme settings, Project project){
-    final LanguageLevel languageLevel = project != null ? PsiManager.getInstance(project).getEffectiveLanguageLevel() : LanguageLevel.HIGHEST;
-    return createHighlighter(new JspFileHighlighter(languageLevel), settings);
-  }
-
-  public static LexerEditorHighlighter createJSPHighlighter(EditorColorsScheme settings, LanguageLevel languageLevel){
-    return createHighlighter(new JspFileHighlighter(languageLevel), settings);
+    return createHighlighter(StdFileTypes.JSP.getHighlighter(project), settings);
   }
 
   public static LexerEditorHighlighter createCustomHighlighter(SyntaxTable syntaxTable, EditorColorsScheme settings){
