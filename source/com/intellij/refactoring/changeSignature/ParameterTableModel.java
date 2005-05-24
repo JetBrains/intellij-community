@@ -1,14 +1,13 @@
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.refactoring.ui.RowEditableTableModel;
-import com.intellij.psi.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.*;
+import com.intellij.refactoring.ui.RowEditableTableModel;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.List;
-import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author ven
@@ -196,7 +195,9 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
     myDefaultValuesCodeFragments = new ArrayList<PsiCodeFragment>(parameterInfos.size());
     for (int i = 0; i < parameterInfos.size(); i++) {
       ParameterInfo parameterInfo = parameterInfos.get(i);
-      myTypeCodeFraments.add(createParameterTypeCodeFragment(parameterInfo.getTypeText(), context));
+      final PsiTypeCodeFragment typeCodeFragment = createParameterTypeCodeFragment(parameterInfo.getTypeText(), context);
+      parameterInfo.getTypeWrapper().addImportsTo(typeCodeFragment);
+      myTypeCodeFraments.add(typeCodeFragment);
       myDefaultValuesCodeFragments.add(createDefaultValueCodeFragment(parameterInfo.defaultValue, null));
     }
   }

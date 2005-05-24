@@ -108,7 +108,9 @@ class ExceptionsTableModel extends AbstractTableModel implements RowEditableTabl
     myExceptionInfos = new ArrayList<ThrownExceptionInfo>(referencedTypes.length);
     for (int i = 0; i < referencedTypes.length; i++) {
       CanonicalTypes.Type typeWrapper = CanonicalTypes.createTypeWrapper(referencedTypes[i]);
-      myTypeCodeFraments.add(createParameterTypeCodeFragment(typeWrapper.getTypeText(), method.getThrowsList()));
+      final PsiTypeCodeFragment typeCodeFragment = createParameterTypeCodeFragment(typeWrapper.getTypeText(), method.getThrowsList());
+      typeWrapper.addImportsTo(typeCodeFragment);
+      myTypeCodeFraments.add(typeCodeFragment);
       myExceptionInfos.add(new ThrownExceptionInfo(i, referencedTypes[i]));
     }
   }

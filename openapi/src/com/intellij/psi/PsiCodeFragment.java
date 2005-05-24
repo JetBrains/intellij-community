@@ -4,7 +4,7 @@
  */
 package com.intellij.psi;
 
-public interface PsiCodeFragment extends PsiFile {
+public interface PsiCodeFragment extends PsiFile, PsiImportHolder {
   void setEverythingAcessible(boolean value);
 
   PsiType getThisType();

@@ -8,6 +8,7 @@ import com.intellij.util.containers.HashMap;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Collection;
 
 /**
  * @author dsl
@@ -17,6 +18,7 @@ public class CanonicalTypes {
   public static abstract class Type {
     public abstract PsiType getType(PsiElement context, final PsiManager manager) throws IncorrectOperationException;
     public abstract String getTypeText();
+    public abstract void addImportsTo(final PsiCodeFragment codeFragment);
   }
 
   private static class Primitive extends Type {
@@ -32,6 +34,8 @@ public class CanonicalTypes {
     public String getTypeText() {
       return myType.getPresentableText();
     }
+
+    public void addImportsTo(final PsiCodeFragment codeFragment) {}
   }
 
   private static class Array extends Type {
@@ -48,6 +52,10 @@ public class CanonicalTypes {
     public String getTypeText() {
       return myComponentType.getTypeText() + "[]";
     }
+
+    public void addImportsTo(final PsiCodeFragment codeFragment) {
+      myComponentType.addImportsTo(codeFragment);
+    }
   }
 
   private static class Ellipsis extends Type {
@@ -63,6 +71,10 @@ public class CanonicalTypes {
 
     public String getTypeText() {
       return myComponentType.getTypeText() + "...";
+    }
+
+    public void addImportsTo(final PsiCodeFragment codeFragment) {
+      myComponentType.addImportsTo(codeFragment);
     }
   }
 
@@ -89,6 +101,10 @@ public class CanonicalTypes {
       if (myBound == null) return "?";
       return "? " + (myIsExtending ? "extends " : "super ") + myBound.getTypeText();
     }
+
+    public void addImportsTo(final PsiCodeFragment codeFragment) {
+      if (myBound != null) myBound.addImportsTo(codeFragment);
+    }
   }
 
   private static class WrongType extends Type {
@@ -105,6 +121,8 @@ public class CanonicalTypes {
     public String getTypeText() {
       return myText;
     }
+
+    public void addImportsTo(final PsiCodeFragment codeFragment) {}
   }
 
 
@@ -124,7 +142,7 @@ public class CanonicalTypes {
       final PsiResolveHelper resolveHelper = manager.getResolveHelper();
       final PsiClass aClass = resolveHelper.resolveReferencedClass(myClassQName, context);
       if (aClass == null) {
-        return factory.createTypeFromText(myClassQName, context);        
+        return factory.createTypeFromText(myClassQName, context);
       }
       Map<PsiTypeParameter, PsiType> substMap = new HashMap<PsiTypeParameter,PsiType>();
       final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(aClass);
@@ -143,6 +161,14 @@ public class CanonicalTypes {
 
     public String getTypeText() {
       return myOriginalText;
+    }
+
+    public void addImportsTo(final PsiCodeFragment codeFragment) {
+      codeFragment.addImportsFromString(myClassQName);
+      final Collection<Type> types = mySubstitutor.values();
+      for (Type type : types) {
+        type.addImportsTo(codeFragment);
+      }
     }
   }
 

@@ -19,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.changeSignature.inCallers.CallerChooser;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CanonicalTypes;
@@ -33,9 +32,9 @@ import com.intellij.util.ui.Table;
 import com.intellij.util.ui.Tree;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -69,7 +68,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   private Tree myExceptionPropagationTree;
   private Tree myParameterPropagationTree;
 
-  public ChangeSignatureDialog(Project project, PsiMethod method, boolean allowDelegation) {
+  public ChangeSignatureDialog(Project project, final PsiMethod method, boolean allowDelegation) {
     super(project, true);
     myProject = project;
     myMethod = method;
