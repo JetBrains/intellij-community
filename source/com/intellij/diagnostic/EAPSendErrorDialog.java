@@ -84,7 +84,7 @@ public class EAPSendErrorDialog extends DialogWrapper {
       }
     };
     mySendAction.putValue(Action.MNEMONIC_KEY, new Integer(KeyEvent.VK_S));
-    mySendAction.putValue(Action.DEFAULT, "true");
+    mySendAction.putValue(DialogWrapper.DEFAULT_ACTION, "true");
     myCancelAction = new AbstractAction("&Cancel") {
       public void actionPerformed(ActionEvent e) {
         myShouldSend = false;
