@@ -9,6 +9,7 @@ import java.util.Iterator;
  */
 class TodoPanelSettings{
   private boolean myArePackagesShown;
+  private boolean myAreModulesShown;
   private boolean myAreFlattenPackages;
   private boolean myIsAutoScrollToSource;
   private String myTodoFilterName;
@@ -18,6 +19,8 @@ class TodoPanelSettings{
       Element child=(Element)i.next();
       if("are-packages-shown".equals(child.getName())){
         myArePackagesShown=Boolean.valueOf(child.getAttributeValue("value")).booleanValue();
+      }if("are-modules-shown".equals(child.getName())){
+        myAreModulesShown=Boolean.valueOf(child.getAttributeValue("value")).booleanValue();
       }if("flatten-packages".equals(child.getName())){
         myAreFlattenPackages=Boolean.valueOf(child.getAttributeValue("value")).booleanValue();
       }else if("is-autoscroll-to-source".equals(child.getName())){
@@ -33,6 +36,10 @@ class TodoPanelSettings{
     areArePackagesShownElement.setAttribute("value",myArePackagesShown?Boolean.TRUE.toString():Boolean.FALSE.toString());
     e.addContent(areArePackagesShownElement);
 
+    Element areModulesShownElement=new Element("are-modules-shown");
+    areModulesShownElement.setAttribute("value",myAreModulesShown?Boolean.TRUE.toString():Boolean.FALSE.toString());
+    e.addContent(areModulesShownElement);
+
     Element areAreFlattenPackagesElement=new Element("flatten-packages");
     areAreFlattenPackagesElement.setAttribute("value",myAreFlattenPackages?Boolean.TRUE.toString():Boolean.FALSE.toString());
     e.addContent(areAreFlattenPackagesElement);
@@ -46,6 +53,14 @@ class TodoPanelSettings{
       todoFilterElement.setAttribute("name",myTodoFilterName);
       e.addContent(todoFilterElement);
     }
+  }
+
+  boolean areModulesShown() {
+    return myAreModulesShown;
+  }
+
+  public void setShownModules(boolean state) {
+    myAreModulesShown = state;
   }
 
   boolean arePackagesShown(){

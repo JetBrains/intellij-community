@@ -9,7 +9,9 @@ import com.intellij.ide.util.treeView.TreeBuilderUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -196,6 +198,32 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     }
     return psiFileList.iterator();
   }
+
+  /**
+    * @return read-only iterator of all valid PSI files that can have TODO items
+    *         and which in specified <code>module</code>.
+    * @see com.intellij.ide.todo.FileTree#getFiles(VirtualFile)
+    */
+   public Iterator<PsiFile> getFiles(Module module) {
+    final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+    ArrayList<PsiFile> psiFileList = null;
+    for (VirtualFile virtualFile : contentRoots) {
+      ArrayList<VirtualFile> files = myFileTree.getFiles(virtualFile);
+      psiFileList = new ArrayList<PsiFile>(files.size());
+      PsiManager psiManager = PsiManager.getInstance(myProject);
+      for (int i = 0; i < files.size(); i++) {
+        VirtualFile file = files.get(i);
+        if (file.isValid()) {
+          PsiFile psiFile = psiManager.findFile(file);
+          if (psiFile != null) {
+            psiFileList.add(psiFile);
+          }
+        }
+      }
+    }
+    return psiFileList.iterator();
+   }
+
 
   /**
    * @return <code>true</code> if specified <code>psiFile</code> can contains too items.
@@ -525,6 +553,17 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
+  void setShowModules(boolean state) {
+    getTodoTreeStructure().setShownModules(state);
+    ArrayList pathsToExpand = new ArrayList();
+    ArrayList pathsToSelect = new ArrayList();
+    TreeBuilderUtil.storePaths(this, myRootNode, pathsToExpand, pathsToSelect, true);
+    myTree.clearSelection();
+    getTodoTreeStructure().validateCache();
+    updateTree(false);
+    TreeBuilderUtil.restorePaths(this, pathsToExpand, pathsToSelect, true);
+  }
+
   private static final class MyComparator implements Comparator<NodeDescriptor> {
     public static final Comparator<NodeDescriptor> ourInstance = new MyComparator();
 
@@ -545,14 +584,17 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       if (descriptor instanceof SummaryNode) {
         return 0;
       }
-      else if (descriptor instanceof TodoDirNode) {
+      else if (descriptor instanceof ModuleToDoNode) {
         return 1;
       }
-      else if (descriptor instanceof TodoFileNode) {
+      else if (descriptor instanceof TodoDirNode) {
         return 2;
       }
-      else if (descriptor instanceof TodoItemNode) {
+      else if (descriptor instanceof TodoFileNode) {
         return 3;
+      }
+      else if (descriptor instanceof TodoItemNode) {
+        return 4;
       }
       else {
         throw new IllegalArgumentException(descriptor.getClass().getName());

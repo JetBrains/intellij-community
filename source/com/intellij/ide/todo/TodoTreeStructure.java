@@ -3,12 +3,14 @@ package com.intellij.ide.todo;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
+import com.intellij.ide.todo.nodes.ModuleToDoNode;
 import com.intellij.ide.todo.nodes.SummaryNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
@@ -34,6 +36,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
 
   protected boolean myFlattenPackages;
   protected boolean myArePackagesShown;
+  protected boolean myAreModulesShown;
 
   /**
    * Don't use this maps directly!
@@ -131,6 +134,14 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
           count++;
         }
       }
+    }else if (element instanceof Module){
+      Iterator<PsiFile> iterator = myBuilder.getFiles((Module)element);
+      while(iterator.hasNext()){
+        PsiFile psiFile = iterator.next();
+        if(accept(psiFile)){
+          count++;
+        }
+      }
     }else{
       throw new IllegalArgumentException("unknown element: "+element);
     }
@@ -162,6 +173,12 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
       for(Iterator i=myBuilder.getAllFiles();i.hasNext();){
         count+=getTodoItemCount(i.next());
       }
+    }else if (element instanceof Module){
+      Iterator<PsiFile> iterator = myBuilder.getFiles((Module)element);
+      while(iterator.hasNext()){
+        PsiFile psiFile = iterator.next();
+        count+=getTodoItemCount(psiFile);
+      }
     }else{
       throw new IllegalArgumentException("unknown element: "+element);
     }
@@ -191,7 +208,9 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
       return mySearchHelper.getTodoItemsCount(((PsiFileNode)element).getValue())>0;
     }else if(element instanceof TodoItemNode){
       return false;
-    }else{
+    }else if (element instanceof ModuleToDoNode){
+      return true;
+    }else {
       throw new IllegalArgumentException(element.getClass().getName());
     }
   }
@@ -226,5 +245,13 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
 
   public List<TreeStructureProvider> getProviders() {
     return EMPTY_TREE_STRUCTURE_PROVIDERS;
+  }
+
+  void setShownModules(boolean state) {
+    myAreModulesShown = state;
+  }
+
+  public boolean isModulesShown() {
+    return myAreModulesShown;
   }
 }

@@ -30,8 +30,8 @@ import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.Content;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.Icons;
+import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -83,6 +83,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     myTodoTreeBuilder = createTreeBuilder(myTree, model, myProject);
     updateTodoFilter();
     myTodoTreeBuilder.setShowPackages(mySettings.arePackagesShown());
+    myTodoTreeBuilder.setShowModules(mySettings.areModulesShown());
     myTodoTreeBuilder.setFlattenPackages(mySettings.areFlattenPackages());
 
     myVisibilityWatcher = new MyVisibilityWatcher();
@@ -144,6 +145,12 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     rightGroup.add(collapseAllAction);
 
     if (!myCurrentFileMode) {
+      MyShowModulesAction showModulesAction = new MyShowModulesAction();
+      showModulesAction.registerCustomShortcutSet(
+        new CustomShortcutSet(
+          KeyStroke.getKeyStroke(KeyEvent.VK_M, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK)),
+        myTree);
+      rightGroup.add(showModulesAction);
       MyShowPackagesAction showPackagesAction = new MyShowPackagesAction();
       showPackagesAction.registerCustomShortcutSet(
         new CustomShortcutSet(
@@ -475,6 +482,21 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     public void setSelected(AnActionEvent e, boolean state) {
       mySettings.setShownPackages(state);
       myTodoTreeBuilder.setShowPackages(state);
+    }
+  }
+
+  private final class MyShowModulesAction extends ToggleAction {
+    public MyShowModulesAction() {
+      super("Group By Modules", null, IconLoader.getIcon("/objectBrowser/showModules.png"));
+    }
+
+    public boolean isSelected(AnActionEvent e) {
+      return mySettings.areModulesShown();
+    }
+
+    public void setSelected(AnActionEvent e, boolean state) {
+      mySettings.setShownModules(state);
+      myTodoTreeBuilder.setShowModules(state);
     }
   }
 

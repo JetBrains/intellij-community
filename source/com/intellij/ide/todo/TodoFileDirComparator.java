@@ -5,6 +5,7 @@ package com.intellij.ide.todo;
 
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
+import com.intellij.ide.todo.nodes.ModuleToDoNode;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
@@ -39,7 +40,11 @@ public final class TodoFileDirComparator implements Comparator{
         String path2=psiDirectory2.getVirtualFile().getPath().toLowerCase();
         return path1.compareTo(path2);
       }
-    }else{
+    } else if(obj1 instanceof ModuleToDoNode) {
+      return -1;
+    } else if(obj2 instanceof ModuleToDoNode) {
+      return 1;
+    } else{
       throw new IllegalArgumentException(obj1.getClass().getName()+","+obj2.getClass().getName());
     }
   }

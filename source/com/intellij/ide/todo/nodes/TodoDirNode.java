@@ -3,8 +3,8 @@ package com.intellij.ide.todo.nodes;
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.todo.HighlightedRegionProvider;
 import com.intellij.ide.todo.TodoFileDirComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
@@ -103,8 +103,6 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
     EditorColorsScheme colorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
     myHighlightedRegions.add(
       new HighlightedRegion(nameEndOffset, newName.length(), colorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES)));
-    data.setPresentableText(newName);
-
 
     data.setPresentableText(newName);
   }
