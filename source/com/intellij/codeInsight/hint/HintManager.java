@@ -37,7 +37,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.EventObject;
-import java.util.Iterator;
 import java.util.List;
 
 public class HintManager implements ApplicationComponent {
@@ -183,8 +182,7 @@ public class HintManager implements ApplicationComponent {
   }
 
   public boolean hasShownHintsThatWillHideByOtherHint() {
-    for (Iterator<HintInfo> iterator = myHintsStack.iterator(); iterator.hasNext();) {
-      HintInfo hintInfo = iterator.next();
+    for (HintInfo hintInfo : myHintsStack) {
       if (hintInfo.hint.isVisible() && (hintInfo.flags & HIDE_BY_OTHER_HINT) != 0) return true;
     }
     return false;
@@ -194,7 +192,7 @@ public class HintManager implements ApplicationComponent {
     ActionManagerEx.getInstanceEx().removeAnActionListener(myAnActionListener);
   }
 
-  private void updateScrollableHintPosition(VisibleAreaEvent e, LightweightHint hint, boolean hideIfOutOfEditor) {
+  private static void updateScrollableHintPosition(VisibleAreaEvent e, LightweightHint hint, boolean hideIfOutOfEditor) {
     if (hint.getComponent() instanceof IntentionHintComponent) {
       ((IntentionHintComponent)hint.getComponent()).closePopup();
     }
@@ -406,7 +404,7 @@ public class HintManager implements ApplicationComponent {
     return getHintPosition(hint, editor, pos, pos, constraint);
   }
 
-  private Point getHintPosition(LightweightHint hint,
+  private static Point getHintPosition(LightweightHint hint,
                                 Editor editor,
                                 LogicalPosition pos1,
                                 LogicalPosition pos2,
@@ -434,7 +432,7 @@ public class HintManager implements ApplicationComponent {
     return p;
   }
 
-  private Point _getHintPosition(LightweightHint hint,
+  private static Point _getHintPosition(LightweightHint hint,
                                 Editor editor,
                                 LogicalPosition pos1,
                                 LogicalPosition pos2,
@@ -661,6 +659,8 @@ public class HintManager implements ApplicationComponent {
 
     public void projectClosed(Project project) {
       FileEditorManager.getInstance(project).removeFileEditorManagerListener(myEditorManagerListener);
+      // avoid leak through com.intellij.codeInsight.hint.TooltipController.myCurrentTooltip
+      getTooltipController().cancelTooltips();
     }
   }
 
@@ -673,10 +673,7 @@ public class HintManager implements ApplicationComponent {
 
     public void execute(Editor editor, DataContext dataContext) {
       Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-      if (project != null && HintManager.getInstance().hideHints(HIDE_BY_ESCAPE | HIDE_BY_ANY_KEY, true, false)) {
-        return;
-      }
-      else {
+      if (project == null || !HintManager.getInstance().hideHints(HIDE_BY_ESCAPE | HIDE_BY_ANY_KEY, true, false)) {
         myOriginalHandler.execute(editor, dataContext);
       }
     }
