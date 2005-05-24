@@ -4,6 +4,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.TemplateStateListener;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -85,14 +86,14 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
     if (targetClasses == null) return;
 
     if (targetClasses.length == 1) {
-      doInvoke(project, targetClasses[0], editor, file);
+      doInvoke(project, targetClasses[0]);
     } else {
       chooseTargetClass(targetClasses, editor, file);
     }
   }
 
-  private void doInvoke(Project project, PsiClass targetClass, final Editor editor, final PsiFile file) {
-    if (!prepareTargetFile(targetClass.getContainingFile())) {
+  private void doInvoke(Project project, PsiClass targetClass) {
+    if (!CodeInsightUtil.prepareFileForWrite(targetClass.getContainingFile())) {
       return;
     }
 
@@ -119,7 +120,7 @@ public abstract class CreateFromUsageBaseAction extends BaseIntentionAction {
         final PsiClass aClass = (PsiClass) list.getSelectedValue();
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            doInvoke(project, aClass, editor, file);
+            doInvoke(project, aClass);
           }
         });
       }

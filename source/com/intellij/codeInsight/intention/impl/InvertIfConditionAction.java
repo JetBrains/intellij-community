@@ -20,6 +20,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.CodeInsightUtil;
 
 public class InvertIfConditionAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.InvertIfConditionAction");
@@ -65,7 +66,7 @@ public class InvertIfConditionAction extends BaseIntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!prepareTargetFile(file)) return;
+    if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
     PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(file.findElementAt(
             editor.getCaretModel().getOffset()), PsiIfStatement.class);

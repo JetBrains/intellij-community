@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.CodeInsightUtil;
 
 /**
  * @author mike
@@ -58,7 +59,7 @@ public class SplitIfAction extends BaseIntentionAction {
   public void invoke(Project project, Editor editor, PsiFile file) {
 
     try {
-      if (!prepareTargetFile(file)) { return; }
+      if (!CodeInsightUtil.prepareFileForWrite(file)) { return; }
 
       int offset = editor.getCaretModel().getOffset();
 
