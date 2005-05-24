@@ -9,6 +9,7 @@ import com.siyeh.ig.classlayout.*;
 import com.siyeh.ig.classmetrics.*;
 import com.siyeh.ig.cloneable.*;
 import com.siyeh.ig.confusing.*;
+import com.siyeh.ig.confusing.ClassEscapesItsScopeInspection;
 import com.siyeh.ig.encapsulation.*;
 import com.siyeh.ig.errorhandling.*;
 import com.siyeh.ig.finalization.FinalizeCallsSuperFinalizeInspection;
