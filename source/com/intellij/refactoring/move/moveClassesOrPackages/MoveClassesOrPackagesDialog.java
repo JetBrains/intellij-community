@@ -9,13 +9,17 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.refactoring.*;
-import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.MoveDestination;
+import com.intellij.refactoring.PackageWrapper;
+import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.ui.RecentsManager;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -25,6 +29,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class MoveClassesOrPackagesDialog extends RefactoringDialog {
+  private static final String RECENTS_KEY = "MoveClassesOrPackagesDialog.RECENTS_KEY";
   private final PsiElement[] myElementsToMove;
   private final MoveCallback myMoveCallback;
 
@@ -34,7 +39,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
   private final JLabel myNameLabel;
   private final JLabel myPromptTo;
-  private final ReferenceEditorWithBrowseButton myWithBrowseButtonReference;
+  private final ReferenceEditorComboWithBrowseButton myWithBrowseButtonReference;
   private JCheckBox myCbSearchInComments;
   private JCheckBox myCbSearchInNonJavaFiles;
   private JCheckBox myCbPreserveSourceFolders;
@@ -60,13 +65,13 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     myNameLabel = new JLabel();
     myPromptTo = new JLabel("To package: ");
     myManager = PsiManager.getInstance(myProject);
-    myWithBrowseButtonReference = new ReferenceEditorWithBrowseButton(null, "", myManager, false);
+    myWithBrowseButtonReference = new ReferenceEditorComboWithBrowseButton(null, "", myManager, false, RECENTS_KEY);
 
     init();
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myWithBrowseButtonReference.getEditorTextField();
+    return myWithBrowseButtonReference.getChildComponent();
   }
 
   protected JComponent createCenterPanel() {
@@ -144,7 +149,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     panel.add(myCbPreserveSourceFolders, gbConstraints);
 
 
-    myWithBrowseButtonReference.getEditorTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+    myWithBrowseButtonReference.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         validateOKButton();
       }
@@ -293,15 +298,16 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   }
 
   private MoveDestination selectDestination() {
-    final String packageName = myWithBrowseButtonReference.getText();
+    final String packageName = myWithBrowseButtonReference.getText().trim();
     if (packageName.length() > 0 && !myManager.getNameHelper().isQualifiedName(packageName)) {
       Messages.showErrorDialog(myProject, "Please enter a valid target package name", "Move");
       return null;
     }
+    RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, packageName);
     PackageWrapper targetPackage = new PackageWrapper(myManager, packageName);
     if (!targetPackage.exists()) {
       final int ret = Messages.showYesNoDialog(myProject, "Package " + packageName + " does not exist.\n" +
-                                                "Do you want to create it?", "Move", Messages.getQuestionIcon());
+                                                          "Do you want to create it?", "Move", Messages.getQuestionIcon());
       if (ret != 0) return null;
     }
 

@@ -24,7 +24,8 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoChange;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import com.intellij.ui.RecentsManager;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.IncorrectOperationException;
 
@@ -37,13 +38,14 @@ import java.util.ArrayList;
 import java.util.Set;
 
 public class MoveMembersDialog extends RefactoringDialog implements MoveMembersOptions {
+  private static final String RECENTS_KEY = "MoveMembersDialog.RECENTS_KEY";
   private MyMemberInfoModel myMemberInfoModel;
 
   private Project myProject;
   private PsiClass mySourceClass;
   private String mySourceClassName;
   private MemberInfo[] myMemberInfos;
-  private final ReferenceEditorWithBrowseButton myTfTargetClassName;
+  private final ReferenceEditorComboWithBrowseButton myTfTargetClassName;
   private MemberSelectionTable myTable;
   private Set<PsiMember> myPreselectMembers;
   private final MoveCallback myMoveCallback;
@@ -69,8 +71,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     PsiClass[] innerClasses = mySourceClass.getInnerClasses();
     ArrayList<MemberInfo> memberList = new ArrayList<MemberInfo>(fields.length + methods.length);
 
-    for (int idx = 0; idx < innerClasses.length; idx++) {
-      PsiClass innerClass = innerClasses[idx];
+    for (PsiClass innerClass : innerClasses) {
       if (!innerClass.hasModifierProperty(PsiModifier.STATIC)) continue;
       MemberInfo info = new MemberInfo(innerClass);
       if (myPreselectMembers.contains(innerClass)) {
@@ -78,8 +79,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
       }
       memberList.add(info);
     }
-    for (int idx = 0; idx < fields.length; idx++) {
-      PsiField field = fields[idx];
+    for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) {
         MemberInfo info = new MemberInfo(field);
         if (myPreselectMembers.contains(field)) {
@@ -88,8 +88,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
         memberList.add(info);
       }
     }
-    for (int idx = 0; idx < methods.length; idx++) {
-      PsiMethod method = methods[idx];
+    for (PsiMethod method : methods) {
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         MemberInfo info = new MemberInfo(method);
         if (myPreselectMembers.contains(method)) {
@@ -100,7 +99,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     }
     myMemberInfos = memberList.toArray(new MemberInfo[memberList.size()]);
     String fqName = initialTargetClass != null && !sourceClass.equals(initialTargetClass) ? initialTargetClass.getQualifiedName() : "";
-    myTfTargetClassName = new ReferenceEditorWithBrowseButton(new ChooseClassAction(), fqName, PsiManager.getInstance(myProject), true);
+    myTfTargetClassName = new ReferenceEditorComboWithBrowseButton(new ChooseClassAction(), fqName, PsiManager.getInstance(myProject), true, RECENTS_KEY);
 
     init();
   }
@@ -145,7 +144,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     _panel.add(myTfTargetClassName, BorderLayout.CENTER);
     box.add(_panel);
 
-    myTfTargetClassName.getEditorTextField().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+    myTfTargetClassName.getChildComponent().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         myMemberInfoModel.updateTargetClass();
       }
@@ -178,20 +177,20 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myTfTargetClassName.getEditorTextField();
+    return myTfTargetClassName.getChildComponent();
   }
 
   public PsiMember[] getSelectedMembers() {
     final MemberInfo[] selectedMemberInfos = myTable.getSelectedMemberInfos();
     ArrayList<PsiMember> list = new ArrayList<PsiMember>();
-    for (int i = 0; i < selectedMemberInfos.length; i++) {
-      list.add(selectedMemberInfos[i].getMember());
+    for (MemberInfo selectedMemberInfo : selectedMemberInfos) {
+      list.add(selectedMemberInfo.getMember());
     }
     return list.toArray(new PsiMember[list.size()]);
   }
 
   public String getTargetClassName() {
-    return myTfTargetClassName.getText().trim();
+    return myTfTargetClassName.getText();
   }
 
   protected void doAction() {
@@ -239,6 +238,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
       return "'" + fqName + "' is not a legal FQ-name";
     }
     else {
+      RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, fqName);
       final PsiClass[] targetClass = new PsiClass[]{null};
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         public void run() {
@@ -264,8 +264,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
         return "Source and destination classes should be different";
       }
       else {
-        for (int i = 0; i < myMemberInfos.length; i++) {
-          MemberInfo info = myMemberInfos[i];
+        for (MemberInfo info : myMemberInfos) {
           if (!info.isChecked()) continue;
           if (PsiTreeUtil.isAncestor(info.getMember(), targetClass[0], false)) {
             return "Cannot move inner class " + info.getDisplayName() + " into itself.";

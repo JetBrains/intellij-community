@@ -17,10 +17,7 @@ import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.MoveRenameUsageInfo;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classRefs.ClassInstanceScanner;
 import com.intellij.refactoring.util.classRefs.ClassReferenceScanner;
 import com.intellij.usageView.FindUsagesCommand;
@@ -225,7 +222,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     final HashMap<PsiClass,HashSet> reportedClassToContainers = new com.intellij.util.containers.HashMap<PsiClass, HashSet>();
     final PackageWrapper aPackage = myTargetPackage;
     for (UsageInfo usage : usages) {
-      if (usage instanceof MoveRenameUsageInfo && ((MoveRenameUsageInfo)usage).referencedElement instanceof PsiClass) {
+      if (usage instanceof MoveRenameUsageInfo && !(usage instanceof NonCodeUsageInfo) &&
+          ((MoveRenameUsageInfo)usage).referencedElement instanceof PsiClass) {
         PsiClass aClass = (PsiClass)((MoveRenameUsageInfo)usage).referencedElement;
         if (!movedClasses.contains(aClass)) {
           movedClasses.add(aClass);

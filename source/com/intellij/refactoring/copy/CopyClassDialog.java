@@ -13,7 +13,8 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ReferenceEditorWithBrowseButton;
+import com.intellij.ui.RecentsManager;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -23,11 +24,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 class CopyClassDialog extends DialogWrapper{
+  private static final String RECENTS_KEY = "CopyClassDialog.RECENTS_KEY";
   private JLabel myInformationLabel = new JLabel("X");
   private JLabel myNameLabel = new JLabel("Name:");
   private EditorTextField myNameField;
   private JLabel myPackageLabel = new JLabel("Destination package:");
-  private ReferenceEditorWithBrowseButton myTfPackage;
+  private ReferenceEditorComboWithBrowseButton myTfPackage;
   private Project myProject;
   private PsiDirectory myTargetDirectory;
   private boolean myDoClone;
@@ -99,7 +101,7 @@ class CopyClassDialog extends DialogWrapper{
 
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
-    myTfPackage = new ReferenceEditorWithBrowseButton(new ActionListener() {
+    myTfPackage = new ReferenceEditorComboWithBrowseButton(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         PackageChooserDialog chooser=new PackageChooserDialog("Choose Destination Package",myProject);
         chooser.selectPackage(myTfPackage.getText());
@@ -109,8 +111,8 @@ class CopyClassDialog extends DialogWrapper{
           myTfPackage.setText(aPackage.getQualifiedName());
         }
       }
-    }, "", PsiManager.getInstance(myProject), false);
-    myPackageLabel.setLabelFor(myTfPackage.getEditorTextField());
+    }, "", PsiManager.getInstance(myProject), false, RECENTS_KEY);
+    myPackageLabel.setLabelFor(myTfPackage.getChildComponent());
     myPackageLabel.setDisplayedMnemonic('D');
 
     panel.add(myTfPackage, gbConstraints);
@@ -162,6 +164,7 @@ class CopyClassDialog extends DialogWrapper{
           errorString[0] = e.getMessage();
         }
       }
+      RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, packageName);
     }
 
     if (errorString[0] != null) {

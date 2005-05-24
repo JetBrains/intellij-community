@@ -10,16 +10,21 @@ import com.intellij.psi.PsiPackage;
 
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 /**
  * @author ven
  */
 public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseButton<EditorComboBox> implements TextAccessor {
   public ReferenceEditorComboWithBrowseButton(final ActionListener browseActionListener,
-                                         final String text,
-                                         final PsiManager manager,
-                                         boolean toAcceptClasses) {
+                                              final String text,
+                                              final PsiManager manager,
+                                              boolean toAcceptClasses, final String recentsKey) {
     super(new EditorComboBox(createDocument(text, manager, toAcceptClasses), manager.getProject(), StdFileTypes.JAVA), browseActionListener);
+    final List<String> recentEntries = RecentsManager.getInstance(manager.getProject()).getRecentEntries(recentsKey);
+    if (recentEntries != null) {
+      setHistory(recentEntries.toArray(new String[recentEntries.size()]));
+    }
   }
 
   private static Document createDocument(final String text, PsiManager manager, boolean isClassesAccepted) {
@@ -51,5 +56,4 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
   public void setHistory(String[] history) {
     getChildComponent().setHistory(history);
   }
-
 }

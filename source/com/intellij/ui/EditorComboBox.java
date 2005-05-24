@@ -16,10 +16,7 @@ import com.intellij.util.IJSwingUtilities;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 
 /**
@@ -66,6 +63,12 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
       }
 
       public void focusLost(FocusEvent e) {
+      }
+    });
+    addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myEditor.getSelectionModel().removeSelection();
+        requestFocus();
       }
     });
     setHistory(new String[]{""});
@@ -221,7 +224,7 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
     }
 
     public Component getEditorComponent() {
-      return myEditor.getComponent();
+      return myEditor != null ? myEditor.getComponent() : null;
     }
 
     public Object getItem() {
@@ -236,7 +239,11 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
     }
 
     public void setItem(Object anObject) {
-      EditorComboBox.this.setText((String)anObject);
+      if (anObject != null) {
+        EditorComboBox.this.setText((String)anObject);
+      } else {
+        EditorComboBox.this.setText("");
+      }
     }
   }
 

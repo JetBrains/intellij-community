@@ -12,33 +12,31 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.TextAccessor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
-import com.intellij.ui.ReferenceEditorWithBrowseButton;
-import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.Iterator;
 
 class IntroduceConstantDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceConstantDialog");
+  private static final String RECENTS_KEY = "IntroduceConstantDialog.RECENTS_KEY";
 
   private Project myProject;
   private final PsiClass myParentClass;
@@ -112,7 +110,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   }
 
   private String getTargetClassName() {
-    return myTfTargetClassName.getText();
+    return myTfTargetClassName.getText().trim();
   }
 
   public PsiClass getDestinationClass () {
@@ -178,7 +176,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     }
     if (possibleClassNames.size() > 1) {
       ReferenceEditorComboWithBrowseButton targetClassName =
-        new ReferenceEditorComboWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(myProject), true);
+        new ReferenceEditorComboWithBrowseButton(new ChooseClassAction(), "", PsiManager.getInstance(myProject), true, RECENTS_KEY);
       myTargetClassNamePanel.setLayout(new BorderLayout());
       myTargetClassNamePanel.add(targetClassName, BorderLayout.CENTER);
       myTargetClassNameLabel.setLabelFor(targetClassName);
@@ -225,7 +223,7 @@ class IntroduceConstantDialog extends DialogWrapper {
         return new Pair<LookupItemPreferencePolicy, Set<LookupItem>>(policy, set);
       }
     },
-                                                          myProject);
+                                                        myProject);
 
     nameSuggestionsManager.setMnemonics(myTypeLabel, myNameSuggestionLabel);
     //////////
@@ -399,6 +397,7 @@ class IntroduceConstantDialog extends DialogWrapper {
 
     RefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY = getFieldVisibility();
 
+    RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, targetClassName);
     super.doOKAction();
   }
 
