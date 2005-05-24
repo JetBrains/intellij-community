@@ -3,7 +3,6 @@ package com.intellij.refactoring.rename;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.util.containers.HashSet;
 
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -19,19 +18,21 @@ public class RenameHandlerRegistry {
   }
 
   private RenameHandlerRegistry() {
+    // should be checked last
     myDefaultElementRenameHandler = new PsiElementRenameHandler();
   }
 
-  public PsiElementRenameHandler getDefaultElementRenameHandler() {
-    return myDefaultElementRenameHandler;
-  }
-
-  public RenameHandler getRenameHandler(DataContext dataContext) {
-    for (Iterator<RenameHandler> iterator = myHandlers.iterator(); iterator.hasNext();) {
-      RenameHandler renameHandler = iterator.next();
-      if (renameHandler.isAvailableOnDataContext(dataContext)) return renameHandler;
+  public boolean hasAvailableHandler(DataContext dataContext) {
+    for (RenameHandler renameHandler : myHandlers) {
+      if (renameHandler.isAvailableOnDataContext(dataContext)) return true;
     }
-    return myDefaultElementRenameHandler.isAvailableOnDataContext(dataContext) ? myDefaultElementRenameHandler : null;
+    return myDefaultElementRenameHandler.isAvailableOnDataContext(dataContext);
+  }
+  public RenameHandler getRenameHandler(DataContext dataContext) {
+    for (RenameHandler renameHandler : myHandlers) {
+      if (renameHandler.isRenaming(dataContext)) return renameHandler;
+    }
+    return myDefaultElementRenameHandler.isRenaming(dataContext) ? myDefaultElementRenameHandler : null;
   }
 
   public void registerHandler(RenameHandler handler) {

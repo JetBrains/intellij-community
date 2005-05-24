@@ -41,7 +41,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     invoke(element, project, element);
   }
 
-  public void invoke(PsiElement element, Project project, PsiElement nameSuggestionContext) {
+  public static void invoke(PsiElement element, Project project, PsiElement nameSuggestionContext) {
     if (element != null && !canRename(element, project)) {
       return;
     }
@@ -81,7 +81,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     }
   }
 
-  private boolean canRename(PsiElement element, Project project) {
+  private static boolean canRename(PsiElement element, Project project) {
     if (element instanceof XmlAttributeValue) {
       XmlAttribute value = (XmlAttribute)element.getParent();
       if (XmlUtil.isAntTargetDefinition(value) || XmlUtil.isAntPropertyDefinition(value)) {
@@ -94,16 +94,9 @@ public class PsiElementRenameHandler implements RenameHandler {
 
     final String REFACTORING_NAME = "Rename";
     if (element == null ||
-        !((element instanceof PsiFile) ||
-          (element instanceof PsiPointcutDef) ||
-          (element instanceof PsiPackage) ||
-          (element instanceof PsiDirectory) ||
-          (element instanceof PsiClass) ||
-          (element instanceof PsiVariable) ||
-          (element instanceof PsiMethod) ||
-          (element instanceof PsiNamedElement) ||
-          (element instanceof XmlAttributeValue)
-        )) {
+        !(element instanceof PsiFile || element instanceof PsiPointcutDef || element instanceof PsiPackage ||
+          element instanceof PsiDirectory || element instanceof PsiClass || element instanceof PsiVariable ||
+          element instanceof PsiMethod || element instanceof PsiNamedElement || element instanceof XmlAttributeValue)) {
       String message =
         "Cannot perform the refactoring.\n" +
         "The caret should be positioned at the symbol to be renamed.";
@@ -118,7 +111,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
 
-  private void rename(PsiElement element, final Project project, PsiElement nameSuggestionContext) {
+  private static void rename(PsiElement element, final Project project, PsiElement nameSuggestionContext) {
     if (element instanceof PsiMethod) {
       PsiMethod psiMethod = (PsiMethod)element;
       if (psiMethod.isConstructor()) {
@@ -167,5 +160,9 @@ public class PsiElementRenameHandler implements RenameHandler {
     }
 
     return !(elementArray[0] instanceof PsiJavaFile) || elementArray[0] instanceof JspFile;
+  }
+
+  public boolean isRenaming(DataContext dataContext) {
+    return isAvailableOnDataContext(dataContext);
   }
 }

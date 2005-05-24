@@ -35,6 +35,10 @@ public class ResourceBundleRenameHandler implements RenameHandler {
     return getResourceBundleFromDataContext(dataContext) != null;
   }
 
+  public boolean isRenaming(DataContext dataContext) {
+    return isAvailableOnDataContext(dataContext);
+  }
+
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
     ResourceBundle resourceBundle = getResourceBundleFromDataContext(dataContext);
 

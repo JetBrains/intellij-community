@@ -35,6 +35,10 @@ public class RenameModuleHandler implements RenameHandler {
     return module != null;
   }
 
+  public boolean isRenaming(DataContext dataContext) {
+    return isAvailableOnDataContext(dataContext);
+  }
+
   public void invoke(Project project, Editor editor, PsiFile file, DataContext dataContext) {
     LOG.assertTrue(false);
   }
