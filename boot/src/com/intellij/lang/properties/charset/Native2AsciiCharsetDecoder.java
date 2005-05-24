@@ -4,9 +4,7 @@ package com.intellij.lang.properties.charset;
  * @author Alexey
  */
 
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
+import java.nio.*;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 
@@ -46,7 +44,7 @@ class Native2AsciiCharsetDecoder extends CharsetDecoder {
 
       while (in.position() < in.limit()) {
         in.mark();
-        byte b = in.get();
+        final byte b = in.get();
         if (b == '\\') {
           byte next = in.get();
           if (next == 'u') {
@@ -72,7 +70,10 @@ class Native2AsciiCharsetDecoder extends CharsetDecoder {
           }
         }
         else {
-          myOutBuffer.append((char)b);
+          buf[0] = b;
+          ByteBuffer byteBuffer = ByteBuffer.wrap(buf, 0, 1);
+          CharBuffer charBuffer = Native2AsciiCharset.DEFAULT_CHARSET.decode(byteBuffer);
+          myOutBuffer.append(charBuffer);
         }
       }
     }

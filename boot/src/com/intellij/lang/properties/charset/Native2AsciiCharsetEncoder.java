@@ -22,7 +22,8 @@ class Native2AsciiCharsetEncoder extends CharsetEncoder {
       try {
         char c = in.get();
         if (c < 255) {
-          out.put((byte)c);
+          ByteBuffer byteBuffer = Native2AsciiCharset.DEFAULT_CHARSET.encode(Character.toString(c));
+          out.put(byteBuffer);
         }
         else {
           out.put((byte)'\\');

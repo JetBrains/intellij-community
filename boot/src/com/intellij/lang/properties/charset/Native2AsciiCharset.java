@@ -10,6 +10,7 @@ import java.nio.charset.CharsetEncoder;
 
 public class Native2AsciiCharset extends Charset {
   public static final Charset INSTANCE = new Native2AsciiCharset("NATIVE_TO_ASCII", null);
+  static final Charset DEFAULT_CHARSET = forName("ISO-8859-1");
 
   public Native2AsciiCharset(String canonicalName, String[] aliases) {
     super(canonicalName, aliases);
