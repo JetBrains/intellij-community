@@ -74,8 +74,8 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     }
 
     final PsiClass[] classes = MoveMethodUtil.getThisClassesNeeded(method);
-    for (int i = 0; i < classes.length; i++) {
-      if (classes[i] instanceof JspClass) {
+    for (PsiClass aClass : classes) {
+      if (aClass instanceof JspClass) {
         String message = "Cannot perform the refactoring.\n" +
                          "Synthetic jsp class is referenced in the method";
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.MOVE_INSTANCE_METHOD, project);
@@ -90,8 +90,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     boolean classTypesFound = false;
     boolean resolvableClassesFound = false;
     boolean classesInProjectFound = false;
-    for (Iterator<PsiVariable> iterator = allVariables.iterator(); iterator.hasNext();) {
-      PsiVariable variable = iterator.next();
+    for (PsiVariable variable : allVariables) {
       final PsiType type = variable.getType();
       if (type instanceof PsiClassType && !((PsiClassType)type).hasParameters()) {
         classTypesFound = true;
@@ -110,13 +109,13 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     if (suitableVariables.isEmpty()) {
       String message = null;
       if (!classTypesFound) {
-        message = "There are no parameters that have a reference type";
+        message = "There are no variables that have a reference type";
       }
       else if (!resolvableClassesFound) {
-        message = "All reference type parametres have unknown types";
+        message = "All candidate variables have unknown types";
       }
       else if (!classesInProjectFound) {
-        message = "All reference type parameters have types that are not in project";
+        message = "All candidate variables have types that are not in project";
       }
       LOG.assertTrue(message != null);
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME,
@@ -142,8 +141,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
   public static Map<PsiClass, String> suggestParameterNames(final PsiMethod method) {
     final PsiClass[] classes = MoveMethodUtil.getThisClassesNeeded(method);
     Map<PsiClass, String> result = new LinkedHashMap<PsiClass, String>();
-    for (int i = 0; i < classes.length; i++) {
-      PsiClass aClass = classes[i];
+    for (PsiClass aClass : classes) {
       result.put(aClass, suggestParameterNameForThisClass(aClass));
     }
     return result;
