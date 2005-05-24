@@ -886,9 +886,11 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   public void fireSelectionChanged(final EditorComposite oldSelectedComposite,
                                    final EditorComposite newSelectedComposite) {
     final VirtualFile oldSelectedFile = oldSelectedComposite != null ? oldSelectedComposite.getFile() : null;
-    final FileEditor oldSelectedEditor = oldSelectedComposite != null ? oldSelectedComposite.getSelectedEditor() : null;
-
     final VirtualFile newSelectedFile = newSelectedComposite != null ? newSelectedComposite.getFile() : null;
+    if (oldSelectedFile == null? newSelectedFile == null : oldSelectedFile.equals(newSelectedFile)) {
+      return; // no need to notify: files are the same
+    }
+    final FileEditor oldSelectedEditor = oldSelectedComposite != null ? oldSelectedComposite.getSelectedEditor() : null;
     final FileEditor newSelectedEditor = newSelectedComposite != null ? newSelectedComposite.getSelectedEditor() : null;
 
     final FileEditorManagerEvent event = new FileEditorManagerEvent(this, oldSelectedFile, oldSelectedEditor, newSelectedFile, newSelectedEditor);
