@@ -67,7 +67,7 @@ public class PropertiesFileType extends LanguageFileType {
       return Native2AsciiCharset.INSTANCE.name();
     }
     else {
-      return null;
+      return "ISO-8859-1";
     }
   }
 }
