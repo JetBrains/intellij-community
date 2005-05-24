@@ -31,7 +31,7 @@ public class ChooseByNamePanel extends ChooseByNameBase {
     return myTextField;
   }
 
-  protected void showList(final boolean truncateSize){
+  protected void showList(){
   }
 
   protected void hideList(){

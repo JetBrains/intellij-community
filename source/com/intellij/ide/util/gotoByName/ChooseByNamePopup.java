@@ -35,7 +35,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return true;
   }
 
-  protected void showList(final boolean truncateSize) {
+  protected void showList() {
     final JLayeredPane layeredPane = myTextField.getRootPane().getLayeredPane();
     final Rectangle bounds = myTextFieldPanel.getBounds();
     bounds.y += myTextFieldPanel.getHeight();
@@ -54,14 +54,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     Rectangle prefferedBounds = new Rectangle(bounds.x, bounds.y, preferredScrollPaneSize.width, preferredScrollPaneSize.height);
 
-    if (truncateSize || !myListScrollPane.isVisible()) {
+    if (myListScrollPane.isVisible()) {
       myListScrollPane.setBounds(prefferedBounds);
-    }
-    else {
-      final Rectangle currentRect = myListScrollPane.getBounds();
-      if (!currentRect.contains(prefferedBounds)) {
-        myListScrollPane.setBounds(prefferedBounds);
-      }
     }
 
     layeredPane.add(myListScrollPane, new Integer(600));

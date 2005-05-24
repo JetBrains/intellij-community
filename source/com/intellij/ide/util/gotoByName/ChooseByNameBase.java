@@ -76,7 +76,7 @@ public abstract class ChooseByNameBase{
   private static final String NOT_FOUND_MESSAGE_CARD = "syslib";
   private static final String NOT_FOUND_CARD = "nfound";
   private static final String CHECK_BOX_CARD = "chkbox";
-  static final int REBUILD_DELAY = 100;
+  static final int REBUILD_DELAY = 300;
 
   private static class MatchesComparator implements Comparator<String> {
     private String myOriginalPattern;
@@ -269,7 +269,7 @@ public abstract class ChooseByNameBase{
       myTextField.addFocusListener(new FocusAdapter() {
         public void focusLost(FocusEvent e) {
           if (!myTextFieldPanel.focusRequested()) {
-            close(false);
+            doClose(false);
             myTextFieldPanel.hideHint();
           }
         }
@@ -323,7 +323,7 @@ public abstract class ChooseByNameBase{
 
     myTextField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent actionEvent) {
-        close(true);
+        doClose(true);
       }
     });
 
@@ -345,7 +345,7 @@ public abstract class ChooseByNameBase{
             e.consume();
           }
           else {
-            close(true);
+            doClose(true);
           }
         }
       }
@@ -373,6 +373,11 @@ public abstract class ChooseByNameBase{
     if (modalityState != null) {
       rebuildList(0, 0, null, modalityState);
     }
+  }
+
+  private void doClose(final boolean ok) {
+    myListUpdater.cancelAll();
+    close(ok);
   }
 
   private synchronized void ensureNamesLoaded(boolean checkboxState) {
@@ -425,18 +430,19 @@ public abstract class ChooseByNameBase{
     // It causes typing of Enter into it.
     myTextFieldPanel.registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        close(false);
+        doClose(false);
       }
-    },
-                                            KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                                            JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+       JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+    );
+
     myList.registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        close(false);
+        doClose(false);
       }
-    },
-                                  KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                                  JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+       JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+    );
 
     if (myTextField.requestFocusInWindow()) {
       myTextField.requestFocus();
@@ -564,20 +570,14 @@ public abstract class ChooseByNameBase{
     }
 
     myTextField.setForeground(UIManager.getColor("TextField.foreground"));
-    int itemsToAppendImmediately = Math.min(Math.max(pos, 1), elements.size());
-
-    while (myListModel.size() < itemsToAppendImmediately && commands.size() > 0) {
-      commands.remove(0).apply();
-    }
-
     if (!commands.isEmpty()) {
-      showList(false);
+      showList();
       myListUpdater.appendToModel(commands, pos);
     }
     else {
       ListScrollingUtil.selectItem(myList, Math.min (pos, myListModel.size () - 1));
       myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
-      showList(true);
+      showList();
     }
   }
 
@@ -643,18 +643,15 @@ public abstract class ChooseByNameBase{
           myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
           ListScrollingUtil.selectItem(myList, Math.min (selectionPos, myListModel.size () - 1));
           if (!commands.isEmpty()) {
-            showList(false);
             myAlarm.addRequest(this, DELAY);
           }
-          else {
-            showList(true);
-          }
+          showList();
         }
       }, DELAY);
     }
   }
 
-  protected abstract void showList(final boolean truncateSize);
+  protected abstract void showList();
 
   protected abstract void hideList();
 
