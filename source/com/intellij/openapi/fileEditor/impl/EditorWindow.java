@@ -115,12 +115,12 @@ public class EditorWindow {
   }
 
   private int calcIndexToSelect(VirtualFile fileBeingClosed, final int fileIndex) {
+    final int currentlySelectedIndex = myTabbedPane.getSelectedIndex();
+    if (currentlySelectedIndex != fileIndex) {
+      // if the file being closed is not currently selected, keep the currently selected file open
+      return fileIndex < currentlySelectedIndex ? currentlySelectedIndex - 1 : -1;
+    }
     if (UISettings.getInstance().ACTIVATE_MRU_EDITOR_ON_CLOSE) {
-      final int currentlySelectedIndex = myTabbedPane.getSelectedIndex();
-      if (currentlySelectedIndex != fileIndex) {
-        // if the file being closed is not currently selected, keep the currently selected file open
-        return fileIndex < currentlySelectedIndex ? currentlySelectedIndex - 1 : -1;
-      }
       // try to open last visited file
       final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().myProject).getFiles();
       for (int idx = histFiles.length - 1; idx >= 0; idx--) {
