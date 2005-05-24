@@ -41,7 +41,9 @@ public class ExportToFileUtil {
         Messages.getWarningIcon()
       );
 
-      if (result != 1 && result != 0) return;
+      if (result != 1 && result != 0) {
+        return;
+      }
       if (result == 1) {
         char[] buf = new char[(int)file.length()];
         try {
@@ -85,6 +87,7 @@ public class ExportToFileUtil {
     protected JScrollPane myTextScrollPane;
     protected JTextField myTfFile;
     protected JButton myFileButton;
+    private ChangeListener myListener;
 
     public ExportDialogBase(Project project, ExporterToTextFile exporter) {
       super(project, true);
@@ -100,16 +103,22 @@ public class ExportToFileUtil {
       setButtonsMargin(null);
       init();
       try {
-        myExporter.addSettingsChangedListener(new ChangeListener() {
-                                                    public void stateChanged(ChangeEvent e) {
-                                                      initText();
-                                                    }
-                                                  });
+        myListener = new ChangeListener() {
+          public void stateChanged(ChangeEvent e) {
+            initText();
+          }
+        };
+        myExporter.addSettingsChangedListener(myListener);
       }
       catch (TooManyListenersException e) {
         LOG.error(e);
       }
       initText();
+    }
+
+    protected void dispose() {
+      myExporter.removeSettingsChangedListener(myListener);
+      super.dispose();
     }
 
     private void initText() {
@@ -128,7 +137,9 @@ public class ExportToFileUtil {
     protected JComponent createNorthPanel() {
       JPanel filePanel = createFilePanel(myTfFile, myFileButton);
       JComponent settingsPanel = myExporter.getSettingsEditor();
-      if (settingsPanel == null) return filePanel;
+      if (settingsPanel == null) {
+        return filePanel;
+      }
       JPanel northPanel = new JPanel(new BorderLayout());
       northPanel.add(filePanel, BorderLayout.NORTH);
       northPanel.add(settingsPanel, BorderLayout.CENTER);
