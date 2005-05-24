@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
@@ -22,7 +23,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 
 public class QuickListPanel {
-  private static final Icon EMPTY_ICON = EmptyIcon.create(16, 16);
+  private static final Icon EMPTY_ICON = EmptyIcon.create(18, 18);
 
   private JButton myRemoveActionButton;
   private JButton myIncludeActionButton;
@@ -142,7 +143,7 @@ public class QuickListPanel {
 
   private void excludeSelectionAction() {
     int[] ids = myActionsList.getSelectedIndices();
-    for (int i = 0; i < ids.length; i++) {
+    for (int i = ids.length - 1; i >=0; i--) {
       ((DefaultListModel)myActionsList.getModel()).remove(ids[i]);
     }
     update();
@@ -234,6 +235,7 @@ public class QuickListPanel {
                                                   int row,
                                                   boolean hasFocus) {
       super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+      Icon icon = null;
       if (value instanceof DefaultMutableTreeNode) {
         boolean used = false;
         Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
@@ -241,43 +243,47 @@ public class QuickListPanel {
           Group group = (Group)userObject;
           final String name = group.getName();
           setText(name != null ? name : group.getId());
-          Icon icon = expanded ? group.getOpenIcon() : group.getIcon();
+          icon = expanded ? group.getOpenIcon() : group.getIcon();
 
           if (icon == null) {
             icon = expanded ? getOpenIcon() : getClosedIcon();
           }
 
-          setIcon(icon);
+
         }
         else if (userObject instanceof String) {
           String actionId = (String)userObject;
           used = ((DefaultListModel)myActionsList.getModel()).lastIndexOf(actionId) >= 0;
           AnAction action = ActionManager.getInstance().getAction(actionId);
           setText(action != null ? action.getTemplatePresentation().getText() : actionId);
-          Icon icon = EMPTY_ICON;
           if (action != null) {
             Icon actionIcon = action.getTemplatePresentation().getIcon();
             if (actionIcon != null) {
               icon = actionIcon;
             }
           }
-          setIcon(icon);
         }
         else if (userObject instanceof QuickList) {
           QuickList list = (QuickList)userObject;
-          setIcon(EMPTY_ICON);
+          //todo icon =
           setText(list.getDisplayName());
           used = ((DefaultListModel)myActionsList.getModel()).lastIndexOf(list.getActionId()) >= 0;
         }
         else if (userObject instanceof Separator) {
           // TODO[vova,anton]: beautify
           setText("-------------");
-          setIcon(EMPTY_ICON);
+
         }
         else {
           throw new IllegalArgumentException("unknown userObject: " + userObject);
         }
 
+        LayeredIcon layeredIcon = new LayeredIcon(2);
+        layeredIcon.setIcon(EMPTY_ICON, 0);
+        if (icon != null){
+          layeredIcon.setIcon(icon, 1, (- icon.getIconWidth() + EMPTY_ICON.getIconWidth())/2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight())/2);
+        }
+        setIcon(layeredIcon);
         if (sel) {
           setForeground(UIManager.getColor("Tree.selectionForeground"));
         }
@@ -297,24 +303,29 @@ public class QuickListPanel {
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      Icon icon = null;
       String actionId = (String)value;
       if (QuickList.SEPARATOR_ID.equals(actionId)) {
         // TODO[vova,anton]: beautify
         setText("-------------");
-        setIcon(EMPTY_ICON);
       }
       else {
         AnAction action = ActionManager.getInstance().getAction(actionId);
         setText(action != null ? action.getTemplatePresentation().getText() : actionId);
-        Icon icon = EMPTY_ICON;
         if (action != null) {
           Icon actionIcon = action.getTemplatePresentation().getIcon();
           if (actionIcon != null) {
             icon = actionIcon;
           }
         }
-        setIcon(icon);
+        LayeredIcon layeredIcon = new LayeredIcon(2);
+        layeredIcon.setIcon(EMPTY_ICON, 0);
+        if (icon != null){
+          layeredIcon.setIcon(icon, 1, (- icon.getIconWidth() + EMPTY_ICON.getIconWidth())/2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight())/2);
+        }
+        setIcon(layeredIcon);
       }
+
       return this;
     }
   }

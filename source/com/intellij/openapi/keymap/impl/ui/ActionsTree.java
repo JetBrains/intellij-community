@@ -8,6 +8,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.treetable.TreeTable;
@@ -24,7 +25,7 @@ import java.util.Enumeration;
 import java.util.Iterator;
 
 public class ActionsTree {
-  private static final Icon EMPTY_ICON = EmptyIcon.create(16, 16);
+  private static final Icon EMPTY_ICON = EmptyIcon.create(18, 18);
 
   private TreeTable myTreeTable;
   private DefaultMutableTreeNode myRoot;
@@ -56,6 +57,7 @@ public class ActionsTree {
       public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
         setBorderSelectionColor(null);
+        Icon icon = null;
         if (value instanceof DefaultMutableTreeNode) {
           Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
           boolean changed;
@@ -64,32 +66,30 @@ public class ActionsTree {
             setText(group.getName());
             Keymap originalKeymap = myKeymap.getParent();
             changed = originalKeymap != null && isGroupChanged(group, originalKeymap, myKeymap);
-            Icon icon = expanded ? group.getOpenIcon() : group.getIcon();
+            icon = expanded ? group.getOpenIcon() : group.getIcon();
 
             if (icon == null) {
               icon = expanded ? getOpenIcon() : getClosedIcon();
             }
 
-            setIcon(icon);
+
           }
           else if (userObject instanceof String) {
             String actionId = (String)userObject;
             AnAction action = ActionManager.getInstance().getAction(actionId);
             setText(action != null ? action.getTemplatePresentation().getText() : actionId);
-            Icon icon = EMPTY_ICON;
             if (action != null) {
               Icon actionIcon = action.getTemplatePresentation().getIcon();
               if (actionIcon != null) {
                 icon = actionIcon;
               }
             }
-            setIcon(icon);
             Keymap originalKeymap = myKeymap.getParent();
             changed = originalKeymap != null && isActionChanged(actionId, originalKeymap, myKeymap);
           }
           else if (userObject instanceof QuickList) {
             QuickList list = (QuickList)userObject;
-            setIcon(EMPTY_ICON);
+            //todo icon =
             setText(list.getDisplayName());
             Keymap originalKeymap = myKeymap.getParent();
             changed = originalKeymap != null && isActionChanged(list.getActionId(), originalKeymap, myKeymap);
@@ -98,11 +98,17 @@ public class ActionsTree {
             // TODO[vova,anton]: beautify
             changed = false;
             setText("-------------");
-            setIcon(EMPTY_ICON);
           }
           else {
             throw new IllegalArgumentException("unknown userObject: " + userObject);
           }
+
+          LayeredIcon layeredIcon = new LayeredIcon(2);
+          layeredIcon.setIcon(EMPTY_ICON, 0);
+          if (icon != null){
+            layeredIcon.setIcon(icon, 1, (- icon.getIconWidth() + EMPTY_ICON.getIconWidth())/2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight())/2);
+          }
+          setIcon(layeredIcon);
 
           // Set color
 
@@ -271,6 +277,12 @@ public class ActionsTree {
       }
       else if (child instanceof String) {
         String actionId = (String)child;
+        if (isActionChanged(actionId, oldKeymap, newKeymap)) {
+          return true;
+        }
+      }
+      else if (child instanceof QuickList){
+        String actionId = ((QuickList)child).getActionId();
         if (isActionChanged(actionId, oldKeymap, newKeymap)) {
           return true;
         }

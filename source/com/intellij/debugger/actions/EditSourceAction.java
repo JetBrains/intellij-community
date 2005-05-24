@@ -9,8 +9,6 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 
@@ -93,7 +91,7 @@ public class EditSourceAction extends DebuggerAction{
       }
     });
 
-    if(debuggerContext != null) {
+    if(debuggerContext != null && debuggerContext.getDebugProcess() != null) {
       debuggerContext.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(debuggerContext) {
         public void threadAction() {
           final SourcePosition position = getSourcePosition(node, debuggerContext);
