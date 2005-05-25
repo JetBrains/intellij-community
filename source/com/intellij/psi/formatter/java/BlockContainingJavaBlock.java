@@ -6,7 +6,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
-import com.intellij.openapi.util.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +16,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
   private final static int BEFORE_BLOCK = 1;
   private final static int AFTER_ELSE = 2;
 
-  private final List<Pair<Integer, Integer>> myBracePositions = new ArrayList<Pair<Integer, Integer>>();
+  private final List<Indent> myIndentsBefore = new ArrayList<Indent>();
   
   public BlockContainingJavaBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CodeStyleSettings settings) {
     super(node, wrap, alignment, indent, settings);
@@ -40,13 +39,12 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
     int state = BEFORE_FIRST;
 
-    int pos = 0;
     while (child != null) {
       if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){        
         final Indent indent = calcIndent(child,  state);
+        myIndentsBefore.add(calcIndentBefore(child,  state));
         state = calcNewState(child, state);
         child = processChild(result, child, childAlignment, childWrap, indent);
-        pos++;
       }
       if (child != null) {
         child = child.getTreeNext();
@@ -111,6 +109,20 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
     }
   }
 
+  private Indent calcIndentBefore(final ASTNode child, final int state) {
+    if (state == AFTER_ELSE) {
+      if (!mySettings.SPECIAL_ELSE_IF_TREATMENT) {
+        return getCodeBlockInternalIndent(1);
+      } else {
+        return getCodeBlockExternalIndent();
+      }
+    }
+    if (child.getElementType() == ElementType.ELSE_KEYWORD) 
+      return getCodeBlockExternalIndent();
+  
+    return Formatter.getInstance().createContinuationIndent();  
+  }
+  
   private boolean isSimpleStatement(final ASTNode child) {
     if (child.getElementType() == ElementType.BLOCK_STATEMENT) return false;
     if (!ElementType.STATEMENT_BIT_SET.isInSet(child.getElementType())) return false;    
@@ -136,7 +148,11 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
   }
 
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    return new ChildAttributes(getCodeBlockInternalIndent(1), null);
+    if (newChildIndex == 0 || newChildIndex == getSubBlocks().size()) {
+      return new ChildAttributes(getCodeBlockExternalIndent(), null);
+    } else {
+      return new ChildAttributes(myIndentsBefore.get(newChildIndex), null);
+    }
   }
 
 }
