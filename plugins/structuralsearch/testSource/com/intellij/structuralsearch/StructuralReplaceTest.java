@@ -121,7 +121,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
                             "public class Test {\n" +
                             "  public static void main(String[] args) {\n" +
                             "    if (1==1)\n" +
-                            "    //FIXME provide a parent frame\n" +
+                            "        //FIXME provide a parent frame\n" +
                             "        JOptionPane.showMessageDialog(null, \"MESSAGE\");\n" +
                             "  }\n" +
                             "}";
