@@ -703,8 +703,7 @@ public final class PsiUtil {
    * @return
    */
   public static boolean isInnerClass(PsiClass aClass) {
-    return !aClass.hasModifierProperty(PsiModifier.STATIC) &&
-           (aClass.getParent() instanceof PsiClass || aClass.getParent() instanceof JspFile);
+    return !aClass.hasModifierProperty(PsiModifier.STATIC) && aClass.getContainingClass() != null;
   }
 
   public static PsiElement findModifierInList(final PsiModifierList modifierList, String modifier) {
