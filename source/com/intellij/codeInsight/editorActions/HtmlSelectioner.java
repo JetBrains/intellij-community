@@ -43,7 +43,7 @@ public class HtmlSelectioner extends SelectWordUtil.WordSelectioner {
       VirtualFile virtualFile = (file!=null)?file.getVirtualFile():null;
       FileType fType = (virtualFile!=null)?FileTypeManager.getInstance().getFileTypeByFile(virtualFile):null;
 
-      return fType == StdFileTypes.HTML || fType == StdFileTypes.XHTML || fType == StdFileTypes.JSPX;
+      return fType == StdFileTypes.HTML || fType == StdFileTypes.XHTML || fType == StdFileTypes.JSPX || fType == StdFileTypes.JSP;
     }
     return false;
   }
