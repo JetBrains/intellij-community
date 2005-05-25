@@ -21,6 +21,12 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     return new IndentImpl(IndentImpl.Type.NORMAL, false);
   }
 
+  public Indent createNormalIndent(int count) {
+    final IndentImpl result = new IndentImpl(IndentImpl.Type.NORMAL, false);
+    result.setCount(count);
+    return result;
+  }
+
   public Indent getNoneIndent() {
     return new IndentImpl(IndentImpl.Type.NONE, false);
   }

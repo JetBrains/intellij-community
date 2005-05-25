@@ -1,11 +1,11 @@
-package com.intellij.psi.formatter.newXmlFormatter.java;
+package com.intellij.psi.formatter.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.formatter.newXmlFormatter.AbstractBlock;
+import com.intellij.psi.formatter.common.AbstractBlock;
 
 import java.util.List;
 

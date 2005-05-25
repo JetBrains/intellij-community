@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter.newXmlFormatter.java;
+package com.intellij.psi.formatter.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
@@ -20,23 +20,15 @@ public class DocCommentBlock extends AbstractJavaBlock{
     final ArrayList<Block> result = new ArrayList<Block>();
 
     ASTNode child = myNode.getFirstChildNode();
-    ArrayList<Block> docCommentData = new ArrayList<Block>();
     while (child != null) {
       if (child.getElementType() == ElementType.DOC_COMMENT_START) {
-        if (!docCommentData.isEmpty()) {
-          result.add(new SynteticCodeBlock(docCommentData, null, mySettings, Formatter.getInstance().createSpaceIndent(1), null));
-          docCommentData = new ArrayList<Block>();
-        }
-        result.add(createJavaBlock(child, mySettings));
+        result.add(createJavaBlock(child, mySettings, Formatter.getInstance().getNoneIndent(),
+                                   null, null));
       } else if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
-        docCommentData.add(createJavaBlock(child,  mySettings, null, getDocTagWrap(child), null));
+        result.add(createJavaBlock(child, mySettings, Formatter.getInstance().createSpaceIndent(1), getDocTagWrap(child), null));
       }
       child = child.getTreeNext();
     }
-    if (!docCommentData.isEmpty()) {
-      result.add(new SynteticCodeBlock(docCommentData, null, mySettings, Formatter.getInstance().createSpaceIndent(1), null));
-    }
-
     return result;
 
   }

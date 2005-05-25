@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter.newXmlFormatter.xml;
+package com.intellij.psi.formatter.xml;
 
 import com.intellij.newCodeFormatting.Block;
 import com.intellij.newCodeFormatting.Indent;
@@ -7,7 +7,7 @@ import com.intellij.newCodeFormatting.ChildAttributes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.formatter.newXmlFormatter.AbstractBlock;
+import com.intellij.psi.formatter.common.AbstractBlock;
 
 import java.util.List;
 
@@ -26,6 +26,12 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
   public List<Block> getSubBlocks() {
     return mySubBlocks;
   }
+
+  /*
+  public Indent getIndent() {
+    return getFormatter().getNoneIndent();
+  }
+  */
 
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
     final IElementType type1 = ((AbstractBlock)child1).getNode().getElementType();

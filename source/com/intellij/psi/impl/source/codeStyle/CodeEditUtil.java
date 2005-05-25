@@ -829,7 +829,7 @@ public class CodeEditUtil {
       settings.XML_KEEP_BLANK_LINES = oldKeepBlankLines;
     }
   }
-
+  
   private static IndentInfo getWhiteSpaceBeforeImpl(final PsiFile file,
                                                     final int tokenStartOffset,
                                                     final Language language,
@@ -838,39 +838,39 @@ public class CodeEditUtil {
                                                     final boolean mayChangeLineFeeds) {
     final FormattingModelBuilder builder = language.getFormattingModelBuilder();
     final PsiElement element = file.findElementAt(tokenStartOffset);
-
+    
     if (builder != null && element.getLanguage().getFormattingModelBuilder() != null) {
 
-      final TextRange textRange = element.getTextRange();
-      final FormattingModel model = builder.createModel(file, settings);
-      return Formatter.getInstance().getWhiteSpaceBefore(model.getDocumentModel(),
-                                                         model.getRootBlock(),
-                                                         settings, settings.getIndentOptions(file.getFileType()), textRange,
-                                                         mayChangeLineFeeds);
-    } else {
-      final PseudoTextBuilder pseudoTextBuilder = language.getFormatter();
-      LOG.assertTrue(pseudoTextBuilder != null);
+          final TextRange textRange = element.getTextRange();
+          final FormattingModel model = builder.createModel(file, settings);
+          return Formatter.getInstance().getWhiteSpaceBefore(model.getDocumentModel(),
+                                                             model.getRootBlock(),
+                                                             settings, settings.getIndentOptions(file.getFileType()), textRange,
+                                                             mayChangeLineFeeds);
+        } else {
+          final PseudoTextBuilder pseudoTextBuilder = language.getFormatter();
+          LOG.assertTrue(pseudoTextBuilder != null);
 
-      final PseudoText pseudoText = pseudoTextBuilder.build(project,
-                                                            settings,
-                                                            file);
-      return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, file.getFileType(), tokenStartOffset, mayChangeLineFeeds);
+          final PseudoText pseudoText = pseudoTextBuilder.build(project,
+                                                                settings,
+                                                                file);
+          return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, file.getFileType(), tokenStartOffset, mayChangeLineFeeds);
+        }
+      }
+
+      private static class MyIndentInfoStorage implements Formatter.IndentInfoStorage {
+        private final PsiFile myFile;
+
+        public MyIndentInfoStorage(final PsiFile file) {
+          myFile = file;
+        }
+
+        public void saveIndentInfo(IndentInfo info, int startOffset) {
+          myFile.findElementAt(startOffset).putUserData(INDENT_INFO_KEY, info);
+        }
+
+        public IndentInfo getIndentInfo(int startOffset) {
+          return myFile.findElementAt(startOffset).getUserData(INDENT_INFO_KEY);
+        }
+      }
     }
-  }
-
-  private static class MyIndentInfoStorage implements Formatter.IndentInfoStorage {
-    private final PsiFile myFile;
-
-    public MyIndentInfoStorage(final PsiFile file) {
-      myFile = file;
-    }
-
-    public void saveIndentInfo(IndentInfo info, int startOffset) {
-      myFile.findElementAt(startOffset).putUserData(INDENT_INFO_KEY, info);
-    }
-
-    public IndentInfo getIndentInfo(int startOffset) {
-      return myFile.findElementAt(startOffset).getUserData(INDENT_INFO_KEY);
-    }
-  }
-}

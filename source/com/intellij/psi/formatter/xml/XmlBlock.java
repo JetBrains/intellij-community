@@ -1,25 +1,27 @@
-package com.intellij.psi.formatter.newXmlFormatter.xml;
+package com.intellij.psi.formatter.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
+import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.formatter.newXmlFormatter.AbstractBlock;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class XmlBlock extends AbstractXmlBlock {
+  private final Indent myIndent;
+
   public XmlBlock(final ASTNode node,
                   final Wrap wrap,
                   final Alignment alignment,
-                  final XmlFormattingPolicy policy) {
+                  final XmlFormattingPolicy policy, final Indent indent) {
     super(node, wrap, alignment, policy);
+    myIndent = indent;
   }
 
   protected List<Block> buildChildren() {
@@ -46,7 +48,7 @@ public class XmlBlock extends AbstractXmlBlock {
       ASTNode child = myNode.getFirstChildNode();
       while (child != null) {
         if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
-          result.add(createChildBlock(child, null, null));
+          result.add(createChildBlock(child, null, null, null));
         }
         child = child.getTreeNext();
       }
@@ -105,6 +107,16 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   public Indent getIndent() {
+    if (myNode.getElementType() == ElementType.XML_PROLOG 
+        || myNode.getElementType() == ElementType.XML_DOCTYPE
+        || SourceTreeToPsiMap.treeElementToPsi(myNode) instanceof XmlDocument) {
+      return getFormatter().getNoneIndent();
+    }
+    else if (myNode.getElementType() == ElementType.XML_COMMENT && myNode.textContains('\n')) {
+      return getFormatter().createAbsoluteNoneIndent();
+    }
+    
+    /*
     if (myNode.getElementType() == ElementType.JSP_SCRIPTLET || myNode.getElementType() == ElementType.JSP_DECLARATION_NEW) {
       return getFormatter().getNoneIndent();
     }
@@ -133,6 +145,8 @@ public class XmlBlock extends AbstractXmlBlock {
     else {
       return null;
     }
+    */
+    return myIndent;
   }
 
   public boolean insertLineBreakBeforeTag() {

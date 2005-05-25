@@ -11,8 +11,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
-import com.intellij.psi.formatter.newXmlFormatter.xml.HtmlPolicy;
-import com.intellij.psi.formatter.newXmlFormatter.xml.XmlBlock;
+import com.intellij.psi.formatter.xml.HtmlPolicy;
+import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
@@ -34,7 +34,7 @@ public class XHTMLLanguage extends XMLLanguage {
         return new PsiBasedFormattingModel(element, settings, 
                                            new XmlBlock(SourceTreeToPsiMap.psiElementToTree(element), 
                                                         null, null, 
-                                                        new HtmlPolicy(settings, ElementType.XML_TAG)));
+                                                        new HtmlPolicy(settings, ElementType.XML_TAG), null));
       }
     };
     

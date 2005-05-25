@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter.newXmlFormatter.java;
+package com.intellij.psi.formatter.java;
 
 import com.intellij.lang.ASTNode;
 

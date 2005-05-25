@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter.newXmlFormatter.xml;
+package com.intellij.psi.formatter.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
@@ -9,11 +9,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class XmlTagBlock extends AbstractXmlBlock{
+  private final Indent myIndent;
+
   public XmlTagBlock(final ASTNode node,
                      final Wrap wrap,
                      final Alignment alignment,
-                     final XmlFormattingPolicy policy) {
+                     final XmlFormattingPolicy policy,
+                     final Indent indent) {
     super(node, wrap, alignment, policy);
+    myIndent = indent;
   }
 
   protected List<Block> buildChildren() {
@@ -27,23 +31,28 @@ public class XmlTagBlock extends AbstractXmlBlock{
     final Alignment textAlignment = formatter.createAlignment();
     final ArrayList<Block> result = new ArrayList<Block>();
     ArrayList<Block> localResult = new ArrayList<Block>();
+    
+    boolean insideTag = false;
+    
     while (child != null) {
       if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
 
         Wrap wrap = chooseWrap(child, tagBeginWrap, attrWrap, textWrap);
         Alignment alignment = chooseAlignment(child, attrAlignment, textAlignment);
         if (child.getElementType() == ElementType.XML_TAG_END) {
-          localResult.add(createChildBlock(child, wrap, alignment));
+          localResult.add(createChildBlock(child, wrap, alignment, null));
           result.add(createTagDescriptionNode(localResult));
           localResult = new ArrayList<Block>();
+          insideTag = true;
         } else if (child.getElementType() == ElementType.XML_END_TAG_START) {
+          insideTag = false;
           if (!localResult.isEmpty()) {
             result.add(createTagContentNode(localResult));
             localResult = new ArrayList<Block>();
-          }
-          localResult.add(createChildBlock(child, wrap, alignment));
+          }          
+          localResult.add(createChildBlock(child, wrap, alignment, null));
         } else if (child.getElementType() == ElementType.XML_EMPTY_ELEMENT_END) {
-          localResult.add(createChildBlock(child, wrap, alignment));
+          localResult.add(createChildBlock(child, wrap, alignment, null));
           result.add(createTagDescriptionNode(localResult));
           localResult = new ArrayList<Block>();
         }
@@ -54,7 +63,20 @@ public class XmlTagBlock extends AbstractXmlBlock{
           createXmlTextBlocks(localResult, child, wrap, alignment);
         }
         else {
-          localResult.add(createChildBlock(child, wrap, alignment));
+          final Indent indent;
+    
+          if (localResult.size() == 1 && localResult.get(0) instanceof JspTextBlock) {
+            indent = Formatter.getInstance().getNoneIndent();     
+          } else if (!insideTag) {
+            indent = null;            
+          }
+          else {
+            indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
+                                ? getFormatter().createNormalIndent()
+                                : getFormatter().getNoneIndent();
+          }
+          
+          localResult.add(createChildBlock(child, wrap, alignment, indent));
         }
       }
       child = child.getTreeNext();
@@ -68,32 +90,30 @@ public class XmlTagBlock extends AbstractXmlBlock{
 
   }
 
+  public Indent getIndent() {
+    return myIndent;
+  }
+
   private void createXmlTextBlocks(final ArrayList<Block> list, final ASTNode textNode, final Wrap wrap, final Alignment alignment) {
     ChameleonTransforming.transformChildren(myNode);
     ASTNode child = textNode.getFirstChildNode();
     while (child != null) {
       if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
-        list.add(createChildBlock(child,  wrap, alignment));
+        final Indent indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
+                              ? getFormatter().createNormalIndent()
+                              : getFormatter().getNoneIndent();
+        list.add(createChildBlock(child,  wrap, alignment, indent));
       }
       child = child.getTreeNext();
     }
   }
 
   private Block createTagContentNode(final ArrayList<Block> localResult) {
-    final Indent indent;
-    
-    if (localResult.size() == 1 && localResult.get(0) instanceof JspTextBlock) {
-      indent = Formatter.getInstance().getNoneIndent();     
-    } else {
-      indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
-                          ? getFormatter().createNormalIndent()
-                          : getFormatter().getNoneIndent();
-    }
-    return AbstractSyntheticBlock.createSynteticBlock(localResult, this, indent, myXmlFormattingPolicy);
+    return AbstractSyntheticBlock.createSynteticBlock(localResult, this, getFormatter().getNoneIndent(), myXmlFormattingPolicy);
   }
 
   private Block createTagDescriptionNode(final ArrayList<Block> localResult) {
-    return AbstractSyntheticBlock.createSynteticBlock(localResult, this, null, myXmlFormattingPolicy);
+    return AbstractSyntheticBlock.createSynteticBlock(localResult, this, getFormatter().getNoneIndent(), myXmlFormattingPolicy);
   }
 
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
@@ -129,10 +149,6 @@ public class XmlTagBlock extends AbstractXmlBlock{
       return createDefaultSpace(true);
     }
 
-  }
-
-  public Indent getIndent() {
-    return getFormatter().getNoneIndent();
   }
 
   public boolean insertLineBreakBeforeTag() {

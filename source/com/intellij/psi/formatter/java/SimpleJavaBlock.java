@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter.newXmlFormatter.java;
+package com.intellij.psi.formatter.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
@@ -20,56 +20,40 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
 
   protected List<Block> buildChildren() {
     ChameleonTransforming.transformChildren(myNode);
-    ASTNode firstChild = myNode.getFirstChildNode();
-    final ArrayList<Block> comments = new ArrayList<Block>();
-    firstChild = readCommentsFrom(firstChild, comments);
-    final ArrayList<Block> blocks = createBlocksFromChild(firstChild);
-    if (comments.isEmpty()) {
-      return blocks;
-    } else {
-      final ArrayList<Block> result = new ArrayList<Block>();
-      result.addAll(comments);
-      if (!blocks.isEmpty()) {
-        final SynteticCodeBlock resultWrapper = new SynteticCodeBlock(blocks, myAlignment, mySettings, myIndent, myWrap);        
-        result.add(resultWrapper);
-      }
-      myAlignment = null;
-      myWrap = null;
-      myIndent = Formatter.getInstance().getNoneIndent();
-      return result;
-    }
-  }
+    ASTNode child = myNode.getFirstChildNode();
+    final ArrayList<Block> result = new ArrayList<Block>();
 
-  private ASTNode readCommentsFrom(ASTNode child, final ArrayList<Block> comments) {
+    Indent indent = null;
     while (child != null) {
       if (ElementType.COMMENT_BIT_SET.isInSet(child.getElementType()) || child.getElementType() == JavaDocElementType.DOC_COMMENT) {
-        comments.add(createJavaBlock(child, mySettings));
+        result.add(createJavaBlock(child, mySettings, Formatter.getInstance().getNoneIndent(), null, null));
+        indent = Formatter.getInstance().getNoneIndent();
       }
       else if (!containsWhiteSpacesOnly(child)) {
-        return child;
+        break;
       }
       child = child.getTreeNext();
     }
-    return child;
-  }
-
-  private ArrayList<Block> createBlocksFromChild(ASTNode child) {
+    
     if (myNode.getElementType() == ElementType.METHOD_CALL_EXPRESSION) {
       if (getReservedWrap() == null) setReservedWrap(Formatter.getInstance().createWrap(getWrapType(mySettings.METHOD_CALL_CHAIN_WRAP), false));
     }
 
-    final ArrayList<Block> result = new ArrayList<Block>();
     Alignment childAlignment = createChildAlignment();
     Wrap childWrap = createChildWrap();
     while (child != null) {
       if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
-        child = processChild(result, child, childAlignment, childWrap);
+        child = processChild(result, child, childAlignment, childWrap, indent);
+        if (indent != null) {
+          indent = Formatter.getInstance().createContinuationIndent();
+        }
+        //indent = Formatter.getInstance().createContinuationIndent();
       }
       if (child != null) {
         child = child.getTreeNext();
       }
     }
-
+     
     return result;
   }
 

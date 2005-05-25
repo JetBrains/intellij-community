@@ -1,17 +1,16 @@
-package com.intellij.psi.formatter.newXmlFormatter.java;
+package com.intellij.psi.formatter.java;
 
+import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.formatter.newXmlFormatter.AbstractBlock;
+import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.codeFormatting.general.FormatterUtil;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlock{
@@ -31,17 +30,30 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     myIndent = indent;
   }
 
-  public static Block createJavaBlock(final ASTNode child, final CodeStyleSettings settings, final Indent indent, Wrap wrap, Alignment alignment) {
-    Indent actualIndent = indent == null ? getDefaultIndent(child) : indent;
+  public static Block createJavaBlock(final ASTNode child,
+                                      final CodeStyleSettings settings,
+                                      final Indent indent,
+                                      Wrap wrap,
+                                      Alignment alignment) {
+    Indent actualIndent = indent == null ? getDefaultSubtreeIndent(child) : indent;
     final IElementType elementType = child.getElementType();
+    if (child.getPsi() instanceof PsiClass) {
+      return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings);
+    }
+    if (isBlockType(elementType)) {
+      return new BlockContainingJavaBlock(child, wrap,  alignment, actualIndent, settings);
+    }    
+    if (isStatement(child, child.getTreeParent())) {
+      return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings);      
+    }
     if (child instanceof LeafElement) {
-      return new LeafBlock(child, wrap, alignment);
+      return new LeafBlock(child, wrap, alignment, actualIndent);
     }
     else if (isLikeExtendsList(elementType)) {
-      return new ExtendsListBlock(child, wrap, alignment, actualIndent, settings);
+      return new ExtendsListBlock(child, wrap, alignment, settings);
     }
-    else if (isBlockType(elementType)) {
-      return new BlockContainingJavaBlock(child, wrap,  alignment, actualIndent, settings);
+    else if (elementType == ElementType.CODE_BLOCK) {
+      return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings);
     }
     else if (elementType == ElementType.LABELED_STATEMENT) {
       return new LabeledJavaBlock(child, wrap, alignment, actualIndent,settings);
@@ -56,43 +68,55 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   private static boolean isLikeExtendsList(final IElementType elementType) {
     return elementType == ElementType.EXTENDS_LIST
-    || elementType == ElementType.IMPLEMENTS_LIST
-    || elementType == ElementType.THROWS_LIST;
+           || elementType == ElementType.IMPLEMENTS_LIST
+           || elementType == ElementType.THROWS_LIST;
   }
 
   private static boolean isBlockType(final IElementType elementType) {
     return elementType == ElementType.SWITCH_STATEMENT
-    || elementType == ElementType.FOR_STATEMENT
-    || elementType == ElementType.WHILE_STATEMENT
-    || elementType == ElementType.DO_WHILE_STATEMENT
-    || elementType == ElementType.IF_STATEMENT
-    || elementType == ElementType.METHOD
-    || elementType == ElementType.FOREACH_STATEMENT;
+           || elementType == ElementType.FOR_STATEMENT
+           || elementType == ElementType.WHILE_STATEMENT
+           || elementType == ElementType.DO_WHILE_STATEMENT
+           || elementType == ElementType.TRY_STATEMENT
+           || elementType == ElementType.CATCH_SECTION
+           || elementType == ElementType.IF_STATEMENT
+           || elementType == ElementType.METHOD
+           || elementType == ElementType.ARRAY_INITIALIZER_EXPRESSION
+           || elementType == ElementType.FOREACH_STATEMENT;
   }
 
   public static Block createJavaBlock(final ASTNode child, final CodeStyleSettings settings) {
-    return createJavaBlock(child, settings, getDefaultIndent(child), null, null);
+    return createJavaBlock(child, settings, getDefaultSubtreeIndent(child), null, null);
   }
 
-  private static Indent getDefaultIndent(final ASTNode child) {
-    if (child.getElementType() == ElementType.JSP_CODE_BLOCK) return Formatter.getInstance().createNormalIndent();
-    if (child.getElementType() == ElementType.DUMMY_HOLDER) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == ElementType.CLASS) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == ElementType.IF_STATEMENT) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == ElementType.TRY_STATEMENT) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == ElementType.CATCH_SECTION) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == ElementType.FOR_STATEMENT) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == ElementType.FOREACH_STATEMENT) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == ElementType.BLOCK_STATEMENT) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == ElementType.DO_WHILE_STATEMENT) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == ElementType.WHILE_STATEMENT) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == ElementType.SWITCH_STATEMENT) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == ElementType.METHOD) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == JavaDocElementType.DOC_COMMENT) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == JavaDocElementType.DOC_TAG) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == JavaDocElementType.DOC_INLINE_TAG) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == ElementType.IMPORT_LIST) return Formatter.getInstance().getNoneIndent();
-    if (SourceTreeToPsiMap.treeElementToPsi(child) instanceof PsiFile) return Formatter.getInstance().getNoneIndent();
+  private static Indent getDefaultSubtreeIndent(final ASTNode child) {
+    final ASTNode parent = child.getTreeParent();
+    if (child.getElementType() == ElementType.EXPRESSION_LIST) return Formatter.getInstance().getNoneIndent();
+    if (child.getElementType() == ElementType.PARAMETER_LIST) return Formatter.getInstance().getNoneIndent();
+    if (child.getElementType() == ElementType.PARENTH_EXPRESSION) return Formatter.getInstance().getNoneIndent();
+    if (child.getElementType() == ElementType.DOC_TAG) return Formatter.getInstance().getNoneIndent();    
+    if (child.getElementType() == ElementType.DOC_COMMENT_LEADING_ASTERISKS) return Formatter.getInstance().createSpaceIndent(1);
+    if (parent != null) {
+      if (parent.getElementType() == ElementType.JSP_CODE_BLOCK) return Formatter.getInstance().createNormalIndent();
+      if (parent.getElementType() == ElementType.DUMMY_HOLDER) return Formatter.getInstance().getNoneIndent();
+      if (parent.getElementType() == ElementType.CLASS) return Formatter.getInstance().getNoneIndent();
+      if (parent.getElementType() == ElementType.IF_STATEMENT) return Formatter.getInstance().getNoneIndent();
+      if (parent.getElementType() == ElementType.TRY_STATEMENT) return Formatter.getInstance().getNoneIndent();
+      if (parent.getElementType() == ElementType.CATCH_SECTION) return Formatter.getInstance().getNoneIndent();
+      if (parent.getElementType() == ElementType.FOR_STATEMENT) return Formatter.getInstance().getNoneIndent();
+      if (parent.getElementType() == ElementType.FOREACH_STATEMENT) return Formatter.getInstance().getNoneIndent();
+      if (parent.getElementType() == ElementType.BLOCK_STATEMENT) return Formatter.getInstance().getNoneIndent();
+      if (parent.getElementType() == ElementType.DO_WHILE_STATEMENT) return Formatter.getInstance().getNoneIndent();
+      if (parent.getElementType() == ElementType.WHILE_STATEMENT) return Formatter.getInstance().getNoneIndent();
+      if (parent.getElementType() == ElementType.SWITCH_STATEMENT) return Formatter.getInstance().getNoneIndent();
+      if (parent.getElementType() == ElementType.METHOD) return Formatter.getInstance().getNoneIndent();
+      if (parent.getElementType() == JavaDocElementType.DOC_COMMENT) return Formatter.getInstance().getNoneIndent();
+      if (parent.getElementType() == JavaDocElementType.DOC_TAG) return Formatter.getInstance().getNoneIndent();
+      if (parent.getElementType() == JavaDocElementType.DOC_INLINE_TAG) return Formatter.getInstance().getNoneIndent();
+      if (parent.getElementType() == ElementType.IMPORT_LIST) return Formatter.getInstance().getNoneIndent();
+      if (SourceTreeToPsiMap.treeElementToPsi(parent) instanceof PsiFile) return Formatter.getInstance().getNoneIndent();
+    }
+    
     return null;
   }
 
@@ -108,15 +132,17 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return myIndent;
   }
 
-  protected boolean isStatement(final ASTNode child) {
-    if (myNode.getElementType() == ElementType.CODE_BLOCK) return false;
-    if (child.getElementType() == ElementType.BLOCK_STATEMENT) return false;
-    final int role = ((CompositeElement)myNode).getChildRole(child);
-    if (myNode.getElementType() == ElementType.IF_STATEMENT) return role == ChildRole.THEN_BRANCH || role == ChildRole.ELSE_BRANCH;
-    if (myNode.getElementType() == ElementType.FOR_STATEMENT) return role == ChildRole.LOOP_BODY;
-    if (myNode.getElementType() == ElementType.WHILE_STATEMENT) return role == ChildRole.LOOP_BODY;
-    if (myNode.getElementType() == ElementType.DO_WHILE_STATEMENT) return role == ChildRole.LOOP_BODY;
-    if (myNode.getElementType() == ElementType.FOREACH_STATEMENT) return role == ChildRole.LOOP_BODY;
+  protected static boolean isStatement(final ASTNode child, final ASTNode parentNode) {
+    if (parentNode != null) {
+      if (parentNode.getElementType() == ElementType.CODE_BLOCK) return false;
+      final int role = ((CompositeElement)parentNode).getChildRole(child);
+      if (parentNode.getElementType() == ElementType.IF_STATEMENT) return role == ChildRole.THEN_BRANCH || role == ChildRole.ELSE_BRANCH;
+      if (parentNode.getElementType() == ElementType.FOR_STATEMENT) return role == ChildRole.LOOP_BODY;
+      if (parentNode.getElementType() == ElementType.WHILE_STATEMENT) return role == ChildRole.LOOP_BODY;
+      if (parentNode.getElementType() == ElementType.DO_WHILE_STATEMENT) return role == ChildRole.LOOP_BODY;
+      if (parentNode.getElementType() == ElementType.FOREACH_STATEMENT) return role == ChildRole.LOOP_BODY;      
+    }
+//    if (child.getElementType() == ElementType.BLOCK_STATEMENT) return false;
     return false;
   }
 
@@ -132,7 +158,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         return Formatter.getInstance().createWrap(getWrapType(mySettings.BINARY_OPERATION_WRAP), false);
       } else {
         if (!hasTheSamePriority(myNode.getTreeParent())) {
-          //Formatter.getInstance().createWrap(getWrapType(mySettings.BINARY_OPERATION_WRAP), false);
           return Formatter.getInstance().createChildWrap(actualWrap, getWrapType(mySettings.BINARY_OPERATION_WRAP), false);
         } else {
           return actualWrap;
@@ -147,6 +172,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     else if (myNode.getElementType() == ElementType.METHOD) {
       return Formatter.getInstance().createWrap(getWrapType(mySettings.THROWS_LIST_WRAP), true);
+    }
+    else if (myNode.getElementType() == ElementType.CODE_BLOCK) {
+      return Formatter.getInstance().createWrap(Wrap.NORMAL, true);      
     }
     else {
       return null;
@@ -199,20 +227,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return false;
   }
 
-  protected ASTNode processChild(final ArrayList<Block> result, ASTNode child, Alignment defaultAlignment, final Wrap defaultWrap) {
-    if (child.getElementType() == ElementType.LBRACE) {
-      if (!result.isEmpty()) {
-        final ArrayList<Block> subBlock = new ArrayList<Block>(result);
-        result.clear();
-        result.add(new SynteticCodeBlock(subBlock, null, mySettings, null, null));
-      }
-      child = createBlockFrom(result, child, ElementType.LBRACE, ElementType.RBRACE);
+  protected ASTNode processChild(final ArrayList<Block> result,
+                                 ASTNode child,
+                                 Alignment defaultAlignment,
+                                 final Wrap defaultWrap,
+                                 final Indent childIndent) {
+    if (child.getElementType() == ElementType.ARRAY_INITIALIZER_EXPRESSION) {
+      result.addAll(new CodeBlockBlock(child, null, null, null, mySettings).buildChildren());
     }
-    else if (isStatement(child)) {
-      createBlockFrom(result, child, null, null);
-    }
-    else
-    if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.EXPRESSION_LIST){
+    else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.EXPRESSION_LIST){
       final Wrap wrap = Formatter.getInstance().createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
       child = createSynteticBlock(result, child, ElementType.LPARENTH, ElementType.RPARENTH,
                                   Formatter.getInstance().getNoneIndent(),
@@ -239,10 +262,12 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     else {
-      Indent indent = null;
+      Indent indent = childIndent;
+      /*
       if (shouldShift(child)) {
         indent = Formatter.getInstance().createNormalIndent();
       }
+      */
       final Block block =
         createJavaBlock(child, mySettings, indent, arrangeChildWrap(child, defaultWrap), arrangeChildAlignment(child, defaultAlignment));
 
@@ -390,13 +415,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
-  private boolean shouldShift(final ASTNode child) {
-    return
-    myNode.getElementType() == ElementType.IF_STATEMENT
-    && child.getElementType() == ElementType.IF_STATEMENT
-    && !mySettings.SPECIAL_ELSE_IF_TREATMENT;
-  }
-
   private ASTNode createSynteticBlock(List<Block> result,
                                       ASTNode child,
                                       IElementType from,
@@ -410,49 +428,25 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     setChildAlignment(alignmentStrategy.getAlignment(null));
 
     ASTNode prev = child;
-    List<Block> resultList = new ArrayList<Block>();
-    List<Block> codeBlock = new ArrayList<Block>();
     while (child != null) {
       if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         if (child.getElementType() == from) {
-          resultList.add(createJavaBlock(child, mySettings));
-        } else if (child.getElementType() == ElementType.SWITCH_LABEL_STATEMENT){
-          child = createCaseBlockFrom(codeBlock, child);
+          result.add(createJavaBlock(child, mySettings, externalIndent, null, null));
         } else if (child.getElementType() == to) {
-          if (!codeBlock.isEmpty()) {
-            resultList.add(new SynteticCodeBlock(codeBlock, null, mySettings, internalIndent, null));
-
-          }
-          resultList.add(createJavaBlock(child, mySettings, null, null, FormatterUtil.isAfterIncompleted(child) ? alignmentStrategy.getAlignment(null) : null));
-          final SynteticCodeBlock externalBlock = new SynteticCodeBlock(resultList, null, mySettings, externalIndent, null);
-          result.add(externalBlock);
-          externalBlock.setChildIndent(internalIndent);
-          externalBlock.setChildAlignment(alignmentStrategy.getAlignment(null));
+          result.add(createJavaBlock(child, mySettings, externalIndent, null, FormatterUtil.isAfterIncompleted(child) ? alignmentStrategy.getAlignment(null) : null));
           return child;
         } else {
           final IElementType elementType = child.getElementType();
-          codeBlock.add(createJavaBlock(child, mySettings, null,
+          result.add(createJavaBlock(child, mySettings, internalIndent,
                                         wrappingStrategy.getWrap(elementType),
                                         alignmentStrategy.getAlignment(elementType)));
-          if (to == null) {
-            resultList.add(new SynteticCodeBlock(codeBlock, null, mySettings, internalIndent, null));
-            result.add(new SynteticCodeBlock(resultList, null, mySettings, externalIndent, null));
-            return child;//process only one statement
+          if (to == null) {//process only one statement
+            return child;
           }
         }
       }
       prev = child;
-      if (child != null) {
-        child = child.getTreeNext();
-      }
-    }
-
-    if (!codeBlock.isEmpty()) {
-      resultList.add(new SynteticCodeBlock(codeBlock, null, mySettings, internalIndent, null));
-    }
-
-    if (!resultList.isEmpty()) {
-      result.add(new SynteticCodeBlock(resultList, null, mySettings, externalIndent, null));
+      child = child.getTreeNext();
     }
 
     return prev;
@@ -467,65 +461,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     myChildIndent = internalIndent;
   }
 
-  private ASTNode createBlockFrom(List<Block> result, ASTNode child, final IElementType from, final IElementType to) {
-
-    return createSynteticBlock(result,
-                               child,
-                               from,
-                               to,
-                               getCodeBlockExternalIndent(),
-                               getCodeBlockInternalIndent(child),
-                               new WrappingStrategy(Formatter.getInstance().createWrap(Wrap.NORMAL, true)) {
-      protected boolean shouldWrap(final IElementType type) {
-        return true;
-      }
-    },
-                               AlignmentStrategy.DO_NOT_ALIGN);
-  }
-
   private Alignment createAlignmentOrDefault(final Alignment defaultAlignment) {
     return defaultAlignment == null ? Formatter.getInstance().createAlignment() :defaultAlignment;
-  }
-
-  private ASTNode createCaseBlockFrom(final List<Block> result, ASTNode child) {
-    List<Block> statementsUnderCase = new ArrayList<Block>();
-    final Block caseBlock = createJavaBlock(child, mySettings);
-    child = child.getTreeNext();
-    ASTNode prev = child;
-    while (child != null) {
-      if (!containsWhiteSpacesOnly(child)) {
-        if (child.getElementType() == ElementType.RBRACE || child.getElementType() == ElementType.SWITCH_LABEL_STATEMENT) {
-          result.add(createCaseBlock(statementsUnderCase, caseBlock));
-          return prev;
-        } else {
-          statementsUnderCase.add(createJavaBlock(child, mySettings));
-        }
-      }
-      prev = child;
-      child = child.getTreeNext();
-    }
-
-    result.add(createCaseBlock(statementsUnderCase, caseBlock));
-
-    return null;
-  }
-
-  private Block createCaseBlock(final List<Block> statementsUnderCase, final Block caseBlock) {
-    Indent indentUnderCase = Formatter.getInstance().createNormalIndent();
-    if (statementsUnderCase.size() == 1 && isCodeBlock(statementsUnderCase.get(0))) {
-      if (mySettings.BRACE_STYLE == CodeStyleSettings.END_OF_LINE || mySettings.BRACE_STYLE == CodeStyleSettings.NEXT_LINE){
-        indentUnderCase = Formatter.getInstance().getNoneIndent();
-      }
-    }
-    final SynteticCodeBlock blockUnderCase = statementsUnderCase.isEmpty() ? null :
-      new SynteticCodeBlock(statementsUnderCase, null, mySettings, indentUnderCase, null);
-    Block[] caseBlocks = blockUnderCase == null ? new Block[] {caseBlock}: new Block[]{caseBlock, blockUnderCase};
-    return new SynteticCodeBlock(Arrays.asList(caseBlocks), null, mySettings, Formatter.getInstance().getNoneIndent(), null);
-  }
-
-  private boolean isCodeBlock(final Block block) {
-    if (!(block instanceof AbstractBlock)) return false;
-    return ((AbstractBlock)block).getTreeNode().getElementType() == ElementType.BLOCK_STATEMENT;
   }
 
   private int getBraceStyle() {
@@ -540,22 +477,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   }
 
-  private Indent getCodeBlockInternalIndent(final ASTNode child) {
+  protected Indent getCodeBlockInternalIndent(final ASTNode child, final int baseChildrenIndent) {
     if (isTopLevelClass() && mySettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS) {
       return Formatter.getInstance().getNoneIndent();
     }
 
-    if (myNode.getTreeParent().getElementType() == ElementType.SWITCH_STATEMENT && !mySettings.INDENT_CASE_FROM_SWITCH) {
-      return Formatter.getInstance().getNoneIndent();
-    }
-
-    if (child.getElementType() == ElementType.IF_STATEMENT && myNode.getElementType() == ElementType.IF_STATEMENT && mySettings.SPECIAL_ELSE_IF_TREATMENT){
-      return Formatter.getInstance().getNoneIndent();
-    }
-
     final int braceStyle = getBraceStyle();
-    return braceStyle == CodeStyleSettings.NEXT_LINE_SHIFTED ? Formatter.getInstance().getNoneIndent()
-           : Formatter.getInstance().createNormalIndent();
+    return braceStyle == CodeStyleSettings.NEXT_LINE_SHIFTED ? 
+           Formatter.getInstance().createNormalIndent(baseChildrenIndent - 1)
+           : Formatter.getInstance().createNormalIndent(baseChildrenIndent);
   }
 
   private boolean isTopLevelClass() {
@@ -563,7 +493,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return SourceTreeToPsiMap.treeElementToPsi(myNode.getTreeParent()) instanceof PsiFile;
   }
 
-  private Indent getCodeBlockExternalIndent(){
+  protected Indent getCodeBlockExternalIndent(){
     final int braceStyle = getBraceStyle();
     if (braceStyle == CodeStyleSettings.END_OF_LINE || braceStyle == CodeStyleSettings.NEXT_LINE) {
       return Formatter.getInstance().getNoneIndent();

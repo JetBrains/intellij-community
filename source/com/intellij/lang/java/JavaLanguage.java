@@ -16,7 +16,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
-import com.intellij.psi.formatter.newXmlFormatter.java.AbstractJavaBlock;
+import com.intellij.psi.formatter.java.AbstractJavaBlock;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.java.JavaAdapter;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;

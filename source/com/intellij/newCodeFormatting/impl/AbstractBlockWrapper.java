@@ -22,8 +22,7 @@ public class AbstractBlockWrapper {
   
   
   protected IndentInfo myIndentFromParent = null;
-  
-  
+  private IndentImpl myIndent = null;
 
   public AbstractBlockWrapper(final Block block, final WhiteSpace whiteSpace, final AbstractBlockWrapper parent, final TextRange textRange) {
     myBlock = block;
@@ -69,12 +68,7 @@ public class AbstractBlockWrapper {
   }
 
   public IndentImpl getIndent(){
-    final Indent indent = getBlock().getIndent();
-    if (indent == null) {
-      return (IndentImpl)Formatter.getInstance().createContinuationWithoutFirstIndent();
-    } else {
-      return (IndentImpl)indent;
-    }
+    return myIndent;
   }
 
   public AbstractBlockWrapper getParent() {
@@ -99,7 +93,7 @@ public class AbstractBlockWrapper {
   private static IndentData getIndent(CodeStyleSettings.IndentOptions options,
                                       AbstractBlockWrapper block,
                                       final int tokenBlockStartOffset) {
-    final IndentImpl indent = block.myParent.getIndent();
+    final IndentImpl indent = block.getIndent();
     if (indent.getType() == IndentImpl.Type.CONTINUATION) {
       return new IndentData(options.CONTINUATION_INDENT_SIZE);
     }
@@ -114,7 +108,7 @@ public class AbstractBlockWrapper {
     if (indent.getType() == IndentImpl.Type.LABEL) return new IndentData(options.LABEL_INDENT_SIZE);
     if (indent.getType() == IndentImpl.Type.NONE) return new IndentData(0);
     if (indent.getType() == IndentImpl.Type.SPACES) return new IndentData(0, indent.getSpaces());
-    return new IndentData(options.INDENT_SIZE);
+    return new IndentData(options.INDENT_SIZE * indent.getCount());
 
   }
 
@@ -122,9 +116,9 @@ public class AbstractBlockWrapper {
                                    CodeStyleSettings.IndentOptions options,
                                    final int tokenBlockStartOffset) {
     final boolean childOnNewLine = child.getWhiteSpace().containsLineFeeds();
-    IndentData childIndent = childOnNewLine || getWhiteSpace().containsLineFeeds() ? getIndent(options, child, tokenBlockStartOffset) : new IndentData(0);
+    IndentData childIndent = childOnNewLine /*|| getWhiteSpace().containsLineFeeds()*/ ? getIndent(options, child, tokenBlockStartOffset) : new IndentData(0);
 
-    if (childOnNewLine && getIndent().isAbsolute()) {
+    if (childOnNewLine && child.getIndent().isAbsolute()) {
       myCanUseFirstChildIndentAsBlockIndent = false;
       AbstractBlockWrapper current = this;
       while (current != null && current.getStartOffset() == getStartOffset()) {
@@ -151,7 +145,7 @@ public class AbstractBlockWrapper {
       return childIndent.add(myParent.getChildOffset(this, options, tokenBlockStartOffset));
     } else {
       if (myParent == null) return  childIndent.add(getWhiteSpace());
-      if (myParent.getIndent().isAbsolute()) return childIndent.add(myParent.myParent.getChildOffset(myParent, options, tokenBlockStartOffset));
+      if (getIndent().isAbsolute()) return childIndent.add(myParent.myParent.getChildOffset(myParent, options, tokenBlockStartOffset));
       if (myCanUseFirstChildIndentAsBlockIndent) {
         return childIndent.add(getWhiteSpace());
       }
@@ -199,7 +193,7 @@ public class AbstractBlockWrapper {
     if (indent.getType() == IndentImpl.Type.LABEL) return new IndentData(options.LABEL_INDENT_SIZE);
     if (indent.getType() == IndentImpl.Type.NONE) return new IndentData(0);
     if (indent.getType() == IndentImpl.Type.SPACES) return new IndentData(0, indent.getSpaces());
-    return new IndentData(options.INDENT_SIZE);
+    return new IndentData(options.INDENT_SIZE * indent.getCount());
 
   }
 
@@ -218,5 +212,8 @@ public class AbstractBlockWrapper {
     if (getStartOffset() != myParent.getStartOffset() && myParent.getWhiteSpace().containsLineFeeds()) return myParent;
     return myParent.findFirstIndentedParent();
   }
-  
+
+  public void setIndent(final IndentImpl indent) {
+    myIndent = indent;
+  }
 }

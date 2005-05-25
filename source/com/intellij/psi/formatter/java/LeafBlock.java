@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter.newXmlFormatter.java;
+package com.intellij.psi.formatter.java;
 
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.TextRange;
@@ -14,11 +14,16 @@ public class LeafBlock implements Block{
   private final Alignment myAlignment;
 
   private static final ArrayList<Block> EMPTY_SUB_BLOCKS = new ArrayList<Block>();
+  private final Indent myIndent;
 
-  public LeafBlock(final ASTNode node, final Wrap wrap, final Alignment alignment) {
+  public LeafBlock(final ASTNode node, 
+                   final Wrap wrap, 
+                   final Alignment alignment,
+                   Indent indent) {
     myNode = node;
     myWrap = wrap;
     myAlignment = alignment;
+    myIndent = indent;
   }
 
   public TextRange getTextRange() {
@@ -34,7 +39,7 @@ public class LeafBlock implements Block{
   }
 
   public Indent getIndent() {
-    return null;
+    return myIndent;
   }
 
   public Alignment getAlignment() {

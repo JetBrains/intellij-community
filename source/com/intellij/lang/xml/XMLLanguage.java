@@ -17,8 +17,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
-import com.intellij.psi.formatter.newXmlFormatter.xml.XmlBlock;
-import com.intellij.psi.formatter.newXmlFormatter.xml.XmlPolicy;
+import com.intellij.psi.formatter.xml.XmlBlock;
+import com.intellij.psi.formatter.xml.XmlPolicy;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.impl.source.xml.behavior.CDATAOnAnyEncodedPolicy;
@@ -47,7 +47,7 @@ public class XMLLanguage extends Language {
     myFormattingModelBuilder = new FormattingModelBuilder() {
       public FormattingModel createModel(final PsiFile element, final CodeStyleSettings settings) {
         final ASTNode root = SourceTreeToPsiMap.psiElementToTree(element);
-        return new PsiBasedFormattingModel(element, settings, new XmlBlock(root, null, null, new XmlPolicy(settings)));
+        return new PsiBasedFormattingModel(element, settings, new XmlBlock(root, null, null, new XmlPolicy(settings), null));
       }
     };    
   }

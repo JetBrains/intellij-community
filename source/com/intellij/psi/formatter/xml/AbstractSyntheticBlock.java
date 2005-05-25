@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter.newXmlFormatter.xml;
+package com.intellij.psi.formatter.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
@@ -7,7 +7,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.formatter.newXmlFormatter.AbstractBlock;
+import com.intellij.psi.formatter.common.AbstractBlock;
 
 import java.util.List;
 

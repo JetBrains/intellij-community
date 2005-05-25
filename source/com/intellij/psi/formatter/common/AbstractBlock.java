@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter.newXmlFormatter;
+package com.intellij.psi.formatter.common;
 
 import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
@@ -50,7 +50,7 @@ public abstract class AbstractBlock implements Block {
     return myNode;
   }
 
-  protected boolean containsWhiteSpacesOnly(final ASTNode node) {
+  protected static boolean containsWhiteSpacesOnly(final ASTNode node) {
     if (node.getElementType() == ElementType.WHITE_SPACE) return true;
     if (node.getElementType() == ElementType.DOC_COMMENT_DATA && node.textContains('\n') && node.getText().trim().length() == 0) {
       return true;

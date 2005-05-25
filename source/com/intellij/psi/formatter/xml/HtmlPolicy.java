@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter.newXmlFormatter.xml;
+package com.intellij.psi.formatter.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.Wrap;

@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter.newXmlFormatter.java;
+package com.intellij.psi.formatter.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
@@ -20,31 +20,21 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
 
   protected List<Block> buildChildren() {
     final ArrayList<Block> result = new ArrayList<Block>();
-    List<Block> codeBlockContent = new ArrayList<Block>();
     ChameleonTransforming.transformChildren(myNode);
     ASTNode child = myNode.getFirstChildNode();
+    Indent currentIndent = getLabelIndent();
+    Wrap currentWrap = null;
     while (child != null) {
       if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+        result.add(createJavaBlock(child, mySettings, currentIndent, currentWrap, null));
         if (child.getElementType() == ElementType.COLON) {
-          codeBlockContent.add(createJavaBlock(child, mySettings));
-          result.add(new SynteticCodeBlock(codeBlockContent, null, mySettings, getLabelIndent(), null));
-          codeBlockContent = new ArrayList<Block>();
-        } else {
-          codeBlockContent.add(createJavaBlock(child, mySettings));
-        }
+          currentIndent = Formatter.getInstance().getNoneIndent();
+          currentWrap =Formatter.getInstance().createWrap(Wrap.ALWAYS, true);
+        } 
       }
       child = child.getTreeNext();
     }
-    if (!codeBlockContent.isEmpty()) {
-      result.add(new SynteticCodeBlock(codeBlockContent, null, mySettings, null,
-                                       Formatter.getInstance().createWrap(getWrapType(mySettings.LABELED_STATEMENT_WRAP), true)));
-    }
     return result;
-
-  }
-
-  public Indent getIndent() {
-    return Formatter.getInstance().getNoneIndent();
   }
 
   private Indent getLabelIndent() {
