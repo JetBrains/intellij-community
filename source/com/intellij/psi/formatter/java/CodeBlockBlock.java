@@ -112,13 +112,13 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     if (state == BEFORE_FIRST) return Formatter.getInstance().getNoneIndent();
     
     if (child.getElementType() == ElementType.SWITCH_LABEL_STATEMENT) {
-      return getCodeBlockInternalIndent(child, myChildrenIndent);
+      return getCodeBlockInternalIndent(myChildrenIndent);
     }
     if (state == AFTER_CASE_LABEL) {
       if (child.getElementType() == ElementType.BLOCK_STATEMENT) {
-        return getCodeBlockInternalIndent(child, myChildrenIndent);
+        return getCodeBlockInternalIndent(myChildrenIndent);
       } else {
-        return getCodeBlockInternalIndent(child, myChildrenIndent + 1);
+        return getCodeBlockInternalIndent(myChildrenIndent + 1);
       }
     }
     if (state == BEFORE_LBRACE) {
@@ -134,9 +134,13 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         return Formatter.getInstance().getNoneIndent();
       }
       else {
-        return getCodeBlockInternalIndent(child, 1);
+        return getCodeBlockInternalIndent(1);
       }
     }
+  }
+
+  public ChildAttributes getChildAttributes(final int newChildIndex) {
+    return new ChildAttributes(getCodeBlockInternalIndent(myChildrenIndent), null);
   }
 
   protected Wrap getReservedWrap() {

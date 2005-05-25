@@ -6,6 +6,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.openapi.util.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,8 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
   private final static int BEFORE_FIRST = 0;
   private final static int BEFORE_BLOCK = 1;
   private final static int AFTER_ELSE = 2;
+
+  private final List<Pair<Integer, Integer>> myBracePositions = new ArrayList<Pair<Integer, Integer>>();
   
   public BlockContainingJavaBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CodeStyleSettings settings) {
     super(node, wrap, alignment, indent, settings);
@@ -37,11 +40,13 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
     int state = BEFORE_FIRST;
 
+    int pos = 0;
     while (child != null) {
-      if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+      if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){        
         final Indent indent = calcIndent(child,  state);
         state = calcNewState(child, state);
         child = processChild(result, child, childAlignment, childWrap, indent);
+        pos++;
       }
       if (child != null) {
         child = child.getTreeNext();
@@ -78,13 +83,13 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
   private Indent calcIndent(final ASTNode child, final int state) {
     if (state == AFTER_ELSE && child.getElementType() == ElementType.IF_STATEMENT) {
       if (!mySettings.SPECIAL_ELSE_IF_TREATMENT) {
-        return getCodeBlockInternalIndent(child, 1);
+        return getCodeBlockInternalIndent(1);
       } else {
         return getCodeBlockExternalIndent();
       }
     }
     if (isSimpleStatement(child)){
-      return getCodeBlockInternalIndent(child, 1);        
+      return getCodeBlockInternalIndent(1);        
     } 
     if (child.getElementType() == ElementType.ELSE_KEYWORD) 
       return getCodeBlockExternalIndent(); 
@@ -95,10 +100,10 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
         return getCodeBlockExternalIndent();
       }
       else if (isSimpleStatement(child)){
-        return getCodeBlockInternalIndent(child, 1);        
+        return getCodeBlockInternalIndent(1);        
       }
       else if (ElementType.COMMENT_BIT_SET.isInSet(child.getElementType())) {
-        return getCodeBlockInternalIndent(child, 1);
+        return getCodeBlockInternalIndent(1);
       }
       else {
         return Formatter.getInstance().createContinuationIndent();
@@ -129,4 +134,9 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
   protected void setReservedWrap(final Wrap reservedWrap) {
   }
+
+  public ChildAttributes getChildAttributes(final int newChildIndex) {
+    return new ChildAttributes(getCodeBlockInternalIndent(1), null);
+  }
+
 }

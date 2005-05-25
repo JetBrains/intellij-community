@@ -63,5 +63,8 @@ public class DocCommentBlock extends AbstractJavaBlock{
 
   protected void setReservedWrap(final Wrap reservedWrap) {
   }
-  
+
+  public ChildAttributes getChildAttributes(final int newChildIndex) {
+    return new ChildAttributes(Formatter.getInstance().createSpaceIndent(1), null);
+  }
 }

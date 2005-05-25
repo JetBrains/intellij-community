@@ -423,9 +423,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                       Indent internalIndent,
                                       WrappingStrategy wrappingStrategy,
                                       AlignmentStrategy alignmentStrategy) {
+    
     myUseChildAttributes = true;
     setChildIndent(internalIndent);
     setChildAlignment(alignmentStrategy.getAlignment(null));
+    
 
     ASTNode prev = child;
     while (child != null) {
@@ -477,7 +479,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   }
 
-  protected Indent getCodeBlockInternalIndent(final ASTNode child, final int baseChildrenIndent) {
+  protected Indent getCodeBlockInternalIndent(final int baseChildrenIndent) {
     if (isTopLevelClass() && mySettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS) {
       return Formatter.getInstance().getNoneIndent();
     }

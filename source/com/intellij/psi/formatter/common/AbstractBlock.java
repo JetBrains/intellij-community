@@ -69,7 +69,7 @@ public abstract class AbstractBlock implements Block {
   }
 
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    return new ChildAttributes(getIndent(), null);
+    return new ChildAttributes(null, null);
   }
 
   public boolean isIncomplete() {
