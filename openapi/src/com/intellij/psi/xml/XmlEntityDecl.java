@@ -20,4 +20,5 @@ public interface XmlEntityDecl extends XmlElement {
 
   String getName();
   PsiElement parse(PsiFile baseFile, int context, XmlEntityRef originalElement);
+  boolean isInternalReference();  
 }

@@ -17,10 +17,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.TrueFilter;
-import com.intellij.psi.filters.ContextGetter;
+import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.TokenTypeFilter;
+import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -34,6 +33,8 @@ import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -80,6 +81,19 @@ public class XmlCompletionData extends CompletionData {
     }
 
     {
+      final CompletionVariant variant = new CompletionVariant(
+        new AndFilter(
+          new LeftNeighbour(new TextFilter("&")),
+          new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS)
+        )
+      );
+      variant.includeScopeClass(XmlToken.class, true);
+      variant.addCompletion(new EntityRefGetter());
+      variant.setInsertHandler(new EntityRefInsertHandler());
+      registerVariant(variant);
+    }
+
+    {
       final CompletionVariant variant = new CompletionVariant(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS));
       variant.includeScopeClass(XmlToken.class, true);
       variant.addCompletion(new WordCompletionData.AllWordsGetter());
@@ -118,8 +132,9 @@ public class XmlCompletionData extends CompletionData {
         if(cur == '}') break;
         if(cur == '{'){
           if(localOffset >= 0 && text.charAt(localOffset) == '$'){
-            if(startOffset >= text.length() - 1 || text.charAt(startOffset + 1) != '}')
+            if (startOffset >= text.length() - 1 || text.charAt(startOffset + 1) != '}') {
               context.editor.getDocument().insertString(caretModel.getOffset(), "}");
+            }
             caretModel.moveToOffset(caretModel.getOffset() + 1);
           }
           break;
@@ -152,14 +167,9 @@ public class XmlCompletionData extends CompletionData {
 
       final CharSequence chars = document.getCharsSequence();
       if (!CharArrayUtil.regionMatches(chars, caretOffset, "=\"") &&
-        !CharArrayUtil.regionMatches(chars, caretOffset, "='")) {
+          !CharArrayUtil.regionMatches(chars, caretOffset, "='")) {
 
-        //if (chars.length <= caretOffset+4 || (chars[caretOffset + 4] != '>' && chars[caretOffset + 4] != '/')) {
-        //  document.insertString(caretOffset, "=\"\" ");
-        //}
-        //else {
-          document.insertString(caretOffset, "=\"\"");
-        //}
+        document.insertString(caretOffset, "=\"\"");
       }
 
       editor.getCaretModel().moveToOffset(caretOffset + 2);
@@ -332,7 +342,7 @@ public class XmlCompletionData extends CompletionData {
             }
 
           },
-          true);
+                                     true);
 
           if (simpleContent[0]!=null) {
             final HashSet<String> variants = new HashSet<String>();
@@ -343,6 +353,58 @@ public class XmlCompletionData extends CompletionData {
       }
 
       return new Object[0];
+    }
+  }
+
+  private static class EntityRefGetter implements ContextGetter {
+    public Object[] get(final PsiElement context, CompletionContext completionContext) {
+      final XmlTag parentOfType = PsiTreeUtil.getParentOfType(context, XmlTag.class);
+      if (parentOfType != null) {
+        final XmlElementDescriptor descriptor = parentOfType.getDescriptor();
+        final List<String> results = new ArrayList<String>();
+
+        if (descriptor != null) {
+          final XmlFile descriptorFile = descriptor.getNSDescriptor().getDescriptorFile();
+
+          if (!parentOfType.getContainingFile().equals(descriptorFile)) {
+            // skip content of embedded dtd, its content will be inserted by word completion
+            final PsiElementProcessor processor = new PsiElementProcessor() {
+              public boolean execute(final PsiElement element) {
+                if (element instanceof XmlEntityDecl) {
+                  final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
+                  if (xmlEntityDecl.isInternalReference()) results.add(xmlEntityDecl.getName());
+                }
+                return true;
+              }
+            };
+
+            XmlUtil.processXmlElements(
+              descriptorFile,
+              processor,
+              true
+            );
+
+            return results.toArray(new Object[results.size()]);
+          }
+        }
+      }
+      return new Object[0];
+    }
+  }
+
+  private static class EntityRefInsertHandler extends BasicInsertHandler {
+    public void handleInsert(CompletionContext context,
+                             int startOffset,
+                             LookupData data,
+                             LookupItem item,
+                             boolean signatureSelected,
+                             char completionChar) {
+      super.handleInsert(context, startOffset, data, item, signatureSelected,
+                         completionChar);
+
+      final CaretModel caretModel = context.editor.getCaretModel();
+      context.editor.getDocument().insertString(caretModel.getOffset(), ";");
+      caretModel.moveToOffset(caretModel.getOffset() + 1);
     }
   }
 }

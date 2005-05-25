@@ -201,7 +201,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
     return null;
   }
 
-  private boolean isInternalReference() {
+  public boolean isInternalReference() {
     for (ASTNode e = getFirstChildNode(); e != null; e = e.getTreeNext()) {
       if (e.getElementType() instanceof IXmlLeafElementType) {
         XmlToken token = (XmlToken)SourceTreeToPsiMap.treeElementToPsi(e);

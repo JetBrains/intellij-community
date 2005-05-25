@@ -701,8 +701,18 @@ public class XmlParsing implements ElementType {
     final FileElement dummyRoot = new DummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
     parseMarkupContent(lexer, dummyRoot);
     while (lexer.getTokenType() != null) {
-      TreeUtil.addChildren(dummyRoot, ParseUtil.createTokenElement(lexer, dummyRoot.getCharTable()));
-      lexer.advance();
+      final TreeElement children;
+
+      if(lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
+        children = parseEntityRef(lexer);
+      } else if (lexer.getTokenType() == XML_ENTITY_DECL_START) {
+        children = parseEntityDecl(lexer);
+      } else {
+        children = ParseUtil.createTokenElement(lexer, dummyRoot.getCharTable());
+        lexer.advance();
+      }
+
+      TreeUtil.addChildren(dummyRoot, children);
     }
     originalLexer.start(text, start, end, _OldXmlLexer.DOCTYPE);
     ParseUtil.insertMissingTokens(dummyRoot, originalLexer, start, end, _OldXmlLexer.DOCTYPE,
