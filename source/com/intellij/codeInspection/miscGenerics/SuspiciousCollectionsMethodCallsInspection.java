@@ -107,21 +107,19 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
               String message = null;
               if (!typeParamMapping.isAssignableFrom(argType)) {
                 if (!typeParamMapping.isConvertibleFrom(argType)) {
-                  String existsElementString = getExistsElementString (patternMethod);
-                  message = MessageFormat.format("For no non-null object of type ''{0}'' can ''{1}'' return {2}", new Object[]{
-                                                     PsiFormatUtil.formatType(argType, 0, PsiSubstitutor.EMPTY),
-                                                     PsiFormatUtil.formatMethod(psiMethod, resolveResult.getSubstitutor(),
-                                                                                PsiFormatUtil.SHOW_NAME |
-                                                                                PsiFormatUtil.SHOW_CONTAINING_CLASS,
-                                                                                PsiFormatUtil.SHOW_TYPE),
-                                                     existsElementString});
+                  message = MessageFormat.format("Calling ''{1}'' may not succeed for non-null objects of type ''{0}''",
+                                                 PsiFormatUtil.formatType(argType, 0, PsiSubstitutor.EMPTY),
+                                                 PsiFormatUtil.formatMethod(psiMethod, resolveResult.getSubstitutor(),
+                                                                            PsiFormatUtil.SHOW_NAME |
+                                                                            PsiFormatUtil.SHOW_CONTAINING_CLASS,
+                                                                            PsiFormatUtil.SHOW_TYPE));
                 }
                 else {
-                  message = MessageFormat.format("Suspicious call to ''{0}''", new Object[]{
-                                                     PsiFormatUtil.formatMethod(psiMethod, resolveResult.getSubstitutor(),
-                                                                                PsiFormatUtil.SHOW_NAME |
-                                                                                PsiFormatUtil.SHOW_CONTAINING_CLASS,
-                                                                                PsiFormatUtil.SHOW_TYPE)});
+                  message = MessageFormat.format("Suspicious call to ''{0}''",
+                                                 PsiFormatUtil.formatMethod(psiMethod, resolveResult.getSubstitutor(),
+                                                                            PsiFormatUtil.SHOW_NAME |
+                                                                            PsiFormatUtil.SHOW_CONTAINING_CLASS,
+                                                                            PsiFormatUtil.SHOW_TYPE));
                 }
               }
               if (message != null) {
@@ -133,12 +131,6 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
             return;
           }
         }
-      }
-
-      private String getExistsElementString(final PsiMethod method) {
-        if (PsiType.BOOLEAN.equals(method.getReturnType())) return "'true'";
-        if (PsiType.INT.equals(method.getReturnType())) return "non-negative value";
-        return "non-null value";
       }
 
       private boolean isInheritorOrSelf(PsiMethod inheritorCandidate, PsiMethod base) {
