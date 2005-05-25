@@ -134,7 +134,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         return Formatter.getInstance().getNoneIndent();
       }
       else {
-        return getCodeBlockInternalIndent(1);
+        return getCodeBlockInternalIndent(myChildrenIndent);
       }
     }
   }

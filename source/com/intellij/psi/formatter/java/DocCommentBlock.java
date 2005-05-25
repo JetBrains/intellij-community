@@ -53,10 +53,6 @@ public class DocCommentBlock extends AbstractJavaBlock{
     return true;
   }
 
-  public Indent getIndent() {
-    return Formatter.getInstance().getNoneIndent();
-  }
-
   protected Wrap getReservedWrap() {
     return null;
   }
