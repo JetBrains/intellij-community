@@ -113,13 +113,12 @@ public class FindInProjectUtil {
     final PsiElement[] children = directory.getChildren();
     if (children == null) return;
 
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
+    for (PsiElement child : children) {
       if (child instanceof PsiFile &&
           (fileMaskRegExp == null ||
            fileMaskRegExp.matcher(((PsiFile)child).getName()).matches()
           )
-      ) {
+        ) {
         fileList.add((PsiFile)child);
       }
       else if (isRecursive && child instanceof PsiDirectory) {
@@ -169,8 +168,8 @@ public class FindInProjectUtil {
     try {
       int i =0;
       for (Iterator<PsiFile> iterator = psiFiles.iterator(); iterator.hasNext();i++) {
-        ProgressManager.getInstance().checkCanceled();
         final PsiFile psiFile = iterator.next();
+        ProgressManager.getInstance().checkCanceled();
         final VirtualFile virtualFile = psiFile.getVirtualFile();
         if (virtualFile == null) continue;
         final int index = i;
@@ -223,35 +222,37 @@ public class FindInProjectUtil {
     if (psiDirectory == null || (findModel.isWithSubdirectories() && fileIndex.isInContent(psiDirectory.getVirtualFile()))) {
       if (canOptimizeForFastWordSearch(findModel)) {
         // optimization
-        final CacheManager cacheManager = ((PsiManagerImpl)PsiManager.getInstance(project)).getCacheManager();
+        CacheManager cacheManager = ((PsiManagerImpl)PsiManager.getInstance(project)).getCacheManager();
 
-        final GlobalSearchScope scope = psiDirectory == null || psiDirectory.getPackage() == null ?
+        GlobalSearchScope scope = psiDirectory == null || psiDirectory.getPackage() == null ?
                                         GlobalSearchScope.projectScope(project) :
                                         GlobalSearchScope.directoryScope(psiDirectory, true);
-        final List<String> words = StringUtil.getWordsIn(findModel.getStringToFind());
-        // search for longer strings first
-        Collections.sort(words, new Comparator<String>() {
-          public int compare(final String o1, final String o2) {
-            return o2.length() - o1.length();
-          }
-        });
-        Set<PsiFile> resultFiles = new THashSet<PsiFile>();
-        for (int i = 0; i < words.size(); i++) {
-          String word = words.get(i);
-          PsiFile[] files = cacheManager.getFilesWithWord(word, UsageSearchContext.ANY, scope);
+        List<String> words = StringUtil.getWordsIn(findModel.getStringToFind());
+        // if no words specified in search box, fallback to brute force search
+        if (words.size() != 0) {
+          // search for longer strings first
+          Collections.sort(words, new Comparator<String>() {
+            public int compare(final String o1, final String o2) {
+              return o2.length() - o1.length();
+            }
+          });
+          Set<PsiFile> resultFiles = new THashSet<PsiFile>();
+          for (int i = 0; i < words.size(); i++) {
+            String word = words.get(i);
+            PsiFile[] files = cacheManager.getFilesWithWord(word, UsageSearchContext.ANY, scope);
 
-          final List<PsiFile> psiFiles = Arrays.asList(files);
-          if (i == 0) {
-            resultFiles.addAll(psiFiles);
+            final List<PsiFile> psiFiles = Arrays.asList(files);
+            if (i == 0) {
+              resultFiles.addAll(psiFiles);
+            }
+            else {
+              resultFiles.retainAll(psiFiles);
+            }
+            filterMaskedFiles(resultFiles, fileMaskRegExp);
+            if (resultFiles.size() == 0) break;
           }
-          else {
-            resultFiles.retainAll(psiFiles);
-          }
-          filterMaskedFiles(resultFiles, fileMaskRegExp);
-          if (resultFiles.size() == 0) break;
+          return resultFiles;
         }
-
-        return resultFiles;
       }
       class EnumContentIterator implements ContentIterator {
         List<VirtualFile> myVirtualFiles = new ArrayList<VirtualFile>();
@@ -389,9 +390,7 @@ public class FindInProjectUtil {
   }
 
   public static boolean hasReadOnlyUsages(final Set<Usage> usages) {
-    for (Iterator<Usage> iterator = usages.iterator(); iterator.hasNext();) {
-      Usage usage = iterator.next();
-
+    for (Usage usage : usages) {
       if (usage.isReadOnly()) return true;
     }
 
