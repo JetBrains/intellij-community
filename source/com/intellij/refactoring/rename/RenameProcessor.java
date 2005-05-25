@@ -124,8 +124,18 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       prepareMethodRenaming((PsiMethod) myPrimaryElement, myNewName);
     } else if (myPrimaryElement instanceof PsiPackage) {
       preparePackageRenaming((PsiPackage) myPrimaryElement, myNewName);
+    } else if (myPrimaryElement instanceof PsiDirectory) {
+      prepareDirectoryRenaming((PsiDirectory) myPrimaryElement, myNewName);
     } else if (myPrimaryElement instanceof Property) {
       preparePropertyRenaming((Property) myPrimaryElement, myNewName);
+    }
+  }
+
+  private void prepareDirectoryRenaming(final PsiDirectory directory, final String newName) {
+    final PsiPackage aPackage = directory.getPackage();
+    if (aPackage != null) {
+      myAllRenames.put(aPackage, newName);
+      preparePackageRenaming(aPackage, newName);
     }
   }
 
@@ -317,18 +327,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   protected UsageInfo[] findUsages() {
     myRenamers.clear();
-    if (myPrimaryElement instanceof PsiDirectory) {
-      final PsiPackage aPackage = ((PsiDirectory)myPrimaryElement).getPackage();
-      final UsageInfo[] usages;
-      if (aPackage != null && aPackage.getName() != null) {
-        usages = RenameUtil.findUsages(aPackage, myNewName, mySearchInComments, mySearchInNonJavaFiles, myAllRenames);
-      }
-      else {
-        usages = RenameUtil.findUsages(myPrimaryElement, myNewName, mySearchInComments, mySearchInNonJavaFiles, myAllRenames);
-      }
-      return UsageViewUtil.removeDuplicatedUsages(usages);
-    }
-
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
 
     for (Map.Entry<PsiElement, String> entry : myAllRenames.entrySet()) {

@@ -48,15 +48,13 @@ public class RenameUtil {
       PsiMethod method = (PsiMethod)element;
 
       PsiReference[] refs = helper.findReferencesIncludingOverriding(method, projectScope, true);
-      for (int i = 0; i < refs.length; i++) {
-        PsiReference ref = refs[i];
+      for (PsiReference ref : refs) {
         result.add(new MoveRenameUsageInfo(ref.getElement(), ref, element));
       }
 
       PsiElement[] overridings = helper.findOverridingMethods(method, projectScope, true);
-      for (int i = 0; i < overridings.length; i++) {
-        PsiElement element1 = overridings[i];
-        result.add(new MoveRenameUsageInfo(element1, null, element));
+      for (PsiElement overriding : overridings) {
+        result.add(new MoveRenameUsageInfo(overriding, null, element));
       }
     }
     else {
@@ -68,8 +66,7 @@ public class RenameUtil {
       else {
         classCollisionsDetector = null;
       }
-      for (int i = 0; i < refs.length; i++) {
-        PsiReference ref = refs[i];
+      for (PsiReference ref : refs) {
         PsiElement referenceElement = ref.getElement();
         result.add(
           new MoveRenameUsageInfo(referenceElement, ref, ref.getRangeInElement().getStartOffset(),
@@ -139,8 +136,7 @@ public class RenameUtil {
   public static void buildPackagePrefixChangedMessage(final VirtualFile[] virtualFiles, StringBuffer message, final String qualifiedName) {
     if (virtualFiles.length > 0) {
       message.append("Package " + qualifiedName + " occurs in package prefixes of the following source folders:\n");
-      for (int i = 0; i < virtualFiles.length; i++) {
-        final VirtualFile virtualFile = virtualFiles[i];
+      for (final VirtualFile virtualFile : virtualFiles) {
         message.append(virtualFile.getPresentableUrl() + "\n");
       }
       message.append("These package prefixes will be changed.");
@@ -169,8 +165,7 @@ public class RenameUtil {
       if (myProcessedFiles.contains(containingFile)) return;
       final PsiReference[] references = searchHelper.findReferences(aClass, new LocalSearchScope(containingFile),
                                                                     false);
-      for (int i = 0; i < references.length; i++) {
-        PsiReference reference = references[i];
+      for (PsiReference reference : references) {
         final PsiElement collisionReferenceElement = reference.getElement();
         if (collisionReferenceElement instanceof PsiJavaCodeReferenceElement) {
           final PsiElement parent = collisionReferenceElement.getParent();
@@ -178,8 +173,9 @@ public class RenameUtil {
             if (aClass.getQualifiedName() != null) {
               results.add(new ClassHidesImportedClassUsageInfo((PsiJavaCodeReferenceElement)collisionReferenceElement,
                                                                renamedClass, aClass));
-            } else {
-              results.add(new ClassHidesUnqualifiableClassUsageInfo((PsiJavaCodeReferenceElement) collisionReferenceElement,
+            }
+            else {
+              results.add(new ClassHidesUnqualifiableClassUsageInfo((PsiJavaCodeReferenceElement)collisionReferenceElement,
                                                                     renamedClass, aClass));
             }
           }
@@ -220,12 +216,10 @@ public class RenameUtil {
         result.add(new MemberExistsUsageInfo(existingMethod, method));
       }
 
-      for (int i = 0; i < inheritors.length; i++) {
-        PsiClass inheritor = inheritors[i];
+      for (PsiClass inheritor : inheritors) {
         PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, inheritor, PsiSubstitutor.EMPTY);
         final PsiMethod[] methodsByName = inheritor.findMethodsByName(newName, false);
-        for (int j = 0; j < methodsByName.length; j++) {
-          PsiMethod conflictingMethod = methodsByName[j];
+        for (PsiMethod conflictingMethod : methodsByName) {
           if (newSignature.equals(conflictingMethod.getSignature(superSubstitutor))) {
             result.add(new SubmemberHidesMemberUsageInfo(conflictingMethod, method));
             break;
@@ -244,9 +238,7 @@ public class RenameUtil {
         result.add(new MemberExistsUsageInfo(existingField, field));
       }
       PsiClass[] inheritors = helper.findInheritors(containingClass, projectScope, true);
-      for (int i = 0; i < inheritors.length; i++) {
-        PsiClass inheritor = inheritors[i];
-
+      for (PsiClass inheritor : inheritors) {
         PsiField conflictingField = inheritor.findFieldByName(newName, false);
         if (conflictingField != null) {
           result.add(new SubmemberHidesMemberUsageInfo(conflictingField, field));
@@ -257,13 +249,9 @@ public class RenameUtil {
       final PsiClass aClass = (PsiClass)element;
       if (aClass.getParent() instanceof PsiClass) {
         PsiClass[] inheritors = helper.findInheritors((PsiClass)aClass.getParent(), projectScope, true);
-        for (int i = 0; i < inheritors.length; i++) {
-          PsiClass inheritor = inheritors[i];
-
+        for (PsiClass inheritor : inheritors) {
           PsiClass[] inners = inheritor.getInnerClasses();
-          for (int j = 0; j < inners.length; j++) {
-            PsiClass inner = inners[j];
-
+          for (PsiClass inner : inners) {
             if (inner.getName().equals(newName)) {
               result.add(new SubmemberHidesMemberUsageInfo(inner, aClass));
             }
@@ -415,8 +403,8 @@ public class RenameUtil {
 
     PsiSearchHelper helper = ref.getManager().getSearchHelper();
     PsiReference[] collidingRefs = helper.findReferences(field, new LocalSearchScope(scopeElement), false);
-    for (int i = 0; i < collidingRefs.length; i++) {
-      PsiElement collidingRef = collidingRefs[i].getElement();
+    for (PsiReference collidingRef1 : collidingRefs) {
+      PsiElement collidingRef = collidingRef1.getElement();
 
       if (collidingRef instanceof PsiReferenceExpression
           && ((PsiReferenceExpression)collidingRef).getQualifierExpression() == null) {
@@ -431,8 +419,7 @@ public class RenameUtil {
     final PsiField field = containingClass.findFieldByName(newName, true);
     if (field != null && !allRenames.containsKey(field)) return field;
     final Set<? extends PsiElement> renamedElements = allRenames.keySet();
-    for (Iterator<? extends PsiElement> iterator = renamedElements.iterator(); iterator.hasNext();) {
-      PsiElement element = iterator.next();
+    for (PsiElement element : renamedElements) {
       if (element instanceof PsiField) {
         final String fieldNewName = allRenames.get(element);
         if (newName.equals(fieldNewName)) return (PsiField)element;
@@ -520,6 +507,7 @@ public class RenameUtil {
       else if (element instanceof PsiPackage) {
         final PsiPackage psiPackage = (PsiPackage)element;
         psiPackage.handleQualifiedNameChange(getQualifiedNameAfterRename(psiPackage.getQualifiedName(), newName));
+        doRenameGenericNamedElement((PsiNamedElement) element, newName, usages, listener);
       }
       else if (element instanceof PsiNamedElement) {
         doRenameGenericNamedElement((PsiNamedElement) element, newName, usages, listener);
@@ -544,8 +532,7 @@ public class RenameUtil {
 
   private static void doRenameGenericNamedElement(PsiNamedElement namedElement, String newName, UsageInfo[] usages, RefactoringElementListener listener)
     throws IncorrectOperationException {
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       rename(usage, newName);
     }
 
@@ -577,8 +564,7 @@ public class RenameUtil {
 
     pointcutDef.getNameIdentifier().replace(newNameIdentifier);
 
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       rename(usage, newName);
     }
 
@@ -628,8 +614,7 @@ public class RenameUtil {
       Collections.reverse(tmp);
       infos = tmp.toArray(new UsageInfo[tmp.size()]);
     }
-    for (int i = 0; i < infos.length; i++) {
-      UsageInfo info = infos[i];
+    for (UsageInfo info : infos) {
       if (info.getElement() == null || !info.getElement().isValid()) continue;
       PsiReference ref = ((MoveRenameUsageInfo)info).reference;
       if (ref == null) continue;
@@ -643,8 +628,7 @@ public class RenameUtil {
       final PsiElement newElement = reference.handleElementRename(newName);
       if (!oldElement.isValid()) {
         final PsiReference[] references = searchHelper.findReferences(originalElement, new LocalSearchScope(newElement), false);
-        for (int i = 0; i < references.length; i++) {
-          PsiReference psiReference = references[i];
+        for (PsiReference psiReference : references) {
           queue.addLast(psiReference);
         }
       }
@@ -659,15 +643,13 @@ public class RenameUtil {
                                         UsageInfo[] usages,
                                         RefactoringElementListener listener) throws IncorrectOperationException {
     // rename all non-package statement references
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       if (PsiTreeUtil.getParentOfType(usage.getElement(), PsiPackageStatement.class) != null) continue;
       rename(usage, newName);
     }
 
     //rename package statement
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       if (PsiTreeUtil.getParentOfType(usage.getElement(), PsiPackageStatement.class) == null) continue;
       rename(usage, newName);
     }
@@ -689,8 +671,7 @@ public class RenameUtil {
                                     RefactoringElementListener listener) throws IncorrectOperationException {
     ArrayList<UsageInfo> postponedCollisions = new ArrayList<UsageInfo>();
     // rename all references
-    for (int i = 0; i < usages.length; i++) {
-      final UsageInfo usage = usages[i];
+    for (final UsageInfo usage : usages) {
       if (!(usage instanceof ResolvableCollisionUsageInfo)) {
         rename(usage, newName);
       }
@@ -720,15 +701,14 @@ public class RenameUtil {
                                      UsageInfo[] usages,
                                      RefactoringElementListener listener) throws IncorrectOperationException {
     // do actual rename of overriding/implementing methods and of references to all them
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       if (!usage.getElement().isValid()) {
         continue;
       }
       if (!(usage.getElement() instanceof PsiMethod)) {
         final PsiReference ref;
         if (usage instanceof MoveRenameUsageInfo) {
-          ref = ((MoveRenameUsageInfo) usage).reference;
+          ref = ((MoveRenameUsageInfo)usage).reference;
         }
         else {
           ref = usage.getElement().getReference();
@@ -741,8 +721,7 @@ public class RenameUtil {
     
     // do actual rename of method
     method.setName(newName);
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       if (usage.getElement() instanceof PsiMethod) {
         ((PsiMethod)usage.getElement()).setName(newName);
       }
@@ -755,8 +734,7 @@ public class RenameUtil {
                                        UsageInfo[] usages,
                                        RefactoringElementListener listener) throws IncorrectOperationException {
     // rename all references
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       if (!usage.getElement().isValid()) {
         continue;
       }
@@ -871,9 +849,7 @@ public class RenameUtil {
   public static String[] getConflictDescriptions(UsageInfo[] usages) {
     ArrayList<String> descriptions = new ArrayList<String>();
 
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
-
+    for (UsageInfo usage : usages) {
       if (usage instanceof UnresolvableCollisionUsageInfo) {
         descriptions.add(((UnresolvableCollisionUsageInfo)usage).getDescription());
       }
