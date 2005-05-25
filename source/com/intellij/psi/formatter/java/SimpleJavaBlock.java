@@ -6,6 +6,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.PsiFile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +45,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     while (child != null) {
       if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         child = processChild(result, child, childAlignment, childWrap, indent);
-        if (indent != null) {
+        if (indent != null && !(myNode.getPsi() instanceof PsiFile)) {
           indent = Formatter.getInstance().createContinuationIndent();
         }
         //indent = Formatter.getInstance().createContinuationIndent();
