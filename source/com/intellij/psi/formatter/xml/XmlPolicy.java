@@ -5,6 +5,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 
 public class XmlPolicy implements XmlFormattingPolicy{
   private final CodeStyleSettings mySettings;
@@ -21,6 +22,7 @@ public class XmlPolicy implements XmlFormattingPolicy{
   }
 
   public boolean indentChildrenOf(final XmlTag parentTag) {
+    if (parentTag instanceof JspXmlRootTag) return false;
     return true;
   }
 

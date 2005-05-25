@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -27,6 +28,7 @@ public class HtmlPolicy implements XmlFormattingPolicy{
   }
 
   public boolean indentChildrenOf(final XmlTag parentTag) {
+    if (parentTag instanceof JspXmlRootTag) return false;
     if (parentTag == null) {
       return true;
     }
