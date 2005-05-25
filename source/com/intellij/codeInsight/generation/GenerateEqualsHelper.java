@@ -30,6 +30,7 @@ public class GenerateEqualsHelper implements Runnable {
   private final PsiManager myManager;
   private String myParameterName;
   private static final String BASE_OBJECT_PARAMETER_NAME = "object";
+  private static final String BASE_OBJECT_LOCAL_NAME = "that";
   private final PsiClass myJavaLangObject;
   private PsiType myObjectType;
   private PsiType myClassType;
@@ -51,8 +52,7 @@ public class GenerateEqualsHelper implements Runnable {
     myProject = project;
 
     myNonNullSet = new HashSet<PsiField>();
-    for (int i = 0; i < nonNullFields.length; i++) {
-      PsiField field = nonNullFields[i];
+    for (PsiField field : nonNullFields) {
       myNonNullSet.add(field);
     }
     myManager = PsiManager.getInstance(project);
@@ -77,8 +77,7 @@ public class GenerateEqualsHelper implements Runnable {
       }
       index++;
       boolean anyEqual = false;
-      for (int i = 0; i < fields.length; i++) {
-        PsiField equalsField = fields[i];
+      for (PsiField equalsField : fields) {
         if (id.equals(equalsField.getName())) {
           anyEqual = true;
           break;
@@ -95,8 +94,7 @@ public class GenerateEqualsHelper implements Runnable {
   public void run() {
     try {
       final PsiElement[] members = generateMembers();
-      for (int i = 0; i < members.length; i++) {
-        PsiElement member = members[i];
+      for (PsiElement member : members) {
         myClass.add(member);
       }
     } catch (IncorrectOperationException e) {
@@ -142,10 +140,7 @@ public class GenerateEqualsHelper implements Runnable {
     myParameterName = getUniqueLocalVarName(objectBaseName, myEqualsFields);
     myClassType = myFactory.createType(myClass);
     nameSuggestions = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, myClassType).names;
-    String instanceBaseName = nameSuggestions.length > 0 ? nameSuggestions[0] : BASE_OBJECT_PARAMETER_NAME;
-    if (instanceBaseName.equals(objectBaseName)) {
-      instanceBaseName = "instance";
-    }
+    String instanceBaseName = nameSuggestions.length > 0 && nameSuggestions[0].length() < 10 ? nameSuggestions[0] : BASE_OBJECT_LOCAL_NAME;
     myClassInstanceName = getUniqueLocalVarName(instanceBaseName, myEqualsFields);
 
     StringBuffer buffer = new StringBuffer();
@@ -155,25 +150,26 @@ public class GenerateEqualsHelper implements Runnable {
       addClassInstance(buffer);
 
       ArrayList<PsiField> equalsFields = new ArrayList<PsiField>();
-      for (int i = 0; i < myEqualsFields.length; i++) {
-        equalsFields.add(myEqualsFields[i]);
+      for (PsiField equalsField : myEqualsFields) {
+        equalsFields.add(equalsField);
       }
       Collections.sort(equalsFields, EqualsFieldsComparator.INSTANCE);
 
-      for (Iterator<PsiField> iterator = equalsFields.iterator(); iterator.hasNext();) {
-        PsiField field = iterator.next();
-
+      for (PsiField field : equalsFields) {
         if (!field.hasModifierProperty(PsiModifier.STATIC)) {
           final PsiType type = field.getType();
           if (type instanceof PsiArrayType) {
             addArrayEquals(buffer, field);
-          } else if (type instanceof PsiPrimitiveType) {
+          }
+          else if (type instanceof PsiPrimitiveType) {
             if (type == PsiType.DOUBLE || type == PsiType.FLOAT) {
               addDoubleFieldComparison(buffer, field);
-            } else {
+            }
+            else {
               addPrimitiveFieldComparison(buffer, field);
             }
-          } else {
+          }
+          else {
             if (type instanceof PsiClassType) {
               final PsiClass aClass = ((PsiClassType)type).resolve();
               if (aClass != null && aClass.isEnum()) {
@@ -312,9 +308,7 @@ public class GenerateEqualsHelper implements Runnable {
       }
       buffer.append(";\n");
       String tempName = addTempDeclaration(buffer);
-      for (int i = 0; i < myHashCodeFields.length; i++) {
-        PsiField field = myHashCodeFields[i];
-
+      for (PsiField field : myHashCodeFields) {
         addTempAssignment(field, buffer, tempName);
         buffer.append(resultName);
         buffer.append(" = ");
@@ -325,7 +319,8 @@ public class GenerateEqualsHelper implements Runnable {
         }
         if (field.getType() instanceof PsiPrimitiveType) {
           addPrimitiveFieldHashCode(buffer, field, tempName);
-        } else {
+        }
+        else {
           addFieldHashCode(buffer, field);
         }
         buffer.append(";\n");
@@ -355,8 +350,7 @@ public class GenerateEqualsHelper implements Runnable {
   }
 
   private String addTempDeclaration(StringBuffer buffer) {
-    for (int i = 0; i < myHashCodeFields.length; i++) {
-      PsiField hashCodeField = myHashCodeFields[i];
+    for (PsiField hashCodeField : myHashCodeFields) {
       if (PsiType.DOUBLE == hashCodeField.getType()) {
         final String name = getUniqueLocalVarName("temp", myHashCodeFields);
         buffer.append("long " + name + ";\n");
