@@ -84,7 +84,10 @@ public class XmlCompletionData extends CompletionData {
       final CompletionVariant variant = new CompletionVariant(
         new AndFilter(
           new LeftNeighbour(new TextFilter("&")),
-          new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS)
+          new OrFilter(
+            new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS),
+            new TokenTypeFilter(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN)
+          )
         )
       );
       variant.includeScopeClass(XmlToken.class, true);
