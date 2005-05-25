@@ -5,7 +5,6 @@ import com.intellij.lang.BracePair;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.lang.jsp.NewJspLanguage;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -24,7 +23,6 @@ import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.xml.util.HtmlUtil;
-import com.intellij.ide.highlighter.XmlFileType;
 
 import java.util.HashMap;
 import java.util.List;
@@ -203,7 +201,7 @@ public class BraceMatchingUtil {
       }
       else if (tokenType == XmlTokenType.XML_TAG_END) {
         boolean result = findTokenBack(iterator, XmlTokenType.XML_END_TAG_START, XmlTokenType.XML_START_TAG_START);
-        if (!result && fileType == StdFileTypes.HTML) {
+        if (!result && (fileType == StdFileTypes.HTML || fileType == StdFileTypes.JSP)) {
           result = isEndOfSingleHtmlTag(fileText, iterator);
         }
 
@@ -234,7 +232,9 @@ public class BraceMatchingUtil {
                tokenType == XmlTokenType.XML_TAG_END ||
                tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END ||
                ( tokenType == XmlTokenType.XML_TAG_END &&
-                 fileType == StdFileTypes.HTML &&
+                 ( fileType == StdFileTypes.HTML ||
+                   fileType == StdFileTypes.JSP
+                 ) &&
                  isEndOfSingleHtmlTag(text, iterator)
                );
       }
