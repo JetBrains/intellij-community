@@ -201,21 +201,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   private Runnable updateFoldRegions(Editor editor, boolean applyDefaultState) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
     if (file != null) {
-      final PsiElement[] psiRoots = file.getPsiRoots();
-      final Runnable[] cascade = new Runnable[psiRoots.length];
-
-      for (int i = 0; i < psiRoots.length; i++) {
-        final PsiElement psiRoot = psiRoots[i];
-        cascade[i] = FoldingUpdate.updateFoldRegions(editor, psiRoot, applyDefaultState);
-      }
-      return new Runnable() {
-        public void run() {
-          for (int i = 0; i < cascade.length; i++) {
-            final Runnable runnable = cascade[i];
-            if(runnable != null) runnable.run();
-          }
-        }
-      };
+      return FoldingUpdate.updateFoldRegions(editor, file, applyDefaultState);
     }
     else {
       return null;

@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.xml.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.codeInsight.folding.impl.CodeFoldingSettings;
 
 import java.util.List;
@@ -43,7 +44,9 @@ public class XmlFoldingBuilder implements FoldingBuilder {
   }
 
   protected void addElementsToFold(List<FoldingDescriptor> foldings, XmlTag tag, Document document) {
-    if (addToFold(foldings, tag, document)) {
+    if (addToFold(foldings, tag, document) ||
+        tag instanceof JspXmlRootTag // has no name but has content
+      ) {
       PsiElement[] children = tag.getChildren();
       for (int i = 0; i < children.length; i++) {
         if (children[i] instanceof XmlTag) {

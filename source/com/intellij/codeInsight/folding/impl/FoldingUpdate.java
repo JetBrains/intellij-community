@@ -48,7 +48,13 @@ class FoldingUpdate {
       file = ((PsiCompiledElement)file).getMirror();
     }
 
-    TreeMap elementsToFoldMap = FoldingPolicy.getElementsToFold(file, document);
+    TreeMap elementsToFoldMap = null;
+    final PsiFile[] psiRoots = ((PsiFile)file).getPsiRoots();
+    for (int i = 0; i < psiRoots.length; i++) {
+      TreeMap fileElementsToFoldMap = FoldingPolicy.getElementsToFold(psiRoots[i], document);
+      if (elementsToFoldMap == null) elementsToFoldMap = fileElementsToFoldMap;
+      else elementsToFoldMap.putAll(fileElementsToFoldMap);
+    }
 
     final Runnable operation = new UpdateFoldRegionsOperation(editor, elementsToFoldMap, applyDefaultState);
     return new Runnable() {
