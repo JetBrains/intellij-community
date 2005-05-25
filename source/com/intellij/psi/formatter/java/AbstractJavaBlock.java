@@ -91,9 +91,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   private static Indent getDefaultSubtreeIndent(final ASTNode child) {
     final ASTNode parent = child.getTreeParent();
+    /*
     if (child.getElementType() == ElementType.EXPRESSION_LIST) return Formatter.getInstance().getNoneIndent();
     if (child.getElementType() == ElementType.PARAMETER_LIST) return Formatter.getInstance().getNoneIndent();
     if (child.getElementType() == ElementType.PARENTH_EXPRESSION) return Formatter.getInstance().getNoneIndent();
+    */
     if (child.getElementType() == ElementType.DOC_TAG) return Formatter.getInstance().getNoneIndent();    
     if (child.getElementType() == ElementType.DOC_COMMENT_LEADING_ASTERISKS) return Formatter.getInstance().createSpaceIndent(1);
     if (parent != null) {
