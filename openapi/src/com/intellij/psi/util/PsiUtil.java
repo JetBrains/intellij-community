@@ -164,17 +164,17 @@ public final class PsiUtil {
   private static void addException(PsiMethod method, PsiClass exceptionClass, String exceptionName) throws IncorrectOperationException {
     PsiReferenceList throwsList = method.getThrowsList();
     PsiJavaCodeReferenceElement[] refs = throwsList.getReferenceElements();
-    for (int i = 0; i < refs.length; i++) {
-      PsiJavaCodeReferenceElement ref = refs[i];
+    for (PsiJavaCodeReferenceElement ref : refs) {
       if (ref.isReferenceTo(exceptionClass)) return;
-      PsiClass aClass = (PsiClass) ref.resolve();
+      PsiClass aClass = (PsiClass)ref.resolve();
       if (exceptionClass != null && aClass != null) {
         if (aClass.isInheritor(exceptionClass, true)) {
           PsiElementFactory factory = method.getManager().getElementFactory();
           PsiJavaCodeReferenceElement ref1;
           if (exceptionName != null) {
             ref1 = factory.createReferenceElementByFQClassName(exceptionName, method.getResolveScope());
-          } else {
+          }
+          else {
             PsiClassType type = factory.createType(exceptionClass);
             ref1 = factory.createReferenceElementByType(type);
           }
@@ -182,8 +182,8 @@ public final class PsiUtil {
           return;
         }
         else if (exceptionClass.isInheritor(aClass, true)) {
-            return;
-          }
+          return;
+        }
       }
     }
 
@@ -201,8 +201,7 @@ public final class PsiUtil {
   // todo: move to PsiThrowsList?
   public static void removeException(PsiMethod method, String exceptionClass) throws IncorrectOperationException {
     PsiJavaCodeReferenceElement[] refs = method.getThrowsList().getReferenceElements();
-    for (int i = 0; i < refs.length; i++) {
-      PsiJavaCodeReferenceElement ref = refs[i];
+    for (PsiJavaCodeReferenceElement ref : refs) {
       if (ref.getCanonicalText().equals(exceptionClass)) {
         ref.delete();
       }
@@ -418,8 +417,7 @@ public final class PsiUtil {
       if (!(element == forStatement.getInitialization() || element == forStatement.getUpdate())) return false;
       final PsiExpressionList expressionList = ((PsiExpressionListStatement) element).getExpressionList();
       final PsiExpression[] expressions = expressionList.getExpressions();
-      for (int i = 0; i < expressions.length; i++) {
-        PsiExpression expression = expressions[i];
+      for (PsiExpression expression : expressions) {
         if (!isStatement(expression)) return false;
       }
       return true;
@@ -708,8 +706,7 @@ public final class PsiUtil {
 
   public static PsiElement findModifierInList(final PsiModifierList modifierList, String modifier) {
     final PsiElement[] children = modifierList.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
+    for (PsiElement child : children) {
       if (child.getText().equals(modifier)) return child;
     }
     return null;
@@ -726,8 +723,7 @@ public final class PsiUtil {
     final PsiFile file = element.getContainingFile();
     if (file instanceof PsiJavaFile) {
       final PsiClass[] classes = ((PsiJavaFile)file).getClasses();
-      for (int i = 0; i < classes.length; i++) {
-        PsiClass aClass = classes[i];
+      for (PsiClass aClass : classes) {
         if (PsiTreeUtil.isAncestor(aClass, element, false)) return aClass;
       }
     }
@@ -886,8 +882,7 @@ public final class PsiUtil {
 
   public static boolean isUnderPsiRoot(PsiFile root, PsiElement element) {
     PsiElement[] psiRoots = root.getPsiRoots();
-    for (int i = 0; i < psiRoots.length; i++) {
-      PsiElement psiRoot = psiRoots[i];
+    for (PsiElement psiRoot : psiRoots) {
       if (PsiTreeUtil.isAncestor(psiRoot, element, false)) return true;
     }
     return false;
