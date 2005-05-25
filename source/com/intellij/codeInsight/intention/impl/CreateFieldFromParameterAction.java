@@ -26,15 +26,9 @@ import java.util.List;
 public class CreateFieldFromParameterAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction");
   private PsiParameter myParameter;
-  private final boolean forcedParameter;
 
   public CreateFieldFromParameterAction() {
     myParameter = null;
-    forcedParameter = false;
-  }
-  public CreateFieldFromParameterAction(PsiParameter parameter) {
-    myParameter = parameter;
-    forcedParameter = true;
   }
 
   private  PsiType getType() {
@@ -49,7 +43,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    myParameter = forcedParameter ? myParameter : findParameterAtCursor(file, editor);
+    myParameter = findParameterAtCursor(file, editor);
     final PsiType type = getType();
     PsiClass targetClass = myParameter == null ? null : PsiTreeUtil.getParentOfType(myParameter, PsiClass.class);
     return
@@ -104,7 +98,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
   }
 
   private void invoke(final Project project, Editor editor, PsiFile file, boolean isInteractive) {
-    myParameter = forcedParameter ? myParameter : findParameterAtCursor(file, editor);
+    myParameter = findParameterAtCursor(file, editor);
     if (!CodeInsightUtil.prepareFileForWrite(myParameter.getContainingFile())) return;
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
@@ -112,27 +106,32 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
     final String parameterName = myParameter.getName();
     String propertyName = styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);
-    SuggestedNameInfo suggestedNameInfo = styleManager.suggestVariableName(VariableKind.FIELD, propertyName, null, type);
-    String[] names = suggestedNameInfo.names;
 
     String fieldNameToCalc;
     boolean isFinalToCalc;
 
     final PsiClass targetClass = PsiTreeUtil.getParentOfType(myParameter, PsiClass.class);
+    final PsiMethod method = (PsiMethod)myParameter.getDeclarationScope();
+
+    final boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
+
+    VariableKind kind = isMethodStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
+    SuggestedNameInfo suggestedNameInfo = styleManager.suggestVariableName(kind, propertyName, null, type);
+    String[] names = suggestedNameInfo.names;
 
     if (isInteractive) {
       List<String> namesList = new ArrayList<String>();
       namesList.addAll(Arrays.asList(names));
-      String defaultName = styleManager.propertyNameToVariableName(propertyName, VariableKind.FIELD);
-      if (!namesList.contains(defaultName)) {
-        namesList.add(0, defaultName);
+      String defaultName = styleManager.propertyNameToVariableName(propertyName, kind);
+      if (namesList.contains(defaultName)) {
+        Collections.swap(namesList, 0, namesList.indexOf(defaultName));
       }
       else {
-        Collections.swap(namesList, 0, namesList.indexOf(defaultName));
+        namesList.add(0, defaultName);
       }
       names = namesList.toArray(new String[namesList.size()]);
 
-      boolean myBeFinal = ((PsiMethod)myParameter.getDeclarationScope()).isConstructor();
+      boolean myBeFinal = method.isConstructor();
       CreateFieldFromParameterDialog dialog = new CreateFieldFromParameterDialog(
         project,
         names,
@@ -147,7 +146,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
       suggestedNameInfo.nameChoosen(fieldNameToCalc);
     }
     else {
-      isFinalToCalc = true;
+      isFinalToCalc = !isMethodStatic;
       fieldNameToCalc = names[0];
     }
 
@@ -160,13 +159,10 @@ public class CreateFieldFromParameterAction implements IntentionAction {
           PsiElementFactory factory = psiManager.getElementFactory();
 
           PsiField field = factory.createField(fieldName, type);
+          PsiModifierList modifierList = field.getModifierList();
+          modifierList.setModifierProperty(PsiModifier.STATIC, isMethodStatic);
+          modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
 
-          if (isFinal) {
-            PsiModifierList modifierList = field.getModifierList();
-            modifierList.setModifierProperty(PsiModifier.FINAL, true);
-          }
-
-          PsiMethod method = (PsiMethod)myParameter.getDeclarationScope();
           PsiCodeBlock methodBody = method.getBody();
           PsiStatement[] statements = methodBody.getStatements();
 
@@ -230,7 +226,8 @@ public class CreateFieldFromParameterAction implements IntentionAction {
 
           String stmtText = fieldName + " = " + parameterName + ";";
           if (fieldName.equals(parameterName)) {
-            stmtText = "this." + stmtText;
+            String prefix = isMethodStatic ? (targetClass.getName() == null ? "" : targetClass.getName() + ".") : "this.";
+            stmtText = prefix + stmtText;
           }
 
           PsiStatement assignmentStmt = factory.createStatementFromText(stmtText, methodBody);
