@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -28,13 +29,14 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
   }
 
   public PsiElement setName(String name) throws IncorrectOperationException {
-    ASTNode keyNode = getKeyNode();
     PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), name,"xxx");
+    ASTNode keyNode = getKeyNode();
+    @NotNull ASTNode newKeyNode = property.getKeyNode();
     if (keyNode == null) {
-      getNode().addChild(property.getKeyNode());
+      getNode().addChild(newKeyNode);
     }
     else {
-      getNode().replaceChild(keyNode, property.getKeyNode());
+      getNode().replaceChild(keyNode, newKeyNode);
     }
     return this;
   }

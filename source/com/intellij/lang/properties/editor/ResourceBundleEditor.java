@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.GuiUtils;
@@ -196,13 +197,12 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
             editor.setRendererMode(propertyName == null);
             Property property = propertiesFile.findPropertyByKey(propertyName);
             final String value = property == null ? "" : property.getValue();
-            final String text = value.replaceAll("\\\\\n", "\n");
             final Document document = editor.getDocument();
             CommandProcessor.getInstance().executeCommand(null, new Runnable() {
               public void run() {
                 ApplicationManager.getApplication().runWriteAction(new Runnable() {
                   public void run() {
-                    document.replaceString(0, document.getTextLength(), text);
+                    updateDocumentFromPropertyValue(value, document);
                   }
                 });
               }
@@ -218,6 +218,38 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         }
       }
     }, 200);
+  }
+
+  private static void updateDocumentFromPropertyValue(final String value, final Document document) {
+    String text = value;
+    text = StringUtil.replace(text, "\\\n", "\n");
+    text = StringUtil.replace(text, "\\n", "\n");
+    text = StringUtil.replace(text, "\\t", "\t");
+    text = StringUtil.replace(text, "\\\\", "\\");
+    text = text.replaceAll("\n\\s*(\\S)", "\n$1");
+    document.replaceString(0, document.getTextLength(), text);
+  }
+  private static void updatePropertyValueFromDocument(final String propertyName,
+                                               final Project project,
+                                               final PropertiesFile propertiesFile,
+                                               final String text) {
+    String value = text;
+    value = StringUtil.replace(value, "\\", "\\\\");
+    value = StringUtil.replace(value, "\n", "\\\n ");
+    value = StringUtil.replace(value, "\t", "\\t");
+    Property property = propertiesFile.findPropertyByKey(propertyName);
+    try {
+      if (property == null) {
+        property = PropertiesElementFactory.createProperty(project, propertyName, value);
+        propertiesFile.add(property);
+      }
+      else {
+        property.setValue(value);
+      }
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
   }
 
   private void installDocumentListeners() {
@@ -284,19 +316,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
                 }
                 String propertyName = getSelectedPropertyName();
                 if (propertyName == null) return;
-                Property property = propertiesFile.findPropertyByKey(propertyName);
-                try {
-                  if (property == null) {
-                    property = PropertiesElementFactory.createProperty(project, propertyName, text);
-                    propertiesFile.add(property);
-                  }
-                  else {
-                    property.setValue(text);
-                  }
-                }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
-                }
+                updatePropertyValueFromDocument(propertyName, project, propertiesFile, text);
               }
             });
           }
