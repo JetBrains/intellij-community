@@ -433,6 +433,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         }
       }
 
+      LOG.assertTrue(myChangeInfo.getMethod().isValid());
+      processPrimaryMethod(myChangeInfo.getMethod(), null, true);
+
       for (UsageInfo usage : usages) {
         if (usage.getElement() == null) continue;
 
@@ -462,10 +465,6 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
           postponedUsages.add(usage);
         }
       }
-
-      LOG.assertTrue(myChangeInfo.getMethod().isValid());
-
-      processPrimaryMethod(myChangeInfo.getMethod(), null, true);
 
       for (UsageInfo usageInfo : postponedUsages) {
         PsiReference reference = usageInfo.getElement().getReference();
@@ -759,7 +758,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   private int getNonVarargCount(ChangeInfo changeInfo, PsiExpression[] args) {
     if (!changeInfo.wasVararg) return args.length;
-    return changeInfo.getMethod().getParameterList().getParameters().length - 1;
+    return changeInfo.oldParameterTypes.length - 1;
   }
 
   //This methods works equally well for primary usages as well as for propagated callers' usages

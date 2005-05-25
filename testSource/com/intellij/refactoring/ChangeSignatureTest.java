@@ -177,6 +177,18 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
            false);
   }
 
+  public void testAddException() throws Exception {
+    doTest(null, null, null, new SimpleParameterGen(new ParameterInfo[0]),
+           new GenExceptions() {
+             public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
+               return new ThrownExceptionInfo[] {
+                 new ThrownExceptionInfo(-1, method.getManager().getElementFactory().createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
+               };
+             }
+           },
+           false);
+  }
+
 
   protected void setUpJdk() {
     super.setUpJdk();
