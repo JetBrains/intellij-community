@@ -320,7 +320,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     if (myPrimaryElement instanceof PsiDirectory) {
       final PsiPackage aPackage = ((PsiDirectory)myPrimaryElement).getPackage();
       final UsageInfo[] usages;
-      if (aPackage != null) {
+      if (aPackage != null && aPackage.getName() != null) {
         usages = RenameUtil.findUsages(aPackage, myNewName, mySearchInComments, mySearchInNonJavaFiles, myAllRenames);
       }
       else {
@@ -430,13 +430,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   private static UsageInfo[] extractUsagesForElement(PsiElement element, UsageInfo[] usages) {
-    if (element instanceof PsiDirectory) {
-      final PsiPackage aPackage = ((PsiDirectory)element).getPackage();
-      if (aPackage != null) {
-        element = aPackage;
-      }
-    }
-
     final ArrayList<UsageInfo> extractedUsages = new ArrayList<UsageInfo>(usages.length);
     for (UsageInfo usage : usages) {
       LOG.assertTrue(usage instanceof MoveRenameUsageInfo);
