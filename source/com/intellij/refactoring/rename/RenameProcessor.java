@@ -133,7 +133,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   private void prepareDirectoryRenaming(final PsiDirectory directory, final String newName) {
     final PsiPackage aPackage = directory.getPackage();
-    if (aPackage != null) {
+    if (aPackage != null && aPackage.getName() != null) {
       myAllRenames.put(aPackage, newName);
       preparePackageRenaming(aPackage, newName);
     }
