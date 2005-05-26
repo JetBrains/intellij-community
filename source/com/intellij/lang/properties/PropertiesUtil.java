@@ -56,7 +56,7 @@ public class PropertiesUtil {
   }
 
   public static boolean isPropertyComplete(final Project project, ResourceBundle resourceBundle, String propertyName) {
-    List<PropertiesFile> propertiesFiles = virtualFilesToProperties(project, resourceBundle.getPropertiesFiles());
+    List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles(project);
     for (PropertiesFile propertiesFile : propertiesFiles) {
       if (propertiesFile.findPropertyByKey(propertyName) == null) return false;
     }
@@ -88,7 +88,7 @@ public class PropertiesUtil {
 
   public static List<Property> findAllProperties(Project project, ResourceBundle resourceBundle, String key) {
     List<Property> result = new SmartList<Property>();
-    List<PropertiesFile> propertiesFiles = virtualFilesToProperties(project, resourceBundle.getPropertiesFiles());
+    List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles(project);
     for (PropertiesFile propertiesFile : propertiesFiles) {
       result.addAll(propertiesFile.findPropertiesByKey(key));
     }

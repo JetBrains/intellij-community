@@ -9,7 +9,6 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -33,7 +32,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
   }
 
   public Collection<AbstractTreeNode> getChildren() {
-    List<PropertiesFile> propertiesFiles = PropertiesUtil.virtualFilesToProperties(myProject, getValue().getPropertiesFiles());
+    List<PropertiesFile> propertiesFiles = getValue().getPropertiesFiles(myProject);
     List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     for (PropertiesFile propertiesFile : propertiesFiles) {
       AbstractTreeNode node = new PsiFileNode(myProject, propertiesFile, getSettings());
@@ -46,7 +45,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
     if (!(psiFile instanceof PropertiesFile)) return false;
     PropertiesFile propertiesFile = (PropertiesFile)psiFile;
-    return getValue().getPropertiesFiles().contains(propertiesFile.getVirtualFile());
+    return getValue().getPropertiesFiles(myProject).contains(propertiesFile);
   }
 
   public void update(PresentationData presentation) {

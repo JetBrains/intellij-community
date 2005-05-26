@@ -1,0 +1,40 @@
+<html>
+<body>
+<table border="0" cellpadding="2" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111">
+  <tr>
+    <td colspan="3"><font face="verdana" size="-1">
+    This is a built-in template used for replace string literal expression (e.g. <b><i>String s = "Hello";</i></b>)
+    with internationalized Java code expression,
+    e.g. <b><i>String s = myResourceBundle.getString("hello");</i></b>.<br>
+    The template is editable. Along with Java expressions and comments, you can also use the predefined variables that
+    will be then expanded into the corresponding values.</font>
+    </td>
+  </tr>
+</table>
+<table border="0" cellpadding="5" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111">
+  <tr>
+    <td colspan="3"><font face="verdana" size="-1">Predefined variables will take the following values:</font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${RESOURCE_BUNDLE}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">Expression of type <b><i>java.util.ResourceBundle</i></b>, instance of which is available in this context</font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${PROPERTY_KEY}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">Property key name which is specified in the corresponding properties file.
+      Typically it is the value that is used for <b><i>ResourceBundle.getString()</i></b> method parameter.
+    </font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${PROPERTY_VALUE}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">Property value which is specified in the corresponding properties file.
+      This is an original Java string literal value.
+    </font></td>
+  </tr>
+
+</table>
+</body>
+</html>

@@ -14,9 +14,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -98,6 +100,13 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   public PsiElement add(PsiElement element) throws IncorrectOperationException {
+    if (element instanceof Property) {
+      throw new IncorrectOperationException("Use addProperty() instead");
+    }
+    return super.add(element);
+  }
+
+  public PsiElement addProperty(Property property) throws IncorrectOperationException {
     final List<Property> properties = getProperties();
     if (properties.size() != 0) {
       Property lastProperty = properties.get(properties.size() - 1);
@@ -105,10 +114,13 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
       if (nextSibling == null || nextSibling.getText().indexOf("\n") == -1) {
         String text = "\n";
         LeafElement ws = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, text.toCharArray(), 0, text.length(), getTreeElement().getCharTable(), myManager);
-        ChangeUtil.addChild(calcTreeElement(), ws, null);
+        ChangeUtil.addChild((CompositeElement)getPropertiesList(), ws, null);
+        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
+        documentManager.commitDocument(documentManager.getDocument(this));
       }
     }
-    return super.add(element);
+    getPropertiesList().addChild(property.getNode());
+    return property;
   }
 
   public void subtreeChanged() {

@@ -6,7 +6,8 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -15,7 +16,7 @@ import java.util.List;
 public interface ResourceBundle {
   Icon ICON = PropertiesFileType.FILE_ICON;
 
-  @NotNull List<VirtualFile> getPropertiesFiles();
+  @NotNull List<PropertiesFile> getPropertiesFiles(final Project project);
 
   @NotNull String getBaseName();
 }

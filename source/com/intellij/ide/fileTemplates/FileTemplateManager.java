@@ -17,6 +17,7 @@ public abstract class FileTemplateManager{
   public static final String TEMPLATE_IMPLEMENTED_METHOD_BODY = "Implemented Method Body.java";
   public static final String TEMPLATE_OVERRIDDEN_METHOD_BODY = "Overridden Method Body.java";
   public static final String TEMPLATE_FROM_USAGE_METHOD_BODY = "New Method Body.java";
+  public static final String TEMPLATE_I18NIZED_EXPRESSION = "I18nized Expression.java";
 
   public static final String INTERNAL_CLASS_TEMPLATE_NAME = "Class";
   public static final String INTERNAL_INTERFACE_TEMPLATE_NAME = "Interface";

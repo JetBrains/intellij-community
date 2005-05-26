@@ -9,7 +9,6 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.PropertiesFilesManager;
-import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -88,7 +87,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     myValuesPanel.add(valuesPanelComponent, "values");
     myValuesPanel.add(myNoPropertySelectedPanel, "noPropertySelected");
 
-    List<PropertiesFile> propertiesFiles = PropertiesUtil.virtualFilesToProperties(myProject, resourceBundle.getPropertiesFiles());
+    List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles(project);
 
     GridBagConstraints gc = new GridBagConstraints(0,0,0,0,0,0,GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5,5,5,5), 0,0);
     int y = 0;
@@ -190,7 +189,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, propertyName == null ? "noPropertySelected" : "values");
           if (propertyName == null) return;
 
-          List<PropertiesFile> propertiesFiles = PropertiesUtil.virtualFilesToProperties(myProject, myResourceBundle.getPropertiesFiles());
+          List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
           for (PropertiesFile propertiesFile : propertiesFiles) {
             EditorEx editor = (EditorEx)myEditors.get(propertiesFile);
             reinitSettings(editor);
@@ -241,7 +240,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     try {
       if (property == null) {
         property = PropertiesElementFactory.createProperty(project, propertyName, value);
-        propertiesFile.add(property);
+        propertiesFile.addProperty(property);
       }
       else {
         property.setValue(value);
@@ -253,7 +252,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   private void installDocumentListeners() {
-    List<PropertiesFile> propertiesFiles = PropertiesUtil.virtualFilesToProperties(myProject, myResourceBundle.getPropertiesFiles());
+    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
     for (final PropertiesFile propertiesFile : propertiesFiles) {
       final EditorEx editor = (EditorEx)myEditors.get(propertiesFile);
       DocumentAdapter listener = new DocumentAdapter() {
@@ -277,7 +276,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     }
   }
   private void uninstallDocumentListeners() {
-    List<PropertiesFile> propertiesFiles = PropertiesUtil.virtualFilesToProperties(myProject, myResourceBundle.getPropertiesFiles());
+    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
     for (final PropertiesFile propertiesFile : propertiesFiles) {
       Editor editor = myEditors.get(propertiesFile);
       DocumentListener listener = myDocumentListeners.get(propertiesFile);

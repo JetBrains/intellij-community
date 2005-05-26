@@ -1,6 +1,6 @@
 public class X {
   void f(Object action) {
-    if (<spot>action instanceof Runnable</spot>) {
+    if (action instanceof Runnable) {
       Runnable runnable = (Runnable)action;
     }
   }

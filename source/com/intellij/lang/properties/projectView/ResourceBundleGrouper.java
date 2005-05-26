@@ -4,7 +4,6 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
@@ -36,7 +35,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, ProjectComp
       if (f instanceof PropertiesFile) {
         PropertiesFile propertiesFile = (PropertiesFile)f;
         ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
-        if (resourceBundle.getPropertiesFiles().size() != 1) {
+        if (resourceBundle.getPropertiesFiles(myProject).size() != 1) {
           if (resourceBundles.add(resourceBundle)) {
             result.add(new ResourceBundleNode(propertiesFile.getProject(), resourceBundle, settings));
           }
@@ -59,7 +58,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, ProjectComp
       }
       if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataName)) {
         if (element instanceof ResourceBundle) {
-          List<PropertiesFile> propertiesFiles = PropertiesUtil.virtualFilesToProperties(myProject, ((ResourceBundle)element).getPropertiesFiles());
+          List<PropertiesFile> propertiesFiles = ((ResourceBundle)element).getPropertiesFiles(myProject);
           return propertiesFiles.toArray(new PsiElement[0]);
         }
       }

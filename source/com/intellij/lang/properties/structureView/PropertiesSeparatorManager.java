@@ -45,17 +45,16 @@ public class PropertiesSeparatorManager implements JDOMExternalizable, Applicati
 
   //returns most probable separator in property files
   private static String guessSeparator(final Project project, final VirtualFile file) {
-    Collection<VirtualFile> files;
+    Collection<PropertiesFile> files;
     if (file instanceof ResourceBundleAsVirtualFile) {
-      files = ((ResourceBundleAsVirtualFile)file).getResourceBundle().getPropertiesFiles();
+      files = ((ResourceBundleAsVirtualFile)file).getResourceBundle().getPropertiesFiles(project);
     }
     else {
-      files = Collections.singletonList(file);
+      PsiManager psiManager = PsiManager.getInstance(project);
+      files = Collections.singletonList((PropertiesFile)psiManager.findFile(file));
     }
     final TIntIntHashMap charCounts = new TIntIntHashMap();
-    PsiManager psiManager = PsiManager.getInstance(project);
-    for (VirtualFile virtualFile : files) {
-      PropertiesFile propertiesFile = (PropertiesFile)psiManager.findFile(virtualFile);
+    for (PropertiesFile propertiesFile : files) {
       if (propertiesFile == null) continue;
       List<Property> properties = propertiesFile.getProperties();
       for (Property property : properties) {

@@ -7,8 +7,12 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.util.SmartList;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -26,14 +30,18 @@ public class ResourceBundleImpl implements ResourceBundle {
     RenameHandlerRegistry.getInstance().registerHandler(ResourceBundleRenameHandler.INSTANCE);
   }
 
-  public List<VirtualFile> getPropertiesFiles() {
+  public List<PropertiesFile> getPropertiesFiles(final Project project) {
     VirtualFile[] children = myBaseDirectory.getChildren();
-    List<VirtualFile> result = new SmartList<VirtualFile>();
+    List<PropertiesFile> result = new SmartList<PropertiesFile>();
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    PsiManager psiManager = PsiManager.getInstance(project);
     for (VirtualFile file : children) {
       if (fileTypeManager.getFileTypeByFile(file) != PropertiesFileType.FILE_TYPE) continue;
       if (Comparing.strEqual(PropertiesUtil.getBaseName(file), myBaseName)) {
-        result.add(file);
+        PsiFile psiFile = psiManager.findFile(file);
+        if (psiFile instanceof PropertiesFile) {
+          result.add((PropertiesFile)psiFile);
+        }
       }
     }
     return result;
@@ -77,8 +85,6 @@ public class ResourceBundleImpl implements ResourceBundle {
   }
 
   public String getUrl() {
-    final String url;
-    url = "resourceBundle:"+getPropertiesFiles().get(0).getUrl();
-    return url;
+    return "resourceBundle:"+getBaseName();
   }
 }

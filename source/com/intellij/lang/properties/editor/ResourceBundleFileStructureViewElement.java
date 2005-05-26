@@ -6,7 +6,6 @@ package com.intellij.lang.properties.editor;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
@@ -33,7 +32,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
   }
 
   public StructureViewTreeElement[] getChildren() {
-    List<PropertiesFile> propertiesFiles = PropertiesUtil.virtualFilesToProperties(myProject, myResourceBundle.getPropertiesFiles());
+    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
     Map<String, Property> propertyNames = new LinkedHashMap<String, Property>();
     for (PropertiesFile propertiesFile : propertiesFiles) {
       List<Property> properties = propertiesFile.getProperties();

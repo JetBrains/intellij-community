@@ -8,6 +8,8 @@ package com.intellij.lang.properties.psi;
 
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,4 +21,6 @@ public interface PropertiesFile extends PsiFile {
   @NotNull List<Property> findPropertiesByKey(String key);
 
   @NotNull ResourceBundle getResourceBundle();
+
+  PsiElement addProperty(Property property) throws IncorrectOperationException;
 }

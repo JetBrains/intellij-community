@@ -795,6 +795,10 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean JSPX_ALIGN_JAVA_ACCORDING_TO_XML = true;
   public boolean JSPX_USE_HTML_FORMATTER = false;
   //----------------------------------------------------------------------------------------
+
+  //-----------------------------------I18n Inspection settings-----------------------------
+  public String NON_NLS_MARKER_COMMENT = "NON-NLS";
+
   private CodeStyleSettings myParentSettings;
 
   public void readExternal(org.jdom.Element element) throws InvalidDataException {

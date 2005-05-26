@@ -53,7 +53,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
   public void invoke(Project project, PsiElement[] elements, DataContext dataContext) {
     invoke(project, null, null, dataContext);
   }
-  private ResourceBundle getResourceBundleFromDataContext(DataContext dataContext) {
+  private static ResourceBundle getResourceBundleFromDataContext(DataContext dataContext) {
     VirtualFile virtualFile = (VirtualFile)dataContext.getData(DataConstantsEx.VIRTUAL_FILE);
     if (!(virtualFile instanceof ResourceBundleAsVirtualFile)) return null;
     return ((ResourceBundleAsVirtualFile)virtualFile).getResourceBundle();
@@ -76,7 +76,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
       return doRename(inputString);
     }
     private boolean doRename(final String inputString) {
-      final List<PropertiesFile> propertiesFiles = PropertiesUtil.virtualFilesToProperties(myProject, myResourceBundle.getPropertiesFiles());
+      final List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
       for (PropertiesFile propertiesFile : propertiesFiles) {
         if (!CodeInsightUtil.prepareFileForWrite(propertiesFile)) return false;
       }

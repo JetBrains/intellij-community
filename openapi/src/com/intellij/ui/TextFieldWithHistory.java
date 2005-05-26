@@ -5,6 +5,7 @@
 package com.intellij.ui;
 
 import javax.swing.*;
+import javax.swing.event.DocumentListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -23,6 +24,10 @@ public class TextFieldWithHistory extends JComboBox {
     getTextEditor().addKeyListener(new HistoricalValuesHighlighter());
   }
 
+  public void addDocumentListener(DocumentListener listener) {
+    getTextEditor().getDocument().addDocumentListener(listener);
+  }
+  
   public void setHistorySize(int aHistorySize) {
     myHistorySize = aHistorySize;
   }
