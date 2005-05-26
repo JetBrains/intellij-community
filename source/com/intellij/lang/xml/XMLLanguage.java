@@ -14,7 +14,7 @@ import com.intellij.newCodeFormatting.FormattingModel;
 import com.intellij.newCodeFormatting.FormattingModelBuilder;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.xml.XmlBlock;
@@ -45,9 +45,9 @@ public class XMLLanguage extends Language {
   protected XMLLanguage(String str) {
     super(str);
     myFormattingModelBuilder = new FormattingModelBuilder() {
-      public FormattingModel createModel(final PsiFile element, final CodeStyleSettings settings) {
+      public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
         final ASTNode root = SourceTreeToPsiMap.psiElementToTree(element);
-        return new PsiBasedFormattingModel(element, settings, new XmlBlock(root, null, null, new XmlPolicy(settings), null));
+        return new PsiBasedFormattingModel(element.getContainingFile(), settings, new XmlBlock(root, null, null, new XmlPolicy(settings), null));
       }
     };    
   }

@@ -9,7 +9,7 @@ import com.intellij.newCodeFormatting.FormattingModel;
 import com.intellij.newCodeFormatting.FormattingModelBuilder;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.xml.HtmlPolicy;
@@ -30,8 +30,8 @@ public class HTMLLanguage extends XMLLanguage {
   public HTMLLanguage() {
     super("HTML");
     myFormattingModelBuilder = new FormattingModelBuilder() {
-      public FormattingModel createModel(final PsiFile element, final CodeStyleSettings settings) {
-        return new PsiBasedFormattingModel(element, settings, 
+      public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
+        return new PsiBasedFormattingModel(element.getContainingFile(), settings, 
                                            new XmlBlock(SourceTreeToPsiMap.psiElementToTree(element), 
                                                         null, null, new HtmlPolicy(settings, ElementType.HTML_TAG), null));
       }

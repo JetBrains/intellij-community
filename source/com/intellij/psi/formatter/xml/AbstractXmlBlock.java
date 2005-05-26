@@ -1,10 +1,10 @@
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -94,23 +94,31 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected Block createChildBlock(final ASTNode child, final Wrap wrap, final Alignment alignment, final Indent indent) {
-    if (child.getElementType() == ElementType.JSP_XML_TEXT) {
-      final ASTNode javaElement = JspTextBlock.findJavaElementAt(child);
-      if (javaElement != null) {
-        return new JspTextBlock(child, null, null, myXmlFormattingPolicy, javaElement);
+    final Language myLanguage = myNode.getPsi().getLanguage();
+    final Language childLanguage = child.getPsi().getLanguage();
+    if (myLanguage == childLanguage || childLanguage.getFormattingModelBuilder() == null) {
+      if (child.getElementType() == ElementType.JSP_XML_TEXT) {
+        final ASTNode javaElement = JspTextBlock.findJavaElementAt(child);
+        if (javaElement != null) {
+          return new JspTextBlock(child, null, null, myXmlFormattingPolicy, javaElement);
+        }
       }
-    }
-    if (child.getElementType() == getTagType() || child.getElementType() == ElementType.XML_TAG) {
-      return new XmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent != null ? indent : getFormatter().getNoneIndent());
-    }
-    else if (child.getElementType() == ElementType.JSP_SCRIPTLET_END) {
-      return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, getFormatter().getNoneIndent());      
-    }
-    else {
-      return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent);
+      if (child.getElementType() == getTagType() || child.getElementType() == ElementType.XML_TAG) {
+        return new XmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent != null ? indent : getFormatter().getNoneIndent());
+      }
+      else if (child.getElementType() == ElementType.JSP_SCRIPTLET_END) {
+        return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, getFormatter().getNoneIndent());      
+      }
+      else {
+        return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent);
+      }
+    } else {
+      final FormattingModel childModel = childLanguage.getFormattingModelBuilder().createModel(child.getPsi(),
+                                                                                               myXmlFormattingPolicy.getSettings());
+      return new AnotherLanguageBlockWrapper(child, myXmlFormattingPolicy, childModel.getRootBlock());
     }
   }
-
+  
   protected boolean isJspxJavaContainingNode(final ASTNode child) {
     if (child.getElementType() != ElementType.XML_TEXT) return false;
     final ASTNode treeParent = child.getTreeParent();
@@ -141,7 +149,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   public abstract boolean isTextElement();
 
-  public static Block creareJspRoot(final PsiFile element, final CodeStyleSettings settings) {
+  public static Block creareJspRoot(final PsiElement element, final CodeStyleSettings settings) {
     final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(element);
     if (settings.JSPX_USE_HTML_FORMATTER) {
       return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.HTML_TAG), null);      
@@ -150,7 +158,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     }
   }
   
-  public static Block creareJspxRoot(final PsiFile element, final CodeStyleSettings settings) {
+  public static Block creareJspxRoot(final PsiElement element, final CodeStyleSettings settings) {
     final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(element);
     if (settings.JSPX_USE_HTML_FORMATTER) {
       return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.XML_TAG), null);      

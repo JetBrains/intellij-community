@@ -14,7 +14,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.java.AbstractJavaBlock;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -43,8 +43,8 @@ public class JavaLanguage extends Language {
   public JavaLanguage() {
     super("JAVA");
     myFormattingModelBuilder = new FormattingModelBuilder() {
-      public FormattingModel createModel(final PsiFile element, final CodeStyleSettings settings) {
-        return new PsiBasedFormattingModel(element, settings, AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element), 
+      public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
+        return new PsiBasedFormattingModel(element.getContainingFile(), settings, AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element), 
                                                                                                 settings));
       }
     };
