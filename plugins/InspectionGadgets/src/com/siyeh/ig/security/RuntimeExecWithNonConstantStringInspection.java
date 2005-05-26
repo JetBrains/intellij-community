@@ -14,7 +14,7 @@ public class RuntimeExecWithNonConstantStringInspection extends ExpressionInspec
         return "CallToRuntimeExecWithNonConstantString";
     }
     public String getDisplayName() {
-        return "Call to 'Runtime.exec()' with with-constant string";
+        return "Call to 'Runtime.exec()' with with non-constant string";
     }
 
     public String getGroupDisplayName() {
