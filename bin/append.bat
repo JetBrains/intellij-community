@@ -1,4 +1,4 @@
-if "%ACC%" == "" goto emptyacc
+if not defined ACC goto emptyacc
 if "%SEPARATOR%" == "" goto noseparator
 set ACC=%ACC%%SEPARATOR%%1
 goto end
