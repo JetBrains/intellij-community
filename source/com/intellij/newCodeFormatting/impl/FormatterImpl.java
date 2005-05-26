@@ -98,14 +98,21 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     final Block block = model.getRootBlock();
     final FormatProcessor processor = new FormatProcessor(docModel, block, settings, indentOptions, affectedRange);
 
-    final String text = model.getDocumentModel().getText();
-    int lineStartOffset = CharArrayUtil.shiftBackward(text, offset, "\t ");
-    if (lineStartOffset != offset) {
-      lineStartOffset = CharArrayUtil.shiftForward(text, lineStartOffset, "\n");
-    }
-    LOG.assertTrue(model.getDocumentModel().getLineNumber(offset) == model.getDocumentModel().getLineNumber(lineStartOffset));
 
     final WhiteSpace whiteSpace = processor.getWhiteSpaceBefore(offset);
+    
+    final String text = model.getDocumentModel().getText();
+    int lineStartOffset = offset;
+    if (lineStartOffset > whiteSpace.getTextRange().getStartOffset()) {
+      if (text.charAt(lineStartOffset) == '\n') {
+        lineStartOffset--;
+      }
+      lineStartOffset = CharArrayUtil.shiftBackward(text, lineStartOffset, "\t ");
+      if (lineStartOffset != offset && text.charAt(lineStartOffset) == '\n') {
+        lineStartOffset++;
+      }      
+    }
+        
     processor.setAllWhiteSpacesAreReadOnly();
     if (whiteSpace == null) {
       return offset;
