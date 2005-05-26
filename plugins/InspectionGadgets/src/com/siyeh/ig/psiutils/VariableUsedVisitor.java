@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class VariableUsedVisitor extends PsiRecursiveElementVisitor{
     private boolean used = false;
-    private final @NotNull PsiVariable variable;
+    @NotNull private final PsiVariable variable;
 
     public VariableUsedVisitor(@NotNull PsiVariable variable){
         super();

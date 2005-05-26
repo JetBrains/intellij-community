@@ -1,6 +1,5 @@
 package com.siyeh.ig.verbose;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
@@ -50,7 +49,7 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
     }
 
     private  class UnnecessaryLocalVariableVisitor extends BaseInspectionVisitor {
-    
+
         public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             if (isCopyVariable(variable)) {
