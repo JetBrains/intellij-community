@@ -87,16 +87,31 @@ final class StripeButtonUI extends MetalToggleButtonUI{
     g2.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
 
     final ButtonModel model=button.getModel();
+
+    g.setColor(new JPanel().getBackground());
+    g.fillRect(0, 0, button.getWidth(), button.getHeight());
+
     if (model.isArmed() && model.isPressed() || model.isSelected()) {
-//      g.setColor(button.getBackground().darker());
-//      g.fillRect(0, 0, button.getWidth(), button.getHeight());
-      g.setColor(button.getBackground());
-      g.fillRect(0, 0, button.getWidth(), button.getHeight());
+      final Graphics2D g2d = (Graphics2D) g;
+      final GradientPaint paint;
+      if (ToolWindowAnchor.TOP == anchor || ToolWindowAnchor.BOTTOM == anchor) {
+        paint = new GradientPaint(0, 0, button.getBackground().darker(), 0, button.getHeight(), button.getBackground().brighter());
+      }
+      else {
+        paint = new GradientPaint(0, 0, button.getBackground().darker(), button.getWidth(), 0, button.getBackground().brighter());
+      }
+      g2d.setPaint(paint);
+      g2d.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
+
+      /*
       g.setColor(button.getBackground().darker());
       g.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
+      */
+      g.setColor(Color.black);
+      g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
     } else /*if (button.isOpaque())*/ {
       g.setColor(button.getBackground());
-      g.fillRect(0, 0, button.getWidth(), button.getHeight());
+      g.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
       g.setColor(Color.GRAY);
       g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
     }

@@ -1,5 +1,6 @@
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
@@ -10,12 +11,6 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 final class TitlePanel extends JPanel {
-  private final Color BND_ENABLE_COLOR = new Color(105, 128, 180);
-  private final Color BND_DISABLE_COLOR = new Color(160, 160, 160);
-
-  private final Color CNT_ENABLE_COLOR = new Color(120, 144, 192);
-  private final Color CNT_DISABLE_COLOR = new Color(184, 184, 184);
-
   private static final int DELAY = 5; // Delay between frames
   private static final int TOTAL_FRAME_COUNT = 7; // Total number of frames in animation sequence
 
@@ -33,31 +28,15 @@ final class TitlePanel extends JPanel {
   private final MyAnimator myAnimator; // Renders panel's color
   private boolean myActive = true;
 
+  private final static int BRIGHTENING_FACTOR = 15;
+
   TitlePanel() {
     super(new BorderLayout());
     myFrameTicker = new Alarm();
     myAnimator = new MyAnimator();
     setLayout(new BorderLayout());
 
-    // Initial boundary color
-
-    myBndStartRed = BND_DISABLE_COLOR.getRed();
-    myBndStartGreen = BND_DISABLE_COLOR.getGreen();
-    myBndStartBlue = BND_DISABLE_COLOR.getBlue();
-
-    myBndEndRed = BND_ENABLE_COLOR.getRed();
-    myBndEndGreen = BND_ENABLE_COLOR.getGreen();
-    myBndEndBlue = BND_ENABLE_COLOR.getBlue();
-
-    // Initial center color
-
-    myCntStartRed = CNT_DISABLE_COLOR.getRed();
-    myCntStartGreen = CNT_DISABLE_COLOR.getGreen();
-    myCntStartBlue = CNT_DISABLE_COLOR.getBlue();
-
-    myCntEndRed = CNT_ENABLE_COLOR.getRed();
-    myCntEndGreen = CNT_ENABLE_COLOR.getGreen();
-    myCntEndBlue = CNT_ENABLE_COLOR.getBlue();
+    setupColors(false);
 
     myCurrentFrame = TOTAL_FRAME_COUNT;
     updateColor();
@@ -72,6 +51,37 @@ final class TitlePanel extends JPanel {
     if (myCurrentFrame > 0) { // reverse rendering
       myCurrentFrame = TOTAL_FRAME_COUNT - myCurrentFrame;
     }
+
+    setupColors(active);
+
+    if (animate) {
+      myFrameTicker.addRequest(myAnimator, DELAY);
+    }
+  }
+
+  private void setupColors(final boolean active) {
+    final Color CNT_ENABLE_COLOR;
+    final Color BND_ENABLE_COLOR;
+    final Color CNT_DISABLE_COLOR;
+    final Color BND_DISABLE_COLOR;
+
+    if (SystemInfo.isWindowsXP) {
+      Toolkit tk = getToolkit();
+
+      CNT_ENABLE_COLOR = (Color)tk.getDesktopProperty("win.frame.activeCaptionGradientColor");
+      BND_ENABLE_COLOR = (Color)tk.getDesktopProperty("win.frame.activeCaptionColor");
+
+      CNT_DISABLE_COLOR = (Color)tk.getDesktopProperty("win.frame.inactiveCaptionGradientColor");
+      BND_DISABLE_COLOR = (Color)tk.getDesktopProperty("win.frame.inactiveCaptionColor");
+    }
+    else {
+      CNT_ENABLE_COLOR = SystemColor.activeCaption;
+      BND_ENABLE_COLOR = SystemColor.activeCaption;
+
+      CNT_DISABLE_COLOR = SystemColor.inactiveCaption;
+      BND_DISABLE_COLOR = SystemColor.inactiveCaption;
+    }
+
     if (active) {
 
       // Boundary color
@@ -116,9 +126,6 @@ final class TitlePanel extends JPanel {
       myCntEndGreen = CNT_DISABLE_COLOR.getGreen();
       myCntEndBlue = CNT_DISABLE_COLOR.getBlue();
     }
-    if (animate) {
-      myFrameTicker.addRequest(myAnimator, DELAY);
-    }
   }
 
   private void updateColor() {
@@ -145,10 +152,10 @@ final class TitlePanel extends JPanel {
   protected final void paintComponent(final Graphics g) {
     super.paintComponent(g);
     final Graphics2D g2d = (Graphics2D) g;
-    g2d.setPaint(new GradientPaint(0, 0, myBndColor, 0, getHeight() / 2, myCntColor));
-    g2d.fillRect(0, 0, getWidth(), getHeight() / 2);
-    g2d.setPaint(new GradientPaint(0, getHeight() / 2, myCntColor, 0, getHeight() - 1, myBndColor));
-    g2d.fillRect(0, getHeight() / 2, getWidth(), getHeight() - 1);
+    g2d.setPaint(new GradientPaint(0, 0, myBndColor, 0, getHeight(), myCntColor));
+    g2d.fillRect(0, 0, getWidth(), getHeight());
+    g2d.setColor(myActive ? SystemColor.activeCaptionBorder : SystemColor.inactiveCaptionBorder);
+    g2d.drawLine(0, 0, getWidth(), 0);
   }
 
   private final class MyAnimator implements Runnable {

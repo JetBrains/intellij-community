@@ -19,8 +19,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ActivatableLineBorder;
+import com.intellij.ui.PopupHandler;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -139,6 +139,8 @@ public final class InternalDecorator extends JPanel {
     // Active
     final boolean active = info.isActive();
     myTitlePanel.setActive(active, !info.isSliding());
+    myTitleLabel.setForeground(active ? SystemColor.activeCaptionText : SystemColor.inactiveCaptionText);
+
     //todo myToolWindowBorder.setActive(active);
     myFloatingDockSeparator.setActive(active);
     myDockAutoHideSeparator.setActive(active);
@@ -297,7 +299,7 @@ public final class InternalDecorator extends JPanel {
     // Compose title bar
     final Component strut = Box.createHorizontalStrut(3);
     myTitlePanel.add(strut, BorderLayout.WEST);
-    myTitleLabel.setForeground(Color.white);
+    myTitleLabel.setForeground(SystemColor.activeCaptionText);
     myTitlePanel.add(myTitleLabel, BorderLayout.CENTER);
 
     final JPanel buttonPanel = new JPanel(new GridBagLayout());

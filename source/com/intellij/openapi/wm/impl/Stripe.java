@@ -26,7 +26,7 @@ final class Stripe extends JPanel{
 
   Stripe(final int anchor){
     super(new GridBagLayout());
-    setBackground(new Color(247, 243, 239));
+    //setBackground(new Color(247, 243, 239));
     myAnchor = anchor;
     myKeymapManagerListener=new MyKeymapManagerListener();
     myWeakKeymapManagerListener=new WeakKeymapManagerListener(KeymapManagerEx.getInstanceEx(),myKeymapManagerListener);
