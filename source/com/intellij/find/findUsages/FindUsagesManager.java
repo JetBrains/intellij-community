@@ -1,10 +1,10 @@
 package com.intellij.find.findUsages;
 
-import static com.intellij.find.findUsages.FindUsagesManager.FileSearchScope.*;
 import com.intellij.aspects.psi.PsiPointcut;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
+import static com.intellij.find.findUsages.FindUsagesManager.FileSearchScope.*;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.FindUsagesProvider;
@@ -44,13 +44,12 @@ import com.intellij.usages.UsageSearcher;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jdom.Element;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import org.jdom.Element;
 
 public class FindUsagesManager implements JDOMExternalizable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findParameterUsages.FindUsagesManager");
@@ -336,19 +335,13 @@ public class FindUsagesManager implements JDOMExternalizable{
     }
   }
 
-  private PsiElement2UsageTargetAdapter[] convertToUsageTargets(final PsiElement[] primaryElementsToSearch, final PsiElement[] secondaryElementsToSearch) {
+  private PsiElement2UsageTargetAdapter[] convertToUsageTargets(final PsiElement[] elementsToSearch) {
     final ArrayList<PsiElement2UsageTargetAdapter> targets = new ArrayList<PsiElement2UsageTargetAdapter>();
-    if (primaryElementsToSearch != null) {
-      for (PsiElement element : primaryElementsToSearch) {
+    if (elementsToSearch != null) {
+      for (PsiElement element : elementsToSearch) {
         convertToUsageTarget(targets, element);
       }
     }
-    if (secondaryElementsToSearch != null) {
-      for (PsiElement element : secondaryElementsToSearch) {
-        convertToUsageTarget(targets, element);
-      }
-    }
-
     return targets.toArray(new PsiElement2UsageTargetAdapter[targets.size()]);
   }
 
@@ -464,12 +457,37 @@ public class FindUsagesManager implements JDOMExternalizable{
 
     UsageViewPresentation presentation = createPresentation(descriptor.getPrimaryElements()[0], findUsagesOptions, toOpenInNewTab);
 
+    final PsiElement2UsageTargetAdapter[] primaryTargets = convertToUsageTargets(descriptor.getPrimaryElements());
+    final PsiElement2UsageTargetAdapter[] additionalTargets = convertToUsageTargets(descriptor.getAdditionalElements());
+    final PsiElement2UsageTargetAdapter[] targets = new PsiElement2UsageTargetAdapter[primaryTargets.length + additionalTargets.length];
+    System.arraycopy(primaryTargets, 0, targets, 0, primaryTargets.length);
+    System.arraycopy(additionalTargets, 0, targets, primaryTargets.length, additionalTargets.length);
     final Factory<UsageSearcher> searcherFactory = new Factory<UsageSearcher>() {
       public UsageSearcher create() {
-        return createUsageSearcher(descriptor, findUsagesOptions, null);
+        final PsiElement[] primary;
+        if (primaryTargets.length > 0) {
+          primary = new PsiElement[primaryTargets.length];
+          for (int idx = 0; idx < primaryTargets.length; idx++) {
+            primary[idx] = primaryTargets[idx].getElement();
+          }
+        }
+        else {
+          primary = null;
+        }
+        final PsiElement[] additional;
+        if (additionalTargets.length > 0) {
+          additional = new PsiElement[additionalTargets.length];
+          for (int idx = 0; idx < additionalTargets.length; idx++) {
+            additional[idx] = additionalTargets[idx].getElement();
+          }
+        }
+        else {
+          additional = null;
+        }
+        // NOTE: it is important to create descriptor at the invocation time, otherwise there is a risk to search with invalid elements 
+        return createUsageSearcher(new UsageInfoToUsageConverter.TargetElementsDescriptor(primary, additional), findUsagesOptions, null);
       }
     };
-    final PsiElement2UsageTargetAdapter[] targets = convertToUsageTargets(descriptor.getPrimaryElements(), descriptor.getAdditionalElements());
     myAnotherManager.searchAndShowUsages(targets, searcherFactory, !toSkipUsagePanelWhenOneUsage, true, presentation, null);
   }
 
