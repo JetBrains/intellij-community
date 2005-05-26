@@ -101,8 +101,11 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
 
     final WhiteSpace whiteSpace = processor.getWhiteSpaceBefore(offset);
     
+    boolean wsContainsCaret = whiteSpace.getTextRange().getStartOffset() <= offset && whiteSpace.getTextRange().getEndOffset() > offset;
+    
     final String text = model.getDocumentModel().getText();
     int lineStartOffset = offset;
+    lineStartOffset = CharArrayUtil.shiftBackwardUntil(text, lineStartOffset, " \t\n");
     if (lineStartOffset > whiteSpace.getTextRange().getStartOffset()) {
       if (text.charAt(lineStartOffset) == '\n') {
         lineStartOffset--;
@@ -132,8 +135,12 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS, block.getTextRange().getLength());
     
     
-    return whiteSpace.getTextRange().getStartOffset() 
-           + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - whiteSpace.getTextRange().getStartOffset(), " \t");
+    if (wsContainsCaret) {
+      return whiteSpace.getTextRange().getStartOffset() 
+             + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - whiteSpace.getTextRange().getStartOffset(), " \t");
+    } else {
+      return offset - whiteSpace.getTextRange().getLength() + newWS.length();
+    }
   }
 
   public void adjustTextRange(final FormattingModel model,
