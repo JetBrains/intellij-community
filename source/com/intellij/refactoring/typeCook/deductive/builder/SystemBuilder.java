@@ -733,6 +733,7 @@ public class SystemBuilder {
 
                         final PsiType operandType = e.evaluateType(expression.getOperand());
                         final PsiType castType = e.evaluateType(expression);
+                        if (operandType == null || castType == null) return;
 
                         if (Util.bindsTypeVariables(operandType)) {
                           system.addCast(expression);
