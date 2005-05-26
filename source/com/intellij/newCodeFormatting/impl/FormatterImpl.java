@@ -97,6 +97,14 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     final FormattingDocumentModel docModel = model.getDocumentModel();
     final Block block = model.getRootBlock();
     final FormatProcessor processor = new FormatProcessor(docModel, block, settings, indentOptions, affectedRange);
+
+    final String text = model.getDocumentModel().getText();
+    int lineStartOffset = CharArrayUtil.shiftBackward(text, offset, "\t ");
+    if (lineStartOffset != offset) {
+      lineStartOffset = CharArrayUtil.shiftForward(text, lineStartOffset, "\n");
+    }
+    LOG.assertTrue(model.getDocumentModel().getLineNumber(offset) == model.getDocumentModel().getLineNumber(lineStartOffset));
+
     final WhiteSpace whiteSpace = processor.getWhiteSpaceBefore(offset);
     processor.setAllWhiteSpacesAreReadOnly();
     if (whiteSpace == null) {
@@ -112,12 +120,13 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     else {
       indent = processor.getIndentAt(offset);
     }
-
-    final String newWS = whiteSpace.generateWhiteSpace(indentOptions, offset, indent);
+    
+    final String newWS = whiteSpace.generateWhiteSpace(indentOptions, lineStartOffset, indent);
     model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS, block.getTextRange().getLength());
-
+    
+    
     return whiteSpace.getTextRange().getStartOffset() 
-           + CharArrayUtil.shiftForward(newWS.toCharArray(), offset - whiteSpace.getTextRange().getStartOffset(), " \t");
+           + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - whiteSpace.getTextRange().getStartOffset(), " \t");
   }
 
   public void adjustTextRange(final FormattingModel model,

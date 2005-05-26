@@ -242,7 +242,6 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
                                                             indentOptions,
                                                             offset,
                                                             significantRange);
-      //System.out.println(file.getText());
       return result;
 
     } else {

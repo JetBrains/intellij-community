@@ -2,6 +2,7 @@ package com.intellij.psi.formatter.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
@@ -96,7 +97,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   protected Block createChildBlock(final ASTNode child, final Wrap wrap, final Alignment alignment, final Indent indent) {
     final Language myLanguage = myNode.getPsi().getLanguage();
     final Language childLanguage = child.getPsi().getLanguage();
-    if (myLanguage == childLanguage || childLanguage.getFormattingModelBuilder() == null) {
+    if (useMyFormatter(myLanguage, childLanguage)) {
       if (child.getElementType() == ElementType.JSP_XML_TEXT) {
         final ASTNode javaElement = JspTextBlock.findJavaElementAt(child);
         if (javaElement != null) {
@@ -118,7 +119,17 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       return new AnotherLanguageBlockWrapper(child, myXmlFormattingPolicy, childModel.getRootBlock());
     }
   }
-  
+
+  private boolean useMyFormatter(final Language myLanguage, final Language childLanguage) {
+    return myLanguage == childLanguage 
+           || childLanguage == StdLanguages.JAVA  
+           || childLanguage == StdLanguages.HTML  
+           || childLanguage == StdLanguages.XML  
+           || childLanguage == StdLanguages.JSP  
+           || childLanguage == StdLanguages.JSPX  
+           || childLanguage.getFormattingModelBuilder() == null;
+  }
+
   protected boolean isJspxJavaContainingNode(final ASTNode child) {
     if (child.getElementType() != ElementType.XML_TEXT) return false;
     final ASTNode treeParent = child.getTreeParent();
@@ -126,8 +137,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     if (treeParent.getElementType() != ElementType.XML_TAG) return false;
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(treeParent);
     final String name = ((XmlTag)psiElement).getName();
-    if (!(Comparing.equal(name, JSPX_SCRIPTLET_TAG_NAME) 
-           || Comparing.equal(name, JSPX_DECLARATION_TAG_NAME))){
+    if (!(Comparing.equal(name, JSPX_SCRIPTLET_TAG_NAME)
+          || Comparing.equal(name, JSPX_DECLARATION_TAG_NAME))){
       return false;
     }
     if (child.getText().trim().length() == 0) return false;
