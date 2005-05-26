@@ -145,6 +145,10 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
     return selectedContent == null || selectedContent.getUserData(contentKey) == null ? null : selectedContent;
   }
 
+  public Content getSelectedContent() {
+    return myFindContentManager.getSelectedContent();
+  }
+
   public UsageView getSelectedUsageView() {
     Content selectedContent = myFindContentManager.getSelectedContent();
     return selectedContent == null ? null: selectedContent.getUserData(USAGE_VIEW_KEY);

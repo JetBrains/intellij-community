@@ -42,6 +42,8 @@ public abstract class UsageViewManager {
 
   public abstract Content getSelectedContent(boolean reusable);
 
+  public abstract Content getSelectedContent();
+
   /**
    * @deprecated
    * @return

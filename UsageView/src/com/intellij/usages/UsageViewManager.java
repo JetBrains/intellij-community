@@ -41,4 +41,7 @@ public abstract class UsageViewManager {
                            FindUsagesProcessPresentation processPresentation,
                            UsageViewPresentation presentation,
                            UsageViewStateListener listener);
+
+  @Nullable
+  public abstract UsageView getSelectedUsageView();
 }

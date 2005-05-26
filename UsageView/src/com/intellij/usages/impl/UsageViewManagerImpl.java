@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -31,6 +32,7 @@ import java.awt.event.ActionEvent;
  */
 public class UsageViewManagerImpl extends UsageViewManager implements ProjectComponent {
   private Project myProject;
+  private static final Key<UsageView> USAGE_VIEW_KEY = Key.create("USAGE_VIEW");
 
   public UsageViewManagerImpl(Project project) {
     myProject = project;
@@ -59,6 +61,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
       true
     );
     usageView.setContent(content);
+    content.putUserData(USAGE_VIEW_KEY, usageView);
     return content;
   }
 
@@ -112,6 +115,15 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
         }
       }
     );
+  }
+
+  public UsageView getSelectedUsageView() {
+    final Content content = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent();
+    if (content != null) {
+      return content.getUserData(USAGE_VIEW_KEY);
+    }
+
+    return null;
   }
 
   static String getProgressTitle(UsageViewPresentation presentation) {

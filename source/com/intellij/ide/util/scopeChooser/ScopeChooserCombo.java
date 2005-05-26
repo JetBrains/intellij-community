@@ -5,7 +5,6 @@
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.ide.util.TreeClassChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -19,9 +18,10 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageView;
-import com.intellij.usageView.UsageViewManager;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.rules.PsiElementUsage;
 
 import javax.swing.*;
 import java.awt.*;
@@ -110,8 +110,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
 
     NamedScopeManager scopeManager = NamedScopeManager.getInstance(myProject);
     NamedScope[] scopes = scopeManager.getScopes();
-    for (int i = 0; i < scopes.length; i++) {
-      NamedScope scope = scopes[i];
+    for (NamedScope scope : scopes) {
       model.addElement(new ScopeDescriptor(GlobalSearchScope.filterScope(myProject, scope, true)));
     }
 
@@ -144,19 +143,18 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
       }
     }
 
-    UsageView selection = UsageViewManager.getInstance(getProject()).getSelectedUsageView();
+    UsageView selectedUsageView = UsageViewManager.getInstance(getProject()).getSelectedUsageView();
 
-    if (selection != null && !selection.isInAsyncUpdate()) {
-      final UsageInfo[] infos = selection.getUsages();
-      if (infos != null) {
-        final java.util.List<PsiElement> results = new ArrayList<PsiElement>(infos.length);
+    if (selectedUsageView != null && !selectedUsageView.isSearchInProgress()) {
+      final Set<Usage> usages = selectedUsageView.getUsages();
+      if (usages != null) {
+        final java.util.List<PsiElement> results = new ArrayList<PsiElement>(usages.size());
 
         if (myPrevSearchFiles) {
           final Set<VirtualFile> files = new HashSet<VirtualFile>();
-          for (int i = 0; i < infos.length; i++) {
-            UsageInfo info = infos[i];
-            if (!selection.isExcluded(info)) {
-              PsiElement psiElement = info.getElement();
+          for (Usage usage : usages) {
+            if (usage instanceof PsiElementUsage) {
+              PsiElement psiElement = ((PsiElementUsage)usage).getElement();
               if (psiElement != null && psiElement.isValid()) {
                 PsiFile psiFile = psiElement.getContainingFile();
                 if (psiFile != null) {
@@ -191,12 +189,12 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
           }
         }
         else {
-          for (int i = 0; i < infos.length; ++i) {
-            if (!selection.isExcluded(infos[i]) &&
-                infos[i].getElement() != null &&
-                infos[i].getElement().isValid()
-            ) {
-              results.add(infos[i].getElement());
+          for (Usage usage : usages) {
+            if (usage instanceof PsiElementUsage) {
+              final PsiElement element = ((PsiElementUsage)usage).getElement();
+              if (element != null && element.isValid()) {
+                results.add(element);
+              }
             }
           }
 
