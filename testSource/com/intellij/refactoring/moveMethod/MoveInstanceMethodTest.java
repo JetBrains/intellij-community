@@ -31,6 +31,8 @@ public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
 
   public void testTwoParams() throws Exception { doTest(true, 0); }
 
+  public void testNoThisParam() throws Exception { doTest(false, 0); }
+
   private void doTest(boolean isTargetParameter, final int targetIndex) throws Exception {
     final String filePath = "/refactoring/moveInstanceMethod/" + getTestName(false) + ".java";
     configureByFile(filePath);
@@ -40,7 +42,7 @@ public class MoveInstanceMethodTest extends LightCodeInsightTestCase {
     final PsiVariable targetVariable = isTargetParameter ? ((PsiVariable)method.getParameterList().getParameters()[targetIndex]) :
                                        method.getContainingClass().getFields()[targetIndex];
     new MoveInstanceMethodProcessor(getProject(),
-                                    method, targetVariable, null, MoveInstanceMethodHandler.suggestParameterNames (method)).run();
+                                    method, targetVariable, null, MoveInstanceMethodHandler.suggestParameterNames (method, targetVariable)).run();
     checkResultByFile(filePath + ".after");
 
   }

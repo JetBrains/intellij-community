@@ -73,7 +73,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
       return;
     }
 
-    final PsiClass[] classes = MoveMethodUtil.getThisClassesNeeded(method);
+    final Set<PsiClass> classes = MoveMethodUtil.getThisClassesToMembers(method).keySet();
     for (PsiClass aClass : classes) {
       if (aClass instanceof JspClass) {
         String message = "Cannot perform the refactoring.\n" +
@@ -138,10 +138,13 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     return suggestedName;
   }
 
-  public static Map<PsiClass, String> suggestParameterNames(final PsiMethod method) {
-    final PsiClass[] classes = MoveMethodUtil.getThisClassesNeeded(method);
+  public static Map<PsiClass, String> suggestParameterNames(final PsiMethod method, final PsiVariable targetVariable) {
+    final Map<PsiClass, Set<PsiMember>> classesToMembers = MoveMethodUtil.getThisClassesToMembers(method);
     Map<PsiClass, String> result = new LinkedHashMap<PsiClass, String>();
-    for (PsiClass aClass : classes) {
+    for (Map.Entry<PsiClass,Set<PsiMember>> entry : classesToMembers.entrySet()) {
+      PsiClass aClass = entry.getKey();
+      final Set<PsiMember> members = entry.getValue();
+      if (members.size() == 1 && members.contains(targetVariable)) continue;
       result.put(aClass, suggestParameterNameForThisClass(aClass));
     }
     return result;

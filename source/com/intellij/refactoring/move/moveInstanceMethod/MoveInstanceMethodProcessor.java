@@ -42,10 +42,10 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   private final Map<PsiClass, String> myOldClassParameterNames;
 
   public MoveInstanceMethodProcessor(final Project project,
-                                   final PsiMethod method,
-                                   final PsiVariable targetVariable,
-                                   final String newVisibility,
-                                   final Map<PsiClass, String> oldClassParameterNames) {
+                                     final PsiMethod method,
+                                     final PsiVariable targetVariable,
+                                     final String newVisibility,
+                                     final Map<PsiClass, String> oldClassParameterNames) {
     super(project);
     myMethod = method;
     myTargetVariable = targetVariable;
@@ -66,15 +66,17 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   protected boolean preprocessUsages(UsageInfo[][] refUsages) {
     final UsageInfo[] usages = refUsages[0];
     ArrayList<String> conflicts = new ArrayList<String>();
-    final Set<PsiMember> methods = Collections.singleton(((PsiMember)myMethod));
+    final Set<PsiMember> members = new com.intellij.util.containers.HashSet<PsiMember>();
+    members.add(myMethod);
+    if (myTargetVariable instanceof PsiField) members.add((PsiMember)myTargetVariable);
     if (!myTargetClass.isInterface()) {
-      conflicts.addAll(Arrays.asList(MoveMembersProcessor.analyzeAccessibilityConflicts(methods, myTargetClass, new LinkedHashSet<String>(), myNewVisibility)));
+      conflicts.addAll(Arrays.asList(MoveMembersProcessor.analyzeAccessibilityConflicts(members, myTargetClass, new LinkedHashSet<String>(), myNewVisibility)));
     }
     else {
       for (final UsageInfo usage : usages) {
         if (usage instanceof InheritorUsageInfo) {
           conflicts.addAll(Arrays.asList(MoveMembersProcessor.analyzeAccessibilityConflicts(
-            methods, ((InheritorUsageInfo)usage).getInheritor(), new LinkedHashSet<String>(), myNewVisibility)));
+            members, ((InheritorUsageInfo)usage).getInheritor(), new LinkedHashSet<String>(), myNewVisibility)));
         }
       }
     }
