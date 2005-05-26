@@ -23,6 +23,10 @@ public class InlineLocalTest extends CodeInsightTestCase {
     doTest();
   }
 
+  public void testNoRedundantCasts () throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     String name = getTestName(false);
     String fileName = "/refactoring/inlineLocal/" + name + ".java";

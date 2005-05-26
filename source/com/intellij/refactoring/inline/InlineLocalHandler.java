@@ -24,7 +24,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 class InlineLocalHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineLocalHandler");
@@ -61,8 +60,8 @@ class InlineLocalHandler {
     }
 
     PsiFile workingFile = local.getContainingFile();
-    for (int i = 0; i < refs.length; i++) {
-      final PsiFile otherFile = refs[i].getElement().getContainingFile();
+    for (PsiReference ref : refs) {
+      final PsiFile otherFile = ref.getElement().getContainingFile();
       if (!otherFile.equals(workingFile)) {
         String message = "Variable " + localName + " is referenced in multiple files";
         RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
@@ -70,14 +69,14 @@ class InlineLocalHandler {
       }
     }
 
-    final ArrayList<PsiReference> toInline = new ArrayList<PsiReference>(refs.length);
-    final PsiJavaCodeReferenceElement firstWriteUsage = (PsiJavaCodeReferenceElement)filterUsagesToInline(refs, toInline);
-    if (toInline.size() == 0) {
+    final ArrayList<PsiReference> toInlines = new ArrayList<PsiReference>(refs.length);
+    final PsiJavaCodeReferenceElement firstWriteUsage = (PsiJavaCodeReferenceElement)filterUsagesToInline(refs, toInlines);
+    if (toInlines.size() == 0) {
       String message = "Variable " + localName + " is never used before modification";
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
       return;
     }
-    final PsiElement lastUsage = (toInline.get(toInline.size() - 1)).getElement();
+    final PsiElement lastUsage = (toInlines.get(toInlines.size() - 1)).getElement();
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(local);
     EditorColorsManager manager = EditorColorsManager.getInstance();
     final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
@@ -95,8 +94,7 @@ class InlineLocalHandler {
       int offset = controlFlow.getEndOffset(anchor);
       if (ControlFlowUtil.needVariableValueAt(local, controlFlow, offset)){
         ArrayList<PsiReference> refsForWriting = new ArrayList<PsiReference>(refs.length);
-        for (int idx = 0; idx < refs.length; idx++) {
-          PsiReference ref = refs[idx];
+        for (PsiReference ref : refs) {
           if (PsiUtil.isAccessedForWriting((PsiExpression)ref.getElement())) {
             refsForWriting.add(ref);
           }
@@ -124,11 +122,11 @@ class InlineLocalHandler {
           tmp = tmp.getParent();
         } while(writeInstructionOffset < 0);
 
-        for (Iterator<PsiReference> iterator = toInline.iterator(); iterator.hasNext();) {
-          PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)iterator.next();
+        for (final PsiReference toInline : toInlines) {
+          PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)toInline;
           if (ControlFlowUtil.isInstructionReachable(controlFlow, controlFlow.getStartOffset(ref), writeInstructionOffset)) {
             String message = "Cannot perform the refactoring.\n" +
-            "Variable initializer does not dominate its usages.";
+                             "Variable initializer does not dominate its usages.";
             RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, project);
             return;
           }
@@ -143,10 +141,10 @@ class InlineLocalHandler {
       // locals with the same names after inlining
       highlightManager.addOccurrenceHighlights(
         editor,
-        toInline.toArray(new PsiReference[toInline.size()]),
+        toInlines.toArray(new PsiReference[toInlines.size()]),
         attributes, true, null
       );
-      int occurrencesCount = toInline.size();
+      int occurrencesCount = toInlines.size();
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(
         REFACTORING_NAME,
         "Inline local variable " + localName + "? (" + occurrencesCount + (occurrencesCount == 1? " occurrence)" : " occurrences)"),
@@ -165,14 +163,14 @@ class InlineLocalHandler {
       public void run() {
         try{
           final PsiExpression initializer = local.getInitializer();
-          PsiExpression[] exprs = new PsiExpression[toInline.size()];
-          for(int idx = 0; idx < toInline.size(); idx++){
-            PsiReference ref = toInline.get(idx);
+          PsiExpression[] exprs = new PsiExpression[toInlines.size()];
+          for(int idx = 0; idx < toInlines.size(); idx++){
+            PsiReference ref = toInlines.get(idx);
             PsiJavaCodeReferenceElement refElement = (PsiJavaCodeReferenceElement)ref.getElement();
             exprs[idx] = RefactoringUtil.inlineVariable(local, initializer, refElement);
           }
           if (firstWriteUsage != null) {
-//            PsiReference firstWriteUsage = refs[toInline.size()];
+//            PsiReference firstWriteUsage = refs[toInlines.size()];
             ControlFlow controlFlow;
             try {
               controlFlow = new ControlFlowAnalyzer(codeFragment, new LocalsControlFlowPolicy(codeFragment), false).buildControlFlow();
@@ -233,17 +231,16 @@ class InlineLocalHandler {
   private static PsiReference filterUsagesToInline(final PsiReference[] refs, ArrayList<PsiReference> toInline) {
     PsiReference firstWriteUsage = null;
     PsiExpression assignmentExpression = null;
-    for (int idx = 0; idx < refs.length; idx++) {
-      PsiReference ref = refs[idx];
+    for (PsiReference ref : refs) {
       PsiElement refElement = ref.getElement();
       if (PsiUtil.isAccessedForWriting((PsiExpression)refElement)) {
-        if(assignmentExpression != null) break;
-        assignmentExpression = (PsiExpression) refElement.getParent();
+        if (assignmentExpression != null) break;
+        assignmentExpression = (PsiExpression)refElement.getParent();
         firstWriteUsage = ref;
         continue;
       }
-      if(assignmentExpression != null) {
-        if(!PsiTreeUtil.isAncestor(assignmentExpression, refElement, true)) break;
+      if (assignmentExpression != null) {
+        if (!PsiTreeUtil.isAncestor(assignmentExpression, refElement, true)) break;
       }
       toInline.add(ref);
     }
