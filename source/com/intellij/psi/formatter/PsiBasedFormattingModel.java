@@ -131,9 +131,6 @@ public class PsiBasedFormattingModel implements FormattingModel {
     return myASTNode.findLeafElementAt(offset);
   }
 
-  public void dispose() {
-  }
-
   private class Indent {
     public int whiteSpaces = 0;
     public int tabs = 0;
@@ -145,9 +142,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
       final Indent indent = (Indent)o;
 
       if (tabs != indent.tabs) return false;
-      if (whiteSpaces != indent.whiteSpaces) return false;
-
-      return true;
+      return whiteSpaces == indent.whiteSpaces;
     }
 
     public int hashCode() {

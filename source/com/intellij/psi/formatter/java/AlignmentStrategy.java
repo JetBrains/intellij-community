@@ -6,13 +6,8 @@ import com.intellij.psi.impl.source.tree.ElementType;
 
 public abstract  class AlignmentStrategy {
   private final Alignment myAlignment;
-  public static final AlignmentStrategy DO_NOT_ALIGN = new AlignmentStrategy(null) {
-    protected boolean shouldAlign(final IElementType type) {
-      return false;
-    }
-  };
 
-  public static final AlignmentStrategy createDoNotAlingCommaStrategy(Alignment alignment) {
+  public static AlignmentStrategy createDoNotAlingCommaStrategy(Alignment alignment) {
     return new AlignmentStrategy(alignment) {
       protected boolean shouldAlign(final IElementType type) {
         return type != ElementType.COMMA || type == null;

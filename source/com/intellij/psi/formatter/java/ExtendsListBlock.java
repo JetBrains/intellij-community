@@ -37,9 +37,7 @@ public class ExtendsListBlock extends AbstractJavaBlock{
           
         }
       }
-      if (child != null) {
-        child = child.getTreeNext();
-      }
+      child = child.getTreeNext();
     }
     if (!elementsExceptKeyword.isEmpty()) {
       result.add(new SynteticCodeBlock(elementsExceptKeyword, alignment,  mySettings, Formatter.getInstance().getNoneIndent(), null));

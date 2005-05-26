@@ -72,11 +72,6 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return myXmlFormattingPolicy.getTagType();
   }
 
-  protected int getMaxLine(int defaultLineForDoNotKeepLineBreaksMode) {
-    if (!myXmlFormattingPolicy.getShouldKeepLineBreaks()) return defaultLineForDoNotKeepLineBreaksMode;
-    return myXmlFormattingPolicy.getKeepBlankLines() + 1;
-  }
-
   protected XmlTag getTag() {
     return getTag(myNode);
   }
@@ -101,7 +96,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       if (child.getElementType() == ElementType.JSP_XML_TEXT) {
         final ASTNode javaElement = JspTextBlock.findJavaElementAt(child);
         if (javaElement != null) {
-          return new JspTextBlock(child, null, null, myXmlFormattingPolicy, javaElement);
+          return new JspTextBlock(child, myXmlFormattingPolicy, javaElement);
         }
       }
       if (child.getElementType() == getTagType() || child.getElementType() == ElementType.XML_TAG) {

@@ -144,7 +144,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (parentNode.getElementType() == ElementType.DO_WHILE_STATEMENT) return role == ChildRole.LOOP_BODY;
       if (parentNode.getElementType() == ElementType.FOREACH_STATEMENT) return role == ChildRole.LOOP_BODY;      
     }
-//    if (child.getElementType() == ElementType.BLOCK_STATEMENT) return false;
     return false;
   }
 
@@ -239,39 +238,27 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.EXPRESSION_LIST){
       final Wrap wrap = Formatter.getInstance().createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
-      child = createSynteticBlock(result, child, ElementType.LPARENTH, ElementType.RPARENTH,
-                                  Formatter.getInstance().getNoneIndent(),
-                                  Formatter.getInstance().createContinuationIndent(),
+      child = createSynteticBlock(result, 
+                                  child,
                                   WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                  AlignmentStrategy.createDoNotAlingCommaStrategy(createAlignment(mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS, null))
-                                  );
+                                  mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
     }
 
     else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.PARAMETER_LIST){
       final Wrap wrap = Formatter.getInstance().createWrap(getWrapType(mySettings.METHOD_PARAMETERS_WRAP), false);
-      child = createSynteticBlock(result, child, ElementType.LPARENTH, ElementType.RPARENTH,
-                                  Formatter.getInstance().getNoneIndent(),
-                                  Formatter.getInstance().createContinuationIndent(),
+      child = createSynteticBlock(result, child,
                                   WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                  AlignmentStrategy.createDoNotAlingCommaStrategy(createAlignment(mySettings.ALIGN_MULTILINE_PARAMETERS, null)));
+                                  mySettings.ALIGN_MULTILINE_PARAMETERS);
     }
     else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.PARENTH_EXPRESSION){
-      child = createSynteticBlock(result, child, ElementType.LPARENTH, ElementType.RPARENTH,
-                                  Formatter.getInstance().getNoneIndent(),
-                                  Formatter.getInstance().createContinuationIndent(),
+      child = createSynteticBlock(result, child,
                                   WrappingStrategy.DO_NOT_WRAP,
-                                  AlignmentStrategy.createDoNotAlingCommaStrategy(createAlignment(mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION, null)));
+                                  mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION);
     }
 
     else {
-      Indent indent = childIndent;
-      /*
-      if (shouldShift(child)) {
-        indent = Formatter.getInstance().createNormalIndent();
-      }
-      */
       final Block block =
-        createJavaBlock(child, mySettings, indent, arrangeChildWrap(child, defaultWrap), arrangeChildAlignment(child, defaultAlignment));
+        createJavaBlock(child, mySettings, childIndent, arrangeChildWrap(child, defaultWrap), arrangeChildAlignment(child, defaultAlignment));
 
       if (block instanceof AbstractJavaBlock) {
         final AbstractJavaBlock javaBlock = ((AbstractJavaBlock)block);
@@ -419,13 +406,16 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   private ASTNode createSynteticBlock(List<Block> result,
                                       ASTNode child,
-                                      IElementType from,
-                                      IElementType to,
-                                      Indent externalIndent,
-                                      Indent internalIndent,
                                       WrappingStrategy wrappingStrategy,
-                                      AlignmentStrategy alignmentStrategy) {
-    
+                                      final boolean doAlign) {
+
+    final IElementType from = ElementType.LPARENTH;
+    final IElementType to = ElementType.RPARENTH;
+    final Indent externalIndent = Formatter.getInstance().getNoneIndent();
+    final Indent internalIndent = Formatter.getInstance().createContinuationIndent();
+    AlignmentStrategy alignmentStrategy = 
+      AlignmentStrategy.createDoNotAlingCommaStrategy(createAlignment(doAlign, null));
+
     myUseChildAttributes = true;
     setChildIndent(internalIndent);
     setChildAlignment(alignmentStrategy.getAlignment(null));

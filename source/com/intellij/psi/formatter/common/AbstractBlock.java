@@ -60,8 +60,7 @@ public abstract class AbstractBlock implements Block {
       return true;
     }
     if (node instanceof LeafElement) return false;
-    if (node.getTextLength() == 0) return true;
-    return false;
+    return node.getTextLength() == 0;
   }
 
   public ASTNode getTreeNode() {

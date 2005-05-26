@@ -22,8 +22,7 @@ public class XmlPolicy implements XmlFormattingPolicy{
   }
 
   public boolean indentChildrenOf(final XmlTag parentTag) {
-    if (parentTag instanceof JspXmlRootTag) return false;
-    return true;
+    return !(parentTag instanceof JspXmlRootTag);
   }
 
   public boolean insertLineBreakBeforeTag(final XmlTag xmlTag) {

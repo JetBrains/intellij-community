@@ -47,11 +47,6 @@ public abstract class AbstractSyntheticBlock implements Block{
     return myXmlFormattingPolicy.getTagType();
   }
 
-  protected int getMaxLine() {
-    if (!myXmlFormattingPolicy.getShouldKeepLineBreaks()) return 1;
-    return myXmlFormattingPolicy.getKeepBlankLines() + 1;
-  }
-
   protected Formatter getFormatter() {
     return Formatter.getInstance();
   }
@@ -86,8 +81,7 @@ public abstract class AbstractSyntheticBlock implements Block{
   public boolean endsWithTextElement() {
     if (endsWithText()) return true;
     if (isEndOfTag() && myXmlFormattingPolicy.isTextElement(getTag())) return true;
-    if (isTextTag(myEndTreeNode)) return true;
-    return false;
+    return isTextTag(myEndTreeNode);
   }
 
   protected XmlTag getTag() {

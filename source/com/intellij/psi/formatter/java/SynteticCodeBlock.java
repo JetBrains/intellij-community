@@ -15,8 +15,6 @@ public class SynteticCodeBlock implements Block, JavaBlock{
   private final Indent myIndentContent;
   private final CodeStyleSettings mySettings;
   private final Wrap myWrap;
-  private Indent myChildIndent;
-  private Alignment myChildAlignment;
   
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.newXmlFormatter.java.SynteticCodeBlock");
 
@@ -66,24 +64,12 @@ public class SynteticCodeBlock implements Block, JavaBlock{
     return treeNode.getPsi().getContainingFile().getText().subSequence(textRange.getStartOffset(), textRange.getEndOffset()).toString();
   }
 
-  public Block getLastChild() {
-    return mySubBlocks.get(mySubBlocks.size() - 1);
-  }
-
   public ASTNode getFirstTreeNode() {
     return AbstractJavaBlock.getTreeNode(mySubBlocks.get(0));
   }
 
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    return new ChildAttributes(myChildIndent == null ? getIndent() : myChildIndent, myChildAlignment);
-  }
-
-  public void setChildIndent(final Indent internalIndent) {
-    myChildIndent = internalIndent;
-  }
-
-  public void setChildAlignment(final Alignment childAlignment) {
-    myChildAlignment = childAlignment;
+    return new ChildAttributes(getIndent(), null);
   }
 
   public boolean isIncomplete() {

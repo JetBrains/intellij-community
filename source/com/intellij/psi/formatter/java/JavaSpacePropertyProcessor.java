@@ -688,30 +688,22 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
     }
   }
 
-  public static int getMaxLineInDeclarations(final CodeStyleSettings settings) {
-    return settings.KEEP_BLANK_LINES_IN_DECLARATIONS + 1;
-  }
-
-  public static int getMaxLineInCode(final CodeStyleSettings settings) {
-    return settings.KEEP_BLANK_LINES_IN_CODE + 1;
-  }
-
   public void visitReferenceList(PsiReferenceList list) {
     if (myRole1 == ChildRole.COMMA) {
       createSpaceInCode(true);
     } else if (myRole2 == ChildRole.COMMA) {
       createSpaceInCode(false);
     } else if (myRole1 == ChildRole.EXTENDS_KEYWORD || myRole2 == ChildRole.EXTENDS_KEYWORD) {
-      createSpaceInCode(true);      
+      createSpaceInCode(true);
     } else if (myRole1 == ChildRole.AMPERSAND_IN_BOUNDS_LIST | myRole2 == ChildRole.AMPERSAND_IN_BOUNDS_LIST) {
-      createSpaceInCode(true);      
+      createSpaceInCode(true);
     } else if (myRole1 == ChildRole.IMPLEMENTS_KEYWORD || myRole2 == ChildRole.IMPLEMENTS_KEYWORD) {
-      createSpaceInCode(true);      
-    }    
+      createSpaceInCode(true);
+    }
     else if (myRole1 == ChildRole.THROWS_KEYWORD) {
-      createSpaceInCode(true);      
-    } 
- 
+      createSpaceInCode(true);
+    }
+
   }
 
   public void visitReferenceExpression(PsiReferenceExpression expression) {
