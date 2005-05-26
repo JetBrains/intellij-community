@@ -172,12 +172,9 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         !operandClass.isInheritor(castClass, true)) {
       return;
     }
+
     // OK, cast is redundant
-    PsiExpression exprToReplace = cast;
-    while (exprToReplace.getParent() instanceof PsiParenthesizedExpression) {
-      exprToReplace = (PsiExpression)exprToReplace.getParent();
-    }
-    exprToReplace.replace(operand);
+    cast.replace(operand);
   }
 
   private void buildGraph(PsiReference[] refs) {
