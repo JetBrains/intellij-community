@@ -36,8 +36,8 @@ public class RedundantCastInspection extends BaseLocalInspectionTool {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     if (initializers == null || initializers.length == 0) return null;
     List<ProblemDescriptor> descriptors = new ArrayList<ProblemDescriptor>();
-    for (int i = 0; i < initializers.length; i++) {
-      final ProblemDescriptor[] localDescriptions = getDescriptions(initializers[i], manager);
+    for (PsiClassInitializer initializer : initializers) {
+      final ProblemDescriptor[] localDescriptions = getDescriptions(initializer, manager);
       if (localDescriptions != null) {
         descriptors.addAll(Arrays.asList(localDescriptions));
       }
@@ -108,16 +108,8 @@ public class RedundantCastInspection extends BaseLocalInspectionTool {
       operand = parExpr.getExpression();
     }
 
-    PsiElement toBeReplaced = castExpression;
-
-    PsiElement parent = castExpression.getParent();
-    while (parent instanceof PsiParenthesizedExpression) {
-      toBeReplaced = parent;
-      parent = parent.getParent();
-    }
-
     try {
-      toBeReplaced.replace(operand);
+      castExpression.replace(operand);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
