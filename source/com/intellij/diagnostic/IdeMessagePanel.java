@@ -123,9 +123,6 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
     if ("true".equals(PropertiesComponent.getInstance().getValue(IdeErrorsDialog.IMMEDIATE_POPUP_OPTION))) {
       openFatals();
     }
-    else if (isShowing()) {
-      Callout.showText(RelativePoint.getCenterOf(myIdeFatal), Callout.NORTH_WEST, INTERNAL_ERROR_NOTICE);
-    }
   }
 
   public void poolCleared() {
