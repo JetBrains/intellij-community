@@ -22,6 +22,7 @@ import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
+import javax.swing.plaf.metal.OceanTheme;
 import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -227,7 +228,7 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
       try {
         LookAndFeel laf=((LookAndFeel)Class.forName(lookAndFeelInfo.getClassName()).newInstance());
         if(laf instanceof MetalLookAndFeel){
-          MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
+          MetalLookAndFeel.setCurrentTheme(new OceanTheme());
         }
         UIManager.setLookAndFeel(laf);
       } catch(Exception exc) {
