@@ -336,8 +336,8 @@ public class CodeInsightUtil {
     return array.toArray(new PsiElement[array.size()]);
   }
 
-  public static boolean prepareClassForWrite(final PsiClass aClass) {
-    PsiFile file = aClass == null ? null : aClass.getContainingFile();
+  public static boolean preparePsiElementForWrite(final PsiElement element) {
+    PsiFile file = element == null ? null : element.getContainingFile();
     return prepareFileForWrite(file);
   }
 

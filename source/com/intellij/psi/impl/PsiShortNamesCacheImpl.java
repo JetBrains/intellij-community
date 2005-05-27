@@ -26,7 +26,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   private final PsiManagerImpl myManager;
   private final ProjectFileIndex myProjectFileIndex;
 
-  private THashMap myFileNameToFilesMap = new THashMap(); // short name --> VirtualFile or Pair of VirtualFile or ArrayList of VirtualFile
+  private THashMap<String,Object> myFileNameToFilesMap = new THashMap<String,Object>(); // short name --> VirtualFile or Pair of VirtualFile or ArrayList of VirtualFile
 
   private boolean myInitialized = false;
   private RepositoryIndex myRepositoryIndex = null;
@@ -50,7 +50,8 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
       ArrayList<PsiFile> files = new ArrayList<PsiFile>(vFiles.length);
       for (int i = 0; i < vFiles.length; i++) {
         VirtualFile vFile = vFiles[i];
-        if (!vFile.isValid() || myManager.findFile(vFile) == null) {
+        PsiFile file;
+        if (!vFile.isValid() || (file = myManager.findFile(vFile)) == null) {
           VirtualFile[] newFiles = new VirtualFile[vFiles.length - 1];
           System.arraycopy(vFiles, 0, newFiles, 0, i);
           System.arraycopy(vFiles, i + 1, newFiles, i, newFiles.length - i);
@@ -58,7 +59,6 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
           i--;
           continue;
         }
-        PsiFile file = myManager.findFile(vFile);
         files.add(file);
       }
       if (vFiles.length < originalSize) {
@@ -73,7 +73,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
 
   public String[] getAllFileNames() {
     fillCache();
-    return (String[])myFileNameToFilesMap.keySet().toArray(new String[myFileNameToFilesMap.size()]);
+    return myFileNameToFilesMap.keySet().toArray(new String[myFileNameToFilesMap.size()]);
   }
 
   public PsiClass[] getClassesByName(String name, final GlobalSearchScope scope) {
@@ -84,8 +84,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
     RepositoryElementsManager repositoryElementsManager = myManager.getRepositoryElementsManager();
     ArrayList<PsiClass> list = new ArrayList<PsiClass>();
     IdLoop:
-    for (int i = 0; i < classIds.length; i++) {
-      long id = classIds[i];
+    for (long id : classIds) {
       PsiClass aClass = (PsiClass)repositoryElementsManager.findOrCreatePsiElementById(id);
       VirtualFile vFile = aClass.getContainingFile().getVirtualFile();
       if (!scope.contains(vFile)) continue;
@@ -187,11 +186,10 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
       }
 
       public boolean equals(PsiElement object, PsiElement object1) {
-        return myManager.areElementsEquivalent((PsiElement)object, (PsiElement)object1);
+        return myManager.areElementsEquivalent(object, object1);
       }
     });
-    for (int i = 0; i < ids.length; i++) {
-      long id = ids[i];
+    for (long id : ids) {
       PsiElement element = repositoryElementsManager.findOrCreatePsiElementById(id);
       if (!scope.contains(element.getContainingFile().getVirtualFile())) continue;
       if (!set.add(element)) continue;
@@ -220,8 +218,8 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
     myFileNameToFilesMap.clear();
 
     PsiDirectory[] projectRoots = myManager.getRootDirectories(PsiRootPackageType.PROJECT);
-    for (int i = 0; i < projectRoots.length; i++) {
-      cacheFilesInDirectory(projectRoots[i]);
+    for (PsiDirectory projectRoot : projectRoots) {
+      cacheFilesInDirectory(projectRoot);
     }
   }
 
@@ -253,13 +251,13 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
     }
 
     PsiFile[] files = dir.getFiles();
-    for (int i = 0; i < files.length; i++) {
-      cacheFile(files[i]);
+    for (PsiFile file : files) {
+      cacheFile(file);
     }
 
     PsiDirectory[] subdirs = dir.getSubdirectories();
-    for (int i = 0; i < subdirs.length; i++) {
-      _cacheFilesInDirectory(subdirs[i]);
+    for (PsiDirectory subdir : subdirs) {
+      _cacheFilesInDirectory(subdir);
     }
   }
 
@@ -298,7 +296,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
     }
   }
 
-  private static void putFiles(THashMap map, String key, VirtualFile[] files) {
+  private static void putFiles(THashMap<String,Object> map, String key, VirtualFile[] files) {
     if (files.length == 0) {
       map.remove(key);
     }

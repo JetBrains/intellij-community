@@ -77,6 +77,7 @@ public abstract class ChooseByNameBase{
   private static final String NOT_FOUND_CARD = "nfound";
   private static final String CHECK_BOX_CARD = "chkbox";
   static final int REBUILD_DELAY = 300;
+  private static final String SEARCHING_CARD = "searching";
 
   private static class MatchesComparator implements Comparator<String> {
     private String myOriginalPattern;
@@ -217,10 +218,13 @@ public abstract class ChooseByNameBase{
       checkBoxPanel.add (myCheckBox);
       checkBoxPanel.add (new JLabel ("  ("));
     }
-
-    myCardContainer.add(checkBoxPanel, CHECK_BOX_CARD);
+    checkBoxPanel.setVisible(myModel.getCheckBoxName() != null);
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(checkBoxPanel, BorderLayout.CENTER);
+    myCardContainer.add(panel, CHECK_BOX_CARD);
     myCardContainer.add(new JLabel("  (" + myModel.getNotInMessage() + ")"), NOT_FOUND_MESSAGE_CARD);
-    myCardContainer.add(new JLabel("  (no matches found)"           ), NOT_FOUND_CARD);
+    myCardContainer.add(new JLabel("  (no matches found)"), NOT_FOUND_CARD);
+    myCardContainer.add(new JLabel("  (searching...)"), SEARCHING_CARD);
     myCard.show(myCardContainer, CHECK_BOX_CARD);
 
     //myCaseCheckBox = new JCheckBox("Ignore case");
@@ -835,7 +839,15 @@ public abstract class ChooseByNameBase{
       myModalityState = modalityState;
     }
 
+    private final Alarm myShowSearchingAlarm = new Alarm();
     public void run() {
+      myShowSearchingAlarm.cancelAllRequests();
+      myShowSearchingAlarm.addRequest(new Runnable() {
+        public void run() {
+          myCard.show(myCardContainer, SEARCHING_CARD);
+        }
+      }, 200, myModalityState);
+
       final List<Object> elements = new ArrayList<Object>();
       Runnable action = new Runnable() {
         public void run() {
@@ -855,15 +867,19 @@ public abstract class ChooseByNameBase{
         myCard.show(myCardContainer, NOT_FOUND_MESSAGE_CARD);
         myCheckboxState = true;
         ApplicationManager.getApplication().runReadAction(action);
-      } else {
-        myCard.show(myCardContainer, CHECK_BOX_CARD);
       }
+      else {
+        myShowSearchingAlarm.cancelAllRequests();
+        if (elements.size() != 0) {
+          myCard.show(myCardContainer, CHECK_BOX_CARD);
+        }
+      }
+      myShowSearchingAlarm.cancelAllRequests();
       if (elements.size() == 0) {
         myCard.show(myCardContainer, NOT_FOUND_CARD);
       }
 
       myElements = elements;
-
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
@@ -929,11 +945,10 @@ public abstract class ChooseByNameBase{
     try {
       final Pattern compiledPattern = Pattern.compile(regex);
       final Matcher matcher = compiledPattern.matcher("");
-      for (String s : names) {
+      for (String name : names) {
         if (cancelled != null && cancelled[0]) {
           throw new ProcessCanceledException();
         }
-        final String name = s;
         if (matcher.reset(name).matches()) {
           list.add(name);
         }
@@ -965,11 +980,9 @@ public abstract class ChooseByNameBase{
     }
 
 
-    {
-      final int eol = pattern.indexOf ('\n');
-      if (eol != -1) {
-        pattern = pattern.substring(0, eol);
-      }
+    final int eol = pattern.indexOf('\n');
+    if (eol != -1) {
+      pattern = pattern.substring(0, eol);
     }
     if (pattern.length() >= 80) {
       pattern = pattern.substring(0, 80);

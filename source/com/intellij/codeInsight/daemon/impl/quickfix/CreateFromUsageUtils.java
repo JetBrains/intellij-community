@@ -206,7 +206,7 @@ public class CreateFromUsageUtils {
             public PsiClass compute() {
               try {
                 PsiClass psiClass = (PsiClass) psiElement;
-                if (!CodeInsightUtil.prepareClassForWrite(psiClass)) return null;
+                if (!CodeInsightUtil.preparePsiElementForWrite(psiClass)) return null;
 
                 PsiManager manager = psiClass.getManager();
                 PsiElementFactory elementFactory = manager.getElementFactory();

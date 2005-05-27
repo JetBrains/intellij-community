@@ -1,13 +1,8 @@
 package com.intellij.ide.util;
 
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.search.GlobalSearchScope;
 
 /**
  * User: anna
@@ -25,15 +20,15 @@ public interface TreeClassChooser{
 
   void showPopup();
 
-  static interface ClassFilter {
+  interface ClassFilter {
     boolean isAccepted(PsiClass aClass);
   }
 
-  static interface ClassFilterWithScope extends ClassFilter {
+  interface ClassFilterWithScope extends ClassFilter {
     GlobalSearchScope getScope();
   }
 
-  static interface InheritanceClassFilter extends ClassFilter{
+  interface InheritanceClassFilter extends ClassFilter{
   }
 
 }

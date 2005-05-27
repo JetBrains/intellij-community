@@ -35,7 +35,7 @@ public class MakeClassInterfaceFix implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtil.prepareClassForWrite(myClass)) return;
+    if (!CodeInsightUtil.preparePsiElementForWrite(myClass)) return;
 
     try {
       PsiJavaCodeReferenceElement[] referenceElements = myClass.getExtendsList().getReferenceElements();

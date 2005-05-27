@@ -2,8 +2,10 @@ package com.intellij.ide.util;
 
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.FileType;
 
 /**
  * User: anna
@@ -20,7 +22,7 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
                                                              GlobalSearchScope scope,
                                                              final TreeClassChooser.ClassFilter classFilter,
                                                              PsiClass initialClass) {
-    return TreeClassChooserDialog.withInnerClasses(title, myProject, GlobalSearchScope.projectScope(myProject), classFilter, initialClass);
+    return TreeClassChooserDialog.withInnerClasses(title, myProject, scope, classFilter, initialClass);
   }
 
   public TreeClassChooser createNoInnerClassesScopeChooser(String title,
@@ -49,6 +51,13 @@ public class TreeClassChooserFactoryImpl extends TreeClassChooserFactory {
                                                         boolean acceptInner,
                                                         Condition<PsiClass> addtionalCondition) {
     return new TreeClassChooserDialog(title, myProject, scope, new TreeClassChooserDialog.InheritanceClassFilterImpl(base, acceptsSelf, acceptInner, addtionalCondition), null);
+  }
+
+  public TreeFileChooser createFileChooser(String title,
+                                           final PsiFile initialFile,
+                                           FileType fileType,
+                                           TreeFileChooser.PsiFileFilter filter) {
+    return new TreeFileChooserDialog(myProject, title, initialFile, fileType, filter);
   }
 
   public void projectOpened() {

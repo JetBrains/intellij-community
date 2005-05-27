@@ -42,8 +42,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 
 public class TreeClassChooserDialog extends DialogWrapper implements TreeClassChooser{
   private Tree myTree;
@@ -133,10 +132,6 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
         return true;
       }
 
-
-      protected boolean isAcceptedNotClass(PsiElement child) {
-        return !(child instanceof PsiFile);
-      }
 
       public boolean isAbbreviatePackageNames() {
         return false;
@@ -374,7 +369,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     private final Condition<PsiClass> myAddtionalCondition;
 
     public InheritanceClassFilterImpl(PsiClass base, boolean acceptsSelf, boolean acceptInner,
-                                  Condition<PsiClass> addtionalCondition
+                                      Condition<PsiClass> addtionalCondition
                                   ) {
       myAcceptsSelf = acceptsSelf;
       myAcceptsInner = acceptInner;

@@ -1,6 +1,8 @@
 
 package com.intellij.ide.util.gotoByName;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
 public interface ChooseByNameModel {
@@ -8,7 +10,8 @@ public interface ChooseByNameModel {
 
   String getNotInMessage();
   String getNotFoundMessage();
-  String getCheckBoxName();
+  /** return null to hide checkbox panel */
+  @Nullable String getCheckBoxName();
   char getCheckBoxMnemonic();
   boolean loadInitialCheckBoxState();
   void saveInitialCheckBoxState(boolean state);

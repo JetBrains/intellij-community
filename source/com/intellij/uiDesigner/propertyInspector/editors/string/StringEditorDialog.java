@@ -1,11 +1,17 @@
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
+import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.ide.util.TreeFileChooser;
+import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.uiDesigner.ResourceBundleChooserDialog;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiPackage;
 import com.intellij.uiDesigner.ResourceBundleLoader;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 
@@ -182,12 +188,30 @@ final class StringEditorDialog extends DialogWrapper{
       myTfBundleName.addActionListener(
         new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
-            final ResourceBundleChooserDialog dialog = new ResourceBundleChooserDialog(myModule.getProject(), null);
-            dialog.show();
-            if(!dialog.isOK()){
-              return;
+            Project project = myModule.getProject();
+            TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser("Choose Resource Bundle", null,
+                                                                                                               PropertiesFileType.FILE_TYPE, null);
+            fileChooser.showDialog();
+            PropertiesFile propertiesFile = (PropertiesFile)fileChooser.getSelectedFile();
+            if (propertiesFile == null) return;
+            final PsiDirectory directory = propertiesFile.getContainingDirectory();
+
+            final String packageName;
+            final PsiPackage aPackage = directory.getPackage();
+            if (aPackage == null) {
+              packageName = "";
             }
-            final String bundleName = dialog.getBundleName();
+            else {
+              packageName = directory.getPackage().getQualifiedName();
+            }
+
+            String bundleName = propertiesFile.getResourceBundle().getBaseName();
+
+            if (packageName.length() > 0) {
+              bundleName = packageName + '.' + bundleName;
+            }
+            bundleName = bundleName.replace('.', '/');
+
             myTfBundleName.setText(bundleName);
           }
         }
