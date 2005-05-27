@@ -1,6 +1,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
@@ -8,12 +9,16 @@ import com.intellij.ui.SimpleTextAttributes;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.*;
 
 
 public class SelectFromListDialog extends DialogWrapper {
   private final ToStringAspect myToStringAspect;
   private final DefaultListModel myModel = new DefaultListModel();
   private final JList myList = new JList(myModel);
+  private final JPanel myMainPanel = new JPanel(new BorderLayout());
+  
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.SelectFromListDialog");
 
   public SelectFromListDialog(Project project,
                               Object[] objects,
@@ -49,7 +54,21 @@ public class SelectFromListDialog extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
-    return ScrollPaneFactory.createScrollPane(myList);
+    myMainPanel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
+    return myMainPanel;
+  }
+  
+  public void addToDialog(JComponent userComponent, String borderLayoutConstraints) {
+    LOG.assertTrue(borderLayoutConstraints != null);
+    LOG.assertTrue(!borderLayoutConstraints.equals(BorderLayout.CENTER), "Can't add any component to center");
+    myMainPanel.add(userComponent, borderLayoutConstraints);
+  }
+
+  public void setSelection(final String defaultLocation) {
+    final int index = myModel.indexOf(defaultLocation);
+    if (index >= 0) {
+      myList.getSelectionModel().setSelectionInterval(index, index);
+    }
   }
 
   public interface ToStringAspect {
@@ -59,5 +78,9 @@ public class SelectFromListDialog extends DialogWrapper {
   public Object[] getSelection(){
     if (!isOK()) return null;
     return myList.getSelectedValues();
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return myList;
   }
 }
