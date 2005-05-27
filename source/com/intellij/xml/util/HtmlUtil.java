@@ -101,7 +101,7 @@ public class HtmlUtil {
     // add html block completions for tags with optional ends!
     String name = descriptor.getName(element);
 
-    if (isOptionalEndForHtmlTag(name)) {
+    if (name != null && isOptionalEndForHtmlTag(name)) {
       PsiElement parent = element.getParent();
 
       if (parent!=null) {
