@@ -56,4 +56,8 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
   public void setHistory(String[] history) {
     getChildComponent().setHistory(history);
   }
+
+  public void prependItem(String item) {
+    getChildComponent().prependItem(item);
+  }
 }

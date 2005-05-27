@@ -170,6 +170,10 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
                       boolean searchInNonJavaFiles,
                       String helpID) {
     myInitialTargetDirectory = initialTargetDirectory;
+    if (targetPackageName.length() != 0) {
+      myWithBrowseButtonReference.prependItem(targetPackageName);
+    }
+
     myTargetDirectoryFixed = isTargetDirectoryFixed;
     if (psiElements.length == 1) {
       PsiElement firstElement = psiElements[0];
@@ -188,8 +192,6 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
     else if (psiElements.length > 1) {
       myNameLabel.setText((psiElements[0] instanceof PsiClass) ? "Move specified classes" : "Move specified packages");
     }
-    myWithBrowseButtonReference.setText(targetPackageName);
-    //myWithBrowseButtonReference.setEnabled(!myTargetDirectoryFixed);
 
     myCbSearchInComments.setSelected(searchInComments);
     myCbSearchInNonJavaFiles.setSelected(searchInNonJavaFiles);
