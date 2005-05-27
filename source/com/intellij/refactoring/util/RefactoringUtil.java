@@ -509,7 +509,11 @@ public class RefactoringUtil {
       if (!RedundantCastUtil.isCastRedundant(cast)) {
         expr = cast;
       } else {
-        expr = (PsiExpression)cast.replace(exprCopy);
+        PsiElement toReplace = cast;
+        while (toReplace.getParent() instanceof PsiParenthesizedExpression) {
+          toReplace = toReplace.getParent();
+        }
+        expr = (PsiExpression)toReplace.replace(exprCopy);
       }
     }
 

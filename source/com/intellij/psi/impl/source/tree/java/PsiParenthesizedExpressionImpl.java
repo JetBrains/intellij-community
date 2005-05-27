@@ -68,9 +68,5 @@ public class PsiParenthesizedExpressionImpl extends CompositePsiElement implemen
   public String toString() {
     return "PsiParenthesizedExpression:" + getText();
   }
-
-  public void replaceChildInternal(ASTNode child, TreeElement newElement) {
-    getTreeParent().replaceChildInternal(this, newElement);
-  }
 }
 

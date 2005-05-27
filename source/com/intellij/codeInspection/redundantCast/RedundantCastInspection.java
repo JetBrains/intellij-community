@@ -108,8 +108,16 @@ public class RedundantCastInspection extends BaseLocalInspectionTool {
       operand = parExpr.getExpression();
     }
 
+    PsiElement toBeReplaced = castExpression;
+
+    PsiElement parent = castExpression.getParent();
+    while (parent instanceof PsiParenthesizedExpression) {
+      toBeReplaced = parent;
+      parent = parent.getParent();
+    }
+
     try {
-      castExpression.replace(operand);
+      toBeReplaced.replace(operand);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
