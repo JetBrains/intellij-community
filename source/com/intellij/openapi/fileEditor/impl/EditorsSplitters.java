@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * Author: msk
  */
-public class EditorsSplitters extends JPanel {
+public final class EditorsSplitters extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorsSplitters");
   protected EditorWindow myCurrentWindow;
   protected VirtualFile myCurrentFile;
@@ -35,6 +35,7 @@ public class EditorsSplitters extends JPanel {
   private Element mySplittersElement;  // temporarily used during initialization
   protected int myInsideChange;
   private MyFocusWatcher myFocusWatcher;
+  private EditorWithProviderComposite myCurrentSelectedEditor;
 
   public EditorsSplitters(final FileEditorManagerImpl manager) {
     super(new BorderLayout());
@@ -524,9 +525,14 @@ public class EditorsSplitters extends JPanel {
           // focused component has changed, but active window not 
           return;
         }
-        EditorWithProviderComposite oldSelected = oldActiveWindow == null ? null : oldActiveWindow.getSelectedEditor();
+        EditorWithProviderComposite oldSelected = myCurrentSelectedEditor;
         EditorWithProviderComposite newSelected = newActiveWindow == null ? null : newActiveWindow.getSelectedEditor();
-        getManager().fireSelectionChanged(oldSelected, newSelected);
+        try {
+          getManager().fireSelectionChanged(oldSelected, newSelected);
+        }
+        finally {
+          myCurrentSelectedEditor = newSelected;
+        }
       }
     }
   }
