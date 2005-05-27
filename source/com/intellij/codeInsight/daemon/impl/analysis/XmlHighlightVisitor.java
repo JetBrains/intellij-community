@@ -217,6 +217,13 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       }
     }
 
+    if (tag instanceof HtmlTag &&
+        ( HtmlUtil.isOptionalEndForHtmlTag(name) ||
+          HtmlUtil.isSingleHtmlTag(name)
+        )
+       ) {
+      return true;
+    }
     return false;
   }
 

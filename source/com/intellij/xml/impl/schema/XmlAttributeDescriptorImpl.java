@@ -84,21 +84,30 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
 
   //todo: refactor to hierarchy of value descriptor?
   public boolean isEnumerated() {
-    return false;
+    final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(myTag);
+
+    return elementDescriptor != null &&
+           elementDescriptor.getType() instanceof ComplexTypeDescriptor &&
+           getEnumeratedValues(elementDescriptor).length != 0;
   }
 
   public String[] getEnumeratedValues() {
-    final HashSet<String> variants = new HashSet<String>();
-    XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(myTag);
+    final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(myTag);
 
     if (elementDescriptor!=null && elementDescriptor.getType() instanceof ComplexTypeDescriptor) {
-      XmlUtil.collectEnumerationValues(((ComplexTypeDescriptor)elementDescriptor.getType()).getDeclaration(),variants);
-
-      if (variants.size() > 0) {
-        return variants.toArray(new String[variants.size()]);
-      }
+      return getEnumeratedValues(elementDescriptor);
     }
 
+    return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  private String[] getEnumeratedValues(final XmlElementDescriptorImpl elementDescriptor) {
+    final HashSet<String> variants = new HashSet<String>();
+    XmlUtil.collectEnumerationValues(((ComplexTypeDescriptor)elementDescriptor.getType()).getDeclaration(),variants);
+
+    if (variants.size() > 0) {
+      return variants.toArray(new String[variants.size()]);
+    }
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
