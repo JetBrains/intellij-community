@@ -59,6 +59,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     myDocumentsListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
         myUpdateEditorAlarm.cancelAllRequests();
+        myUpdateAlarm.cancelAllRequests();
         myUpdateEditorAlarm.addRequest(new Runnable() {
           public void run() {
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
