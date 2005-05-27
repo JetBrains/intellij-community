@@ -88,14 +88,15 @@ final class StripeButtonUI extends MetalToggleButtonUI{
 
     final ButtonModel model=button.getModel();
 
+    final Color background = button.getBackground();
     if (model.isArmed() && model.isPressed() || model.isSelected()) {
       final Graphics2D g2d = (Graphics2D) g;
       final GradientPaint paint;
       if (ToolWindowAnchor.TOP == anchor || ToolWindowAnchor.BOTTOM == anchor) {
-        paint = new GradientPaint(0, 0, button.getBackground().darker(), 0, button.getHeight(), button.getBackground().brighter());
+        paint = new GradientPaint(0, 0, background.darker(), 0, button.getHeight(), background.brighter());
       }
       else {
-        paint = new GradientPaint(0, 0, button.getBackground().darker(), button.getWidth(), 0, button.getBackground().brighter());
+        paint = new GradientPaint(0, 0, background.darker(), button.getWidth(), 0, background.brighter());
       }
       g2d.setPaint(paint);
       g2d.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
@@ -104,13 +105,26 @@ final class StripeButtonUI extends MetalToggleButtonUI{
       g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
     }
     else {
-      g.setColor(button.getBackground());
+      g.setColor(background);
       g.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
       g.setColor(Color.GRAY);
       g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
     }
 
     if (model.isRollover()) {
+      if (!model.isArmed() && !model.isPressed() && !model.isSelected()) {
+        final Graphics2D g2d = (Graphics2D) g;
+        final GradientPaint paint;
+        if (ToolWindowAnchor.TOP == anchor || ToolWindowAnchor.BOTTOM == anchor) {
+          paint = new GradientPaint(0, 0, background, 0, button.getHeight(), Color.white);
+        }
+        else {
+          paint = new GradientPaint(0, 0, background, button.getWidth(), 0, Color.white);
+        }
+        g2d.setPaint(paint);
+        g2d.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
+      }
+
       g.setColor(Color.darkGray);
       g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
     }
@@ -143,12 +157,12 @@ final class StripeButtonUI extends MetalToggleButtonUI{
     if(text!=null){
       if(model.isEnabled()){
         if(model.isArmed()&&model.isPressed()||model.isSelected()){
-          g.setColor(button.getBackground());
+          g.setColor(background);
         } else{
           g.setColor(button.getForeground());
         }
       } else{
-        g.setColor(button.getBackground().darker());
+        g.setColor(background.darker());
       }
       /* Draw the Text */
       if(model.isEnabled()){
