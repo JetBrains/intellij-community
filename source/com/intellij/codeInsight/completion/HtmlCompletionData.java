@@ -39,6 +39,10 @@ public class HtmlCompletionData extends XmlCompletionData {
     return true;
   }
 
+  protected void setCaseInsensitive(final boolean caseInsensitive) {
+    myCaseInsensitive = caseInsensitive;
+  }
+
   protected ElementFilter createTagCompletionFilter() {
     return new ElementFilter() {
       public boolean isAcceptable(Object element, PsiElement context) {
