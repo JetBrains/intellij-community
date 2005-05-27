@@ -44,6 +44,7 @@
 
     <group id="SubversionFilePopupGroup" popup="true" text="_Subversion" class="com.qintsoft.svn4idea.actions.SubversionGroup">
       <add-to-group group-id="VcsGroup" anchor="last"/>
+      <add-to-group group-id="VcsGroups" anchor="last"/>      
     </group>
 
     <group id="SubversionGroup">
