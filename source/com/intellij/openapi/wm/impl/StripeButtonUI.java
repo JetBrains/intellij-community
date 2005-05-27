@@ -88,9 +88,6 @@ final class StripeButtonUI extends MetalToggleButtonUI{
 
     final ButtonModel model=button.getModel();
 
-    g.setColor(new JPanel().getBackground());
-    g.fillRect(0, 0, button.getWidth(), button.getHeight());
-
     if (model.isArmed() && model.isPressed() || model.isSelected()) {
       final Graphics2D g2d = (Graphics2D) g;
       final GradientPaint paint;
@@ -103,16 +100,18 @@ final class StripeButtonUI extends MetalToggleButtonUI{
       g2d.setPaint(paint);
       g2d.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
 
-      /*
-      g.setColor(button.getBackground().darker());
-      g.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
-      */
       g.setColor(Color.black);
       g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
-    } else /*if (button.isOpaque())*/ {
+    }
+    else {
       g.setColor(button.getBackground());
       g.fillRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
       g.setColor(Color.GRAY);
+      g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
+    }
+
+    if (model.isRollover()) {
+      g.setColor(Color.darkGray);
       g.drawRoundRect(3, 3, button.getWidth() - 6, button.getHeight() - 6, 5, 5);
     }
 

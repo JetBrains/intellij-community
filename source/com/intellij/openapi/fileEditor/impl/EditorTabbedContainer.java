@@ -53,7 +53,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
       enableEvents(MouseEvent.MOUSE_EVENT_MASK);
       setOpaque(true);
       myTabbedPanePopupHandler = new MyTabbedPanePopupHandler();
-      putClientProperty("TabbedPane.paintContentBorder", Boolean.FALSE);
+//      putClientProperty("TabbedPane.paintContentBorder", Boolean.FALSE);
       setFocusable(false);
       updateUI();
     }

@@ -76,6 +76,8 @@ public final class StripeButton extends JToggleButton implements ActionListener{
     myDecorator.getToolWindow().addPropertyChangeListener(myToolWindowHandler);
     addActionListener(this);
     addMouseListener(new MyPopupHandler());
+    setRolloverEnabled(true);
+    setOpaque(false);
 
     enableEvents(MouseEvent.MOUSE_EVENT_MASK);
   }

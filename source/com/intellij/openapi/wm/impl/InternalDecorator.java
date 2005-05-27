@@ -139,7 +139,6 @@ public final class InternalDecorator extends JPanel {
     // Active
     final boolean active = info.isActive();
     myTitlePanel.setActive(active, !info.isSliding());
-    myTitleLabel.setForeground(active ? SystemColor.activeCaptionText : SystemColor.inactiveCaptionText);
 
     //todo myToolWindowBorder.setActive(active);
     myFloatingDockSeparator.setActive(active);
@@ -299,7 +298,7 @@ public final class InternalDecorator extends JPanel {
     // Compose title bar
     final Component strut = Box.createHorizontalStrut(3);
     myTitlePanel.add(strut, BorderLayout.WEST);
-    myTitleLabel.setForeground(SystemColor.activeCaptionText);
+    myTitleLabel.setForeground(Color.white);
     myTitlePanel.add(myTitleLabel, BorderLayout.CENTER);
 
     final JPanel buttonPanel = new JPanel(new GridBagLayout());
@@ -761,9 +760,20 @@ public final class InternalDecorator extends JPanel {
      * To prevent this I don't allow to change UI.
      */
     public final void updateUI() {
-      setUI(MetalButtonUI.createUI(this));
+      setUI(new MyTitleButtonUI());
       setOpaque(false);
       setRolloverEnabled(true);
+      setContentAreaFilled(false);
+    }
+  }
+
+  private static final class MyTitleButtonUI extends MetalButtonUI {
+    @Override protected void paintIcon(Graphics g, JComponent c, Rectangle iconRect) {
+      MyTitleButton btn = (MyTitleButton)c;
+      if (btn.getModel().isArmed() && btn.getModel().isPressed()) {
+        iconRect = new Rectangle(iconRect.x - 1, iconRect.y, iconRect.width, iconRect.height);
+      }
+      super.paintIcon(g, c, iconRect);
     }
   }
 

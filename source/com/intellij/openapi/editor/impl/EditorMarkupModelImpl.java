@@ -11,12 +11,14 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoComposite;
-import com.intellij.codeInsight.daemon.impl.actions.ToggleGotoNextErrorOnAction;
 import com.intellij.codeInsight.daemon.impl.actions.ToggleGotoNextErrorOffAction;
+import com.intellij.codeInsight.daemon.impl.actions.ToggleGotoNextErrorOnAction;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;                                                        
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -24,15 +26,14 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.ErrorStripeEvent;
 import com.intellij.openapi.editor.ex.ErrorStripeListener;
+import com.intellij.openapi.editor.impl.collections50.PriorityQueue;
+import com.intellij.openapi.editor.impl.collections50.Queue;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.util.SmartList;
-import com.intellij.openapi.editor.impl.collections50.PriorityQueue;
-import com.intellij.openapi.editor.impl.collections50.Queue;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 
 import javax.swing.*;
@@ -47,6 +48,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorMarkupModelImpl");
 
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
+  private static final Icon ERRORS_FOUND_ICON = IconLoader.getIcon("/general/errorsFound.png");
 
   private EditorImpl myEditor;
   private MyErrorPanel myErrorPanel;
@@ -290,7 +292,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
 
         g.setColor(color);
-        g.fillRect(x+1, yStart, paintWidth - 1, yEnd-yStart);
+        g.fillRect(x+1, yStart, paintWidth - 2, yEnd-yStart);
 
         Color brighter = color.brighter();
         Color darker = color.darker();
@@ -300,15 +302,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         g.drawLine(x, yStart, x, yEnd-1);
         if (i == 0 || !isAdjacent(mySpots.get(i - 1), markSpot) || wider(markSpot, mySpots.get(i - 1))) {
           //top decoration
-          g.drawLine(x + 1, yStart, x + paintWidth - 1, yStart);
+          g.drawLine(x + 1, yStart, x + paintWidth - 2, yStart);
         }
         g.setColor(darker);
         if (i == mySpots.size()-1 || !isAdjacent(markSpot, mySpots.get(i + 1)) || wider(markSpot, mySpots.get(i + 1))) {
           // bottom decoration
-          g.drawLine(x + 1, yEnd-1, x + paintWidth-1, yEnd-1);
+          g.drawLine(x + 1, yEnd-1, x + paintWidth-2, yEnd-1);
         }
         //right
-        g.drawLine(x + paintWidth, yStart, x + paintWidth, yEnd - 1);
+        g.drawLine(x + paintWidth - 2, yStart, x + paintWidth - 2, yEnd - 1);
 
       }
     }
@@ -464,7 +466,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     public Dimension getPreferredSize() {
-      return new Dimension(12, 0);
+      return new Dimension(ERRORS_FOUND_ICON.getIconWidth() + 2, 0);
     }
 
     protected void paintComponent(Graphics g) {
@@ -483,10 +485,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         if (myErrorStripeRenderer != null) {
           EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
           int top = scrollBar.getDecScrollButtonHeight();
-          myErrorStripeRenderer.paint(this, g, new Rectangle(0, 0, top, getWidth()));
+          myErrorStripeRenderer.paint(this, g, new Rectangle(0, 0, getWidth(), top));
         }
 
-        myMarkSpots.repaint(g,getWidth());
+        myMarkSpots.repaint(g, ERRORS_FOUND_ICON.getIconWidth());
       }
       finally {
         ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();

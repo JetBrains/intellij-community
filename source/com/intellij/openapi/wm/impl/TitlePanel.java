@@ -1,6 +1,5 @@
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
@@ -16,6 +15,13 @@ final class TitlePanel extends JPanel {
 
   private int myCurrentFrame;
 
+  private final static Color CNT_ENABLE_COLOR = new Color(105, 128, 180);
+  private final static Color BND_ENABLE_COLOR = CNT_ENABLE_COLOR.brighter();
+
+  private final static Color BND_DISABLE_COLOR = new Color(160, 160, 160);
+  private final static Color CNT_DISABLE_COLOR = new Color(184, 184, 184);
+
+
   private float myBndStartRed, myBndStartGreen, myBndStartBlue; // start boundary color for animation
   private float myBndEndRed, myBndEndGreen, myBndEndBlue; // end boundary color for animation
   private Color myBndColor; // current boundary color
@@ -27,8 +33,6 @@ final class TitlePanel extends JPanel {
   private final Alarm myFrameTicker; // Determines moments of rendering of next frame
   private final MyAnimator myAnimator; // Renders panel's color
   private boolean myActive = true;
-
-  private final static int BRIGHTENING_FACTOR = 15;
 
   TitlePanel() {
     super(new BorderLayout());
@@ -60,28 +64,6 @@ final class TitlePanel extends JPanel {
   }
 
   private void setupColors(final boolean active) {
-    final Color CNT_ENABLE_COLOR;
-    final Color BND_ENABLE_COLOR;
-    final Color CNT_DISABLE_COLOR;
-    final Color BND_DISABLE_COLOR;
-
-    if (SystemInfo.isWindowsXP) {
-      Toolkit tk = getToolkit();
-
-      CNT_ENABLE_COLOR = (Color)tk.getDesktopProperty("win.frame.activeCaptionGradientColor");
-      BND_ENABLE_COLOR = (Color)tk.getDesktopProperty("win.frame.activeCaptionColor");
-
-      CNT_DISABLE_COLOR = (Color)tk.getDesktopProperty("win.frame.inactiveCaptionGradientColor");
-      BND_DISABLE_COLOR = (Color)tk.getDesktopProperty("win.frame.inactiveCaptionColor");
-    }
-    else {
-      CNT_ENABLE_COLOR = SystemColor.activeCaption;
-      BND_ENABLE_COLOR = SystemColor.activeCaption;
-
-      CNT_DISABLE_COLOR = SystemColor.inactiveCaption;
-      BND_DISABLE_COLOR = SystemColor.inactiveCaption;
-    }
-
     if (active) {
 
       // Boundary color
@@ -154,8 +136,10 @@ final class TitlePanel extends JPanel {
     final Graphics2D g2d = (Graphics2D) g;
     g2d.setPaint(new GradientPaint(0, 0, myBndColor, 0, getHeight(), myCntColor));
     g2d.fillRect(0, 0, getWidth(), getHeight());
+    /*
     g2d.setColor(myActive ? SystemColor.activeCaptionBorder : SystemColor.inactiveCaptionBorder);
     g2d.drawLine(0, 0, getWidth(), 0);
+    */
   }
 
   private final class MyAnimator implements Runnable {
