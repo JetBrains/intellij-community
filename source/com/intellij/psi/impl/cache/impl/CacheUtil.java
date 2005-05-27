@@ -63,7 +63,7 @@ public class CacheUtil {
         */
         PsiElementFactoryImpl factory = (PsiElementFactoryImpl)psiFile.getManager().getElementFactory();
         char[] chars = CharArrayUtil.fromSequence(text);
-        fileCopy = factory.createDummyFileFromText(fileType, chars, 0, text.length());
+        fileCopy = factory.createDummyFileFromText(psiFile.getName(), fileType, chars, 0, text.length());
       }
       fileCopy.setModificationStamp(psiFile.getModificationStamp());
     }

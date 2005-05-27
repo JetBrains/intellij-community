@@ -614,9 +614,9 @@ public class PsiElementFactoryImpl implements PsiElementFactory {
     return createFileFromText(myManager, type, name, chars, startOffset, endOffset);
   }
 
-  public PsiFile createDummyFileFromText(FileType fileType, char[] chars, int startOffset, int endOffset) {
+  public PsiFile createDummyFileFromText(final String name, FileType fileType, char[] chars, int startOffset, int endOffset) {
     LOG.assertTrue(!fileType.isBinary());
-    return createFileFromText(myManager, fileType, "", chars, startOffset, endOffset);
+    return createFileFromText(myManager, fileType, name, chars, startOffset, endOffset);
   }
 
   public static PsiFile createFileFromText(PsiManagerImpl manager,
