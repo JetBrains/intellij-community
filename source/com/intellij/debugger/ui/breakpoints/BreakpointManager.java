@@ -355,10 +355,10 @@ public class BreakpointManager implements JDOMExternalizable {
     return fieldBreakpoint;
   }
 
-  public ExceptionBreakpoint addExceptionBreakpoint(String exceptionClassName) {
+  public ExceptionBreakpoint addExceptionBreakpoint(String exceptionClassName, String packageName) {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     LOG.assertTrue(exceptionClassName != null);
-    ExceptionBreakpoint breakpoint = new ExceptionBreakpoint(myProject, exceptionClassName);
+    ExceptionBreakpoint breakpoint = new ExceptionBreakpoint(myProject, exceptionClassName, packageName);
     addBreakpoint(breakpoint);
     if (LOG.isDebugEnabled()) {
       LOG.debug("ExceptionBreakpoint Added");

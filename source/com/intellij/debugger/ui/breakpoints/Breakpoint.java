@@ -13,9 +13,11 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
@@ -31,6 +33,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.sun.jdi.ObjectReference;
@@ -225,11 +228,11 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
     }
   }
 
-  public void updateUI() {
+  public final void updateUI() {
     updateUI(EmptyRunnable.getInstance());
   }
 
-  public void updateUI(Runnable afterUpdate) {
+  public void updateUI(final Runnable afterUpdate) {
   }
 
   public void delete() {

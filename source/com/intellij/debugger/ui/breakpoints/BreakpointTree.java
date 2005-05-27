@@ -19,6 +19,7 @@ import java.util.*;
  *         Date: May 20, 2005
  */
 public class BreakpointTree extends CheckboxTree {
+  private static final String DEFAULT_PACKAGE_NAME = "<Default>";
   private final CheckedTreeNode myRootNode;
   private final List<Breakpoint> myBreakpoints = new ArrayList<Breakpoint>();
   private final Map<TreeDescriptor, CheckedTreeNode> myDescriptorToNodeMap = new HashMap<TreeDescriptor, CheckedTreeNode>();
@@ -35,6 +36,38 @@ public class BreakpointTree extends CheckboxTree {
     new MethodToPackageAppender(),
     new ClassToPackageAppender(),
     new PackageToPackageAppender(),
+  };
+
+  private final Comparator<CheckedTreeNode> myNodeComparator = new Comparator<CheckedTreeNode>() {
+    public int compare(CheckedTreeNode o1, CheckedTreeNode o2) {
+      final int w1 = getWeight(o1);
+      final int w2 = getWeight(o2);
+      if (w1 != w2) {
+        return w1 - w2;
+      }
+      final TreeDescriptor d1 = (TreeDescriptor)o1.getUserObject();
+      final TreeDescriptor d2 = (TreeDescriptor)o2.getUserObject();
+      if (d1 instanceof BreakpointDescriptor && d2 instanceof BreakpointDescriptor) {
+        return 0;
+      }
+      return d1.getDisplayString().compareTo(d2.getDisplayString());
+    }
+
+    private int getWeight(CheckedTreeNode node) {
+      if (node.getUserObject() instanceof BreakpointDescriptor) {
+        return 100;
+      }
+      if (node.getUserObject() instanceof MethodDescriptor) {
+        return 90;
+      }
+      if (node.getUserObject() instanceof PackageDescriptor) {
+        return 80;
+      }
+      if (node.getUserObject() instanceof ClassDescriptor) {
+        return 70;
+      }
+      return 50;
+    }
   };
 
   protected void installSpeedSearch() {
@@ -148,10 +181,16 @@ public class BreakpointTree extends CheckboxTree {
   private static final class MethodDescriptor extends TreeDescriptor {
     private final String myClassName;
     private final String myMethodName;
+    private final String myPackageName;
 
-    public MethodDescriptor(String methodName, String className) {
+    public MethodDescriptor(String methodName, String className, String packageName) {
       myClassName = className;
       myMethodName = methodName;
+      myPackageName = packageName;
+    }
+
+    public String getPackageName() {
+      return myPackageName;
     }
 
     public String getClassName() {
@@ -194,14 +233,19 @@ public class BreakpointTree extends CheckboxTree {
 
   private static final class ClassDescriptor extends TreeDescriptor {
     private final String myClassName;
+    private final String myPackageName;
 
-    public ClassDescriptor(String className) {
+    public ClassDescriptor(String className, String packageName) {
       myClassName = className;
+      myPackageName = "".equals(packageName)? DEFAULT_PACKAGE_NAME : packageName;
     }
 
     public String getPackageName() {
+      if (myPackageName != null) {
+        return myPackageName;
+      }
       final int dotIndex = myClassName.lastIndexOf('.');
-      return dotIndex >= 0 ? myClassName.substring(0, dotIndex) : "<Default>";
+      return dotIndex >= 0 ? myClassName.substring(0, dotIndex) : DEFAULT_PACKAGE_NAME;
     }
 
     public String getClassName() {
@@ -240,7 +284,7 @@ public class BreakpointTree extends CheckboxTree {
     private final String myPackageName;
 
     public PackageDescriptor(String packageName) {
-      myPackageName = packageName;
+      myPackageName = "".equals(packageName)? DEFAULT_PACKAGE_NAME : packageName;
     }
 
     public String getPackageName() {
@@ -371,9 +415,10 @@ public class BreakpointTree extends CheckboxTree {
     breakpoint.updateUI(new Runnable() {
       public void run() {
         rebuildTree();
-        selectBreakpoint(breakpoint);
       }
     });
+    rebuildTree();
+    selectBreakpoint(breakpoint);
   }
 
   public void removeBreakpoint(Breakpoint breakpoint) {
@@ -430,10 +475,29 @@ public class BreakpointTree extends CheckboxTree {
     for (final CheckedTreeNode child : children) {
       myRootNode.add(child);
     }
-
+    //sortChildren(myRootNode);
     ((DefaultTreeModel)getModel()).nodeStructureChanged(myRootNode);
     treeStateSnapshot.restore(this);
     expandPath(new TreePath(myRootNode));
+  }
+
+  private void sortChildren(CheckedTreeNode node) {
+    final int childCount = node.getChildCount();
+    if (childCount == 0) {
+      return;
+    }
+    final List<CheckedTreeNode> children = new ArrayList<CheckedTreeNode>(childCount);
+    for (int idx = 0; idx < childCount; idx++) {
+      children.add((CheckedTreeNode)node.getChildAt(idx));
+    }
+    for (CheckedTreeNode child : children) {
+      sortChildren(child);
+      child.removeFromParent();
+    }
+    Collections.sort(children, myNodeComparator);
+    for (CheckedTreeNode child : children) {
+      node.add(child);
+    }
   }
   
   private @NotNull CheckedTreeNode  createNode(final TreeDescriptor descriptor) {
@@ -521,10 +585,11 @@ public class BreakpointTree extends CheckboxTree {
       final LineBreakpoint lineBreakpoint = (LineBreakpoint)breakpoint;
       final String methodName = lineBreakpoint.getMethodName();
       final String className = lineBreakpoint.getClassName();
-      if (methodName == null || className == null) {
+      final String packageName = lineBreakpoint.getPackageName();
+      if (methodName == null || className == null || packageName == null) {
         return node;
       }
-      return attachNodeToParent(new MethodDescriptor(methodName, className), node);
+      return attachNodeToParent(new MethodDescriptor(methodName, className, packageName), node);
     }
   }
 
@@ -540,19 +605,25 @@ public class BreakpointTree extends CheckboxTree {
       
       final Breakpoint breakpoint = ((BreakpointDescriptor)descriptor).getBreakpoint();
       final String className;
+      final String packageName;
       if (breakpoint instanceof ExceptionBreakpoint) {
-        className = ((ExceptionBreakpoint)breakpoint).getQualifiedName();
+        final ExceptionBreakpoint exceptionBreakpoint = (ExceptionBreakpoint)breakpoint;
+        className = exceptionBreakpoint.getQualifiedName();
+        packageName = exceptionBreakpoint.getPackageName();
       }
       else if (breakpoint instanceof BreakpointWithHighlighter) {
-        className = ((BreakpointWithHighlighter)breakpoint).getClassName();
+        final BreakpointWithHighlighter breakpointWithHighlighter = (BreakpointWithHighlighter)breakpoint;
+        className = breakpointWithHighlighter.getClassName();
+        packageName = breakpointWithHighlighter.getPackageName();
       }
       else {
         className = null;
+        packageName = null;
       }
-      if (className == null) {
+      if (className == null || packageName == null) {
         return node;
       }
-      return attachNodeToParent(new ClassDescriptor(className), node);
+      return attachNodeToParent(new ClassDescriptor(className, packageName), node);
     }
   }
 
@@ -564,20 +635,19 @@ public class BreakpointTree extends CheckboxTree {
       }
       
       final Breakpoint breakpoint = ((BreakpointDescriptor)descriptor).getBreakpoint();
-      final String className;
+      final String packageName;
       if (breakpoint instanceof ExceptionBreakpoint) {
-        className = ((ExceptionBreakpoint)breakpoint).getQualifiedName();
+        packageName = ((ExceptionBreakpoint)breakpoint).getPackageName();
       }
       else if (breakpoint instanceof BreakpointWithHighlighter) {
-        className = ((BreakpointWithHighlighter)breakpoint).getClassName();
+        packageName = ((BreakpointWithHighlighter)breakpoint).getPackageName();
       }
       else {
-        className = null;
+        packageName = null;
       }
-      if (className == null) {
+      if (packageName == null) {
         return node;
       }
-      final String packageName = new ClassDescriptor(className).getPackageName();
       return attachNodeToParent(new PackageDescriptor(packageName), node);
     }
   }
@@ -591,8 +661,10 @@ public class BreakpointTree extends CheckboxTree {
       if (!(descriptor instanceof MethodDescriptor)) {
         return node;
       }
-      final String className = ((MethodDescriptor)descriptor).getClassName();
-      return attachNodeToParent(new ClassDescriptor(className), node);
+      final MethodDescriptor methodDescriptor = (MethodDescriptor)descriptor;
+      final String className = methodDescriptor.getClassName();
+      final String packageName = methodDescriptor.getPackageName();
+      return attachNodeToParent(new ClassDescriptor(className, packageName), node);
     }
   }
 
@@ -602,8 +674,9 @@ public class BreakpointTree extends CheckboxTree {
       if (!(descriptor instanceof MethodDescriptor)) {
         return node;
       }
-      final String className = ((MethodDescriptor)descriptor).getClassName();
-      final String packageName = new ClassDescriptor(className).getPackageName();
+      final MethodDescriptor methodDescriptor = (MethodDescriptor)descriptor;
+      final String className = methodDescriptor.getClassName();
+      final String packageName = methodDescriptor.getPackageName();
       return attachNodeToParent(new PackageDescriptor(packageName), node);
     }
   }
@@ -686,11 +759,6 @@ public class BreakpointTree extends CheckboxTree {
       final List<TreePath> pathsToSelect = getPaths(tree, mySelectedUserObjects);
       if (pathsToSelect.size() > 0) {
         tree.getSelectionModel().clearSelection();
-        /*
-        for (TreePath path : pathsToSelect) {
-          TreeUtil.selectPath(tree, path.getParentPath());
-        }
-        */
         tree.setSelectionPaths(pathsToSelect.toArray(new TreePath[pathsToSelect.size()]));
       }
     }

@@ -265,7 +265,9 @@ public class JVMNameUtil {
   public static String getClassDisplayName(DebugProcessImpl debugProcess, SourcePosition classAt) {
     PsiClass psiClass = getClassAt(classAt);
 
-    if(psiClass != null && psiClass.getQualifiedName() != null) return psiClass.getQualifiedName();
+    if(psiClass != null && psiClass.getQualifiedName() != null) {
+      return psiClass.getQualifiedName();
+    }
 
     if(debugProcess != null && debugProcess.isAttached()) {
       List<ReferenceType> allClasses = debugProcess.getPositionManager().getAllClasses(classAt);
@@ -274,6 +276,29 @@ public class JVMNameUtil {
       }
     }
     return "Class at " + classAt.getFile().getName() + ":" + classAt.getLine();
+  }
+
+  public static String getPackageDisplayName(DebugProcessImpl debugProcess, SourcePosition classAt) {
+    PsiClass psiClass = getClassAt(classAt);
+
+    if(psiClass != null) {
+      final PsiFile containingFile = psiClass.getContainingFile();
+      if(containingFile instanceof PsiJavaFile) {
+        return ((PsiJavaFile)containingFile).getPackageName();
+      }
+    }
+
+    if(debugProcess != null && debugProcess.isAttached()) {
+      List<ReferenceType> allClasses = debugProcess.getPositionManager().getAllClasses(classAt);
+      if(allClasses.size() > 0) {
+        final String className = allClasses.get(0).name();
+        int dotIndex = className.lastIndexOf('.');
+        if (dotIndex >= 0) {
+          return className.substring(0, dotIndex);
+        }
+      }
+    }
+    return "";
   }
 
   public static PsiClass getTopLevelParentClass(PsiClass psiClass) {

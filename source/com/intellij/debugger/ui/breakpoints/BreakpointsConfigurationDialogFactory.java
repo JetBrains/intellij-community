@@ -377,7 +377,7 @@ public class BreakpointsConfigurationDialogFactory {
         String qName = (selectedClass != null)? selectedClass.getQualifiedName() : null;
 
         if (qName != null && qName.length() > 0) {
-          ExceptionBreakpoint breakpoint = getBreakpointManager().addExceptionBreakpoint(qName);
+          ExceptionBreakpoint breakpoint = getBreakpointManager().addExceptionBreakpoint(qName, ((PsiJavaFile)selectedClass.getContainingFile()).getPackageName());
           myExceptionBreakpointsPanel.addBreakpoint(breakpoint);
         }
         myExceptionBreakpointsPanel.ensureSelectionExists();

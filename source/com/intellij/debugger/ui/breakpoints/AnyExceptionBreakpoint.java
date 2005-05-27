@@ -16,7 +16,7 @@ public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
   public static final String ANY_EXCEPTION_BREAKPOINT = "breakpoint_any";
 
   protected AnyExceptionBreakpoint(Project project) {
-    super(project, null);
+    super(project, null, null);
     ENABLED = false;
   }
 

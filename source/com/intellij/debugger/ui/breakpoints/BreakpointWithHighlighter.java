@@ -54,6 +54,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   private boolean myVisible = true;
   private Icon myIcon = getSetIcon();
   private String myClassName = "";
+  private String myPackageName = "";
   private String myInvalidMessage = "";
 
   protected abstract void createRequestForPreparedClass(final DebugProcessImpl debugProcess,
@@ -71,8 +72,12 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     return myIcon;
   }
 
-  protected String getClassName() {
+  public String getClassName() {
     return myClassName;
+  }
+
+  public String getPackageName() {
+    return myPackageName;
   }
 
   protected Breakpoint init() {
@@ -91,11 +96,8 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
   private void updateCaches(DebugProcessImpl debugProcess) {
     myIcon = calcIcon(debugProcess);
-    myClassName = calcClassName(debugProcess);
-  }
-
-  private String calcClassName(DebugProcessImpl debugProcess) {
-    return JVMNameUtil.getClassDisplayName(debugProcess, getSourcePosition());
+    myClassName = JVMNameUtil.getClassDisplayName(debugProcess, getSourcePosition());
+    myPackageName = JVMNameUtil.getPackageDisplayName(debugProcess, getSourcePosition());
   }
 
   private Icon calcIcon(DebugProcessImpl debugProcess) {
@@ -118,12 +120,12 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     if(requestsManager.isVerified(this)){
       return getVerifiedIcon();
     }
-    
+
     if(requestsManager.isInvalid(this)){
       myInvalidMessage = requestsManager.getInvalidMessage(this);
       return getInvalidIcon();
-    } 
-    
+    }
+
     return getSetIcon();
   }
 
@@ -252,11 +254,17 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
    * updates the state of breakpoint and all the related UI widgets etc
    */
   public final void updateUI(final Runnable afterUpdate) {
-    if(ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
       public void run() {
-        if(PsiManager.getInstance(myProject).isDisposed()) return;
-        if(!isValid()) return;
+        if (PsiManager.getInstance(myProject).isDisposed()) {
+          return;
+        }
+        if (!isValid()) {
+          return;
+        }
 
         DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myProject).getContext();
         final DebugProcessImpl debugProcess = context.getDebugProcess();
@@ -325,12 +333,16 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   public boolean isAt(Document document, int offset) {
-    if (getHighlighter() == null || !getHighlighter().isValid()) return false;
+    if (getHighlighter() == null || !getHighlighter().isValid()) {
+      return false;
+    }
     return (document.equals(getHighlighter().getDocument()) && getSourcePosition().getLine() == document.getLineNumber(offset));
   }
 
   protected void reload(PsiFile psiFile) {
-    if (!(psiFile instanceof PsiJavaFile)) return;
+    if (!(psiFile instanceof PsiJavaFile)) {
+      return;
+    }
     myTimeStamp = getSourcePosition().getFile().getModificationStamp();
   }
 
@@ -467,15 +479,25 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   public void readExternal(Element breakpointNode) throws InvalidDataException {
     super.readExternal(breakpointNode);
     final String url = breakpointNode.getAttributeValue("url");
+
     final String className = breakpointNode.getAttributeValue("class");
     if (className != null) {
       myClassName = className;
     }
 
+    final String packageName = breakpointNode.getAttributeValue("package");
+    if (packageName != null) {
+      myPackageName = packageName;
+    }
+
     VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
-    if (vFile == null) throw new InvalidDataException("File number is invalid for breakpoint");
+    if (vFile == null) {
+      throw new InvalidDataException("File number is invalid for breakpoint");
+    }
     final Document doc = FileDocumentManager.getInstance().getDocument(vFile);
-    if (doc == null) throw new InvalidDataException("File number is invalid for breakpoint");
+    if (doc == null) {
+      throw new InvalidDataException("File number is invalid for breakpoint");
+    }
 
     // line number
     final int line;
@@ -485,11 +507,15 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     catch (Exception e) {
       throw new InvalidDataException("Line number is invalid forbreakpoint");
     }
-    if (line < 0) throw new InvalidDataException("Line number is invalid forbreakpoint");
+    if (line < 0) {
+      throw new InvalidDataException("Line number is invalid forbreakpoint");
+    }
 
     RangeHighlighter highlighter = createHighlighter(myProject, doc, line);
 
-    if (highlighter == null) throw new InvalidDataException("");
+    if (highlighter == null) {
+      throw new InvalidDataException("");
+    }
 
     myHighlighter = highlighter;
     reload();
@@ -502,6 +528,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     parentNode.setAttribute("url", url);
     parentNode.setAttribute("line", Integer.toString(getSourcePosition().getLine()));
     parentNode.setAttribute("class", myClassName);
+    parentNode.setAttribute("package", myPackageName);
   }
 
   private ActionGroup createMenuActions() {

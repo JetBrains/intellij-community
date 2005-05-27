@@ -36,6 +36,7 @@ public class ExceptionBreakpoint extends Breakpoint {
   public boolean NOTIFY_CAUGHT   = true;
   public boolean NOTIFY_UNCAUGHT = true;
   private String myQualifiedName;
+  private String myPackageName;
 
   public static Icon ICON = IconLoader.getIcon("/debugger/db_exception_breakpoint.png");
   public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_exception_breakpoint.png");
@@ -51,13 +52,31 @@ public class ExceptionBreakpoint extends Breakpoint {
     return CATEGORY;
   }
 
-  protected ExceptionBreakpoint(Project project, String qualifiedName) {
+  protected ExceptionBreakpoint(Project project, String qualifiedName, String packageName) {
     super(project);
     myQualifiedName = qualifiedName;
+    if (packageName == null) {
+      myPackageName = calcPackageName(qualifiedName);
+    }
+    else {
+      myPackageName = packageName;
+    }
+  }
+
+  private String calcPackageName(String qualifiedName) {
+    if (qualifiedName == null) {
+      return null;
+    }
+    int dotIndex = qualifiedName.lastIndexOf('.');
+    return dotIndex >= 0? qualifiedName.substring(0, dotIndex) : "";
   }
 
   public String getQualifiedName() {
     return myQualifiedName;
+  }
+
+  public String getPackageName() {
+    return myPackageName;
   }
 
   public PsiClass getPsiClass() {
@@ -166,13 +185,18 @@ public class ExceptionBreakpoint extends Breakpoint {
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
     super.writeExternal(parentNode);
-    if(getQualifiedName() != null) {
-      parentNode.setAttribute("class_name", getQualifiedName());
+    if(myQualifiedName != null) {
+      parentNode.setAttribute("class_name", myQualifiedName);
+    }
+    if(myPackageName != null) {
+      parentNode.setAttribute("package_name", myPackageName);
     }
   }
 
   public PsiElement getEvaluationElement() {
-    if(getQualifiedName() == null) return null;
+    if (getQualifiedName() == null) {
+      return null;
+    }
     return PsiManager.getInstance(myProject).findClass(getQualifiedName(), GlobalSearchScope.allScope(myProject));
   }
 
@@ -183,6 +207,9 @@ public class ExceptionBreakpoint extends Breakpoint {
     if(className == null) {
       throw new InvalidDataException(READ_NO_CLASS_NAME);
     }
+
+    String packageName = parentNode.getAttributeValue("package_name");
+    myPackageName = packageName != null? packageName : calcPackageName(packageName);
   }
 
   public static ExceptionBreakpoint read(Project project, Element parentNode) throws InvalidDataException {
