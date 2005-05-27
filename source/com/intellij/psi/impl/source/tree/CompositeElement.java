@@ -272,17 +272,13 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public void replaceChildInternal(ASTNode child, TreeElement newElement) {
-    if (getElementType() == JavaElementType.PARENTH_EXPRESSION) {
-      getTreeParent().replaceChildInternal(this, newElement);
-    } else {
-      if (ElementType.EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
-        boolean needParenth = ReplaceExpressionUtil.isNeedParenthesis(child, newElement);
-        if (needParenth) {
-          newElement = SourceUtil.addParenthToReplacedChild(JavaElementType.PARENTH_EXPRESSION, newElement, getManager());
-        }
+    if (ElementType.EXPRESSION_BIT_SET.isInSet(child.getElementType())) {
+      boolean needParenth = ReplaceExpressionUtil.isNeedParenthesis(child, newElement);
+      if (needParenth) {
+        newElement = SourceUtil.addParenthToReplacedChild(JavaElementType.PARENTH_EXPRESSION, newElement, getManager());
       }
-      CodeEditUtil.replaceChild(this, child, newElement);
     }
+    CodeEditUtil.replaceChild(this, child, newElement);
   }
 
   private int myCachedLength = -1;
