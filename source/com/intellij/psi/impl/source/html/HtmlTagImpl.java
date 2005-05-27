@@ -29,8 +29,10 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
 
     for (int i = 0; i < subTags.length; i++) {
       final XmlTag subTag = subTags[i];
-      if(namespace == null){
-        final String tagName = subTag.getName().toLowerCase();
+      if(namespace == null) {
+        String tagName = subTag.getName();
+        if (tagName == null) continue;
+        tagName = tagName.toLowerCase();
 
         if(name == null || name.equals(tagName)){
           result.add(subTag);
