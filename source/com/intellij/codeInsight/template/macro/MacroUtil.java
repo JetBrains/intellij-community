@@ -1,24 +1,27 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.completion.proc.VariablesProcessor;
-import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.PsiElementResult;
+import com.intellij.codeInsight.template.PsiTypeResult;
+import com.intellij.codeInsight.template.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Iterator;
 
-class MacroUtil {
+public class MacroUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.macro.MacroUtil");
 
-  public static PsiType resultToPsiType(Result result, ExpressionContext context){
+  @Nullable public static PsiType resultToPsiType(Result result, ExpressionContext context){
     if (result instanceof PsiTypeResult) {
       return ((PsiTypeResult) result).getType();
     }
@@ -43,7 +46,7 @@ class MacroUtil {
     }
   }
 
-  public static PsiExpression resultToPsiExpression(Result result, ExpressionContext context){
+  @Nullable public static PsiExpression resultToPsiExpression(Result result, ExpressionContext context){
     if (result instanceof PsiElementResult){
       PsiElement element = ((PsiElementResult)result).getElement();
       if (element instanceof PsiExpression){
@@ -76,8 +79,8 @@ class MacroUtil {
     }
   }
 
-  public static PsiExpression[] getStandardExpressions(PsiElement place) {
-    ArrayList array = new ArrayList();
+  @NotNull public static PsiExpression[] getStandardExpressions(PsiElement place) {
+    ArrayList<PsiExpression> array = new ArrayList<PsiExpression>();
     PsiElementFactory factory = place.getManager().getElementFactory();
     try {
       array.add(factory.createExpressionFromText("true", null));
@@ -122,14 +125,26 @@ class MacroUtil {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-    return (PsiExpression[])array.toArray(new PsiExpression[array.size()]);
+    return array.toArray(new PsiExpression[array.size()]);
   }
 
-  public static PsiVariable[] getVariablesVisibleAt(final PsiElement place, String prefix) {
+  @NotNull public static PsiExpression[] getStandardExpressionsOfType(PsiElement place, PsiType type) {
+    List<PsiExpression> array = new ArrayList<PsiExpression>();
+    PsiExpression[] expressions = MacroUtil.getStandardExpressions(place);
+    for (PsiExpression expr : expressions) {
+      PsiType type1 = expr.getType();
+      if (type == null || type1 != null && type.isAssignableFrom(type1)) {
+        array.add(expr);
+      }
+    }
+    return array.toArray(new PsiExpression[array.size()]);
+  }
+
+  @NotNull public static PsiVariable[] getVariablesVisibleAt(final PsiElement place, String prefix) {
     final List<PsiVariable> list = new ArrayList<PsiVariable>();
     VariablesProcessor varproc = new VariablesProcessor(prefix, true, list){
       public boolean execute(PsiElement pe, PsiSubstitutor substitutor) {
-        if(!(pe instanceof PsiField) || PsiUtil.isAccessible(((PsiField)pe), place, null)) return super.execute(pe, substitutor);
+        if(!(pe instanceof PsiField) || PsiUtil.isAccessible((PsiField)pe, place, null)) return super.execute(pe, substitutor);
         return true;
       }
     };
