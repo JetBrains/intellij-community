@@ -21,10 +21,12 @@ public class RelaxedNsXmlElementDescriptor extends XmlElementDescriptorImpl {
   public XmlElementDescriptor getElementDescriptor(XmlTag childTag) {
     XmlElementDescriptor elementDescriptor = super.getElementDescriptor(childTag);
 
-    if (elementDescriptor == null &&
-        !childTag.getNamespace().equals(XmlUtil.XHTML_URI)
-      ) {
-      return new AnyXmlElementDescriptor(this,childTag.getNSDescriptor(childTag.getNamespace(),true));
+    if (elementDescriptor == null) {
+      final String namespace = childTag.getNamespace();
+
+      if(!XmlUtil.XHTML_URI.equals(namespace)) {
+        return new AnyXmlElementDescriptor(this,childTag.getNSDescriptor(childTag.getNamespace(),true));
+      }
     }
 
     return elementDescriptor;
