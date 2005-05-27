@@ -97,7 +97,7 @@ public static TreeState createOn(JTree tree) {
 
 private static List<List<PathElement>> createPaths(final JTree tree) {
   final ArrayList<List<PathElement>> result = new ArrayList<List<PathElement>>();
-  final ArrayList<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(tree);
+  final java.util.List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(tree);
   for (Iterator<TreePath> iterator = expandedPaths.iterator(); iterator.hasNext();) {
     final List<PathElement> path = createPath(iterator.next());
     if (path != null) {

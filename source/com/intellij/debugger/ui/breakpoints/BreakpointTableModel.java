@@ -5,33 +5,41 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.util.ui.ItemRemovable;
+import com.intellij.ui.TableUtil;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.LinkedList;
+import java.util.*;
 
 public class BreakpointTableModel extends AbstractTableModel implements ItemRemovable {
   public static final int ENABLED_STATE = 0;
   public static final int NAME = 1;
 
-  private java.util.List myBreakpoints = null;
+  private java.util.List<Breakpoint> myBreakpoints = null;
 
   public BreakpointTableModel() {
-    myBreakpoints = new LinkedList();
+    myBreakpoints = new ArrayList<Breakpoint>();
   }
 
   public final void setBreakpoints(Breakpoint[] breakpoints) {
     myBreakpoints.clear();
     if (breakpoints != null) {
-      for (int idx = 0; idx < breakpoints.length; idx++) {
-        myBreakpoints.add(breakpoints[idx]);
-      }
+      myBreakpoints.addAll(Arrays.asList(breakpoints));
     }
+    fireTableDataChanged();
+  }
+
+  public List<Breakpoint> getBreakpoints() {
+    return Collections.unmodifiableList(myBreakpoints);
+  }
+
+  public void removeBreakpoints(Breakpoint[] breakpoints) {
+    myBreakpoints.removeAll(Arrays.asList(breakpoints));
     fireTableDataChanged();
   }
 
   public Breakpoint getBreakpoint(int index) {
     if (index < 0 || index >= myBreakpoints.size()) return null;
-    return (Breakpoint)myBreakpoints.get(index);
+    return myBreakpoints.get(index);
   }
 
   public boolean isBreakpointEnabled(int index) {

@@ -219,7 +219,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   private Object[] getExpandedElements() {
-    final ArrayList<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(getTree());
+    final java.util.List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(getTree());
     return convertPathsToValues(expandedPaths.toArray(new TreePath[expandedPaths.size()]));
   }
 

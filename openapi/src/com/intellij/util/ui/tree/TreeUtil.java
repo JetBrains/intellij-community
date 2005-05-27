@@ -16,7 +16,7 @@ public final class TreeUtil {
   /**
    * @param paths output parameter.
    */
-  public static void collectExpandedPaths(final JTree tree, final ArrayList<TreePath> paths){
+  public static void collectExpandedPaths(final JTree tree, final List<TreePath> paths){
     LOG.assertTrue(tree != null);
     LOG.assertTrue(paths != null);
 
@@ -27,7 +27,7 @@ public final class TreeUtil {
     collectExpandedPathsImpl(tree, paths, new TreePath(root));
   }
 
-  public static ArrayList<TreePath> collectExpandedPaths(final JTree tree){
+  public static List<TreePath> collectExpandedPaths(final JTree tree){
     final ArrayList<TreePath> result = new ArrayList<TreePath>();
     final Object root = tree.getModel().getRoot();
     final TreePath rootPath = new TreePath(root);
@@ -35,7 +35,7 @@ public final class TreeUtil {
     return result;
   }
 
-  public static ArrayList<TreePath> collectExpandedPaths(final JTree tree, TreePath path){
+  public static List<TreePath> collectExpandedPaths(final JTree tree, TreePath path){
     final ArrayList<TreePath> result = new ArrayList<TreePath>();
     final Object lastPathComponent = path.getLastPathComponent();
     final TreeModel model = tree.getModel();
@@ -65,7 +65,7 @@ public final class TreeUtil {
     return result;
   }
 
-  private static boolean collectExpandedPathsImpl(final JTree tree, final ArrayList<TreePath> paths, final TreePath path){
+  private static boolean collectExpandedPathsImpl(final JTree tree, final Collection<TreePath> paths, final TreePath path){
     final TreeModel model = tree.getModel();
     final Object lastPathComponent = path.getLastPathComponent();
     if(model.isLeaf(lastPathComponent)){
@@ -90,7 +90,7 @@ public final class TreeUtil {
   /**
    * Expands specified paths.
    */
-  public static void restoreExpandedPaths(final JTree tree, final ArrayList<TreePath> paths){
+  public static void restoreExpandedPaths(final JTree tree, final List<TreePath> paths){
     LOG.assertTrue(tree != null);
     LOG.assertTrue(paths != null);
 

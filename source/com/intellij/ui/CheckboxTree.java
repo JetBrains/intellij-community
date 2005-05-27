@@ -38,12 +38,12 @@ public class CheckboxTree extends Tree {
           checkBounds.setLocation(rowBounds.getLocation());
 
           if (checkBounds.contains(e.getPoint())) {
-            CheckedTreeNode node = (CheckedTreeNode) getPathForRow(row).getLastPathComponent();
+            final CheckedTreeNode node = (CheckedTreeNode) getPathForRow(row).getLastPathComponent();
             if (node.isEnabled()) {
               toggleNode(node);
-              e.consume();
               setSelectionRow(row);
             }
+            e.consume();
           }
         }
       }
@@ -78,6 +78,11 @@ public class CheckboxTree extends Tree {
     boolean checked = !node.isChecked();
     checkNode(node, checked);
     return checked;
+  }
+
+  public int getToggleClickCount() {
+    // to prevent node expanding/collapsing on checkbox toggling
+    return -1;
   }
 
   protected void checkNode(CheckedTreeNode node, boolean checked) {

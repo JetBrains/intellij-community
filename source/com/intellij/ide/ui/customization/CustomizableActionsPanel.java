@@ -116,7 +116,7 @@ public class CustomizableActionsPanel {
 
     myAddActionButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final ArrayList<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
+        final java.util.List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
         final TreePath selectionPath = myActionsTree.getLeadSelectionPath();
         if (selectionPath != null){
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
@@ -139,7 +139,7 @@ public class CustomizableActionsPanel {
 
     myAddSeparatorButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final ArrayList<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
+        final java.util.List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
         final TreePath selectionPath = myActionsTree.getLeadSelectionPath();
         if (selectionPath != null){
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
@@ -155,7 +155,7 @@ public class CustomizableActionsPanel {
 
     myRemoveActionButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final ArrayList<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
+        final java.util.List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
         final TreePath[] selectionPath = myActionsTree.getSelectionPaths();
         if (selectionPath != null){
           for (int i = 0; i < selectionPath.length; i++) {
@@ -172,7 +172,7 @@ public class CustomizableActionsPanel {
 
     myMoveActionUpButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final ArrayList<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
+        final java.util.List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
         final TreePath[] selectionPath = myActionsTree.getSelectionPaths();
         if (selectionPath != null){
           for (int i = 0; i < selectionPath.length; i++) {
@@ -196,7 +196,7 @@ public class CustomizableActionsPanel {
 
     myMoveActionDownButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final ArrayList<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
+        final java.util.List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myActionsTree);
         final TreePath[] selectionPath = myActionsTree.getSelectionPaths();
         if (selectionPath != null){
           for (int i = 0; i < selectionPath.length; i++) {
@@ -420,7 +420,7 @@ public class CustomizableActionsPanel {
   }
 
   public void apply() throws ConfigurationException {
-    final ArrayList<TreePath> treePaths = TreeUtil.collectExpandedPaths(myActionsTree);
+    final java.util.List<TreePath> treePaths = TreeUtil.collectExpandedPaths(myActionsTree);
     if (mySelectedSchema != null){
       CustomizationUtil.optimizeSchema(myActionsTree, mySelectedSchema);
     }
@@ -445,7 +445,7 @@ public class CustomizableActionsPanel {
     restorePathsAfterTreeOptimization(treePaths);
   }
 
-  private void restorePathsAfterTreeOptimization(final ArrayList<TreePath> treePaths) {
+  private void restorePathsAfterTreeOptimization(final java.util.List<TreePath> treePaths) {
     for (Iterator<TreePath> iterator = treePaths.iterator(); iterator.hasNext();) {
       myActionsTree.expandPath(CustomizationUtil.getPathByUserObjects(myActionsTree, iterator.next()));
     }

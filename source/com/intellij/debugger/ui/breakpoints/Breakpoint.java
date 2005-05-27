@@ -52,6 +52,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
   public boolean LOG_EXPRESSION_ENABLED = false;
   private TextWithImports  myLogMessage; // an expression to be evaluated and printed
   private static final String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
+  public static final Breakpoint[] EMPTY_ARRAY = new Breakpoint[0];
 
   protected Breakpoint(Project project) {
     super(project);

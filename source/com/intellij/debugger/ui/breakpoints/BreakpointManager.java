@@ -58,6 +58,7 @@ public class BreakpointManager implements JDOMExternalizable {
   private List<EnableBreakpointRule> myBreakpointRules = new ArrayList<EnableBreakpointRule>(); // breakpoint rules
   private List<Breakpoint> myBreakpointsListForIteration = null; // another list for breakpoints iteration, unsynchronized access ok
   private Map<Document, List<BreakpointWithHighlighter>> myDocumentBreakpoints = new HashMap<Document, List<BreakpointWithHighlighter>>();
+  private Map<String, String> myUIProperties = new java.util.HashMap<String, String>();
 
   private BreakpointsConfigurationDialogFactory myBreakpointsConfigurable;
   private EditorMouseListener myEditorMouseListener;
@@ -500,6 +501,20 @@ public class BreakpointManager implements JDOMExternalizable {
             });            
           }
         });
+        
+        myUIProperties.clear();
+        final Element props = parentNode.getChild("ui_properties");
+        if (props != null) {
+          final List children = props.getChildren("property");
+          for (Object child : children) {
+            Element property = (Element)child;
+            final String name = property.getAttributeValue("name");
+            final String value = property.getAttributeValue("value");
+            if (name != null && value != null) {
+              myUIProperties.put(name, value);
+            }
+          }
+        }
       }
     });
 
@@ -588,6 +603,17 @@ public class BreakpointManager implements JDOMExternalizable {
     });
     if (ex != null) {
       throw ex;
+    }
+    
+    final Element props = new Element("ui_properties");
+    parentNode.addContent(props);
+    for (Iterator<String> it = myUIProperties.keySet().iterator(); it.hasNext();) {
+      final String name = it.next();
+      final String value = myUIProperties.get(name);
+      final Element property = new Element("property");
+      props.addContent(property);
+      property.setAttribute("name", name);
+      property.setAttribute("value", value);
     }
   }
 
@@ -864,5 +890,12 @@ public class BreakpointManager implements JDOMExternalizable {
     }
     return null;
   }
+
+  public String getProperty(String name) {
+    return myUIProperties.get(name);
+  }
   
+  public String setProperty(String name, String value) {
+    return myUIProperties.put(name, value);
+  }
 }
