@@ -315,8 +315,7 @@ public class BreakpointPanel {
 
     final java.util.List<Breakpoint> treeBreakpoints = myTree.getBreakpoints();
     if (treeBreakpoints.size() > 0) {
-      final int[] rows = myTree.getSelectionRows();
-      if (rows == null || rows.length == 0) {
+      if (myTree.getSelectionModel().getSelectionCount() == 0) {
         myTree.selectFirstBreakpoint();
       }
     }

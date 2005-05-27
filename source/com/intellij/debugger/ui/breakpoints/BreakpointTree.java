@@ -5,6 +5,7 @@
 package com.intellij.debugger.ui.breakpoints;
 import com.intellij.ui.*;
 import com.intellij.util.Icons;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +36,19 @@ public class BreakpointTree extends CheckboxTree {
     new ClassToPackageAppender(),
     new PackageToPackageAppender(),
   };
+
+  protected void installSpeedSearch() {
+    new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
+      public String convert(TreePath path) {
+        final CheckedTreeNode node = (CheckedTreeNode)path.getLastPathComponent();
+        return ((TreeDescriptor)node.getUserObject()).getDisplayString();
+      }
+    });
+  }
+
+  public boolean getExpandsSelectedPaths() {
+    return true;
+  }
 
   public Breakpoint[] getSelectedBreakpoints() {
     final TreePath[] selectionPaths = getSelectionPaths();
@@ -84,11 +98,19 @@ public class BreakpointTree extends CheckboxTree {
     return Collections.unmodifiableList(myBreakpoints);
   }
 
-  private interface TreeDescriptor {
-    public void customizeCellRenderer(final ColoredTreeCellRenderer targetRenderer, CheckedTreeNode node, boolean selected, final boolean checked, boolean expanded, boolean leaf, boolean hasFocus);
+  private abstract static class TreeDescriptor {
+    protected void customizeCellRenderer(final ColoredTreeCellRenderer targetRenderer, CheckedTreeNode node, boolean selected, final boolean checked, boolean expanded, boolean leaf, boolean hasFocus) {
+      targetRenderer.setIcon(getDisplayIcon());
+      targetRenderer.append(getDisplayString(), checked? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
+
+    protected abstract String getDisplayString();
+
+    protected abstract Icon getDisplayIcon();
+
   }
 
-  private static final class BreakpointDescriptor implements TreeDescriptor {
+  private static final class BreakpointDescriptor extends TreeDescriptor {
     private final Breakpoint myBreakpoint;
     public BreakpointDescriptor(Breakpoint breakpoint) {
       myBreakpoint = breakpoint;
@@ -97,13 +119,14 @@ public class BreakpointTree extends CheckboxTree {
       return myBreakpoint;
     }
 
-    public void customizeCellRenderer(final ColoredTreeCellRenderer targetRenderer, CheckedTreeNode node, boolean selected,
-                                      final boolean checked, boolean expanded, boolean leaf, boolean hasFocus) {
-      final Icon icon = (myBreakpoint instanceof BreakpointWithHighlighter)?
-                        myBreakpoint.ENABLED? ((BreakpointWithHighlighter)myBreakpoint).getSetIcon() : ((BreakpointWithHighlighter)myBreakpoint).getDisabledIcon() :
-                        myBreakpoint.getIcon();
-      targetRenderer.setIcon(icon);
-      targetRenderer.append(myBreakpoint.getDisplayName(), checked? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    protected Icon getDisplayIcon() {
+      return (myBreakpoint instanceof BreakpointWithHighlighter)?
+        myBreakpoint.ENABLED? ((BreakpointWithHighlighter)myBreakpoint).getSetIcon() : ((BreakpointWithHighlighter)myBreakpoint).getDisabledIcon() :
+        myBreakpoint.getIcon();
+    }
+
+    public String getDisplayString() {
+      return myBreakpoint.getDisplayName();
     }
 
     public boolean equals(final Object o) {
@@ -122,7 +145,7 @@ public class BreakpointTree extends CheckboxTree {
     }
   }
 
-  private static final class MethodDescriptor implements TreeDescriptor {
+  private static final class MethodDescriptor extends TreeDescriptor {
     private final String myClassName;
     private final String myMethodName;
 
@@ -139,10 +162,12 @@ public class BreakpointTree extends CheckboxTree {
       return myMethodName;
     }
 
-    public void customizeCellRenderer(final ColoredTreeCellRenderer targetRenderer, CheckedTreeNode node, boolean selected,
-                                      final boolean checked, boolean expanded, boolean leaf, boolean hasFocus) {
-      targetRenderer.setIcon(Icons.METHOD_ICON);
-      targetRenderer.append(myMethodName, checked? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    protected String getDisplayString() {
+      return myMethodName;
+    }
+
+    protected Icon getDisplayIcon() {
+      return Icons.METHOD_ICON;
     }
 
     public boolean equals(final Object o) {
@@ -167,7 +192,7 @@ public class BreakpointTree extends CheckboxTree {
     }
   }
 
-  private static final class ClassDescriptor implements TreeDescriptor {
+  private static final class ClassDescriptor extends TreeDescriptor {
     private final String myClassName;
 
     public ClassDescriptor(String className) {
@@ -183,12 +208,13 @@ public class BreakpointTree extends CheckboxTree {
       return myClassName;
     }
 
-    public void customizeCellRenderer(final ColoredTreeCellRenderer targetRenderer, CheckedTreeNode node, boolean selected,
-                                      final boolean checked, boolean expanded, boolean leaf, boolean hasFocus) {
-      targetRenderer.setIcon(Icons.CLASS_ICON);
+    protected String getDisplayString() {
       final int dotIndex = myClassName.lastIndexOf('.');
-      final String shortName = dotIndex >= 0 && dotIndex + 1 < myClassName.length()? myClassName.substring(dotIndex + 1) : myClassName;
-      targetRenderer.append(shortName, checked? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      return dotIndex >= 0 && dotIndex + 1 < myClassName.length()? myClassName.substring(dotIndex + 1) : myClassName;
+    }
+
+    protected Icon getDisplayIcon() {
+      return Icons.CLASS_ICON;
     }
 
     public boolean equals(final Object o) {
@@ -210,7 +236,7 @@ public class BreakpointTree extends CheckboxTree {
     }
   }
 
-  private static final class PackageDescriptor implements TreeDescriptor {
+  private static final class PackageDescriptor extends TreeDescriptor {
     private final String myPackageName;
 
     public PackageDescriptor(String packageName) {
@@ -239,6 +265,14 @@ public class BreakpointTree extends CheckboxTree {
         displayName = myPackageName;
       }
       targetRenderer.append(displayName, checked? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
+
+    protected String getDisplayString() {
+      return myPackageName;
+    }
+
+    protected Icon getDisplayIcon() {
+      return Icons.PACKAGE_ICON;
     }
 
     public boolean equals(final Object o) {
@@ -364,8 +398,7 @@ public class BreakpointTree extends CheckboxTree {
     myDescriptorToNodeMap.clear();
     myDescriptorToNodeMap.put((TreeDescriptor)myRootNode.getUserObject(), myRootNode);
     // build tree
-    for (Iterator<Breakpoint> it = myBreakpoints.iterator(); it.hasNext();) {
-      final Breakpoint breakpoint = it.next();
+    for (final Breakpoint breakpoint : myBreakpoints) {
       CheckedTreeNode node = createNode(new BreakpointDescriptor(breakpoint));
       node.setChecked(breakpoint.ENABLED);
       addNode(node);
@@ -390,12 +423,11 @@ public class BreakpointTree extends CheckboxTree {
       }
       children.add(child);
     }
-    for (Iterator<CheckedTreeNode> it = children.iterator(); it.hasNext();) {
-      it.next().removeFromParent();
+    for (final CheckedTreeNode aChildren : children) {
+      aChildren.removeFromParent();
     }
     myRootNode.removeAllChildren();
-    for (Iterator<CheckedTreeNode> it = children.iterator(); it.hasNext();) {
-      final CheckedTreeNode child = it.next();
+    for (final CheckedTreeNode child : children) {
       myRootNode.add(child);
     }
 
@@ -414,8 +446,7 @@ public class BreakpointTree extends CheckboxTree {
    * @param node
    */
   private void addNode(CheckedTreeNode node) {
-    for (int idx = 0; idx < myAppenders.length; idx++) {
-      final NodeAppender appender = myAppenders[idx];
+    for (final NodeAppender appender : myAppenders) {
       node = appender.append(node);
       if (node == null) {
         break;
@@ -612,18 +643,20 @@ public class BreakpointTree extends CheckboxTree {
     }
   }
 
-  private static class RootDescriptor implements TreeDescriptor {
-    public void customizeCellRenderer(final ColoredTreeCellRenderer targetRenderer, CheckedTreeNode node, boolean selected,
-                                      final boolean checked,
-                                      boolean expanded,
-                                      boolean leaf,
-                                      boolean hasFocus) {
+  private static class RootDescriptor extends TreeDescriptor {
+
+    protected String getDisplayString() {
+      return "";
+    }
+
+    protected Icon getDisplayIcon() {
+      return Icons.PROJECT_ICON;
     }
   }
   
   private static class TreeStateSnapshot {
-    private final Object[][] myExpandedUserObjects;
-    private final Object[][] mySelectedUserObjects;
+    private final Object[] myExpandedUserObjects;
+    private final Object[] mySelectedUserObjects;
     private static final Object[][] EMPTY = new Object[0][];
 
     public TreeStateSnapshot(BreakpointTree tree) {
@@ -632,14 +665,14 @@ public class BreakpointTree extends CheckboxTree {
       mySelectedUserObjects =getUserObjects(tree.getSelectionPaths());
     }
 
-    private Object[][] getUserObjects(final TreePath[] treePaths) {
+    private Object[] getUserObjects(final TreePath[] treePaths) {
       if (treePaths == null) {
         return EMPTY;
       }
-      Object[][] userObjects = new Object[treePaths.length][];
+      Object[] userObjects = new Object[treePaths.length];
       int index = 0;
       for (TreePath path : treePaths) {
-        userObjects[index++] = ((CheckedTreeNode)path.getLastPathComponent()).getUserObjectPath();
+        userObjects[index++] = ((CheckedTreeNode)path.getLastPathComponent()).getUserObject();
       }
       return userObjects;
     }
@@ -653,23 +686,21 @@ public class BreakpointTree extends CheckboxTree {
       final List<TreePath> pathsToSelect = getPaths(tree, mySelectedUserObjects);
       if (pathsToSelect.size() > 0) {
         tree.getSelectionModel().clearSelection();
+        /*
+        for (TreePath path : pathsToSelect) {
+          TreeUtil.selectPath(tree, path.getParentPath());
+        }
+        */
         tree.setSelectionPaths(pathsToSelect.toArray(new TreePath[pathsToSelect.size()]));
       }
     }
 
-    private List<TreePath> getPaths(BreakpointTree tree, final Object[][] userObjects) {
+    private List<TreePath> getPaths(BreakpointTree tree, final Object[] userObjects) {
       final List<TreePath> paths = new ArrayList<TreePath>(userObjects.length);
-      for (Object[] userObjectPath : userObjects) {
-        final List<CheckedTreeNode> nodes = new ArrayList<CheckedTreeNode>(userObjectPath.length);
-        for (Object userObject : userObjectPath) {
-          final CheckedTreeNode node = tree.myDescriptorToNodeMap.get(userObject);
-          if (node == null) {
-            break;
-          }
-          nodes.add(node);
-        }
-        if (nodes.size() > 0) {
-          paths.add(new TreePath(nodes.toArray()));
+      for (Object descriptor : userObjects) {
+        final CheckedTreeNode node = tree.myDescriptorToNodeMap.get(descriptor);
+        if (node != null) {
+          paths.add(new TreePath(node.getPath()));
         }
       }
       return paths;

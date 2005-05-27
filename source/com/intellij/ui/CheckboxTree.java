@@ -26,7 +26,7 @@ public class CheckboxTree extends Tree {
     putClientProperty("JTree.lineStyle", "Angled");
     TreeToolTipHandler.install(this);
     TreeUtil.installActions(this);
-    new TreeSpeedSearch(this);
+    installSpeedSearch();
 
     addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
@@ -52,7 +52,7 @@ public class CheckboxTree extends Tree {
     addKeyListener(
       new KeyAdapter() {
         public void keyPressed(KeyEvent e) {
-          if(e.getKeyCode() == KeyEvent.VK_SPACE) {
+          if(e.getKeyCode() == KeyEvent.VK_SPACE && !SpeedSearchBase.hasActiveSpeedSearch(CheckboxTree.this)) {
             TreePath treePath = getLeadSelectionPath();
             CheckedTreeNode firstNode = (CheckedTreeNode)treePath.getLastPathComponent();
             boolean checked = toggleNode(firstNode);
@@ -72,6 +72,10 @@ public class CheckboxTree extends Tree {
 
     setSelectionRow(0);
     setModel(new DefaultTreeModel(root));
+  }
+
+  protected void installSpeedSearch() {
+    new TreeSpeedSearch(this);
   }
 
   protected boolean toggleNode(CheckedTreeNode node) {
