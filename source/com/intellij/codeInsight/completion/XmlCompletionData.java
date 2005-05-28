@@ -16,6 +16,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.TokenTypeFilter;
@@ -292,9 +293,14 @@ public class XmlCompletionData extends CompletionData {
       if (completionChar == '>') {
         template.addTextSegment(">");
         template.addEndVariable();
-        template.addTextSegment("</");
-        template.addTextSegment(descriptor.getName(tag));
-        template.addTextSegment(">");
+
+        if ( !(tag instanceof HtmlTag) ||
+            !HtmlUtil.isSingleHtmlTag(tag.getName())
+           ) {
+          template.addTextSegment("</");
+          template.addTextSegment(descriptor.getName(tag));
+          template.addTextSegment(">");
+        }
       }
       else if (completionChar == '/') {
         template.addTextSegment("/>");
