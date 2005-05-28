@@ -140,6 +140,34 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
+  public void registerXmlErrorQuickFix(final PsiErrorElement element, final HighlightInfo highlightInfo) {
+    final String text = element.getErrorDescription();
+    if (text != null && text.startsWith("Unescaped &")) {
+      QuickFixAction.registerQuickFixAction(highlightInfo, new IntentionAction() {
+        public String getText() {
+          return "Escape Ampersand";
+        }
+
+        public String getFamilyName() {
+          return getText();
+        }
+
+        public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+          return true;
+        }
+
+        public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+          final int textOffset = element.getTextOffset();
+          editor.getDocument().replaceString(textOffset,textOffset + 1,"&amp;");
+        }
+
+        public boolean startInWriteAction() {
+          return true;
+        }
+      }, null);
+    }
+  }
+
   static class RenameTagBeginOrEndIntentionAction implements IntentionAction {
     private boolean myStart;
     private XmlTag myTagToChange;

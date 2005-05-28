@@ -35,6 +35,7 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 
@@ -303,7 +304,11 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
     TextRange range = element.getTextRange();
     if (range.getLength() > 0) {
-      myHolder.add(HighlightInfo.createHighlightInfo(errorType, range, element.getErrorDescription()));
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(errorType, range, element.getErrorDescription());
+      myHolder.add(highlightInfo);
+      if (PsiTreeUtil.getParentOfType(element, XmlTag.class) != null) {
+        myXmlVisitor.registerXmlErrorQuickFix(element,highlightInfo);
+      }
     }
     else {
       int offset = range.getStartOffset();
