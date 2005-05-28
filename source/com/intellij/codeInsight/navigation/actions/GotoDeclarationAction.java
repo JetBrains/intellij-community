@@ -13,6 +13,7 @@ import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultipleTargetsReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -130,6 +131,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       if (reference instanceof PropertyReference) {
         List<Property> properties = ((PropertyReference)reference).suggestProperties();
         return properties.toArray(new PsiElement[properties.size()]);
+      } else if (reference instanceof PsiMultipleTargetsReference) {
+        return ((PsiMultipleTargetsReference)reference).multiResolve();
       }
     }
     return PsiElement.EMPTY_ARRAY;
