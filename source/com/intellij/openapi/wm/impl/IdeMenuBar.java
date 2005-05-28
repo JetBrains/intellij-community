@@ -83,10 +83,18 @@ public class IdeMenuBar extends JMenuBar{
       myNewVisibleActions = temp;
 
       removeAll();
+      Color background = null;
       for(int i=0;i<myVisibleActions.size();i++){
         final AnAction action=(AnAction)myVisibleActions.get(i);
-        add(new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory));
+        final ActionMenu menu = new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory);
+        add(menu);
+        background = menu.getBackground();
       }
+
+      if (background != null) {
+        setBackground(background);
+      }
+
       updateMnemonicsVisibility();
       validate();
 
@@ -97,7 +105,18 @@ public class IdeMenuBar extends JMenuBar{
           frame.validate();
         }
       }
+    }
+  }
 
+  /**
+   * Hacks a problem under Alloy LaF which draws menubar in different background menu items are drawn in.
+   */
+  @Override public void updateUI() {
+    super.updateUI();
+    if (getMenuCount() > 0) {
+      final JMenu menu = getMenu(0);
+      menu.updateUI();
+      setBackground(menu.getBackground());
     }
   }
 
