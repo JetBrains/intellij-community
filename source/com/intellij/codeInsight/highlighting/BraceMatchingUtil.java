@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
@@ -570,15 +571,23 @@ public class BraceMatchingUtil {
     String name = null;
     if (tokenType == XmlTokenType.XML_START_TAG_START) {
       {
+        boolean wasWhiteSpace = false;
         iterator.advance();
-        IElementType tokenType1;
-        if (!iterator.atEnd() &&
-            ( (tokenType1 = iterator.getTokenType()) == XmlTokenType.XML_TAG_NAME ||
-              tokenType1 == XmlTokenType.XML_NAME
-            )
+        IElementType tokenType1 = (!iterator.atEnd() ? iterator.getTokenType():null);
+
+        if (tokenType1 == JavaTokenType.WHITE_SPACE) {
+          wasWhiteSpace = true;
+          iterator.advance();
+          tokenType1 = (!iterator.atEnd() ? iterator.getTokenType():null);
+        }
+
+        if (tokenType1 == XmlTokenType.XML_TAG_NAME ||
+            tokenType1 == XmlTokenType.XML_NAME
            ) {
           name = fileText.subSequence(iterator.getStart(), iterator.getEnd()).toString();
         }
+
+        if (wasWhiteSpace) iterator.retreat();
         iterator.retreat();
       }
     }
@@ -593,6 +602,12 @@ public class BraceMatchingUtil {
           if (tokenType1 == XmlTokenType.XML_NAME) {
             iterator.retreat();
             tokenType1 = iterator.getTokenType();
+            
+            if (tokenType1 == JavaTokenType.WHITE_SPACE) {
+              iterator.retreat();
+              tokenType1 = iterator.getTokenType();
+              iterator.advance();
+            }
             iterator.advance();
             if (tokenType1 == XmlTokenType.XML_START_TAG_START || tokenType1== XmlTokenType.XML_END_TAG_START) {
               name = fileText.subSequence(iterator.getStart(), iterator.getEnd()).toString();
