@@ -916,7 +916,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private static void writeOption(Element parentNode, Map<String, Boolean> optionsForPanes, String optionName) {
     Element e = new Element(optionName);
     for (Map.Entry<String, Boolean> entry : optionsForPanes.entrySet()) {
-      e.setAttribute(entry.getKey(), entry.getValue().booleanValue() ? "true" : "false");
+      final String key = entry.getKey();
+      if (key != null) { //SCR48267
+        e.setAttribute(key, entry.getValue().booleanValue() ? "true" : "false");
+      }
     }
 
     parentNode.addContent(e);
