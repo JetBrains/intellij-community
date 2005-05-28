@@ -550,6 +550,10 @@ public class TypedHandler implements TypedActionHandler {
       element = element.getParent();
     }
 
+    if (element instanceof XmlAttributeValue) {
+      element = element.getParent().getParent();
+    }
+
     while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
     if (element == null) return;
     if (!(element instanceof XmlTag)) {
