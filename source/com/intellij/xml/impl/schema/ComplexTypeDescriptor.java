@@ -282,7 +282,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   private boolean _canContainTag(String localName, String namespace, XmlTag tag) {
     if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "any")) {
       if ("##other".equals(tag.getAttributeValue("namespace"))) {
-        return !namespace.equals(myDocumentDescriptor.getDefaultNamespace());
+        return namespace == null || !namespace.equals(myDocumentDescriptor.getDefaultNamespace());
       }
       return true;
     }
