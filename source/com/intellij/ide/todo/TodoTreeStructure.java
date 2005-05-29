@@ -1,6 +1,8 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
+import com.intellij.ide.projectView.impl.nodes.PackageElement;
+import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.todo.nodes.ModuleToDoNode;
@@ -91,7 +93,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
     return myFlattenPackages;
   }
 
-  final void setFlattenPackages(boolean state){
+  public final void setFlattenPackages(boolean state){
     myFlattenPackages=state;
   }
 
@@ -142,6 +144,14 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
           count++;
         }
       }
+    } else if (element instanceof PackageElement){
+      Iterator<PsiFile> iterator = myBuilder.getFiles((PackageElement)element);
+      while(iterator.hasNext()){
+        PsiFile psiFile = iterator.next();
+        if(accept(psiFile)){
+          count++;
+        }
+      }
     }else{
       throw new IllegalArgumentException("unknown element: "+element);
     }
@@ -164,6 +174,9 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
         count=mySearchHelper.getTodoItemsCount(psiFile);
       }
     }else if(element instanceof PsiDirectory){
+      if (((PsiDirectory)element).getPackage() != null){
+        return 0;
+      }
       Iterator<PsiFile> iterator = myBuilder.getFiles((PsiDirectory)element);
       while(iterator.hasNext()){
         PsiFile psiFile = iterator.next();
@@ -175,6 +188,12 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
       }
     }else if (element instanceof Module){
       Iterator<PsiFile> iterator = myBuilder.getFiles((Module)element);
+      while(iterator.hasNext()){
+        PsiFile psiFile = iterator.next();
+        count+=getTodoItemCount(psiFile);
+      }
+    } else if(element instanceof PackageElement){
+      Iterator<PsiFile> iterator = myBuilder.getFiles((PackageElement)element);
       while(iterator.hasNext()){
         PsiFile psiFile = iterator.next();
         count+=getTodoItemCount(psiFile);
@@ -209,6 +228,8 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
     }else if(element instanceof TodoItemNode){
       return false;
     }else if (element instanceof ModuleToDoNode){
+      return true;
+    }else if (element instanceof PackageElementNode){
       return true;
     }else {
       throw new IllegalArgumentException(element.getClass().getName());

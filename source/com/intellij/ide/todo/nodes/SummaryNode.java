@@ -10,9 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,21 +44,7 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
     }
     else {
       if (myToDoSettings.getIsPackagesShown()) {
-        for (Iterator i = myBuilder.getAllFiles(); i.hasNext();) {
-          final PsiFile psiFile = (PsiFile)i.next();
-          if (psiFile == null) { // skip invalid PSI files
-            continue;
-          }
-          final VirtualFile virtualFile = psiFile.getVirtualFile();
-          final VirtualFile contentRoot = projectFileIndex.getContentRootForFile(virtualFile);
-          if (contentRoot != null) {
-            final PsiDirectory projectRoot = PsiManager.getInstance(getProject()).findDirectory(contentRoot);
-            TodoDirNode projectRootNode = new TodoDirNode(getProject(), projectRoot, myBuilder);
-            if (projectRoot != null && !children.contains(projectRootNode)) {
-              children.add(projectRootNode);
-            }
-          }
-        }
+        TodoPackageUtil.addPackagesToChildren(children, myBuilder.getAllFiles(), null, myBuilder, getProject());        
       }
       else {
         for (Iterator i = myBuilder.getAllFiles(); i.hasNext();) {

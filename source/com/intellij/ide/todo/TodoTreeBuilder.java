@@ -1,6 +1,7 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.todo.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
@@ -12,6 +13,8 @@ import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -20,6 +23,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageTreeColorsScheme;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -160,7 +164,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
         return iterator.hasNext();
       }
 
-      public Object next() {
+      @Nullable public Object next() {
         VirtualFile vFile = iterator.next();
         if (vFile == null || !vFile.isValid()) {
           return null;
@@ -192,7 +196,39 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       if (file.isValid()) {
         PsiFile psiFile = psiManager.findFile(file);
         if (psiFile != null) {
-          psiFileList.add(psiFile);
+          if (psiFile.getContainingDirectory() == null ||
+              psiFile.getContainingDirectory().getPackage() == null){
+            psiFileList.add(psiFile);
+          }
+        }
+      }
+    }
+    return psiFileList.iterator();
+  }
+
+  /**
+   * @return read-only iterator of all valid PSI files that can have TODO items
+   *         and which are located under specified <code>psiDirctory</code>.
+   * @see com.intellij.ide.todo.FileTree#getFiles(VirtualFile)
+   */
+  public Iterator<PsiFile> getFiles(PackageElement packageElement) {
+    final PsiManager psiManager = PsiManager.getInstance(myProject);
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    ArrayList<PsiFile> psiFileList = new ArrayList<PsiFile>();
+    final PsiDirectory[] directories = packageElement.getPackage().getDirectories();
+    for (PsiDirectory directory : directories) {
+      final VirtualFile directoryFile = directory.getVirtualFile();
+      final Module module = fileIndex.getModuleForFile(directoryFile);
+      if (packageElement.getModule() != null && module != null && !packageElement.getModule().equals(module)){
+        continue;
+      }
+      ArrayList<VirtualFile> files = myFileTree.getFiles(directoryFile);
+      for (VirtualFile file : files) {
+        if (file.isValid()){
+          PsiFile psiFile = psiManager.findFile(file);
+          if (psiFile != null){
+            psiFileList.add(psiFile);
+          }
         }
       }
     }
@@ -205,6 +241,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     * @see com.intellij.ide.todo.FileTree#getFiles(VirtualFile)
     */
    public Iterator<PsiFile> getFiles(Module module) {
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
     ArrayList<PsiFile> psiFileList = null;
     for (VirtualFile virtualFile : contentRoots) {
@@ -213,6 +250,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       PsiManager psiManager = PsiManager.getInstance(myProject);
       for (int i = 0; i < files.size(); i++) {
         VirtualFile file = files.get(i);
+        if (fileIndex.getModuleForFile(file) != module) continue;
         if (file.isValid()) {
           PsiFile psiFile = psiManager.findFile(file);
           if (psiFile != null) {
@@ -315,7 +353,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       else {
         return getFirstPointerForElement(firstChild);
       }
-    } 
+    }
   }
 
   /**
@@ -355,7 +393,9 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     if (
       (obj instanceof ToDoRootNode) ||
       (obj instanceof SummaryNode) ||
-      (obj instanceof TodoDirNode)
+      (obj instanceof TodoDirNode) ||
+      (obj instanceof TodoPackageNode) ||
+      (obj instanceof ModuleToDoNode)
     ) {
       HashSet<PsiFile> files = new HashSet<PsiFile>();
       NodeDescriptor descriptor = (NodeDescriptor)obj;
@@ -564,6 +604,11 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     TreeBuilderUtil.restorePaths(this, pathsToExpand, pathsToSelect, true);
   }
 
+  public boolean isDirectoryEmpty(PsiDirectory psiDirectory){
+    LOG.assertTrue(psiDirectory != null);
+    return myFileTree.isDirectoryEmpty(psiDirectory.getVirtualFile());
+  }
+
   private static final class MyComparator implements Comparator<NodeDescriptor> {
     public static final Comparator<NodeDescriptor> ourInstance = new MyComparator();
 
@@ -588,6 +633,9 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
         return 1;
       }
       else if (descriptor instanceof TodoDirNode) {
+        return 2;
+      }
+      else if (descriptor instanceof TodoPackageNode) {
         return 2;
       }
       else if (descriptor instanceof TodoFileNode) {

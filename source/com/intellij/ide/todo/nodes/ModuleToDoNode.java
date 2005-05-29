@@ -12,11 +12,8 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.HighlightedRegion;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
@@ -36,25 +33,8 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
 
   public Collection<AbstractTreeNode> getChildren() {
     ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
-
     if (myToDoSettings.getIsPackagesShown()) {
-      for (Iterator i = myBuilder.getAllFiles(); i.hasNext();) {
-        final PsiFile psiFile = (PsiFile)i.next();
-        if (psiFile == null) { // skip invalid PSI files
-          continue;
-        }
-        final VirtualFile virtualFile = psiFile.getVirtualFile();
-        final boolean isInContent = ModuleRootManager.getInstance(getValue()).getFileIndex().isInContent(virtualFile);
-        if (!isInContent) continue;
-        final VirtualFile contentRoot = ProjectRootManager.getInstance(getProject()).getFileIndex().getContentRootForFile(virtualFile);
-        if (contentRoot != null) {
-          final PsiDirectory projectRoot = PsiManager.getInstance(getProject()).findDirectory(contentRoot);
-          TodoDirNode projectRootNode = new TodoDirNode(getProject(), projectRoot, myBuilder);
-          if (projectRoot != null && !children.contains(projectRootNode)) {
-            children.add(projectRootNode);
-          }
-        }
-      }
+      TodoPackageUtil.addPackagesToChildren(children, myBuilder.getFiles(getValue()), getValue(), myBuilder, getProject());
     }
     else {
       for (Iterator i = myBuilder.getAllFiles(); i.hasNext();) {
@@ -85,7 +65,7 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
     StringBuffer sb = new StringBuffer(newName);
     int nameEndOffset = newName.length();
     int todoItemCount = getStructure().getTodoItemCount(getValue());
-    sb.append("(").append(todoItemCount).append(" item");
+    sb.append(" (").append(todoItemCount).append(" item");
     if (todoItemCount != 1) {
       sb.append('s');
     }
@@ -98,17 +78,17 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
     newName = sb.toString();
     myHighlightedRegions.clear();
 
-   TextAttributes textAttributes = new TextAttributes();
+    TextAttributes textAttributes = new TextAttributes();
 
-   if (CopyPasteManager.getInstance().isCutElement(getValue())) {
-     textAttributes.setForegroundColor(CopyPasteManager.CUT_COLOR);
-   }
-   myHighlightedRegions.add(new HighlightedRegion(0, nameEndOffset, textAttributes));
+    if (CopyPasteManager.getInstance().isCutElement(getValue())) {
+      textAttributes.setForegroundColor(CopyPasteManager.CUT_COLOR);
+    }
+    myHighlightedRegions.add(new HighlightedRegion(0, nameEndOffset, textAttributes));
 
-   EditorColorsScheme colorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
-   myHighlightedRegions.add(
-     new HighlightedRegion(nameEndOffset, newName.length(), colorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES)));
-   presentation.setOpenIcon(getValue().getModuleType().getNodeIcon(true));
+    EditorColorsScheme colorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
+    myHighlightedRegions.add(
+      new HighlightedRegion(nameEndOffset, newName.length(), colorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES)));
+    presentation.setOpenIcon(getValue().getModuleType().getNodeIcon(true));
     presentation.setClosedIcon(getValue().getModuleType().getNodeIcon(false));
     presentation.setPresentableText(newName);
   }

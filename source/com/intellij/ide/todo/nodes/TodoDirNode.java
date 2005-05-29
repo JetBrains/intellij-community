@@ -1,9 +1,7 @@
 package com.intellij.ide.todo.nodes;
 
-import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.todo.HighlightedRegionProvider;
 import com.intellij.ide.todo.TodoFileDirComparator;
@@ -19,7 +17,6 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.HighlightedRegion;
 import com.intellij.usageView.UsageTreeColors;
@@ -56,24 +53,9 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
       return;
     }
 
-    PsiPackage aPackage = getValue().getPackage();
-    String newName;
-    if (PackageUtil.isPackage(getValue())) {
-      if (getStructure().areFlattenPackages()) {
-        newName = aPackage.getQualifiedName();
-        if (newName.length() == 0) { // default package
-          newName = getValue().getName();
-        }
-      }
-      else {
-        newName = getValue().getName();
-      }
-    }
-    else {
-      VirtualFile directory = getValue().getVirtualFile();
-      boolean isProjectRoot = !ProjectRootManager.getInstance(getProject()).getFileIndex().isInContent(directory);
-      newName = isProjectRoot ? getValue().getVirtualFile().getPresentableUrl() : getValue().getName();
-    }
+    VirtualFile directory = getValue().getVirtualFile();
+    boolean isProjectRoot = !ProjectRootManager.getInstance(getProject()).getFileIndex().isInContent(directory);
+    String newName = isProjectRoot || getStructure().getIsFlattenPackages() ? getValue().getVirtualFile().getPresentableUrl() : getValue().getName();
 
     StringBuffer sb = new StringBuffer(newName);
     int nameEndOffset = newName.length();
@@ -94,7 +76,7 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
     TextAttributes textAttributes = new TextAttributes();
     Color newColor = FileStatusManager.getInstance(getProject()).getStatus(getValue().getVirtualFile()).getColor();
 
-    if (((CopyPasteManagerEx)CopyPasteManager.getInstance()).isCutElement(getValue())) {
+    if (CopyPasteManager.getInstance().isCutElement(getValue())) {
       newColor = CopyPasteManager.CUT_COLOR;
     }
     textAttributes.setForegroundColor(newColor);
@@ -128,6 +110,9 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
         // Add directories (find first ancestor directory that is in our psiDirectory)
         PsiDirectory _dir = psiFile.getContainingDirectory();
         while (_dir != null) {
+          if (_dir.getPackage() != null){
+            break;
+          }
           final PsiDirectory parentDirectory = _dir.getParentDirectory();
           TodoDirNode todoDirNode = new TodoDirNode(getProject(), _dir, myBuilder);
           if (parentDirectory != null && psiDirectory.equals(parentDirectory) && !children.contains(todoDirNode)) {
@@ -157,8 +142,11 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
           }
           // Add directories
           final PsiDirectory _dir = psiFile.getContainingDirectory();
+          if (_dir.getPackage() != null){
+            continue;
+          }
           TodoDirNode todoDirNode = new TodoDirNode(getProject(), _dir, myBuilder);
-          if (PsiTreeUtil.isAncestor(psiDirectory, _dir, true) && !children.contains(todoDirNode)) {
+          if (PsiTreeUtil.isAncestor(psiDirectory, _dir, true) && !children.contains(todoDirNode) && !myBuilder.isDirectoryEmpty(_dir)) {
             children.add(todoDirNode);
             continue;
           }

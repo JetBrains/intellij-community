@@ -79,7 +79,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
   }
 
   protected AbstractTreeNode createRootElement() {
-    if  (myFile == null) {
+    if  (!accept(myFile)) {
       return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);
     } else {
       return new SingleFileToDoNode(myProject, myFile, myBuilder);

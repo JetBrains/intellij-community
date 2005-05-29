@@ -7,6 +7,7 @@ import com.intellij.ide.todo.configurable.TodoConfigurable;
 import com.intellij.ide.todo.nodes.TodoDirNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
+import com.intellij.ide.todo.nodes.TodoPackageNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -253,6 +254,10 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     if (userObject instanceof TodoDirNode) {
       TodoDirNode descriptor = (TodoDirNode)userObject;
       return descriptor.getValue();
+    }
+    else if (userObject instanceof TodoPackageNode) {
+      TodoPackageNode descriptor = (TodoPackageNode)userObject;
+      return descriptor.getValue().getPackage();
     }
     else if (userObject instanceof TodoFileNode) {
       TodoFileNode descriptor = (TodoFileNode)userObject;

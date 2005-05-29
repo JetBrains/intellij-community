@@ -20,10 +20,12 @@ final class FileTree{
    */
   private final HashMap<VirtualFile,ArrayList<VirtualFile>> myDirectory2Children;
   private final HashSet<VirtualFile> myFiles;
+  private final HashMap<VirtualFile, ArrayList<VirtualFile> > myStrictDirectory2Children;
 
   FileTree(){
     myDirectory2Children=new HashMap<VirtualFile,ArrayList<VirtualFile>>();
     myFiles=new HashSet<VirtualFile>();
+    myStrictDirectory2Children = new HashMap<VirtualFile, ArrayList<VirtualFile>>();
   }
 
   void add(VirtualFile file){
@@ -34,7 +36,18 @@ final class FileTree{
     myFiles.add(file);
     VirtualFile dir=file.getParent();
     LOG.assertTrue(dir!=null);
-    ArrayList<VirtualFile> children=myDirectory2Children.get(dir);
+
+    ArrayList<VirtualFile> children=myStrictDirectory2Children.get(dir);
+    if(children!=null){
+      LOG.assertTrue(!children.contains(file));
+      children.add(file);
+    }else{
+      children=new ArrayList<VirtualFile>(2);
+      children.add(file);
+      myStrictDirectory2Children.put(dir,children);
+    }
+
+    children=myDirectory2Children.get(dir);
     if(children!=null){
       LOG.assertTrue(!children.contains(file));
       children.add(file);
@@ -63,6 +76,11 @@ final class FileTree{
     }
   }
 
+  boolean isDirectoryEmpty(VirtualFile dir){
+    final ArrayList<VirtualFile> files = myStrictDirectory2Children.get(dir);
+    return files == null || files.isEmpty();
+  }
+
   void removeFile(VirtualFile file){
     if(!myFiles.contains(file)){
       return;
@@ -82,6 +100,13 @@ final class FileTree{
           }
           dirsToBeRemoved.add(_directory); // we have to remove empty _directory
         }
+      }
+    }
+    for (VirtualFile dir : myStrictDirectory2Children.keySet()) {
+      final ArrayList<VirtualFile> children = myStrictDirectory2Children.get(dir);
+      LOG.assertTrue(children!=null);
+      if(children.contains(file)){
+        children.remove(file);
       }
     }
     // We have remove also all removed (empty) directories
@@ -109,6 +134,7 @@ final class FileTree{
       throw new IllegalArgumentException("directory isn't empty: "+psiDirectory);
     }
     //
+    myStrictDirectory2Children.remove(psiDirectory);
     ArrayList dirsToBeRemoved=null;
     for(Iterator<VirtualFile> i=myDirectory2Children.keySet().iterator();i.hasNext();){
       VirtualFile _directory=i.next();
@@ -137,6 +163,7 @@ final class FileTree{
   }
 
   void clear(){
+    myStrictDirectory2Children.clear();
     myDirectory2Children.clear();
     myFiles.clear();
   }

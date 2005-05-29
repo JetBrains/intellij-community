@@ -3,6 +3,7 @@
  */
 package com.intellij.ide.todo;
 
+import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.todo.nodes.ModuleToDoNode;
@@ -20,10 +21,14 @@ public final class TodoFileDirComparator implements Comparator{
   public int compare(Object obj1,Object obj2){
     if((obj1 instanceof PsiFileNode)&&(obj2 instanceof PsiFileNode)){
       return compareFiles(((PsiFileNode)obj1).getValue(),((PsiFileNode)obj2).getValue());
-    }else if((obj1 instanceof PsiFileNode)&&(obj2 instanceof PsiDirectoryNode)){
+    }else if((obj1 instanceof PsiFileNode)&&(obj2 instanceof PsiDirectoryNode || obj2 instanceof PackageElementNode)){
       return 1;
-    }else if((obj1 instanceof PsiDirectoryNode)&&(obj2 instanceof PsiFileNode)){
+    }else if((obj1 instanceof PsiDirectoryNode || obj1 instanceof PackageElementNode)&&(obj2 instanceof PsiFileNode)){
       return -1;
+    }else if(obj1 instanceof PsiDirectoryNode && obj2 instanceof PackageElementNode){
+      return -1;
+    }else if(obj1 instanceof PackageElementNode && obj2 instanceof PsiDirectoryNode){
+      return 1;
     }else if((obj1 instanceof PsiDirectoryNode)&&(obj2 instanceof PsiDirectoryNode)){
       PsiDirectory psiDirectory1=((PsiDirectoryNode)obj1).getValue();
       PsiPackage psiPackage1=psiDirectory1.getPackage();
@@ -40,6 +45,8 @@ public final class TodoFileDirComparator implements Comparator{
         String path2=psiDirectory2.getVirtualFile().getPath().toLowerCase();
         return path1.compareTo(path2);
       }
+    } else if ((obj1 instanceof PackageElementNode) && (obj2 instanceof PackageElementNode)){
+      return ((PackageElementNode)obj1).getValue().getPackage().getQualifiedName().compareTo(((PackageElementNode)obj2).getValue().getPackage().getQualifiedName());
     } else if(obj1 instanceof ModuleToDoNode) {
       return -1;
     } else if(obj2 instanceof ModuleToDoNode) {
