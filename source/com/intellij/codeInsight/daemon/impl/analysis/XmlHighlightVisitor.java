@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
@@ -92,7 +93,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     if (token.getTokenType() == XmlTokenType.XML_NAME) {
       PsiElement element = token.getPrevSibling();
       while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
-      
+
       if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_START_TAG_START) {
         PsiElement parent = element.getParent();
 
@@ -330,6 +331,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               }
 
               public void invoke(final Project project, final Editor editor, PsiFile file) {
+                if (!CodeInsightUtil.prepareFileForWrite(file)) return;
                 ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(tag);
                 PsiElement anchor = SourceTreeToPsiMap.treeElementToPsi(
                   XmlChildRole.EMPTY_TAG_END_FINDER.findChild(treeElement)
