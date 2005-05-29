@@ -4,8 +4,10 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.QuickList;
+import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ArrayUtil;
 
@@ -24,7 +26,7 @@ import java.util.ArrayList;
 
 public class QuickListPanel {
   private static final Icon EMPTY_ICON = EmptyIcon.create(18, 18);
-
+  private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
   private JButton myRemoveActionButton;
   private JButton myIncludeActionButton;
   private JButton myMoveActionDownButton;
@@ -265,7 +267,7 @@ public class QuickListPanel {
         }
         else if (userObject instanceof QuickList) {
           QuickList list = (QuickList)userObject;
-          //todo icon =
+          icon = QUICK_LIST_ICON;
           setText(list.getDisplayName());
           used = ((DefaultListModel)myActionsList.getModel()).lastIndexOf(list.getActionId()) >= 0;
         }
@@ -317,6 +319,9 @@ public class QuickListPanel {
           if (actionIcon != null) {
             icon = actionIcon;
           }
+        }
+        if (actionId.startsWith(QuickList.QUICK_LIST_PREFIX)){
+          icon = QUICK_LIST_ICON;
         }
         LayeredIcon layeredIcon = new LayeredIcon(2);
         layeredIcon.setIcon(EMPTY_ICON, 0);

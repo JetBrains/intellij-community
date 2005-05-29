@@ -8,6 +8,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Alarm;
@@ -26,7 +27,7 @@ import java.util.Iterator;
 
 public class ActionsTree {
   private static final Icon EMPTY_ICON = EmptyIcon.create(18, 18);
-
+  private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
   private TreeTable myTreeTable;
   private DefaultMutableTreeNode myRoot;
   private JScrollPane myComponent;
@@ -89,7 +90,7 @@ public class ActionsTree {
           }
           else if (userObject instanceof QuickList) {
             QuickList list = (QuickList)userObject;
-            //todo icon =
+            icon = QUICK_LIST_ICON;
             setText(list.getDisplayName());
             Keymap originalKeymap = myKeymap.getParent();
             changed = originalKeymap != null && isActionChanged(list.getActionId(), originalKeymap, myKeymap);
