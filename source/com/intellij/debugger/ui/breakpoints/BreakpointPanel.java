@@ -10,6 +10,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -22,6 +23,9 @@ import java.util.EventListener;
 public class BreakpointPanel {
   private final BreakpointPropertiesPanel myPropertiesPanel;
   private final BreakpointPanelAction[] myActions;
+  private final String myBreakpointCategory;
+  private final String myDisplayName;
+  private final String myHelpID;
   private Breakpoint myCurrentViewableBreakpoint;
 
   private JPanel myPanel;
@@ -39,7 +43,7 @@ public class BreakpointPanel {
   
   public static final String TREE_VIEW = "TREE";
   public static final String TABLE_VIEW = "TABLE";
-  
+
   public BreakpointTable getTable() {
     return myTable;
   }
@@ -69,6 +73,10 @@ public class BreakpointPanel {
     return BreakpointPanel.TREE_VIEW.equals(getCurrentViewId());
   }
 
+  public String getHelpID() {
+    return myHelpID;
+  }
+
   public interface ChangesListener extends EventListener {
     void breakpointsChanged();
   }
@@ -81,9 +89,12 @@ public class BreakpointPanel {
     myEventDispatcher.removeListener(listener);
   }
 
-  public BreakpointPanel(BreakpointPropertiesPanel propertiesPanel, final BreakpointPanelAction[] actions) {
+  public BreakpointPanel(BreakpointPropertiesPanel propertiesPanel, final BreakpointPanelAction[] actions, String breakpointCategory, String displayName, String helpId) {
     myPropertiesPanel = propertiesPanel;
     myActions = actions;
+    myBreakpointCategory = breakpointCategory;
+    myDisplayName = displayName;
+    myHelpID = helpId;
 
     myTable = new BreakpointTable();
     myTree = new BreakpointTree();
@@ -162,6 +173,14 @@ public class BreakpointPanel {
     updateCurrentBreakpointPropertiesPanel();
   }
 
+  public String getBreakpointCategory() {
+    return myBreakpointCategory;
+  }
+
+  public String getDisplayName() {
+    return myDisplayName;
+  }
+
   public Breakpoint getCurrentViewableBreakpoint() {
     return myCurrentViewableBreakpoint;
   }
@@ -177,8 +196,7 @@ public class BreakpointPanel {
   }
 
   public void updateButtons() {
-    for (int idx = 0; idx < myActions.length; idx++) {
-      final BreakpointPanelAction action = myActions[idx];
+    for (final BreakpointPanelAction action : myActions) {
       final AbstractButton button = action.getButton();
       action.update();
       if (!button.isEnabled() && button.hasFocus()) {

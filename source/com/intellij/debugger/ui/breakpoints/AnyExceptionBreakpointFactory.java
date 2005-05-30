@@ -5,6 +5,10 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -15,7 +19,15 @@ public class AnyExceptionBreakpointFactory extends BreakpointFactory{
     return new AnyExceptionBreakpoint(project);
   }
 
-  public BreakpointPanel createBreakpointPanel(Project project) {
+  public Icon getIcon() {
+    return ExceptionBreakpoint.ICON;
+  }
+
+  public Icon getDisabledIcon() {
+    return ExceptionBreakpoint.DISABLED_ICON;
+  }
+
+  public @Nullable BreakpointPanel createBreakpointPanel(Project project, DialogWrapper parentDialog) {
     return null;
   }
 

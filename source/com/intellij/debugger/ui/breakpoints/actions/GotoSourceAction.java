@@ -28,6 +28,7 @@ public class GotoSourceAction extends BreakpointPanelAction {
   public void actionPerformed(ActionEvent e) {
     gotoSource();
   }
+
   private void gotoSource() {
     OpenFileDescriptor editSourceDescriptor = getPanel().createEditSourceDescriptor(myProject);
     if (editSourceDescriptor != null) {

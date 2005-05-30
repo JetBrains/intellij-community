@@ -7,7 +7,10 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * Used to deexternalize breakpoints of certain category while reading saved configuration and for creating configuration UI
@@ -18,7 +21,11 @@ public abstract class BreakpointFactory implements ApplicationComponent{
 
   public abstract String getBreakpointCategory();
 
-  public abstract @Nullable BreakpointPanel createBreakpointPanel(Project project);
+  public abstract @Nullable BreakpointPanel createBreakpointPanel(Project project, DialogWrapper parentDialog);
+
+  public abstract Icon getIcon();
+
+  public abstract Icon getDisabledIcon();
 
   public void initComponent() {
   }
