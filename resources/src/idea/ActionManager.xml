@@ -459,7 +459,7 @@
         <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction" text="Generify..." description="Convert your code to use generic types"/>
         <action id="Type Migration" class="com.intellij.refactoring.actions.TypeMigrationAction" text="Type Migration..." description="Migrate one type to another"/>
         <separator/>
-        <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction" text="Extract include..." description="Turn the selected code fragment into included file"/>
+        <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction" text="Extract Include File..." description="Turn the selected code fragment into included file"/>
       </group>
 
       <!-- Build -->
