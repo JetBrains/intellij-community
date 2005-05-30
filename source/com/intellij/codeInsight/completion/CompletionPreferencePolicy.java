@@ -67,7 +67,10 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
 
   public int compare(final LookupItem item1, final LookupItem item2) {
     if (item1 == item2) return 0;
-
+    if(item1.getLookupString().toLowerCase().startsWith(myPrefix.toLowerCase()) && !item2.getLookupString().toLowerCase().startsWith(myPrefix.toLowerCase()))
+      return -1;
+    if(!item1.getLookupString().toLowerCase().startsWith(myPrefix.toLowerCase()) && item2.getLookupString().toLowerCase().startsWith(myPrefix.toLowerCase()))
+      return 1;
     Object o1 = item1.getObject();
     Object o2 = item2.getObject();
 
