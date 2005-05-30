@@ -115,7 +115,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
       final String key2 = possibleNames[i];
       if(context != getNameUsageContext(key2)) continue;
       final String name = getName(key2);
-      if(!name.startsWith(prefix)) continue;
+      if(name == null || !name.startsWith(prefix)) continue;
       suggestions.add(name);
     }
     return suggestions.toArray(new String[suggestions.size()]);
