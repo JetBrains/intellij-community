@@ -99,36 +99,37 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return Formatter.getInstance().getNoneIndent();
     }
 
-    /*
-    if (child.getElementType() == ElementType.EXPRESSION_LIST) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == ElementType.PARAMETER_LIST) return Formatter.getInstance().getNoneIndent();
-    if (child.getElementType() == ElementType.PARENTH_EXPRESSION) return Formatter.getInstance().getNoneIndent();
-    */
     if (child.getElementType() == ElementType.DOC_TAG) return Formatter.getInstance().getNoneIndent();    
     if (child.getElementType() == ElementType.DOC_COMMENT_LEADING_ASTERISKS) return Formatter.getInstance().createSpaceIndent(1);
     if (parent != null) {
-      if (parent.getElementType() == ElementType.MODIFIER_LIST) return  Formatter.getInstance().getNoneIndent();
-      if (parent.getElementType() == ElementType.JSP_CODE_BLOCK) return Formatter.getInstance().createNormalIndent();
-      if (parent.getElementType() == ElementType.DUMMY_HOLDER) return Formatter.getInstance().getNoneIndent();
-      if (parent.getElementType() == ElementType.CLASS) return Formatter.getInstance().getNoneIndent();
-      if (parent.getElementType() == ElementType.IF_STATEMENT) return Formatter.getInstance().getNoneIndent();
-      if (parent.getElementType() == ElementType.TRY_STATEMENT) return Formatter.getInstance().getNoneIndent();
-      if (parent.getElementType() == ElementType.CATCH_SECTION) return Formatter.getInstance().getNoneIndent();
-      if (parent.getElementType() == ElementType.FOR_STATEMENT) return Formatter.getInstance().getNoneIndent();
-      if (parent.getElementType() == ElementType.FOREACH_STATEMENT) return Formatter.getInstance().getNoneIndent();
-      if (parent.getElementType() == ElementType.BLOCK_STATEMENT) return Formatter.getInstance().getNoneIndent();
-      if (parent.getElementType() == ElementType.DO_WHILE_STATEMENT) return Formatter.getInstance().getNoneIndent();
-      if (parent.getElementType() == ElementType.WHILE_STATEMENT) return Formatter.getInstance().getNoneIndent();
-      if (parent.getElementType() == ElementType.SWITCH_STATEMENT) return Formatter.getInstance().getNoneIndent();
-      if (parent.getElementType() == ElementType.METHOD) return Formatter.getInstance().getNoneIndent();
-      if (parent.getElementType() == JavaDocElementType.DOC_COMMENT) return Formatter.getInstance().getNoneIndent();
-      if (parent.getElementType() == JavaDocElementType.DOC_TAG) return Formatter.getInstance().getNoneIndent();
-      if (parent.getElementType() == JavaDocElementType.DOC_INLINE_TAG) return Formatter.getInstance().getNoneIndent();
-      if (parent.getElementType() == ElementType.IMPORT_LIST) return Formatter.getInstance().getNoneIndent();
-      if (SourceTreeToPsiMap.treeElementToPsi(parent) instanceof PsiFile) return Formatter.getInstance().getNoneIndent();
+      final Indent defaultChildIndent = getChildIndent(parent);
+      if (defaultChildIndent != null) return defaultChildIndent;
     }
     
     return null;
+  }
+
+  private static Indent getChildIndent(final ASTNode parent) {
+    if (parent.getElementType() == ElementType.MODIFIER_LIST) return  Formatter.getInstance().getNoneIndent();
+    if (parent.getElementType() == ElementType.JSP_CODE_BLOCK) return Formatter.getInstance().createNormalIndent();
+    if (parent.getElementType() == ElementType.DUMMY_HOLDER) return Formatter.getInstance().getNoneIndent();
+    if (parent.getElementType() == ElementType.CLASS) return Formatter.getInstance().getNoneIndent();
+    if (parent.getElementType() == ElementType.IF_STATEMENT) return Formatter.getInstance().getNoneIndent();
+    if (parent.getElementType() == ElementType.TRY_STATEMENT) return Formatter.getInstance().getNoneIndent();
+    if (parent.getElementType() == ElementType.CATCH_SECTION) return Formatter.getInstance().getNoneIndent();
+    if (parent.getElementType() == ElementType.FOR_STATEMENT) return Formatter.getInstance().getNoneIndent();
+    if (parent.getElementType() == ElementType.FOREACH_STATEMENT) return Formatter.getInstance().getNoneIndent();
+    if (parent.getElementType() == ElementType.BLOCK_STATEMENT) return Formatter.getInstance().getNoneIndent();
+    if (parent.getElementType() == ElementType.DO_WHILE_STATEMENT) return Formatter.getInstance().getNoneIndent();
+    if (parent.getElementType() == ElementType.WHILE_STATEMENT) return Formatter.getInstance().getNoneIndent();
+    if (parent.getElementType() == ElementType.SWITCH_STATEMENT) return Formatter.getInstance().getNoneIndent();
+    if (parent.getElementType() == ElementType.METHOD) return Formatter.getInstance().getNoneIndent();
+    if (parent.getElementType() == JavaDocElementType.DOC_COMMENT) return Formatter.getInstance().getNoneIndent();
+    if (parent.getElementType() == JavaDocElementType.DOC_TAG) return Formatter.getInstance().getNoneIndent();
+    if (parent.getElementType() == JavaDocElementType.DOC_INLINE_TAG) return Formatter.getInstance().getNoneIndent();
+    if (parent.getElementType() == ElementType.IMPORT_LIST) return Formatter.getInstance().getNoneIndent();
+    if (SourceTreeToPsiMap.treeElementToPsi(parent) instanceof PsiFile) return Formatter.getInstance().getNoneIndent();
+    else return null;
   }
 
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
@@ -603,5 +604,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     } else {
       return super.getChildAttributes(newChildIndex);
     }
+  }
+
+  protected Indent getChildIndent() {
+    return getChildIndent(myNode);
   }
 }

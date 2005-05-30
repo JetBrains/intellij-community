@@ -101,6 +101,8 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
 
     final WhiteSpace whiteSpace = processor.getWhiteSpaceBefore(offset);
     
+    if (whiteSpace == null) return offset;
+    
     boolean wsContainsCaret = whiteSpace.getTextRange().getStartOffset() <= offset && whiteSpace.getTextRange().getEndOffset() > offset;
     
     final String text = model.getDocumentModel().getText();
