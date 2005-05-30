@@ -150,7 +150,9 @@ public class CompletionData
 
       LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, context.prefix);
     }
-    LookupItemUtil.addLookupItems(set, CompletionUtil.getUnserolvedReferences(PsiTreeUtil.getParentOfType(var, PsiCodeBlock.class), false), context.prefix);
+    PsiElement parent = PsiTreeUtil.getParentOfType(var, PsiCodeBlock.class);
+    if(parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
+    LookupItemUtil.addLookupItems(set, CompletionUtil.getUnserolvedReferences(parent, false), context.prefix);
     LookupItemUtil.addLookupItems(set, StatisticsManager.getInstance().getNameSuggestions(var.getType(), StatisticsManager.getContext(var), context.prefix), context.prefix);
 
     return new NamePreferencePolicy(suggestedNameInfo);
