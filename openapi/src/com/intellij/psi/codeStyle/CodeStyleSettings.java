@@ -18,8 +18,7 @@ import java.util.List;
 /**
  *
  */
-public class CodeStyleSettings implements Cloneable, JDOMExternalizable {  
-
+public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public CodeStyleSettings() {
     initTypeToName();
     initImports();
@@ -638,8 +637,6 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean TERNARY_OPERATION_SIGNS_ON_NEXT_LINE = false;
 
   public boolean MODIFIER_LIST_WRAP = false;
-  public boolean ANNOTATIONS_LIST_WRAP = false;
-  public boolean ANNOTATION_WRAP = false;
 
   public boolean KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
   public boolean KEEP_SIMPLE_METHODS_IN_ONE_LINE = false;
@@ -796,6 +793,22 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean JSPX_USE_HTML_FORMATTER = false;
   //----------------------------------------------------------------------------------------
 
+  
+  //-------------- Annotation formatting settings-------------------------------------------
+  
+  public int METHOD_ANNOTATION_WRAP = WRAP_ALWAYS;  
+  public int CLASS_ANNOTATION_WRAP = WRAP_ALWAYS;  
+  public int FIELD_ANNOTATION_WRAP = WRAP_ALWAYS;  
+  public int PARAMETER_ANNOTATION_WRAP = DO_NOT_WRAP;  
+  public int VARIABLE_ANNOTATION_WRAP = WRAP_ALWAYS;  
+  public int ANNOTATION_PARAMETERS_WRAP = WRAP_AS_NEEDED;  
+  public boolean ALIGN_MULTILINE_ANNOTATION_PARAMETERS = false;  
+  
+  public boolean SPACE_BEFORE_ANOTATION_PARAMETER_LIST = false;
+  public boolean SPACE_WITHIN_ANNOTATION_PARENTHESES = false;
+  
+  //----------------------------------------------------------------------------------------
+  
   //-----------------------------------I18n Inspection settings-----------------------------
   public String NON_NLS_MARKER_COMMENT = "NON-NLS";
 

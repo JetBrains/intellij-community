@@ -25,6 +25,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("SPACE_BEFORE_CATCH_PARENTHESES", "\"catch\" parentheses", BEFORE_PARENTHESES);
     initBooleanField("SPACE_BEFORE_SWITCH_PARENTHESES", "\"switch\" parentheses", BEFORE_PARENTHESES);
     initBooleanField("SPACE_BEFORE_SYNCHRONIZED_PARENTHESES", "\"synchronized\" parentheses", BEFORE_PARENTHESES);
+    initBooleanField("SPACE_BEFORE_ANOTATION_PARAMETER_LIST", "Annotation parameters", BEFORE_PARENTHESES);
 
     initBooleanField("SPACE_AROUND_ASSIGNMENT_OPERATORS", "Assignment operators (=, +=, ...)", AROUND_OPERATORS);
     initBooleanField("SPACE_AROUND_LOGICAL_OPERATORS", "Logical operators (&&, ||)", AROUND_OPERATORS);
@@ -59,6 +60,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("SPACE_WITHIN_SWITCH_PARENTHESES", "\"switch\"  parentheses", WITHIN_PARENTHESES);
     initBooleanField("SPACE_WITHIN_SYNCHRONIZED_PARENTHESES", "\"synchronized\"  parentheses", WITHIN_PARENTHESES);
     initBooleanField("SPACE_WITHIN_CAST_PARENTHESES", "Type cast parentheses", WITHIN_PARENTHESES);
+    initBooleanField("SPACE_WITHIN_ANNOTATION_PARENTHESES", "Annotation parentheses", WITHIN_PARENTHESES);
 
     initBooleanField("SPACE_BEFORE_QUEST", "Before '?'", TERNARY_OPERATOR);
     initBooleanField("SPACE_AFTER_QUEST", "After '?'", TERNARY_OPERATOR);
@@ -86,7 +88,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
   }
 
   protected String getPreviewText() {
-    return "public class Foo {\n" +
+    return "@Annotation(param1=\"value1\", param2=\"value2\") public class Foo {\n" +
             "  int[] X = new int[]{1,3,5,6,7,87,1213,2};\n\n" +
             "  public void foo(int x, int y) {\n" +
             "    for(int i = 0; i < x; i++){\n" +

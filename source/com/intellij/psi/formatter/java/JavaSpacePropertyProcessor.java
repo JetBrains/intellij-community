@@ -766,4 +766,32 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
       createSpaceInCode(mySettings.SPACE_BEFORE_TYPE_PARAMETER_LIST);
     }
   }
+
+  public void visitAnnotation(PsiAnnotation annotation) {
+    if (myRole2 == ChildRole.PARAMETER_LIST) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_ANOTATION_PARAMETER_LIST);
+    } else if (myChild1.getElementType() == ElementType.AT && myChild2.getElementType() == ElementType.JAVA_CODE_REFERENCE) {
+      createSpaceInCode(false);
+    }
+  }
+
+  public void visitAnnotationParameterList(PsiAnnotationParameterList list) {
+    if (myRole1 == ChildRole.LPARENTH && myRole2 == ChildRole.RPARENTH) {
+      createSpaceInCode(false);
+    } else if (myRole1 == ChildRole.LPARENTH || myRole2 == ChildRole.RPARENTH) {
+      createSpaceInCode(mySettings.SPACE_WITHIN_ANNOTATION_PARENTHESES);
+    } else if (myRole2 == ChildRole.COMMA) {
+      createSpaceInCode(false);
+    } else if (myRole1 == ChildRole.COMMA) {
+      createSpaceInCode(true);
+    }
+  
+  }
+
+  public void visitNameValuePair(PsiNameValuePair pair) {
+    if (myRole1 == ChildRole.OPERATION_SIGN || myRole2 == ChildRole.OPERATION_SIGN) {
+      createSpaceInCode(mySettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
+    }
+  }
+
 }

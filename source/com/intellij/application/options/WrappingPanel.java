@@ -83,8 +83,15 @@ public class WrappingPanel extends OptionTableWithPreviewPanel {
     initRadioGroupField("LABELED_STATEMENT_WRAP", LABELED_STATEMENT_WRAPPING, SINGLE_ITEM_WRAP_OPTIONS, SINGLE_ITEM_WRAP_VALUES);
 
     initBooleanField("MODIFIER_LIST_WRAP", "Wrap after modifier list", MODIFIER_LIST_WRAPPING);
-    initBooleanField("ANNOTATIONS_LIST_WRAP", "Wrap after annotations before modifier", MODIFIER_LIST_WRAPPING);
-    initBooleanField("ANNOTATION_WRAP", "Wrap after each annotation", MODIFIER_LIST_WRAPPING);
+
+    initRadioGroupField("ANNOTATION_PARAMETERS_WRAP", "Annotation parameters", FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    
+    initRadioGroupField("CLASS_ANNOTATION_WRAP", "Classes annotation", FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    initRadioGroupField("METHOD_ANNOTATION_WRAP", "Methods annotation", FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    initRadioGroupField("FIELD_ANNOTATION_WRAP", "Fields annotation", FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    initRadioGroupField("PARAMETER_ANNOTATION_WRAP", "Parameters annotation", FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    initRadioGroupField("VARIABLE_ANNOTATION_WRAP", "Local variables annotation", FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    
   }
 
   protected void setupEditorSettings(Editor editor) {
@@ -108,7 +115,7 @@ public class WrappingPanel extends OptionTableWithPreviewPanel {
            " * This is a sample file.\n" +
            " */\n" +
            "\n" +
-           "@Annotation1 @Annotation2 public class ThisIsASampleClass extends C1 implements I1, I2, I3, I4, I5 {\n" +
+           "public class ThisIsASampleClass extends C1 implements I1, I2, I3, I4, I5 {\n" +
            "  private int f1;\n" +
            "  private int f2;\n" +
            "  public void foo1(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {}\n" +
@@ -124,6 +131,15 @@ public class WrappingPanel extends OptionTableWithPreviewPanel {
            "       super.getFoo().foo().getBar().bar();\n" +
            "    }\n" +
            "  }\n" +
+           "}\n" +
+           "\n" +
+           "@Annotation1 @Annotation2 @Annotation3(param1=\"value1\", param2=\"value2\") @Annotation4 class Foo {\n" +
+           "    @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") public static void foo(){\n" +
+           "    }\n" +
+           "    @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") public static int myFoo;\n" +
+           "    public void method(@Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") final int param){\n" +
+           "        @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") final int localVariable;" +
+           "    }\n" +      
            "}";
   }
 }

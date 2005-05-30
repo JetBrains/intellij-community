@@ -19,6 +19,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> {
         if (!(aClass instanceof PsiAnonymousClass)) {
           result.add(new JavaClassTreeElement(aClass, isInherited()));
         }
+        
       }
     });
     return result.toArray(new StructureViewTreeElement[result.size()]);
