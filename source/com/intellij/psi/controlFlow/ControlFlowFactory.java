@@ -41,8 +41,7 @@ public class ControlFlowFactory {
 
   public static ControlFlow getControlFlow(PsiElement element, ControlFlowPolicy policy, boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
     SoftReference<ControlFlowContext> ref = element.getUserData(CONTROL_FLOW_KEY);
-    ControlFlowContext flows = ref == null ? null : ref.get();
-    ControlFlowContext currentFlow = flows;
+    ControlFlowContext currentFlow = ref == null ? null : ref.get();
     final long modificationCount = element.getManager().getModificationTracker().getModificationCount();
     ControlFlow flow = null;
     while (currentFlow != null) {
@@ -68,6 +67,9 @@ public class ControlFlowFactory {
     return flow;
   }
 
+  static void flushControlFlows(PsiElement element) {
+    element.putUserData(CONTROL_FLOW_KEY, null);
+  }
   static void registerControlFlow(PsiElement element, ControlFlow flow, boolean evaluateConstantIfCondition, ControlFlowPolicy policy) {
     SoftReference<ControlFlowContext> ref = element.getUserData(CONTROL_FLOW_KEY);
     ControlFlowContext flows = ref == null ? null : (ControlFlowContext) ref.get();

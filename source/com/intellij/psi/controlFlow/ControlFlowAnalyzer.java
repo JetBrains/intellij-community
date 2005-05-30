@@ -4,8 +4,8 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.IntArrayList;
@@ -27,6 +27,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
   private List<PsiElement> myFinallyBlocks = new ArrayList<PsiElement>();
   private List<PsiElement> myUnhandledExceptionCatchBlocks = new ArrayList<PsiElement>();
   private List<PsiClassType> myCheckedExceptions = new ArrayList<PsiClassType>();
+  private Map<PsiElement, ControlFlow> myRegisteredSubControlFlows = new THashMap<PsiElement, ControlFlow>();
 
   private static class StatementStack {
     private List<PsiElement> myStatements = new ArrayList<PsiElement>();
@@ -134,14 +135,10 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
 
   private void cleanupNonPatchedInstructionOffsets() {
     // make all non patched goto instructions jump to the end of control flow
-    Iterator<TIntArrayList> nonPatchedOffsets = offsetsAddElementStart.values().iterator();
-    while (nonPatchedOffsets.hasNext()) {
-      TIntArrayList offsets = nonPatchedOffsets.next();
+    for (TIntArrayList offsets : offsetsAddElementStart.values()) {
       patchInstructionOffsets(offsets, myCurrentFlow.getEndOffset(myCodeFragment));
     }
-    nonPatchedOffsets = offsetsAddElementEnd.values().iterator();
-    while (nonPatchedOffsets.hasNext()) {
-      TIntArrayList offsets = nonPatchedOffsets.next();
+    for (TIntArrayList offsets : offsetsAddElementEnd.values()) {
       patchInstructionOffsets(offsets, myCurrentFlow.getEndOffset(myCodeFragment));
     }
   }
@@ -193,10 +190,17 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
       cleanupNonPatchedInstructionOffsets();
     }
     catch (AnalysisCanceledSoftException e) {
+      flushCreatedSubFlows();
       throw new AnalysisCanceledException(e.getErrorElement());
     }
 
     return myCurrentFlow;
+  }
+
+  private void flushCreatedSubFlows() {
+    for (PsiElement element : myRegisteredSubControlFlows.keySet()) {
+      ControlFlowFactory.flushControlFlows(element);
+    }
   }
 
   private void startElement(PsiElement element) {
@@ -271,8 +275,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     if (myCatchBlocks.size() != 0) {
       final PsiClassType[] unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(element, element.getParent());
       if (unhandledExceptions != null) {
-        for (int i = 0; i < unhandledExceptions.length; i++) {
-          PsiClassType unhandledException = unhandledExceptions[i];
+        for (PsiClassType unhandledException : unhandledExceptions) {
           myCheckedExceptions.add(unhandledException);
           generateThrow(unhandledException, element);
         }
@@ -344,22 +347,23 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     startElement(codeFragment);
     int prevOffset = myCurrentFlow.getSize();
     PsiElement[] children = codeFragment.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      children[i].accept(this);
+    for (PsiElement aChildren : children) {
+      aChildren.accept(this);
     }
 
     finishElement(codeFragment);
     // cache child code block in hope it will be needed
-    ControlFlowFactory.registerControlFlow(codeFragment, new ControlFlowSubRange(myCurrentFlow, prevOffset, myCurrentFlow.getSize()),
-                                           myEvaluateConstantIfConfition, myPolicy);
+    ControlFlowSubRange flow = new ControlFlowSubRange(myCurrentFlow, prevOffset, myCurrentFlow.getSize());
+    ControlFlowFactory.registerControlFlow(codeFragment, flow, myEvaluateConstantIfConfition, myPolicy);
+    myRegisteredSubControlFlows.put(codeFragment, flow);
   }
 
   public void visitCodeBlock(PsiCodeBlock block) {
     startElement(block);
     int prevOffset = myCurrentFlow.getSize();
     PsiStatement[] statements = block.getStatements();
-    for (int i = 0; i < statements.length; i++) {
-      statements[i].accept(this);
+    for (PsiStatement statement : statements) {
+      statement.accept(this);
     }
 
     //each statement should contain at least one instruction in order to getElement(offset) work
@@ -370,14 +374,14 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
 
     finishElement(block);
     // cache child code block in hope it will be needed
-    ControlFlowFactory.registerControlFlow(block, new ControlFlowSubRange(myCurrentFlow, prevOffset, myCurrentFlow.getSize()),
-                                           myEvaluateConstantIfConfition, myPolicy);
+    ControlFlowSubRange flow = new ControlFlowSubRange(myCurrentFlow, prevOffset, myCurrentFlow.getSize());
+    ControlFlowFactory.registerControlFlow(block, flow, myEvaluateConstantIfConfition, myPolicy);
+    myRegisteredSubControlFlows.put(block, flow);
   }
 
   private void emitEmptyInstruction() {
     myCurrentFlow.addInstruction(new EmptyInstruction());
   }
-
 
   public void visitJspFile(JspFile file) {
     visitChildren(file);
@@ -386,7 +390,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
   public void visitBlockStatement(PsiBlockStatement statement) {
     startElement(statement);
     final PsiCodeBlock codeBlock = statement.getCodeBlock();
-    if (codeBlock != null) codeBlock.accept(this);
+    codeBlock.accept(this);
     finishElement(statement);
   }
 
@@ -468,8 +472,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     startElement(statement);
     int pc = myCurrentFlow.getSize();
     PsiElement[] elements = statement.getDeclaredElements();
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
+    for (PsiElement element : elements) {
       if (element instanceof PsiClass) {
         element.accept(this);
       }
@@ -486,13 +489,15 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
             || element instanceof PsiField) {
           if (element instanceof PsiLocalVariable && !myPolicy.isLocalVariableAccepted((PsiLocalVariable)element)) continue;
 
-          if (myAssignmentTargetsAreElements)
+          if (myAssignmentTargetsAreElements) {
             startElement(element);
+          }
 
           generateWriteInstruction((PsiVariable)element);
 
-          if (myAssignmentTargetsAreElements)
+          if (myAssignmentTargetsAreElements) {
             finishElement(element);
+          }
         }
       }
     }
@@ -564,8 +569,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
   public void visitExpressionListStatement(PsiExpressionListStatement statement) {
     startElement(statement);
     PsiExpression[] expressions = statement.getExpressionList().getExpressions();
-    for (int i = 0; i < expressions.length; i++) {
-      PsiExpression expr = expressions[i];
+    for (PsiExpression expr : expressions) {
       expr.accept(this);
     }
     finishElement(statement);
@@ -822,8 +826,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
       PsiSwitchLabelStatement defaultLabel = null;
-      for (int i = 0; i < statements.length; i++) {
-        PsiStatement aStatement = statements[i];
+      for (PsiStatement aStatement : statements) {
         if (aStatement instanceof PsiSwitchLabelStatement) {
           if (((PsiSwitchLabelStatement)aStatement).isDefaultCase()) {
             defaultLabel = (PsiSwitchLabelStatement)aStatement;
@@ -1159,8 +1162,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
 
   public void visitExpressionList(PsiExpressionList list) {
     PsiExpression[] expressions = list.getExpressions();
-    for (int i = 0; i < expressions.length; i++) {
-      final PsiExpression expression = expressions[i];
+    for (final PsiExpression expression : expressions) {
       myStartStatementStack.pushStatement(expression, false);
       myEndStatementStack.pushStatement(expression, false);
 
@@ -1183,8 +1185,8 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     startElement(expression);
 
     PsiExpression[] initializers = expression.getInitializers();
-    for (int i = 0; i < initializers.length; i++) {
-      initializers[i].accept(this);
+    for (PsiExpression initializer : initializers) {
+      initializer.accept(this);
     }
 
     finishElement(expression);
@@ -1227,7 +1229,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
       }
     }
     else {
-      if (lExpr != null) lExpr.accept(this);
+      lExpr.accept(this);
     }
 
     myStartStatementStack.popStatement();
@@ -1240,7 +1242,7 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     startElement(expression);
 
     final PsiExpression lOperand = expression.getLOperand();
-    if (lOperand != null) lOperand.accept(this);
+    lOperand.accept(this);
 
     PsiConstantEvaluationHelper evalHelper = expression.getManager().getConstantEvaluationHelper();
     if (expression.getOperationSign() != null) {
@@ -1324,8 +1326,8 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     startElement(element);
 
     PsiElement[] children = element.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      children[i].accept(this);
+    for (PsiElement aChildren : children) {
+      aChildren.accept(this);
     }
 
     finishElement(element);
@@ -1376,8 +1378,8 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
 
     int pc = myCurrentFlow.getSize();
     PsiElement[] children = expression.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      children[i].accept(this);
+    for (PsiElement aChildren : children) {
+      aChildren.accept(this);
     }
     generateCheckedExceptionJumps(expression);
 
@@ -1496,8 +1498,8 @@ public class ControlFlowAnalyzer extends PsiElementVisitor {
     }
 
     PsiElement[] children = scope.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      addUsedVariables(array, children[i]);
+    for (PsiElement aChildren : children) {
+      addUsedVariables(array, aChildren);
     }
   }
 
