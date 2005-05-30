@@ -340,6 +340,11 @@ public abstract class DialogWrapper {
    */
   protected void dispose() {
     synchronized (ourLock) {
+      final JRootPane rootPane = getRootPane();
+      final KeyStroke[] strokes = rootPane.getRegisteredKeyStrokes();
+      for (KeyStroke keyStroke : strokes) {
+        rootPane.unregisterKeyboardAction(keyStroke);
+      }
       myPeer.dispose();
     }
   }
@@ -857,4 +862,5 @@ public abstract class DialogWrapper {
       doHelpAction();
     }
   }
+
 }

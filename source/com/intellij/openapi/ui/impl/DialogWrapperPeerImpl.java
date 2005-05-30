@@ -23,6 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 
 public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogWrapper");
@@ -35,6 +36,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
    */
   private WindowManagerEx myWindowManager;
   private Project myProject;
+  private java.util.List<Runnable> myDisposeActions = new ArrayList<Runnable>();
 
   /**
    * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
@@ -151,6 +153,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   protected void dispose() {
     LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
+    for (Runnable runnable : myDisposeActions) {
+      runnable.run();
+    }
+    myDisposeActions.clear();
     myDialog.remove(myDialog.getRootPane());
 
     Runnable disposer = new Runnable() {
@@ -271,7 +277,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   public void show() {
     LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
 
-    new AnCancelAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)), getRootPane());
+    final AnCancelAction anCancelAction = new AnCancelAction();
+    final JRootPane rootPane = getRootPane();
+    anCancelAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)), rootPane);
+    myDisposeActions.add(new Runnable() {
+      public void run() {
+        anCancelAction.unregisterCustomShortcutSet(rootPane);
+      }
+    });
 
     if (!myCanBeParent && myWindowManager != null) {
       myWindowManager.doNotSuggestAsParent(myDialog);
@@ -308,7 +321,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       if (focusOwner instanceof JComponent && SpeedSearchBase.hasActiveSpeedSearch((JComponent)focusOwner)) {
         return;
       }
-      
+
       if (focusOwner instanceof JTree) {
         JTree tree = (JTree)focusOwner;
         if (!tree.isEditing()) {
@@ -459,7 +472,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             final DialogWrapper activeWrapper = getActiveWrapper();
-            if (activeWrapper == null) return;
+            if (activeWrapper == null) {
+              return;
+            }
 
             JComponent toFocus = activeWrapper.getPreferredFocusedComponent();
             if (toFocus == null) {

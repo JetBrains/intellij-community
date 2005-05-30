@@ -24,7 +24,6 @@ import java.util.ArrayList;
 public class BreakpointsConfigurationDialogFactory {
   private static final String BREAKPOINT_PANEL = "breakpoint_panel";
   private Project myProject;
-  private java.util.List<BreakpointPanel> myPanels = new ArrayList<BreakpointPanel>();
 
   private int myLastSelectedTabIndex = 0;
 
@@ -47,6 +46,8 @@ public class BreakpointsConfigurationDialogFactory {
     private JPanel myPanel;
     private TabbedPaneWrapper myTabbedPane;
     private JComponent myPreferredComponent;
+    private java.util.List<Runnable> myDisposeActions = new ArrayList<Runnable>();
+    private java.util.List<BreakpointPanel> myPanels = new ArrayList<BreakpointPanel>();
 
     public BreakpointsConfigurationDialog() {
       super(myProject, true);
@@ -91,10 +92,16 @@ public class BreakpointsConfigurationDialogFactory {
         }
       }
 
-      myTabbedPane.addChangeListener(new ChangeListener() {
+      final ChangeListener tabPaneChangeListener = new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
           BreakpointPanel panel = getSelectedPanel();
           panel.ensureSelectionExists();
+        }
+      };
+      myTabbedPane.addChangeListener(tabPaneChangeListener);
+      myDisposeActions.add(new Runnable() {
+        public void run() {
+          myTabbedPane.removeChangeListener(tabPaneChangeListener);
         }
       });
       myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
@@ -149,14 +156,20 @@ public class BreakpointsConfigurationDialogFactory {
       breakpointManager.setProperty(category + "_viewId", panel.getCurrentViewId());
     }
 
-    private void addPanel(BreakpointPanel panel, final String title) {
+    private void addPanel(final BreakpointPanel panel, final String title) {
       JPanel jpanel = panel.getPanel();
       jpanel.putClientProperty(BREAKPOINT_PANEL, panel);
       myTabbedPane.addTab(title, jpanel);
       final int tabIndex = myTabbedPane.getTabCount() - 1;
-      panel.addChangesListener(new BreakpointPanel.ChangesListener() {
+      final BreakpointPanel.ChangesListener changesListener = new BreakpointPanel.ChangesListener() {
         public void breakpointsChanged() {
           updateTabTitle(tabIndex);
+        }
+      };
+      panel.addChangesListener(changesListener);
+      myDisposeActions.add(new Runnable() {
+        public void run() {
+          panel.removeChangesListener(changesListener);
         }
       });
     }
@@ -177,10 +190,14 @@ public class BreakpointsConfigurationDialogFactory {
 
     protected void dispose() {
       apply();
+      for (Runnable runnable : myDisposeActions) {
+        runnable.run();
+      }
+      myDisposeActions.clear();
       if (myPanel != null) {
         for (BreakpointPanel panel : myPanels) {
-          panel.dispose();
           savePanelSettings(panel, panel.getBreakpointCategory());
+          panel.dispose();
         }
         myTabbedPane.uninstallKeyboardNavigation();
         myLastSelectedTabIndex = myTabbedPane.getSelectedIndex();
@@ -195,8 +212,7 @@ public class BreakpointsConfigurationDialogFactory {
       for (BreakpointPanel panel : myPanels) {
         panel.saveChanges();
       }
-      BreakpointManager breakpointManager = getBreakpointManager();
-      breakpointManager.updateAllRequests();
+      DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().updateAllRequests();
     }
 
     private void reset() {

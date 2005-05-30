@@ -13,9 +13,12 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 
 import javax.swing.*;
+import javax.swing.tree.TreeSelectionModel;
+import javax.swing.tree.TreeModel;
 import javax.swing.event.*;
 import java.awt.*;
 import java.util.EventListener;
+import java.util.ArrayList;
 
 /**
  * @author Jeka
@@ -27,6 +30,7 @@ public class BreakpointPanel {
   private final String myDisplayName;
   private final String myHelpID;
   private Breakpoint myCurrentViewableBreakpoint;
+  private java.util.List<Runnable> myDisposeActions = new ArrayList<Runnable>();
 
   private JPanel myPanel;
   private JPanel myBreakPointsPanel;
@@ -37,10 +41,10 @@ public class BreakpointPanel {
   private JPanel myButtonsPanel;
   private EventDispatcher<ChangesListener> myEventDispatcher = EventDispatcher.create(ChangesListener.class);
   private String myCurrentViewId = TABLE_VIEW;
-  
+
   private static final String PROPERTIES_STUB = "STUB";
   private static final String PROPERTIES_DATA = "DATA";
-  
+
   public static final String TREE_VIEW = "TREE";
   public static final String TABLE_VIEW = "TABLE";
 
@@ -102,24 +106,51 @@ public class BreakpointPanel {
     myTablePlace.setLayout(new CardLayout());
     myTablePlace.add(ScrollPaneFactory.createScrollPane(myTable), TABLE_VIEW);
 
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+    final ListSelectionListener listSelectionListener = new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         updateCurrentBreakpointPropertiesPanel();
       }
+    };
+    final ListSelectionModel tableSelectionModel = myTable.getSelectionModel();
+    tableSelectionModel.addListSelectionListener(listSelectionListener);
+    myDisposeActions.add(new Runnable() {
+      public void run() {
+        tableSelectionModel.removeListSelectionListener(listSelectionListener);
+      }
     });
-    myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+
+    final TreeSelectionModel treeSelectionModel = myTree.getSelectionModel();
+    final TreeSelectionListener treeSelectionListener = new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         updateCurrentBreakpointPropertiesPanel();
       }
+    };
+    treeSelectionModel.addTreeSelectionListener(treeSelectionListener);
+    myDisposeActions.add(new Runnable() {
+      public void run() {
+        treeSelectionModel.removeTreeSelectionListener(treeSelectionListener);
+      }
     });
-    myTable.getModel().addTableModelListener(new TableModelListener() {
+
+    final BreakpointTableModel tableModel = myTable.getModel();
+    final TableModelListener tableModelListener = new TableModelListener() {
       public void tableChanged(TableModelEvent e) {
         if (e.getType() == TableModelEvent.UPDATE) {
           updateCurrentBreakpointPropertiesPanel();
         }
+        myEventDispatcher.getMulticaster().breakpointsChanged();
+      }
+    };
+    tableModel.addTableModelListener(tableModelListener);
+    myDisposeActions.add(new Runnable() {
+      public void run() {
+        tableModel.removeTableModelListener(tableModelListener);
       }
     });
-    myTree.getModel().addTreeModelListener(new TreeModelListener() {
+
+
+    final TreeModel treeModel = myTree.getModel();
+    final TreeModelListener treeModelListener = new TreeModelListener() {
       public void treeNodesChanged(TreeModelEvent e) {
       }
 
@@ -137,7 +168,14 @@ public class BreakpointPanel {
           }
         });
       }
+    };
+    treeModel.addTreeModelListener(treeModelListener);
+    myDisposeActions.add(new Runnable() {
+      public void run() {
+        treeModel.removeTreeModelListener(treeModelListener);
+      }
     });
+
     myPropertiesPanelPlace.setLayout(new CardLayout());
     final JPanel stubPanel = new JPanel();
     stubPanel.setMinimumSize(myPropertiesPanel.getPanel().getMinimumSize());
@@ -153,18 +191,23 @@ public class BreakpointPanel {
       final AbstractButton button = action.isStateAction()? new JCheckBox(action.getName()) : new JButton(action.getName());
       action.setButton(button);
       button.addActionListener(action);
+      myDisposeActions.add(new Runnable() {
+        public void run() {
+          button.removeActionListener(action);
+        }
+      });
       final double weighty = (idx == actions.length - 1) ? 1.0 : 0.0;
       myButtonsPanel.add(button, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, weighty, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 2, 2, 2), 0, 0));
     }
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+    final ListSelectionListener tableSelectionListener = new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         updateButtons();
       }
-    });
-
-    myTable.getModel().addTableModelListener(new TableModelListener() {
-      public void tableChanged(TableModelEvent e) {
-        myEventDispatcher.getMulticaster().breakpointsChanged();
+    };
+    tableSelectionModel.addListSelectionListener(tableSelectionListener);
+    myDisposeActions.add(new Runnable() {
+      public void run() {
+        tableSelectionModel.removeListSelectionListener(tableSelectionListener);
       }
     });
 
@@ -291,6 +334,10 @@ public class BreakpointPanel {
   }
 
   public void dispose() {
+    for (Runnable runnable : myDisposeActions) {
+      runnable.run();
+    }
+    myDisposeActions.clear();
     myPropertiesPanel.dispose();
   }
 
@@ -337,7 +384,7 @@ public class BreakpointPanel {
         myTree.selectFirstBreakpoint();
       }
     }
-    
+
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         if (isTreeShowing()) {
