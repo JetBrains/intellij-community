@@ -475,7 +475,7 @@ public class BreakpointTree extends CheckboxTree {
     for (final CheckedTreeNode child : children) {
       myRootNode.add(child);
     }
-    //sortChildren(myRootNode);
+    sortChildren(myRootNode);
     ((DefaultTreeModel)getModel()).nodeStructureChanged(myRootNode);
     treeStateSnapshot.restore(this);
     expandPath(new TreePath(myRootNode));
