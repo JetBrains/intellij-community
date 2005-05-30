@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlTag;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,9 +39,12 @@ public class XmlBlock extends AbstractXmlBlock {
       }
 
       final ASTNode treeParent = myNode.getTreeParent();
-      if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag(treeParent))) {
-        return result;
-      }
+      final XmlTag tag = getTag(treeParent);
+      if (tag != null) {
+        if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(tag)) {
+          return result;
+        }
+      } 
     }
 
     if (myNode instanceof CompositeElement) {
