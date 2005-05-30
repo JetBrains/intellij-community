@@ -489,6 +489,12 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
     } else if (ElementType.COMMENT_BIT_SET.isInSet(myChild1.getElementType()) 
                && (myRole2 == ChildRole.MODIFIER_LIST || myRole2 == ChildRole.TYPE_REFERENCE)) {
       myResult = Formatter.getInstance().createSpaceProperty(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
+    } else if (myRole2 == ChildRole.DEFAULT_KEYWORD) {
+      createSpaceInCode(true);
+    } else if (myRole2 == ChildRole.ANNOTATION_DEFAULT_VALUE) {
+      createSpaceInCode(true);
+    } else if (myChild2.getElementType() == ElementType.SEMICOLON) {
+      createSpaceInCode(false);
     }
 
   }
@@ -794,4 +800,15 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
     }
   }
 
+  public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
+    if (myRole1 == ChildRole.LBRACE && myRole2 == ChildRole.RBRACE) {
+      createSpaceInCode(false);
+    } else if (myRole1 ==ChildRole.LBRACE || myRole2 == ChildRole.RBRACE) {
+      createSpaceInCode(mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES);
+    } else if (myRole1 == ChildRole.COMMA) {
+      createSpaceInCode(true);
+    } else if (myRole2 == ChildRole.COMMA) {
+      createSpaceInCode(false);
+    }
+  }
 }
