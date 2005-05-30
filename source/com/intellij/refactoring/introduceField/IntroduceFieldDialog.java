@@ -421,6 +421,7 @@ class IntroduceFieldDialog extends DialogWrapper {
 
     if (isTestClass()) {
       myRbInSetUp = new JRadioButton("setUp method");
+      myRbInSetUp.setMnemonic('s');
       initializationPanel.add(myRbInSetUp);
     }
 
