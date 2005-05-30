@@ -13,7 +13,7 @@ import com.intellij.refactoring.lang.html.ExtractIncludeFromHTMLHandler;
 import com.intellij.refactoring.lang.jsp.extractInclude.ExtractJspIncludeFileHandler;
 
 /**
- *
+ * @author ven
  */
 public class ExtractIncludeAction extends BaseRefactoringAction {
   public boolean isAvailableInEditorOnly() {
