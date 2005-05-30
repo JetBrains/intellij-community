@@ -3,6 +3,7 @@ package com.intellij.lexer;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.jsp.el.ELTokenType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -74,13 +75,28 @@ public class HtmlLexer extends BaseHtmlLexer {
 
   private boolean isStartOfEmbeddmentTagContent(final IElementType tokenType) {
     return (tokenType == XmlTokenType.XML_DATA_CHARACTERS ||
-     tokenType == XmlTokenType.XML_COMMENT_START ||
-     tokenType == ElementType.WHITE_SPACE
+            tokenType == XmlTokenType.XML_COMMENT_START ||
+            tokenType == ElementType.WHITE_SPACE
     );
   }
 
   public HtmlLexer() {
     this(new MergingLexerAdapter(new FlexAdapter(new _HtmlLexer()), TOKENS_TO_MERGE),true);
+  }
+
+  public void activateElSupport() {
+    Lexer baseLexer = getBaseLexer();
+
+    if (baseLexer instanceof MergingLexerAdapter) {
+      baseLexer = ((MergingLexerAdapter)baseLexer).getOriginal();
+      if (baseLexer instanceof FlexAdapter) {
+        final FlexLexer flex = ((FlexAdapter)baseLexer).getFlex();
+
+        if (flex instanceof ELHostLexer) {
+          ((ELHostLexer)flex).setElTypes(ELTokenType.JSP_EL_HOLDER,ELTokenType.JSP_EL_HOLDER);
+        }
+      }
+    }
   }
 
   protected HtmlLexer(Lexer _baseLexer, boolean _caseInsensitive) {

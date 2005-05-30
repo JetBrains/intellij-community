@@ -4,7 +4,6 @@ import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.HashMap;
 
