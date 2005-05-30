@@ -81,6 +81,8 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     builder.buildDFST();
     if (builder.isAcyclic()){
       mySplitter.setProportion(1.f);
+    } else {
+      mySplitter.setProportion(0.5f);
     }
   }
 
@@ -163,7 +165,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
         else if (!(node2.getUserObject() instanceof MyUserObject)){
           return -1;
         }
-        return (((MyUserObject)node1.getUserObject()).toString().compareTo(((MyUserObject)node2.getUserObject()).toString()));
+        return (node1.getUserObject().toString().compareTo(node2.getUserObject().toString()));
       }
     });
   }
