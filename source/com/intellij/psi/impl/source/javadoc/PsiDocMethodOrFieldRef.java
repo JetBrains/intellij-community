@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.util.CharTable;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -139,11 +140,24 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   private PsiElement getScope(){
     ChameleonTransforming.transformChildren(this);
     if (getFirstChildNode().getElementType() == ElementType.DOC_REFERENCE_HOLDER) {
-      PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode().getFirstChildNode());
-      if(referenceElement == null) return null;
-      final PsiElement referencedElement = referenceElement.resolve();
-      if (referencedElement instanceof PsiClass) {
-        return referencedElement;
+      final PsiElement firstChildPsi = SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode().getFirstChildNode());
+      if (firstChildPsi instanceof PsiJavaCodeReferenceElement) {
+        PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)firstChildPsi;
+        if(referenceElement == null) return null;
+        final PsiElement referencedElement = referenceElement.resolve();
+        if (referencedElement instanceof PsiClass) {
+          return referencedElement;
+        }
+      }
+      else if (firstChildPsi instanceof PsiKeyword) {
+        final PsiKeyword keyword = (PsiKeyword)firstChildPsi;
+
+        if (keyword.getTokenType().equals(JavaTokenType.THIS_KEYWORD)) {
+          return ResolveUtil.getContextClass(this);
+        } else if (keyword.getTokenType().equals(JavaTokenType.SUPER_KEYWORD)) {
+          final PsiClass contextClass = ResolveUtil.getContextClass(this);
+          if (contextClass != null) return contextClass.getSuperClass();
+        }
       }
     }
     final PsiElement place = SourceTreeToPsiMap.treeElementToPsi(TreeUtil.findParent(this, TreeElement.CLASS));
