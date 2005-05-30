@@ -82,4 +82,13 @@ public class MergingLexerAdapter extends LexerBase {
   public Lexer getOriginal() {
     return myOriginal;
   }
+
+  public void restore(LexerPosition position) {
+    myOriginal.restore(position);
+    myTokenType = null;
+  }
+
+  public LexerPosition getCurrentPosition() {
+    return myOriginal.getCurrentPosition();
+  }
 }
