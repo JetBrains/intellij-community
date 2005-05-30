@@ -664,7 +664,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public void visitImportStaticReferenceElement(PsiImportStaticReferenceElement ref) {
     //check single-static-import statement
     String refName = ref.getReferenceName();
-    ResolveResult[] results = ref.multiResolve(false);
+    JavaResolveResult[] results = ref.multiResolve(false);
 
     if (results.length == 0) {
       String description = MessageFormat.format(UNKNOWN_SYMBOL, new Object[]{refName});
@@ -674,7 +674,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     }
     else {
       PsiManager manager = ref.getManager();
-      for (ResolveResult result : results) {
+      for (JavaResolveResult result : results) {
         PsiElement element = result.getElement();
         if (!(element instanceof PsiModifierListOwner) || !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
           continue;
@@ -713,14 +713,14 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   private void registerConstructorCall(PsiConstructorCall constructorCall) {
-    ResolveResult resolveResult = constructorCall.resolveMethodGenerics();
+    JavaResolveResult resolveResult = constructorCall.resolveMethodGenerics();
     if (myRefCountHolder != null) {
       myRefCountHolder.registerReference(constructorCall, resolveResult);
     }
   }
 
   public void visitReferenceElement(PsiJavaCodeReferenceElement ref) {
-    ResolveResult result = ref.advancedResolve(true);
+    JavaResolveResult result = ref.advancedResolve(true);
     PsiElement resolved = result.getElement();
     PsiElement parent = ref.getParent();
     if (myRefCountHolder != null) {
@@ -805,7 +805,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (!myHolder.hasErrorResults()) {
       visitExpression(expression);
     }
-    ResolveResult result = expression.advancedResolve(false);
+    JavaResolveResult result = expression.advancedResolve(false);
     PsiElement resolved = result.getElement();
     if (resolved instanceof PsiVariable && resolved.getContainingFile() == expression.getContainingFile()) {
       if (!myHolder.hasErrorResults()) {

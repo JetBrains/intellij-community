@@ -434,7 +434,7 @@ public class RefactoringUtil {
   }
 
   public static PsiClass getThisResolveClass(final PsiReferenceExpression place) {
-    final ResolveResult resolveResult = place.advancedResolve(false);
+    final JavaResolveResult resolveResult = place.advancedResolve(false);
     final PsiElement scope = resolveResult.getCurrentFileResolveScope();
     if (scope instanceof PsiClass) {
       return (PsiClass)scope;

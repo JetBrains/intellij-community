@@ -363,7 +363,7 @@ public class HighlightMethodUtil {
                                               PsiResolveHelper resolveHelper) {
     PsiExpressionList list = methodCall.getArgumentList();
     PsiReferenceExpression referenceToMethod = methodCall.getMethodExpression();
-    ResolveResult resolveResult = referenceToMethod.advancedResolve(true);
+    JavaResolveResult resolveResult = referenceToMethod.advancedResolve(true);
     PsiElement element = resolveResult.getElement();
 
     boolean isDummy = false;
@@ -456,13 +456,13 @@ public class HighlightMethodUtil {
   private static HighlightInfo checkAmbiguousMethodCall(final PsiReferenceExpression referenceToMethod,
                                                         final PsiExpressionList list,
                                                         final PsiElement element,
-                                                        final ResolveResult resolveResult,
+                                                        final JavaResolveResult resolveResult,
                                                         final PsiMethodCallExpression methodCall, final PsiResolveHelper resolveHelper) {
-    ResolveResult[] resolveResults = referenceToMethod.multiResolve(true);
+    JavaResolveResult[] resolveResults = referenceToMethod.multiResolve(true);
     MethodCandidateInfo methodCandidate1 = null;
     MethodCandidateInfo methodCandidate2 = null;
     List<MethodCandidateInfo> candidateList = new ArrayList<MethodCandidateInfo>();
-    for (ResolveResult result : resolveResults) {
+    for (JavaResolveResult result : resolveResults) {
       if (!(result instanceof MethodCandidateInfo)) continue;
       MethodCandidateInfo candidate = (MethodCandidateInfo)result;
       if (candidate.isApplicable() && !candidate.getElement().isConstructor()) {
@@ -476,7 +476,7 @@ public class HighlightMethodUtil {
       }
     }
 
-    for (ResolveResult result : resolveResults) {
+    for (JavaResolveResult result : resolveResults) {
       if (!(result instanceof MethodCandidateInfo)) continue;
       MethodCandidateInfo candidate = (MethodCandidateInfo)result;
       if (candidate.isAccessible()) candidateList.add(candidate);
@@ -1263,7 +1263,7 @@ public class HighlightMethodUtil {
       }
     }
     else {
-      ResolveResult[] results = constructorCall.getManager().getResolveHelper().multiResolveConstructor((PsiClassType)type, list, list);
+      JavaResolveResult[] results = constructorCall.getManager().getResolveHelper().multiResolveConstructor((PsiClassType)type, list, list);
       MethodCandidateInfo result = null;
       if (results.length == 1) result = (MethodCandidateInfo)results[0];
 

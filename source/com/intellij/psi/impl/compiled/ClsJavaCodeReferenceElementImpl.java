@@ -157,13 +157,13 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   private static class Resolver implements ResolveCache.GenericsResolver {
     public static Resolver INSTANCE = new Resolver();
 
-    public ResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode) {
-      final ResolveResult resolveResult = ((ClsJavaCodeReferenceElementImpl)ref).advancedResolveImpl();
-      return resolveResult.getElement() == null ? ResolveResult.EMPTY_ARRAY : new ResolveResult[] {resolveResult};
+    public JavaResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode) {
+      final JavaResolveResult resolveResult = ((ClsJavaCodeReferenceElementImpl)ref).advancedResolveImpl();
+      return resolveResult.getElement() == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[] {resolveResult};
     }
   }
 
-  private ResolveResult advancedResolveImpl() {
+  private JavaResolveResult advancedResolveImpl() {
     final PsiElement resolve = resolveElement();
     if (resolve instanceof PsiClass) {
       final Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
@@ -187,13 +187,13 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   }
 
 
-  public ResolveResult advancedResolve(boolean incompleteCode) {
-    final ResolveResult[] results = multiResolve(incompleteCode);
+  public JavaResolveResult advancedResolve(boolean incompleteCode) {
+    final JavaResolveResult[] results = multiResolve(incompleteCode);
     if (results.length == 1) return results[0];
-    return ResolveResult.EMPTY;
+    return JavaResolveResult.EMPTY;
   }
 
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final ResolveCache resolveCache = ((PsiManagerImpl)getManager()).getResolveCache();
     return resolveCache.resolveWithCaching(this, Resolver.INSTANCE, false, incompleteCode);
   }

@@ -3,8 +3,7 @@ package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiVariable;
-import com.intellij.psi.ResolveResult;
-import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 
 public class ResolveVariableUtil {
@@ -26,7 +25,7 @@ public class ResolveVariableUtil {
     Statistics.resolveVariableTime += (time2 - time1);
     Statistics.resolveVariableCount++;
     */
-    final ResolveResult[] result = processor.getResult();
+    final JavaResolveResult[] result = processor.getResult();
     if(result.length != 1) return null;
     final PsiVariable refVar = (PsiVariable) result[0].getElement();
 

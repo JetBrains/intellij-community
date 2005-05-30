@@ -13,10 +13,10 @@ import com.intellij.psi.scope.PsiScopeProcessor;
  * Time: 16:02:15
  * To change this template use Options | File Templates.
  */
-public interface PsiJavaReference extends PsiReference{
+public interface PsiJavaReference extends PsiMultipleTargetsReference {
   void processVariants(PsiScopeProcessor processor);
 
-  ResolveResult advancedResolve(boolean incompleteCode);
-  ResolveResult[] multiResolve(boolean incompleteCode);
+  JavaResolveResult advancedResolve(boolean incompleteCode);
+  JavaResolveResult[] multiResolve(boolean incompleteCode);
 
 }

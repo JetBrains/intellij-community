@@ -80,11 +80,11 @@ public final class PsiUtil {
     return place.getManager().getResolveHelper().isAccessible(member, place, accessObjectClass);
   }
 
-  public static ResolveResult getAccessObjectClass(PsiExpression accessObject) {
+  public static JavaResolveResult getAccessObjectClass(PsiExpression accessObject) {
     if (accessObject instanceof PsiSuperExpression) {
       final PsiJavaCodeReferenceElement qualifier = ((PsiSuperExpression) accessObject).getQualifier();
       if (qualifier != null) { // E.super.f
-        final ResolveResult result = qualifier.advancedResolve(false);
+        final JavaResolveResult result = qualifier.advancedResolve(false);
         final PsiElement resolve = result.getElement();
         if (resolve instanceof PsiClass) {
           final PsiClass psiClass;
@@ -113,9 +113,9 @@ public final class PsiUtil {
             return new CandidateInfo(psiClass, substitutor);
           }
           else
-            return ResolveResult.EMPTY;
+            return JavaResolveResult.EMPTY;
         }
-        return ResolveResult.EMPTY;
+        return JavaResolveResult.EMPTY;
       }
       else {
         PsiElement scope = accessObject.getContext();
@@ -134,12 +134,12 @@ public final class PsiUtil {
           lastParent = scope;
           scope = scope.getContext();
         }
-        return ResolveResult.EMPTY;
+        return JavaResolveResult.EMPTY;
       }
     }
     else {
       PsiType type = accessObject.getType();
-      if (!(type instanceof PsiClassType || type instanceof PsiArrayType)) return ResolveResult.EMPTY;
+      if (!(type instanceof PsiClassType || type instanceof PsiArrayType)) return JavaResolveResult.EMPTY;
       return PsiUtil.resolveGenericsClassInType(type);
     }
   }
@@ -829,7 +829,7 @@ public final class PsiUtil {
     return true;
   }
 
-  public static PsiElement[] mapElements(CandidateInfo[] candidates) {
+  public static PsiElement[] mapElements(ResolveResult[] candidates) {
     PsiElement[] result = new PsiElement[candidates.length];
     for (int i = 0; i < candidates.length; i++) {
       result[i] = candidates[i].getElement();

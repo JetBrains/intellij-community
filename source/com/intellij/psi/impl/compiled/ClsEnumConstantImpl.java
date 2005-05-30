@@ -54,8 +54,8 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
     return null;
   }
 
-  public ResolveResult resolveMethodGenerics() {
-    return ResolveResult.EMPTY;
+  public JavaResolveResult resolveMethodGenerics() {
+    return JavaResolveResult.EMPTY;
   }
 
   public PsiEnumConstantInitializer getInitializingClass() {

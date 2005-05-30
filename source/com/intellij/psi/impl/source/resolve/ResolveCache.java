@@ -11,9 +11,9 @@ import java.lang.ref.SoftReference;
 import java.util.Set;
 
 public class ResolveCache {
-  private static final Key<MapPair<PsiReference, SoftReference<ResolveResult[]>>> JAVA_RESOLVE_MAP = Key.create("ResolveCache.JAVA_RESOLVE_MAP");
+  private static final Key<MapPair<PsiReference, SoftReference<JavaResolveResult[]>>> JAVA_RESOLVE_MAP = Key.create("ResolveCache.JAVA_RESOLVE_MAP");
   private static final Key<MapPair<PsiReference, Reference<PsiElement>>> RESOLVE_MAP = Key.create("ResolveCache.RESOLVE_MAP");
-  private static final Key<MapPair<PsiReference, SoftReference<ResolveResult[]>>> JAVA_RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.JAVA_RESOLVE_MAP_INCOMPLETE");
+  private static final Key<MapPair<PsiReference, SoftReference<JavaResolveResult[]>>> JAVA_RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.JAVA_RESOLVE_MAP_INCOMPLETE");
   private static final Key<MapPair<PsiReference, Reference<PsiElement>>> RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.RESOLVE_MAP_INCOMPLETE");
   private static final Key<String> IS_BEING_RESOLVED_KEY = Key.create("ResolveCache.IS_BEING_RESOLVED_KEY");
   private static final Key<MapPair<PsiVariable, Object>> VAR_TO_CONST_VALUE_MAP_KEY = Key.create("ResolveCache.VAR_TO_CONST_VALUE_MAP_KEY");
@@ -30,7 +30,7 @@ public class ResolveCache {
   private final WeakHashMap<PsiVariable,Object> myVarToConstValueMap2;
 
   public static interface GenericsResolver{
-    ResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode);
+    JavaResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode);
   }
 
   public static interface Resolver{
@@ -120,7 +120,7 @@ public class ResolveCache {
     return reference;
   }
 
-  public ResolveResult[] resolveWithCaching(PsiJavaReference ref,
+  public JavaResolveResult[] resolveWithCaching(PsiJavaReference ref,
                                             GenericsResolver resolver,
                                             boolean needToPreventRecursion,
                                             boolean incompleteCode) {
@@ -129,11 +129,11 @@ public class ResolveCache {
     synchronized (PsiLock.LOCK) {
       // lock is necessary here because of needToPreventRecursion
       boolean physical = ref.getElement().isPhysical();
-      final ResolveResult[] cached = getCachedJavaResolve(ref, physical, incompleteCode);
+      final JavaResolveResult[] cached = getCachedJavaResolve(ref, physical, incompleteCode);
       if (cached != null) return cached;
 
       if (incompleteCode) {
-        final ResolveResult[] results = resolveWithCaching(ref, resolver, needToPreventRecursion, false);
+        final JavaResolveResult[] results = resolveWithCaching(ref, resolver, needToPreventRecursion, false);
         if (results != null && results.length > 0) {
           setCachedJavaResolve(ref, results, physical, true);
           return results;
@@ -141,10 +141,10 @@ public class ResolveCache {
       }
       if (needToPreventRecursion) {
         PsiElement element = ref.getElement();
-        if (element.getUserData(IS_BEING_RESOLVED_KEY) != null) return ResolveResult.EMPTY_ARRAY;
+        if (element.getUserData(IS_BEING_RESOLVED_KEY) != null) return JavaResolveResult.EMPTY_ARRAY;
         element.putUserData(IS_BEING_RESOLVED_KEY, "");
       }
-      final ResolveResult[] result = resolver.resolve(ref, incompleteCode);
+      final JavaResolveResult[] result = resolver.resolve(ref, incompleteCode);
       if (needToPreventRecursion) {
         PsiElement element = ref.getElement();
         element.putUserData(IS_BEING_RESOLVED_KEY, null);
@@ -158,16 +158,16 @@ public class ResolveCache {
     return (physical ? 0 : 1) << 1 | (ic ? 1 : 0);
   }
 
-  private void setCachedJavaResolve(PsiReference ref, ResolveResult[] result, boolean physical, boolean incomplete){
+  private void setCachedJavaResolve(PsiReference ref, JavaResolveResult[] result, boolean physical, boolean incomplete){
     int index = getIndex(physical, incomplete);
-    myJavaResolveMaps[index].put(ref, new SoftReference<ResolveResult[]>(result));
+    myJavaResolveMaps[index].put(ref, new SoftReference<JavaResolveResult[]>(result));
   }
 
-  private ResolveResult[] getCachedJavaResolve(PsiReference ref, boolean physical, boolean ic){
+  private JavaResolveResult[] getCachedJavaResolve(PsiReference ref, boolean physical, boolean ic){
     int index = getIndex(physical, ic);
     final Reference reference = (Reference)myJavaResolveMaps[index].get(ref);
     if(reference == null) return null;
-    return (ResolveResult[]) reference.get();
+    return (JavaResolveResult[]) reference.get();
   }
 
   public static interface ConstValueComputer{

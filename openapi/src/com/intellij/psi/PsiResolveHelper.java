@@ -16,9 +16,9 @@ public interface PsiResolveHelper {
    * @param argumentList      list of arguments of the call or new expression
    * @param place             place where constructor is invoked (used for checking access)
    */
-  ResolveResult resolveConstructor(PsiClassType type, PsiExpressionList argumentList, PsiElement place);
+  JavaResolveResult resolveConstructor(PsiClassType type, PsiExpressionList argumentList, PsiElement place);
 
-  ResolveResult[] multiResolveConstructor(PsiClassType type, PsiExpressionList argumentList, PsiElement place);
+  JavaResolveResult[] multiResolveConstructor(PsiClassType type, PsiExpressionList argumentList, PsiElement place);
 
   CandidateInfo[] getReferencedMethodCandidates(PsiCallExpression call, boolean dummyImplicitConstructor);
 

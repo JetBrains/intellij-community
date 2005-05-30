@@ -76,7 +76,7 @@ public class DebuggerTreeNodeExpression {
 //        expression.acceptChildren(this);
 //
 //        try {
-//          ResolveResult resolveResult = expression.advancedResolve(false);
+//          JavaResolveResult resolveResult = expression.advancedResolve(false);
 //
 //          PsiElement oldResolved = resolveResult.getElement();
 //

@@ -172,7 +172,7 @@ public abstract class GenericsHighlightUtil {
     }
   }
 
-  public static HighlightInfo checkTypeParameterExtendsList(PsiReferenceList referenceList, ResolveResult resolveResult, PsiElement context) {
+  public static HighlightInfo checkTypeParameterExtendsList(PsiReferenceList referenceList, JavaResolveResult resolveResult, PsiElement context) {
     PsiClass aClass = (PsiClass)referenceList.getParent();
     final PsiJavaCodeReferenceElement[] referenceElements = referenceList.getReferenceElements();
     HighlightInfo errorResult = null;
@@ -292,7 +292,7 @@ public abstract class GenericsHighlightUtil {
       if (anonymousClass != null) classReference = anonymousClass.getBaseClassReference();
     }
     if (classReference == null) return null;
-    final ResolveResult result = classReference.advancedResolve(false);
+    final JavaResolveResult result = classReference.advancedResolve(false);
     if (result.getElement() instanceof PsiTypeParameter) {
       final PsiTypeParameter typeParameter = (PsiTypeParameter)result.getElement();
       String description = MessageFormat.format("Type parameter ''{0}'' cannot be instantiated directly",
@@ -493,7 +493,7 @@ public abstract class GenericsHighlightUtil {
            ((PsiClassType)type2).resolve() instanceof PsiTypeParameter;
   }
 
-  public static HighlightInfo checkUncheckedCall(ResolveResult resolveResult, PsiCall call) {
+  public static HighlightInfo checkUncheckedCall(JavaResolveResult resolveResult, PsiCall call) {
     if (call.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
     if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
 
@@ -602,7 +602,7 @@ public abstract class GenericsHighlightUtil {
     return null;
   }
 
-  public static HighlightInfo checkAccessStaticFieldFromEnumConstructor(PsiReferenceExpression expr, ResolveResult result) {
+  public static HighlightInfo checkAccessStaticFieldFromEnumConstructor(PsiReferenceExpression expr, JavaResolveResult result) {
     final PsiElement resolved = result.getElement();
 
     if (!(resolved instanceof PsiField)) return null;
@@ -830,7 +830,7 @@ public abstract class GenericsHighlightUtil {
     return list;
   }
 
-  public static HighlightInfo checkGenericCallWithRawArguments(ResolveResult resolveResult, PsiCallExpression callExpression) {
+  public static HighlightInfo checkGenericCallWithRawArguments(JavaResolveResult resolveResult, PsiCallExpression callExpression) {
     final PsiMethod method = (PsiMethod)resolveResult.getElement();
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     final PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
@@ -848,7 +848,7 @@ public abstract class GenericsHighlightUtil {
 
   public static HighlightInfo checkParametersOnRaw(PsiReferenceParameterList refParamList) {
     if (refParamList.getTypeArguments().length == 0) return null;
-    ResolveResult resolveResult = null;
+    JavaResolveResult resolveResult = null;
     PsiElement parent = refParamList.getParent();
     if (parent instanceof PsiJavaCodeReferenceElement) {
       resolveResult = ((PsiJavaCodeReferenceElement)parent).advancedResolve(false);

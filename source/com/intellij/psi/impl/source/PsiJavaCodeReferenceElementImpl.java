@@ -285,10 +285,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   private static final class OurGenericsResolver implements ResolveCache.GenericsResolver {
     public static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
-    public ResolveResult[] _resolve(final PsiJavaReference ref, final boolean incompleteCode) {
+    public JavaResolveResult[] _resolve(final PsiJavaReference ref, final boolean incompleteCode) {
       final PsiJavaCodeReferenceElementImpl referenceElement = (PsiJavaCodeReferenceElementImpl)ref;
       final int kind = referenceElement.getKind();
-      ResolveResult[] result = referenceElement.resolve(kind);
+      JavaResolveResult[] result = referenceElement.resolve(kind);
       if (incompleteCode && result.length == 0 && kind != CLASS_FQ_NAME_KIND && kind != CLASS_FQ_OR_PACKAGE_NAME_KIND) {
         final VariableResolverProcessor processor = new VariableResolverProcessor(referenceElement);
         PsiScopesUtil.resolveAndWalk(processor, referenceElement, null, incompleteCode);
@@ -303,11 +303,11 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return result;
     }
 
-    public ResolveResult[] resolve(final PsiJavaReference ref, final boolean incompleteCode) {
-      final ResolveResult[] result = _resolve(ref, incompleteCode);
+    public JavaResolveResult[] resolve(final PsiJavaReference ref, final boolean incompleteCode) {
+      final JavaResolveResult[] result = _resolve(ref, incompleteCode);
       if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
         final PsiType[] parameters = ((PsiJavaCodeReferenceElement)ref).getTypeParameters();
-        final ResolveResult[] newResult = new ResolveResult[result.length];
+        final JavaResolveResult[] newResult = new JavaResolveResult[result.length];
         for (int i = 0; i < result.length; i++) {
           final CandidateInfo resolveResult = (CandidateInfo)result[i];
           newResult[i] = new CandidateInfo(
@@ -321,17 +321,17 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
-  public ResolveResult advancedResolve(final boolean incompleteCode) {
-    final ResolveResult[] results = multiResolve(incompleteCode);
+  public JavaResolveResult advancedResolve(final boolean incompleteCode) {
+    final JavaResolveResult[] results = multiResolve(incompleteCode);
     if (results.length == 1) return results[0];
-    return ResolveResult.EMPTY;
+    return JavaResolveResult.EMPTY;
   }
 
-  public ResolveResult[] multiResolve(final boolean incompleteCode) {
+  public JavaResolveResult[] multiResolve(final boolean incompleteCode) {
     final PsiManager manager = getManager();
     if (manager == null) {
       LOG.assertTrue(false, "getManager() == null!");
-      return ResolveResult.EMPTY_ARRAY;
+      return JavaResolveResult.EMPTY_ARRAY;
     }
 
     final ResolveCache resolveCache = ((PsiManagerImpl)manager).getResolveCache();
@@ -347,16 +347,16 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return subst;
   }
 
-  private ResolveResult[] resolve(final int kind) {
+  private JavaResolveResult[] resolve(final int kind) {
     switch (kind) {
     case CLASS_FQ_NAME_KIND:
            {
              // TODO: support type parameters in FQ names
              final String textSkipWhiteSpaceAndComments = getTextSkipWhiteSpaceAndComments();
-             if (textSkipWhiteSpaceAndComments == null || textSkipWhiteSpaceAndComments.length() == 0) return ResolveResult.EMPTY_ARRAY;
+             if (textSkipWhiteSpaceAndComments == null || textSkipWhiteSpaceAndComments.length() == 0) return JavaResolveResult.EMPTY_ARRAY;
              final PsiClass aClass = getManager().findClass(textSkipWhiteSpaceAndComments, getResolveScope());
-             if (aClass == null) return ResolveResult.EMPTY_ARRAY;
-             return new ResolveResult[]{new CandidateInfo(aClass, updateSubstitutor(PsiSubstitutor.EMPTY, aClass), this, false)};
+             if (aClass == null) return JavaResolveResult.EMPTY_ARRAY;
+             return new JavaResolveResult[]{new CandidateInfo(aClass, updateSubstitutor(PsiSubstitutor.EMPTY, aClass), this, false)};
            }
 
     case CLASS_IN_QUALIFIED_NEW_KIND:
@@ -375,21 +375,21 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
                LOG.assertTrue(qualifier != null);
              }
              else if (parent instanceof PsiJavaCodeReferenceElement) {
-               return ResolveResult.EMPTY_ARRAY;
+               return JavaResolveResult.EMPTY_ARRAY;
              }
              else {
                LOG.assertTrue(false, "Invalid java reference!");
-               return ResolveResult.EMPTY_ARRAY;
+               return JavaResolveResult.EMPTY_ARRAY;
              }
 
              final PsiType qualifierType = qualifier.getType();
-             if (qualifierType == null) return ResolveResult.EMPTY_ARRAY;
-             if (!(qualifierType instanceof PsiClassType)) return ResolveResult.EMPTY_ARRAY;
-             final ResolveResult result = PsiUtil.resolveGenericsClassInType(qualifierType);
-             if (result.getElement() == null) return ResolveResult.EMPTY_ARRAY;
+             if (qualifierType == null) return JavaResolveResult.EMPTY_ARRAY;
+             if (!(qualifierType instanceof PsiClassType)) return JavaResolveResult.EMPTY_ARRAY;
+             final JavaResolveResult result = PsiUtil.resolveGenericsClassInType(qualifierType);
+             if (result.getElement() == null) return JavaResolveResult.EMPTY_ARRAY;
              final PsiElement classNameElement;
              classNameElement = getReferenceNameElement();
-             if (!(classNameElement instanceof PsiIdentifier)) return ResolveResult.EMPTY_ARRAY;
+             if (!(classNameElement instanceof PsiIdentifier)) return JavaResolveResult.EMPTY_ARRAY;
              final String className = classNameElement.getText();
 
              final ClassResolverProcessor processor = new ClassResolverProcessor(className, this);
@@ -400,7 +400,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
            {
              final PsiElement classNameElement;
              classNameElement = getReferenceNameElement();
-             if (!(classNameElement instanceof PsiIdentifier)) return ResolveResult.EMPTY_ARRAY;
+             if (!(classNameElement instanceof PsiIdentifier)) return JavaResolveResult.EMPTY_ARRAY;
              final String className = classNameElement.getText();
 
              final ClassResolverProcessor processor = new ClassResolverProcessor(className, this);
@@ -416,18 +416,18 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
              final PsiPackage aPackage = manager.findPackage(packageName);
              if (aPackage == null || !aPackage.isValid()) {
                if (!manager.isPartOfPackagePrefix(packageName)) {
-                 return ResolveResult.EMPTY_ARRAY;
+                 return JavaResolveResult.EMPTY_ARRAY;
                }
                else {
                  return CandidateInfo.RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE;
                }
              }
-             return new ResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY)};
+             return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY)};
            }
 
     case CLASS_FQ_OR_PACKAGE_NAME_KIND:
            {
-             final ResolveResult[] result = resolve(CLASS_FQ_NAME_KIND);
+             final JavaResolveResult[] result = resolve(CLASS_FQ_NAME_KIND);
              if (result.length == 0) {
                return resolve(PACKAGE_NAME_KIND);
              }
@@ -435,11 +435,11 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
            }
     case CLASS_OR_PACKAGE_NAME_KIND:
            {
-             final ResolveResult[] classResolveResult = resolve(CLASS_NAME_KIND);
+             final JavaResolveResult[] classResolveResult = resolve(CLASS_NAME_KIND);
              // [dsl]todo[ik]: review this change I guess ResolveInfo should be merged if both
              // class and package resolve failed.
              if (classResolveResult.length == 0) {
-               final ResolveResult[] packageResolveResult = resolve(PACKAGE_NAME_KIND);
+               final JavaResolveResult[] packageResolveResult = resolve(PACKAGE_NAME_KIND);
                if (packageResolveResult.length > 0) return packageResolveResult;
              }
              return classResolveResult;
@@ -447,7 +447,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     default:
            LOG.assertTrue(false);
     }
-    return ResolveResult.EMPTY_ARRAY;
+    return JavaResolveResult.EMPTY_ARRAY;
   }
 
   public final PsiElement handleElementRename(final String newElementName) throws IncorrectOperationException {

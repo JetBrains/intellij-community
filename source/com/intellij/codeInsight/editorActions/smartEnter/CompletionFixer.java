@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.ResolveResult;
+import com.intellij.psi.JavaResolveResult;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -19,7 +19,7 @@ public class CompletionFixer implements Fixer {
   public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof PsiJavaCodeReferenceElement) {
       PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement) psiElement;
-      final ResolveResult resolved = ref.advancedResolve(true);
+      final JavaResolveResult resolved = ref.advancedResolve(true);
       if (resolved == null || resolved.getElement() == null) {
         editor.getCaretModel().moveToOffset(ref.getTextRange().getEndOffset());
         final CodeCompletionAction completionAction = (CodeCompletionAction) ActionManager.getInstance().getAction("CodeCompletion");

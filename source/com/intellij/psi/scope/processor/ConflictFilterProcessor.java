@@ -3,7 +3,7 @@ package com.intellij.psi.scope.processor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.ResolveResult;
+import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
@@ -23,7 +23,7 @@ import java.util.List;
 public class ConflictFilterProcessor extends FilterScopeProcessor
  implements NameHint{
   protected final PsiConflictResolver[] myResolvers;
-  private ResolveResult[] myCachedResult = null;
+  private JavaResolveResult[] myCachedResult = null;
   private String myName;
 
   public ConflictFilterProcessor(String name, PsiElement element, ElementFilter filter, PsiConflictResolver[] resolvers, List container){
@@ -68,12 +68,12 @@ public class ConflictFilterProcessor extends FilterScopeProcessor
     }
   }
 
-  public void forceResult(ResolveResult[] result){
+  public void forceResult(JavaResolveResult[] result){
     myCachedResult = result;
   }
 
 
-  public ResolveResult[] getResult(){
+  public JavaResolveResult[] getResult(){
     if(myCachedResult == null){
       CandidateInfo candidate;
 
@@ -84,7 +84,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor
           break;
         }
       }
-      myCachedResult = conflicts.toArray(new ResolveResult[conflicts.size()]);
+      myCachedResult = conflicts.toArray(new JavaResolveResult[conflicts.size()]);
     }
 
     return myCachedResult;

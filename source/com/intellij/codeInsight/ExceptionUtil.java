@@ -266,7 +266,7 @@ public class ExceptionUtil {
   }
 
   public static PsiClassType[] getUnhandledExceptions(PsiCallExpression methodCall, PsiElement topElement) {
-    final ResolveResult result = methodCall.resolveMethodGenerics();
+    final JavaResolveResult result = methodCall.resolveMethodGenerics();
     PsiMethod method = (PsiMethod)result.getElement();
     return getUnhandledExceptions(method, methodCall, topElement, result.getSubstitutor());
   }

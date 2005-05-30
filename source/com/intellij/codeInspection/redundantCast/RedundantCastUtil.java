@@ -184,7 +184,7 @@ public class RedundantCastUtil {
         if (type == null) return;
         if (type instanceof PsiPrimitiveType) return;
 
-        final ResolveResult resolveResult = methodExpr.advancedResolve(false);
+        final JavaResolveResult resolveResult = methodExpr.advancedResolve(false);
         PsiMethod targetMethod = (PsiMethod)resolveResult.getElement();
         if (targetMethod == null) return;
         if (targetMethod.hasModifierProperty(PsiModifier.STATIC)) return;
@@ -198,7 +198,7 @@ public class RedundantCastUtil {
           PsiExpression newOperand = ((PsiTypeCastExpression)((PsiParenthesizedExpression)newQualifier).getExpression()).getOperand();
           newQualifier.replace(newOperand);
 
-          final ResolveResult newResult = newCall.getMethodExpression().advancedResolve(false);
+          final JavaResolveResult newResult = newCall.getMethodExpression().advancedResolve(false);
           if (!newResult.isValidResult()) return;
           final PsiMethod newTargetMethod = (PsiMethod)newResult.getElement();
           final PsiType newReturnType = newResult.getSubstitutor().substitute(newTargetMethod.getReturnType());
@@ -273,7 +273,7 @@ public class RedundantCastUtil {
         PsiManager manager = expression.getManager();
         PsiElementFactory factory = manager.getElementFactory();
 
-        ResolveResult newResult;
+        JavaResolveResult newResult;
 
         try {
           PsiCallExpression newCall = (PsiCallExpression)factory.createExpressionFromText(expression.getText(), expression);

@@ -378,7 +378,7 @@ public class ControlFlowUtil {
   }
 
   private static boolean checkReferenceExpressionScope (final PsiReferenceExpression ref, final PsiElement targetClassMember) {
-    final ResolveResult resolveResult = ref.advancedResolve(false);
+    final JavaResolveResult resolveResult = ref.advancedResolve(false);
     final PsiElement def = resolveResult.getElement();
     if (def != null) {
       PsiElement parent = def.getParent ();
@@ -422,7 +422,7 @@ public class ControlFlowUtil {
     if (scope instanceof PsiJavaCodeReferenceElement) {
 
       final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)scope;
-      final ResolveResult result = ref.advancedResolve(false);
+      final JavaResolveResult result = ref.advancedResolve(false);
       final PsiElement refElement = result.getElement();
 
       if (refElement != null) {

@@ -137,12 +137,12 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   public PsiMethod resolveMethod() {
     PsiClass containingClass = getContainingClass();
     LOG.assertTrue(containingClass != null);
-    ResolveResult resolveResult = getManager().getResolveHelper()
+    JavaResolveResult resolveResult = getManager().getResolveHelper()
       .resolveConstructor(getManager().getElementFactory().createType(containingClass), getArgumentList(), this);
     return (PsiMethod)resolveResult.getElement();
   }
 
-  public ResolveResult resolveMethodGenerics() {
+  public JavaResolveResult resolveMethodGenerics() {
     PsiClass containingClass = getContainingClass();
     LOG.assertTrue(containingClass != null);
     return getManager().getResolveHelper()
@@ -247,16 +247,16 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
     public void processVariants(PsiScopeProcessor processor) {
     }
 
-    public ResolveResult[] multiResolve(boolean incompleteCode) {
+    public JavaResolveResult[] multiResolve(boolean incompleteCode) {
       PsiManager manager = getManager();
       PsiClassType type = manager.getElementFactory().createType(getContainingClass());
       return manager.getResolveHelper().multiResolveConstructor(type, getArgumentList(), getElement());
     }
 
-    public ResolveResult advancedResolve(boolean incompleteCode) {
-      final ResolveResult[] results = multiResolve(incompleteCode);
+    public JavaResolveResult advancedResolve(boolean incompleteCode) {
+      final JavaResolveResult[] results = multiResolve(incompleteCode);
       if (results.length == 1) return results[0];
-      return ResolveResult.EMPTY;
+      return JavaResolveResult.EMPTY;
     }
 
     public PsiElement resolve() {

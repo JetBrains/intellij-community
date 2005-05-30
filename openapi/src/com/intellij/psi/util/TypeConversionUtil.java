@@ -769,7 +769,7 @@ public class TypeConversionUtil {
     final Set<PsiClass> visited = new HashSet<PsiClass>();
     if (derivedClass instanceof PsiAnonymousClass) {
       final PsiClassType baseType = ((PsiAnonymousClass)derivedClass).getBaseClassType();
-      final ResolveResult result = baseType.resolveGenerics();
+      final JavaResolveResult result = baseType.resolveGenerics();
       if (result.getElement() == null) return null;
       substitutor = getSuperClassSubstitutorInner(superClass, (PsiClass)result.getElement(),
                                                   derivedSubstitutor.putAll(result.getSubstitutor()), visited, manager);
@@ -824,7 +824,7 @@ public class TypeConversionUtil {
       //if (!(substitutedType instanceof PsiClassType)) return null;
       LOG.assertTrue(substitutedType instanceof PsiClassType);
 
-      final ResolveResult result = ((PsiClassType)substitutedType).resolveGenerics();
+      final JavaResolveResult result = ((PsiClassType)substitutedType).resolveGenerics();
       final PsiElement newCandidate = result.getElement();
       if (newCandidate != null) {
         final PsiSubstitutor substitutor = result.getSubstitutor();

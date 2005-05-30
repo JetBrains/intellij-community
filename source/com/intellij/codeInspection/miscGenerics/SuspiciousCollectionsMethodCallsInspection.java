@@ -88,7 +88,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
         if (!(argType instanceof PsiClassType)) return;
 
         final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
-        final ResolveResult resolveResult = methodExpression.advancedResolve(false);
+        final JavaResolveResult resolveResult = methodExpression.advancedResolve(false);
         final PsiMethod psiMethod = (PsiMethod)resolveResult.getElement();
         if (psiMethod == null) return;
 

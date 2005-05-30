@@ -566,7 +566,7 @@ public class ImportHelper{
         continue;
         }
 
-        ResolveResult resolveResult = referenceElement.advancedResolve(true);
+        JavaResolveResult resolveResult = referenceElement.advancedResolve(true);
         PsiElement refElement = resolveResult.getElement();
         if (refElement == null) {
           refElement = ResolveClassUtil.resolveClass(referenceElement); // might be uncomplete code

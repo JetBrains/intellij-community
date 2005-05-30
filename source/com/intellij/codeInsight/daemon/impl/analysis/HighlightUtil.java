@@ -1021,7 +1021,7 @@ public class HighlightUtil {
     }
   }
 
-  static String buildProblemWithAccessDescription(PsiElement refElement, PsiJavaCodeReferenceElement reference, ResolveResult result) {
+  static String buildProblemWithAccessDescription(PsiElement refElement, PsiJavaCodeReferenceElement reference, JavaResolveResult result) {
     String symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
 
     if (((PsiModifierListOwner)refElement).hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -1755,7 +1755,7 @@ public class HighlightUtil {
     return null;
   }
 
-  static HighlightInfo checkAccessStaticMemberViaInstanceReference(PsiReferenceExpression expr, ResolveResult result) {
+  static HighlightInfo checkAccessStaticMemberViaInstanceReference(PsiReferenceExpression expr, JavaResolveResult result) {
     PsiElement resolved = result.getElement();
     if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE)) {
       return null;
@@ -1915,7 +1915,7 @@ public class HighlightUtil {
   }
 
   //@top
-  public static HighlightInfo checkReference(PsiJavaCodeReferenceElement ref, ResolveResult result, PsiElement resolved) {
+  public static HighlightInfo checkReference(PsiJavaCodeReferenceElement ref, JavaResolveResult result, PsiElement resolved) {
     PsiElement refName = ref.getReferenceNameElement();
 
     if (!(refName instanceof PsiIdentifier) && !(refName instanceof PsiKeyword)) return null;
@@ -2006,7 +2006,7 @@ public class HighlightUtil {
 
   public static HighlightInfo checkReferenceList(PsiJavaCodeReferenceElement ref,
                                                  PsiReferenceList referenceList,
-                                                 ResolveResult resolveResult) {
+                                                 JavaResolveResult resolveResult) {
     PsiClass resolved = (PsiClass)resolveResult.getElement();
     PsiElement refGrandParent = referenceList.getParent();
     HighlightInfo highlightInfo = null;

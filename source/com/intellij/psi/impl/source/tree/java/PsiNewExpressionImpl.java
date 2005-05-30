@@ -70,7 +70,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
     return resolveConstructor();
   }
 
-  public ResolveResult resolveMethodGenerics() {
+  public JavaResolveResult resolveMethodGenerics() {
     ASTNode classRef = findChildByRole(ChildRole.TYPE_REFERENCE);
     if (classRef != null){
       ASTNode argumentList = TreeUtil.skipElements(classRef.getTreeNext(), WHITE_SPACE_OR_COMMENT_BIT_SET);
@@ -97,7 +97,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
       }
     }
 
-    return ResolveResult.EMPTY;
+    return JavaResolveResult.EMPTY;
   }
 
   public PsiExpression getQualifier() {

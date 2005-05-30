@@ -60,7 +60,7 @@ public class RefCountHolder {
     return myXmlId2TagMap.get(id);
   }
 
-  public void registerReference(PsiElement ref, ResolveResult resolveResult) {
+  public void registerReference(PsiElement ref, JavaResolveResult resolveResult) {
     PsiElement refElement = resolveResult.getElement();
     if (refElement != null && getFile().equals(refElement.getContainingFile())) {
       registerLocalRef(ref, refElement);

@@ -3,11 +3,8 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 
@@ -81,14 +78,14 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     return myPatternExpression.resolve();
   }
 
-  public ResolveResult advancedResolve(boolean incompleteCode){
+  public JavaResolveResult advancedResolve(boolean incompleteCode){
     return myPatternExpression.advancedResolve(incompleteCode);
   }
 
-  public ResolveResult[] multiResolve(boolean incompleteCode){
-    final ResolveResult result = advancedResolve(incompleteCode);
-    if(result != ResolveResult.EMPTY) return new ResolveResult[]{result};
-    return ResolveResult.EMPTY_ARRAY;
+  public JavaResolveResult[] multiResolve(boolean incompleteCode){
+    final JavaResolveResult result = advancedResolve(incompleteCode);
+    if(result != JavaResolveResult.EMPTY) return new JavaResolveResult[]{result};
+    return JavaResolveResult.EMPTY_ARRAY;
   }
 
 

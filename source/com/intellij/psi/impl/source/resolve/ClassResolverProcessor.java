@@ -20,7 +20,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   private PsiClass myAccessClass = null;
   private boolean myAccessibleResultsFlag = false;
   private List<CandidateInfo> myCandidates = null;
-  private ResolveResult[] myResult = ResolveResult.EMPTY_ARRAY;
+  private JavaResolveResult[] myResult = JavaResolveResult.EMPTY_ARRAY;
   private PsiElement myCurrentFileContext;
 
   public ClassResolverProcessor(String className, PsiElement place) {
@@ -42,9 +42,9 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     }
   }
 
-  public ResolveResult[] getResult() {
+  public JavaResolveResult[] getResult() {
     if (myResult != null) return myResult;
-    if (myCandidates == null) return myResult = ResolveResult.EMPTY_ARRAY;
+    if (myCandidates == null) return myResult = JavaResolveResult.EMPTY_ARRAY;
 
     {
       // normalizing
@@ -58,7 +58,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
         }
       }
     }
-    myResult = myCandidates.toArray(new ResolveResult[myCandidates.size()]);
+    myResult = myCandidates.toArray(new JavaResolveResult[myCandidates.size()]);
     return myResult;
   }
 
@@ -107,7 +107,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
           myAccessibleResultsFlag = true;
           if (!myGrouped) {
             myCandidates = null;
-            myResult = new ResolveResult[]{new CandidateInfo(aClass, substitutor, null, null, false, myCurrentFileContext)};
+            myResult = new JavaResolveResult[]{new CandidateInfo(aClass, substitutor, null, null, false, myCurrentFileContext)};
             return false;
           }
         }
@@ -195,7 +195,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     return accessible;
   }
 
-  public void forceResult(ResolveResult[] result) {
+  public void forceResult(JavaResolveResult[] result) {
     myResult = result;
   }
 

@@ -67,14 +67,14 @@ public class ClsTypeParameterReferenceImpl extends ClsElementImpl implements Psi
     return null;
   }
 
-  public ResolveResult advancedResolve(boolean incompleteCode){
+  public JavaResolveResult advancedResolve(boolean incompleteCode){
     return new CandidateInfo(resolve(), PsiSubstitutor.EMPTY);
   }
 
-  public ResolveResult[] multiResolve(boolean incompleteCode){
-    final ResolveResult result = advancedResolve(incompleteCode);
-    if(result != ResolveResult.EMPTY) return new ResolveResult[]{result};
-    return ResolveResult.EMPTY_ARRAY;
+  public JavaResolveResult[] multiResolve(boolean incompleteCode){
+    final JavaResolveResult result = advancedResolve(incompleteCode);
+    if(result != JavaResolveResult.EMPTY) return new JavaResolveResult[]{result};
+    return JavaResolveResult.EMPTY_ARRAY;
   }
 
   public PsiType[] getTypeParameters() {

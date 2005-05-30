@@ -99,10 +99,10 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
   private static final class OurGenericsResolver implements ResolveCache.GenericsResolver {
     public static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
-    public ResolveResult[] _resolve(PsiJavaReference ref, boolean incompleteCode) {
+    public JavaResolveResult[] _resolve(PsiJavaReference ref, boolean incompleteCode) {
       final PsiReferenceExpressionImpl _ref = (PsiReferenceExpressionImpl)ref;
       IElementType parentType = _ref.getTreeParent() != null ? _ref.getTreeParent().getElementType() : null;
-      final ResolveResult[] result = _ref._resolve(parentType);
+      final JavaResolveResult[] result = _ref._resolve(parentType);
 
       if (incompleteCode && parentType != REFERENCE_EXPRESSION && result.length == 0) {
         return _ref._resolve(REFERENCE_EXPRESSION);
@@ -110,11 +110,11 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       return result;
     }
 
-    public ResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode) {
-      final ResolveResult[] result = _resolve(ref, incompleteCode);
+    public JavaResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode) {
+      final JavaResolveResult[] result = _resolve(ref, incompleteCode);
       if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
         final PsiType[] parameters = ((PsiJavaCodeReferenceElement)ref).getTypeParameters();
-        final ResolveResult[] newResult = new ResolveResult[result.length];
+        final JavaResolveResult[] newResult = new JavaResolveResult[result.length];
         for (int i = 0; i < result.length; i++) {
           final CandidateInfo resolveResult = (CandidateInfo)result[i];
           newResult[i] = new CandidateInfo(
@@ -128,7 +128,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     }
   }
 
-  private ResolveResult[] _resolve(IElementType parentType) {
+  private JavaResolveResult[] _resolve(IElementType parentType) {
     if (parentType == null) {
       parentType = getTreeParent() != null ? getTreeParent().getElementType() : null;
     }
@@ -137,7 +137,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
         {
           final VariableResolverProcessor processor = new VariableResolverProcessor(this);
           PsiScopesUtil.resolveAndWalk(processor, this, null);
-          ResolveResult[] result = processor.getResult();
+          JavaResolveResult[] result = processor.getResult();
 
           if (result.length > 0) {
             return processor.getResult();
@@ -146,12 +146,12 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
         {
           final PsiElement classNameElement;
           classNameElement = getReferenceNameElement();
-          if (!(classNameElement instanceof PsiIdentifier)) return ResolveResult.EMPTY_ARRAY;
+          if (!(classNameElement instanceof PsiIdentifier)) return JavaResolveResult.EMPTY_ARRAY;
           final String className = classNameElement.getText();
 
           final ClassResolverProcessor processor = new ClassResolverProcessor(className, this);
           PsiScopesUtil.resolveAndWalk(processor, this, null);
-          ResolveResult[] result = processor.getResult();
+          JavaResolveResult[] result = processor.getResult();
           if (result.length > 0) {
             return processor.getResult();
           }
@@ -162,13 +162,13 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
           final PsiPackage aPackage = manager.findPackage(packageName);
           if (aPackage == null) {
             if (!manager.isPartOfPackagePrefix(packageName)) {
-              return ResolveResult.EMPTY_ARRAY;
+              return JavaResolveResult.EMPTY_ARRAY;
             }
             else {
               return CandidateInfo.RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE;
             }
           }
-          return new ResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY)};
+          return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY)};
         }
       }
     }
@@ -180,7 +180,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
           PsiScopesUtil.setupAndRunProcessor(processor, methodCall, false);
         }
         catch (MethodProcessorSetupFailedException e) {
-          return ResolveResult.EMPTY_ARRAY;
+          return JavaResolveResult.EMPTY_ARRAY;
         }
         return processor.getResult();
       }
@@ -201,10 +201,10 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
               };
               PsiScopesUtil.treeWalkUp(processor, aClass, aClass);
               if (processor.size() == 1) {
-                return new ResolveResult[]{new CandidateInfo(processor.getResult(0), PsiSubstitutor.EMPTY)};
+                return new JavaResolveResult[]{new CandidateInfo(processor.getResult(0), PsiSubstitutor.EMPTY)};
               }
 
-              return ResolveResult.EMPTY_ARRAY;
+              return JavaResolveResult.EMPTY_ARRAY;
             }
           }
         }
@@ -225,7 +225,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     }
   }
 
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final PsiManager manager = getManager();
     if (manager == null) {
       LOG.assertTrue(false, "getManager() == null!");
@@ -255,7 +255,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
   public static final String LENGTH = "length";
 
   public PsiType getType() {
-    ResolveResult result = advancedResolve(false);
+    JavaResolveResult result = advancedResolve(false);
     PsiElement resolve = result.getElement();
     if (resolve == null) {
       ASTNode refName = findChildByRole(ChildRole.REFERENCE_NAME);
@@ -334,10 +334,10 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
   }
 
-  public ResolveResult advancedResolve(boolean incompleteCode) {
-    final ResolveResult[] results = multiResolve(incompleteCode);
+  public JavaResolveResult advancedResolve(boolean incompleteCode) {
+    final JavaResolveResult[] results = multiResolve(incompleteCode);
     if (results.length == 1) return results[0];
-    return ResolveResult.EMPTY;
+    return JavaResolveResult.EMPTY;
   }
 
   public PsiElement getReferenceNameElement() {
@@ -362,7 +362,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     if (getQualifierExpression() != null) {
       return renameDirectly(newElementName);
     }
-    final ResolveResult resolveResult = advancedResolve(false);
+    final JavaResolveResult resolveResult = advancedResolve(false);
     if (resolveResult.getElement() == null) {
       return renameDirectly(newElementName);
     }

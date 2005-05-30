@@ -106,7 +106,7 @@ public class CopyHandler extends EditorActionHandler {
         final PsiElement element = elements[i];
         if (element instanceof PsiJavaCodeReferenceElement) {
           if (!((PsiJavaCodeReferenceElement) element).isQualified()) {
-            final ResolveResult resolveResult = ((PsiJavaCodeReferenceElement) element).advancedResolve(false);
+            final JavaResolveResult resolveResult = ((PsiJavaCodeReferenceElement) element).advancedResolve(false);
             final PsiElement refElement = resolveResult.getElement();
             if (refElement != null && refElement.getContainingFile() != file) {
 

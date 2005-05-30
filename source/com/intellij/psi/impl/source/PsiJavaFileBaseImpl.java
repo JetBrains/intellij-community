@@ -30,7 +30,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private PsiImportListImpl myRepositoryImportList = null;
   private String myCachedPackageName = null;
   protected PsiClass[] myCachedClasses = null;
-  private final Map<PsiJavaFile,Map<String, SoftReference<ResolveResult[]>>> myGuessCache = ResolveCache.getOrCreateWeakMap(myManager, CACHED_CLASSES_MAP_KEY, false);
+  private final Map<PsiJavaFile,Map<String, SoftReference<JavaResolveResult[]>>> myGuessCache = ResolveCache.getOrCreateWeakMap(myManager, CACHED_CLASSES_MAP_KEY, false);
 
   private static final String[] IMPLICIT_IMPORTS = new String[]{ "java.lang" };
 
@@ -275,7 +275,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if (classHint == null || classHint.shouldProcess(PsiClass.class)){
       if(processor instanceof ClassResolverProcessor){
         // Some speedup
-        final ResolveResult[] guessClass = getGuess(name);
+        final JavaResolveResult[] guessClass = getGuess(name);
         if(guessClass != null){
           ((ClassResolverProcessor) processor).forceResult(guessClass);
           return false;
@@ -413,20 +413,20 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return true;
   }
 
-  private ResolveResult[] getGuess(final String name){
+  private JavaResolveResult[] getGuess(final String name){
     final Map guessForFile = myGuessCache.get(this);
     final Reference ref = guessForFile != null ? (Reference)guessForFile.get(name) : null;
 
-    return ref != null ? (ResolveResult[])ref.get() : null;
+    return ref != null ? (JavaResolveResult[])ref.get() : null;
   }
 
-  private void setGuess(final String name, final ResolveResult[] cached){
-    Map<String,SoftReference<ResolveResult[]>> guessForFile = myGuessCache.get(this);
+  private void setGuess(final String name, final JavaResolveResult[] cached){
+    Map<String,SoftReference<JavaResolveResult[]>> guessForFile = myGuessCache.get(this);
     if(guessForFile == null){
-      guessForFile = new HashMap<String, SoftReference<ResolveResult[]>>();
+      guessForFile = new HashMap<String, SoftReference<JavaResolveResult[]>>();
       myGuessCache.put(this, guessForFile);
     }
-    guessForFile.put(name, new SoftReference<ResolveResult[]>(cached));
+    guessForFile.put(name, new SoftReference<JavaResolveResult[]>(cached));
   }
 
 

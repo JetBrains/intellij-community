@@ -104,7 +104,7 @@ public class PsiScopesUtil {
       if (qualifier instanceof PsiExpression || qualifier instanceof PsiJavaCodeReferenceElement){
         if(qualifier instanceof PsiExpression){
           type = ((PsiExpression)qualifier).getType();
-          final ResolveResult result = PsiUtil.resolveGenericsClassInType(type);
+          final JavaResolveResult result = PsiUtil.resolveGenericsClassInType(type);
           target = result.getElement();
           substitutor = result.getSubstitutor();
         }
@@ -112,14 +112,14 @@ public class PsiScopesUtil {
         if(type == null && qualifier instanceof PsiJavaCodeReferenceElement) {
           // In case of class qualifier
           final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)qualifier;
-          final ResolveResult result = referenceElement.advancedResolve(incompleteCode);
+          final JavaResolveResult result = referenceElement.advancedResolve(incompleteCode);
           target = result.getElement();
           substitutor = result.getSubstitutor();
 
           if(target instanceof PsiVariable){
             type = substitutor.substitute(((PsiVariable) target).getType());
             if(type instanceof PsiClassType){
-              final ResolveResult typeResult = ((PsiClassType) type).resolveGenerics();
+              final JavaResolveResult typeResult = ((PsiClassType) type).resolveGenerics();
               target = typeResult.getElement();
               substitutor = substitutor.merge(typeResult.getSubstitutor());
             }
@@ -128,7 +128,7 @@ public class PsiScopesUtil {
           else if(target instanceof PsiMethod){
             type = substitutor.substitute(((PsiMethod) target).getReturnType());
             if(type instanceof PsiClassType){
-              final ResolveResult typeResult = ((PsiClassType) type).resolveGenerics();
+              final JavaResolveResult typeResult = ((PsiClassType) type).resolveGenerics();
               target = typeResult.getElement();
               substitutor = substitutor.merge(typeResult.getSubstitutor());
             }
@@ -228,7 +228,7 @@ public class PsiScopesUtil {
           PsiType type = ((PsiExpression) qualifier).getType();
           if (type == null) {
             if (qualifier instanceof PsiJavaCodeReferenceElement) {
-              final ResolveResult result = ((PsiJavaCodeReferenceElement) qualifier).advancedResolve(false);
+              final JavaResolveResult result = ((PsiJavaCodeReferenceElement) qualifier).advancedResolve(false);
               if (result.getElement() instanceof PsiClass) {
                 processor.handleEvent(PsiScopeProcessor.Event.START_STATIC, null);
                 processQualifierResult(result, processor, methodCall);
@@ -264,7 +264,7 @@ public class PsiScopesUtil {
         }
       }
 
-      final ResolveResult result = classRef.advancedResolve(false);
+      final JavaResolveResult result = classRef.advancedResolve(false);
       PsiClass aClass = (PsiClass) result.getElement();
       if (aClass == null)
         throw new MethodProcessorSetupFailedException("Cant resolve class in new expression");
@@ -285,18 +285,18 @@ public class PsiScopesUtil {
                                          PsiManager manager,
                                          PsiMethodCallExpression call) throws MethodProcessorSetupFailedException {
     if (type instanceof PsiClassType) {
-      ResolveResult qualifierResult = ((PsiClassType)type).resolveGenerics();
+      JavaResolveResult qualifierResult = ((PsiClassType)type).resolveGenerics();
       return processQualifierResult(qualifierResult, processor, call);
     }
     else if (type instanceof PsiArrayType) {
-      ResolveResult qualifierResult = manager.getElementFactory().getArrayClassType(((PsiArrayType)type).getComponentType()).resolveGenerics();
+      JavaResolveResult qualifierResult = manager.getElementFactory().getArrayClassType(((PsiArrayType)type).getComponentType()).resolveGenerics();
       return processQualifierResult(qualifierResult, processor, call);
     }
 
     return true;
   }
 
-  private static boolean processQualifierResult(ResolveResult qualifierResult,
+  private static boolean processQualifierResult(JavaResolveResult qualifierResult,
                                            final MethodsProcessor processor,
                                            PsiMethodCallExpression methodCall) throws MethodProcessorSetupFailedException {
     PsiElement resolve = qualifierResult.getElement();

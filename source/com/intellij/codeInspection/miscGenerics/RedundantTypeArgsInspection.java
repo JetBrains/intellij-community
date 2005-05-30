@@ -71,7 +71,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
                                        PsiCallExpression expression,
                                        final InspectionManager inspectionManager, final List<ProblemDescriptor> problems) {
 
-        final ResolveResult resolveResult = reference.advancedResolve(false);
+        final JavaResolveResult resolveResult = reference.advancedResolve(false);
 
         if (resolveResult.getElement() instanceof PsiMethod && resolveResult.isValidResult()) {
           PsiMethod method = (PsiMethod)resolveResult.getElement();

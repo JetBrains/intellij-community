@@ -72,7 +72,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     }
   }
 
-  public ResolveResult advancedResolve(boolean incompleteCode){
+  public JavaResolveResult advancedResolve(boolean incompleteCode){
     final PsiElement resolved = resolve();
     PsiSubstitutor substitutor = mySubstitutor;
     if (substitutor == null) {
@@ -85,10 +85,10 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     return new CandidateInfo(resolved, substitutor);
   }
 
-  public ResolveResult[] multiResolve(boolean incompleteCode){
-    final ResolveResult result = advancedResolve(incompleteCode);
-    if(result != ResolveResult.EMPTY) return new ResolveResult[]{result};
-    return ResolveResult.EMPTY_ARRAY;
+  public JavaResolveResult[] multiResolve(boolean incompleteCode){
+    final JavaResolveResult result = advancedResolve(incompleteCode);
+    if(result != JavaResolveResult.EMPTY) return new JavaResolveResult[]{result};
+    return JavaResolveResult.EMPTY_ARRAY;
   }
 
   public void processVariants(PsiScopeProcessor processor){

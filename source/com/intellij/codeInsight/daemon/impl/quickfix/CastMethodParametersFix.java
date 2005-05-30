@@ -146,7 +146,7 @@ public class CastMethodParametersFix extends AddTypeCastFix implements Intention
             PsiScopesUtil.resolveAndWalk(processor, methodRef, null);
           }
 
-          ResolveResult[] result = processor.getResult();
+          JavaResolveResult[] result = processor.getResult();
           if (result.length == 1 && result[0].isValidResult()) {
             suggestedCasts.add(parameterType.getCanonicalText());
             QuickFixAction.registerQuickFixAction(highlightInfo, new CastMethodParametersFix(list, i, parameterType), null);

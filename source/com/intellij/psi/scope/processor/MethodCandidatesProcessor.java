@@ -45,7 +45,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
   }
 
   public CandidateInfo[] getCandidates(){
-    final ResolveResult[] resolveResult = getResult();
+    final JavaResolveResult[] resolveResult = getResult();
     CandidateInfo[] infos = new CandidateInfo[resolveResult.length];
     System.arraycopy(resolveResult, 0, infos, 0, resolveResult.length);
     return infos;

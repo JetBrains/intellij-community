@@ -513,7 +513,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     return anchor;
   }
 
-  static PsiElement getClassContainingResolve (final ResolveResult result) {
+  static PsiElement getClassContainingResolve (final JavaResolveResult result) {
     final PsiElement elem = result.getElement ();
     if (elem != null) {
       if (elem instanceof PsiLocalVariable || elem instanceof PsiParameter) {
@@ -577,7 +577,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       
       if (oldExpr instanceof PsiReferenceExpression) {
         final PsiReferenceExpression oldRef = (PsiReferenceExpression) oldExpr;
-        final ResolveResult adv = oldRef.advancedResolve(false);
+        final JavaResolveResult adv = oldRef.advancedResolve(false);
         final PsiElement scope = getClassContainingResolve (adv);
         final PsiClass clss = PsiTreeUtil.getParentOfType (oldExpr, PsiClass.class);
         if (PsiTreeUtil.isAncestor (clss, scope, false)) {

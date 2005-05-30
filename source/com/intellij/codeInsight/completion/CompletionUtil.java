@@ -321,7 +321,7 @@ public class CompletionUtil {
   public static PsiType eliminateWildcards (PsiType type) {
     if (type instanceof PsiClassType) {
       PsiClassType classType = ((PsiClassType)type);
-      ResolveResult resolveResult = classType.resolveGenerics();
+      JavaResolveResult resolveResult = classType.resolveGenerics();
       PsiClass aClass = (PsiClass)resolveResult.getElement();
       if (aClass != null) {
         PsiManager manager = aClass.getManager();

@@ -74,13 +74,13 @@ public class WrapExpressionFix implements IntentionAction {
     return true;
   }
 
-  public static void registerWrapAction (ResolveResult[] candidates, PsiExpression[] expressions, HighlightInfo highlightInfo) {
+  public static void registerWrapAction (JavaResolveResult[] candidates, PsiExpression[] expressions, HighlightInfo highlightInfo) {
     PsiClassType expectedType = null;
     PsiExpression expr = null;
 
     nextMethod:
     for (int i = 0; i < candidates.length && expectedType == null; i++) {
-      ResolveResult candidate = candidates[i];
+      JavaResolveResult candidate = candidates[i];
       PsiSubstitutor substitutor = candidate.getSubstitutor();
       PsiParameter[] parameters = ((PsiMethod) candidate.getElement()).getParameterList().getParameters();
       if (parameters.length != expressions.length) continue;

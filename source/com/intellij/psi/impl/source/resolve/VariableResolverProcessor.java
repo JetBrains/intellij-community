@@ -41,7 +41,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
       setName(referenceName.getText());
     }
     if (qualifier instanceof PsiExpression){
-      final ResolveResult accessClass = PsiUtil.getAccessObjectClass((PsiExpression)qualifier);
+      final JavaResolveResult accessClass = PsiUtil.getAccessObjectClass((PsiExpression)qualifier);
       final PsiElement element = accessClass.getElement();
       if (element instanceof PsiTypeParameter) {
         final PsiManager manager = element.getManager();

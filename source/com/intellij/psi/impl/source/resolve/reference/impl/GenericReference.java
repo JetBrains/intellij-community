@@ -59,7 +59,7 @@ public abstract class GenericReference implements PsiReference{
     }
 
     processVariants(processor);
-    final ResolveResult[] result = processor.getResult();
+    final JavaResolveResult[] result = processor.getResult();
     if(result.length != 1) return null;
     return result[0].getElement();
   }

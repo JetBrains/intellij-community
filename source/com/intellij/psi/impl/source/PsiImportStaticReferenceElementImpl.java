@@ -184,18 +184,18 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     return "PsiImportStaticReferenceElement:" + getText();
   }
 
-  public ResolveResult advancedResolve(boolean incompleteCode) {
-    final ResolveResult[] results = multiResolve(incompleteCode);
+  public JavaResolveResult advancedResolve(boolean incompleteCode) {
+    final JavaResolveResult[] results = multiResolve(incompleteCode);
     if (results.length == 1) return results[0];
-    return ResolveResult.EMPTY;
+    return JavaResolveResult.EMPTY;
   }
 
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public JavaResolveResult[] multiResolve(boolean incompleteCode) {
     final ResolveCache resolveCache = ((PsiManagerImpl)getManager()).getResolveCache();
     return resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, false, incompleteCode);
   }
 
-  private class OurResolveResult implements ResolveResult {
+  private class OurResolveResult implements JavaResolveResult {
     PsiMember myTarget;
     Boolean myAccessible = null;
 
@@ -239,34 +239,34 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
 
   private static final class OurGenericsResolver implements ResolveCache.GenericsResolver {
     private static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
-    public ResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode) {
+    public JavaResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode) {
       LOG.assertTrue(ref instanceof PsiImportStaticReferenceElementImpl);
       final PsiImportStaticReferenceElementImpl referenceElement = ((PsiImportStaticReferenceElementImpl)ref);
       final PsiElement qualifier = referenceElement.getQualifier();
-      if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return ResolveResult.EMPTY_ARRAY;
+      if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return JavaResolveResult.EMPTY_ARRAY;
       final PsiElement target = ((PsiJavaCodeReferenceElement)qualifier).resolve();
-      if (!(target instanceof PsiClass)) return ResolveResult.EMPTY_ARRAY;
-      final ArrayList<ResolveResult> results = new ArrayList<ResolveResult>();
+      if (!(target instanceof PsiClass)) return JavaResolveResult.EMPTY_ARRAY;
+      final ArrayList<JavaResolveResult> results = new ArrayList<JavaResolveResult>();
       target.processDeclarations(referenceElement.new MyScopeProcessor(results),
                                  PsiSubstitutor.EMPTY, referenceElement, referenceElement);
       if (results.size() <= 1) {
-        return results.toArray(new ResolveResult[results.size()]);
+        return results.toArray(new JavaResolveResult[results.size()]);
       }
       for(int i = results.size() - 1; i >= 0; i--) {
-        final ResolveResult resolveResult = results.get(i);
+        final JavaResolveResult resolveResult = results.get(i);
         if (!resolveResult.isValidResult()) {
           results.remove(i);
         }
       }
-      return results.toArray(new ResolveResult[results.size()]);
+      return results.toArray(new JavaResolveResult[results.size()]);
     }
 
   }
 
   private class MyScopeProcessor extends BaseScopeProcessor implements NameHint {
-    private final List<ResolveResult> myResults;
+    private final List<JavaResolveResult> myResults;
 
-    public MyScopeProcessor(List<ResolveResult> results) {
+    public MyScopeProcessor(List<JavaResolveResult> results) {
       myResults = results;
     }
 

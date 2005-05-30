@@ -23,7 +23,7 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
 
   public PsiType getType() {
     PsiReferenceExpression methodExpression = getMethodExpression();
-    final ResolveResult result = methodExpression.advancedResolve(false);
+    final JavaResolveResult result = methodExpression.advancedResolve(false);
     final PsiMethod method = (PsiMethod)result.getElement();
     if (method == null) return null;
 
@@ -68,7 +68,7 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
     return (PsiMethod)getMethodExpression().resolve();
   }
 
-  public ResolveResult resolveMethodGenerics() {
+  public JavaResolveResult resolveMethodGenerics() {
     return getMethodExpression().advancedResolve(false);
   }
 

@@ -15,7 +15,7 @@ import com.intellij.psi.infos.CandidateInfo;
 public class CastConstructorParametersFix {
   public static void registerCastActions(PsiJavaCodeReferenceElement ctrRef, PsiExpressionList list, HighlightInfo highlightInfo) {
     if (ctrRef == null) return;
-    ResolveResult resolved = ((PsiJavaReference) ctrRef.getReference()).advancedResolve(false);
+    JavaResolveResult resolved = ((PsiJavaReference) ctrRef.getReference()).advancedResolve(false);
     PsiClass aClass = (PsiClass) resolved.getElement();
     if (aClass == null) return;
     PsiMethod[] methods = aClass.getConstructors();

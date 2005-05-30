@@ -24,7 +24,7 @@ import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultipleTargetsReference;
+import com.intellij.psi.PsiMultipleTargetsReference;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -568,8 +568,8 @@ public class CtrlMouseHandler implements ProjectComponent {
         PsiElement resolvedElement;
 
         if (ref instanceof PsiMultipleTargetsReference) {
-          final PsiElement[] psiElements = ((PsiMultipleTargetsReference)ref).multiResolve();
-          resolvedElement = (psiElements.length > 0)?psiElements[0]:null;
+          final ResolveResult[] psiElements = ((PsiMultipleTargetsReference)ref).multiResolve(false);
+          resolvedElement = (psiElements.length > 0)? psiElements[0].getElement() : null;
         } else {
           resolvedElement = ref.resolve();
         }

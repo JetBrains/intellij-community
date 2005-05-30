@@ -41,9 +41,9 @@ public class PsiClassReferenceType extends PsiClassType {
   }
 
   private static class DelegatingClassResolveResult implements ClassResolveResult {
-    private final ResolveResult myDelegate;
+    private final JavaResolveResult myDelegate;
 
-    private DelegatingClassResolveResult(ResolveResult delegate) {
+    private DelegatingClassResolveResult(JavaResolveResult delegate) {
       myDelegate = delegate;
     }
 
@@ -81,12 +81,12 @@ public class PsiClassReferenceType extends PsiClassType {
     }
   }
 
-  private static ClassResolveResult createClassResolveResult(ResolveResult result) {
+  private static ClassResolveResult createClassResolveResult(JavaResolveResult result) {
     return new DelegatingClassResolveResult(result);
   }
 
   public ClassResolveResult resolveGenerics() {
-    final ResolveResult result = myReference.advancedResolve(false);
+    final JavaResolveResult result = myReference.advancedResolve(false);
     return createClassResolveResult(result);
   }
 

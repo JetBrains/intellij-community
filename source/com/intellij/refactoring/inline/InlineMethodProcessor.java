@@ -396,7 +396,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private PsiSubstitutor getCallSubstitutor (PsiMethodCallExpression methodCall) {
-    ResolveResult resolveResult = methodCall.getMethodExpression().advancedResolve(false);
+    JavaResolveResult resolveResult = methodCall.getMethodExpression().advancedResolve(false);
     LOG.assertTrue (myManager.areElementsEquivalent(resolveResult.getElement(), myMethod));
     if (resolveResult.getSubstitutor() != PsiSubstitutor.EMPTY) {
       Iterator<PsiTypeParameter> oldTypeParameters = PsiUtil.typeParametersIterator(myMethod);
@@ -419,7 +419,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         PsiType type = typeElement.getType();
 
         if (type instanceof PsiClassType) {
-          ResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
+          JavaResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
           PsiElement resolved = resolveResult.getElement();
           if (resolved instanceof PsiTypeParameter && ((PsiTypeParameter)resolved).getOwner() == myMethodCopy) {
             PsiType newType = resolveResult.getSubstitutor().putAll(substitutor).substitute((PsiTypeParameter)resolved);

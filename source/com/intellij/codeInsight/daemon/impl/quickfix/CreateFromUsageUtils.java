@@ -44,10 +44,10 @@ public class CreateFromUsageUtils {
 
   public static boolean isValidReference(PsiReference reference, boolean unresolvedOnly) {
     if (!(reference instanceof PsiJavaReference)) return false;
-    ResolveResult[] results = ((PsiJavaReference)reference).multiResolve(true);
+    JavaResolveResult[] results = ((PsiJavaReference)reference).multiResolve(true);
     if(results.length == 0) return false;
     if (!unresolvedOnly) {
-      for (ResolveResult result : results) {
+      for (JavaResolveResult result : results) {
         if (!result.isValidResult()) return false;
       }
     }
@@ -57,7 +57,7 @@ public class CreateFromUsageUtils {
   public static boolean isValidMethodReference(PsiReference reference, PsiMethodCallExpression call) {
     if (!(reference instanceof PsiJavaReference)) return false;
     try {
-      ResolveResult candidate = ((PsiJavaReference) reference).advancedResolve(true);
+      JavaResolveResult candidate = ((PsiJavaReference) reference).advancedResolve(true);
       PsiElement result = candidate.getElement();
       if (!(result instanceof PsiMethod)) return false;
       return PsiUtil.isApplicable((PsiMethod) result, candidate.getSubstitutor(),

@@ -9,7 +9,7 @@ import com.intellij.psi.*;
 /**
  * @author ik,dsl
  */
-public class CandidateInfo implements ResolveResult{
+public class CandidateInfo implements JavaResolveResult {
   private PsiElement myPlace = null;
   private PsiClass myAccessClass = null;
   private PsiElement myCandidate = null;
@@ -112,6 +112,6 @@ public class CandidateInfo implements ResolveResult{
     return candidateInfo;
   }
 
-  public static final ResolveResult[] RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE =
-          new ResolveResult[]{createCandidateInfoForPackagePrefixPart()};
+  public static final JavaResolveResult[] RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE =
+          new JavaResolveResult[]{createCandidateInfoForPackagePrefixPart()};
 }

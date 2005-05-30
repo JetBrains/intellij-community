@@ -247,19 +247,19 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     }
   }
 
-  public static void registerIntentions(ResolveResult[] candidates,
+  public static void registerIntentions(JavaResolveResult[] candidates,
                                         PsiExpressionList list,
                                         HighlightInfo highlightInfo, TextRange fixRange) {
     if (candidates == null || candidates.length == 0) return;
     PsiExpression[] expressions = list.getExpressions();
-    for (ResolveResult candidate : candidates) {
+    for (JavaResolveResult candidate : candidates) {
       registerIntention(expressions, highlightInfo, fixRange, candidate, list);
     }
   }
 
   private static void registerIntention(PsiExpression[] expressions,
                                         HighlightInfo highlightInfo,
-                                        TextRange fixRange, ResolveResult candidate, PsiElement context) {
+                                        TextRange fixRange, JavaResolveResult candidate, PsiElement context) {
     PsiMethod method = (PsiMethod)candidate.getElement();
     PsiSubstitutor substitutor = candidate.getSubstitutor();
     if (method.getManager().isInProject(method)) {

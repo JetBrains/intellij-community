@@ -194,7 +194,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
       root.accept(new PsiRecursiveElementVisitor() {
         public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           if (!reference.isQualified()) {
-            final ResolveResult resolveResult = reference.advancedResolve(false);
+            final JavaResolveResult resolveResult = reference.advancedResolve(false);
             final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
             if (resolveScope instanceof PsiImportStatementBase) {
               //noinspection SuspiciousMethodCalls

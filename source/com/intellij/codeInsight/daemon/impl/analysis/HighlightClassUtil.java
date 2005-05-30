@@ -399,7 +399,7 @@ public class HighlightClassUtil {
 
   //@top
   static HighlightInfo checkExtendsClassAndImplementsInterface(PsiReferenceList referenceList,
-                                                               ResolveResult resolveResult,
+                                                               JavaResolveResult resolveResult,
                                                                PsiJavaCodeReferenceElement context) {
     PsiClass aClass = (PsiClass)referenceList.getParent();
     boolean isImplements = referenceList.equals(aClass.getImplementsList());

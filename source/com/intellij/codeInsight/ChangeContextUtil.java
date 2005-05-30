@@ -38,7 +38,7 @@ public class ChangeContextUtil {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)scope;
       PsiExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier == null){
-        final ResolveResult resolveResult = refExpr.advancedResolve(false);
+        final JavaResolveResult resolveResult = refExpr.advancedResolve(false);
         final PsiElement refElement = resolveResult.getElement();
         if (refElement != null){
           if (refElement instanceof PsiClass){

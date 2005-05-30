@@ -121,7 +121,7 @@ public abstract class PsiClassType extends PsiType {
     return visitor.visitClassType(this);
   }
 
-  public interface ClassResolveResult extends ResolveResult {
+  public interface ClassResolveResult extends JavaResolveResult {
     PsiClass getElement();
 
     ClassResolveResult EMPTY = new ClassResolveResult() {

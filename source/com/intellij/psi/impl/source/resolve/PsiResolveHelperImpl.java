@@ -27,19 +27,19 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     myManager = manager;
   }
 
-  public ResolveResult resolveConstructor(PsiClassType classType, PsiExpressionList argumentList, PsiElement place) {
-    ResolveResult[] result = multiResolveConstructor(classType, argumentList, place);
-    if (result.length != 1) return ResolveResult.EMPTY;
+  public JavaResolveResult resolveConstructor(PsiClassType classType, PsiExpressionList argumentList, PsiElement place) {
+    JavaResolveResult[] result = multiResolveConstructor(classType, argumentList, place);
+    if (result.length != 1) return JavaResolveResult.EMPTY;
     return result[0];
   }
 
-  public ResolveResult[] multiResolveConstructor(PsiClassType type, PsiExpressionList argumentList, PsiElement place) {
+  public JavaResolveResult[] multiResolveConstructor(PsiClassType type, PsiExpressionList argumentList, PsiElement place) {
     final MethodResolverProcessor processor;
     PsiClassType.ClassResolveResult classResolveResult = type.resolveGenerics();
     final PsiClass aClass = classResolveResult.getElement();
-    final ResolveResult[] result;
+    final JavaResolveResult[] result;
     if (aClass == null) {
-      result = ResolveResult.EMPTY_ARRAY;
+      result = JavaResolveResult.EMPTY_ARRAY;
     }
     else {
       if (argumentList.getParent() instanceof PsiAnonymousClass) {
@@ -191,7 +191,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
         if (arg == null) return PsiType.NULL;
       }
 
-      ResolveResult paramResult = ((PsiClassType)param).resolveGenerics();
+      JavaResolveResult paramResult = ((PsiClassType)param).resolveGenerics();
       PsiClass paramClass = (PsiClass)paramResult.getElement();
       if (typeParam == paramClass) {
         return arg == null || arg.getDeepComponentType() instanceof PsiPrimitiveType ||
@@ -200,7 +200,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
       if (paramClass == null) return PsiType.NULL;
 
       if (arg instanceof PsiClassType) {
-        ResolveResult argResult = ((PsiClassType)arg).resolveGenerics();
+        JavaResolveResult argResult = ((PsiClassType)arg).resolveGenerics();
         PsiClass argClass = (PsiClass)argResult.getElement();
         if (argClass == null) return PsiType.NULL;
 

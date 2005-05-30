@@ -18,9 +18,9 @@ public class AccessStaticViaInstanceFix implements IntentionAction {
 
   private final PsiReferenceExpression myExpression;
   private final PsiMember myMember;
-  private final ResolveResult myResult;
+  private final JavaResolveResult myResult;
 
-  public AccessStaticViaInstanceFix(PsiReferenceExpression expression, ResolveResult result) {
+  public AccessStaticViaInstanceFix(PsiReferenceExpression expression, JavaResolveResult result) {
     myExpression = expression;
     myMember = (PsiMember)result.getElement();
     myResult = result;
