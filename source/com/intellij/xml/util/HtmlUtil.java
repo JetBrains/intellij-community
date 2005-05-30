@@ -49,7 +49,7 @@ public class HtmlUtil {
   private static final String INLINE_ELEMENTS_CONTAINER[] = { "p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "dt" };
   private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new THashSet<String>();
 
-  private static final String EMPTY_ATTRS[] = { "nowrap", "compact", "disabled", "readonly", "selected", "multiple", "nohref", "ismap", "declare", "noshade" };
+  private static final String EMPTY_ATTRS[] = { "nowrap", "compact", "disabled", "readonly", "selected", "multiple", "nohref", "ismap", "declare", "noshade", "checked" };
   private static final Set<String> EMPTY_ATTRS_MAP = new THashSet<String>();
 
   static {
