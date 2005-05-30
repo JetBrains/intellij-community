@@ -58,7 +58,7 @@ public class NameUtil {
     return true;
   }
 
-  public static String buildRegexp(String pattern, int exactPrefixLen) {
+  public static String buildRegexp(String pattern, int exactPrefixLen, final boolean caseSencetive) {
     {
       final int len = pattern.length ();
       int i = 0;
@@ -98,19 +98,19 @@ public class NameUtil {
       if (Character.isLetterOrDigit(c)) {
         // This logic allows to use uppercase letters only to catch the name like PDM for PsiDocumentManager
         if (Character.isUpperCase(c) || Character.isDigit(c)) {
-          if (!uppercaseOnly) {
+          if (!uppercaseOnly && !caseSencetive) {
             buffer.append('(');
           }
           if (i > 0) buffer.append("[a-z0-9]*");
           buffer.append(c);
-          if (!uppercaseOnly) {
+          if (!uppercaseOnly && !caseSencetive) {
             buffer.append('|');
             buffer.append(Character.toLowerCase(c));
             buffer.append(')');
           }
           lastIsUppercase = true;
         }
-        else if (Character.isLowerCase(c)) {
+        else if (Character.isLowerCase(c) && !caseSencetive) {
           buffer.append('[');
           buffer.append(c);
           buffer.append('|');

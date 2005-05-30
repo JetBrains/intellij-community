@@ -942,7 +942,7 @@ public abstract class ChooseByNameBase{
 
     boolean overflow = false;
     final String[] names = checkboxState ? myNames[1] : myNames[0];
-    final String regex = NameUtil.buildRegexp(pattern, myExactPrefixLen);
+    final String regex = NameUtil.buildRegexp(pattern, myExactPrefixLen, false);
 
     try {
       final Pattern compiledPattern = Pattern.compile(regex);

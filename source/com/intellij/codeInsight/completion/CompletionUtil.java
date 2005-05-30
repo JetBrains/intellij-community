@@ -22,6 +22,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.position.SuperParentFilter;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
@@ -31,6 +32,8 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashMap;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CompletionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionUtil");
@@ -176,7 +179,7 @@ public class CompletionUtil {
   }
 
   public static boolean checkName(String name, String prefix){
-    return checkName(name,prefix,false);
+    return checkName(name, prefix, false);
   }
   
   public static boolean checkName(String name, String prefix, boolean forceCaseInsensitive){
@@ -214,6 +217,29 @@ public class CompletionUtil {
     }
     return ret;
   }
+
+
+  public static Matcher createCampelHumpsMatcher(String pattern){
+    final Pattern pat;
+    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    int variant = settings.COMPLETION_CASE_SENSITIVE;
+
+    switch(variant){
+      case CodeInsightSettings.NONE:
+        pat = Pattern.compile(NameUtil.buildRegexp(pattern, 0, false));
+        break;
+      case CodeInsightSettings.FIRST_LETTER:
+        pat = Pattern.compile(NameUtil.buildRegexp(pattern, 1, false));
+        break;
+      case CodeInsightSettings.ALL:
+        pat = Pattern.compile(NameUtil.buildRegexp(pattern, 0, true));
+        break;
+      default:
+        pat = Pattern.compile(NameUtil.buildRegexp(pattern, 0, false));
+    }
+    return pat.matcher("");
+  }
+
 
   public static LookupItemPreferencePolicy completeVariableNameForRefactoring(Project project, LinkedHashSet set, String prefix, PsiType varType,
                                                                               VariableKind varKind) {

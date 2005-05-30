@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,7 +11,6 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.containers.HashMap;
@@ -22,7 +22,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 public class LookupImpl extends LightweightHint implements Lookup {
@@ -187,9 +186,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
   }
 
   void updateList(){
-    final String pattern = NameUtil.buildRegexp(myPrefix, 0);
-    final Pattern compiledPattern = Pattern.compile(pattern);
-    final Matcher matcher = compiledPattern.matcher("");
+    final Matcher matcher = CompletionUtil.createCampelHumpsMatcher(myPrefix);
     Object oldSelected = myList.getSelectedValue();
     DefaultListModel model = new DefaultListModel();
     ArrayList<LookupItem> array = new ArrayList<LookupItem>();

@@ -3,7 +3,6 @@ package com.intellij.codeInsight.completion.scope;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.infos.CandidateInfo;
@@ -13,7 +12,6 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 /**
@@ -65,9 +63,8 @@ public class CompletionProcessor extends BaseScopeProcessor
           myQualifierClass = PsiUtil.resolveClassInType(myQualifierType);
         }
       }
-    final String pattern = NameUtil.buildRegexp(myPrefix, 0);
-    final Pattern compiledPattern = Pattern.compile(pattern);
-    myMatcher = compiledPattern.matcher("");
+
+    myMatcher = CompletionUtil.createCampelHumpsMatcher(myPrefix);
   }
 
   public CompletionProcessor(String prefix, PsiElement element, ElementFilter filter){
@@ -115,7 +112,7 @@ public class CompletionProcessor extends BaseScopeProcessor
     PsiResolveHelper resolveHelper = myElement.getManager().getResolveHelper();
     if(!(element instanceof PsiMember) || resolveHelper.isAccessible(((PsiMember)element), myElement, myQualifierClass)){
       final String name = PsiUtil.getName(element);
-      if((CompletionUtil.checkName(name, myPrefix) || myMatcher.reset(name).matches())
+      if(name != null && (CompletionUtil.checkName(name, myPrefix) || myMatcher.reset(name).matches())
          && myFilter.isClassAcceptable(element.getClass())
          && myFilter.isAcceptable(new CandidateInfo(element, substitutor), myElement))
         add(new CompletionElement(myQualifierType, element, substitutor));
