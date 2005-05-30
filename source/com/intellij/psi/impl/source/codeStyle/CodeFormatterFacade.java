@@ -1,7 +1,5 @@
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.codeFormatting.PseudoText;
-import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.Formatter;
 import com.intellij.newCodeFormatting.FormattingModel;
@@ -9,7 +7,6 @@ import com.intellij.newCodeFormatting.FormattingModelBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -147,28 +144,6 @@ public class CodeFormatterFacade implements Constants {
 
       return SourceTreeToPsiMap.psiElementToTree(pointer.getElement());
 
-    }
-
-    if (useNewFormatter(fileType)) {
-      PseudoTextBuilder pseudoTextBuilder = ((LanguageFileType)fileType).getLanguage().getFormatter();
-      if (pseudoTextBuilder == null) {
-        return element;
-      }
-      else {
-        try {
-          final PseudoText pseudoText =
-            pseudoTextBuilder.build(myHelper.getProject(), mySettings, psiElement);
-          GeneralCodeFormatter.createSimpleInstance(pseudoText, mySettings, fileType, startOffset, endOffset, null).format();
-        }
-        catch (ProcessCanceledException processCanceledException) {
-          throw processCanceledException;
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-        formatComments(element, startOffset, endOffset);
-        return element;
-      }
     }
 
     final TextRange range = element.getTextRange();

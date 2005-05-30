@@ -1,7 +1,5 @@
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.codeFormatting.PseudoText;
-import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -634,25 +632,6 @@ public class CodeEditUtil {
     return res.booleanValue();
   }
 
-  public static void unindentSubtree(ASTNode clone, TreeElement original, CharTable table) {
-    PsiManager manager = original.getManager();
-    LOG.assertTrue(manager != null, "Manager should present (?)");
-    LOG.assertTrue(clone.getTreeParent().getElementType() == ElementType.DUMMY_HOLDER);
-
-    final PsiFile file = SourceTreeToPsiMap.treeElementToPsi(original).getContainingFile();
-    FileType fileType = file.getFileType();
-    Helper helper = new Helper(fileType, manager.getProject());
-    /*
-        TreeElement prevWS = helper.getPrevWhitespace(original);
-        if( prevWS == null || prevWS.getText().indexOf('\n') < 0 ) return;
-    */
-    if (clone instanceof CompositeElement) {
-      int origIndent = helper.getIndent(original);
-
-      helper.indentSubtree(clone, origIndent, 0, table);
-    }
-  }
-
   public static ASTNode getDefaultAnchor(PsiImportList list, PsiImportStatementBase statement) {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(list.getProject());
     ImportHelper importHelper = new ImportHelper(settings);
@@ -735,50 +714,9 @@ public class CodeEditUtil {
     }
   }
 
-  public static void normalizeSpace(Helper helper, ASTNode parent, ASTNode child1, ASTNode child2, CharTable table) {
-    StringBuffer buffer = null;
-    int count = 0;
-    for (ASTNode child = child1 != null ? child1.getTreeNext() : parent.getFirstChildNode(); child != child2; child = child.getTreeNext()) {
-      if (child instanceof CompositeElement && child.getFirstChildNode() == null) continue;
-
-      if (Helper.isNonSpace(child)) {
-        LOG.error("Whitespace expected");
-      }
-      if (buffer == null) {
-        buffer = new StringBuffer();
-      }
-      buffer.append(child.getText());
-      count++;
-    }
-
-    if (count > 1) {
-      LeafElement newSpace =
-        Factory.createSingleLeafElement(JavaTokenType.WHITE_SPACE, buffer.toString().toCharArray(), 0, buffer.length(), table, SharedImplUtil.getManagerByTree(parent));
-      count = 0;
-      ASTNode next;
-      for (ASTNode child = child1 != null ? child1.getTreeNext() : parent.getFirstChildNode(); child != child2; child = next) {
-        next = child.getTreeNext();
-        if (child instanceof CompositeElement && child.getTextLength() == 0) continue;
-        if (count == 0) {
-          parent.replaceChild(child, newSpace);
-        }
-        else {
-          parent.removeChild(child);
-        }
-        count++;
-      }
-    }
-
-    if (child1 != null && child2 != null && Helper.getSpaceText(parent, child1, child2).length() == 0) {
-      if (!helper.canStickChildrenTogether(child1, child2)) {
-        helper.makeSpace(parent, child1, child2, " ");
-      }
-    }
-  }
-
   public static String getStringWhiteSpaceBetweenTokens(ASTNode first, ASTNode second, Language language) {
-    final PseudoTextBuilder pseudoTextBuilder = language.getFormatter();
-    if (pseudoTextBuilder == null) {
+    final FormattingModelBuilder modelBuilder = language.getFormattingModelBuilder();
+    if (modelBuilder == null) {
       final LeafElement leafElement = ParseUtil.nextLeaf((TreeElement)first, null);
       if (leafElement != second) {
         return leafElement.getText();
@@ -814,7 +752,7 @@ public class CodeEditUtil {
       return language;
     }
 
-    if (((LanguageFileType)fileType).getLanguage().getFormatter() == null) {
+    if (((LanguageFileType)fileType).getLanguage().getFormattingModelBuilder() == null) {
       return language;
     } else {
       return ((LanguageFileType)fileType).getLanguage();
@@ -837,7 +775,20 @@ public class CodeEditUtil {
     final int oldKeepBlankLines = settings.XML_KEEP_BLANK_LINES;
     settings.XML_KEEP_BLANK_LINES = 0;
     try {
-      return getWhiteSpaceBeforeImpl(file, tokenStartOffset, language, project, settings, mayChangeLineFeeds);
+      final FormattingModelBuilder builder = language.getFormattingModelBuilder();
+      final PsiElement element = file.findElementAt(tokenStartOffset);
+    
+      if (builder != null && element.getLanguage().getFormattingModelBuilder() != null) {
+      
+        final TextRange textRange = element.getTextRange();
+        final FormattingModel model = builder.createModel(file, settings);
+        return Formatter.getInstance().getWhiteSpaceBefore(model.getDocumentModel(),
+                                                           model.getRootBlock(),
+                                                           settings, settings.getIndentOptions(file.getFileType()), textRange,
+                                                           mayChangeLineFeeds);
+      } else {
+        return new IndentInfo(0, 0, 0);
+      }
 
     }
     finally {
@@ -846,49 +797,25 @@ public class CodeEditUtil {
     }
   }
 
-  private static IndentInfo getWhiteSpaceBeforeImpl(final PsiFile file,
-                                                    final int tokenStartOffset,
-                                                    final Language language,
-                                                    final Project project,
-                                                    final CodeStyleSettings settings,
-                                                    final boolean mayChangeLineFeeds) {
-    final FormattingModelBuilder builder = language.getFormattingModelBuilder();
-    final PsiElement element = file.findElementAt(tokenStartOffset);
-
-    if (builder != null && element.getLanguage().getFormattingModelBuilder() != null) {
-
-          final TextRange textRange = element.getTextRange();
-          final FormattingModel model = builder.createModel(file, settings);
-          return Formatter.getInstance().getWhiteSpaceBefore(model.getDocumentModel(),
-                                                             model.getRootBlock(),
-                                                             settings, settings.getIndentOptions(file.getFileType()), textRange,
-                                                             mayChangeLineFeeds);
-        } else {
-          final PseudoTextBuilder pseudoTextBuilder = language.getFormatter();
-          LOG.assertTrue(pseudoTextBuilder != null);
-
-          final PseudoText pseudoText = pseudoTextBuilder.build(project,
-                                                                settings,
-                                                                file);
-          return GeneralCodeFormatter.getWhiteSpaceBetweenTokens(pseudoText, settings, file.getFileType(), tokenStartOffset, mayChangeLineFeeds);
-        }
-      }
-
-      private static class MyIndentInfoStorage implements Formatter.IndentInfoStorage {
-        private final PsiFile myFile;
-        private final Collection<PsiElement> myDirtyElements;
-
-        public MyIndentInfoStorage(final PsiFile file, final Collection<PsiElement> dirtyElement) {
-          myFile = file;
-          myDirtyElements = dirtyElement;
-        }
-
-        public void saveIndentInfo(IndentInfo info, int startOffset) {
-          myFile.findElementAt(startOffset).putUserData(INDENT_INFO_KEY, info);
-        }
-
-        public IndentInfo getIndentInfo(int startOffset) {
-          return myFile.findElementAt(startOffset).getUserData(INDENT_INFO_KEY);
-        }
+  private static class MyIndentInfoStorage implements Formatter.IndentInfoStorage {
+    private final PsiFile myFile;
+    private final Collection<PsiElement> myDirtyElements;
+    
+    public MyIndentInfoStorage(final PsiFile file, final Collection<PsiElement> dirtyElement) {
+      myFile = file;
+      myDirtyElements = dirtyElement;
+    }
+    
+    public void saveIndentInfo(IndentInfo info, int startOffset) {
+      final PsiElement element = myFile.findElementAt(startOffset);
+      if (element != null) {
+        element.putUserData(INDENT_INFO_KEY, info);
+        myDirtyElements.add(element);
       }
     }
+    
+    public IndentInfo getIndentInfo(int startOffset) {
+      return myFile.findElementAt(startOffset).getUserData(INDENT_INFO_KEY);
+    }
+  }
+}

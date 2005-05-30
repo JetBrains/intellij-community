@@ -1,6 +1,5 @@
 package com.intellij.lang;
 
-import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.cacheBuilder.WordsScanner;
@@ -76,10 +75,6 @@ public abstract class Language {
 
   public SyntaxHighlighter getSyntaxHighlighter(Project project) {
     return new PlainSyntaxHighlighter();
-  }
-
-  public PseudoTextBuilder getFormatter() {
-    return null;
   }
 
   public FormattingModelBuilder getFormattingModelBuilder(){

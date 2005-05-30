@@ -1,7 +1,5 @@
 package com.intellij.codeInsight.actions;
 
-import com.intellij.codeFormatting.PseudoTextBuilder;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
@@ -125,13 +123,9 @@ public class ReformatCodeAction extends AnAction {
         return;
       }
 
-      final Language lang = file.getLanguage();
-      if (lang != null) {
-        final PseudoTextBuilder formatter = lang.getFormatter();
-        if (formatter == null && file.getLanguage().getFormattingModelBuilder() == null) {
-          presentation.setEnabled(false);
-          return;
-        }
+      if (file.getLanguage().getFormattingModelBuilder() != null) {
+        presentation.setEnabled(false);
+        return;
       }
     }
     else if (dataContext.getData(DataConstantsEx.MODULE_CONTEXT) == null &&

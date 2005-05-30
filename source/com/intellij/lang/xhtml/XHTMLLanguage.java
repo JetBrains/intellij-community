@@ -1,6 +1,5 @@
 package com.intellij.lang.xhtml;
 
-import com.intellij.codeFormatting.PseudoTextBuilder;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.xml.XMLLanguage;
@@ -42,11 +41,6 @@ public class XHTMLLanguage extends XMLLanguage {
 
   public SyntaxHighlighter getSyntaxHighlighter(Project project) {
     return new XmlFileHighlighter(false,true);
-  }
-
-  public PseudoTextBuilder getFormatter() {
-    //return new HtmlPseudoTextBuilder(ElementType.XML_TAG);
-    return null;  
   }
 
   public XmlPsiPolicy getPsiPolicy() {

@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomModel;
@@ -18,13 +17,12 @@ import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.impl.source.*;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
+import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.parsing.*;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
@@ -53,10 +51,10 @@ public class ChangeUtil implements Constants {
     prepareAndRunChangeAction(new ChangeAction(){
       public void makeChange(TreeChangeEvent destinationTreeChange) {
         if (anchorBefore != null) {
-          insertBefore(destinationTreeChange, newCharTab, anchorBefore, first);
+          insertBefore(destinationTreeChange, anchorBefore, first);
         }
         else {
-          add(destinationTreeChange, newCharTab, parent, first);
+          add(destinationTreeChange, parent, first);
         }
       }
     }, parent);
@@ -89,7 +87,7 @@ public class ChangeUtil implements Constants {
 
     prepareAndRunChangeAction(new ChangeAction(){
       public void makeChange(TreeChangeEvent destinationTreeChange) {
-        replace(destinationTreeChange, newCharTable, oldChild, newChild);
+        replace(destinationTreeChange, oldChild, newChild);
         repairRemovedElement(parent, newCharTable, oldChild);
       }
     }, parent);
@@ -117,8 +115,8 @@ public class ChangeUtil implements Constants {
           }
           else{
             final TreeElement first = (TreeElement)parent.getFirstChildNode();
-            remove(destinationTreeChange, newCharTab, first, null);
-            add(destinationTreeChange, newCharTab, parent, (TreeElement)firstChild);
+            remove(destinationTreeChange, first, null);
+            add(destinationTreeChange, parent, (TreeElement)firstChild);
             repairRemovedElement(parent, newCharTab, first);
           }
         }
@@ -154,7 +152,6 @@ public class ChangeUtil implements Constants {
   }
 
   private static void add(final TreeChangeEvent destinationTreeChange,
-                          final CharTable newCharTab,
                           final CompositeElement parent,
                           final TreeElement first) {
     TreeUtil.addChildren(parent, first);
@@ -166,7 +163,6 @@ public class ChangeUtil implements Constants {
   }
 
   private static void remove(final TreeChangeEvent destinationTreeChange,
-                             final CharTable newCharTab,
                              final TreeElement first,
                              final TreeElement last) {
     TreeElement child = first;
@@ -178,7 +174,6 @@ public class ChangeUtil implements Constants {
   }
 
   private static void insertBefore(final TreeChangeEvent destinationTreeChange,
-                                   final CharTable newCharTab,
                                    final TreeElement anchorBefore,
                                    final TreeElement first) {
     TreeUtil.insertBefore(anchorBefore, first);
@@ -190,23 +185,12 @@ public class ChangeUtil implements Constants {
   }
 
   private static void replace(final TreeChangeEvent sourceTreeChange,
-                              final CharTable table,
                               final TreeElement oldChild,
                               final TreeElement newChild) {
     TreeUtil.replaceWithList(oldChild, newChild);
     final ReplaceChangeInfoImpl change = (ReplaceChangeInfoImpl)ChangeInfoImpl.create(ChangeInfo.REPLACE, newChild);
     sourceTreeChange.addElementaryChange(newChild, change);
     change.setReplaced(oldChild);
-  }
-
-  private static void checkConsistency(PsiFile file) {
-    if (file != null) {
-      Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-      if (document != null) {
-        PsiDocumentManagerImpl.checkConsistency(file, document);
-      }
-      checkTextRanges(file);
-    }
   }
 
   private static void registerLeafsInCharTab(CharTable newCharTab, ASTNode child, CharTable oldCharTab) {
@@ -237,7 +221,7 @@ public class ChangeUtil implements Constants {
     if (fileElement != null) {
       prepareAndRunChangeAction(new ChangeAction() {
         public void makeChange(TreeChangeEvent destinationTreeChange) {
-          remove(destinationTreeChange, oldCharTab, first, last);
+          remove(destinationTreeChange, first, last);
           repairRemovedElement(fileElement, oldCharTab, first);
 
           final FileElement treeElement = new DummyHolder(fileElement.getManager(), oldCharTab, false).getTreeElement();
@@ -433,7 +417,7 @@ public class ChangeUtil implements Constants {
     registerLeafsInCharTab(table, element, charTableByTree);
     new DummyHolder(manager, element, null, table).getTreeElement();
     encodeInformation(element, original);
-    CodeEditUtil.unindentSubtree(element, original, table);
+    Helper.unindentSubtree(element, original, table);
     TreeUtil.clearCaches(element);
     return element;
   }

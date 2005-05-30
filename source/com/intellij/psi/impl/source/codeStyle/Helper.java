@@ -712,4 +712,19 @@ public class Helper {
   public Project getProject() {
     return myProject;
   }
+
+  public static void unindentSubtree(ASTNode clone, TreeElement original, CharTable table) {
+    PsiManager manager = original.getManager();
+    LOG.assertTrue(manager != null, "Manager should present (?)");
+    LOG.assertTrue(clone.getTreeParent().getElementType() == ElementType.DUMMY_HOLDER);
+
+    final PsiFile file = SourceTreeToPsiMap.treeElementToPsi(original).getContainingFile();
+    FileType fileType = file.getFileType();
+    Helper helper = new Helper(fileType, manager.getProject());
+    if (clone instanceof CompositeElement) {
+      int origIndent = helper.getIndent(original);
+
+      helper.indentSubtree(clone, origIndent, 0, table);
+    }
+  }
 }
