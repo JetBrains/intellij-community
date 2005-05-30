@@ -87,15 +87,11 @@ public abstract class RefactoringDialog extends DialogWrapper {
   protected abstract void doAction();
 
   final protected void doPreviewAction () {
-    validateButtons();
-    if (!isOKActionEnabled()) return;
     myCbPreviewResults = true;
     doAction ();
   }
 
   final protected void doRefactorAction () {
-    validateButtons();
-    if (!isOKActionEnabled()) return;
     myCbPreviewResults = false;
     doAction ();
   }
@@ -104,11 +100,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
   final protected void closeOKAction() { super.doOKAction(); }
 
   final protected void doOKAction() {
-    validateButtons();
-
-    if (!isOKActionEnabled()) return;
     doAction();
-
   }
 
   protected boolean areButtonsValid () { return true; }

@@ -147,12 +147,14 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     myTfTargetClassName.getChildComponent().getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         myMemberInfoModel.updateTargetClass();
+        validateButtons();
       }
     });
 
     panel.add(box, BorderLayout.CENTER);
     panel.add(Box.createVerticalStrut(10), BorderLayout.SOUTH);
 
+    validateButtons();
     return panel;
   }
 
