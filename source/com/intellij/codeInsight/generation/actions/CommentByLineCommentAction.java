@@ -5,6 +5,7 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.generation.CommentByLineCommentHandler;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Language;
+import com.intellij.lang.Commenter;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,9 @@ public class CommentByLineCommentAction extends BaseCodeInsightAction {
       return ((CustomFileType)fileType).getCommenter() != null;
     }
     final Language lang = file.getLanguage();
-    return lang != null && lang.getCommenter() != null;
+    if (lang == null) return false;
+    final Commenter commenter = lang.getCommenter();
+    if (commenter == null) return false;
+    return commenter.getLineCommentPrefix() != null;
   }
 }
