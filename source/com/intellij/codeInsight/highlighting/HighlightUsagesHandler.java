@@ -123,7 +123,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     findManager.setFindWasPerformed();
     findManager.setFindNextModel(model);
 
-    WindowManager.getInstance().getStatusBar(project).setInfo("Highlighted " + count + " occurencies of \"" + model.getStringToFind() +
+    WindowManager.getInstance().getStatusBar(project).setInfo("Highlighted " + count + " occurences of \"" + model.getStringToFind() +
                                                               "\" (press Escape to remove the highlighting)");
   }
 
