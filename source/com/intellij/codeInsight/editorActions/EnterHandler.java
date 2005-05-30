@@ -199,6 +199,7 @@ public class EnterHandler extends EditorWriteActionHandler {
                                   || text.charAt(caretOffset) == ' '
                                   || text.charAt(caretOffset) == '\t');
     // to prevent keeping some elements (e.g. comments) at first column
+    /*
     if (settings.SMART_INDENT_ON_ENTER || forceIndent) {
       String toInsert = insertSpace && CodeStyleSettingsManager.getSettings(project).INSERT_FIRST_SPACE_IN_LINE ? "\n " : "\n";
       document.insertString(caretOffset, toInsert);
@@ -208,7 +209,16 @@ public class EnterHandler extends EditorWriteActionHandler {
       myOriginalHandler.execute(editor, dataContext);
       caretOffset = editor.getCaretModel().getOffset();
     }
-
+    */
+    editor.getCaretModel().moveToOffset(caretOffset);
+    myOriginalHandler.execute(editor, dataContext);
+    
+    if (settings.SMART_INDENT_ON_ENTER || forceIndent) {
+      caretOffset += 1;
+    }
+    else {
+      caretOffset = editor.getCaretModel().getOffset();
+    }    
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final DoEnterAction action = new DoEnterAction(
@@ -472,6 +482,8 @@ public class EnterHandler extends EditorWriteActionHandler {
       buffer.append("*");
       buffer.append(lineSeparator);
       buffer.append("*/");
+      
+      removeTrailingSpaces(myDocument, myOffset);
 
       myDocument.insertString(myOffset, buffer.toString());
 
@@ -537,9 +549,30 @@ public class EnterHandler extends EditorWriteActionHandler {
       myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, lineSeparator);
       myOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), myOffset, lineSeparator);
       myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, lineSeparator);
+      removeTrailingSpaces(myDocument, myOffset);
       myDocument.insertString(myOffset, " ");
       myOffset++;
       PsiDocumentManager.getInstance(project).commitAllDocuments();
+    }
+
+    private void removeTrailingSpaces(final Document document, final int offset) {
+      int startOffset = offset;
+      int endOffset = offset;
+
+      final CharSequence charsSequence = document.getCharsSequence();
+      
+      for (int i = startOffset; i < charsSequence.length(); i++) {
+        final char c = charsSequence.charAt(i);
+        endOffset = i;
+        if (c == '\n') {          
+          break;
+        }        
+        if (c != ' ' && c != '\t') {
+          return;
+        }
+      }
+
+      document.deleteString(startOffset, endOffset);
     }
 
     private boolean insertDocAsterisk(int lineStart, boolean docAsterisk) {
@@ -559,7 +592,8 @@ public class EnterHandler extends EditorWriteActionHandler {
             docAsterisk = false;
           }
           else {
-            myDocument.insertString(myOffset, "*");
+            removeTrailingSpaces(myDocument, myOffset);
+            myDocument.insertString(myOffset, "* ");
             PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
           }
         }
