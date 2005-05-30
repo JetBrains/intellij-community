@@ -279,4 +279,28 @@ public class FormatterUtil {
     }
     return false;
   }
+
+  public static void replaceLastWhiteSpace(final ASTNode astNode, final String whiteSpace) {
+    LeafElement lastWS = TreeUtil.findLastLeaf(astNode);
+    if (lastWS.getElementType() != ElementType.WHITE_SPACE) {
+      lastWS = null;
+    }
+    if (whiteSpace.length() == 0 && lastWS == null) {
+      return;
+    }
+    if (lastWS != null && whiteSpace.length() == 0) {
+      lastWS.getTreeParent().removeRange(lastWS, null);
+      return;
+    }
+    LeafElement whiteSpaceElement = Factory.createSingleLeafElement(ElementType.WHITE_SPACE,
+                                                                    whiteSpace.toCharArray(), 0, whiteSpace.length(),
+                                                                    SharedImplUtil.findCharTableByTree(lastWS), SharedImplUtil.getManagerByTree(lastWS));
+    
+    if (lastWS == null) {
+      astNode.addChild(whiteSpaceElement, null);
+    } else {
+      ASTNode treeParent = lastWS.getTreeParent();
+      treeParent.replaceChild(lastWS, whiteSpaceElement);
+    }
+  }
 }

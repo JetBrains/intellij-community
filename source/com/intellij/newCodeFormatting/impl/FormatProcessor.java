@@ -25,7 +25,7 @@ class FormatProcessor {
 
   private Map<TextRange, Pair<AbstractBlockWrapper, Boolean>> myPreviousDependancies = new HashMap<TextRange, Pair<AbstractBlockWrapper, Boolean>>();
   private boolean myAlignAgain = false;
-  private final int myMaxEndOffset;
+  private final WhiteSpace myLastWhiteSpace;
 
   public FormatProcessor(final FormattingDocumentModel docModel, Block rootBlock,
                          CodeStyleSettings settings,
@@ -33,15 +33,24 @@ class FormatProcessor {
                          TextRange affectedRange) {
     myIndentOption = indentOptions;
     mySettings = settings;
-    final InitialInfoBuilder builder = InitialInfoBuilder.buildBlocks(rootBlock, 
-                                                                      docModel, 
-                                                                      affectedRange, 
+    final InitialInfoBuilder builder = InitialInfoBuilder.buildBlocks(rootBlock,
+                                                                      docModel,
+                                                                      affectedRange,
                                                                       indentOptions);
     myInfos = builder.getBlockToInfoMap();
     myFirstTokenBlock = builder.getFirstTokenBlock();
     myCurrentBlock = myFirstTokenBlock;
     myTextRangeToWrapper = buildTextRangeToInfoMap(myFirstTokenBlock);
-    myMaxEndOffset = rootBlock.getTextRange().getEndOffset();
+    myLastWhiteSpace = new WhiteSpace(getLastBlock().getTextRange().getEndOffset(), false);
+    myLastWhiteSpace.append(docModel.getTextLength(), docModel, indentOptions);
+  }
+
+  private LeafBlockWrapper getLastBlock() {
+    LeafBlockWrapper result = myFirstTokenBlock;
+    while (result.getNextBlock() != null) {
+      result =  result.getNextBlock();
+    }
+    return result;
   }
 
   private TIntObjectHashMap<LeafBlockWrapper> buildTextRangeToInfoMap(final LeafBlockWrapper first) {
@@ -454,11 +463,11 @@ class FormatProcessor {
     return false;
   }
 
-  public WhiteSpace getWhiteSpaceBefore(final int startOffset) {
+  public LeafBlockWrapper getBlockBefore(final int startOffset) {
     int current = startOffset;
-    while (current < myMaxEndOffset) {
+    while (current < myLastWhiteSpace.getTextRange().getStartOffset()) {
       final LeafBlockWrapper currentValue = myTextRangeToWrapper.get(current);
-      if (currentValue != null) return currentValue.getWhiteSpace();
+      if (currentValue != null) return currentValue;
       current++;
     }
     return null;
@@ -583,5 +592,9 @@ class FormatProcessor {
 
   public LeafBlockWrapper getFirstTokenBlock() {
     return myFirstTokenBlock;
+  }
+
+  public WhiteSpace getLastWhiteSpace() {
+    return myLastWhiteSpace;
   }
 }

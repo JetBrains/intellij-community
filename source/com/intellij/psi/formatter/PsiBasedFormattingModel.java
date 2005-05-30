@@ -51,31 +51,40 @@ public class PsiBasedFormattingModel implements FormattingModel {
     {
     final int offset = textRange.getEndOffset();
     final ASTNode leafElement = findElementAt(offset);
-    final int oldElementLength = leafElement.getTextRange().getLength();
-    if (leafElement.getTextRange().getStartOffset() < textRange.getStartOffset()) {
-      final int newElementLength = new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, getSpaceCount(whiteSpace))
-        .getTextRange().getLength();
-      blockLength = blockLength - oldElementLength + newElementLength;
-    }
-    else {
-      changeWhiteSpaceBeforeLeaf(whiteSpace, leafElement);
-      if (leafElement.textContains('\n')
-        && whiteSpace.indexOf('\n') >= 0) {
-        try {
-          Indent lastLineIndent = getLastLineIndent(leafElement.getText());
-          Indent whiteSpaceIndent = createIndentOn(getLastLine(whiteSpace));
-          final int shift = calcShift(lastLineIndent, whiteSpaceIndent);
-          final int newElementLength = new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, shift).getTextRange()
-            .getLength();
+      if (leafElement != null) {
+        final int oldElementLength = leafElement.getTextRange().getLength();
+        if (leafElement.getTextRange().getStartOffset() < textRange.getStartOffset()) {
+          final int newElementLength = new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, getSpaceCount(whiteSpace))
+            .getTextRange().getLength();
           blockLength = blockLength - oldElementLength + newElementLength;
         }
-        catch (IOException e) {
-          throw new RuntimeException(e);
+        else {
+          changeWhiteSpaceBeforeLeaf(whiteSpace, leafElement);
+          if (leafElement.textContains('\n')
+              && whiteSpace.indexOf('\n') >= 0) {
+            try {
+              Indent lastLineIndent = getLastLineIndent(leafElement.getText());
+              Indent whiteSpaceIndent = createIndentOn(getLastLine(whiteSpace));
+              final int shift = calcShift(lastLineIndent, whiteSpaceIndent);
+              final int newElementLength = new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, shift).getTextRange()
+                .getLength();
+              blockLength = blockLength - oldElementLength + newElementLength;
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          }
         }
+
+        return blockLength;
+      } else {
+        changeLastWhiteSpace(whiteSpace);
+        return 0;
       }
     }
 
-    return blockLength;
+  protected void changeLastWhiteSpace(final String whiteSpace) {
+    FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace);
   }
 
   protected void changeWhiteSpaceBeforeLeaf(final String whiteSpace, final ASTNode leafElement) {

@@ -78,7 +78,9 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
                                         final CodeStyleSettings.IndentOptions indentOptions,
                                         final TextRange affectedRange, final boolean mayChangeLineFeeds) {
     final FormatProcessor processor = new FormatProcessor(model, block, settings, indentOptions, affectedRange);
-    WhiteSpace whiteSpace = processor.getWhiteSpaceBefore(affectedRange.getStartOffset());
+    final LeafBlockWrapper blockBefore = processor.getBlockBefore(affectedRange.getStartOffset());
+    LOG.assertTrue(blockBefore != null);
+    WhiteSpace whiteSpace = blockBefore.getWhiteSpace();
     LOG.assertTrue(whiteSpace != null);
     if (!mayChangeLineFeeds) {
       whiteSpace.setLineFeedsAreReadOnly();
@@ -94,18 +96,63 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
                               final CodeStyleSettings.IndentOptions indentOptions,
                               final int offset,
                               final TextRange affectedRange) throws IncorrectOperationException {
-    final FormattingDocumentModel docModel = model.getDocumentModel();
+    final FormattingDocumentModel documentModel = model.getDocumentModel();
     final Block block = model.getRootBlock();
-    final FormatProcessor processor = new FormatProcessor(docModel, block, settings, indentOptions, affectedRange);
+    final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions, affectedRange);
+
+    final LeafBlockWrapper blockAfterOffset = processor.getBlockBefore(offset);
+
+    if (blockAfterOffset != null) {
+      final WhiteSpace whiteSpace = blockAfterOffset.getWhiteSpace();
+      boolean wsContainsCaret = whiteSpace.getTextRange().getStartOffset() <= offset && whiteSpace.getTextRange().getEndOffset() > offset;
+
+      final CharSequence text = getCharSequence(documentModel);
+      int lineStartOffset = getLineStartOffset(offset, whiteSpace, text);
+
+      processor.setAllWhiteSpacesAreReadOnly();
+      whiteSpace.setLineFeedsAreReadOnly(true);
+      final IndentInfo indent;
+      if (documentModel.getLineNumber(offset) == documentModel.getLineNumber(whiteSpace.getTextRange().getEndOffset())) {
+        whiteSpace.setReadOnly(false);
+        processor.formatWithoutRealModifications();
+        indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
+      }
+      else {
+        indent = processor.getIndentAt(offset);
+      }
+
+      final String newWS = whiteSpace.generateWhiteSpace(indentOptions, lineStartOffset, indent);
+      model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS, blockAfterOffset.getTextRange().getLength());
 
 
-    final WhiteSpace whiteSpace = processor.getWhiteSpaceBefore(offset);
-    
-    if (whiteSpace == null) return offset;
-    
-    boolean wsContainsCaret = whiteSpace.getTextRange().getStartOffset() <= offset && whiteSpace.getTextRange().getEndOffset() > offset;
-    
-    final String text = model.getDocumentModel().getText();
+      if (wsContainsCaret) {
+        return whiteSpace.getTextRange().getStartOffset()
+               + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - whiteSpace.getTextRange().getStartOffset(), " \t");
+      } else {
+        return offset - whiteSpace.getTextRange().getLength() + newWS.length();
+      }
+    } else {
+      WhiteSpace lastWS = processor.getLastWhiteSpace();
+      int lineStartOffset = getLineStartOffset(offset, lastWS, getText(documentModel));
+      
+      final IndentInfo indent = new IndentInfo(0, 0, 0);
+      final String newWS = lastWS.generateWhiteSpace(indentOptions, lineStartOffset, indent);
+      model.replaceWhiteSpace(lastWS.getTextRange(), newWS, 0);
+
+      return lastWS.getTextRange().getStartOffset()
+             + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - lastWS.getTextRange().getStartOffset(), " \t");
+    }
+  }
+
+  public static String getText(final FormattingDocumentModel documentModel) {
+    return getCharSequence(documentModel).toString();
+  }
+
+  private static CharSequence getCharSequence(final FormattingDocumentModel documentModel) {
+    return documentModel.getText(new TextRange(0, documentModel.getTextLength()));
+  }
+
+  private int getLineStartOffset(final int offset, final WhiteSpace whiteSpace, final CharSequence text) {
     int lineStartOffset = offset;
     lineStartOffset = CharArrayUtil.shiftBackwardUntil(text, lineStartOffset, " \t\n");
     if (lineStartOffset > whiteSpace.getTextRange().getStartOffset()) {
@@ -115,34 +162,9 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
       lineStartOffset = CharArrayUtil.shiftBackward(text, lineStartOffset, "\t ");
       if (lineStartOffset != offset && text.charAt(lineStartOffset) == '\n') {
         lineStartOffset++;
-      }      
+      }
     }
-        
-    processor.setAllWhiteSpacesAreReadOnly();
-    if (whiteSpace == null) {
-      return offset;
-    }
-    whiteSpace.setLineFeedsAreReadOnly(true);
-    final IndentInfo indent;
-    if (docModel.getLineNumber(offset) == docModel.getLineNumber(whiteSpace.getTextRange().getEndOffset())) {
-      whiteSpace.setReadOnly(false);      
-      processor.formatWithoutRealModifications();
-      indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
-    }
-    else {
-      indent = processor.getIndentAt(offset);
-    }
-    
-    final String newWS = whiteSpace.generateWhiteSpace(indentOptions, lineStartOffset, indent);
-    model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS, block.getTextRange().getLength());
-    
-    
-    if (wsContainsCaret) {
-      return whiteSpace.getTextRange().getStartOffset() 
-             + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - whiteSpace.getTextRange().getStartOffset(), " \t");
-    } else {
-      return offset - whiteSpace.getTextRange().getLength() + newWS.length();
-    }
+    return lineStartOffset;
   }
 
   public void adjustTextRange(final FormattingModel model,
