@@ -84,11 +84,49 @@ public class MergingLexerAdapter extends LexerBase {
   }
 
   public void restore(LexerPosition position) {
-    myOriginal.restore(position);
-    myTokenType = null;
+    MyLexerPosition pos = (MyLexerPosition)position;
+
+    myOriginal.restore(pos.getOriginalPosition());
+    myTokenType = pos.getType();
+    myTokenStart = pos.getOffset();
+    myState = pos.getOldState();
   }
 
   public LexerPosition getCurrentPosition() {
-    return myOriginal.getCurrentPosition();
+    return new MyLexerPosition(myTokenStart, myTokenType, myOriginal.getCurrentPosition(), myState);
+  }
+
+  private static class MyLexerPosition implements LexerPosition{
+    private int myOffset;
+    private IElementType myTokenType;
+    private LexerPosition myOriginalPosition;
+    private int myOldState;
+
+    public MyLexerPosition(final int offset, final IElementType tokenType, final LexerPosition originalPosition, int oldState) {
+      myOffset = offset;
+      myTokenType = tokenType;
+      myOriginalPosition = originalPosition;
+      myOldState = oldState;
+    }
+
+    public int getOffset() {
+      return myOffset;
+    }
+
+    public LexerState getState() {
+      return myOriginalPosition.getState();
+    }
+
+    public IElementType getType() {
+      return myTokenType;
+    }
+
+    public LexerPosition getOriginalPosition() {
+      return myOriginalPosition;
+    }
+
+    public int getOldState() {
+      return myOldState;
+    }
   }
 }
