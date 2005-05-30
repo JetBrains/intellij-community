@@ -57,6 +57,26 @@ public class CharArrayUtil {
     return offset;
   }
 
+  public static int shiftForwardCarefully(CharSequence buffer, int offset, String chars) {
+    if (offset + 1 >= buffer.length()) return offset;
+    if (!isSuitable(chars, buffer.charAt(offset))) return offset;
+    offset++;
+    while (true) {
+      if (offset >= buffer.length()) return offset - 1;
+      char c = buffer.charAt(offset);
+      if (!isSuitable(chars, c)) return offset - 1;
+      offset++;
+    }
+  }
+
+  private static boolean isSuitable(final String chars, final char c) {
+    int i;
+    for (i = 0; i < chars.length(); i++) {
+      if (c == chars.charAt(i)) return true;
+    }
+    return false;
+  }
+
   public static int shiftForward(char[] buffer, int offset, String chars) {
     return shiftForward(new CharArrayCharSequence(buffer), offset, chars);
   }

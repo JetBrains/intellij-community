@@ -60,7 +60,14 @@ public abstract class AbstractBlock implements Block {
       return true;
     }
     if (node instanceof LeafElement) return false;
-    return node.getTextLength() == 0;
+    if (node.getTextLength() == 0) return true;
+
+    ASTNode child = node.getFirstChildNode();
+    while (child != null) {
+      if (!containsWhiteSpacesOnly(child)) return false;
+      child = child.getTreeNext();
+    }
+    return true;
   }
 
   public ASTNode getTreeNode() {

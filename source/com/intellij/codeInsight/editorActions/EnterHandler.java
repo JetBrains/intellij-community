@@ -198,23 +198,12 @@ public class EnterHandler extends EditorWriteActionHandler {
                                 !(caretOffset >= document.getTextLength()
                                   || text.charAt(caretOffset) == ' '
                                   || text.charAt(caretOffset) == '\t');
-    // to prevent keeping some elements (e.g. comments) at first column
-    /*
-    if (settings.SMART_INDENT_ON_ENTER || forceIndent) {
-      String toInsert = insertSpace && CodeStyleSettingsManager.getSettings(project).INSERT_FIRST_SPACE_IN_LINE ? "\n " : "\n";
-      document.insertString(caretOffset, toInsert);
-      caretOffset += 1;
-    }
-    else {
-      myOriginalHandler.execute(editor, dataContext);
-      caretOffset = editor.getCaretModel().getOffset();
-    }
-    */
     editor.getCaretModel().moveToOffset(caretOffset);
     myOriginalHandler.execute(editor, dataContext);
     
     if (settings.SMART_INDENT_ON_ENTER || forceIndent) {
       caretOffset += 1;
+      caretOffset = CharArrayUtil.shiftForward(editor.getDocument().getCharsSequence(), caretOffset, " \t");
     }
     else {
       caretOffset = editor.getCaretModel().getOffset();
