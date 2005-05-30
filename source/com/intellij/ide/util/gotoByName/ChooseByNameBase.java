@@ -73,11 +73,11 @@ public abstract class ChooseByNameBase{
   private static int VISIBLE_LIST_SIZE_LIMIT = 10;
   private static final int MAXIMUM_LIST_SIZE_LIMIT = 30;
   private int myMaximumListSizeLimit = MAXIMUM_LIST_SIZE_LIMIT;
-  private static final String NOT_FOUND_MESSAGE_CARD = "syslib";
+  private static final String NOT_FOUND_IN_PROJECT_CARD = "syslib";
   private static final String NOT_FOUND_CARD = "nfound";
   private static final String CHECK_BOX_CARD = "chkbox";
-  static final int REBUILD_DELAY = 300;
   private static final String SEARCHING_CARD = "searching";
+  private static final int REBUILD_DELAY = 300;
 
   private static class MatchesComparator implements Comparator<String> {
     private String myOriginalPattern;
@@ -222,7 +222,7 @@ public abstract class ChooseByNameBase{
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(checkBoxPanel, BorderLayout.CENTER);
     myCardContainer.add(panel, CHECK_BOX_CARD);
-    myCardContainer.add(new JLabel("  (" + myModel.getNotInMessage() + ")"), NOT_FOUND_MESSAGE_CARD);
+    myCardContainer.add(new JLabel("  (" + myModel.getNotInMessage() + ")"), NOT_FOUND_IN_PROJECT_CARD);
     myCardContainer.add(new JLabel("  (no matches found)"), NOT_FOUND_CARD);
     myCardContainer.add(new JLabel("  (searching...)"), SEARCHING_CARD);
     myCard.show(myCardContainer, CHECK_BOX_CARD);
@@ -487,6 +487,7 @@ public abstract class ChooseByNameBase{
         if (!isShowListForEmptyPattern() && (text == null || text.trim().length() == 0)) {
           myListModel.clear();
           hideList();
+          myCard.show(myCardContainer, CHECK_BOX_CARD);
           return;
         }
         final Runnable request = new Runnable() {
@@ -839,14 +840,9 @@ public abstract class ChooseByNameBase{
       myModalityState = modalityState;
     }
 
-    private final Alarm myShowSearchingAlarm = new Alarm();
+    private final Alarm myShowCardAlarm = new Alarm();
     public void run() {
-      myShowSearchingAlarm.cancelAllRequests();
-      myShowSearchingAlarm.addRequest(new Runnable() {
-        public void run() {
-          myCard.show(myCardContainer, SEARCHING_CARD);
-        }
-      }, 200, myModalityState);
+      showCard(SEARCHING_CARD, 200);
 
       final List<Object> elements = new ArrayList<Object>();
       Runnable action = new Runnable() {
@@ -861,23 +857,21 @@ public abstract class ChooseByNameBase{
       };
       ApplicationManager.getApplication().runReadAction(action);
 
-      if (myCancelled[0]) return;
+      if (myCancelled[0]) {
+        myShowCardAlarm.cancelAllRequests();
+        return;
+      }
 
+      final String cardToShow;
       if (elements.size() == 0 && !myCheckboxState) {
-        myCard.show(myCardContainer, NOT_FOUND_MESSAGE_CARD);
         myCheckboxState = true;
         ApplicationManager.getApplication().runReadAction(action);
+        cardToShow = elements.size() == 0 ? NOT_FOUND_CARD : NOT_FOUND_IN_PROJECT_CARD;
       }
       else {
-        myShowSearchingAlarm.cancelAllRequests();
-        if (elements.size() != 0) {
-          myCard.show(myCardContainer, CHECK_BOX_CARD);
-        }
+        cardToShow = elements.size() == 0 ? NOT_FOUND_CARD : CHECK_BOX_CARD;
       }
-      myShowSearchingAlarm.cancelAllRequests();
-      if (elements.size() == 0) {
-        myCard.show(myCardContainer, NOT_FOUND_CARD);
-      }
+      showCard(cardToShow, 0);
 
       myElements = elements;
 
@@ -886,6 +880,15 @@ public abstract class ChooseByNameBase{
           myCallback.run(myElements);
         }
       }, myModalityState);
+    }
+
+    private void showCard(final String card, final int delay) {
+      myShowCardAlarm.cancelAllRequests();
+      myShowCardAlarm.addRequest(new Runnable() {
+        public void run() {
+          myCard.show(myCardContainer, card);
+        }
+      }, delay, myModalityState);
     }
 
     public void setCanCancel(boolean canCancel) {
