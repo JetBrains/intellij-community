@@ -62,7 +62,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private final ResourceBundle myResourceBundle;
   private final Map<PropertiesFile, JPanel> myTitledPanels;
   private final JComponent myNoPropertySelectedPanel = new NoPropertySelectedPanel().getComponent();
-  private Map<PropertiesFile, DocumentListener> myDocumentListeners = new THashMap<PropertiesFile, DocumentListener>();
+  private Map<Editor, DocumentListener> myDocumentListeners = new THashMap<Editor, DocumentListener>();
   private final Project myProject;
   private boolean myDisposed;
 
@@ -80,19 +80,36 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         selectionChanged();
       }
     });
+    installPropertiesChangeListeners();
+    StructureViewTreeElement[] children = myStructureViewComponent.getTreeModel().getRoot().getChildren();
+    if (children.length != 0) {
+      StructureViewTreeElement child = children[0];
+      String propName = ((ResourceBundlePropertyStructureViewElement)child).getValue();
+      setState(new ResourceBundleEditorState(propName));
+    }
 
+    myEditors = new THashMap<PropertiesFile, Editor>();
+    myTitledPanels = new THashMap<PropertiesFile, JPanel>();
+    recreateEditorsPanel();
+  }
+
+  private void recreateEditorsPanel() {
+    myUpdateEditorAlarm.cancelAllRequests();
+
+    myValuesPanel.removeAll();
     myValuesPanel.setLayout(new CardLayout());
 
     JPanel valuesPanelComponent = new JPanel(new GridBagLayout());
     myValuesPanel.add(valuesPanelComponent, "values");
     myValuesPanel.add(myNoPropertySelectedPanel, "noPropertySelected");
 
-    List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles(project);
+    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
 
-    GridBagConstraints gc = new GridBagConstraints(0,0,0,0,0,0,GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5,5,5,5), 0,0);
+    GridBagConstraints gc = new GridBagConstraints(0, 0, 0, 0, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                                   new Insets(5, 5, 5, 5), 0, 0);
     int y = 0;
-    myEditors = new THashMap<PropertiesFile, Editor>();
-    myTitledPanels = new THashMap<PropertiesFile, JPanel>();
+    releaseAllEditors();
+    myTitledPanels.clear();
     for (final PropertiesFile propertiesFile : propertiesFiles) {
       Editor editor = createEditor();
       myEditors.put(propertiesFile, editor);
@@ -121,24 +138,17 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     gc.weighty = 10;
 
     valuesPanelComponent.add(new JPanel(), gc);
-    //selectionChanged();
-    installPropertiesChangeListener();
-    StructureViewTreeElement[] children = myStructureViewComponent.getTreeModel().getRoot().getChildren();
-    if (children.length != 0) {
-      StructureViewTreeElement child = children[0];
-      String propName = ((ResourceBundlePropertyStructureViewElement)child).getValue();
-      setState(new ResourceBundleEditorState(propName));
-    }
+    myValuesPanel.repaint();
   }
 
-  private void installPropertiesChangeListener() {
+  private void installPropertiesChangeListeners() {
     PropertiesFilesManager.getInstance().addPropertiesFileListener(new PropertiesFilesManager.PropertiesFileListener() {
       public void fileAdded(VirtualFile propertiesFile) {
-
+        recreateEditorsPanel();
       }
 
       public void fileRemoved(VirtualFile propertiesFile) {
-
+        recreateEditorsPanel();
       }
 
       public void fileChanged(VirtualFile propertiesFile) {
@@ -260,18 +270,15 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
         public void beforeDocumentChange(DocumentEvent e) {
           oldText = e.getDocument().getText();
-          //EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-          //editor.setHighlighter(new EmptyEditorHighlighter(scheme.getAttributes(PropertiesHighlighter.PROPERTY_VALUE)));
         }
 
         public void documentChanged(DocumentEvent e) {
           Document document = e.getDocument();
           String text = document.getText();
           updatePropertyValueFor(document, propertiesFile, text, oldText);
-          //reinitSettings(editor);
         }
       };
-      myDocumentListeners.put(propertiesFile, listener);
+      myDocumentListeners.put(editor, listener);
       editor.getDocument().addDocumentListener(listener);
     }
   }
@@ -279,7 +286,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
     for (final PropertiesFile propertiesFile : propertiesFiles) {
       Editor editor = myEditors.get(propertiesFile);
-      DocumentListener listener = myDocumentListeners.get(propertiesFile);
+      DocumentListener listener = myDocumentListeners.remove(editor);
       if (listener != null) {
         editor.getDocument().removeDocumentListener(listener);
       }
@@ -353,7 +360,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   public void setState(FileEditorState state) {
     String propertyName = ((ResourceBundleEditorState)state).myPropertyName;
     if (propertyName != null) {
-      myStructureViewComponent.select(propertyName, false);
+      myStructureViewComponent.select(propertyName, true);
+      selectionChanged();
     }
   }
 
@@ -396,6 +404,14 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   public void dispose() {
     myDisposed = true;
     myStructureViewComponent.dispose();
+    releaseAllEditors();
+  }
+
+  private void releaseAllEditors() {
+    for (Editor editor : myEditors.values()) {
+      EditorFactory.getInstance().releaseEditor(editor);
+    }
+    myEditors.clear();
   }
 
   private static class ResourceBundleEditorState implements FileEditorState {

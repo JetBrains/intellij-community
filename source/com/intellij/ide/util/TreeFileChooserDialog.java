@@ -18,13 +18,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ui.Tree;
-import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 
 import javax.swing.*;
@@ -71,10 +69,19 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     myProject = project;
     init();
     if (initialFile != null) {
-      selectFile(initialFile);
+      // dialog does not exist yet
+      SwingUtilities.invokeLater(new Runnable(){
+        public void run() {
+          selectFile(initialFile);
+        }
+      });
     }
 
-    handleSelectionChanged();
+    SwingUtilities.invokeLater(new Runnable(){
+      public void run() {
+        handleSelectionChanged();
+      }
+    });
   }
 
   protected JComponent createCenterPanel() {
@@ -172,7 +179,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       protected void initUI(final ChooseByNamePopupComponent.Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
         super.initUI(callback, modalityState, allowMultipleSelection);
         dummyPanel.add(myGotoByNamePanel.getPanel(), BorderLayout.CENTER);
-        IdeFocusTraversalPolicy.getPreferredFocusedComponent(myGotoByNamePanel.getPanel()).requestFocus();
+        //IdeFocusTraversalPolicy.getPreferredFocusedComponent(myGotoByNamePanel.getPanel()).requestFocus();
       }
 
       protected void choosenElementMightChange() {
@@ -183,7 +190,11 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     myTabbedPane.addTab("Project", scrollPane);
     myTabbedPane.addTab("Search by Name", dummyPanel);
 
-    myGotoByNamePanel.invoke(new MyCallback(), ModalityState.stateForComponent(getRootPane()), false);
+    SwingUtilities.invokeLater(new Runnable(){
+      public void run() {
+        myGotoByNamePanel.invoke(new MyCallback(), ModalityState.stateForComponent(getRootPane()), false);
+      }
+    });
 
     myTabbedPane.installKeyboardNavigation();
 
@@ -225,16 +236,11 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     // Select element in the tree
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (myBuilder == null) return;
-        myBuilder.buildNodeForElement(file);
-        final DefaultMutableTreeNode node = myBuilder.getNodeForElement(file);
-        if (node != null) {
-          final TreePath treePath = new TreePath(node.getPath());
-          myTree.expandPath(treePath);
-          TreeUtil.selectPath(myTree, treePath);
+        if (myBuilder != null) {
+          myBuilder.select(file, file.getVirtualFile(), true);
         }
       }
-    });
+    }, ModalityState.stateForComponent(getWindow()));
   }
 
   public void showDialog() {
@@ -273,7 +279,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myGotoByNamePanel.getPreferredFocusedComponent();
+    return myTree;
   }
 
   private final class MyGotoFileModel implements ChooseByNameModel {

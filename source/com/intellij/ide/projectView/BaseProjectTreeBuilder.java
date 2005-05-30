@@ -96,7 +96,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
-  public void select(Object element, VirtualFile file, boolean requestFocus, BaseProjectTreeBuilder treeBuilder) {
+  public void select(Object element, VirtualFile file, boolean requestFocus) {
     AbstractTreeNode node = select((AbstractTreeNode)getTreeStructure().getRootElement(), file, element);
     TreeUtil.selectInTree(getNodeForElement(node), requestFocus, getTree());
   }

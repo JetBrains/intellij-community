@@ -169,7 +169,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   }
 
   public void select(Object element, VirtualFile file, boolean requestFocus) {
-    myTreeBuilder.select(element, file, requestFocus, myTreeBuilder);
+    myTreeBuilder.select(element, file, requestFocus);
   }
 
   public final void selectModule(Module module, boolean requestFocus) {

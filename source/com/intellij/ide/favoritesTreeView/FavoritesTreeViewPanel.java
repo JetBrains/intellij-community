@@ -244,7 +244,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   }
 
   public void selectElement(final Object selector, final VirtualFile file) {
-    myBuilder.select(selector, file, true, myBuilder);
+    myBuilder.select(selector, file, true);
   }
 
   public Tree getTree() {

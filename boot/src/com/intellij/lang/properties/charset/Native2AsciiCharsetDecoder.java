@@ -96,7 +96,8 @@ class Native2AsciiCharsetDecoder extends CharsetDecoder {
     int b2 = (d2 << 8) & 0x0F00;
     int b3 = (d3 << 4) & 0x00F0;
     int b4 = (d4 << 0) & 0x000F;
-    return (char)(b1 | b2 | b3 | b4);
+    int code = b1 | b2 | b3 | b4;
+    if (Character.isWhitespace(code)) return INVALID_CHAR;
+    return (char)code;
   }
-
 }

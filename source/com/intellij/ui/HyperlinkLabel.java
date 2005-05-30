@@ -8,14 +8,15 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Eugene Belyaev
  */
 public class HyperlinkLabel extends HighlightableComponent {
   private HighlightedText myHighlightedText;
-  private ArrayList myListeners = new ArrayList();
+  private List<HyperlinkListener> myListeners = new ArrayList<HyperlinkListener>();
   private final Color myTextForegroundColor;
   private final Color myTextBackgroundColor;
   private final Color myTextEffectColor;
@@ -28,7 +29,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     myTextForegroundColor = textForegroundColor;
     myTextBackgroundColor = textBackgroundColor;
     myTextEffectColor = textEffectColor;
-    enforceBackgroundOutsideText(textBackgroundColor);    
+    enforceBackgroundOutsideText(textBackgroundColor);
     setHyperlinkText(text);
     enableEvents(AWTEvent.MOUSE_EVENT_MASK);
   }
@@ -87,9 +88,8 @@ public class HyperlinkLabel extends HighlightableComponent {
 
   protected void fireHyperlinkEvent() {
     HyperlinkEvent e = new HyperlinkEvent(this, HyperlinkEvent.EventType.ACTIVATED, null, null);
-    HyperlinkListener[] listeners = (HyperlinkListener[]) myListeners.toArray(new HyperlinkListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      HyperlinkListener listener = listeners[i];
+    HyperlinkListener[] listeners = myListeners.toArray(new HyperlinkListener[myListeners.size()]);
+    for (HyperlinkListener listener : listeners) {
       listener.hyperlinkUpdate(e);
     }
   }
