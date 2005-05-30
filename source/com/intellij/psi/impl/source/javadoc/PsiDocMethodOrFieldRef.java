@@ -36,7 +36,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   public PsiReference getReference() {
     final PsiElement scope = getScope();
     final PsiElement element = getNameElement();
-    if (element == null) return new MyReference(null);
+    if (scope == null || element == null) return new MyReference(null);
     final String name = element.getText();
 
 
@@ -145,9 +145,8 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)firstChildPsi;
         if(referenceElement == null) return null;
         final PsiElement referencedElement = referenceElement.resolve();
-        if (referencedElement instanceof PsiClass) {
-          return referencedElement;
-        }
+        if (referencedElement instanceof PsiClass) return referencedElement;
+        return null;
       }
       else if (firstChildPsi instanceof PsiKeyword) {
         final PsiKeyword keyword = (PsiKeyword)firstChildPsi;
@@ -157,13 +156,11 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         } else if (keyword.getTokenType().equals(JavaTokenType.SUPER_KEYWORD)) {
           final PsiClass contextClass = ResolveUtil.getContextClass(this);
           if (contextClass != null) return contextClass.getSuperClass();
+          return null;
         }
       }
     }
-    final PsiElement place = SourceTreeToPsiMap.treeElementToPsi(TreeUtil.findParent(this, TreeElement.CLASS));
-    if(place == null)
-      return getContainingFile();
-    return place;
+    return ResolveUtil.getContextClass(this);
   }
 
   private class MyReference implements PsiReference {
@@ -178,10 +175,12 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     }
 
     public Object[] getVariants(){
-      final PsiElement scope = getScope();
       final List<PsiModifierListOwner> vars = new ArrayList<PsiModifierListOwner>();
-      vars.addAll(Arrays.asList(getAllMethods(scope, PsiDocMethodOrFieldRef.this)));
-      vars.addAll(Arrays.asList(getAllVariables(scope, PsiDocMethodOrFieldRef.this)));
+      final PsiElement scope = getScope();
+      if (scope != null) {
+        vars.addAll(Arrays.asList(getAllMethods(scope, PsiDocMethodOrFieldRef.this)));
+        vars.addAll(Arrays.asList(getAllVariables(scope, PsiDocMethodOrFieldRef.this)));
+      }
       return vars.toArray();
     }
 
