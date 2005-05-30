@@ -9,6 +9,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
@@ -18,6 +19,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 /**
  * Created by IntelliJ IDEA.
@@ -228,8 +231,12 @@ implements JDOMExternalizable{
         ret.setAttribute(key, myItemProperties.get(key));
       }
     }
+    final String pattern = NameUtil.buildRegexp(prefix, 0);
+    final Pattern compiledPattern = Pattern.compile(pattern);
+    final Matcher matcher = compiledPattern.matcher("");
+
     final String lookupString = ret.getLookupString();
-    if(CompletionUtil.checkName(lookupString, prefix, caseInsensitive)){
+    if(CompletionUtil.checkName(lookupString, prefix, caseInsensitive) || matcher.reset(lookupString).matches()){
       set.add(ret);
       return ret;
     }

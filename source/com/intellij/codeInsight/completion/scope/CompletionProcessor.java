@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion.scope;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.infos.CandidateInfo;
@@ -12,6 +13,8 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,6 +36,7 @@ public class CompletionProcessor extends BaseScopeProcessor
   private boolean myMembersFlag = false;
   private PsiType myQualifierType = null;
   private PsiClass myQualifierClass = null;
+  private final Matcher myMatcher;
 
   private CompletionProcessor(String prefix, PsiElement element, List<CompletionElement> container, ElementFilter filter){
     mySettings = CodeInsightSettings.getInstance();
@@ -61,6 +65,9 @@ public class CompletionProcessor extends BaseScopeProcessor
           myQualifierClass = PsiUtil.resolveClassInType(myQualifierType);
         }
       }
+    final String pattern = NameUtil.buildRegexp(myPrefix, 0);
+    final Pattern compiledPattern = Pattern.compile(pattern);
+    myMatcher = compiledPattern.matcher("");
   }
 
   public CompletionProcessor(String prefix, PsiElement element, ElementFilter filter){
@@ -108,8 +115,9 @@ public class CompletionProcessor extends BaseScopeProcessor
     PsiResolveHelper resolveHelper = myElement.getManager().getResolveHelper();
     if(!(element instanceof PsiMember) || resolveHelper.isAccessible(((PsiMember)element), myElement, myQualifierClass)){
       final String name = PsiUtil.getName(element);
-      if(CompletionUtil.checkName(name, myPrefix) && myFilter.isClassAcceptable(element.getClass())
-        && myFilter.isAcceptable(new CandidateInfo(element, substitutor), myElement))
+      if((CompletionUtil.checkName(name, myPrefix) || myMatcher.reset(name).matches())
+         && myFilter.isClassAcceptable(element.getClass())
+         && myFilter.isAcceptable(new CandidateInfo(element, substitutor), myElement))
         add(new CompletionElement(myQualifierType, element, substitutor));
     }
     return true;

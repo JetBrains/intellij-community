@@ -207,8 +207,10 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     for(int i = 0; i < items.length; i++){
       final LookupItem item = items[i];
       final String lookupString = item.getLookupString();
-      if (!lookupString.toLowerCase().startsWith(prefix.toLowerCase())){
-        throw new RuntimeException("Hmm... Some lookup items have other than $prefix prefix.");
+      if (!lookupString.toLowerCase().startsWith(prefix.toLowerCase())) {
+        // since camel humps
+        return prefix;
+        //throw new RuntimeException("Hmm... Some lookup items have other than $prefix prefix.");
       }
 
       //final String afterPrefix = lookupString.substring(prefix.length());

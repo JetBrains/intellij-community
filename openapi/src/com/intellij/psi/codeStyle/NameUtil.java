@@ -4,6 +4,8 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 import java.util.ArrayList;
 
 public class NameUtil {
@@ -46,5 +48,95 @@ public class NameUtil {
       array.add(word);
     }
     return (String[])array.toArray(new String[array.size()]);
+  }
+
+  private static boolean containsOnlyUppercaseLetters(String s) {
+    for (int i = 0; i < s.length(); i++) {
+      char c = s.charAt(i);
+      if (c != '*' && !Character.isUpperCase(c)) return false;
+    }
+    return true;
+  }
+
+  public static String buildRegexp(String pattern, int exactPrefixLen) {
+    {
+      final int len = pattern.length ();
+      int i = 0;
+      while (i != len && (Character.isLetterOrDigit(pattern.charAt(i)) && (i == 0 || !Character.isUpperCase(pattern.charAt(i))))) {
+        ++i;
+      }
+    }
+
+
+    final int eol = pattern.indexOf('\n');
+    if (eol != -1) {
+      pattern = pattern.substring(0, eol);
+    }
+    if (pattern.length() >= 80) {
+      pattern = pattern.substring(0, 80);
+    }
+
+    final StringBuffer buffer = new StringBuffer();
+    boolean lastIsUppercase = false;
+    final boolean endsWithSpace = StringUtil.endsWithChar(pattern, ' ');
+    final boolean uppercaseOnly = containsOnlyUppercaseLetters(pattern);
+    pattern = pattern.trim();
+    exactPrefixLen = Math.min(exactPrefixLen, pattern.length());
+    for (int i = 0; i != exactPrefixLen; ++i) {
+      final char c = pattern.charAt(i);
+      if (Character.isLetterOrDigit(c)) {
+        buffer.append(c);
+      }
+      else {
+        buffer.append("\\u");
+        buffer.append(Integer.toHexString(c + 0x20000).substring(1));
+      }
+    }
+    for (int i = exactPrefixLen; i < pattern.length(); i++) {
+      final char c = pattern.charAt(i);
+      lastIsUppercase = false;
+      if (Character.isLetterOrDigit(c)) {
+        // This logic allows to use uppercase letters only to catch the name like PDM for PsiDocumentManager
+        if (Character.isUpperCase(c) || Character.isDigit(c)) {
+          if (!uppercaseOnly) {
+            buffer.append('(');
+          }
+          if (i > 0) buffer.append("[a-z0-9]*");
+          buffer.append(c);
+          if (!uppercaseOnly) {
+            buffer.append('|');
+            buffer.append(Character.toLowerCase(c));
+            buffer.append(')');
+          }
+          lastIsUppercase = true;
+        }
+        else if (Character.isLowerCase(c)) {
+          buffer.append('[');
+          buffer.append(c);
+          buffer.append('|');
+          buffer.append(Character.toUpperCase(c));
+          buffer.append(']');
+        }
+        else {
+          buffer.append(c);
+        }
+      }
+      else if (c == '*') {
+        buffer.append(".*");
+      }
+      else {
+        buffer.append("\\u");
+        buffer.append(Integer.toHexString(c + 0x20000).substring(1));
+      }
+    }
+
+    if (!endsWithSpace) {
+      buffer.append(".*");
+    }
+    else if (lastIsUppercase) {
+      buffer.append("[a-z0-9]*");
+    }
+    final String regex = buffer.toString();
+    return regex;
   }
 }

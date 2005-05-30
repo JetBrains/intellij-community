@@ -12,10 +12,10 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
@@ -942,8 +942,7 @@ public abstract class ChooseByNameBase{
 
     boolean overflow = false;
     final String[] names = checkboxState ? myNames[1] : myNames[0];
-    final Pair<String,String> pref_regex = buildRegexp(pattern);
-    final String regex = pref_regex.getSecond();
+    final String regex = NameUtil.buildRegexp(pattern, myExactPrefixLen);
 
     try {
       final Pattern compiledPattern = Pattern.compile(regex);
@@ -961,98 +960,6 @@ public abstract class ChooseByNameBase{
     }
 
     return overflow;
-  }
-
-  private static boolean containsOnlyUppercaseLetters(String s) {
-    for (int i = 0; i < s.length(); i++) {
-      char c = s.charAt(i);
-      if (c != '*' && !Character.isUpperCase(c)) return false;
-    }
-    return true;
-  }
-
-  private Pair<String,String> buildRegexp(String pattern) {
-    String pref;
-    {
-      final int len = pattern.length ();
-      int i = 0;
-      while (i != len && (Character.isLetterOrDigit(pattern.charAt(i)) && (i == 0 || !Character.isUpperCase(pattern.charAt(i))))) {
-        ++i;
-      }
-      pref = pattern.substring(0,i);
-    }
-
-
-    final int eol = pattern.indexOf('\n');
-    if (eol != -1) {
-      pattern = pattern.substring(0, eol);
-    }
-    if (pattern.length() >= 80) {
-      pattern = pattern.substring(0, 80);
-    }
-
-    final StringBuffer buffer = new StringBuffer();
-    boolean lastIsUppercase = false;
-    final boolean endsWithSpace = StringUtil.endsWithChar(pattern, ' ');
-    final boolean uppercaseOnly = containsOnlyUppercaseLetters(pattern);
-    pattern = pattern.trim();
-    myExactPrefixLen = Math.min(myExactPrefixLen, pattern.length());
-    for (int i = 0; i != myExactPrefixLen; ++i) {
-      final char c = pattern.charAt(i);
-      if (Character.isLetterOrDigit(c)) {
-        buffer.append(c);
-      }
-      else {
-        buffer.append("\\u");
-        buffer.append(Integer.toHexString(c + 0x20000).substring(1));
-      }
-    }
-    for (int i = myExactPrefixLen; i < pattern.length(); i++) {
-      final char c = pattern.charAt(i);
-      lastIsUppercase = false;
-      if (Character.isLetterOrDigit(c)) {
-        // This logic allows to use uppercase letters only to catch the name like PDM for PsiDocumentManager
-        if (Character.isUpperCase(c) || Character.isDigit(c)) {
-          if (!uppercaseOnly) {
-            buffer.append('(');
-          }
-          if (i > 0) buffer.append("[a-z0-9]*");
-          buffer.append(c);
-          if (!uppercaseOnly) {
-            buffer.append('|');
-            buffer.append(Character.toLowerCase(c));
-            buffer.append(')');
-          }
-          lastIsUppercase = true;
-        }
-        else if (Character.isLowerCase(c)) {
-          buffer.append('[');
-          buffer.append(c);
-          buffer.append('|');
-          buffer.append(Character.toUpperCase(c));
-          buffer.append(']');
-        }
-        else {
-          buffer.append(c);
-        }
-      }
-      else if (c == '*') {
-        buffer.append(".*");
-      }
-      else {
-        buffer.append("\\u");
-        buffer.append(Integer.toHexString(c + 0x20000).substring(1));
-      }
-    }
-
-    if (!endsWithSpace) {
-      buffer.append(".*");
-    }
-    else if (lastIsUppercase) {
-      buffer.append("[a-z0-9]*");
-    }
-    final String regex = buffer.toString();
-    return Pair.create(pref, regex);
   }
 
   private static interface CalcElementsCallback {
