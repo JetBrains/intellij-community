@@ -262,10 +262,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                 mySettings.ALIGN_MULTILINE_PARAMETERS);
     }
     else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.ANNOTATION_PARAMETER_LIST){
-      final Wrap wrap = Formatter.getInstance().createWrap(getWrapType(mySettings.ANNOTATION_PARAMETERS_WRAP), false);
+      final Wrap wrap = Formatter.getInstance().createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
       child = processParenBlock(result, child,
                                 WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                mySettings.ALIGN_MULTILINE_ANNOTATION_PARAMETERS);
+                                mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
     }    
     else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.PARENTH_EXPRESSION){
       child = processParenBlock(result, child,

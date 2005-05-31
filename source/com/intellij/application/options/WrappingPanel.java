@@ -84,13 +84,12 @@ public class WrappingPanel extends OptionTableWithPreviewPanel {
 
     initBooleanField("MODIFIER_LIST_WRAP", "Wrap after modifier list", MODIFIER_LIST_WRAPPING);
 
-    initRadioGroupField("ANNOTATION_PARAMETERS_WRAP", "Annotation parameters", FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
-    
     initRadioGroupField("CLASS_ANNOTATION_WRAP", "Classes annotation", FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
     initRadioGroupField("METHOD_ANNOTATION_WRAP", "Methods annotation", FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
     initRadioGroupField("FIELD_ANNOTATION_WRAP", "Fields annotation", FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
     initRadioGroupField("PARAMETER_ANNOTATION_WRAP", "Parameters annotation", FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
     initRadioGroupField("VARIABLE_ANNOTATION_WRAP", "Local variables annotation", FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    initRadioGroupField("ENUM_CONSTANTS_WRAP", "Enum constants", FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
     
   }
 
@@ -131,6 +130,10 @@ public class WrappingPanel extends OptionTableWithPreviewPanel {
            "       super.getFoo().foo().getBar().bar();\n" +
            "    }\n" +
            "  }\n" +
+           "}\n" +
+           "\n" +
+           "enum Breed {\n" +
+           "    Dalmatian(), Labrador(), Dachshund()\n" +
            "}\n" +
            "\n" +
            "@Annotation1 @Annotation2 @Annotation3(param1=\"value1\", param2=\"value2\") @Annotation4 class Foo {\n" +
