@@ -13,7 +13,7 @@ import java.util.Enumeration;
  * Time: 7:01:02 PM
  */
 public abstract class TreeBuilderNode extends DefaultMutableTreeNode{
-  private boolean                    myChildrenBuilt = false;
+  private boolean  myChildrenBuilt = false;
 
   public TreeBuilderNode(Object userObject) {
     super(userObject);
