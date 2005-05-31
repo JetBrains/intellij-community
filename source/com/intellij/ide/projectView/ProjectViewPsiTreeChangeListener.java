@@ -42,6 +42,10 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
   }
 
   private void childrenChanged(PsiElement parent) {
+    if (parent == null) return;
+    if (parent.getContainingFile() == null) return;
+    if (parent.getContainingFile().getVirtualFile() == null) return;
+    
     if (parent instanceof PsiDirectory && isFlattenPackages()){
       getUpdater().addSubtreeToUpdate(getRootNode());
       return;

@@ -40,6 +40,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -382,13 +383,43 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
    */
   private final class MyOccurenceNavigator implements OccurenceNavigator {
     public boolean hasNextOccurence() {
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      return getNextPointer() != null;
+      TreePath path = myTree.getSelectionPath();
+      if (path == null) {
+        return false;
+      }
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      NodeDescriptor userObject = (NodeDescriptor)node.getUserObject();
+      if (userObject == null) {
+        return false;
+      }
+      Object element = userObject.getElement();
+      if (element instanceof TodoItemNode) {
+        return myTree.getRowCount() != myTree.getRowForPath(path) + 1;
+      }
+      else {
+        return true;
+      }
     }
 
     public boolean hasPreviousOccurence() {
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      return getPreviousPointer() != null;
+      TreePath path = myTree.getSelectionPath();
+      if (path == null) {
+        return false;
+      }
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+      NodeDescriptor userObject = (NodeDescriptor)node.getUserObject();
+      if (userObject == null) {
+        return false;
+      }
+      Object element = userObject.getElement();
+      return !isFirst(node);      
+    }
+
+    private boolean isFirst(final TreeNode node) {
+      final TreeNode parent = node.getParent();
+      if (parent == null) return true;
+      if (parent.getIndex(node) != 0) return false;
+      return isFirst(parent);
     }
 
     public OccurenceNavigator.OccurenceInfo goNextOccurence() {

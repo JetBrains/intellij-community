@@ -761,7 +761,7 @@ public abstract class AbstractTreeBuilder {
     return nodes.size() > 0 ? nodes.get(0) : null;
   }
 
-  private Object findNodeByElement(Object element) {
+  protected Object findNodeByElement(Object element) {
     if (myElementToNodeMap.containsKey(element)){
       return myElementToNodeMap.get(element);
     }

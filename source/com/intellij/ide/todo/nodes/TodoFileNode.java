@@ -91,6 +91,7 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
         }
       } else {
         children.add(new TodoItemNode(getProject(), pointer, myBuilder));
+        
       }
     }
     Collections.sort(children, SmartTodoItemPointerComparator.ourInstance);
