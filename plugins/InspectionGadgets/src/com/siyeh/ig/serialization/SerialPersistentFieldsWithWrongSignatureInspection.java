@@ -7,29 +7,29 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class SerialPersistentFieldsWithWrongSignatureInspection extends ClassInspection {
-
-    public String getDisplayName() {
+public class SerialPersistentFieldsWithWrongSignatureInspection
+                                                                extends ClassInspection{
+    public String getDisplayName(){
         return "'serialPersistentFields' field not declared 'private static final ObjectStreamField[]'";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.SERIALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "#ref field of a Serializable class is not declared 'private static final ObjectStreamField[]' #loc ";
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+    public BaseInspectionVisitor buildVisitor(){
         return new SerializableDefinesSerialVersionUIDVisitor();
     }
 
-    private static class SerializableDefinesSerialVersionUIDVisitor extends BaseInspectionVisitor {
-
-        public void visitClass(@NotNull PsiClass aClass) {
+    private static class SerializableDefinesSerialVersionUIDVisitor
+                                                                    extends BaseInspectionVisitor{
+        public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so it doesn't drill down
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
+            if(aClass.isInterface() || aClass.isAnnotationType()){
                 return;
             }
 
@@ -45,15 +45,16 @@ public class SerialPersistentFieldsWithWrongSignatureInspection extends ClassIns
                         break;
                     } else{
                         final PsiType type = field.getType();
-                        if(type != null){
+                        if(type != null
+                                && !type.equalsToText("java.io.ObjectStreamField[]"))
+                        {
                             badSerialPersistentFields = field;
                             break;
                         }
                     }
                 }
             }
-            if(badSerialPersistentFields == null)
-            {
+            if(badSerialPersistentFields == null){
                 return;
             }
             if(!SerializationUtils.isSerializable(aClass)){
@@ -62,11 +63,9 @@ public class SerialPersistentFieldsWithWrongSignatureInspection extends ClassIns
             registerFieldError(badSerialPersistentFields);
         }
 
-        private static boolean isSerialPersistentFields(PsiField field) {
+        private static boolean isSerialPersistentFields(PsiField field){
             final String fieldName = field.getName();
             return "serialPersistentFields".equals(fieldName);
         }
-
     }
-
 }

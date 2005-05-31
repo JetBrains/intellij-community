@@ -3,6 +3,7 @@ package com.siyeh.igtest.abstraction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.AbstractList;
+import java.lang.reflect.Array;
 
 interface TestInter{}
 
@@ -22,5 +23,9 @@ public class OverlyStrongTypeCastInspection
     {
         Object o = null;
         test((TestInter)o);
+    }
+
+    public static Object[] array(List<?> l, Class type){
+        return l.toArray((Object[]) Array.newInstance(type, l.size()));
     }
 }
