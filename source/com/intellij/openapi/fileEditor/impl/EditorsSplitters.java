@@ -18,10 +18,8 @@ import org.jdom.Element;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 
 /**
@@ -53,7 +51,6 @@ public final class EditorsSplitters extends JPanel {
   }
 
   private void clear() {
-    cancelUpdateIcon();
     removeAll();
     myWindows.clear();
     myCurrentWindow = null;
@@ -68,7 +65,7 @@ public final class EditorsSplitters extends JPanel {
   public void stopListeningFocus() {
     myFocusWatcher.deinstall(this);
   }
-  
+
   public VirtualFile getCurrentFile() {
     if (myCurrentWindow != null) {
       return myCurrentWindow.getSelectedFile();
@@ -273,28 +270,36 @@ public final class EditorsSplitters extends JPanel {
   private static final Alarm ALARM = new Alarm();
   protected void updateFileIcon(final VirtualFile file, final boolean useAlarm) {
     LOG.assertTrue(file != null);
-    Runnable updateRunnable = new Runnable() {
-      public void run() {
-        final EditorWindow[] windows = findWindows(file);
-        if (windows != null) {
-          for (int i = 0; i < windows.length; i++) {
-            windows[i].updateFileIcon(file);
-          }
-        }
-      }
-    };
-
     if (useAlarm) {
-      cancelUpdateIcon();
-      ALARM.addRequest(updateRunnable, 200);
+      updateFileIconLater(file);
     }
     else {
-      updateRunnable.run();
+      updateFileIconImmediately(file);
     }
   }
 
-  private static void cancelUpdateIcon() {
+  private void updateFileIconImmediately(final VirtualFile file) {
+    final EditorWindow[] windows = findWindows(file);
+    if (windows != null) {
+      for (EditorWindow window : windows) {
+        window.updateFileIcon(file);
+      }
+    }
+  }
+
+  private Set<VirtualFile> myFilesToUpdateIconsFor = new HashSet<VirtualFile>();
+
+  private void updateFileIconLater(VirtualFile file) {
+    myFilesToUpdateIconsFor.add(file);
     ALARM.cancelAllRequests();
+    ALARM.addRequest(new Runnable() {
+      public void run() {
+        for (VirtualFile file : myFilesToUpdateIconsFor) {
+          updateFileIconImmediately(file);
+        }
+        myFilesToUpdateIconsFor.clear();
+      }
+    }, 200);
   }
 
   public void updateFileColor(final VirtualFile file) {
