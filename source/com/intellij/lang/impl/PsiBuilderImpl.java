@@ -37,6 +37,7 @@ public class PsiBuilderImpl implements PsiBuilder {
   private CharTable myCharTable;
   private int myCurrentLexem;
   private CharSequence myText;
+  private boolean myDebugMode = false;
 
   public PsiBuilderImpl(Language lang, final Project project, CharTable charTable, CharSequence text) {
     myText = text;
@@ -54,9 +55,13 @@ public class PsiBuilderImpl implements PsiBuilder {
   private class StartMarker extends ProductionMarker implements Marker {
     public IElementType myType;
     public DoneMarker myDoneMarker = null;
+    public Throwable myDebugAllocationPosition = null;
 
     public StartMarker(int idx) {
       super(idx);
+      if (myDebugMode) {
+        myDebugAllocationPosition = new Throwable("Created at the following trace.");
+      }
     }
 
     public Marker preceed() {
@@ -221,7 +226,13 @@ public class PsiBuilderImpl implements PsiBuilder {
       if (item instanceof Marker) {
         StartMarker otherMarker = (StartMarker)item;
         if (otherMarker.myDoneMarker == null) {
-          LOG.error("Another not done marker of type [" + otherMarker.myType + "] added after this one. Must be done before this.");
+          LOG.error("Another not done marker added after this one. Must be done before this.");
+          final Throwable debugAllocOther = otherMarker.myDebugAllocationPosition;
+          final Throwable debugAllocThis = ((StartMarker)marker).myDebugAllocationPosition;
+          if (debugAllocOther != null) {
+            LOG.error("Attempt to close marker allocated at: ", debugAllocThis);
+            LOG.error("Before marker allocated at: " + debugAllocOther);
+          }
         }
       }
     }
@@ -299,6 +310,10 @@ public class PsiBuilderImpl implements PsiBuilder {
     LOG.assertTrue(curNode == null, "Unbalanced tree");
 
     return rootNode;
+  }
+
+  public void setDebugMode(boolean dbgMode) {
+    myDebugMode = dbgMode;
   }
 
   private int insertLeafs(int curToken, int lastIdx, final ASTNode curNode) {

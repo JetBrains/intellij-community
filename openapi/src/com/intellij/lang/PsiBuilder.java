@@ -31,4 +31,10 @@ public interface PsiBuilder {
   boolean eof();
 
   ASTNode getTreeBuilt();
+
+  /**
+   * Builder will print stack trace to marker allocation position if one is not done when calling getTreeBuilt().
+   * @param dbgMode
+   */
+  void setDebugMode(boolean dbgMode);
 }
