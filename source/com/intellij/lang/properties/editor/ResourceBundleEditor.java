@@ -81,16 +81,17 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       }
     });
     installPropertiesChangeListeners();
+
+    myEditors = new THashMap<PropertiesFile, Editor>();
+    myTitledPanels = new THashMap<PropertiesFile, JPanel>();
+    recreateEditorsPanel();
+
     StructureViewTreeElement[] children = myStructureViewComponent.getTreeModel().getRoot().getChildren();
     if (children.length != 0) {
       StructureViewTreeElement child = children[0];
       String propName = ((ResourceBundlePropertyStructureViewElement)child).getValue();
       setState(new ResourceBundleEditorState(propName));
     }
-
-    myEditors = new THashMap<PropertiesFile, Editor>();
-    myTitledPanels = new THashMap<PropertiesFile, JPanel>();
-    recreateEditorsPanel();
   }
 
   private void recreateEditorsPanel() {
