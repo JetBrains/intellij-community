@@ -6,6 +6,7 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ClassUtil;
 
 class ConvertIntegerToDecimalPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -26,6 +27,10 @@ class ConvertIntegerToDecimalPredicate implements PsiElementPredicate{
             return text.charAt(0) == '0';
         }
         if(type.equals(PsiType.DOUBLE) || type.equals(PsiType.FLOAT)){
+            if(!ClassUtil.classExists("javax.xml.xpath.XPath"))
+            {
+                return false;
+            }
             final PsiManager manager = expression.getManager();
             final LanguageLevel languageLevel =
                     manager.getEffectiveLanguageLevel();

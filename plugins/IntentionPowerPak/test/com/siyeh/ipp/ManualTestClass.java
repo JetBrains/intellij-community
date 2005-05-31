@@ -29,7 +29,7 @@ public class ManualTestClass
     public void testFloat()
     {
         // convert between hex, and decimal
-        float foo = 31.0f;
+        float foo = 0x1.fp4f;
         double doubleFoo = 31.2;
     }
 
