@@ -33,16 +33,18 @@ package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Map;
 
 public interface ColorSettingsPage {
-  String getDisplayName();
-  Icon getIcon();
-  AttributesDescriptor[] getAttributeDescriptors();
-  ColorDescriptor[] getColorDescriptors();
-  SyntaxHighlighter getHighlighter();
-  String getDemoText();
-  Map<String,TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap();
+  @NotNull String getDisplayName();
+  @Nullable Icon getIcon();
+  @NotNull AttributesDescriptor[] getAttributeDescriptors();
+  @NotNull ColorDescriptor[] getColorDescriptors();
+  @NotNull SyntaxHighlighter getHighlighter();
+  @NotNull String getDemoText();
+  @Nullable Map<String,TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap();
 }
