@@ -75,7 +75,7 @@ public class ClickNavigator {
   }
 
   private static boolean highlightDataContainsOffset(HighlightData data, int offset) {
-    return (offset >= data.getStartOffset() && offset <= data.getEndOffset());
+    return offset >= data.getStartOffset() && offset <= data.getEndOffset();
   }
 
   public void addClickNavigator(final Editor view,
@@ -103,8 +103,7 @@ public class ClickNavigator {
   public static String highlightingTypeFromTokenType(IElementType tokenType, SyntaxHighlighter highlighter) {
     TextAttributesKey[] highlights = highlighter.getTokenHighlights(tokenType);
     String s = null;
-    for (int i = 0; i < highlights.length; i++) {
-      TextAttributesKey highlight = highlights[i];
+    for (TextAttributesKey highlight : highlights) {
       if (highlight != HighlighterColors.TEXT) {
         s = highlight.getExternalName();
         break;
@@ -138,11 +137,10 @@ public class ClickNavigator {
     }
 
     if (data != null) {
-      for (int i = 0; i < data.length; i++) {
-        HighlightData highlightData = data[i];
+      for (HighlightData highlightData : data) {
         if (highlightDataContainsOffset(highlightData, editor.logicalPositionToOffset(pos))) {
           if (!select) setCursor(editor, Cursor.HAND_CURSOR);
-          setSelectedItem(data[i].getHighlightType(), select);
+          setSelectedItem(highlightData.getHighlightType(), select);
           return;
         }
       }

@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 
 public class ColorAndFontOptions extends BaseConfigurable implements ApplicationComponent {
   private ColorAndFontPanel myPanel;
@@ -52,8 +51,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
   public boolean isModified() {
     if (!mySelectedScheme.getName().equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) return true;
 
-    for (Iterator<MyColorScheme> iterator = mySchemes.values().iterator(); iterator.hasNext();) {
-      MyColorScheme scheme = iterator.next();
+    for (MyColorScheme scheme : mySchemes.values()) {
       if (scheme.isModified()) return true;
     }
 
@@ -133,8 +131,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
       EditorColorsManager myColorsManager = EditorColorsManager.getInstance();
 
       myColorsManager.removeAllSchemes();
-      for (Iterator<MyColorScheme> iterator = mySchemes.values().iterator(); iterator.hasNext();) {
-        MyColorScheme scheme = iterator.next();
+      for (MyColorScheme scheme : mySchemes.values()) {
         if (!scheme.isDefault()) {
           scheme.apply();
           myColorsManager.addColorsScheme(scheme.getOriginalScheme());
@@ -149,8 +146,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
       EditorFactory.getInstance().refreshAllEditors();
 
       Project[] projects = ProjectManager.getInstance().getOpenProjects();
-      for (int i = 0; i < projects.length; i++) {
-        Project project1 = projects[i];
+      for (Project project1 : projects) {
         // Update breakpoints for debugger.
         updateBreakpoints(project1);
       }
@@ -159,8 +155,8 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
       myPanel.resetSchemesCombo();
 
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-      for (int i = 0; i < openProjects.length; i++) {
-        FileStatusManager.getInstance(openProjects[i]).fileStatusesChanged();
+      for (Project openProject : openProjects) {
+        FileStatusManager.getInstance(openProject).fileStatusesChanged();
       }
 
       myPanel.apply();
@@ -194,8 +190,8 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
     EditorColorsScheme[] allSchemes = colorsManager.getAllSchemes();
 
     mySchemes = new HashMap<String, MyColorScheme>();
-    for (int i = 0; i < allSchemes.length; i++) {
-      MyColorScheme schemeDelegate = new MyColorScheme(allSchemes[i]);
+    for (EditorColorsScheme allScheme : allSchemes) {
+      MyColorScheme schemeDelegate = new MyColorScheme(allScheme);
       initScheme(schemeDelegate);
       mySchemes.put(schemeDelegate.getName(), schemeDelegate);
     }
@@ -215,8 +211,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
   private static void initPluggedDescriptions(ArrayList<EditorSchemeAttributeDescriptor> descriptions,
                                               MyColorScheme scheme) {
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
-    for (int i = 0; i < pages.length; i++) {
-      ColorSettingsPage page = pages[i];
+    for (ColorSettingsPage page : pages) {
       initDescriptions(page, descriptions, scheme);
     }
   }
@@ -226,14 +221,12 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
                                        MyColorScheme scheme) {
     String group = page.getDisplayName();
     AttributesDescriptor[] attributeDescriptors = page.getAttributeDescriptors();
-    for (int i = 0; i < attributeDescriptors.length; i++) {
-      AttributesDescriptor descriptor = attributeDescriptors[i];
+    for (AttributesDescriptor descriptor : attributeDescriptors) {
       addSchemedDescription(descriptions, descriptor.getDisplayName(), group, descriptor.getKey(), scheme);
     }
 
     ColorDescriptor[] colorDescriptors = page.getColorDescriptors();
-    for (int i = 0; i < colorDescriptors.length; i++) {
-      ColorDescriptor descriptor = colorDescriptors[i];
+    for (ColorDescriptor descriptor : colorDescriptors) {
       ColorKey back = descriptor.getKind() == ColorDescriptor.Kind.BACKGROUND ? descriptor.getKey() : null;
       ColorKey fore = descriptor.getKind() == ColorDescriptor.Kind.FOREGROUND ? descriptor.getKey() : null;
       addEditorSettingDescription(descriptions, descriptor.getDisplayName(), group, back, fore, scheme);
@@ -248,8 +241,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
 
     FileStatus[] statuses = PeerFactory.getInstance().getFileStatusFactory().getAllFileStatuses();
 
-    for (int i = 0; i < statuses.length; i++) {
-      FileStatus fileStatus = statuses[i];
+    for (FileStatus fileStatus : statuses) {
       addEditorSettingDescription(descriptions,
                                   fileStatus.getText(),
                                   FILE_STATUS_GROUP,
@@ -532,8 +524,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
       if (myLineSpacing != myParentScheme.getLineSpacing()) return true;
       if (!myFontName.equals(myParentScheme.getEditorFontName())) return true;
 
-      for (int i = 0; i < myDescriptors.length; i++) {
-        EditorSchemeAttributeDescriptor descriptor = myDescriptors[i];
+      for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
         if (descriptor.isModified()) return true;
       }
 
@@ -545,8 +536,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
       myParentScheme.setEditorFontName(myFontName);
       myParentScheme.setLineSpacing(myLineSpacing);
 
-      for (int i = 0; i < myDescriptors.length; i++) {
-        EditorSchemeAttributeDescriptor descriptor = myDescriptors[i];
+      for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
         descriptor.apply(myParentScheme);
       }
     }
