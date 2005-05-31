@@ -46,17 +46,17 @@ public final class DesktopLayout implements JDOMExternalizable {
    */
   private WindowInfo[] myAllInfos;
 
-  DesktopLayout() {
+  public DesktopLayout() {
     myRegisteredId2Info = new com.intellij.util.containers.HashMap<String, WindowInfo>();
     myUnregisteredId2Info = new com.intellij.util.containers.HashMap<String, WindowInfo>();
   }
 
   /**
-   * Copies itself into the passed
+   * Copies itself from the passed
    *
    * @param layout to be copied.
    */
-  final void copyFrom(final DesktopLayout layout) {
+  public final void copyFrom(final DesktopLayout layout) {
     final WindowInfo[] infos = layout.getAllInfos();
     for (int i = 0; i < infos.length; i++) {
       WindowInfo info = myRegisteredId2Info.get(infos[i].getId());

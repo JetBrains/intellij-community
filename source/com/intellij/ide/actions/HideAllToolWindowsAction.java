@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.impl.DesktopLayout;
 
 public class HideAllToolWindowsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
@@ -18,19 +18,35 @@ public class HideAllToolWindowsAction extends AnAction {
 
     ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
 
+    DesktopLayout layout = new DesktopLayout();
+    layout.copyFrom(toolWindowManager.getLayout());
+
     // to clear windows stack
     toolWindowManager.clearSideStack();
     //toolWindowManager.activateEditorComponent();
-    
+
+
     String[] ids = toolWindowManager.getToolWindowIds();
-    for (int i = 0; i < ids.length; i++) {
-      String id = ids[i];
+    boolean hasVisible = false;
+    for (String id : ids) {
       ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
       if (toolWindow.isVisible()) {
         toolWindow.hide(null);
+        hasVisible = true;
       }
     }
-    toolWindowManager.activateEditorComponent();
+
+    if (hasVisible) {
+      toolWindowManager.setLayoutToRestoreLater(layout);
+      toolWindowManager.activateEditorComponent();
+    }
+    else {
+      final DesktopLayout restoredLayout = toolWindowManager.getLayoutToRestoreLater();
+      if (restoredLayout != null) {
+        toolWindowManager.setLayoutToRestoreLater(null);
+        toolWindowManager.setLayout(restoredLayout);
+      }
+    }
   }
 
   public void update(AnActionEvent event) {
@@ -41,14 +57,21 @@ public class HideAllToolWindowsAction extends AnAction {
       return;
     }
 
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
     String[] ids = toolWindowManager.getToolWindowIds();
-    for (int i = 0; i < ids.length; i++) {
-      String id = ids[i];
+    for (String id : ids) {
       if (toolWindowManager.getToolWindow(id).isVisible()) {
         presentation.setEnabled(true);
+        presentation.setText("Hi&de All Windows", true);
         return;
       }
+    }
+
+    final DesktopLayout layout = toolWindowManager.getLayoutToRestoreLater();
+    if (layout != null) {
+      presentation.setEnabled(true);
+      presentation.setText("Restore Windows");
+      return;
     }
 
     presentation.setEnabled(false);

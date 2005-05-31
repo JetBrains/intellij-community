@@ -10,7 +10,10 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.FocusWatcher;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -24,7 +27,9 @@ import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -54,6 +59,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private ToolWindowsPane myToolWindowsPane;
   private IdeFrame myFrame;
+  private DesktopLayout myLayoutToRestoreLater = null;
 
   /**
    * invoked by reflection
@@ -580,6 +586,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   public DesktopLayout getLayout() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myLayout;
+  }
+
+  public void setLayoutToRestoreLater(DesktopLayout layout) {
+    myLayoutToRestoreLater = layout;
+  }
+
+  public DesktopLayout getLayoutToRestoreLater() {
+    return myLayoutToRestoreLater;
   }
 
   public void setLayout(final DesktopLayout layout) {
