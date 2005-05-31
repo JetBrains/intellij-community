@@ -1,5 +1,6 @@
 package com.intellij.ide.ui;
 
+import com.incors.plaf.alloy.IdeaAlloyLAF;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,7 +13,6 @@ import com.intellij.ui.IdeaBlueMetalTheme;
 import com.intellij.ui.SideBorder2;
 import com.intellij.ui.plaf.beg.*;
 import com.sun.java.swing.plaf.windows.WindowsLookAndFeel;
-import com.incors.plaf.alloy.IdeaAlloyLAF;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -22,7 +22,6 @@ import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
-import javax.swing.plaf.metal.OceanTheme;
 import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -228,7 +227,7 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
       try {
         LookAndFeel laf=((LookAndFeel)Class.forName(lookAndFeelInfo.getClassName()).newInstance());
         if(laf instanceof MetalLookAndFeel){
-          MetalLookAndFeel.setCurrentTheme(new OceanTheme());
+          MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
         }
         UIManager.setLookAndFeel(laf);
       } catch(Exception exc) {
