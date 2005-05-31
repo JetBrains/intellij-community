@@ -1,11 +1,13 @@
 package com.intellij.openapi.diff.impl.external;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.DiffTool;
+import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.mergeTool.MergeTool;
 import com.intellij.openapi.editor.Editor;
@@ -16,7 +18,6 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.config.*;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import org.jdom.Element;
 
 import java.awt.*;
@@ -55,6 +56,8 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
       return editor.getUserData(EDITOR_IS_DIFF_KEY) != null;
     }
   };
+  private ComparisonPolicy myComparisonPolicy;
+  public static final String COMPARISON_POLICY_ATTR_NAME = "COMPARISON_POLICY";
 
   public DiffManagerImpl() {
     myProperties = new ExternalizablePropertyContainer();
@@ -108,13 +111,31 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
 
   public void readExternal(Element element) throws InvalidDataException {
     myProperties.readExternal(element);
+    readPolicy(element);
+  }
+
+  private void readPolicy(final Element element) {
+    final String policyName = element.getAttributeValue(COMPARISON_POLICY_ATTR_NAME);
+    if (policyName != null) {
+      ComparisonPolicy[] policies = ComparisonPolicy.getAllInstances();
+      for (int i = 0; i < policies.length; i++) {
+        ComparisonPolicy policy = policies[i];
+        if (policy.getName().equals(policyName)) {
+          myComparisonPolicy = policy;
+          break;
+        }
+      }
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     myProperties.writeExternal(element);
+    if (myComparisonPolicy != null) {
+      element.setAttribute(COMPARISON_POLICY_ATTR_NAME, myComparisonPolicy.getName());
+    }
   }
 
-  AbstractProperty.AbstractPropertyContainer getProperties() { return myProperties; }
+  public AbstractProperty.AbstractPropertyContainer getProperties() { return myProperties; }
 
   public static DiffPanel createDiffPanel(DiffRequest data, Window window) {
     DiffPanel diffPanel = null;
@@ -132,4 +153,11 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     }
   }
 
+  public void setComparisonPolicy(final ComparisonPolicy p) {
+    myComparisonPolicy = p;
+  }
+
+  public ComparisonPolicy getComparisonPolicy() {
+    return myComparisonPolicy;
+  }
 }

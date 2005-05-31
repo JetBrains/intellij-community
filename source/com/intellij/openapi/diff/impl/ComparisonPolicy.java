@@ -12,6 +12,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.Diff;
 
 public abstract class ComparisonPolicy {
+  private final String myName;
+
+  protected ComparisonPolicy(final String name) {
+    myName = name;
+  }
+
   public DiffFragment[] buildFragments(String[] strings1, String[] strings2) {
     DiffFragmentBuilder builder = new DiffFragmentBuilder(strings1, strings2);
     Object[] wrappers1 = getWrappers(strings1);
@@ -28,7 +34,7 @@ public abstract class ComparisonPolicy {
     return DiffFragmentBuilder.buildFragments(builder, change);
   }
 
-  public static final ComparisonPolicy DEFAULT = new ComparisonPolicy() {
+  public static final ComparisonPolicy DEFAULT = new ComparisonPolicy("Default") {
     protected Object[] getWrappers(String[] strings) {
       return strings;
     }
@@ -46,7 +52,7 @@ public abstract class ComparisonPolicy {
     }
   };
 
-  public static final ComparisonPolicy TRIM_SPACE = new ComparisonPolicy() {
+  public static final ComparisonPolicy TRIM_SPACE = new ComparisonPolicy("Trim space") {
     protected Object[] getLineWrappers(String[] lines) {
       return trimStrings(lines);
     }
@@ -55,8 +61,9 @@ public abstract class ComparisonPolicy {
       String text1 = word1.getText();
       String text2 = word2.getText();
       if (word1.isWhitespace() && word2.isWhitespace() &&
-          word1.atEndOfLine() && word2.atEndOfLine())
+          word1.atEndOfLine() && word2.atEndOfLine()) {
         return DiffFragment.unchanged(text1, text2);
+      }
       return createFragment(text1, text2);
     }
 
@@ -145,7 +152,21 @@ public abstract class ComparisonPolicy {
 
   public abstract DiffFragment createFragment(Word word1, Word word2);
 
+  public String getName() {
+    return myName;
+  }
+
+  public static final ComparisonPolicy[] COMPARISON_POLICIES = new ComparisonPolicy[]{DEFAULT, IGNORE_SPACE, TRIM_SPACE};
+  
+  public static ComparisonPolicy[] getAllInstances() {
+    return COMPARISON_POLICIES;
+  }
+
   private static class IgnoreSpacePolicy extends ComparisonPolicy implements DiffCorrection.FragmentProcessor<DiffCorrection.FragmentsCollector> {
+    public IgnoreSpacePolicy() {
+      super("Ignore spaces");
+    }
+
     protected Object[] getLineWrappers(String[] lines) {
       Object[] result = new Object[lines.length];
       for (int i = 0; i < lines.length; i++) {
@@ -188,8 +209,9 @@ public abstract class ComparisonPolicy {
     public DiffFragment createFragment(String text1, String text2) {
       String toCompare1 = toNotNull(text1);
       String toCompare2 = toNotNull(text2);
-      if (getWrapper(toCompare1).equals(getWrapper(toCompare2)))
+      if (getWrapper(toCompare1).equals(getWrapper(toCompare2))) {
         return DiffFragment.unchanged(toCompare1, toCompare2);
+      }
       return new DiffFragment(text1, text2);
     }
 

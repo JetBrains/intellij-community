@@ -19,6 +19,7 @@ import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.splitter.DiffDividerPaint;
 import com.intellij.openapi.diff.impl.splitter.LineBlocks;
 import com.intellij.openapi.diff.impl.util.*;
+import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
@@ -82,6 +83,15 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
                                   new DiffDividerPaint(this, FragmentSide.SIDE1));
     myPanel.insertDiffComponent(mySplitter, new MyScrollingPanel());
     myPanel.setDataProvider(new MyDataProvider());
+
+    final ComparisonPolicy comparisonPolicy = getComparisonPolicy();
+    final ComparisonPolicy defaultComparisonPolicy = DiffManagerImpl.getInstanceEx().getComparisonPolicy();
+    
+    if (defaultComparisonPolicy != null && comparisonPolicy != defaultComparisonPolicy) {
+      setComparisonPolicy(defaultComparisonPolicy);
+    }
+    
+
   }
 
   public Editor getEditor1() {
@@ -187,6 +197,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public void setComparisonPolicy(ComparisonPolicy comparisonPolicy) {
     myData.setComparisonPolicy(comparisonPolicy);
+    DiffManagerImpl.getInstanceEx().setComparisonPolicy(comparisonPolicy);
     rediff();
   }
 
