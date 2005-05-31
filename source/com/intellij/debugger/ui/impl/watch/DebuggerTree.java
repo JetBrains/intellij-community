@@ -537,6 +537,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   private class BuildValueNodeCommand extends BuildNodeCommand {
     public BuildValueNodeCommand(DebuggerTreeNodeImpl node) {
       super(node);
+      System.out.println("DebuggerTree$BuildValueNodeCommand.BuildValueNodeCommand " + this);
     }
 
     public void threadAction() {
@@ -556,14 +557,18 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
           }
 
           public void setChildren(final List<DebuggerTreeNode> children) {
-            IJSwingUtilities.invoke(new Runnable() {
+            System.out.println(this + ": Invoke setting children, count= " + children.size());
+
+            SwingUtilities.invokeLater(new Runnable() {
               public void run() {
-                getNode().removeAllChildren();
+                System.out.println("About to set children, count= " + children.size());
+                final DebuggerTreeNodeImpl node = getNode();
+                node.removeAllChildren();
                 for (Iterator<DebuggerTreeNode> iterator = children.iterator(); iterator.hasNext();) {
                   DebuggerTreeNode debuggerTreeNode = iterator.next();
-                  getNode().add(debuggerTreeNode);
+                  node.add(debuggerTreeNode);
                 }
-                getNode().childrenChanged(false);
+                node.childrenChanged(false);
               }
             });
           }

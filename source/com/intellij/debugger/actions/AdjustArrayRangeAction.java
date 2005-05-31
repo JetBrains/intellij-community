@@ -62,8 +62,10 @@ public class AdjustArrayRangeAction extends DebuggerAction {
     editor.show();
 
     if(editor.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+      System.out.println("[AdjustArrayRangeAction] setting renderer + " + cloneRenderer + "@" + cloneRenderer.hashCode());
       debugProcess.getManagerThread().invokeLater(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
         public void contextAction() throws Exception {
+          System.out.println("[Context Action] setting renderer + " + cloneRenderer + "@" + cloneRenderer.hashCode());
           selectedNode.setRenderer(cloneRenderer);
         }
       });

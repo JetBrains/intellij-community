@@ -85,7 +85,9 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
   }
 
   private void update(final DebuggerContextImpl context, final Runnable runnable, boolean labelOnly) {
-    if(!labelOnly) clear();
+    if(!labelOnly) {
+      clear();
+    }
 
     if(context != null && context.getDebugProcess() != null) {
       getTree().saveState(this);

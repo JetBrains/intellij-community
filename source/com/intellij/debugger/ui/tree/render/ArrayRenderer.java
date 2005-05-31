@@ -154,12 +154,12 @@ public class ArrayRenderer extends NodeRendererImpl{
           children.add(0, nodeManager.createMessageNode(new MessageDescriptor(MORE_ELEMENTS, MessageDescriptor.SPECIAL)));
         }
 
-        if(END_INDEX < array.length()) {
+        if(END_INDEX < array.length() - 1) {
           children.add(nodeManager.createMessageNode(new MessageDescriptor(MORE_ELEMENTS, MessageDescriptor.SPECIAL)));
         }
       }
     }
-
+    System.out.println(this + "@" + this.hashCode() + ": Setting children, count = " + children.size() + "; builder " + builder);
     builder.setChildren(children);
   }
 

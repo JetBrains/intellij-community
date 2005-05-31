@@ -206,6 +206,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
   }
 
   public void fireRenderersChanged() {
+    System.out.println("NodeRendererSettings.fireRenderersChanged");
     myDispatcher.getMulticaster().renderersChanged();
   }
 
