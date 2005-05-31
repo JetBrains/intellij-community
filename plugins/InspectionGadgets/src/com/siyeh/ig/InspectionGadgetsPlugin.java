@@ -363,6 +363,10 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(ResultSetIndexZeroInspection.class);
         inspectionClasses.add(LoopStatementsThatDontLoopInspection.class);
         inspectionClasses.add(MalformedRegexInspection.class);
+        if(classExists("javax.xml.xpath.XPath"))
+        {
+            inspectionClasses.add(MalformedXPathInspection.class);
+        }
         inspectionClasses.add(MalformedXPathInspection.class);
         inspectionClasses.add(MismatchedArrayReadWriteInspection.class);
         inspectionClasses.add(MismatchedCollectionQueryUpdateInspection.class);
@@ -391,6 +395,16 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(EqualsWhichDoesntCheckParameterClassInspection.class);
         inspectionClasses.add(NullArgumentToVariableArgMethodInspection.class);
         inspectionClasses.add(EnumSwitchStatementWhichMissesCasesInspection.class);
+    }
+
+    private boolean classExists(String className){
+        final Class<?> aClass;
+        try{
+            aClass = Class.forName(className);
+        } catch(ClassNotFoundException e){
+            return false;
+        }
+        return aClass != null;
     }
 
     private void registerAbstractionInspections(){
