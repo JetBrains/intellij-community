@@ -15,6 +15,13 @@ public class UnusedCatchParameterInspectionInspection
         {
             throw new Exception();
         }
+        catch(Exception ignore)
+        {
+        }
+        try
+        {
+            throw new Exception();
+        }
         catch(Exception e)
         {
             //catch comment

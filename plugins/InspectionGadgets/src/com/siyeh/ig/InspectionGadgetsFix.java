@@ -20,7 +20,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         try{
             doFix(project, descriptor);
         } catch(IncorrectOperationException e){
-            final Class aClass = getClass();
+            final Class<? extends InspectionGadgetsFix> aClass = getClass();
             final String className = aClass.getName();
             final Logger logger = Logger.getInstance(className);
             logger.error(e);
@@ -30,12 +30,12 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
     protected abstract void doFix(Project project, ProblemDescriptor descriptor)
             throws IncorrectOperationException;
 
-    protected void deleteElement(@NotNull PsiElement element)
+    protected static void deleteElement(@NotNull PsiElement element)
             throws IncorrectOperationException{
         element.delete();
     }
 
-    protected void replaceExpression(PsiExpression expression,
+    protected static void replaceExpression(PsiExpression expression,
                                      String newExpression)
             throws IncorrectOperationException{
         final PsiManager psiManager = expression.getManager();
@@ -47,7 +47,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         styleManager.reformat(replacementExp);
     }
 
-    protected void replaceStatement(PsiStatement statement,
+    protected static void replaceStatement(PsiStatement statement,
                                     String newStatement)
             throws IncorrectOperationException{
         final PsiManager psiManager = statement.getManager();
@@ -57,6 +57,18 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         final PsiElement replacementExp = statement.replace(newExp);
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
         styleManager.reformat(replacementExp);
+    }
+    protected static void replaceStatementAndShortenClassNames(PsiStatement statement,
+                                    String newStatement)
+            throws IncorrectOperationException{
+        final PsiManager psiManager = statement.getManager();
+        final PsiElementFactory factory = psiManager.getElementFactory();
+        final PsiStatement newExp = factory.createStatementFromText(newStatement,
+                                                                    null);
+        final PsiElement replacementStatement = statement.replace(newExp);
+        final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
+        styleManager.shortenClassReferences(replacementStatement);
+        styleManager.reformat(replacementStatement);
     }
 
     private static boolean isQuickFixOnReadOnlyFile(ProblemDescriptor descriptor){

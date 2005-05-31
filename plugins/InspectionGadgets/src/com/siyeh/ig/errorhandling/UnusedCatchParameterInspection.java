@@ -19,6 +19,8 @@ public class UnusedCatchParameterInspection extends StatementInspection{
     /** @noinspection PublicField*/
     public boolean m_ignoreTestCases = false;
 
+
+
     public String getDisplayName(){
         return "Unused 'catch' parameter";
     }
@@ -92,6 +94,11 @@ public class UnusedCatchParameterInspection extends StatementInspection{
             final PsiParameter param = section.getParameter();
             final PsiCodeBlock block = section.getCatchBlock();
             if(param == null || block == null){
+                return;
+            }
+            final String paramName = param.getName();
+            if("ignore".equals(paramName)|| "ignored".equals(paramName))
+            {
                 return;
             }
             if(m_ignoreCatchBlocksWithComments){

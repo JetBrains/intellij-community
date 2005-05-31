@@ -9,9 +9,15 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 public class ImplicitCallToSuperInspection extends MethodInspection{
+    @SuppressWarnings("PublicField")
+    public boolean m_ignoreForObjectSubclasses = false;
+
     private final AddExplicitSuperCall fix = new AddExplicitSuperCall();
 
     public String getDisplayName(){
@@ -28,6 +34,11 @@ public class ImplicitCallToSuperInspection extends MethodInspection{
 
     public InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
+    }
+
+    public JComponent createOptionsPanel(){
+        return new SingleCheckboxOptionsPanel("Ignore for direct subclasses of java.lang.Object",
+                                              this, "m_ignoreForObjectSubclasses");
     }
 
     private static class AddExplicitSuperCall extends InspectionGadgetsFix{
@@ -55,8 +66,8 @@ public class ImplicitCallToSuperInspection extends MethodInspection{
         return new ImplicitCallToSuperVisitor();
     }
 
-    private static class ImplicitCallToSuperVisitor
-                                                    extends BaseInspectionVisitor{
+    private class ImplicitCallToSuperVisitor
+            extends BaseInspectionVisitor{
         public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             if(!method.isConstructor()){
@@ -68,6 +79,15 @@ public class ImplicitCallToSuperInspection extends MethodInspection{
             }
             if(containingClass.isEnum()){
                 return;
+            }
+            if(m_ignoreForObjectSubclasses){
+                final PsiClass superClass = containingClass.getSuperClass();
+                if(superClass != null){
+                    final String superClassName = superClass.getQualifiedName();
+                    if("java.lang.Object".equals(superClassName)){
+                        return;
+                    }
+                }
             }
             final PsiCodeBlock body = method.getBody();
             if(body == null){
@@ -88,8 +108,8 @@ public class ImplicitCallToSuperInspection extends MethodInspection{
             registerMethodError(method);
         }
 
-        private static boolean isConstructorCall(PsiStatement statement){
-            if(!(statement instanceof PsiExpressionStatement)){
+        private  boolean isConstructorCall(PsiStatement statement){
+        if(!(statement instanceof PsiExpressionStatement)){
                 return false;
             }
             final PsiExpressionStatement expressionStatement = (PsiExpressionStatement) statement;

@@ -1,9 +1,7 @@
 package com.siyeh.ig.security;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -14,7 +12,7 @@ public class RuntimeExecWithNonConstantStringInspection extends ExpressionInspec
         return "CallToRuntimeExecWithNonConstantString";
     }
     public String getDisplayName() {
-        return "Call to 'Runtime.exec()' with with non-constant string";
+        return "Call to 'Runtime.exec()' with non-constant string";
     }
 
     public String getGroupDisplayName() {
@@ -30,7 +28,7 @@ public class RuntimeExecWithNonConstantStringInspection extends ExpressionInspec
     }
 
     private static class RuntimeExecVisitor extends BaseInspectionVisitor {
-      
+
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();

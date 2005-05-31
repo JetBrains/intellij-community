@@ -67,9 +67,7 @@ public class ArrayEqualsInspection extends ExpressionInspection{
                 final PsiElement replacementExp = call.replace(newExp);
                 final CodeStyleManager styleManager =
                         manager.getCodeStyleManager();
-                styleManager.shortenClassReferences(replacementExp);
                 styleManager.reformat(replacementExp);
-
         }
     }
 

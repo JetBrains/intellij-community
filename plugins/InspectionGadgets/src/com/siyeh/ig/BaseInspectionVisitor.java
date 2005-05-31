@@ -112,7 +112,7 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
         registerError(location, description, fix);
     }
 
-    private @Nullable LocalQuickFix createFix(PsiElement location){
+    @Nullable private LocalQuickFix createFix(PsiElement location){
         final LocalQuickFix fix;
         if(!onTheFly &&
                 inspection.buildQuickFixesOnlyForOnTheFlyErrors()){
@@ -124,7 +124,7 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
     }
 
     @Nullable
-            public ProblemDescriptor[] getErrors(){
+    public ProblemDescriptor[] getErrors(){
         if(errors == null){
             return null;
         } else{

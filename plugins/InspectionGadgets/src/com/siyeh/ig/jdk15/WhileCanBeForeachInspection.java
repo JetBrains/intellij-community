@@ -62,7 +62,7 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             final PsiStatement statement = getPreviousStatement(whileStatement);
             assert statement!=null;
             deleteElement(statement);
-            replaceStatement(whileStatement, newExpression);
+            replaceStatementAndShortenClassNames(whileStatement, newExpression);
         }
 
         private String createCollectionIterationText(PsiWhileStatement whileStatement,
@@ -85,8 +85,8 @@ public class WhileCanBeForeachInspection extends StatementInspection{
 
             final PsiMethodCallExpression initializer =
                     (PsiMethodCallExpression) iterator.getInitializer();
-            final PsiExpression collection = initializer.getMethodExpression()
-                            .getQualifierExpression();
+            final PsiExpression collection =
+                    initializer.getMethodExpression().getQualifierExpression();
             final PsiClassType type = (PsiClassType) collection.getType();
             final PsiType[] parameters = type.getParameters();
             final String contentTypeString;
@@ -96,15 +96,15 @@ public class WhileCanBeForeachInspection extends StatementInspection{
                     final PsiWildcardType wildcardType = (PsiWildcardType) parameterType;
                     final PsiType bound = wildcardType.getBound();
                     if(bound == null){
-                        contentTypeString = "Object";
+                        contentTypeString = "java.lang.Object";
                     } else{
-                        contentTypeString = bound.getPresentableText();
+                        contentTypeString = bound.getCanonicalText();
                     }
                 } else{
-                    contentTypeString = parameterType.getPresentableText();
+                    contentTypeString = parameterType.getCanonicalText();
                 }
             } else{
-                contentTypeString = "Object";
+                contentTypeString = "java.lang.Object";
             }
             final PsiManager psiManager = PsiManager.getInstance(project);
             final PsiElementFactory elementFactory =

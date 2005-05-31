@@ -62,11 +62,11 @@ public class ForCanBeForeachInspection extends StatementInspection{
             if(isArrayLoopStatement(forStatement)){
                 final String newExpression =
                         createArrayIterationText(forStatement, project);
-                replaceStatement(forStatement, newExpression);
+                replaceStatementAndShortenClassNames(forStatement, newExpression);
             } else if(isCollectionLoopStatement(forStatement)){
                 final String newExpression =
                         createCollectionIterationText(forStatement, project);
-                replaceStatement(forStatement, newExpression);
+                replaceStatementAndShortenClassNames(forStatement, newExpression);
             }
         }
 
@@ -99,12 +99,12 @@ public class ForCanBeForeachInspection extends StatementInspection{
                 if(parameterType instanceof PsiWildcardType){
                     final PsiWildcardType wildcardType = (PsiWildcardType) parameterType;
                     final PsiType bound = wildcardType.getExtendsBound();
-                    contentTypeString = bound.getPresentableText();
+                    contentTypeString = bound.getCanonicalText();
                 } else{
-                    contentTypeString = parameterType.getPresentableText();
+                    contentTypeString = parameterType.getCanonicalText();
                 }
             } else{
-                contentTypeString = "Object";
+                contentTypeString = "java.lang.Object";
             }
             final PsiManager psiManager = PsiManager.getInstance(project);
             final PsiElementFactory elementFactory =

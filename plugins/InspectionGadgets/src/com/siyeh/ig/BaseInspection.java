@@ -101,8 +101,7 @@ public abstract class BaseInspection extends LocalInspectionTool{
         return super.checkClass(aClass, manager, isOnTheFly);
     }
 
-    @Nullable
-            public ProblemDescriptor[] checkField(PsiField field,
+    public ProblemDescriptor[] checkField(PsiField field,
                                                   InspectionManager manager,
                                                   boolean isOnTheFly){
         if(telemetryEnabled){

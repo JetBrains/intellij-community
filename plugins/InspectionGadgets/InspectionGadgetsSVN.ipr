@@ -2,6 +2,17 @@
 <project version="4" relativePaths="false">
   <component name="AntConfiguration">
     <defaultAnt bundledAnt="true" />
+    <buildFile url="file://$PROJECT_DIR$/build.xml">
+      <additionalClassPath>
+        <entry path="file://$APPLICATION_HOME_DIR$/redist/annotations.jar" />
+        <entry path="file://$APPLICATION_HOME_DIR$/redist/javac2.jar" />
+        <entry path="file://$APPLICATION_HOME_DIR$/redist/forms_rt.jar" />
+      </additionalClassPath>
+      <antReference projectDefault="true" />
+      <customJdkName value="" />
+      <maximumHeapSize value="128" />
+      <properties />
+    </buildFile>
   </component>
   <component name="CodeStyleSettingsManager">
     <option name="PER_PROJECT_SETTINGS" />
@@ -185,7 +196,7 @@
       <module fileurl="file://$PROJECT_DIR$/InspectionGadgetsSVN.iml" filepath="$PROJECT_DIR$/InspectionGadgetsSVN.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 3341" />
+  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 3353" />
   <component name="RmicSettings">
     <option name="IS_EANABLED" value="false" />
     <option name="DEBUGGING_INFO" value="true" />

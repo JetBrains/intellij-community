@@ -88,14 +88,15 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             if (expectedType.isAssignableFrom(operandType)) {
                 return;     //then it's redundant, and caught by the built-in exception
             }
-            if(expectedType instanceof PsiClassType)
+            if(isTypeParameter(expectedType))
             {
-                final PsiClass aClass = ((PsiClassType) expectedType).resolve();
-                if(aClass == null)
-                {
-                    return;
-                }
-                if(aClass instanceof PsiTypeParameter)
+                return;
+            }
+            if(expectedType instanceof PsiArrayType)
+            {
+                final PsiArrayType arrayType = (PsiArrayType) expectedType;
+                final PsiType componentType = arrayType.getDeepComponentType();
+                if(isTypeParameter(componentType))
                 {
                     return;
                 }
@@ -111,6 +112,18 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             }
             final PsiTypeElement castTypeElement = expression.getCastType();
             registerError(castTypeElement);
+        }
+
+        private static boolean isTypeParameter(PsiType type){
+
+            if(!(type instanceof PsiClassType)){
+                return false;
+            }
+            final PsiClass aClass = ((PsiClassType) type).resolve();
+            if(aClass == null){
+                return false;
+            }
+            return aClass instanceof PsiTypeParameter;
         }
     }
 }
