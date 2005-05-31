@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.ide.projectView.ViewSettings;
@@ -52,8 +53,16 @@ public class PackageViewProjectNode extends AbstractProjectNode {
 
   public Collection<AbstractTreeNode> getChildren() {
     if (getSettings().isShowModules()) {
-      final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-      return modulesAndGroups(modules);
+      final List<Module> allModules = new ArrayList<Module>(Arrays.asList(ModuleManager.getInstance(getProject()).getModules()));
+      for (Iterator<Module> it = allModules.iterator(); it.hasNext();) {
+        final Module module = it.next();
+        final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
+        if (sourceRoots.length == 0) {
+          // do not show modules with no source roots configured
+          it.remove();
+        }
+      }
+      return modulesAndGroups(allModules.toArray(new Module[allModules.size()]));
     }
     else {
       final List<VirtualFile> sourceRoots = new ArrayList<VirtualFile>();
@@ -63,13 +72,11 @@ public class PackageViewProjectNode extends AbstractProjectNode {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
       final Set<PsiPackage> topLevelPackages = new HashSet<PsiPackage>();
-      final ProjectFileIndex projectFileIndex = projectRootManager.getFileIndex();
 
-      for (Iterator<VirtualFile> it = sourceRoots.iterator(); it.hasNext();) {
-        final VirtualFile root = it.next();
+      for (final VirtualFile root : sourceRoots) {
         final PsiDirectory directory = psiManager.findDirectory(root);
         if (directory == null) {
-        continue;
+          continue;
         }
         final PsiPackage directoryPackage = directory.getPackage();
         if (directoryPackage == null || PackageUtil.isPackageDefault(directoryPackage)) {
