@@ -15,7 +15,7 @@ public abstract class WrappingStrategy {
   public static WrappingStrategy createDoNotWrapCommaStrategy(Wrap wrap) {
     return new WrappingStrategy(wrap) {
       protected boolean shouldWrap(final IElementType type) {
-        return type != ElementType.COMMA;
+        return type != ElementType.COMMA && type != ElementType.SEMICOLON;
       }
     };
   }

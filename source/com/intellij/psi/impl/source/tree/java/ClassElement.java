@@ -199,7 +199,7 @@ public class ClassElement extends RepositoryTreeElement {
     return candidate.getElementType() == SEMICOLON ? candidate : null;
   }
 
-  private ASTNode findEnumConstantListDelimiterPlace() {
+  public ASTNode findEnumConstantListDelimiterPlace() {
     final ASTNode first = findChildByRole(ChildRole.LBRACE);
     if (first == null) return null;
     for (ASTNode child = first.getTreeNext(); ; child = child.getTreeNext()) {

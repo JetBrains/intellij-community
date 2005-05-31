@@ -809,6 +809,11 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   
   //----------------------------------------------------------------------------------------
   
+  
+  //-------------------------Enums----------------------------------------------------------
+  public int ENUM_CONSTANTS_WRAP = CodeStyleSettings.DO_NOT_WRAP;
+  //----------------------------------------------------------------------------------------
+  
   //-----------------------------------I18n Inspection settings-----------------------------
   public String NON_NLS_MARKER_COMMENT = "NON-NLS";
 

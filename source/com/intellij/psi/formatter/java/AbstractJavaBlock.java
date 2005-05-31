@@ -8,6 +8,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.tree.IElementType;
 
 import java.util.ArrayList;
@@ -248,30 +249,32 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.EXPRESSION_LIST){
       final Wrap wrap = Formatter.getInstance().createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
-      child = createSynteticBlock(result, 
-                                  child,
-                                  WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                  mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
+      child = processParenBlock(result,
+                                child,
+                                WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
+                                mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
     }
 
     else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.PARAMETER_LIST){
       final Wrap wrap = Formatter.getInstance().createWrap(getWrapType(mySettings.METHOD_PARAMETERS_WRAP), false);
-      child = createSynteticBlock(result, child,
-                                  WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                  mySettings.ALIGN_MULTILINE_PARAMETERS);
+      child = processParenBlock(result, child,
+                                WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
+                                mySettings.ALIGN_MULTILINE_PARAMETERS);
     }
     else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.ANNOTATION_PARAMETER_LIST){
       final Wrap wrap = Formatter.getInstance().createWrap(getWrapType(mySettings.ANNOTATION_PARAMETERS_WRAP), false);
-      child = createSynteticBlock(result, child,
-                                  WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
-                                  mySettings.ALIGN_MULTILINE_ANNOTATION_PARAMETERS);
+      child = processParenBlock(result, child,
+                                WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
+                                mySettings.ALIGN_MULTILINE_ANNOTATION_PARAMETERS);
     }    
     else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.PARENTH_EXPRESSION){
-      child = createSynteticBlock(result, child,
-                                  WrappingStrategy.DO_NOT_WRAP,
-                                  mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION);
+      child = processParenBlock(result, child,
+                                WrappingStrategy.DO_NOT_WRAP,
+                                mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION);
     }
-
+    else if (child.getElementType() == ElementType.ENUM_CONSTANT && myNode instanceof ClassElement) {
+      child =  processEnumBlock(result, child, ((ClassElement)myNode).findEnumConstantListDelimiterPlace());
+    }
     else {
       final Block block =
         createJavaBlock(child, mySettings, childIndent, arrangeChildWrap(child, defaultWrap), arrangeChildAlignment(child, defaultAlignment));
@@ -490,23 +493,22 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
-  private ASTNode createSynteticBlock(List<Block> result,
-                                      ASTNode child,
-                                      WrappingStrategy wrappingStrategy,
-                                      final boolean doAlign) {
+  private ASTNode processParenBlock(List<Block> result,
+                                    ASTNode child,
+                                    WrappingStrategy wrappingStrategy,
+                                    final boolean doAlign) {
+
+    myUseChildAttributes = true;
 
     final IElementType from = ElementType.LPARENTH;
     final IElementType to = ElementType.RPARENTH;
+    
     final Indent externalIndent = Formatter.getInstance().getNoneIndent();
     final Indent internalIndent = Formatter.getInstance().createContinuationIndent();
-    AlignmentStrategy alignmentStrategy = 
-      AlignmentStrategy.createDoNotAlingCommaStrategy(createAlignment(doAlign, null));
-
-    myUseChildAttributes = true;
+    AlignmentStrategy alignmentStrategy = AlignmentStrategy.createDoNotAlingCommaStrategy(createAlignment(doAlign, null));
     setChildIndent(internalIndent);
     setChildAlignment(alignmentStrategy.getAlignment(null));
     
-
     ASTNode prev = child;
     while (child != null) {
       if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
@@ -533,6 +535,23 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   }
 
+  private ASTNode processEnumBlock(List<Block> result,
+                                    ASTNode child,
+                                    ASTNode last) {
+
+    final WrappingStrategy wrappingStrategy = WrappingStrategy.createDoNotWrapCommaStrategy(Formatter.getInstance()
+      .createWrap(getWrapType(mySettings.ENUM_CONSTANTS_WRAP), true));
+    while (child != null) {
+      if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+        result.add(createJavaBlock(child, mySettings, Formatter.getInstance().createNormalIndent(), 
+                                   wrappingStrategy.getWrap(child.getElementType()), null));
+        if (child == last) return child; 
+      }
+      child = child.getTreeNext();
+    }
+    return null;
+  }
+  
   private void setChildAlignment(final Alignment alignment) {
     myChildAlignment = alignment;
   }

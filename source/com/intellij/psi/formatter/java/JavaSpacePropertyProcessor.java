@@ -811,4 +811,11 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
       createSpaceInCode(false);
     }
   }
+
+  public void visitEnumConstant(PsiEnumConstant enumConstant) {
+    if (myRole2 == ChildRole.ARGUMENT_LIST) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
+    }
+  }
+
 }
