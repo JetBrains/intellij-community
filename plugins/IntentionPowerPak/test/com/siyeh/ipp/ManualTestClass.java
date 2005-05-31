@@ -26,6 +26,12 @@ public class ManualTestClass
         long bar2 = 31000000000000000000000000000000000000000000000L;
 
     }
+    public void testFloat()
+    {
+        // convert between hex, and decimal
+        float foo = 31.0f;
+        double doubleFoo = 31.2;
+    }
 
     public void testShift()
     {
@@ -1049,7 +1055,7 @@ public class ManualTestClass
             System.out.println("3");
         }
     }
-    
+
     public void testFlipAnd()
     {
         boolean foo = true;
@@ -1300,7 +1306,7 @@ public class ManualTestClass
         bar.append('\'');
         bar.append('"');
     }
-    
+
     public void testStringToChar()
     {
          String foo = "b" + "foo";
@@ -1373,7 +1379,7 @@ public class ManualTestClass
         for (int i = 0; i < a; i++)
             System.out.println(i * 2);
     }
-    
+
     private void assertNull(Object value)
     {
     }

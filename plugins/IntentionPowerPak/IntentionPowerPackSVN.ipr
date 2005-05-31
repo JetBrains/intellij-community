@@ -196,7 +196,7 @@
       <module fileurl="file://$PROJECT_DIR$/IntentionPowerPackSVN.iml" filepath="$PROJECT_DIR$/IntentionPowerPackSVN.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 3341" />
+  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 3353" />
   <component name="RmicSettings">
     <option name="IS_EANABLED" value="false" />
     <option name="DEBUGGING_INFO" value="true" />

@@ -3,7 +3,7 @@
 <project name ="IntentionPowerPack" default ="compile">
 
     <property name="src.dir" value="src"/>
-    <property name="idea.dir" value="c:/IntelliJ-IDEA-3200"/>
+    <property name="idea.dir" value="c:/IntelliJ-IDEA-3341`"/>
     <property name="idea.plugin.dir" value="C:\Documents and Settings\dgriffith\.IntelliJIdea\config\plugins"/>
 
     <property name="debug" value="true"/>
