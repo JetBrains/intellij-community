@@ -51,7 +51,7 @@ public abstract class TreeBuilderNode extends DefaultMutableTreeNode{
   }
 
   public void clear() {
-    removeAllChildren();
+    //removeAllChildren();
     myChildrenBuilt = false;
   }
 

@@ -113,10 +113,5 @@ public class AdjustArrayRangeAction extends DebuggerAction {
     public String getHelpTopic() {
       return null;
     }
-
-    public void apply() {
-      super.apply();
-      NodeRendererSettings.getInstance().fireRenderersChanged();
-    }
   }
 }
