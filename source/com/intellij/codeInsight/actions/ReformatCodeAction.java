@@ -124,7 +124,7 @@ public class ReformatCodeAction extends AnAction {
       }
 
       if (file.getLanguage().getFormattingModelBuilder() != null) {
-        presentation.setEnabled(false);
+        presentation.setEnabled(true);
         return;
       }
     }
