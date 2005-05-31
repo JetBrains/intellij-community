@@ -175,8 +175,8 @@ public abstract class AbstractListBuilder {
     if (file == null) return lastPathNode;
     AbstractTreeNode found = lastPathNode;
     while (found != null) {
-      if (Comparing.equal(lastPathNode.getValue(), lastPathElement)) {
-      break;
+      if (nodeIsAcceptableForElement(lastPathNode, lastPathElement)) {
+        break;
       }
       else {
         found = findInChildren(lastPathNode, file, lastPathElement);
