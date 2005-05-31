@@ -137,8 +137,11 @@ public class StructureViewWrapperImpl implements StructureViewWrapper {
 
 
   public void setFileEditor(FileEditor fileEditor) {
-    if (myFileEditor != null? !myFileEditor.equals(fileEditor) : fileEditor != null) {
-      myFileEditor = fileEditor;
+    final boolean fileChanged = myFileEditor != null ? !myFileEditor.equals(fileEditor) : fileEditor != null;
+    if (fileChanged) {
+      myFileEditor = fileEditor;      
+    }
+    if (fileChanged || (isStructureViewShowing() && myPanel.getComponentCount() == 0 && myFileEditor != null)) {
       rebuild();
     }
   }
