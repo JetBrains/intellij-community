@@ -216,6 +216,7 @@ public class PsiBuilderImpl implements PsiBuilder {
     LOG.assertTrue(removed, "The marker must be added before it is dropped.");
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void done(Marker marker) {
     LOG.assertTrue(((StartMarker)marker).myDoneMarker == null, "Marker already done.");
     int idx = myProduction.lastIndexOf(marker);
@@ -226,13 +227,13 @@ public class PsiBuilderImpl implements PsiBuilder {
       if (item instanceof Marker) {
         StartMarker otherMarker = (StartMarker)item;
         if (otherMarker.myDoneMarker == null) {
-          LOG.error("Another not done marker added after this one. Must be done before this.");
           final Throwable debugAllocOther = otherMarker.myDebugAllocationPosition;
           final Throwable debugAllocThis = ((StartMarker)marker).myDebugAllocationPosition;
           if (debugAllocOther != null) {
-            LOG.error("Attempt to close marker allocated at: ", debugAllocThis);
-            LOG.error("Before marker allocated at: " + debugAllocOther);
+            debugAllocThis.printStackTrace(System.err);
+            debugAllocOther.printStackTrace(System.err);
           }
+          LOG.error("Another not done marker added after this one. Must be done before this.");
         }
       }
     }
