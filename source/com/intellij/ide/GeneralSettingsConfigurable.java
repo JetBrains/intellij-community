@@ -211,6 +211,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
 
   public void disposeUIResources() {
     myComponent = null;
+    myDiffOptions = null;
   }
 
   public String getHelpTopic() {
