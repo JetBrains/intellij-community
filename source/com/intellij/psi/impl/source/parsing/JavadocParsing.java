@@ -1,10 +1,11 @@
 package com.intellij.psi.impl.source.parsing;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.JavaDocLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.ex.JdkUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -12,7 +13,6 @@ import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.lang.ASTNode;
 import com.intellij.util.CharTable;
 
 public class JavadocParsing extends Parsing {
@@ -39,11 +39,11 @@ public class JavadocParsing extends Parsing {
   }
 
   public TreeElement parseJavaDocReference(char[] myBuffer,
-                                                  CharTable charTable,
-                                                  Lexer originalLexer,
-                                                  int state,
-                                                  boolean isType,
-                                                  PsiManager manager) {
+                                           CharTable charTable,
+                                           Lexer originalLexer,
+                                           int state,
+                                           boolean isType,
+                                           PsiManager manager) {
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(myBuffer, 0, myBuffer.length, state);
 
@@ -155,16 +155,17 @@ public class JavadocParsing extends Parsing {
       return tag;
     }
     else if (TAG_VALUE.isInSet(lexer.getTokenType())) {
-      if (tagName != null && tagName.equals("@see") && !isInlineItem) {
+      if ("@see".equals(tagName) && !isInlineItem) {
         return parseSeeTagValue(lexer);
       }
-      else if (tagName != null && tagName.equals("@link") && isInlineItem) {
+      else if ("@link".equals(tagName) && isInlineItem) {
         return parseSeeTagValue(lexer);
       }
-      else if (tagName != null && JdkUtil.isJdk14(manager.getProject()) && tagName.equals("@linkplain") && isInlineItem) {
+      else if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_4) >= 0 &&
+               "@linkplain".equals(tagName) && isInlineItem) {
         return parseSeeTagValue(lexer);
       }
-      else if (tagName != null && !isInlineItem && (tagName.equals("@throws") || tagName.equals("@exception"))) {
+      else if (!isInlineItem && ("@throws".equals(tagName) || "@exception".equals(tagName))) {
         final LeafElement element = parseReferenceOrType(lexer.getBuffer(), lexer.getTokenStart(), lexer.getTokenEnd(), false,
                                                          lexer.getState());
         element.setState(lexer.getState());

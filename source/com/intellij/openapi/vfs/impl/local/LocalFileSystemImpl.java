@@ -40,9 +40,9 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
   private File[] myCachedRoots;
 
-  private final Map<VirtualFile,Object> myRefreshStatusMap = new WeakHashMap<VirtualFile, Object>(); // VirtualFile --> 'status'
-  private static final Object DIRTY_STATUS = Key.create("DIRTY_STATUS");
-  private static final Object DELETED_STATUS = Key.create("DELETED_STATUS");
+  private final Map<VirtualFile,Key> myRefreshStatusMap = new WeakHashMap<VirtualFile, Key>(); // VirtualFile --> 'status'
+  private static final Key DIRTY_STATUS = Key.create("DIRTY_STATUS");
+  private static final Key DELETED_STATUS = Key.create("DELETED_STATUS");
 
   private WatchForChangesThread myWatchForChangesThread;
 
@@ -106,8 +106,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
   private boolean isPhysicalRoot(String path) {
     path = path.replace('/', File.separatorChar);
-    for (int i = 0; i < myCachedRoots.length; i++) {
-      File root = myCachedRoots[i];
+    for (File root : myCachedRoots) {
       String rootPath = root.getPath();
       if (equal(path, rootPath)) {
         return true;
@@ -434,7 +433,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
         storeRefreshStatusToFiles();
       }
 
-      Object status;
+      Key status;
       synchronized (myRefreshStatusMap) {
         status = myRefreshStatusMap.remove(file);
       }
@@ -449,9 +448,11 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
         }
         if (recursive && ((VirtualFileImpl)file).areChildrenCached()) {
           VirtualFile[] children = file.getChildren();
-          for (int i = 0; i < children.length; i++) {
-            VirtualFile child = children[i];
-            if (status == DIRTY_STATUS && !((VirtualFileImpl)child).getPhysicalFile().exists()) continue; // should be already handled above (see SCR6145)
+          for (VirtualFile child : children) {
+            if (status == DIRTY_STATUS &&
+                !((VirtualFileImpl)child).getPhysicalFile().exists()) {
+              continue; // should be already handled above (see SCR6145)
+            }
             refresh(child, recursive, false, worker, modalityState, asynchronous);
           }
         }
@@ -642,8 +643,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
             }
           );
         } else {
-          for (int i = 0; i < infos.length; i++) {
-            FileWatcher.ChangeInfo info = infos[i];
+          for (FileWatcher.ChangeInfo info : infos) {
             String path = info.getFilePath();
             int changeType = info.getChangeType();
             if (changeType == FileWatcher.FILE_MODIFIED) {
