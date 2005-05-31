@@ -620,6 +620,7 @@ public class CodeEditUtil {
     Pair<IElementType, IElementType> pair = new Pair<IElementType, IElementType>(type1, type2);
     Boolean res = myCanStickJavaTokensMatrix.get(pair);
     if (res == null) {
+      if (!checkToken(token1) || !checkToken(token2)) return true;
       String text = token1.getText() + token2.getText();
       Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
       lexer.start(text.toCharArray(), 0, text.length());
@@ -630,6 +631,15 @@ public class CodeEditUtil {
       myCanStickJavaTokensMatrix.put(pair, res);
     }
     return res.booleanValue();
+  }
+
+  private static boolean checkToken(final PsiJavaToken token1) {
+    Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
+    final String text = token1.getText();
+    lexer.start(text.toCharArray(), 0, text.length());
+    if (lexer.getTokenType() != token1.getTokenType()) return false;
+    lexer.advance();
+    return lexer.getTokenType() == null;
   }
 
   public static ASTNode getDefaultAnchor(PsiImportList list, PsiImportStatementBase statement) {
