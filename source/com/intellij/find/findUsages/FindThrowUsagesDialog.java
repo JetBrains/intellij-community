@@ -1,14 +1,10 @@
 
 package com.intellij.find.findUsages;
 
-import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiThrowStatement;
-import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
+import com.intellij.psi.search.SearchScopeCache;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 
@@ -17,7 +13,6 @@ import java.awt.*;
 
 public class FindThrowUsagesDialog extends FindUsagesDialog {
   private StateRestoringCheckBox myCbUsages;
-  private StateRestoringCheckBox myCbStrict;
   private JComboBox myCbExns;
   private boolean myHasFindWhatPanel;
   private ThrowSearchUtil.Root [] myRoots;
@@ -42,10 +37,9 @@ public class FindThrowUsagesDialog extends FindUsagesDialog {
   }
 
   public FindUsagesOptions getShownOptions(){
-    final FindUsagesOptions options = new FindUsagesOptions(myProject, SearchScopeCache.getInstance(myProject));
+    final FindUsagesOptions options = new FindUsagesOptions(SearchScopeCache.getInstance(myProject));
     options.clear();
     options.isUsages = true;
-    options.isStrictThrowUsages = false;
     return options;
   }
 
@@ -67,7 +61,6 @@ public class FindThrowUsagesDialog extends FindUsagesDialog {
   public void calcFindUsagesOptions(final FindUsagesOptions options) {
     super.calcFindUsagesOptions(options);
     options.isUsages = isSelected(myCbUsages) || !myHasFindWhatPanel;
-    options.isStrictThrowUsages = isSelected(myCbStrict);
     options.isThrowUsages = true;
   }
 
@@ -77,7 +70,6 @@ public class FindThrowUsagesDialog extends FindUsagesDialog {
     findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
 
     myCbUsages = addCheckboxToPanel("Usages"       , myFindUsagesOptions.isUsages,            findWhatPanel,  true, 'U');
-    myCbStrict = addCheckboxToPanel("Strict search", myFindUsagesOptions.isStrictThrowUsages, findWhatPanel,  true, 'S');
     //final ThrowSearchUtil.Root[] searchRoots = ThrowSearchUtil.getSearchRoots(getPsiElement ());
 
     //final PsiThrowStatement throwStatement = (PsiThrowStatement)getPsiElement();

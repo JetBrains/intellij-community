@@ -174,7 +174,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
       setStatusText(myTarget, myRefs.length, myProject);
 
-      FindUsagesOptions options = new FindUsagesOptions(myProject, SearchScopeCache.getInstance(myProject));
+      FindUsagesOptions options = new FindUsagesOptions(SearchScopeCache.getInstance(myProject));
       options.isUsages = true;
       options.isReadAccess = true;
       options.isWriteAccess = true;

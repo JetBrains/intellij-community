@@ -99,7 +99,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     if (method == null) return;
     if (!CodeInsightUtil.prepareFileForWrite(method.getContainingFile())) return;
 
-    final FindUsagesOptions options = new FindUsagesOptions(project, SearchScopeCache.getInstance(project));
+    final FindUsagesOptions options = new FindUsagesOptions(SearchScopeCache.getInstance(project));
     options.isImplementingMethods = true;
     options.isMethodsUsages = true;
     options.isOverridingMethods = true;

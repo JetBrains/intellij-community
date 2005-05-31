@@ -40,22 +40,19 @@ public class ThrowSearchUtil {
    * @param aCatch
    * @param processor
    * @param root
-   * @param options
    */
 
-  private static boolean processExn(final PsiParameter aCatch, Processor processor, Root root, FindUsagesOptions options) {
+  private static boolean processExn(final PsiParameter aCatch, Processor processor, Root root) {
     final PsiType type = aCatch.getType();
     if (type.isAssignableFrom(root.myType)) {
       processor.process (new UsageInfo (aCatch));
       return false;
     }
-    else if (options.isStrictThrowUsages && !root.isExact && root.myType.isAssignableFrom (type)) {
+    else if (!root.isExact && root.myType.isAssignableFrom (type)) {
         processor.process (new UsageInfo (aCatch));
         return true;
     }
-    else {
-      return true;
-    }
+    return true;
   }
 
   private static void scanCatches(PsiElement elem,
@@ -83,7 +80,7 @@ public class ThrowSearchUtil {
         final PsiTryStatement aTry = (PsiTryStatement) elem;
         final PsiParameter[] catches = aTry.getCatchBlockParameters();
         for (int i = 0; i != catches.length; ++ i) {
-          if (!processExn(catches[i], processor, root, options)) {
+          if (!processExn(catches[i], processor, root)) {
             return;
           }
         }

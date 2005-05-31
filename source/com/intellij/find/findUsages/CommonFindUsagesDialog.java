@@ -24,7 +24,7 @@ public class CommonFindUsagesDialog extends FindUsagesDialog {
   }
 
   public FindUsagesOptions getShownOptions() {
-    return new FindUsagesOptions(myProject, SearchScopeCache.getInstance(myProject));
+    return new FindUsagesOptions(SearchScopeCache.getInstance(myProject));
   }
 
   protected void update() {

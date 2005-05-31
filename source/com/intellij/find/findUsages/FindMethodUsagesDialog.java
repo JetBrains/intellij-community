@@ -23,7 +23,7 @@ public class FindMethodUsagesDialog extends FindUsagesDialog {
   }
 
   public FindUsagesOptions getShownOptions() {
-    FindUsagesOptions options = new FindUsagesOptions(myProject, SearchScopeCache.getInstance(myProject));
+    FindUsagesOptions options = new FindUsagesOptions(SearchScopeCache.getInstance(myProject));
     options.clear();
     options.isUsages = true;
     options.isIncludeOverloadUsages = isToChange(myCbIncludeOverloadedMethods);

@@ -95,7 +95,7 @@ public class FindUsagesManager implements JDOMExternalizable{
   }
 
   private FindUsagesOptions createFindUsagesOptions(SearchScopeCache searchScopeCache) {
-    FindUsagesOptions findUsagesOptions = new FindUsagesOptions(myProject, searchScopeCache);
+    FindUsagesOptions findUsagesOptions = new FindUsagesOptions(searchScopeCache);
     findUsagesOptions.isUsages = true;
     findUsagesOptions.isIncludeOverloadUsages = false;
     findUsagesOptions.isIncludeSubpackages = true;

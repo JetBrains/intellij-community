@@ -20,7 +20,7 @@ public class FindVariableUsagesDialog extends FindUsagesDialog {
   }
 
   public FindUsagesOptions getShownOptions(){
-    FindUsagesOptions options = new FindUsagesOptions(myProject, SearchScopeCache.getInstance(myProject));
+    FindUsagesOptions options = new FindUsagesOptions(SearchScopeCache.getInstance(myProject));
     options.clear();
     options.isReadAccess = false;
     options.isWriteAccess = false;

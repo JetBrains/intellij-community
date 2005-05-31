@@ -28,7 +28,7 @@ public class FindClassUsagesDialog extends FindUsagesDialog {
   }
 
   public FindUsagesOptions getShownOptions(){
-    FindUsagesOptions options = new FindUsagesOptions(myProject, SearchScopeCache.getInstance(myProject));
+    FindUsagesOptions options = new FindUsagesOptions(SearchScopeCache.getInstance(myProject));
     options.clear();
     options.isUsages = isToChange(myCbUsages);
     options.isMethodsUsages = isToChange(myCbMethodsUsages);

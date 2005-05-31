@@ -1,11 +1,9 @@
 
 package com.intellij.find.findUsages;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.SearchScopeCache;
-import com.intellij.psi.impl.search.ThrowSearchUtil;
 
 /**
  *
@@ -35,10 +33,9 @@ public class FindUsagesOptions implements Cloneable {
   public boolean isOverridingPointcuts = false;
   public boolean isIncludeOverloadUsages = false;
   public boolean isThrowUsages = false;
-  public boolean isStrictThrowUsages = false;
   public ThrowSearchUtil.Root myThrowRoot = null;
 
-  public FindUsagesOptions(final Project project, SearchScopeCache searchScopeCache) {
+  public FindUsagesOptions(SearchScopeCache searchScopeCache) {
     searchScope = searchScopeCache.getProjectScope();
   }
 
@@ -73,7 +70,6 @@ public class FindUsagesOptions implements Cloneable {
     isOverridingPointcuts = false;
     isIncludeOverloadUsages = false;
     isThrowUsages = false;
-    isStrictThrowUsages = false;
     myThrowRoot = null;
   }
 }
