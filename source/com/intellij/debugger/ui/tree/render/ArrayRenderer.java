@@ -159,7 +159,6 @@ public class ArrayRenderer extends NodeRendererImpl{
         }
       }
     }
-    System.out.println(this + "@" + this.hashCode() + ": Setting children, count = " + children.size() + "; builder " + builder);
     builder.setChildren(children);
   }
 
