@@ -171,7 +171,7 @@ public class CyclicDependenciesPanel extends JPanel {
         } else {
           if (child instanceof PackageNode){
             node.removeAllChildren();
-            result.append((result.length() != 0 ? ".":"") + (child.toString().equals(DEFAULT_PACKAGE_ABBREVIATION) ? "" : child.toString()));
+            result.append((result.length() != 0 ? ".":"") + (node.toString().equals(DEFAULT_PACKAGE_ABBREVIATION) ? "" : node.toString()));
             node = hideEmptyMiddlePackages(child, result);
             ((PackageNode)node).setPackageName(result.toString());//toString()
           }
