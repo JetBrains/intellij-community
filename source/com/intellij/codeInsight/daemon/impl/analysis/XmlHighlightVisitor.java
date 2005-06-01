@@ -417,7 +417,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   private static HighlightInfoType getTagProblemInfoType(XmlTag tag) {
-    return (tag instanceof HtmlTag && tag.getNamespace().equals(XmlUtil.HTML_URI))?
+    return (tag instanceof HtmlTag && XmlUtil.HTML_URI.equals(tag.getNamespace()))?
            HighlightInfoType.WARNING:HighlightInfoType.WRONG_REF;
   }
 
