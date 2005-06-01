@@ -196,7 +196,7 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
     optionGroup.add(new JLabel("while ():"), myWhileForceCombo);
 
     myDoWhileForceCombo = createForceBracesCombo();
-    optionGroup.add(new JLabel("do () while:"), myDoWhileForceCombo);
+    optionGroup.add(new JLabel("do ... while():"), myDoWhileForceCombo);
 
     return optionGroup.createPanel();
   }
