@@ -559,9 +559,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
   private TreeElement addInternal(TreeElement child, ASTNode anchor, boolean before) throws IncorrectOperationException{
     final PomModel model = getProject().getModel();
-    final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     final InsertTransaction transaction;
-    if (child.getElementType() == XmlElementType.XML_TEXT) {
+    if (anchor != null && child.getElementType() == XmlElementType.XML_TEXT) {
       XmlText psi = null;
       if(anchor.getPsi() instanceof XmlText)
         psi = (XmlText)anchor.getPsi();
