@@ -130,7 +130,8 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
 
   public void visitClass(PsiClass aClass) {
     if (myRole2 == ChildRole.LBRACE) {
-      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_CLASS_LBRACE, mySettings.CLASS_BRACE_STYLE);
+      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_CLASS_LBRACE, mySettings.CLASS_BRACE_STYLE, new TextRange(myParent.getTextRange().getStartOffset(),
+                                                                                                                        myChild2.getTextRange().getStartOffset()));
     } else if (myRole2 == ChildRole.METHOD  || myRole2 == ChildRole.CLASS_INITIALIZER) {
       if (myRole1 == ChildRole.LBRACE) {
         myResult = Formatter.getInstance().createSpaceProperty(0,0, 1, mySettings.KEEP_LINE_BREAKS, 0);
@@ -249,7 +250,8 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
     if (myRole2 == ChildRole.LPARENTH) {
       createSpaceInCode(mySettings.SPACE_BEFORE_WHILE_PARENTHESES);
     } else if (myRole2 == ChildRole.LOOP_BODY) {
-      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_WHILE_LBRACE, mySettings.BRACE_STYLE);
+      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_WHILE_LBRACE, mySettings.BRACE_STYLE, new TextRange(myParent.getTextRange().getStartOffset(),
+                                                                                                                  myChild2.getTextRange().getStartOffset()));
     }
 
   }
@@ -262,7 +264,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
       createSpaceInCode(mySettings.SPACE_WITHIN_WHILE_PARENTHESES);
     }
     else if (myRole2 == ChildRole.LOOP_BODY) {
-      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_DO_LBRACE, mySettings.BRACE_STYLE);
+      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_DO_LBRACE, mySettings.BRACE_STYLE, null);
     }
     else if (myRole1 == ChildRole.LOOP_BODY) {
       processOnNewLineCondition(mySettings.WHILE_ON_NEW_LINE);
@@ -286,7 +288,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
       processOnNewLineCondition(mySettings.FINALLY_ON_NEW_LINE);
     }
     else if (myRole2 == ChildRole.FINALLY_BLOCK || myRole2 == ChildRole.TRY_BLOCK) {
-      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_FINALLY_LBRACE, mySettings.BRACE_STYLE);
+      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_FINALLY_LBRACE, mySettings.BRACE_STYLE, null);
     }
     else if (myRole2 == ChildRole.CATCH_SECTION) {
       processOnNewLineCondition(mySettings.CATCH_ON_NEW_LINE);
@@ -364,19 +366,20 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
         if (mySettings.ELSE_ON_NEW_LINE) {
           myResult = Formatter.getInstance().createSpaceProperty(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
         } else {
-          myResult = createNonLFSpace(1, false);
+          myResult = createNonLFSpace(1, false, null);
         }
       }
     } else if (myRole1 == ChildRole.ELSE_KEYWORD) {
       if (myChild2.getElementType() == ElementType.IF_STATEMENT) {
         if (mySettings.SPECIAL_ELSE_IF_TREATMENT) {
-          myResult = createNonLFSpace(1, true);
+          myResult = createNonLFSpace(1, true, null);
         } else {
           myResult = Formatter.getInstance().createSpaceProperty(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
         }
       } else {
         if (myChild2.getElementType() == ElementType.BLOCK_STATEMENT) {
-          myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_ELSE_LBRACE, mySettings.BRACE_STYLE);
+          myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_ELSE_LBRACE, mySettings.BRACE_STYLE, new TextRange(myParent.getTextRange().getStartOffset(),
+                                                                                                                       myChild2.getTextRange().getStartOffset()));
         } else {
           createSpaceInCode(mySettings.SPACE_BEFORE_ELSE_LBRACE);
         }
@@ -384,7 +387,8 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
     }
     else if (myChild2.getElementType() == ElementType.BLOCK_STATEMENT) {
       boolean space = myRole2 == ChildRole.ELSE_BRANCH ? mySettings.SPACE_BEFORE_ELSE_LBRACE: mySettings.SPACE_BEFORE_IF_LBRACE;
-      myResult = getSpaceBeforeLBrace(space, mySettings.BRACE_STYLE);
+      myResult = getSpaceBeforeLBrace(space, mySettings.BRACE_STYLE, new TextRange(myParent.getTextRange().getStartOffset(),
+                                                                                   myChild2.getTextRange().getStartOffset()));
     }
     else if (myRole2 == ChildRole.LPARENTH) {
       createSpaceInCode(mySettings.SPACE_BEFORE_IF_PARENTHESES);
@@ -400,11 +404,14 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
     }
   }
 
-  private SpaceProperty createNonLFSpace(int spaces, final boolean keepLineBreaks) {
+  private SpaceProperty createNonLFSpace(int spaces, final boolean keepLineBreaks, final TextRange dependantRange) {
     final ASTNode prev = getPrevElementType(myChild2);
     if (prev != null && prev.getElementType() == ElementType.END_OF_LINE_COMMENT) {
       return Formatter.getInstance().createSpaceProperty(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
-    } else {
+    } else if (dependantRange != null) {
+      return Formatter.getInstance().createDependentLFProperty(spaces, spaces, dependantRange, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    }
+    else {
       return Formatter.getInstance().createSpaceProperty(spaces, spaces, 0, keepLineBreaks, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
   }
@@ -413,10 +420,14 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
     return FormatterUtil.getLeafNonSpaceBefore(child);
   }
 
-  private SpaceProperty getSpaceBeforeLBrace(final boolean spaceBeforeLbrace, int braceStyle) {
-    if (braceStyle == CodeStyleSettings.END_OF_LINE) {
+  private SpaceProperty getSpaceBeforeLBrace(final boolean spaceBeforeLbrace, int braceStyle, TextRange dependantRange) {
+    if (dependantRange != null && braceStyle == CodeStyleSettings.NEXT_LINE_IF_WRAPPED) {
       int space = spaceBeforeLbrace ? 1 : 0;
-      return createNonLFSpace(space, false);
+      return createNonLFSpace(space, false, dependantRange);
+    }
+    else if (braceStyle == CodeStyleSettings.END_OF_LINE) {
+      int space = spaceBeforeLbrace ? 1 : 0;
+      return createNonLFSpace(space, false, null);
     } else {
       return Formatter.getInstance().createSpaceProperty(0,0, 1, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
@@ -483,7 +494,8 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
     else if (myRole1 == ChildRole.PARAMETER_LIST && myRole2 == ChildRole.THROWS_LIST) {
       createSpaceInCode(true);
     } else if (myRole2 == ChildRole.METHOD_BODY) {
-      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_METHOD_LBRACE, mySettings.METHOD_BRACE_STYLE);
+      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_METHOD_LBRACE, mySettings.METHOD_BRACE_STYLE, new TextRange(myParent.getTextRange().getStartOffset(),
+                                                                                                                          myChild2.getTextRange().getStartOffset()));
     } else if (myRole1 == ChildRole.MODIFIER_LIST) {
       processModifierList();
     } else if (ElementType.COMMENT_BIT_SET.isInSet(myChild1.getElementType()) 
@@ -582,7 +594,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
       createSpaceInCode(mySettings.SPACE_WITHIN_SWITCH_PARENTHESES);
     }
     else if (myRole2 == ChildRole.SWITCH_BODY) {
-      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_SWITCH_LBRACE, mySettings.BRACE_STYLE);
+      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_SWITCH_LBRACE, mySettings.BRACE_STYLE, null);
     }
 
   }
@@ -619,7 +631,8 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
     }
     else if (myRole2 == ChildRole.LOOP_BODY) {
       if (myChild2.getElementType() == ElementType.BLOCK_STATEMENT) {
-        myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_FOR_LBRACE, mySettings.BRACE_STYLE);
+        myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_FOR_LBRACE, mySettings.BRACE_STYLE, new TextRange(myParent.getTextRange().getStartOffset(),
+                                                                                                                  myChild2.getTextRange().getStartOffset()));
       } else if (mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE) {
         myResult = Formatter.getInstance().createDependentLFProperty(1, 1, myParent.getTextRange(), false, mySettings.KEEP_BLANK_LINES_IN_CODE);
       } else {
@@ -638,7 +651,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
 
   public void visitCatchSection(PsiCatchSection section) {
     if (myRole2 == ChildRole.CATCH_BLOCK) {
-      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_CATCH_LBRACE, mySettings.BRACE_STYLE);
+      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_CATCH_LBRACE, mySettings.BRACE_STYLE, null);
     }
     else if (myRole2 == ChildRole.CATCH_BLOCK_PARAMETER_LPARENTH) {
       createSpaceInCode(mySettings.SPACE_BEFORE_CATCH_PARENTHESES);

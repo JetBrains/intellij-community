@@ -594,7 +594,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   protected Indent getCodeBlockExternalIndent(){
     final int braceStyle = getBraceStyle();
-    if (braceStyle == CodeStyleSettings.END_OF_LINE || braceStyle == CodeStyleSettings.NEXT_LINE) {
+    if (braceStyle == CodeStyleSettings.END_OF_LINE || braceStyle == CodeStyleSettings.NEXT_LINE || braceStyle == CodeStyleSettings.NEXT_LINE_IF_WRAPPED) {
       return Formatter.getInstance().getNoneIndent();
     } else {
       return Formatter.getInstance().createNormalIndent();
