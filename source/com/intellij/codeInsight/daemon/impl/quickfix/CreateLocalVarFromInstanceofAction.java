@@ -32,7 +32,11 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpression(editor, file);
     if (instanceOfExpression != null) {
-      String castTo = instanceOfExpression.getCheckType().getType().getPresentableText();
+      PsiTypeElement checkType = instanceOfExpression.getCheckType();
+      if (checkType == null) return false;
+      PsiType type = checkType.getType();
+      if (type == null) return false;
+      String castTo = type.getPresentableText();
       setText("Insert '("+castTo+")"+instanceOfExpression.getOperand().getText()+"' declaration");
 
       PsiStatement statement = PsiTreeUtil.getParentOfType(instanceOfExpression, PsiStatement.class);
