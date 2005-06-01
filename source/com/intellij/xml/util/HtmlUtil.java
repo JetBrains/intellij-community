@@ -200,7 +200,7 @@ public class HtmlUtil {
       if (text.length() > 0 && !text.startsWith("http://") && !text.startsWith("mailto:") &&
           !text.startsWith("javascript:")
          ) {
-        refs = new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this).getAllReferences();
+        refs = new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this, false).getAllReferences();
       } else {
         refs = PsiReference.EMPTY_ARRAY;
       }

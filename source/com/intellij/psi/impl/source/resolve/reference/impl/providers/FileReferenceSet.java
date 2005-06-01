@@ -36,13 +36,20 @@ public class FileReferenceSet {
   private final int myStartInElement;
   private final ReferenceType myType;
   private final PsiReferenceProvider myProvider;
+  private final boolean myCaseSensitive;
   private String myPathString;
 
-  public FileReferenceSet(String str, PsiElement element, int startInElement, ReferenceType type, PsiReferenceProvider provider){
+  public FileReferenceSet(String str,
+                          PsiElement element,
+                          int startInElement,
+                          ReferenceType type,
+                          PsiReferenceProvider provider,
+                          final boolean isCaseSensitive){
     myType = type;
     myElement = element;
     myStartInElement = startInElement;
     myProvider = provider;
+    myCaseSensitive = isCaseSensitive;
     myPathString = str.trim();
 
     reparse(str);
@@ -151,7 +158,7 @@ public class FileReferenceSet {
         WebDirectoryElement[] children = ((WebDirectoryElement)context).getChildren();
 
         for (WebDirectoryElement child : children) {
-          if (myText.equals(child.getName())) {
+          if (equalsTo(child)) {
             return child.isDirectory() ? (PsiFileSystemItem)child : child.getOriginalFile();
           }
         }
@@ -163,13 +170,18 @@ public class FileReferenceSet {
         for (PsiElement element : children) {
           PsiFileSystemItem child = (PsiFileSystemItem)element;
 
-          if (myText.equals(child.getName())) {
+          if (equalsTo(child)) {
             return child;
           }
         }
       }
 
       return null;
+    }
+
+    private boolean equalsTo(final PsiFileSystemItem child) {
+      return myCaseSensitive ? myText.equals(child.getName()) :
+        myText.compareToIgnoreCase(child.getName()) == 0;
     }
 
     public boolean isReferenceTo(PsiElement element) {
