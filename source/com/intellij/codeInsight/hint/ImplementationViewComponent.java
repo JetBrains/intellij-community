@@ -185,10 +185,10 @@ public class ImplementationViewComponent extends JPanel {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         if (myFileChooser != null) {
-          myFileChooser.requestFocusInWindow();
+          myFileChooser.requestFocus();
         }
         else {
-          myViewingPanel.requestFocusInWindow();
+          myViewingPanel.requestFocus();
         }
       }
     });
