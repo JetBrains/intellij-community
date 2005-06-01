@@ -167,7 +167,9 @@ public class CanonicalTypes {
       codeFragment.addImportsFromString(myClassQName);
       final Collection<Type> types = mySubstitutor.values();
       for (Type type : types) {
-        type.addImportsTo(codeFragment);
+        if (type != null) {
+          type.addImportsTo(codeFragment);
+        }
       }
     }
   }
