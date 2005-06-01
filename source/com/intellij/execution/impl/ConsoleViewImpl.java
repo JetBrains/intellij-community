@@ -361,7 +361,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
     print(hyperlinkText, ConsoleViewContentType.NORMAL_OUTPUT);
     flushDeferredText();
     final int textLength = myEditor.getDocument().getTextLength();
-    addHyperlink(textLength - hyperlinkText.length(), textLength, info);
+    addHyperlink(textLength - hyperlinkText.length(), textLength, null, info);
   }
 
   private Editor createEditor() {
@@ -489,17 +489,21 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
           final int highlightStartOffset = result.highlightStartOffset;
           final int highlightEndOffset = result.highlightEndOffset;
           final HyperlinkInfo hyperlinkInfo = result.hyperlinkInfo;
-          addHyperlink(highlightStartOffset, highlightEndOffset, hyperlinkInfo);
+          addHyperlink(highlightStartOffset, highlightEndOffset, result.highlightAttributes, hyperlinkInfo);
         }
       }
     }
   }
 
-  private void addHyperlink(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo) {
+  private void addHyperlink(final int highlightStartOffset,
+                            final int highlightEndOffset,
+                            final TextAttributes highlightAttributes,
+                            final HyperlinkInfo hyperlinkInfo) {
+    TextAttributes textAttributes = highlightAttributes != null ? highlightAttributes : HYPERLINK_ATTRIBUTES;
     final RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset,
                                                                                  highlightEndOffset,
                                                                                  HighlighterLayer.SELECTION - 1,
-                                                                                 HYPERLINK_ATTRIBUTES,
+                                                                                 textAttributes,
                                                                                  HighlighterTargetArea.EXACT_RANGE);
     myHyperlinks.add(highlighter, hyperlinkInfo);
   }

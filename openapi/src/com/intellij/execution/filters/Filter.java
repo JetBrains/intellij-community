@@ -4,6 +4,8 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.editor.markup.TextAttributes;
+
 /**
  * @author Yura Cangea
  * @version 1.0
@@ -12,12 +14,18 @@ public interface Filter {
   class Result{
     public final int highlightStartOffset;
     public final int highlightEndOffset;
+    public final TextAttributes highlightAttributes;
     public final HyperlinkInfo hyperlinkInfo;
 
     public Result(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo) {
+      this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, null);
+    }
+
+    public Result(final int highlightStartOffset, final int highlightEndOffset, final HyperlinkInfo hyperlinkInfo, final TextAttributes highlightAttributes) {
       this.highlightStartOffset = highlightStartOffset;
       this.highlightEndOffset = highlightEndOffset;
       this.hyperlinkInfo = hyperlinkInfo;
+      this.highlightAttributes = highlightAttributes;
     }
   }
 
