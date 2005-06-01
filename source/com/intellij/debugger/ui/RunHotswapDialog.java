@@ -2,16 +2,15 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.OptionsDialog;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * User: lex
@@ -22,13 +21,29 @@ import java.util.*;
 
 
 public class RunHotswapDialog extends OptionsDialog {
-  private final java.util.Set <DebuggerSession>  mySessionsToReload;
-  private final java.util.List<DebuggerSession>  mySessions;
   private JPanel myPanel;
-  private JTable mySessionsTable;
+  private ElementsChooser<SessionItem> myElementsChooser;
 
   public RunHotswapDialog(Project project, java.util.List<DebuggerSession> sessions) {
     super(project);
+    myPanel = new JPanel(new BorderLayout());
+    final List<SessionItem> items = new ArrayList<SessionItem>(sessions.size());
+    for (DebuggerSession session : sessions) {
+      items.add(new SessionItem(session));
+    }
+    Collections.sort(items, new Comparator<SessionItem>() {
+      public int compare(SessionItem debuggerSession, SessionItem debuggerSession1) {
+        return debuggerSession.getSession().getSessionName().compareTo(debuggerSession1.getSession().getSessionName());
+      }
+    });
+    myElementsChooser = new ElementsChooser<SessionItem>(items, true);
+    myPanel.setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 5, 0));
+    //myElementsChooser.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));
+    if (sessions.size() > 0) {
+      myElementsChooser.selectElements(items.subList(0, 1));
+    }
+    myPanel.add(myElementsChooser, BorderLayout.CENTER);
+    //myPanel.add(new JLabel("Choose debug sessions to reload classes:"), BorderLayout.NORTH);
     if(sessions.size() == 1) {
       setTitle("Reload Changed Classes for " + sessions.get(0).getSessionName());
       myPanel.setVisible(false);
@@ -37,68 +52,6 @@ public class RunHotswapDialog extends OptionsDialog {
       setTitle("Reload Changed Classes");
     }
     setButtonsAlignment(SwingUtilities.CENTER);
-    mySessionsToReload = new HashSet<DebuggerSession>(sessions);
-    mySessions = new ArrayList<DebuggerSession>(sessions.size());
-    mySessions.addAll(sessions);
-    Collections.sort(mySessions, new Comparator<DebuggerSession>() {
-      public int compare(DebuggerSession debuggerSession, DebuggerSession debuggerSession1) {
-        return debuggerSession.getSessionName().compareTo(debuggerSession1.getSessionName());
-      }
-    });
-
-    mySessionsTable.setModel(new AbstractTableModel() {
-      private static final int CHECKBOX_COLUMN = 0;
-      private static final int SESSION_COLUMN  = 1;
-
-      public String getColumnName(int column) {
-        return column == SESSION_COLUMN ? "Session" : "";
-      }
-
-      public Class getColumnClass(int columnIndex) {
-        if (columnIndex == CHECKBOX_COLUMN) {
-          return Boolean.class;
-        }
-        return super.getColumnClass(columnIndex);
-      }
-
-      public int getColumnCount() {
-        return 2;
-      }
-
-      public int getRowCount() {
-        return mySessions.size();
-      }
-
-      public Object getValueAt(int rowIndex, int columnIndex) {
-        if(columnIndex == CHECKBOX_COLUMN) {
-          return Boolean.valueOf(mySessionsToReload.contains(mySessions.get(rowIndex)));
-        }
-        else {
-          return mySessions.get(rowIndex).getSessionName();
-        }
-      }
-
-      public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return columnIndex == CHECKBOX_COLUMN;
-      }
-
-      public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        if(columnIndex == CHECKBOX_COLUMN) {
-          if(Boolean.TRUE.equals(aValue)) {
-            mySessionsToReload.add(mySessions.get(rowIndex));
-          }
-          else {
-            mySessionsToReload.remove(mySessions.get(rowIndex));
-          }
-        }
-      }
-    });
-
-    final TableColumn checkboxColumn = mySessionsTable.getTableHeader().getColumnModel().getColumn(0);
-    int width = new JCheckBox().getMinimumSize().width;
-    checkboxColumn.setWidth(width);
-    checkboxColumn.setPreferredWidth(width);
-    checkboxColumn.setMaxWidth(width);
     this.init();
   }
 
@@ -127,7 +80,6 @@ public class RunHotswapDialog extends OptionsDialog {
   protected Action[] createActions(){
     setOKButtonText("Yes");
     setCancelButtonText("No");
-
     return new Action[]{getOKAction(), getCancelAction()};
   }
 
@@ -148,15 +100,27 @@ public class RunHotswapDialog extends OptionsDialog {
   }
 
   public Collection<DebuggerSession> getSessionsToReload() {
-    ArrayList<DebuggerSession> result = new ArrayList<DebuggerSession>();
+    final List<SessionItem> markedElements = myElementsChooser.getMarkedElements();
+    final List<DebuggerSession>  sessions = new ArrayList<DebuggerSession>(markedElements.size());
+    for (SessionItem item : markedElements) {
+      sessions.add(item.getSession());
+    }
+    return sessions;
+  }
 
-    for (Iterator<DebuggerSession> iterator = mySessions.iterator(); iterator.hasNext();) {
-      DebuggerSession debuggerSession = iterator.next();
-      if(mySessionsToReload.contains(debuggerSession)) {
-        result.add(debuggerSession);
-      }
+  private static class SessionItem {
+    private final DebuggerSession mySession;
+
+    public SessionItem(DebuggerSession session) {
+      mySession = session;
     }
 
-    return result;
+    public DebuggerSession getSession() {
+      return mySession;
+    }
+
+    public String toString() {
+      return mySession.getSessionName();
+    }
   }
 }

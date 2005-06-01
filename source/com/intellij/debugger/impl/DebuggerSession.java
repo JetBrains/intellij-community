@@ -363,7 +363,9 @@ public class DebuggerSession {
 
   public String getStateDescription() {
     DebuggerSessionState state = getSessionState();
-    if (state.myDescription != null) return state.myDescription;
+    if (state.myDescription != null) {
+      return state.myDescription;
+    }
 
     switch (state.myState) {
       case STATE_STOPPED:
