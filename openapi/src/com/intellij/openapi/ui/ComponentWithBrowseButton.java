@@ -4,7 +4,10 @@
  */
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -82,19 +85,28 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel {
    */
   public static final class MyDoClickAction extends AnAction{
     private final FixedSizeButton myBrowseButton;
-
+    private JComponent myFocusedComponent;
     public MyDoClickAction(FixedSizeButton browseButton) {
       myBrowseButton = browseButton;
     }
 
     public void actionPerformed(AnActionEvent e){
       myBrowseButton.doClick();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          if (myFocusedComponent != null){
+            myFocusedComponent.requestFocus();
+          }
+        }
+      });
+
     }
 
     public void registerShortcut(JComponent textField) {
       ShortcutSet shiftEnter = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_DOWN_MASK));
       registerCustomShortcutSet(shiftEnter, textField);
       myBrowseButton.setToolTipText(KeymapUtil.getShortcutsText(shiftEnter.getShortcuts()));
+      myFocusedComponent = textField;
     }
 
     public static void addTo(FixedSizeButton browseButton, JComponent aComponent) {
