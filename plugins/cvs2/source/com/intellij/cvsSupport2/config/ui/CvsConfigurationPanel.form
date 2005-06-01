@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.cvsSupport2.config.ui.CvsConfigurationPanel">
-  <grid id="91882" binding="myPanel" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="4429e" binding="myPanel" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="36" y="2" width="599" height="574"/>
+      <xy x="35" y="22" width="600" height="425"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
@@ -11,134 +11,15 @@
     <children>
       <hspacer id="b26a4">
         <constraints>
-          <xy x="570" y="274" width="29" height="11"/>
-          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+          <xy x="606" y="193" width="29" height="11"/>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
         </constraints>
       </hspacer>
-      <vspacer id="573da">
-        <constraints>
-          <xy x="279" y="453" width="11" height="121"/>
-          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
-        </constraints>
-      </vspacer>
-      <grid id="a9d61" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
-        <constraints>
-          <xy x="0" y="428" width="570" height="25"/>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children>
-          <component id="bfbd0" class="javax.swing.JButton" binding="myConfigureGlobalButton">
-            <constraints>
-              <xy x="451" y="0" width="119" height="25"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
-            </constraints>
-            <properties>
-              <text value="&amp;Global Settings..."/>
-            </properties>
-          </component>
-          <hspacer id="5ef92">
-            <constraints>
-              <xy x="0" y="7" width="451" height="11"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
-            </constraints>
-          </hspacer>
-        </children>
-      </grid>
-      <grid id="9d089" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
-        <margin top="0" left="2" bottom="0" right="0"/>
-        <constraints>
-          <xy x="0" y="220" width="570" height="120"/>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3"/>
-        </constraints>
-        <properties/>
-        <border type="etched" title="Files Creation/Deletion"/>
-        <children>
-          <component id="61a1a" class="javax.swing.JLabel">
-            <constraints>
-              <xy x="279" y="23" width="166" height="14"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text value="When files are deleted with IDEA:"/>
-            </properties>
-          </component>
-          <component id="94821" class="javax.swing.JRadioButton" binding="myShowDialogOnRemovingFile">
-            <constraints>
-              <xy x="279" y="40" width="218" height="30"/>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text value="Show options before removing from CVS"/>
-              <margin top="10" left="2" bottom="2" right="2"/>
-            </properties>
-          </component>
-          <component id="8d230" class="javax.swing.JRadioButton" binding="myPerformActionOnRemovingFile">
-            <constraints>
-              <xy x="279" y="70" width="147" height="22"/>
-              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text value="Remove from CVS silently"/>
-              <margin top="2" left="2" bottom="2" right="2"/>
-            </properties>
-          </component>
-          <component id="ffa2b" class="javax.swing.JRadioButton" binding="myDoNothingOnRemovingFile">
-            <constraints>
-              <xy x="279" y="92" width="143" height="22"/>
-              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text value="Do not remove from CVS"/>
-              <margin top="2" left="2" bottom="2" right="2"/>
-            </properties>
-          </component>
-          <component id="c9eaa" class="javax.swing.JLabel">
-            <constraints>
-              <xy x="8" y="23" width="167" height="14"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text value="When files are created with IDEA:"/>
-            </properties>
-          </component>
-          <component id="9bc97" class="javax.swing.JRadioButton" binding="myShowDialogOnAddingFile">
-            <constraints>
-              <xy x="8" y="40" width="194" height="30"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text value="Show options before adding to CVS"/>
-              <margin top="10" left="2" bottom="2" right="2"/>
-            </properties>
-          </component>
-          <component id="f0112" class="javax.swing.JRadioButton" binding="myPerformActionOnAddingFile">
-            <constraints>
-              <xy x="8" y="70" width="117" height="22"/>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text value="Add to CVS silently"/>
-            </properties>
-          </component>
-          <component id="f6275" class="javax.swing.JRadioButton" binding="myDoNothingOnAddingFile">
-            <constraints>
-              <xy x="8" y="92" width="118" height="22"/>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text value="Do not add  to CVS"/>
-            </properties>
-          </component>
-        </children>
-      </grid>
       <grid id="2ac61" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
         <margin top="0" left="2" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="103" width="570" height="112"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1"/>
+          <xy x="36" y="22" width="570" height="112"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1"/>
         </constraints>
         <properties/>
         <border type="etched" title="Updating"/>
@@ -181,112 +62,11 @@
           </component>
         </children>
       </grid>
-      <grid id="28102" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
-        <constraints>
-          <xy x="0" y="0" width="570" height="98"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
-        </constraints>
-        <properties/>
-        <border type="etched" title="Command Dialogs"/>
-        <children>
-          <grid id="89718" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
-            <margin top="0" left="2" bottom="0" right="0"/>
-            <constraints>
-              <xy x="6" y="20" width="558" height="72"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <component id="1b52c" class="javax.swing.JCheckBox" binding="myShowAdd">
-                <constraints>
-                  <xy x="2" y="20" width="43" height="30"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Add"/>
-                  <focusable value="false"/>
-                  <label value="Add"/>
-                  <margin top="10" left="2" bottom="2" right="2"/>
-                </properties>
-              </component>
-              <component id="4288c" class="javax.swing.JLabel">
-                <constraints>
-                  <xy x="2" y="3" width="282" height="14"/>
-                  <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Display options dialog when these commands are invoked:"/>
-                </properties>
-              </component>
-              <component id="aaaa1" class="javax.swing.JCheckBox" binding="myShowUpdate">
-                <constraints>
-                  <xy x="431" y="20" width="59" height="30"/>
-                  <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Update"/>
-                  <focusable value="false"/>
-                  <label value="Update"/>
-                  <margin top="10" left="2" bottom="2" right="2"/>
-                </properties>
-              </component>
-              <component id="fd74a" class="javax.swing.JCheckBox" binding="myShowEdit">
-                <constraints>
-                  <xy x="214" y="20" width="42" height="30"/>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Edit"/>
-                  <label value="Edit"/>
-                  <margin top="10" left="2" bottom="2" right="2"/>
-                </properties>
-              </component>
-              <component id="47b54" class="javax.swing.JCheckBox" binding="myShowRemove">
-                <constraints>
-                  <xy x="2" y="50" width="63" height="22"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Remove"/>
-                  <focusPainted value="true"/>
-                  <focusable value="false"/>
-                  <enabled value="true"/>
-                  <label value="Remove"/>
-                  <margin top="2" left="2" bottom="2" right="2"/>
-                </properties>
-              </component>
-              <component id="61dd1" class="javax.swing.JCheckBox" binding="myShowCheckout">
-                <constraints>
-                  <xy x="214" y="50" width="69" height="22"/>
-                  <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Check Out"/>
-                  <focusable value="true"/>
-                  <margin top="2" left="2" bottom="2" right="2"/>
-                </properties>
-              </component>
-              <component id="bd056" class="javax.swing.JCheckBox" binding="myShowCommit">
-                <constraints>
-                  <xy x="431" y="50" width="59" height="22"/>
-                  <grid row="2" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Commit"/>
-                  <margin top="2" left="2" bottom="2" right="2"/>
-                </properties>
-              </component>
-            </children>
-          </grid>
-        </children>
-      </grid>
       <grid id="d6fd" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="345" width="570" height="78"/>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3"/>
+          <xy x="35" y="136" width="570" height="78"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
         <border type="etched" title="Other Settings:"/>
@@ -297,8 +77,8 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Use read-only flag for not edited files"/>
               <label value="Use read-only flag for not edited files"/>
+              <text value="Use read-only flag for not edited files"/>
             </properties>
           </component>
           <component id="d52c8" class="javax.swing.JCheckBox" binding="myShowOutput">
@@ -307,8 +87,8 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Show CVS server output"/>
               <margin top="2" left="2" bottom="10" right="2"/>
+              <text value="Show CVS server output"/>
             </properties>
           </component>
           <grid id="e2f6f" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -342,6 +122,38 @@
           </grid>
         </children>
       </grid>
+      <grid id="a9d61" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="36" y="216" width="570" height="25"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="bfbd0" class="javax.swing.JButton" binding="myConfigureGlobalButton">
+            <constraints>
+              <xy x="451" y="0" width="119" height="25"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+            </constraints>
+            <properties>
+              <text value="&amp;Global Settings..."/>
+            </properties>
+          </component>
+          <hspacer id="5ef92">
+            <constraints>
+              <xy x="0" y="7" width="451" height="11"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+            </constraints>
+          </hspacer>
+        </children>
+      </grid>
+      <vspacer id="573da">
+        <constraints>
+          <xy x="307" y="243" width="11" height="204"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+        </constraints>
+      </vspacer>
     </children>
   </grid>
 </form>

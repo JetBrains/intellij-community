@@ -187,14 +187,14 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
   }
 
   public void editFiles(final VirtualFile[] files) {
-    CvsConfiguration configuration = CvsConfiguration.getInstance(myProject);
+    VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
     if (configuration.SHOW_EDIT_DIALOG) {
       EditOptionsDialog editOptionsDialog = new EditOptionsDialog(myProject);
       editOptionsDialog.show();
       if (!editOptionsDialog.isOK()) return;
     }
 
-    final CvsHandler editHandler = CommandCvsHandler.createEditHandler(files, configuration.RESERVED_EDIT);
+    final CvsHandler editHandler = CommandCvsHandler.createEditHandler(files, CvsConfiguration.getInstance(myProject).RESERVED_EDIT);
     new CvsOperationExecutor(true, myProject, ModalityState.current()).performActionSync(editHandler, CvsOperationExecutorCallback.EMPTY);
 
   }

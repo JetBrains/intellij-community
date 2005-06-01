@@ -9,8 +9,8 @@ import com.intellij.cvsSupport2.cvsoperations.cvsCheckOut.ui.CheckoutFileDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.actions.VcsContext;
-import com.intellij.util.ui.OptionsDialog;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.util.ui.OptionsDialog;
 
@@ -42,7 +42,7 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
     if (!e.getPresentation().isVisible()) {
       return;
     }
-    CvsConfiguration config = getConfig(e);
+    VcsConfiguration config = getCommonConfig(e);
     if (config == null) return;
     adjustName(config.SHOW_CHECKOUT_OPTIONS, e);
   }
@@ -62,7 +62,7 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
     Project project = context.getProject();
     FilePath[] filesArray = context.getSelectedFilePaths();
     List<FilePath> files = Arrays.asList(filesArray);
-    if (CvsConfiguration.getInstance(project).SHOW_CHECKOUT_OPTIONS
+    if (VcsConfiguration.getInstance(project).SHOW_CHECKOUT_OPTIONS
         || OptionsDialog.shiftIsPressed(context.getModifiers())){
       CheckoutFileDialog checkoutFileDialog = new CheckoutFileDialog(project,
                                                                      files);

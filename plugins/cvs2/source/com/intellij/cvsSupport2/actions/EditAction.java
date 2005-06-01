@@ -1,15 +1,15 @@
 package com.intellij.cvsSupport2.actions;
 
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui.EditOptionsDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.OptionsDialog;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.util.ui.OptionsDialog;
 
 /**
  * author: lesya
@@ -23,7 +23,7 @@ public class EditAction extends AsbtractActionFromEditGroup {
     if (!e.getPresentation().isVisible()) {
       return;
     }
-    CvsConfiguration config = getConfig(e);
+    VcsConfiguration config = getCommonConfig(e);
     if (config == null) return;
 
     adjustName(config.SHOW_EDIT_DIALOG, e);
@@ -36,7 +36,7 @@ public class EditAction extends AsbtractActionFromEditGroup {
 
   protected CvsHandler getCvsHandler(CvsContext context) {
     Project project = context.getProject();
-    CvsConfiguration configuration = CvsConfiguration.getInstance(project);
+    VcsConfiguration configuration = VcsConfiguration.getInstance(project);
     if (configuration.SHOW_EDIT_DIALOG|| OptionsDialog.shiftIsPressed(context.getModifiers())) {
       EditOptionsDialog editOptionsDialog = new EditOptionsDialog(project);
       editOptionsDialog.show();
@@ -44,6 +44,6 @@ public class EditAction extends AsbtractActionFromEditGroup {
     }
 
     return CommandCvsHandler.createEditHandler(context.getSelectedFiles(),
-                                               configuration.RESERVED_EDIT);
+                                               CvsConfiguration.getInstance(project).RESERVED_EDIT);
   }
 }

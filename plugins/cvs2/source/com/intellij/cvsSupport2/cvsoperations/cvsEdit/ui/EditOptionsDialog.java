@@ -2,6 +2,7 @@ package com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui;
 
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
@@ -24,11 +25,11 @@ public class EditOptionsDialog extends OptionsDialog {
   }
 
   protected boolean isToBeShown() {
-    return CvsConfiguration.getInstance(myProject).SHOW_EDIT_DIALOG;
+    return VcsConfiguration.getInstance(myProject).SHOW_EDIT_DIALOG;
   }
 
   protected void setToBeShown(boolean value, boolean onOk) {
-    CvsConfiguration.getInstance(myProject).SHOW_EDIT_DIALOG = value;
+    VcsConfiguration.getInstance(myProject).SHOW_EDIT_DIALOG = value;
   }
 
   protected JComponent createCenterPanel() {

@@ -5,18 +5,18 @@ import com.intellij.cvsSupport2.actions.RemoveLocallyFileOrDirectoryAction;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
-import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.ui.RestoreDirectoriesConfirmationDialog;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Options;
 
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -53,7 +53,7 @@ class DeleteHandler {
       myDeletedStorage.purgeDirsWithNoEntries();
       final boolean showWarning = restored;
 
-      if (CvsConfiguration.getInstance(myProject).ON_FILE_REMOVING != Options.DO_NOTHING) {
+      if (VcsConfiguration.getInstance(myProject).ON_FILE_REMOVING != Options.DO_NOTHING) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             if (!myCvsStorageComponent.getIsActive()) return;

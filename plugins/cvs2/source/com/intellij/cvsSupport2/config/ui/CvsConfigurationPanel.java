@@ -34,25 +34,6 @@ public class CvsConfigurationPanel {
   private JComboBox myDefaultTextFileKeywordSubstitution;
   private JCheckBox myShowOutput;
 
-  private JCheckBox myShowUpdate;
-  private JCheckBox myShowCommit;
-  private JCheckBox myShowAdd;
-
-  private JCheckBox myShowRemove;
-  private JCheckBox myShowEdit;
-  private JCheckBox myShowCheckout;
-
-  private JRadioButton myShowDialogOnAddingFile;
-  private JRadioButton myPerformActionOnAddingFile;
-  private JRadioButton myDoNothingOnAddingFile;
-
-  private JRadioButton myShowDialogOnRemovingFile;
-  private JRadioButton myPerformActionOnRemovingFile;
-  private JRadioButton myDoNothingOnRemovingFile;
-
-  private final JRadioButton[] myOnFileAddingGroup;
-  private final JRadioButton[] myOnFileRemovingGroup;
-
   private ArrayList<CvsRootConfiguration> myConfigurations;
   private JButton myConfigureGlobalButton;
 
@@ -64,18 +45,6 @@ public class CvsConfigurationPanel {
 
   public CvsConfigurationPanel(Project project) {
     myProject = project;
-    myOnFileAddingGroup = new JRadioButton[]{
-      myShowDialogOnAddingFile,
-      myPerformActionOnAddingFile,
-      myDoNothingOnAddingFile
-    };
-
-    myOnFileRemovingGroup = new JRadioButton[]{
-      myShowDialogOnRemovingFile,
-      myPerformActionOnRemovingFile,
-      myDoNothingOnRemovingFile
-    };
-
     myOnFileMergedWithConflictGroup = new JRadioButton[]{
       myShowDialogOnMergedWithConflict,
       myGetLatestVersionOnMergedWithConflict,
@@ -111,23 +80,11 @@ public class CvsConfigurationPanel {
                          CvsApplicationLevelConfiguration appLevelConfiguration) {
     myConfigurations = new ArrayList<CvsRootConfiguration>(appLevelConfiguration.CONFIGURATIONS);
 
-    myShowUpdate.setSelected(getCommonConfig().SHOW_UPDATE_OPTIONS);
-    myShowCommit.setSelected(getCommonConfig().SHOW_CHECKIN_OPTIONS);
-    myShowAdd.setSelected(config.SHOW_ADD_OPTIONS);
-    myShowRemove.setSelected(config.SHOW_REMOVE_OPTIONS);
-    myShowEdit.setSelected(config.SHOW_EDIT_DIALOG);
-    myShowCheckout.setSelected(config.SHOW_CHECKOUT_OPTIONS);
 
     myShowOutput.setSelected(config.SHOW_OUTPUT);
     myMakeNewFilesReadOnly.setSelected(config.MAKE_NEW_FILES_READONLY);
 
-
-    createButtonGroup(myOnFileAddingGroup);
-    createButtonGroup(myOnFileRemovingGroup);
     createButtonGroup(myOnFileMergedWithConflictGroup);
-
-    myOnFileAddingGroup[config.ON_FILE_ADDING].setSelected(true);
-    myOnFileRemovingGroup[config.ON_FILE_REMOVING].setSelected(true);
     myOnFileMergedWithConflictGroup[config.SHOW_CORRUPTED_PROJECT_FILES].setSelected(true);
 
     KeywordSubstitutionListWithSelection keywordSubstitutions = new KeywordSubstitutionListWithSelection();
@@ -162,17 +119,10 @@ public class CvsConfigurationPanel {
   public void saveTo(CvsConfiguration config, CvsApplicationLevelConfiguration appLevelConfiguration) {
     appLevelConfiguration.CONFIGURATIONS = myConfigurations;
 
-    config.SHOW_ADD_OPTIONS = myShowAdd.isSelected();
-    config.SHOW_REMOVE_OPTIONS = myShowRemove.isSelected();
-    getCommonConfig().SHOW_UPDATE_OPTIONS = myShowUpdate.isSelected();
-    getCommonConfig().SHOW_CHECKIN_OPTIONS = myShowCommit.isSelected();
     config.MAKE_NEW_FILES_READONLY = myMakeNewFilesReadOnly.isSelected();
     config.DEFAULT_TEXT_FILE_SUBSTITUTION = selectedSubstitution();
-    config.SHOW_EDIT_DIALOG = myShowEdit.isSelected();
-    config.SHOW_CHECKOUT_OPTIONS = myShowCheckout.isSelected();
+
     config.SHOW_OUTPUT = myShowOutput.isSelected();
-    config.ON_FILE_ADDING = getSelected(myOnFileAddingGroup);
-    config.ON_FILE_REMOVING = getSelected(myOnFileRemovingGroup);
     config.SHOW_CORRUPTED_PROJECT_FILES = getSelected(myOnFileMergedWithConflictGroup);
   }
 
@@ -184,20 +134,10 @@ public class CvsConfigurationPanel {
   public boolean equalsTo(CvsConfiguration config,
                           CvsApplicationLevelConfiguration appLevelConfiguration) {
     return new HashSet(appLevelConfiguration.CONFIGURATIONS).equals(new HashSet(myConfigurations))
-           && config.SHOW_ADD_OPTIONS == myShowAdd.isSelected()
-           && config.SHOW_REMOVE_OPTIONS == myShowRemove.isSelected()
-           && getCommonConfig().SHOW_UPDATE_OPTIONS == myShowUpdate.isSelected()
-           && getCommonConfig().SHOW_CHECKIN_OPTIONS == myShowCommit.isSelected()
-           &&
-           config.MAKE_NEW_FILES_READONLY ==
-           myMakeNewFilesReadOnly.isSelected()
-           && config.DEFAULT_TEXT_FILE_SUBSTITUTION.equals(selectedSubstitution())
-           && config.SHOW_EDIT_DIALOG == myShowEdit.isSelected()
-           && config.SHOW_CHECKOUT_OPTIONS == myShowCheckout.isSelected()
+           && config.MAKE_NEW_FILES_READONLY == myMakeNewFilesReadOnly.isSelected()
            && config.SHOW_OUTPUT == myShowOutput.isSelected()
-           && config.ON_FILE_ADDING == getSelected(myOnFileAddingGroup)
            && config.SHOW_CORRUPTED_PROJECT_FILES == getSelected(myOnFileMergedWithConflictGroup)
-           && config.ON_FILE_REMOVING == getSelected(myOnFileRemovingGroup);
+           && config.DEFAULT_TEXT_FILE_SUBSTITUTION.equals(selectedSubstitution());
   }
 
   public JComponent getPanel() {

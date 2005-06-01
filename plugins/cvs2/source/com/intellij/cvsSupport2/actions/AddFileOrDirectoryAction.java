@@ -3,6 +3,7 @@ package com.intellij.cvsSupport2.actions;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.DeletedCVSDirectoryStorage;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
@@ -54,7 +55,7 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     super.update(e);
     if (!e.getPresentation().isVisible())
       return;
-    CvsConfiguration config = getConfig(e);
+    VcsConfiguration config = getCommonConfig(e);
     if (config == null) return;
     adjustName(config.SHOW_ADD_OPTIONS, e);
   }

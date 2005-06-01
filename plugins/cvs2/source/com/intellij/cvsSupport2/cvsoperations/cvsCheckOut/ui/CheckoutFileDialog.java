@@ -7,6 +7,7 @@ import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.ui.DateOrRevisionOr
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
@@ -23,14 +24,14 @@ public class CheckoutFileDialog extends OptionsDialog {
     super(project);
     myDateOrRevisionOrTagSettings = new DateOrRevisionOrTagSettings(
       new TagsProviderOnVirtualFiles(files), project, false);
-    myDateOrRevisionOrTagSettings.updateFrom(getConfiguration().CHECKOUT_DATE_OR_REVISION_SETTINGS);
+    myDateOrRevisionOrTagSettings.updateFrom(getCvsConfiguration().CHECKOUT_DATE_OR_REVISION_SETTINGS);
     setTitle("Checkout Options");
     init();
   }
 
 
   protected void doOKAction() {
-    myDateOrRevisionOrTagSettings.saveTo(getConfiguration().CHECKOUT_DATE_OR_REVISION_SETTINGS);
+    myDateOrRevisionOrTagSettings.saveTo(getCvsConfiguration().CHECKOUT_DATE_OR_REVISION_SETTINGS);
     super.doOKAction();
   }
 
@@ -46,7 +47,11 @@ public class CheckoutFileDialog extends OptionsDialog {
     return getConfiguration().SHOW_CHECKOUT_OPTIONS;
   }
 
-  private CvsConfiguration getConfiguration() {
+  private VcsConfiguration getConfiguration() {
+    return VcsConfiguration.getInstance(myProject);
+  }
+
+  private CvsConfiguration getCvsConfiguration() {
     return CvsConfiguration.getInstance(myProject);
   }
 

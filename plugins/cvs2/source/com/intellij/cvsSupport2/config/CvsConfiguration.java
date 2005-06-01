@@ -24,13 +24,9 @@ public class CvsConfiguration implements ProjectComponent, JDOMExternalizable {
   public static final int MERGE_WITH_BRANCH = 1;
   public static final int MERGE_TWO_BRANCHES = 2;
 
-  public int ON_FILE_ADDING = Options.SHOW_DIALOG;
-  public int ON_FILE_REMOVING = Options.SHOW_DIALOG;
 
   public boolean PRUNE_EMPTY_DIRECTORIES = true;
 
-  public boolean SHOW_ADD_OPTIONS = true;
-  public boolean SHOW_REMOVE_OPTIONS = true;
   public int MERGING_MODE = DO_NOT_MERGE;
   public String MERGE_WITH_BRANCH1_NAME = "HEAD";
   public String MERGE_WITH_BRANCH2_NAME = "HEAD";
@@ -42,10 +38,8 @@ public class CvsConfiguration implements ProjectComponent, JDOMExternalizable {
   public boolean PROCESS_DELETED_FILES;
   public boolean PROCESS_IGNORED_FILES;
 
-  public boolean SHOW_EDIT_DIALOG = true;
   public boolean RESERVED_EDIT;
   private final Project myProject;
-  public boolean SHOW_CHECKOUT_OPTIONS = true;
   public DateOrRevisionSettings CHECKOUT_DATE_OR_REVISION_SETTINGS = new DateOrRevisionSettings();
   public DateOrRevisionSettings UPDATE_DATE_OR_REVISION_SETTINGS = new DateOrRevisionSettings();
   public DateOrRevisionSettings SHOW_CHANGES_REVISION_SETTINGS = new DateOrRevisionSettings();

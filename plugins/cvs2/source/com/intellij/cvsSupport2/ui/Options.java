@@ -2,6 +2,7 @@ package com.intellij.cvsSupport2.ui;
 
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsConfiguration;
 
 public interface Options {
   boolean isToBeShown(Project project);
@@ -10,22 +11,22 @@ public interface Options {
 
   Options ADD_ACTION = new Options() {
     public boolean isToBeShown(Project project) {
-      return CvsConfiguration.getInstance(project).SHOW_ADD_OPTIONS;
+      return VcsConfiguration.getInstance(project).SHOW_ADD_OPTIONS;
     }
 
     public void setToBeShown(boolean value, Project project, boolean onOk) {
-      CvsConfiguration.getInstance(project).SHOW_ADD_OPTIONS = value;
+      VcsConfiguration.getInstance(project).SHOW_ADD_OPTIONS = value;
     }
   };
 
   Options ON_FILE_ADDING = new Options() {
     public boolean isToBeShown(Project project) {
-      return CvsConfiguration.getInstance(project).ON_FILE_ADDING
+      return VcsConfiguration.getInstance(project).ON_FILE_ADDING
              == com.intellij.util.Options.SHOW_DIALOG;
     }
 
     public void setToBeShown(boolean value, Project project, boolean onOk) {
-      CvsConfiguration.getInstance(project).ON_FILE_ADDING = CvsConfiguration.convertToEnumValue(value, onOk);
+      VcsConfiguration.getInstance(project).ON_FILE_ADDING = CvsConfiguration.convertToEnumValue(value, onOk);
     }
 
   };
@@ -33,22 +34,22 @@ public interface Options {
 
   Options ON_FILE_REMOVING = new Options() {
     public boolean isToBeShown(Project project) {
-      return CvsConfiguration.getInstance(project).ON_FILE_REMOVING
+      return VcsConfiguration.getInstance(project).ON_FILE_REMOVING
              == com.intellij.util.Options.SHOW_DIALOG;
     }
 
     public void setToBeShown(boolean value, Project project, boolean onOk) {
-      CvsConfiguration.getInstance(project).ON_FILE_REMOVING = CvsConfiguration.convertToEnumValue(value, onOk);
+      VcsConfiguration.getInstance(project).ON_FILE_REMOVING = CvsConfiguration.convertToEnumValue(value, onOk);
     }
   };
 
   Options REMOVE_ACTION = new Options() {
     public boolean isToBeShown(Project project) {
-      return CvsConfiguration.getInstance(project).SHOW_REMOVE_OPTIONS;
+      return VcsConfiguration.getInstance(project).SHOW_REMOVE_OPTIONS;
     }
 
     public void setToBeShown(boolean value, Project project, boolean onOk) {
-      CvsConfiguration.getInstance(project).SHOW_REMOVE_OPTIONS = value;
+      VcsConfiguration.getInstance(project).SHOW_REMOVE_OPTIONS = value;
     }
   };
 

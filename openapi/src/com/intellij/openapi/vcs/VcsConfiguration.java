@@ -10,6 +10,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.util.Options;
 import org.jdom.Element;
 
 import java.util.List;
@@ -39,6 +40,16 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
 
   public float FILE_HISTORY_DIALOG_COMMENTS_SPLITTER_PROPORTION = 0.8f;
   public float FILE_HISTORY_DIALOG_SPLITTER_PROPORTION = 0.5f;
+
+  public int ON_FILE_ADDING = Options.SHOW_DIALOG;
+  public int ON_FILE_REMOVING = Options.SHOW_DIALOG;
+  public boolean SHOW_ADD_OPTIONS = true;
+  public boolean SHOW_REMOVE_OPTIONS = true;
+
+  public boolean SHOW_EDIT_DIALOG = true;
+
+  public boolean SHOW_CHECKOUT_OPTIONS = true;
+
 
   public String ACTIVE_VCS_NAME;
   public boolean UPDATE_GROUP_BY_PACKAGES = false;
