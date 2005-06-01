@@ -28,13 +28,15 @@ public abstract class OptionsDialog extends DialogWrapper {
   protected JComponent createSouthPanel() {
     JComponent southPanel = super.createSouthPanel();
 
-    if (!canBeHidden()) return southPanel;
+    if (!canBeHidden()) {
+      return southPanel;
+    }
 
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(myCheckBoxDoNotShowDialog, BorderLayout.WEST);
+    final JPanel panel = new JPanel(new GridBagLayout());
+    panel.add(myCheckBoxDoNotShowDialog, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(southPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     myCheckBoxDoNotShowDialog.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));
     myCheckBoxDoNotShowDialog.setSelected(!isToBeShown());
-    panel.add(southPanel, BorderLayout.CENTER);
     return panel;
   }
 

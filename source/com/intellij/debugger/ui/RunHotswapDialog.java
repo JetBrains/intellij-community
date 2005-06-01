@@ -71,7 +71,7 @@ public class RunHotswapDialog extends OptionsDialog {
 
       public Object getValueAt(int rowIndex, int columnIndex) {
         if(columnIndex == CHECKBOX_COLUMN) {
-          return new Boolean(mySessionsToReload.contains(mySessions.get(rowIndex)));
+          return Boolean.valueOf(mySessionsToReload.contains(mySessions.get(rowIndex)));
         }
         else {
           return mySessions.get(rowIndex).getSessionName();
@@ -79,16 +79,16 @@ public class RunHotswapDialog extends OptionsDialog {
       }
 
       public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return rowIndex == CHECKBOX_COLUMN;
+        return columnIndex == CHECKBOX_COLUMN;
       }
 
       public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        if(rowIndex == CHECKBOX_COLUMN) {
+        if(columnIndex == CHECKBOX_COLUMN) {
           if(Boolean.TRUE.equals(aValue)) {
-            mySessionsToReload.add(mySessions.get(columnIndex));
+            mySessionsToReload.add(mySessions.get(rowIndex));
           }
           else {
-            mySessionsToReload.remove(mySessions.get(columnIndex));
+            mySessionsToReload.remove(mySessions.get(rowIndex));
           }
         }
       }
