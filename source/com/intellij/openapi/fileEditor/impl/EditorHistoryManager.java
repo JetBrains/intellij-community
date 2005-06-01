@@ -137,7 +137,10 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
     final HistoryEntry entry = getEntry(file);
     if(entry == null){
       // Size of entry list can be less than number of opened editors (some entries can be removed)
-      fileOpenedImpl(file);
+      if (file.isValid()) {
+        // the file could have been deleted, so the isValid() check is essential
+        fileOpenedImpl(file);
+      }
       return;
     }
     
