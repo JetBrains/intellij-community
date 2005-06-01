@@ -31,6 +31,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * User: anna
  * Date: Jan 31, 2005
@@ -50,6 +52,7 @@ public class CyclicDependenciesPanel extends JPanel {
   private CyclicDependenciesBuilder myBuilder;
   private Content myContent;
   private DependenciesPanel.DependencyPanelSettings mySettings = new DependenciesPanel.DependencyPanelSettings();
+  public static final String DEFAULT_PACKAGE_ABBREVIATION = "<default package>";
 
 
   public CyclicDependenciesPanel(Project project, final CyclicDependenciesBuilder builder) {
@@ -134,13 +137,14 @@ public class CyclicDependenciesPanel extends JPanel {
     }
   }
 
+  @Nullable
   private PackageDependenciesNode getNextPackageNode(DefaultMutableTreeNode node) {
     DefaultMutableTreeNode child = node;
     while (node != null) {
       if (node instanceof CycleNode) {
         final TreeNode packageDependenciesNode = child.getNextSibling() != null
-                                                                ? child.getNextSibling()
-                                                                : node.getChildAt(0);
+                                                 ? child.getNextSibling()
+                                                 : node.getChildAt(0);
         if (packageDependenciesNode instanceof PackageNode){
           return (PackageNode)packageDependenciesNode;
         }
@@ -156,18 +160,18 @@ public class CyclicDependenciesPanel extends JPanel {
 
   private PackageDependenciesNode hideEmptyMiddlePackages(PackageDependenciesNode node, StringBuffer result){
     if (node.getChildCount() > 1 || (node.getChildCount() == 1 && node.getChildAt(0) instanceof FileNode)){
-      result.append((result.length() != 0 ? ".":"") + (node.toString().equals("<default package>") ? "" : node.toString()));//toString()
+      result.append((result.length() != 0 ? ".":"") + (node.toString().equals(DEFAULT_PACKAGE_ABBREVIATION) ? "" : node.toString()));//toString()
     } else {
       if (node.getChildCount() == 1){
         PackageDependenciesNode child = (PackageDependenciesNode)node.getChildAt(0);
-        if (!(node instanceof PackageNode)){
+        if (!(node instanceof PackageNode)){  //e.g. modules node
           node.removeAllChildren();
           child = hideEmptyMiddlePackages(child, result);
           node.add(child);
         } else {
-          if (node.getChildAt(0) instanceof PackageNode){
+          if (child instanceof PackageNode){
             node.removeAllChildren();
-            result.append((result.length() != 0 ? ".":"") + (node.toString().equals("<default package>") ? "" : node.toString()));
+            result.append((result.length() != 0 ? ".":"") + (child.toString().equals(DEFAULT_PACKAGE_ABBREVIATION) ? "" : child.toString()));
             node = hideEmptyMiddlePackages(child, result);
             ((PackageNode)node).setPackageName(result.toString());//toString()
           }
@@ -312,6 +316,7 @@ public class CyclicDependenciesPanel extends JPanel {
     tree.expandPath(new TreePath(node.getPath()));
   }
 
+  @Nullable
   private PackageNode getSelectedPackage(final Tree tree) {
     TreePath[] paths = tree.getSelectionPaths();
     if (paths == null || paths.length != 1) return null;
