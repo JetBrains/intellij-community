@@ -9,9 +9,11 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.j2ee.module.components.J2EEModuleUrl;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -29,7 +31,7 @@ import java.util.*;
  */
 public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase implements JDOMExternalizable {
   private static final ArrayList<AbstractUrl> ourAbstractUrlProviders = new ArrayList<AbstractUrl>();
-
+  private static final Logger LOG = Logger.getInstance("com.intellij.ide.favoritesTreeView.FavoritesTreeStructure");
   static {
     ourAbstractUrlProviders.add(new ClassUrl(null, null));
     ourAbstractUrlProviders.add(new ModuleUrl(null, null));
@@ -70,8 +72,13 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     return myRoot;
   }
 
-  public void addToFavorites(AbstractTreeNode element) {
-    myFavorites.add(element);
+  public void addToFavorites(AbstractTreeNode treeNode) {
+    Object elementToAdd = treeNode.getValue() instanceof SmartPsiElementPointer ? ((SmartPsiElementPointer)treeNode.getValue()).getElement() : treeNode.getValue();
+    for (AbstractTreeNode node : myFavorites) {
+      Object element = node.getValue() instanceof SmartPsiElementPointer ? ((SmartPsiElementPointer)node.getValue()).getElement() : node.getValue();
+      if (Comparing.equal(element, elementToAdd)) return;
+    }
+    myFavorites.add(treeNode);
   }
 
   //for tests only
@@ -175,6 +182,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
   }
 
   public boolean contains(final VirtualFile vFile){
+    LOG.assertTrue(vFile != null);
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     final Set<Boolean> find = new HashSet<Boolean>();
     final ContentIterator contentIterator = new ContentIterator() {
@@ -189,7 +197,8 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
       AbstractTreeNode node = iterator.next();
       if (node.getValue() instanceof PsiElement){
         final VirtualFile virtualFile = BasePsiNode.getVirtualFile(((PsiElement)node.getValue()));
-        if (vFile == null ? virtualFile == null : vFile.getPath().equals(virtualFile.getPath())){
+        if (virtualFile == null) continue;
+        if (vFile.getPath().equals(virtualFile.getPath())){
           return true;
         }
         if (!virtualFile.isDirectory()){

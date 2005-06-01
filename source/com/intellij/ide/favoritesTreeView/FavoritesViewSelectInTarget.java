@@ -90,6 +90,7 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper{
   protected void select(final Object selector, final VirtualFile virtualFile, final boolean requestFocus) {
     selectElement(new Runnable() {
       public void run() {
+        if (virtualFile == null) return;
         final FavoritesTreeViewPanel suitableFavoritesList = findSuitableFavoritesList(virtualFile);
         if (suitableFavoritesList != null){
           suitableFavoritesList.selectElement(selector, virtualFile);
