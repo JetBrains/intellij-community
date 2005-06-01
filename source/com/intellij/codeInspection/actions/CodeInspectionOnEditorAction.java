@@ -5,7 +5,10 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -39,6 +42,9 @@ public class CodeInspectionOnEditorAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    e.getPresentation().setVisible(e.getPlace().equals(ActionPlaces.EDITOR_POPUP));
+    final DataContext dataContext = e.getDataContext();
+    final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    final PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
+    e.getPresentation().setEnabled(project != null && psiFile != null);
   }
 }
