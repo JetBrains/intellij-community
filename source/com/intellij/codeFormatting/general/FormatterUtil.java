@@ -34,13 +34,16 @@ package com.intellij.codeFormatting.general;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.CharTable;
+import com.intellij.util.IncorrectOperationException;
 
 public class FormatterUtil {
   public static String getWhiteSpaceBefore(ASTNode element) {
@@ -124,9 +127,9 @@ public class FormatterUtil {
         treePrev.getElementType() != whiteSpaceToken &&
         treePrev.getTextLength() > 0 &&
         whiteSpace.length() >
-                    0) {
+        0) {
       LeafElement whiteSpaceElement = Factory.createSingleLeafElement(treePrev.getElementType(), whiteSpace.toCharArray(), 0, whiteSpace.length(),
-                                                          charTable, SharedImplUtil.getManagerByTree(leafElement));
+                                                                      charTable, SharedImplUtil.getManagerByTree(leafElement));
 
       ASTNode treeParent = treePrev.getTreeParent();
       treeParent.replaceChild(treePrev, whiteSpaceElement);
@@ -171,21 +174,21 @@ public class FormatterUtil {
     } else {
       if (isTag(treeParent) && leafAfter.getElementType() == ElementType.XML_START_TAG_START ||
           leafAfter.getElementType() == ElementType.XML_END_TAG_START) {
-        CompositeElement xmlTextElement = Factory.createCompositeElement(ElementType.XML_TEXT, 
-                                                                         charTable, 
+        CompositeElement xmlTextElement = Factory.createCompositeElement(ElementType.XML_TEXT,
+                                                                         charTable,
                                                                          SharedImplUtil.getManagerByTree(treePrev));
         xmlTextElement.addChild(whiteSpaceElement);
         treeParent.addChild(xmlTextElement, treePrev);
-        
+
       } else {
         treeParent.addChild(whiteSpaceElement, treePrev);
       }
     }
   }
-  
+
   private static boolean isTag(final ASTNode treeParent) {
-    return treeParent.getElementType() == ElementType.XML_TAG 
-        || treeParent.getElementType() == ElementType.HTML_TAG;
+    return treeParent.getElementType() == ElementType.XML_TAG
+           || treeParent.getElementType() == ElementType.HTML_TAG;
   }
 
   private static ASTNode findPreviousWhiteSpace(final ASTNode leafElement) {
@@ -295,7 +298,7 @@ public class FormatterUtil {
     LeafElement whiteSpaceElement = Factory.createSingleLeafElement(ElementType.WHITE_SPACE,
                                                                     whiteSpace.toCharArray(), 0, whiteSpace.length(),
                                                                     SharedImplUtil.findCharTableByTree(lastWS), SharedImplUtil.getManagerByTree(lastWS));
-    
+
     if (lastWS == null) {
       astNode.addChild(whiteSpaceElement, null);
     } else {
@@ -310,6 +313,41 @@ public class FormatterUtil {
       delete(treeParent);
     } else {
       treeParent.removeRange(prevElement, prevElement.getTreeNext());
+    }
+  }
+
+  public static void join(final ASTNode node1, final ASTNode node2) {
+    if (node1 == null || node2 == null) return;
+
+    if (node1.getElementType() == ElementType.XML_TEXT && node2.getElementType() == ElementType.XML_TEXT) {
+      joinXmlTexts(node1, node2);
+    }
+
+    if (node1.getTreeParent().getElementType() == ElementType.XML_TEXT && node2.getTreeParent().getElementType() == ElementType.XML_TEXT) {
+      joinXmlTexts(node1.getTreeParent(), node2.getTreeParent());
+    }
+
+    else if (node1.getTreeParent().getElementType() == ElementType.WHITE_SPACE && node2.getElementType() == ElementType.XML_TEXT) {
+      joinXmlTexts(node1.getTreeParent(), node2);
+    }
+
+    else if (node2.getTreeParent().getElementType() == ElementType.WHITE_SPACE && node2.getElementType() == ElementType.XML_TEXT) {
+      joinXmlTexts(node1, node2.getTreeParent());
+    }
+
+
+  }
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeFormatting.general.FormatterUtil");
+  private static void joinXmlTexts(ASTNode node1, ASTNode node2) {
+    final XmlText text1 = ((XmlText)node1.getPsi());
+    final XmlText text2 = ((XmlText)node2.getPsi());
+
+    try {
+      text1.insertText(text2.getValue(), text1.getValue().length());
+      delete(node2);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
     }
   }
 }

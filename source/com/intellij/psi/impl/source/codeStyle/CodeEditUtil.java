@@ -216,6 +216,10 @@ public class CodeEditUtil {
 
         adjustSpacePositions(nextElement, prevElement, options);
 
+        if (prevElement != null) {
+          FormatterUtil.join(prevElement, TreeUtil.nextLeaf(prevElement));
+        }
+
         if (adjustWSBefore) {
           adjustWhiteSpaceBefore(nextElement, true, true, true, false);
         }
@@ -243,7 +247,6 @@ public class CodeEditUtil {
     if (prevElement != null && isWS(prevElement) && isWS(elementBeforeNext) && prevElement != elementBeforeNext) {
       replaceTwoSpacesWithOne(elementBeforeNext, prevElement, options);
     }
-
 
     elementBeforeNext = TreeUtil.prevLeaf(nextElement);
 
