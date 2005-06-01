@@ -495,13 +495,13 @@ public class CodeEditUtil {
   }
 
   private static void delete(final ASTNode prevElement) {
-    prevElement.getTreeParent().removeRange(prevElement, prevElement.getTreeNext());
+    FormatterUtil.delete(prevElement);
   }
 
   private static ASTNode findElementAfter(final ASTNode parent, boolean canBeWhiteSpace) {
     ASTNode candidate = parent.getTreeNext();
     while (candidate !=null) {
-      if ((canBeWhiteSpace || !isWS(candidate)) && candidate.getTextLength() > 0) return candidate;
+      if ((canBeWhiteSpace || !isWS(candidate) && !containsWhiteSpacesOnly(candidate)) && candidate.getTextLength() > 0) return candidate;
       candidate =  candidate.getTreeNext();
     }
     final ASTNode treeParent = parent.getTreeParent();
@@ -510,6 +510,21 @@ public class CodeEditUtil {
     } else {
       return null;
     }
+  }
+
+  private static boolean containsWhiteSpacesOnly(final ASTNode candidate) {
+    if (candidate.getTextLength() == 0) return false;
+    ASTNode child = candidate.getFirstChildNode();
+    if (child == null) return false;
+    while (child != null) {
+      if (!isWS(child)) {
+        if (!containsWhiteSpacesOnly(child)) {
+          return false;
+        }
+      }
+      child =  child.getTreeNext();
+    }
+    return true;
   }
 
   private static boolean isWS(final ASTNode lastChild) {

@@ -612,33 +612,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         LOG.error(e);
       }
     }
-    else if (child.getElementType() != XmlElementType.XML_TEXT) {
-      final ASTNode treePrev = child.getTreePrev();
-      final ASTNode treeNext = child.getTreeNext();
-
-      if (treePrev.getElementType() == XmlElementType.XML_TEXT && treeNext.getElementType() == XmlElementType.XML_TEXT) {
-        try {
-          model.runTransaction(new PomTransactionBase(getParent(), aspect) {
-            public PomModelEvent runInner() throws IncorrectOperationException {
-              final XmlTextImpl xmlText = (XmlTextImpl)treePrev.getPsi();
-              try {
-                xmlText.insertText(((XmlText)treeNext).getValue(), xmlText.getValue().length());
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
-              removeChild(treeNext);
-              removeChild(child);
-              return null;
-            }
-          });
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
-      else XmlTagImpl.super.deleteChildInternal(child);
-    }
     else{
       XmlTagImpl.super.deleteChildInternal(child);
     }

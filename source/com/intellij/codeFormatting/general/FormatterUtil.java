@@ -303,4 +303,13 @@ public class FormatterUtil {
       treeParent.replaceChild(lastWS, whiteSpaceElement);
     }
   }
+
+  public static void delete(final ASTNode prevElement) {
+    final ASTNode treeParent = prevElement.getTreeParent();
+    if (treeParent.getElementType() == ElementType.XML_TEXT && treeParent.getTextRange().equals(prevElement.getTextRange())) {
+      delete(treeParent);
+    } else {
+      treeParent.removeRange(prevElement, prevElement.getTreeNext());
+    }
+  }
 }
