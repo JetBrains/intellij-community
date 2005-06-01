@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.text.AttributeSet;
@@ -23,9 +24,9 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.regex.Matcher;
 
 public abstract class SpeedSearchBase<Comp extends JComponent> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SpeedSearchBase");
@@ -225,6 +226,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       return;
     }
     if (e.getID() == KeyEvent.KEY_TYPED) {
+      if (!UIUtil.isReallyTypedEvent(e)) return;
+
       char c = e.getKeyChar();
       if (Character.isLetterOrDigit(c) || c == '_' || c == '*') {
         manageSearchPopup(new SearchPopup(String.valueOf(c)));

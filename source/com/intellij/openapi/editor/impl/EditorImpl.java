@@ -35,6 +35,7 @@ import com.intellij.ui.JScrollPane2;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -3036,22 +3037,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
   public boolean processKeyTyped(KeyEvent e) {
     if (e.getID() != KeyEvent.KEY_TYPED) return false;
     char c = e.getKeyChar();
-    if (isReallyTypedEvent(e) && c >= 0x20 && c != 0x7F) { // Hack just like in javax.swing.text.DefaultEditorKit.DefaultKeyTypedAction
+    if (UIUtil.isReallyTypedEvent(e)) { // Hack just like in javax.swing.text.DefaultEditorKit.DefaultKeyTypedAction
       processKeyTyped(c);
       return true;
     }
     else {
       return false;
     }
-  }
-
-  private static boolean isReallyTypedEvent(KeyEvent e) {
-    int modifiers = e.getModifiers();
-    if (SystemInfo.isMac) {
-      return !e.isMetaDown() && !e.isControlDown();
-    }
-
-    return (modifiers & ActionEvent.ALT_MASK) == (modifiers & ActionEvent.CTRL_MASK);
   }
 
   public void beforeModalityStateChanged() {
