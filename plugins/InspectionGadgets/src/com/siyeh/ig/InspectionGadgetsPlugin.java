@@ -4,12 +4,16 @@ import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.siyeh.ig.abstraction.*;
+import com.siyeh.ig.bitwise.IncompatibleMaskInspection;
+import com.siyeh.ig.bitwise.PointlessBitwiseExpressionInspection;
+import com.siyeh.ig.bitwise.ShiftOutOfRangeInspection;
 import com.siyeh.ig.bugs.*;
 import com.siyeh.ig.classlayout.*;
 import com.siyeh.ig.classmetrics.*;
 import com.siyeh.ig.cloneable.*;
 import com.siyeh.ig.confusing.*;
 import com.siyeh.ig.confusing.ClassEscapesItsScopeInspection;
+import com.siyeh.ig.controlflow.*;
 import com.siyeh.ig.encapsulation.*;
 import com.siyeh.ig.errorhandling.*;
 import com.siyeh.ig.finalization.FinalizeCallsSuperFinalizeInspection;
@@ -21,6 +25,7 @@ import com.siyeh.ig.initialization.*;
 import com.siyeh.ig.internationalization.*;
 import com.siyeh.ig.j2me.*;
 import com.siyeh.ig.jdk.*;
+import com.siyeh.ig.jdk15.*;
 import com.siyeh.ig.junit.*;
 import com.siyeh.ig.logging.ClassWithMultipleLoggersInspection;
 import com.siyeh.ig.logging.ClassWithoutLoggerInspection;
@@ -32,24 +37,17 @@ import com.siyeh.ig.memory.SystemGCInspection;
 import com.siyeh.ig.memory.ZeroLengthArrayInitializationInspection;
 import com.siyeh.ig.methodmetrics.*;
 import com.siyeh.ig.naming.*;
+import com.siyeh.ig.numeric.*;
 import com.siyeh.ig.performance.*;
 import com.siyeh.ig.portability.*;
 import com.siyeh.ig.resources.*;
 import com.siyeh.ig.security.*;
 import com.siyeh.ig.serialization.*;
 import com.siyeh.ig.style.*;
-import com.siyeh.ig.style.RedundantFieldInitializationInspection;
 import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
 import com.siyeh.ig.threading.*;
 import com.siyeh.ig.verbose.*;
 import com.siyeh.ig.visibility.*;
-import com.siyeh.ig.controlflow.*;
-import com.siyeh.ig.numeric.*;
-import com.siyeh.ig.jdk15.*;
-import com.siyeh.ig.bugs.StaticCallOnSubclassInspection;
-import com.siyeh.ig.bitwise.ShiftOutOfRangeInspection;
-import com.siyeh.ig.bitwise.PointlessBitwiseExpressionInspection;
-import com.siyeh.ig.bitwise.IncompatibleMaskInspection;
 
 import java.io.*;
 import java.util.*;
@@ -81,7 +79,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void createDocumentation(PrintStream out){
-        initComponent();
+        Arrays.sort(getInspectionClasses(), new InspectionComparator());
         final Class[] classes = getInspectionClasses();
         String currentGroupName = "";
 
@@ -210,11 +208,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     public Class[] getInspectionClasses(){
-        final int numInspections = m_inspectionClasses.size();
-        return m_inspectionClasses.toArray(new Class[numInspections]);
-    }
-
-    public void initComponent(){
+      if (m_inspectionClasses.isEmpty()){
         registerNamingInspections();
         registerBugInspections();
         registerCloneInspections();
@@ -242,8 +236,12 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         registerSecurityInspections();
         registerResourceManagementInspections();
         registerJ2MEInspections();
-        Collections.sort(m_inspectionClasses, new InspectionComparator());
+      }
+      final int numInspections = m_inspectionClasses.size();
+      return m_inspectionClasses.toArray(new Class[numInspections]);
     }
+
+    public void initComponent(){}
 
     private void registerResourceManagementInspections(){
         final List<Class> inspectionClasses = m_inspectionClasses;
