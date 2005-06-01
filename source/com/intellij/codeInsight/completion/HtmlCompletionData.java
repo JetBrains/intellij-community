@@ -105,6 +105,7 @@ public class HtmlCompletionData extends XmlCompletionData {
   private boolean isScriptTag(XmlTag tag) {
     if (tag!=null) {
       String tagName = tag.getName();
+      if (tagName == null) return false;
       if (myCaseInsensitive) tagName = tagName.toLowerCase();
 
       return tagName.equals("script");
@@ -116,6 +117,7 @@ public class HtmlCompletionData extends XmlCompletionData {
   private boolean isStyleTag(XmlTag tag) {
     if (tag!=null) {
       String tagName = tag.getName();
+      if (tagName == null) return false;
       if (myCaseInsensitive) tagName = tagName.toLowerCase();
 
       return tagName.equals("style");
