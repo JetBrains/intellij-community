@@ -242,8 +242,7 @@ public class UsageInfo2UsageAdapter implements Usage, UsageInModule, UsageInLibr
     }
 
     public TextChunk[] getText() {
-      final PsiElement element = getElement();
-      if (element != null && element.isValid()) {
+      if (isValid()) {
         // the check below makes sence only for valid PsiElement
         final long currentModificationStamp = getCurrentModificationStamp();
         if (currentModificationStamp != myModificationStamp) {
