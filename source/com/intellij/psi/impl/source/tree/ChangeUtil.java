@@ -244,7 +244,7 @@ public class ChangeUtil implements Constants {
     final PomModel model = manager.getProject().getModel();
     try{
       final TreeAspect treeAspect = model.getModelAspect(TreeAspect.class);
-      model.runTransaction(new PomTransactionBase(changedElement.getPsi()) {
+      model.runTransaction(new PomTransactionBase(changedElement.getPsi(), treeAspect) {
         public PomModelEvent runInner() {
           final PomModelEvent event = new PomModelEvent(model);
           final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);
@@ -264,7 +264,7 @@ public class ChangeUtil implements Constants {
           changedElement.subtreeChanged();
           return event;
         }
-      }, treeAspect);
+      });
     }
     catch(IncorrectOperationException ioe){
       LOG.error(ioe);

@@ -4,23 +4,23 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.PomModel;
-import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
+import com.intellij.pom.xml.XmlAspect;
+import com.intellij.pom.xml.impl.events.XmlTextChangedImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.pom.xml.impl.events.XmlTextChangedImpl;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlTagTextUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Arrays;
 
 public class XmlTextImpl extends XmlElementImpl implements XmlText {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlTextImpl");
@@ -156,29 +156,32 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
 
     final PomModel model = getProject().getModel();
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
-    model.runTransaction(new PomTransactionBase(this) {
+    model.runTransaction(new PomTransactionBase(this, aspect) {
       public PomModelEvent runInner() throws IncorrectOperationException {
         final String oldText = getText();
         replaceAllChildrenToChildrenOf(firstEncodedElement.getTreeParent());
         clearCaches();
         return XmlTextChangedImpl.createXmlTextChanged(model, XmlTextImpl.this, oldText);
       }
-    }, aspect);
+    });
   }
 
-  public XmlElement insertAtOffset(final XmlElement element, int physicalOffset) throws IncorrectOperationException{
+  public XmlElement insertAtOffset(final XmlElement element, final int physicalOffset) throws IncorrectOperationException{
     if(element instanceof XmlText){
       insertText(((XmlText)element).getValue(), displayToPhysical(physicalOffset));
     }
     else {
-      final XmlTagImpl tag = (XmlTagImpl)getParentTag();
-      final XmlText rightPart = tag.splitText(this, physicalOffset);
-      if(rightPart != null) {
-        tag.addBefore(element, rightPart);
-      }
-      else {
-        tag.addAfter(element, this);
-      }
+      final PomModel model = getProject().getModel();
+      final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
+      model.runTransaction(new PomTransactionBase(getParent(), aspect) {
+        public PomModelEvent runInner() throws IncorrectOperationException {
+          final XmlTagImpl tag = (XmlTagImpl)getParentTag();
+          final XmlText rightPart = tag.splitText(XmlTextImpl.this, physicalOffset);
+          if(rightPart != null) tag.addBefore(element, rightPart);
+          else tag.addAfter(element, XmlTextImpl.this);
+          return null;
+        }
+      });
     }
 
     return this;

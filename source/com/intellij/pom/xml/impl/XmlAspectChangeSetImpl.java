@@ -31,7 +31,10 @@ public class XmlAspectChangeSetImpl implements XmlChangeSet {
   }
 
   public void merge(PomChangeSet blocked) {
-    myChanges.addAll(((XmlAspectChangeSetImpl)blocked).myChanges);
+    final List<XmlChange> changes = ((XmlAspectChangeSetImpl)blocked).myChanges;
+    for (XmlChange xmlChange : changes) {
+      add(xmlChange);
+    }
   }
 
   public void add(XmlChange xmlChange) {

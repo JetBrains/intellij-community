@@ -11,9 +11,11 @@ import java.util.Iterator;
 
 public abstract class PomTransactionBase implements PomTransaction{
   private PsiElement myScope;
+  private PomModelAspect myAspect;
   private PomModelEvent myAccumulatedEvent;
-  public PomTransactionBase(PsiElement scope){
+  public PomTransactionBase(PsiElement scope, final PomModelAspect aspect){
     myScope = scope;
+    myAspect = aspect;
     myAccumulatedEvent = new PomModelEvent(scope.getManager().getProject().getModel());
   }
 
@@ -24,7 +26,11 @@ public abstract class PomTransactionBase implements PomTransaction{
   public void run() throws IncorrectOperationException {
     // override accumulated event because transaction should construct full model event in its aspect
     final PomModelEvent event = runInner();
-    if(event == null) return;
+    if(event == null){
+      // in case of null event aspect change set supposed to be rebuild by low level events
+      myAccumulatedEvent.registerChangeSet(myAspect, null);
+      return;
+    }
     final Set<PomModelAspect> changedAspects = event.getChangedAspects();
     final Iterator<PomModelAspect> iterator = changedAspects.iterator();
     while (iterator.hasNext()) {
@@ -37,5 +43,9 @@ public abstract class PomTransactionBase implements PomTransaction{
 
   public PsiElement getChangeScope() {
     return myScope;
+  }
+
+  public PomModelAspect getTransactionAspect() {
+    return myAspect;
   }
 }

@@ -3,15 +3,13 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.j2ee.ExternalResourceManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
-import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
-import com.intellij.pom.xml.impl.events.*;
+import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
+import com.intellij.pom.xml.impl.events.XmlTagNameChangedImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -19,9 +17,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.meta.PsiMetaData;
@@ -245,7 +240,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
   public PsiElement setName(final String name) throws IncorrectOperationException {
     final PomModel model = getProject().getModel();
-    model.runTransaction(new PomTransactionBase(this) {
+    final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
+    model.runTransaction(new PomTransactionBase(this, aspect) {
       public PomModelEvent runInner() throws IncorrectOperationException{
         final String oldName = getName();
         final XmlTagImpl dummyTag = (XmlTagImpl)getManager().getElementFactory().createTagFromText(XmlTagTextUtil.composeTagText(name, "aa"));
@@ -257,7 +253,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
         return XmlTagNameChangedImpl.createXmlTagNameChanged(model, tag, oldName);
       }
-    }, model.getModelAspect(XmlAspect.class));
+    });
     return this;
   }
 
@@ -467,7 +463,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
 
     if(attribute != null){
       if(value == null){
-        deleteChildInternal(SourceTreeToPsiMap.psiElementToTree(attribute));
+        deleteChildInternal(attribute.getNode());
         return null;
       }
       attribute.setValue(value);
@@ -496,7 +492,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     boolean insideBody = false;
     for (int i = 0; i < elements.length; i++) {
       final PsiElement element = elements[i];
-      final ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(element);
+      final ASTNode treeElement = element.getNode();
       if(insideBody){
         if(treeElement.getElementType() == XmlTokenType.XML_END_TAG_START) break;
         if(!(treeElement instanceof XmlTagChild)) continue;
@@ -561,135 +557,91 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return firstAppended;
   }
 
-  private TreeElement addInternal(final TreeElement child, final ASTNode anchor, final boolean before) throws IncorrectOperationException{
-    final PsiFile containingFile = getContainingFile();
-    final FileType fileType = containingFile.getFileType();
+  private TreeElement addInternal(TreeElement child, ASTNode anchor, boolean before) throws IncorrectOperationException{
     final PomModel model = getProject().getModel();
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
-    final TreeElement[] retHolder = new TreeElement[1];
-    if (child.getElementType() == XmlElementType.XML_ATTRIBUTE) {
-      model.runTransaction(new PomTransactionBase(this) {
-        public PomModelEvent runInner(){
-          final String value = ((XmlAttribute)child).getValue();
-          final String name = ((XmlAttribute)child).getName();
-          TreeElement treeElement;
-          if (anchor == null) {
-            ASTNode startTagEnd = XmlChildRole.START_TAG_END_FINDER.findChild(XmlTagImpl.this);
-            if (startTagEnd == null) startTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(XmlTagImpl.this);
-
-            if (startTagEnd == null) {
-              treeElement = addInternalHack(child, child, null, null, fileType);
-            }
-            else {
-              treeElement = addInternalHack(child, child, startTagEnd, Boolean.TRUE, fileType);
-            }
-          }
-          else {
-            treeElement = addInternalHack(child, child, anchor, Boolean.valueOf(before), fileType);
-          }
-          final ASTNode treePrev = treeElement.getTreePrev();
-          if(treeElement.getElementType() != XmlTokenType.XML_WHITE_SPACE && treePrev.getElementType() != XmlTokenType.XML_WHITE_SPACE){
-            final LeafElement singleLeafElement = Factory.createSingleLeafElement(XmlTokenType.XML_WHITE_SPACE, new char[]{' '}, 0, 1,
-                                                                                  SharedImplUtil.findCharTableByTree(XmlTagImpl.this), getManager());
-            addChild(singleLeafElement, treeElement);
-            treeElement = singleLeafElement;
-          }
-
-          retHolder[0] = treeElement;
-          return XmlAttributeSetImpl.createXmlAttributeSet(model, XmlTagImpl.this, name, value);
+    final InsertTransaction transaction;
+    if (child.getElementType() == XmlElementType.XML_TEXT) {
+      XmlText psi = null;
+      if(anchor.getPsi() instanceof XmlText)
+        psi = (XmlText)anchor.getPsi();
+      else {
+        final ASTNode other = before ? anchor.getTreePrev() : getTreeNext();
+        if(other.getPsi() instanceof XmlText) {
+          before = !before;
+          psi = (XmlText)other.getPsi();
         }
+      }
 
-      }, aspect);
+      if(psi != null){
+        if(before)
+          psi.insertText(((XmlText)child.getPsi()).getValue(), 0);
+        else
+          psi.insertText(((XmlText)child.getPsi()).getValue(), psi.getValue().length());
+        return (TreeElement)psi.getNode();
+      }
     }
-    else if (child.getElementType() == XmlElementType.XML_TAG || child.getElementType() == XmlElementType.XML_TEXT) {
-      final BodyInsertTransaction transaction = new BodyInsertTransaction(model, child, anchor, before, fileType);
-      model.runTransaction(transaction, aspect);
-      return transaction.getNewElement();
+    LOG.assertTrue(child.getPsi() instanceof XmlAttribute || child.getPsi() instanceof XmlTagChild);
+    if (child.getElementType() == XmlElementType.XML_ATTRIBUTE) {
+      transaction = new InsertAttributeTransaction(child, anchor, before, model);
+    }
+    else if (anchor == null){
+      transaction = new BodyInsertTransaction(child);
     }
     else{
-      model.runTransaction(new PomTransactionBase(this) {
-        public PomModelEvent runInner() {
-          final TreeElement treeElement = addInternalHack(child, child, anchor, Boolean.valueOf(before), fileType);
-          retHolder[0] = treeElement;
-          return XmlTagChildAddImpl.createXmlTagChildAdd(model, XmlTagImpl.this, (XmlTagChild)SourceTreeToPsiMap.treeElementToPsi(treeElement));
-        }
-      }, aspect);
+      transaction = new GenericInsertTransaction(child, anchor, before);
     }
-    return retHolder[0];
+    model.runTransaction(transaction);
+    return transaction.getFirstInserted();
   }
 
   public void deleteChildInternal(final ASTNode child) {
     final PomModel model = getProject().getModel();
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
-    try {
+
+    if(child.getElementType() == XmlElementType.XML_ATTRIBUTE){
+      try {
+        model.runTransaction(new PomTransactionBase(this, aspect) {
+          public PomModelEvent runInner() {
+            final String name = ((XmlAttribute)child).getName();
+            XmlTagImpl.super.deleteChildInternal(child);
+            return XmlAttributeSetImpl.createXmlAttributeSet(model, XmlTagImpl.this, name, null);
+          }
+        });
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
+    else if (child.getElementType() != XmlElementType.XML_TEXT) {
       final ASTNode treePrev = child.getTreePrev();
       final ASTNode treeNext = child.getTreeNext();
 
-      if (child.getElementType() != XmlElementType.XML_TEXT) {
-        if (treePrev.getElementType() == XmlElementType.XML_TEXT && treeNext.getElementType() == XmlElementType.XML_TEXT) {
-          final XmlTextImpl xmlText = (XmlTextImpl)SourceTreeToPsiMap.treeElementToPsi(treePrev);
-          final String oldText = xmlText.getText();
-          model.runTransaction(new PomTransactionBase(this) {
-            public PomModelEvent runInner() throws IncorrectOperationException{
-              final int displayOffset = xmlText.getValue().length();
-              xmlText.insertText(((XmlText)treeNext).getValue(), displayOffset);
+      if (treePrev.getElementType() == XmlElementType.XML_TEXT && treeNext.getElementType() == XmlElementType.XML_TEXT) {
+        try {
+          model.runTransaction(new PomTransactionBase(getParent(), aspect) {
+            public PomModelEvent runInner() throws IncorrectOperationException {
+              final XmlTextImpl xmlText = (XmlTextImpl)treePrev.getPsi();
+              try {
+                xmlText.insertText(((XmlText)treeNext).getValue(), xmlText.getValue().length());
+              }
+              catch (IncorrectOperationException e) {
+                LOG.error(e);
+              }
               removeChild(treeNext);
               removeChild(child);
-              { // Handling whitespaces
-                final LeafElement leafElementAt = xmlText.findLeafElementAt(displayOffset);
-                if(leafElementAt != null && leafElementAt.getElementType() == XmlTokenType.XML_WHITE_SPACE){
-                  final String wsText = CodeEditUtil.getStringWhiteSpaceBetweenTokens(
-                    ParseUtil.prevLeaf(leafElementAt, null),
-                    ParseUtil.nextLeaf(leafElementAt, null),
-                    getLanguage());
-                  final LeafElement newWhitespace =
-                    Factory.createSingleLeafElement(XmlTokenType.XML_WHITE_SPACE, wsText.toCharArray(), 0, wsText.length(), null, getManager());
-                  xmlText.replaceChild(leafElementAt, newWhitespace);
-                }
-              }
-              final PomModelEvent event = new PomModelEvent(model);
-              { // event construction
-                final XmlAspectChangeSetImpl xmlAspectChangeSet = new XmlAspectChangeSetImpl(model, (XmlFile)getContainingFile());
-                xmlAspectChangeSet.add(new XmlTagChildRemovedImpl(XmlTagImpl.this, (XmlTagChild)treeNext));
-                xmlAspectChangeSet.add(new XmlTagChildRemovedImpl(XmlTagImpl.this, (XmlTagChild)child));
-                xmlAspectChangeSet.add(new XmlTextChangedImpl(xmlText, oldText));
-                event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
-              }
-              return event;
+              return null;
             }
-          }, aspect);
-          return;
+          });
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
         }
       }
-
-      model.runTransaction(new PomTransactionBase(this) {
-        public PomModelEvent runInner() {
-          if(child.getElementType() == XmlElementType.XML_ATTRIBUTE){
-            final String name = ((XmlAttribute)child).getName();
-            XmlTagImpl.super.deleteChildInternal(child);
-
-            return XmlAttributeSetImpl.createXmlAttributeSet(model, XmlTagImpl.this, name, null);
-          }
-          XmlTagImpl.super.deleteChildInternal(child);
-          return XmlTagChildRemovedImpl.createXmlTagChildRemoved(model, XmlTagImpl.this, (XmlTagChild)SourceTreeToPsiMap.treeElementToPsi(child));
-        }
-      }, aspect);
-
+      else XmlTagImpl.super.deleteChildInternal(child);
     }
-    catch (IncorrectOperationException e) {}
-    finally{
-      clearCaches();
-    }
-  }
-
-  public void replaceChildInternal(ASTNode child, TreeElement newElement) {
-    try {
-      addInternal(newElement, child, false);
-      deleteChildInternal(child);
-    }
-    catch (IncorrectOperationException e) {}
-    finally{
-      clearCaches();
+    else{
+      XmlTagImpl.super.deleteChildInternal(child);
     }
   }
 
@@ -724,130 +676,58 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     return null;
   }
 
-  private class BodyInsertTransaction extends PomTransactionBase{
+  private class BodyInsertTransaction extends InsertTransaction{
     private TreeElement myChild;
-    private ASTNode myAnchor;
     private ASTNode myNewElement;
-    private PomModel myModel;
-    private boolean myBeforeFlag;
-    private FileType myFileType ;
 
-    public BodyInsertTransaction(PomModel model, TreeElement child, ASTNode anchor, boolean beforeFlag, FileType fileType) {
+    public BodyInsertTransaction(TreeElement child) {
       super(XmlTagImpl.this);
-      this.myModel = model;
       this.myChild = child;
-      this.myAnchor = anchor;
-      this.myBeforeFlag = beforeFlag;
-      myFileType = fileType;
     }
 
     public PomModelEvent runInner() throws IncorrectOperationException {
-      ASTNode treeElement;
-      if(myChild.getElementType() == XmlElementType.XML_TEXT){
-        final XmlText xmlChildAsText = (XmlText)myChild;
-        ASTNode left;
-        ASTNode right;
-        if(myBeforeFlag){
-          left = myAnchor != null ? myAnchor.getTreePrev() : getLastChildNode();
-          right = myAnchor;
-        }
-        else{
-          left = myAnchor != null ? myAnchor : getLastChildNode();
-          right = myAnchor != null ? myAnchor.getTreeNext() : null;
-        }
-        if(left != null && left.getElementType() == XmlElementType.XML_TEXT){
-          final XmlText xmlText = (XmlText)left;
-          final String text = xmlText.getText();
-          xmlText.insertText(xmlChildAsText.getValue(), xmlText.getValue().length());
-          myNewElement = left;
-          return XmlTextChangedImpl.createXmlTextChanged(myModel, xmlText, text);
-        }
-        if(right != null && right.getElementType() == XmlElementType.XML_TEXT){
-          final XmlText xmlText = (XmlText)right;
-          final String text = xmlText.getText();
-          xmlText.insertText(xmlChildAsText.getValue(), 0);
-          myNewElement = right;
-          return XmlTextChangedImpl.createXmlTextChanged(myModel, xmlText, text);
-        }
-      }
-
-      if (myAnchor == null) {
-        ASTNode anchor = expandTag();
-        if(myChild.getElementType() == XmlElementType.XML_TAG){
-          final XmlElementDescriptor parentDescriptor = getDescriptor();
-          final XmlTag[] subTags = getSubTags();
-          if (parentDescriptor != null && subTags.length > 0){
-            final XmlElementDescriptor[] childElementDescriptors = parentDescriptor.getElementsDescriptors(XmlTagImpl.this);
-            int subTagNum = -1;
-            for (int i = 0; i < childElementDescriptors.length; i++) {
-              final XmlElementDescriptor childElementDescriptor = childElementDescriptors[i];
-              final String childElementName = childElementDescriptor.getName();
-              while (subTagNum < subTags.length - 1 && subTags[subTagNum + 1].getName().equals(childElementName)) {
-                subTagNum++;
-              }
-              if (childElementName.equals(XmlChildRole.START_TAG_NAME_FINDER.findChild(myChild).getText())) {
-                // insert child just after anchor
-                // insert into the position specified by index
-                if(subTagNum >= 0){
+      final ASTNode anchor = expandTag();
+      if(myChild.getElementType() == XmlElementType.XML_TAG){
+        // compute where to insert tag according to DTD or XSD
+        final XmlElementDescriptor parentDescriptor = getDescriptor();
+        final XmlTag[] subTags = getSubTags();
+        if (parentDescriptor != null && subTags.length > 0){
+          final XmlElementDescriptor[] childElementDescriptors = parentDescriptor.getElementsDescriptors(XmlTagImpl.this);
+          int subTagNum = -1;
+          for (int i = 0; i < childElementDescriptors.length; i++) {
+            final XmlElementDescriptor childElementDescriptor = childElementDescriptors[i];
+            final String childElementName = childElementDescriptor.getName();
+            while (subTagNum < subTags.length - 1 && subTags[subTagNum + 1].getName().equals(childElementName)) {
+              subTagNum++;
+            }
+            if (childElementName.equals(XmlChildRole.START_TAG_NAME_FINDER.findChild(myChild).getText())) {
+              // insert child just after anchor
+              // insert into the position specified by index
+              if(subTagNum >= 0){
                   final ASTNode subTag = (ASTNode)subTags[subTagNum];
-                  if(subTag.getTreeParent() != XmlTagImpl.this){
-                    // in entity
-                    final XmlEntityRef entityRef = PsiTreeUtil.getParentOfType(subTags[subTagNum], XmlEntityRef.class);
-                    throw new IncorrectOperationException("Can't insert subtag to entity! Entity reference text: " + entityRef.getText());
-                  }
-                  treeElement = addInternalHack(myChild, myChild, subTag, Boolean.FALSE, myFileType);
+                if(subTag.getTreeParent() != XmlTagImpl.this){
+                  // in entity
+                  final XmlEntityRef entityRef = PsiTreeUtil.getParentOfType(subTags[subTagNum], XmlEntityRef.class);
+                  throw new IncorrectOperationException("Can't insert subtag to entity! Entity reference text: " + entityRef != null ? entityRef.getText() : "");
                 }
-                else{
-                  final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(XmlTagImpl.this);
-                  treeElement = addInternalHack(myChild, myChild, child, Boolean.FALSE, myFileType);
-                }
-                myNewElement = treeElement;
-                return XmlTagChildAddImpl.createXmlTagChildAdd(myModel, XmlTagImpl.this, (XmlTagChild)SourceTreeToPsiMap.treeElementToPsi(treeElement));
+                myNewElement = XmlTagImpl.super.addInternal(myChild, myChild, subTag, Boolean.FALSE);
               }
+              else{
+                final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(XmlTagImpl.this);
+                myNewElement = XmlTagImpl.super.addInternal(myChild, myChild, child, Boolean.FALSE);
+              }
+              return null;
             }
           }
         }
-        treeElement = addInternalHack(myChild, myChild, anchor, Boolean.TRUE, myFileType);
       }
-      else {
-        treeElement = addInternalHack(myChild, myChild, myAnchor, Boolean.valueOf(myBeforeFlag), myFileType);
-      }
-      if(treeElement.getElementType() == XmlTokenType.XML_END_TAG_START){
-        // whitespace add
-        treeElement = treeElement.getTreePrev();
-        if(treeElement.getElementType() == XmlTokenType.XML_TAG_END){
-          // empty tag
-          final PsiElement parent = getParent();
-          if (parent instanceof XmlTag) {
-            return XmlTagChildChangedImpl.createXmlTagChildChanged(myModel, (XmlTag)parent, XmlTagImpl.this);
-          }
-          return XmlDocumentChangedImpl.createXmlDocumentChanged(myModel, (XmlDocument)parent);
-        }
-      }
-      myNewElement = treeElement;
-      return XmlTagChildAddImpl.createXmlTagChildAdd(myModel, XmlTagImpl.this, (XmlTagChild)SourceTreeToPsiMap.treeElementToPsi(treeElement));
+      myNewElement = XmlTagImpl.super.addInternal(myChild, myChild, anchor, Boolean.TRUE);
+      return null;
     }
 
-    TreeElement getNewElement(){
+    public TreeElement getFirstInserted(){
       return (TreeElement)myNewElement;
     }
-  }
-
-  private TreeElement addInternalHack(TreeElement first,
-                                      ASTNode last,
-                                      ASTNode anchor,
-                                      Boolean beforeFlag,
-                                      FileType fileType) {
-    if(first instanceof XmlTagChild && fileType == StdFileTypes.XHTML){
-      if (beforeFlag == null || !beforeFlag.booleanValue()) {
-        addChildren(first, last.getTreeNext(), anchor.getTreeNext());
-      }
-      else {
-        addChildren(first, last.getTreeNext(), anchor);
-      }
-      return first;
-    }
-    return super.addInternal(first, last, anchor, beforeFlag);
   }
 
   protected XmlText splitText(final XmlTextImpl childText, final int displayOffset) throws IncorrectOperationException{
@@ -861,7 +741,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       private XmlTextImpl myRight;
 
       public MyTransaction() {
-        super(XmlTagImpl.this);
+        super(XmlTagImpl.this, aspect);
       }
 
       public PomModelEvent runInner() throws IncorrectOperationException{
@@ -873,20 +753,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         addChild(rightText, childText.getTreeNext());
 
         final String value = childText.getValue();
-        final String text = childText.getText();
 
         childText.setValue(value.substring(0, displayOffset));
         rightText.setValue(value.substring(displayOffset));
 
-        final PomModelEvent event = new PomModelEvent(model);
-        {// event construction
-          final XmlAspectChangeSetImpl change = new XmlAspectChangeSetImpl(model, (XmlFile)(containingFile instanceof XmlFile ? containingFile : null));
-          change.add(new XmlTextChangedImpl(childText, text));
-          change.add(new XmlTagChildAddImpl(XmlTagImpl.this, rightText));
-          event.registerChangeSet(aspect, change);
-        }
         myRight = rightText;
-        return event;
+        return null;
       }
 
       public XmlText getResult() {
@@ -894,7 +766,79 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       }
     }
     final MyTransaction transaction = new MyTransaction();
-    model.runTransaction(transaction, aspect);
+    model.runTransaction(transaction);
     return transaction.getResult();
+  }
+
+  private class InsertAttributeTransaction extends InsertTransaction{
+    private final TreeElement myChild;
+    private final ASTNode myAnchor;
+    private final boolean myBefore;
+    private final PomModel myModel;
+    private TreeElement myFirstInserted = null;
+
+    public InsertAttributeTransaction(final TreeElement child, final ASTNode anchor, final boolean before, final PomModel model) {
+      super(XmlTagImpl.this);
+      myChild = child;
+      myAnchor = anchor;
+      myBefore = before;
+      myModel = model;
+    }
+
+    public PomModelEvent runInner(){
+      final String value = ((XmlAttribute)myChild).getValue();
+      final String name = ((XmlAttribute)myChild).getName();
+      if (myAnchor == null) {
+        ASTNode startTagEnd = XmlChildRole.START_TAG_END_FINDER.findChild(XmlTagImpl.this);
+        if (startTagEnd == null) startTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(XmlTagImpl.this);
+
+        if (startTagEnd == null) {
+          myFirstInserted = XmlTagImpl.super.addInternal(myChild, myChild, null, null);
+        }
+        else {
+          myFirstInserted = XmlTagImpl.super.addInternal(myChild, myChild, startTagEnd, Boolean.TRUE);
+        }
+      }
+      else {
+        myFirstInserted = XmlTagImpl.super.addInternal(myChild, myChild, myAnchor, Boolean.valueOf(myBefore));
+      }
+      return XmlAttributeSetImpl.createXmlAttributeSet(myModel, XmlTagImpl.this, name, value);
+    }
+
+    public TreeElement getFirstInserted(){
+      return myFirstInserted;
+    }
+  }
+
+  private class GenericInsertTransaction extends InsertTransaction{
+    private final TreeElement myChild;
+    private final ASTNode myAnchor;
+    private final boolean myBefore;
+    private TreeElement myRetHolder;
+
+    public GenericInsertTransaction(final TreeElement child, final ASTNode anchor, final boolean before) {
+      super(XmlTagImpl.this);
+      myChild = child;
+      myAnchor = anchor;
+      myBefore = before;
+    }
+
+    public PomModelEvent runInner() {
+      final TreeElement treeElement = XmlTagImpl.super.addInternal(myChild, myChild, myAnchor, Boolean.valueOf(myBefore));
+      myRetHolder = treeElement;
+      return null;
+    }
+
+    public TreeElement getFirstInserted() {
+      return myRetHolder;
+    }
+  }
+
+  private abstract class InsertTransaction extends PomTransactionBase{
+    public InsertTransaction(final PsiElement scope) {
+      super(scope, getProject().getModel().getModelAspect(XmlAspect.class));
+    }
+
+    public abstract TreeElement getFirstInserted();
   }
 }

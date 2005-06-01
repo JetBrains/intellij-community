@@ -58,7 +58,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
     final PomModel model = getProject().getModel();
     final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((CompositeElement)getManager().getElementFactory().createXmlAttribute("a", valueText));
-    model.runTransaction(new PomTransactionBase(this) {
+    final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
+    model.runTransaction(new PomTransactionBase(this, aspect) {
       public PomModelEvent runInner(){
         if(value != null){
           CodeEditUtil.replaceChild(XmlAttributeImpl.this, value, newValue);
@@ -68,7 +69,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
         }
         return XmlAttributeSetImpl.createXmlAttributeSet(model, getParent(), getName(), value != null ? value.getText() : null);
       }
-    }, model.getModelAspect(XmlAspect.class));
+    });
   }
 
   public XmlElement getNameElement() {
@@ -117,17 +118,18 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final String oldName = name.getText();
     final PomModel model = getProject().getModel();
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((CompositeElement)getManager().getElementFactory().createXmlAttribute(nameText, ""));
-    model.runTransaction(new PomTransactionBase(getParent()) {
+    final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
+    model.runTransaction(new PomTransactionBase(getParent(), aspect) {
       public PomModelEvent runInner(){
         CodeEditUtil.replaceChild(XmlAttributeImpl.this, name, newName);
         return XmlAttributeSetImpl.createXmlAttributeSet(model, getParent(), nameText, getValue());
       }
-    }, model.getModelAspect(XmlAspect.class));
-    model.runTransaction(new PomTransactionBase(getParent()) {
+    });
+    model.runTransaction(new PomTransactionBase(getParent(), aspect) {
       public PomModelEvent runInner(){
         return XmlAttributeSetImpl.createXmlAttributeSet(model, getParent(), oldName, null);
       }
-    }, model.getModelAspect(XmlAspect.class));
+    });
 
     return this;
   }

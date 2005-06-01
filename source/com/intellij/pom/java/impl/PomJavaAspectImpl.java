@@ -161,17 +161,11 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
     return null;
   }
 
-  private void firePomEvent(final PsiElement element) {
-    if (element != null) {
-      firePomEvent(element.getContainingFile());
-    }
-  }
-
   private void firePomEvent(final PsiFile file) {
     if (isJavaFile(file)) {
       final PomModel model = myProject.getModel();
       try {
-        myProject.getModel().runTransaction(new PomTransactionBase(file) {
+        myProject.getModel().runTransaction(new PomTransactionBase(file, this) {
           public PomModelEvent runInner() {
             final PomModelEvent event = new PomModelEvent(model);
             final PomJavaAspectChangeSet set = new PomJavaAspectChangeSet(model, file);
@@ -179,7 +173,7 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
             event.registerChangeSet(PomJavaAspectImpl.this, set);
             return event;
           }
-        }, this);
+        });
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

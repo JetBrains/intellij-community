@@ -24,7 +24,10 @@ public class PomModelEvent extends EventObject {
     if (myChangeSets == null) {
       myChangeSets = new HashMap<PomModelAspect, PomChangeSet>();
     }
-    myChangeSets.put(aspect, set);
+    if(set != null)
+      myChangeSets.put(aspect, set);
+    else
+      myChangeSets.remove(aspect);
   }
 
   public PomChangeSet getChangeSet(PomModelAspect aspect) {

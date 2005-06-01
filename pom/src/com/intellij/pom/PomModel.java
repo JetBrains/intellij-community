@@ -19,5 +19,5 @@ public interface PomModel extends UserDataHolder, ProjectComponent {
   void addModelListener(PomModelListener listener);
   void removeModelListener(PomModelListener listener);
 
-  void runTransaction(PomTransaction transaction, PomModelAspect aspect) throws IncorrectOperationException;
+  void runTransaction(PomTransaction transaction) throws IncorrectOperationException;
 }

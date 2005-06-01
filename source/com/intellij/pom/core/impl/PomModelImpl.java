@@ -132,9 +132,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   private final Stack<Pair<PomModelAspect, PomTransaction>> myBlockedAspects = new Stack<Pair<PomModelAspect, PomTransaction>>();
 
-  public synchronized void runTransaction(PomTransaction transaction,
-                                          PomModelAspect aspect) throws IncorrectOperationException{
+  public synchronized void runTransaction(PomTransaction transaction) throws IncorrectOperationException{
     synchronized(PsiLock.LOCK){
+      final PomModelAspect aspect = transaction.getTransactionAspect();
       startTransaction(transaction);
       try{
 

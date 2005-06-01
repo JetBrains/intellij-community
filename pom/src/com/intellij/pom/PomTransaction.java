@@ -15,4 +15,5 @@ public interface PomTransaction{
   PomModelEvent getAccumulatedEvent();
   void run() throws IncorrectOperationException;
   PsiElement getChangeScope();
+  PomModelAspect getTransactionAspect();
 }

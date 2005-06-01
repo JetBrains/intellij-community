@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.xml.*;
 import com.intellij.util.CharTable;
 
@@ -94,18 +93,18 @@ public class XmlAspectImpl implements XmlAspect {
             final int changeType = changeByChild.getChangeType();
             if (treeElement.getElementType() == XmlTokenType.XML_NAME) {
               if (changeType == ChangeInfo.REMOVED) {
-                oldName = ((TreeElement)treeElement).getText();
+                oldName = treeElement.getText();
               }
               else if (changeType == ChangeInfo.REPLACE) {
-                oldName = ((TreeElement)((ReplaceChangeInfo)changeByChild).getReplaced()).getText();
+                oldName = ((ReplaceChangeInfo)changeByChild).getReplaced().getText();
               }
             }
             if (treeElement.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE) {
               if (changeType == ChangeInfo.REMOVED) {
-                oldValue = ((TreeElement)treeElement).getText();
+                oldValue = treeElement.getText();
               }
               else if (changeType == ChangeInfo.REPLACE) {
-                oldValue = ((TreeElement)((ReplaceChangeInfo)changeByChild).getReplaced()).getText();
+                oldValue = ((ReplaceChangeInfo)changeByChild).getReplaced().getText();
               }
             }
           }
