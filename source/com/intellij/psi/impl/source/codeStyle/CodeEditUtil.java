@@ -42,6 +42,8 @@ public class CodeEditUtil {
 
   public static TreeElement addChildren(CompositeElement parent, ASTNode first, ASTNode last, ASTNode anchorBefore) {
 
+    LOG.assertTrue(first != null);
+
     checkAllWhiteSpaces(parent);
 
     ASTNode lastChild = last != null ? last.getTreeNext() : null;
@@ -60,10 +62,16 @@ public class CodeEditUtil {
       boolean keepFirstIndent = keepFirstIndent(parent, anchorBefore, first, lastChild);
 
       parent.addChildren(first, lastChild, anchorBefore);
+
       treePrev = getPreviousElements(first);
-      adjustWhiteSpaces(first, anchorBefore, keepFirstIndent);
+      if (!FormatterUtil.join(TreeUtil.prevLeaf(first), first)){
+        adjustWhiteSpaces(first, anchorBefore, keepFirstIndent);
+      }
+
       if (nextElement != null) {
-        adjustWhiteSpaces(nextElement, nextElement.getTreeNext(), false);
+        if (!FormatterUtil.join(TreeUtil.prevLeaf(nextElement), nextElement)) {
+          adjustWhiteSpaces(nextElement, nextElement.getTreeNext(), false);
+        }
       }
     }
     finally {
@@ -396,19 +404,23 @@ public class CodeEditUtil {
     ASTNode current = first;
     ASTNode result = first;
     while(current != null && current != lastChild) {
-      LeafElement leaf = TreeUtil.findFirstLeaf(current);
 
-      if ((current == first && current.getTreeNext() != lastChild) || current.getElementType() != ElementType.WHITE_SPACE) {
-        if (leaf != null && leaf.getElementType() == ElementType.WHITE_SPACE) {
-          if (leaf == result) result = leaf.getTreeNext();
-          delete(leaf);
+      if (current.getElementType() != ElementType.XML_TEXT) {
+        LeafElement leaf = TreeUtil.findFirstLeaf(current);
+
+        if (((current == first && current.getTreeNext() != lastChild)
+             || current.getElementType() != ElementType.WHITE_SPACE)) {
+          if (leaf != null && leaf.getElementType() == ElementType.WHITE_SPACE) {
+            if (leaf == result) result = leaf.getTreeNext();
+            delete(leaf);
+          }
         }
-      }
-      leaf = TreeUtil.findLastLeaf(current);
-      if (current.getElementType() != ElementType.WHITE_SPACE) {
-        if (leaf != null && leaf.getElementType() == ElementType.WHITE_SPACE) {
-          if (leaf == result) result = leaf.getTreeNext();
-          delete(leaf);
+        leaf = TreeUtil.findLastLeaf(current);
+        if (current.getElementType() != ElementType.WHITE_SPACE) {
+          if (leaf != null && leaf.getElementType() == ElementType.WHITE_SPACE) {
+            if (leaf == result) result = leaf.getTreeNext();
+            delete(leaf);
+          }
         }
       }
       current = current.getTreeNext();

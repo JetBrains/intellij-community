@@ -316,26 +316,30 @@ public class FormatterUtil {
     }
   }
 
-  public static void join(final ASTNode node1, final ASTNode node2) {
-    if (node1 == null || node2 == null) return;
+  public static boolean join(final ASTNode node1, final ASTNode node2) {
+    if (node1 == null || node2 == null) return false;
 
     if (node1.getElementType() == ElementType.XML_TEXT && node2.getElementType() == ElementType.XML_TEXT) {
       joinXmlTexts(node1, node2);
+      return true;
     }
 
     if (node1.getTreeParent().getElementType() == ElementType.XML_TEXT && node2.getTreeParent().getElementType() == ElementType.XML_TEXT) {
       joinXmlTexts(node1.getTreeParent(), node2.getTreeParent());
+      return true;
     }
 
-    else if (node1.getTreeParent().getElementType() == ElementType.WHITE_SPACE && node2.getElementType() == ElementType.XML_TEXT) {
+    else if (node1.getTreeParent().getElementType() == ElementType.XML_TEXT && node2.getElementType() == ElementType.XML_TEXT) {
       joinXmlTexts(node1.getTreeParent(), node2);
+      return true;
     }
 
-    else if (node2.getTreeParent().getElementType() == ElementType.WHITE_SPACE && node2.getElementType() == ElementType.XML_TEXT) {
+    else if (node2.getTreeParent().getElementType() == ElementType.XML_TEXT && node2.getElementType() == ElementType.XML_TEXT) {
       joinXmlTexts(node1, node2.getTreeParent());
+      return true;
     }
 
-
+    return false;
   }
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeFormatting.general.FormatterUtil");
   private static void joinXmlTexts(ASTNode node1, ASTNode node2) {
