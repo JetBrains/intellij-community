@@ -159,7 +159,7 @@ public class CyclicDependenciesPanel extends JPanel {
   }
 
   private PackageDependenciesNode hideEmptyMiddlePackages(PackageDependenciesNode node, StringBuffer result){
-    if (node.getChildCount() > 1 || (node.getChildCount() == 1 && node.getChildAt(0) instanceof FileNode)){
+    if (node.getChildCount() == 0 || node.getChildCount() > 1 || (node.getChildCount() == 1 && node.getChildAt(0) instanceof FileNode)){
       result.append((result.length() != 0 ? ".":"") + (node.toString().equals(DEFAULT_PACKAGE_ABBREVIATION) ? "" : node.toString()));//toString()
     } else {
       if (node.getChildCount() == 1){
