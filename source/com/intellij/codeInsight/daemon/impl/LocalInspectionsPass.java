@@ -274,7 +274,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     message = StringUtil.replace(message, "<code>", "'");
     message = StringUtil.replace(message, "</code>", "'");
     //message = message.replaceAll("<[^>]*>", "");
-    message = StringUtil.replace(message, "#ref", psiElement.getText());
+    String text = psiElement == null ? "" : psiElement.getText();
+    message = StringUtil.replace(message, "#ref", text);
     message = StringUtil.replace(message, "#loc", "");
     return message;
   }
