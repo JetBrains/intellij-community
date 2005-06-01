@@ -4,8 +4,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -53,6 +53,7 @@ public abstract class AnAction {
 
 
   private static final ShortcutSet ourEmptyShortcutSet = new CustomShortcutSet(new Shortcut[0]);
+  private boolean myIsDefaultIcon = true;
 
   /**
    * Creates a new action with its text, description and icon set to <code>null</code>.
@@ -212,5 +213,13 @@ public abstract class AnAction {
       toolTipText += " (" + shortcutsText + ")";
     }
     return toolTipText;
+  }
+
+  public void setDefaultIcon(boolean isDefaultIconSet) {
+    myIsDefaultIcon = isDefaultIconSet;
+  }
+
+  public boolean isDefaultIcon() {
+    return myIsDefaultIcon;
   }
 }

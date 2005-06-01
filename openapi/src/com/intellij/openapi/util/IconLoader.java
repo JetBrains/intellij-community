@@ -15,8 +15,8 @@ import sun.reflect.Reflection;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.Map;
 import java.net.URL;
+import java.util.Map;
 
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
@@ -40,7 +40,7 @@ public final class IconLoader {
     }
   };
 
-  private static Icon getIcon(final Image image) {
+  public static Icon getIcon(final Image image) {
     LOG.assertTrue(image != null);
     Icon icon = myImage2Icon.get(image);
     if (icon != null) {

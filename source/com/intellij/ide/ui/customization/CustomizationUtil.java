@@ -3,6 +3,7 @@ package com.intellij.ide.ui.customization;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -257,7 +258,7 @@ public class CustomizationUtil {
       ActionUrl url = new ActionUrl();
       url.setGroupPath(groupPath);
       final Object userObject = child.getUserObject();
-      url.setComponent(userObject);
+      url.setComponent(userObject instanceof Pair ? ((Pair)userObject).first : userObject);
       result.add(url);
     }
     return result.toArray(new ActionUrl[result.size()]);
