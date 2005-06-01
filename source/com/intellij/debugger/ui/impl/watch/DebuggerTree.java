@@ -16,27 +16,22 @@ import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.impl.DebuggerTreeBase;
 import com.intellij.debugger.ui.impl.tree.TreeBuilder;
 import com.intellij.debugger.ui.impl.tree.TreeBuilderNode;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.ChildrenBuilder;
+import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.debugger.ui.tree.render.NodeRendererSettingsListener;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentListener;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.IJSwingUtilities;
 import com.sun.jdi.*;
 
 import javax.swing.*;
@@ -44,7 +39,6 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -156,7 +150,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     if (node == null || node.getDescriptor() == null) {
       return;
     }
-
     BuildNodeCommand builder = getBuildNodeCommand(node);
     builder.getNode().add(myDescriptorManager.createMessageNode(MessageDescriptor.EVALUATING));
     getDebuggerContext().getDebugProcess().getManagerThread().invokeLater(builder);
@@ -369,7 +362,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   public abstract class BuildNodeCommand extends DebuggerContextCommandImpl {
     private final DebuggerTreeNodeImpl myNode;
 
-    protected final List<DebuggerTreeNodeImpl> myChildren = new LinkedList<DebuggerTreeNodeImpl>();
+    protected final List<DebuggerTreeNode> myChildren = new LinkedList<DebuggerTreeNode>();
 
     protected BuildNodeCommand(DebuggerTreeNodeImpl node) {
       super(DebuggerTree.this.getDebuggerContext());
@@ -380,17 +373,17 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       return myNode;
     }
 
-    protected void updateUI() {
+    protected void updateUI(final boolean scrollToVisible) {
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-          public void run() {
-            myNode.removeAllChildren();
-            for (Iterator<DebuggerTreeNodeImpl> iterator = myChildren.iterator(); iterator.hasNext();) {
-              DebuggerTreeNodeImpl debuggerTreeNode = iterator.next();
-              myNode.add(debuggerTreeNode);
-            }
-            myNode.childrenChanged(true);
+        public void run() {
+          myNode.removeAllChildren();
+          for (Iterator<DebuggerTreeNode> iterator = myChildren.iterator(); iterator.hasNext();) {
+            DebuggerTreeNode debuggerTreeNode = iterator.next();
+            myNode.add(debuggerTreeNode);
           }
-        });
+          myNode.childrenChanged(scrollToVisible);
+        }
+      });
     }
   }
 
@@ -438,7 +431,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         myChildren.add(myDescriptorManager.createMessageNode(new MessageDescriptor(e.getMessage())));
       }
 
-      updateUI();
+      updateUI(true);
     }
   }
 
@@ -479,7 +472,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
           }
         }
       }
-      updateUI();
+      updateUI(true);
     }
   }
 
@@ -530,7 +523,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
 
       myChildren.addAll(threadNodes);
 
-      updateUI();
+      updateUI(true);
     }
   }
 
@@ -542,7 +535,8 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     public void threadAction() {
       ValueDescriptorImpl descriptor = (ValueDescriptorImpl)getNode().getDescriptor();
       try {
-        descriptor.getRenderer(getSuspendContext().getDebugProcess()).buildChildren(descriptor.getValue(), new ChildrenBuilder() {
+        final NodeRenderer renderer = descriptor.getRenderer(getSuspendContext().getDebugProcess());
+        renderer.buildChildren(descriptor.getValue(), new ChildrenBuilder() {
           public NodeManagerImpl getNodeManager() {
             return myDescriptorManager;
           }
@@ -556,17 +550,8 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
           }
 
           public void setChildren(final List<DebuggerTreeNode> children) {
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                final DebuggerTreeNodeImpl node = getNode();
-                node.removeAllChildren();
-                for (Iterator<DebuggerTreeNode> iterator = children.iterator(); iterator.hasNext();) {
-                  DebuggerTreeNode debuggerTreeNode = iterator.next();
-                  node.add(debuggerTreeNode);
-                }
-                node.childrenChanged(false);
-              }
-            });
+            myChildren.addAll(children);
+            updateUI(false);
           }
         }, getDebuggerContext().createEvaluationContext());
       }
@@ -597,7 +582,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         }
       }
 
-      updateUI();
+      updateUI(true);
     }
   }
 

@@ -191,10 +191,6 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
     });
   }
 
-  public void add(MutableTreeNode newChild) {
-    super.add(newChild);    //To change body of overriden methods use Options | File Templates.
-  }
-
   public DebuggerTreeNodeImpl add(MessageDescriptor message) {
     DebuggerTreeNodeImpl node = getNodeFactory().createMessageNode(message);
     add(node);

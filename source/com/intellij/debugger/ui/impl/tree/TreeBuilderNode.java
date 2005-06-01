@@ -1,9 +1,6 @@
 package com.intellij.debugger.ui.impl.tree;
 
-import com.intellij.openapi.diagnostic.Logger;
-
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.Enumeration;
 
@@ -21,38 +18,23 @@ public abstract class TreeBuilderNode extends DefaultMutableTreeNode{
 
   abstract protected TreeBuilder getTreeBuilder();
 
-  public void removeAllChildren() {
-    myChildrenBuilt = true;
-    super.removeAllChildren();
-  }
-
-  public void add(MutableTreeNode newChild) {
-    myChildrenBuilt = true;
-    super.add(newChild);
-  }
-
-  public void remove(MutableTreeNode aChild) {
-    myChildrenBuilt = true;
-    super.remove(aChild);
-  }
-
-  public void insert(MutableTreeNode newChild, int childIndex) {
-    myChildrenBuilt = true;
-    super.insert(newChild, childIndex);
-  }
-
   private void checkChildren() {
-    if(!myChildrenBuilt) {
-      myChildrenBuilt = true;
-      if(getTreeBuilder().isExpandable(this)) {
-        getTreeBuilder().buildChildren(this);
+    synchronized (this) {
+      if (myChildrenBuilt) {
+        return;
       }
+      myChildrenBuilt = true;
+    }
+    final TreeBuilder treeBuilder = getTreeBuilder();
+    if(treeBuilder.isExpandable(this)) {
+      treeBuilder.buildChildren(this);
     }
   }
 
   public void clear() {
-    //removeAllChildren();
-    myChildrenBuilt = false;
+    synchronized (this) {
+      myChildrenBuilt = false;
+    }
   }
 
   //TreeNode interface
@@ -87,9 +69,5 @@ public abstract class TreeBuilderNode extends DefaultMutableTreeNode{
   public int getIndex(TreeNode node) {
     checkChildren();
     return super.getIndex(node);
-  }
-
-  public boolean isChildrenBuilt() {
-    return myChildrenBuilt;
   }
 }
