@@ -84,12 +84,12 @@ public class IdeaApplication {
     AlloyLookAndFeel.setProperty("alloy.licenseCode", "4#JetBrains#1ou2uex#6920nk");
     AlloyLookAndFeel.setProperty("alloy.isToolbarEffectsEnabled", "false");
     if (SystemInfo.isWindows) {
-      UIManager.installLookAndFeel("Alloy. IDEA Theme", AlloyIdea.class.getName());
+      UIManager.installLookAndFeel(AlloyIdea.NAME, AlloyIdea.class.getName());
     }
-    UIManager.installLookAndFeel("Alloy. Default Theme", AlloyDefault.class.getName());
-    UIManager.installLookAndFeel("Alloy. Bedoin Theme", AlloyBedouin.class.getName());
-    UIManager.installLookAndFeel("Alloy. Acid Theme", AlloyAcid.class.getName());
-    UIManager.installLookAndFeel("Alloy. Glass Theme", AlloyGlass.class.getName());
+    UIManager.installLookAndFeel(AlloyDefault.NAME, AlloyDefault.class.getName());
+    UIManager.installLookAndFeel(AlloyBedouin.NAME, AlloyBedouin.class.getName());
+    UIManager.installLookAndFeel(AlloyAcid.NAME, AlloyAcid.class.getName());
+    UIManager.installLookAndFeel(AlloyGlass.NAME, AlloyGlass.class.getName());
   }
 
   private class IdeStarter implements ApplicationStarter {
