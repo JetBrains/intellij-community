@@ -27,7 +27,7 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
   public InspectionToolRegistrar(InspectionToolProvider[] providers) {
     myInspectionTools = new ArrayList<Class>();
     myLocalInspectionTools = new ArrayList<Class>();
-    //if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
       for (int i = 0; i < providers.length; i++) {
         InspectionToolProvider provider = providers[i];
         Class[] classes = provider.getInspectionClasses();
@@ -40,7 +40,7 @@ public class InspectionToolRegistrar implements ApplicationComponent, JDOMExtern
           }
         }
       }
-    //}
+    }
   }
 
   public static InspectionToolRegistrar getInstance() {
