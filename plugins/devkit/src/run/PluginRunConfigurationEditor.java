@@ -61,6 +61,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   private JComboBox myModules = new JComboBox(myModulesModel);
   private JLabel myModuleLabel = new JLabel("Choose classpath and jdk from module:");
   private LabeledComponent<RawCommandLineEditor> myVMParameters = new LabeledComponent<RawCommandLineEditor>();
+  private LabeledComponent<RawCommandLineEditor> myProgramParameters = new LabeledComponent<RawCommandLineEditor>();
 
   private JCheckBox myShowLogs = new JCheckBox("Show idea.log");
 
@@ -116,12 +117,14 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   public void resetEditorFrom(PluginRunConfiguration prc) {
     myModules.setSelectedItem(prc.getModule());
     getVMParameters().setText(prc.VM_PARAMETERS);
+    getProgramParameters().setText(prc.PROGRAM_PARAMETERS);
   }
 
 
   public void applyEditorTo(PluginRunConfiguration prc) throws ConfigurationException {
     prc.setModule(((Module)myModules.getSelectedItem()));
     prc.VM_PARAMETERS = getVMParameters().getText();
+    prc.PROGRAM_PARAMETERS = getProgramParameters().getText();
   }
 
   public JComponent createEditor() {
@@ -145,8 +148,14 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     myVMParameters.setText("&VM Parameters");
     myVMParameters.setComponent(new RawCommandLineEditor());
     myVMParameters.getComponent().setDialodCaption(myVMParameters.getRawText());
+
+    myProgramParameters.setText("&Program Parameters");
+    myProgramParameters.setComponent(new RawCommandLineEditor());
+    myProgramParameters.getComponent().setDialodCaption(myProgramParameters.getRawText());
+
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0);
     wholePanel.add(myVMParameters, gc);
+    wholePanel.add(myProgramParameters, gc);
     wholePanel.add(myShowLogs, gc);
     wholePanel.add(myModuleLabel, gc);
     gc.weighty = 1;
@@ -156,6 +165,10 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
 
   public RawCommandLineEditor getVMParameters() {
     return myVMParameters.getComponent();
+  }
+
+  public RawCommandLineEditor getProgramParameters() {
+    return myProgramParameters.getComponent();
   }
 
   public void disposeEditor() {

@@ -61,6 +61,8 @@ public class PluginRunConfiguration extends RunConfigurationBase {
   private String myModuleName;
 
   public String VM_PARAMETERS;
+  public String PROGRAM_PARAMETERS;
+
   public PluginRunConfiguration(final Project project, final ConfigurationFactory factory, final String name) {
     super(project, factory, name);
   }
@@ -116,12 +118,8 @@ public class PluginRunConfiguration extends RunConfigurationBase {
 
         ParametersList vm = params.getVMParametersList();
 
-        final String[] userVMOptions = VM_PARAMETERS != null ? VM_PARAMETERS.split(" ") : null;
-        for (int i = 0; userVMOptions != null && i < userVMOptions.length; i++) {
-          if (userVMOptions[i] != null && userVMOptions[i].length() > 0){
-            vm.add(userVMOptions[i]);
-          }
-        }
+        fillParameterList(vm, VM_PARAMETERS);
+        fillParameterList(params.getProgramParametersList(), PROGRAM_PARAMETERS);
 
         String libPath = jdk.getHomePath() + File.separator + "lib";
         vm.add("-Xbootclasspath/p:" + libPath + File.separator + "boot.jar");
@@ -154,6 +152,15 @@ public class PluginRunConfiguration extends RunConfigurationBase {
     state.setConsoleBuilder(TextConsoleBuidlerFactory.getInstance().createBuilder(getProject()));
     state.setModulesToCompile(getModules());    //todo
     return state;
+  }
+
+  private void fillParameterList(ParametersList list, String value) {
+    final String[] parameters = value != null ? value.split(" ") : null;
+    for (int i = 0; parameters != null && i < parameters.length; i++) {
+      if (parameters[i] != null && parameters[i].length() > 0){
+        list.add(parameters[i]);
+      }
+    }
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
