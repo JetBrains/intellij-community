@@ -580,7 +580,8 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     }
   }
 
-  private void addInspectionTool(InspectionTool inspectionTool){
+  //make public for tests only
+  public void addInspectionTool(InspectionTool inspectionTool){
     myTools.put(inspectionTool.getShortName(), inspectionTool);
   }
 
