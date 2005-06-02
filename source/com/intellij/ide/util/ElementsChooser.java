@@ -429,13 +429,18 @@ public class ElementsChooser<T> extends JPanel {
   private class MyElementColumnCellRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       final Color color = UIManager.getColor("Table.focusCellBackground");
-      UIManager.put("Table.focusCellBackground", table.getSelectionBackground());
-      Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      setText(getItemText((T)value));
-      if (component instanceof JLabel) {
-        ((JLabel)component).setBorder(noFocusBorder);
+      Component component;
+      try {
+        UIManager.put("Table.focusCellBackground", table.getSelectionBackground());
+        component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        setText(getItemText((T)value));
+        if (component instanceof JLabel) {
+          ((JLabel)component).setBorder(noFocusBorder);
+        }
       }
-      UIManager.put("Table.focusCellBackground", color);
+      finally {
+        UIManager.put("Table.focusCellBackground", color);
+      }
       final MyTableModel model = (MyTableModel)table.getModel();
       component.setEnabled(ElementsChooser.this.isEnabled() && (myColorUnmarkedElements? model.isElementMarked(row) : true));
       ElementProperties properties = myElementToPropertiesMap.get(value);
@@ -443,19 +448,21 @@ public class ElementsChooser<T> extends JPanel {
         if (component instanceof JLabel) {
           ((JLabel)component).setIcon(properties.getIcon());
         }
-        component.setForeground(properties.getColor());
+        final Color propertiesColor = properties.getColor();
+        if (propertiesColor != null) {
+          component.setForeground(propertiesColor);
+        }
       }
       else {
         if (component instanceof JLabel) {
           ((JLabel)component).setIcon(null);
         }
-        component.setForeground(UIManager.getColor("Table.cellForeground"));
       }
       return component;
     }
   }
 
-  private class CheckMarkColumnCellRenderer extends DefaultTableCellRenderer {
+  private class CheckMarkColumnCellRenderer implements TableCellRenderer {
     private TableCellRenderer myDelegate;
 
     public CheckMarkColumnCellRenderer(TableCellRenderer delegate) {
