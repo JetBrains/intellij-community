@@ -56,6 +56,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   public static final String COMPONENT_NAME = "ProjectModuleManager";
   private static final String MODULE_GROUP_SEPARATOR = "/";
   private ModulePath[] myModulePaths;
+  private ModulePath[] myFailedModulePaths = new ModulePath[0];
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -107,8 +108,8 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     final List<ModulePath> paths = new ArrayList<ModulePath>();
     final Element modules = element.getChild("modules");
     if (modules != null) {
-      for (Iterator iterator = modules.getChildren("module").iterator(); iterator.hasNext();) {
-        Element moduleElement = (Element)iterator.next();
+      for (final Object value : modules.getChildren("module")) {
+        Element moduleElement = (Element)value;
         final String fileUrlValue = moduleElement.getAttributeValue("fileurl");
         final String filepath;
         if (fileUrlValue != null) {
@@ -133,6 +134,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     if (myModulePaths != null && myModulePaths.length > 0) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
+          final List<ModulePath> failedPaths = new ArrayList<ModulePath>(Arrays.asList(myModulePaths));
           final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
           for (int idx = 0; idx < myModulePaths.length; idx++) {
             final ModulePath modulePath = myModulePaths[idx];
@@ -146,6 +148,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
                 final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
                 setModuleGroupPath(module, groupPath);
               }
+              failedPaths.remove(modulePath);
             }
             catch (final IOException e) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -194,6 +197,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
               });
             }
           }
+          myFailedModulePaths = failedPaths.toArray(new ModulePath[failedPaths.size()]);
           if (!ApplicationManager.getApplication().isHeadlessEnvironment() && modulesWithUnknownTypes.size() > 0) {
             final StringBuffer message = new StringBuffer("Cannot determine module type for the following ");
             if (modulesWithUnknownTypes.size() == 1) {
@@ -230,34 +234,104 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    Element modules = new Element("modules");
-    final Collection<Module> collection = getModulesToWrite();
-    ArrayList<Module> sorted = new ArrayList<Module>(collection);
-    Collections.sort(sorted, new Comparator<Module>() {
-      public int compare(Module module, Module module1) {
-        return module.getName().compareTo(module1.getName());
-      }
-    });
-    for (Iterator iterator = sorted.iterator(); iterator.hasNext();) {
-      ModuleImpl module = (ModuleImpl)iterator.next();
-      if (module.isDefault()) {
-        continue;
-      }
+  private static abstract class SaveItem {
+
+    protected abstract String getModuleName();
+    protected abstract String getGroupPathString();
+    protected abstract String getModuleFilePath();
+    public boolean isDefaultModule() {
+      return false;
+    }
+
+    public final void writeExternal(Element parentElement) {
       Element moduleElement = new Element("module");
-      final String moduleFilePath = module.getModuleFilePath().replace(File.separatorChar, '/');
+      final String moduleFilePath = getModuleFilePath();
       final String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, moduleFilePath);
       moduleElement.setAttribute("fileurl", url);
       // [dsl] support for older builds
       moduleElement.setAttribute("filepath", moduleFilePath);
 
-      String[] groupPath = getModuleGroupPath(module);
+      final String groupPath = getGroupPathString();
       if (groupPath != null) {
-        final String groupPathString = StringUtil.join(groupPath, MODULE_GROUP_SEPARATOR);
-        moduleElement.setAttribute("group", groupPathString);
+        moduleElement.setAttribute("group", groupPath);
       }
+      parentElement.addContent(moduleElement);
+    }
+  }
 
-      modules.addContent(moduleElement);
+  private class ModuleSaveItem extends SaveItem{
+    private final Module myModule;
+
+    public ModuleSaveItem(Module module) {
+      myModule = module;
+    }
+
+    protected String getModuleName() {
+      return myModule.getName();
+    }
+
+    protected String getGroupPathString() {
+      String[] groupPath = getModuleGroupPath(myModule);
+      return groupPath != null ? StringUtil.join(groupPath, MODULE_GROUP_SEPARATOR) : null;
+    }
+
+    protected String getModuleFilePath() {
+      return myModule.getModuleFilePath().replace(File.separatorChar, '/');
+    }
+
+    public boolean isDefaultModule() {
+      return ((ModuleImpl)myModule).isDefault();
+    }
+  }
+
+  private class ModulePathSaveItem extends SaveItem{
+    private final ModulePath myModulePath;
+    private String myFilePath;
+    private final String myName;
+
+    public ModulePathSaveItem(ModulePath modulePath) {
+      myModulePath = modulePath;
+      myFilePath = modulePath.getPath().replace(File.separatorChar, '/');
+
+      final int slashIndex = myFilePath.lastIndexOf('/');
+      final int startIndex = slashIndex >= 0 && (slashIndex + 1) < myFilePath.length() ? slashIndex + 1 : 0;
+      final int endIndex = myFilePath.endsWith(".iml")? myFilePath.length() - ".iml".length() : myFilePath.length();
+      myName = myFilePath.substring(startIndex, endIndex);
+    }
+
+    protected String getModuleName() {
+      return myName;
+    }
+
+    protected String getGroupPathString() {
+      return myModulePath.getModuleGroup();
+    }
+
+    protected String getModuleFilePath() {
+      return myFilePath;
+    }
+  }
+
+  public void writeExternal(Element element) throws WriteExternalException {
+    final Element modules = new Element("modules");
+    final Collection<Module> collection = getModulesToWrite();
+
+    ArrayList<SaveItem> sorted = new ArrayList<SaveItem>(collection.size() + myFailedModulePaths.length);
+    for (Module module : collection) {
+      sorted.add(new ModuleSaveItem(module));
+    }
+    for (ModulePath modulePath : myFailedModulePaths) {
+      sorted.add(new ModulePathSaveItem(modulePath));
+    }
+    Collections.sort(sorted, new Comparator<SaveItem>() {
+      public int compare(SaveItem item1, SaveItem item2) {
+        return item1.getModuleName().compareTo(item2.getModuleName());
+      }
+    });
+    for (SaveItem saveItem : sorted) {
+      if (!saveItem.isDefaultModule()) {
+        saveItem.writeExternal(modules);
+      }
     }
 
     element.addContent(modules);
