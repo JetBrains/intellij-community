@@ -170,6 +170,8 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     if (myOccurrencesCount > 1) {
       myCbReplaceAll = new NonFocusableCheckBox("Replace all occurrences of expression (" + myOccurrencesCount + " occurrences)");
       myCbReplaceAll.setMnemonic('A');
+      myCbReplaceAll.setDisplayedMnemonicIndex("Replace ".length());
+
       panel.add(myCbReplaceAll, gbConstraints);
       myCbReplaceAll.addItemListener(
               new ItemListener() {
