@@ -176,7 +176,7 @@ public class VirtualFileImpl extends VirtualFile {
   public String getPresentableName() {
     if (UISettings.getInstance().HIDE_KNOWN_EXTENSION_IN_TABS) {
       final String nameWithoutExtension = getNameWithoutExtension();
-      return (nameWithoutExtension.length () == 0 ? getName() : nameWithoutExtension);
+      return nameWithoutExtension.length() == 0 ? getName() : nameWithoutExtension;
     }
     return getName();
   }
@@ -264,8 +264,7 @@ public class VirtualFileImpl extends VirtualFile {
         PhysicalFile file = getPhysicalFile();
         PhysicalFile[] files = file.listFiles();
         if (files != null) {
-          for (int i = 0; i < files.length; i++) {
-            PhysicalFile f = files[i];
+          for (PhysicalFile f : files) {
             array.add(new VirtualFileImpl(myFileSystem, this, f, f.isDirectory()));
           }
         }
@@ -350,8 +349,8 @@ public class VirtualFileImpl extends VirtualFile {
   private static void delete(PhysicalFile physicalFile) throws IOException {
     PhysicalFile[] list = physicalFile.listFiles();
     if (list != null) {
-      for (int i = 0; i < list.length; i++) {
-        delete(list[i]);
+      for (PhysicalFile aList : list) {
+        delete(aList);
       }
     }
     if (!physicalFile.delete()) {
@@ -445,6 +444,9 @@ public class VirtualFileImpl extends VirtualFile {
     }
     myFileSystem.fireBeforeContentsChange(requestor, this);
     final OutputStream out = new BufferedOutputStream(physicalFile.createOutputStream());
+    if (myBOM != null) {
+      out.write(myBOM);
+    }
     return new OutputStream() {
       public void write(int b) throws IOException {
         out.write(b);
@@ -824,7 +826,7 @@ public class VirtualFileImpl extends VirtualFile {
     }
   }
 
-  private boolean isInvalidName(String name){
+  private static boolean isInvalidName(String name){
     if (name.indexOf('\\') >= 0) return true;
     if (name.indexOf('/') >= 0) return true;
     return false;

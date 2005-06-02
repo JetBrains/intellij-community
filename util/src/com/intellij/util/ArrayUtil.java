@@ -120,4 +120,21 @@ public class ArrayUtil {
     }
     return -1;
   }
+
+  public static boolean startsWith(byte[] array, byte[] subArray) {
+    if (array == subArray)
+      return true;
+    if (array == null || subArray == null)
+      return false;
+
+    int length = subArray.length;
+    if (array.length < length)
+      return false;
+
+    for (int i = 0; i < length; i++)
+      if (array[i] != subArray[i])
+        return false;
+
+    return true;
+  }
 }

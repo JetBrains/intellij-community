@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.Patches;
 import gnu.trove.THashMap;
 
 import javax.swing.*;
@@ -25,6 +26,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
   public static final VirtualFile[] EMPTY_ARRAY = new VirtualFile[0];
 
   private Charset myCharset;
+  protected byte[] myBOM;
 
   protected VirtualFile() {
   }
@@ -190,9 +192,8 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
   public VirtualFile findChild(String name){
     VirtualFile[] children = getChildren();
     if (children == null) return null;
-    for(int i = 0; i < children.length; i++){
-      VirtualFile child = children[i];
-      if (child.nameEquals(name)){
+    for (VirtualFile child : children) {
+      if (child.nameEquals(name)) {
         return child;
       }
     }
@@ -387,12 +388,29 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
                                                                    true);
       myCharset = seis.getEncoding();
       reader = seis.getReader();
-    } else {
+      if (Patches.SUN_BUG_ID_4508058) {
+        myBOM = seis.detectUTF8_BOM();
+      }
+    }
+    else {
       myCharset = CharsetToolkit.getIDEOptionsCharset();
       if (myCharset != null) {
-        reader = new BufferedReader( new InputStreamReader(stream, myCharset) );
-      } else {
-        reader = new BufferedReader( new InputStreamReader(stream) );
+        reader = new BufferedReader(new InputStreamReader(stream, myCharset));
+        if (Patches.SUN_BUG_ID_4508058) {
+          if (myCharset.name().equals("UTF-8")) {
+            reader.mark(1);
+            char c = (char)reader.read();
+            if (c == '\uFEFF') {
+              myBOM = CharsetToolkit.UTF8_BOM;
+            }
+            else {
+              reader.reset();
+            }
+          }
+        }
+      }
+      else {
+        reader = new BufferedReader(new InputStreamReader(stream));
       }
     }
 

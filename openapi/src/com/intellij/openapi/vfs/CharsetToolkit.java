@@ -6,6 +6,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.ArrayUtil;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -56,6 +57,10 @@ public class CharsetToolkit {
   private byte[] buffer;
   private Charset defaultCharset;
   private boolean enforce8Bit = false;
+
+  static final byte[] UTF8_BOM = new byte[]{-17, -69, -65, };
+  private static final byte[] UTF16LE_BOM = new byte[]{-1, -2, };
+  private static final byte[] UTF16BE_BOM = new byte[]{-2, -1, };
 
   /**
    * Constructor of the <code>CharsetToolkit</code> utility class.
@@ -361,8 +366,8 @@ public class CharsetToolkit {
    * @param bom a buffer.
    * @return true if the buffer has a BOM for UTF8.
    */
-  private static boolean hasUTF8Bom(byte[] bom) {
-    return (bom.length >= 3 && bom[0] == -17 && bom[1] == -69 && bom[2] == -65);
+  public static boolean hasUTF8Bom(byte[] bom) {
+    return ArrayUtil.startsWith(bom, UTF8_BOM);
   }
 
   /**
@@ -373,7 +378,7 @@ public class CharsetToolkit {
    * @return true if the buffer has a BOM for UTF-16 Low Endian.
    */
   private static boolean hasUTF16LEBom(byte[] bom) {
-    return (bom.length >= 2 && bom[0] == -1 && bom[1] == -2);
+    return ArrayUtil.startsWith(bom, UTF16LE_BOM);
   }
 
   /**
@@ -384,7 +389,7 @@ public class CharsetToolkit {
    * @return true if the buffer has a BOM for UTF-16 Big Endian.
    */
   private static boolean hasUTF16BEBom(byte[] bom) {
-    return (bom.length >= 2 && bom[0] == -2 && bom[1] == -1);
+    return ArrayUtil.startsWith(bom, UTF16BE_BOM);
   }
 
   /**

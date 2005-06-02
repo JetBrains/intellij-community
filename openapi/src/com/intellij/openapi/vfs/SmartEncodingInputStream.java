@@ -151,7 +151,9 @@ public class SmartEncodingInputStream extends InputStream {
       byte b = buffer[counter++];
       return 0xFF & ((int)b);
     }
-    else return is != null ? is.read() : -1;
+    else {
+      return is != null ? is.read() : -1;
+    }
   }
 
   public int read(byte b[], int off, int len) throws IOException {
@@ -197,5 +199,13 @@ public class SmartEncodingInputStream extends InputStream {
   public void close() throws IOException {
     if( is != null ) this.is.close();
     buffer = null;
+  }
+
+  public byte[] detectUTF8_BOM() {
+    if ("UTF-8".equals(charset.name()) && CharsetToolkit.hasUTF8Bom(buffer)) {
+      counter += CharsetToolkit.UTF8_BOM.length;
+      return CharsetToolkit.UTF8_BOM;
+    }
+    return null;
   }
 }

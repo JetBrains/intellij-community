@@ -123,4 +123,10 @@ public class Patches {
    * application stops responding.
    */
   public static final boolean SUN_BUG_ID_4818143 = SystemInfo.isLinux || SystemInfo.isFreeBSD;
+
+  /**
+   * Java does not recognize the optional BOM which can begin a UTF-8 stream.
+   * It treats the BOM as if it were the initial character of the stream
+   */
+  public static final boolean SUN_BUG_ID_4508058 = true;
 }
