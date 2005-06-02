@@ -45,21 +45,21 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
     return box;
   }
 
-  private void updateDialogForExtractSubclass() {
+  protected void updateDialogForExtractSubclass() {
     getClassNameLabel().setText("Rename original class to:");
     getClassNameLabel().setDisplayedMnemonic('R');
     getPreviewAction().setEnabled (true);
   }
-
-  protected abstract JLabel getClassNameLabel();
-
-  protected abstract JLabel getPackageNameLabel();
 
   protected void updateDialogForExtractSuperclass() {
     getClassNameLabel().setText(StringUtil.capitalize(getEntityName()) + " name:");
     getClassNameLabel().setDisplayedMnemonic('S');
     getPreviewAction().setEnabled (false);
   }
+
+  protected abstract JLabel getClassNameLabel();
+
+  protected abstract JLabel getPackageNameLabel();
 
   protected abstract String getEntityName();
 

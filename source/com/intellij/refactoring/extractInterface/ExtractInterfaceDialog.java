@@ -160,6 +160,18 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
     return panel;
   }
 
+  @Override
+  protected void updateDialogForExtractSubclass() {
+    myInterfaceNameLabel.setText("Rename implementation class to:");
+    myPackageLabel.setText("Package for implementation class:");
+  }
+
+  @Override
+  protected void updateDialogForExtractSuperclass() {
+    myInterfaceNameLabel.setText("Interface name:");
+    myPackageLabel.setText("Package for new interface:");
+  }
+
   protected JLabel getClassNameLabel() {
     return myInterfaceNameLabel;
   }
