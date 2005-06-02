@@ -230,7 +230,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   public void commitTransaction(Document document){
     final DocumentChangeTransaction documentChangeTransaction = removeTransaction(document);
     if(documentChangeTransaction == null) return;
-    if(documentChangeTransaction.getAffectedFragments().size() == 0) return; // Nothing to do
+    //if(documentChangeTransaction.getAffectedFragments().size() == 0) return; // Nothing to do
 
     final PsiElement changeScope = documentChangeTransaction.getChangeScope();
     final PsiTreeChangeEventImpl fakeEvent = new PsiTreeChangeEventImpl(changeScope.getManager());
