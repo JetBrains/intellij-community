@@ -25,6 +25,21 @@ public abstract class OptionsDialog extends DialogWrapper {
     myProject = project;
   }
 
+  protected OptionsDialog(Project project, boolean canBeParent) {
+    super(project, canBeParent);
+    myProject = project;
+  }
+
+  protected OptionsDialog(boolean canBeParent) {
+    super(canBeParent);
+    myProject = null;
+  }
+
+  protected OptionsDialog(Component parent, boolean canBeParent) {
+    super(parent, canBeParent);
+    myProject = null;
+  }
+
   protected JComponent createSouthPanel() {
     JComponent southPanel = super.createSouthPanel();
 

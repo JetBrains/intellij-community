@@ -45,6 +45,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     settings.setUseUTFGuessing(myComponent.myChkUTFGuessing.isSelected());
     settings.setUseDefaultBrowser(myComponent.myUseSystemDefaultBrowser.isSelected());
     settings.setUseCyclicBuffer(myComponent.myUseCyclicBuffer.isSelected());
+    settings.setConfirmExit(myComponent.myConfirmExit.isSelected());
     try {
       settings.setCyclicBufferSize(Integer.parseInt(myComponent.myCyclicBufferSize.getText()) * 1024);
     }
@@ -102,6 +103,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     isModified |= settings.isUseUTFGuessing() != myComponent.myChkUTFGuessing.isSelected();
     isModified |= settings.isUseDefaultBrowser() != myComponent.myUseSystemDefaultBrowser.isSelected();
     isModified |= settings.isUseCyclicBuffer() != myComponent.myUseCyclicBuffer.isSelected();
+    isModified |= settings.isConfirmExit() != myComponent.myConfirmExit.isSelected();
     isModified |= !Comparing.strEqual(settings.getCyclicBufferSize()/1024 + "", myComponent.myCyclicBufferSize.getText());
 
     int inactiveTimeout = -1;
@@ -181,6 +183,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     myComponent.myTfInactiveTimeout.setEditable(settings.isAutoSaveIfInactive());
     myComponent.myUseCyclicBuffer.setSelected(settings.isUseCyclicBuffer());
     myComponent.myCyclicBufferSize.setEditable(settings.isUseCyclicBuffer());
+    myComponent.myConfirmExit.setSelected(settings.isConfirmExit());
     myComponent.myCyclicBufferSize.setText(settings.getCyclicBufferSize()/1024+"");
 
     myComponent.myIgnoreFilesField.setText(FileTypeManagerEx.getInstanceEx().getIgnoredFilesList());
@@ -241,6 +244,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     private JRadioButton myUseUserDefinedBrowser;
     private JCheckBox myUseCyclicBuffer;
     private JTextField myCyclicBufferSize;
+    public JCheckBox myConfirmExit;
 
     public MyComponent() {
       ButtonGroup buttonGroup = new ButtonGroup();

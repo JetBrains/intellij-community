@@ -31,6 +31,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
   private String myLastProjectLocation;
   private boolean myUseCyclicBuffer;
   private int myCyclicBufferSize = 1024*1024; //1Mb
+  private boolean myConfirmExit = true;
 
   public static GeneralSettings getInstance(){
     return ApplicationManager.getApplication().getComponent(GeneralSettings.class);
@@ -285,6 +286,15 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
         }
       }
 
+      if ("confirmExit".equals(name)){
+        try {
+          myConfirmExit = Boolean.valueOf(value).booleanValue();
+        }
+        catch (Exception ex) {
+          myConfirmExit = false;
+        }
+      }
+
       if ("cyclicBufferSize".equals(name)){
         try {
           myCyclicBufferSize = Integer.parseInt(value);
@@ -382,6 +392,11 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
     optionElement.setAttribute("value", Integer.toString(myCyclicBufferSize));
     parentNode.addContent(optionElement);
 
+    optionElement = new Element("option");
+    optionElement.setAttribute("name", "confirmExit");
+    optionElement.setAttribute("value", Boolean.toString(myConfirmExit));
+    parentNode.addContent(optionElement);
+
     if (myLastProjectLocation != null) {
       optionElement = new Element("option");
       optionElement.setAttribute("name", "lastProjectLocation");
@@ -413,6 +428,14 @@ public class GeneralSettings implements NamedJDOMExternalizable, ApplicationComp
 
   public void setUseCyclicBuffer(final boolean useCyclicBuffer) {
     myUseCyclicBuffer = useCyclicBuffer;
+  }
+
+  public boolean isConfirmExit() {
+    return myConfirmExit;
+  }
+
+  public void setConfirmExit(boolean confirmExit) {
+    myConfirmExit = confirmExit;
   }
 
   public int getCyclicBufferSize() {

@@ -2,6 +2,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.Patches;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationListener;
@@ -579,16 +580,29 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   private boolean canExit() {
+
+    if (GeneralSettings.getInstance().isConfirmExit()) {
+      final ConfirmExitDialog confirmExitDialog = new ConfirmExitDialog();
+      confirmExitDialog.show();
+      if (!confirmExitDialog.isOK()){
+        return false;
+      }
+    }
+
     ApplicationListener[] listeners = getListeners();
 
     for (ApplicationListener applicationListener : listeners) {
-      if (!applicationListener.canExitApplication()) return false;
+      if (!applicationListener.canExitApplication()) {
+        return false;
+      }
     }
 
     ProjectManagerEx projectManager = (ProjectManagerEx)ProjectManager.getInstance();
     Project[] projects = projectManager.getOpenProjects();
     for (Project project : projects) {
-      if (!projectManager.canClose(project)) return false;
+      if (!projectManager.canClose(project)) {
+        return false;
+      }
     }
 
     return true;
