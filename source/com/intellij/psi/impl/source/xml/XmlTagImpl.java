@@ -566,7 +566,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
         psi = (XmlText)anchor.getPsi();
       else {
         final ASTNode other = before ? anchor.getTreePrev() : getTreeNext();
-        if(other.getPsi() instanceof XmlText) {
+        if(other != null && other.getPsi() instanceof XmlText) {
           before = !before;
           psi = (XmlText)other.getPsi();
         }
