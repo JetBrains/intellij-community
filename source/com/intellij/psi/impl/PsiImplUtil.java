@@ -3,16 +3,11 @@ package com.intellij.psi.impl;
 import com.intellij.aspects.psi.PsiAspect;
 import com.intellij.aspects.psi.PsiPointcutDef;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
@@ -24,13 +19,11 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiImplUtil");
-
-  private static final Key<Pair<Map<String,List<MethodCandidateInfo>>,Runnable>> METHODS_MAP_IN_CLASS_KEY = Key.create("METHODS_MAP_IN_CLASS_KEY");
-  private static final Key<Pair<Map<String,List<CandidateInfo>>,Runnable>> FIELDS_MAP_IN_CLASS_KEY = Key.create("FIELDS_MAP_IN_CLASS_KEY");
 
   public static PsiMethod[] getConstructors(PsiClass aClass) {
     final List<PsiMethod> constructorsList = new ArrayList<PsiMethod>();
@@ -40,101 +33,6 @@ public class PsiImplUtil {
     }
     return constructorsList.toArray(PsiMethod.EMPTY_ARRAY);
   }
-
-  public static Map<String, List<MethodCandidateInfo>> getAllMethodsMap(final PsiClass psiClass){
-    if (!psiClass.isPhysical()) {
-      return _getAllMethodsMap(psiClass);
-    }
-
-    final Pair<Map<String, List<MethodCandidateInfo>>, Runnable> value = psiClass.getUserData(METHODS_MAP_IN_CLASS_KEY);
-
-    if (value == null) {
-      final Map<String, List<MethodCandidateInfo>> allMethods = _getAllMethodsMap(psiClass);
-      final Runnable cleaner = new Runnable() {
-        public void run() {
-          psiClass.putUserData(METHODS_MAP_IN_CLASS_KEY, null);
-        }
-      };
-      psiClass.putUserData(METHODS_MAP_IN_CLASS_KEY, new Pair<Map<String, List<MethodCandidateInfo>>, Runnable>(allMethods, cleaner));
-      PsiManagerImpl manager = (PsiManagerImpl)psiClass.getManager();
-      manager.registerWeakRunnableToRunOnChange(cleaner);
-      return allMethods;
-    }
-
-    return value.first;
-  }
-
-  private static Map<String, List<MethodCandidateInfo>> _getAllMethodsMap(PsiClass psiClass) {
-    final List<MethodCandidateInfo> list = new ArrayList<MethodCandidateInfo>();
-    PsiScopesUtil.processScope(psiClass, new FilterScopeProcessor(new ClassFilter(PsiMethod.class), null, list){
-      protected void add(PsiElement element, PsiSubstitutor substitutor) {
-        list.add(new MethodCandidateInfo(element, substitutor));
-      }
-    }, PsiSubstitutor.EMPTY, null, psiClass);
-
-    final Map<String, List<MethodCandidateInfo>> methods = new HashMap<String,List<MethodCandidateInfo>>();
-    final Iterator<MethodCandidateInfo> iterator = list.iterator();
-    while (iterator.hasNext()) {
-      final MethodCandidateInfo info = iterator.next();
-      final PsiMethod method = info.getElement();
-      final String name = method.getName();
-      List<MethodCandidateInfo> methodsList = methods.get(name);
-      if(methodsList == null){
-        methodsList = new ArrayList<MethodCandidateInfo>(1);
-        methods.put(name, methodsList);
-      }
-      methodsList.add(info);
-    }
-    return methods;
-  }
-
-  public static Map<String, List<CandidateInfo>> getAllFieldsMap(final PsiClass psiClass){
-    if (!psiClass.isPhysical()) {
-      return _getAllFieldsMap(psiClass);
-    }
-
-    final Pair<Map<String, List<CandidateInfo>>, Runnable> value = psiClass.getUserData(FIELDS_MAP_IN_CLASS_KEY);
-
-    if (value == null) {
-      final Map<String, List<CandidateInfo>> allFields = _getAllFieldsMap(psiClass);
-      final Runnable cleaner = new Runnable() {
-        public void run() {
-          psiClass.putUserData(FIELDS_MAP_IN_CLASS_KEY, null);
-        }
-      };
-      psiClass.putUserData(FIELDS_MAP_IN_CLASS_KEY, new Pair<Map<String, List<CandidateInfo>>, Runnable>(allFields, cleaner));
-      PsiManagerImpl manager = (PsiManagerImpl)psiClass.getManager();
-      manager.registerWeakRunnableToRunOnChange(cleaner);
-      return allFields;
-    }
-
-    return value.first;
-  }
-
-  private static Map<String, List<CandidateInfo>> _getAllFieldsMap(PsiClass psiClass) {
-    final List<CandidateInfo> list = new ArrayList<CandidateInfo>();
-    PsiScopesUtil.processScope(psiClass, new FilterScopeProcessor(new ClassFilter(PsiField.class), null, list){
-      protected void add(PsiElement element, PsiSubstitutor substitutor) {
-        list.add(new CandidateInfo(element, substitutor));
-      }
-    }, PsiSubstitutor.EMPTY, null, psiClass);
-
-    final Map<String, List<CandidateInfo>> fields = new HashMap<String,List<CandidateInfo>>();
-    final Iterator<CandidateInfo> iterator = list.iterator();
-    while (iterator.hasNext()) {
-      final CandidateInfo info = iterator.next();
-      final PsiField field = (PsiField)info.getElement();
-      final String name = field.getName();
-      List<CandidateInfo> fieldsList = fields.get(name);
-      if(fieldsList == null){
-        fieldsList = new ArrayList<CandidateInfo>(1);
-        fields.put(name, fieldsList);
-      }
-      fieldsList.add(info);
-    }
-    return fields;
-  }
-
 
   public static PsiPointcutDef findPointcutDefBySignature(PsiAspect psiAspect, PsiPointcutDef patternPointcut,
                                                           boolean checkBases) {
