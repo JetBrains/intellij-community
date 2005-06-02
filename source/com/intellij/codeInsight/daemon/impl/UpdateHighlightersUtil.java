@@ -22,6 +22,7 @@ import com.intellij.util.containers.HashMap;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
 
 public class UpdateHighlightersUtil {
 
@@ -39,7 +40,7 @@ public class UpdateHighlightersUtil {
                                              Document document,
                                              int startOffset,
                                              int endOffset,
-                                             HighlightInfo[] highlights,
+                                             Collection<HighlightInfo> highlights,
                                              int group) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     List<HighlightInfo> array = new ArrayList<HighlightInfo>();
@@ -134,7 +135,7 @@ public class UpdateHighlightersUtil {
     HighlightInfo[] newHighlights = array.toArray(new HighlightInfo[array.size()]);
     DaemonCodeAnalyzerImpl.setHighlights(document, newHighlights, project);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Added segment highlighters:" + highlights.length);
+      LOG.debug("Added segment highlighters:" + highlights.size());
     }
   }
 

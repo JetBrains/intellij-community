@@ -46,6 +46,8 @@ import com.intellij.util.IncorrectOperationException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
 
 public class PostHighlightingPass extends TextEditorHighlightingPass {
   private static final String SYMBOL_IS_NOT_USED = " ''{0}'' is never used";
@@ -74,7 +76,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private final int myEndOffset;
   private final boolean myCompiled;
 
-  private HighlightInfo[] myHighlights;
+  private Collection<HighlightInfo> myHighlights;
   private DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
   private boolean myHasRedundantImports;
   private final CodeStyleManagerEx myStyleManager;
@@ -104,7 +106,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   public void doCollectInformation(ProgressIndicator progress) {
     if (myCompiled) {
-      myHighlights = HighlightInfo.EMPTY_ARRAY;;
+      myHighlights = Collections.EMPTY_LIST;
       return;
     }
 
@@ -126,7 +128,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       highlights.add(highlightInfo);
     }
 
-    myHighlights = highlights.toArray(new HighlightInfo[highlights.size()]);
+    myHighlights = highlights;
   }
 
   public void doApplyInformationToEditor() {
@@ -171,7 +173,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   // for tests only
-  public HighlightInfo[] getHighlights() {
+  public Collection<HighlightInfo> getHighlights() {
     return myHighlights;
   }
 

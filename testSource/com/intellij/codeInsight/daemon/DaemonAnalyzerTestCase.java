@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDocumentManager;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   protected void doTest(String filePath, boolean checkWarnings, boolean checkInfos) throws Exception {
@@ -60,18 +61,18 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     Document document = myEditor.getDocument();
     GeneralHighlightingPass action1 = new GeneralHighlightingPass(myProject, myFile, document, 0, myFile.getTextLength(), false, true);
     action1.doCollectInformation(new MockProgressInidicator());
-    HighlightInfo[] highlights1 = action1.getHighlights();
+    Collection<HighlightInfo> highlights1 = action1.getHighlights();
 
     PostHighlightingPass action2 = new PostHighlightingPass(myProject, myFile, myEditor, 0, myFile.getTextLength(), false);
     action2.doCollectInformation(new MockProgressInidicator());
-    HighlightInfo[] highlights2 = action2.getHighlights();
+    Collection<HighlightInfo> highlights2 = action2.getHighlights();
 
     ArrayList<HighlightInfo> list = new ArrayList<HighlightInfo>();
     for (HighlightInfo highlightInfo : highlights1) {
       list.add(highlightInfo);
     }
-    for (int i = 0; i < highlights2.length; i++) {
-      list.add(highlights2[i]);
+    for (HighlightInfo aHighlights2 : highlights2) {
+      list.add(aHighlights2);
     }
     return list.toArray(new HighlightInfo[list.size()]);
   }

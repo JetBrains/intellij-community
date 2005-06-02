@@ -13,7 +13,9 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.util.ArrayUtil;
+
+import java.util.Collection;
+import java.util.HashSet;
 
 public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCase {
   protected void doTest(String filePath, boolean checkWarnings, boolean checkInfos) throws Exception {
@@ -50,12 +52,14 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     Document document = getEditor().getDocument();
     GeneralHighlightingPass action1 = new GeneralHighlightingPass(getProject(), getFile(), document, 0, getFile().getTextLength(), false, true);
     action1.doCollectInformation(new MockProgressInidicator());
-    HighlightInfo[] highlights1 = action1.getHighlights();
+    Collection<HighlightInfo> highlights1 = action1.getHighlights();
 
     PostHighlightingPass action2 = new PostHighlightingPass(getProject(), getFile(), getEditor(), 0, getFile().getTextLength(), false);
     action2.doCollectInformation(new MockProgressInidicator());
-    HighlightInfo[] highlights2 = action2.getHighlights();
+    Collection<HighlightInfo> highlights2 = action2.getHighlights();
 
-    return ArrayUtil.mergeArrays(highlights1, highlights2, HighlightInfo.class);
+    HashSet<HighlightInfo> result = new HashSet<HighlightInfo>(highlights1);
+    result.addAll(highlights2);
+    return result.toArray(new HighlightInfo[result.size()]);
   }
 }

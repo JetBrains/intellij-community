@@ -123,8 +123,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
           }
           else if (element instanceof PsiFile){
             PsiFile psiFile = (PsiFile)element;
-            for (int k = 0; k < tools.length; k++) {
-              currentTool = tools[k];              
+            for (LocalInspectionTool tool : tools) {
+              currentTool = tool;
               appendDescriptors(currentTool.checkFile(psiFile, iManager, true), currentTool);
             }
           }
@@ -246,8 +246,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       }
     }
 
-    HighlightInfo[] array = infos.toArray(new HighlightInfo[infos.size()]);
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, array,
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, infos,
                                                    UpdateHighlightersUtil.INSPECTION_HIGHLIGHTERS_GROUP);
     myDescriptors = Collections.EMPTY_LIST;
     myLevels = Collections.EMPTY_LIST;

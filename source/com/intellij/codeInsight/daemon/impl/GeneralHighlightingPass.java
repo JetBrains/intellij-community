@@ -42,10 +42,7 @@ import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
@@ -62,7 +59,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
 
   private final HighlightVisitor[] myHighlightVisitors;
 
-  private HighlightInfo[] myHighlights = HighlightInfo.EMPTY_ARRAY;
+  private Collection<HighlightInfo> myHighlights = Collections.EMPTY_LIST;
   private LineMarkerInfo[] myMarkers = LineMarkerInfo.EMPTY_ARRAY;
 
   private final DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
@@ -150,7 +147,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         setRefCountHolders(null);
       }
     }
-    myHighlights = result.toArray(new HighlightInfo[result.size()]);
+    myHighlights = result;
   }
 
   private void addHighlights(Collection<HighlightInfo> result, Collection<HighlightInfo> highlights) {
@@ -195,7 +192,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   }
 
   //for tests only
-  public HighlightInfo[] getHighlights() {
+  public Collection<HighlightInfo> getHighlights() {
     return myHighlights;
   }
 
@@ -276,7 +273,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       builder.analyzeFileDependencies(myFile, new DependenciesBuilder.DependencyProcessor() {
         public void process(PsiElement place, PsiElement dependency) {
           PsiFile dependencyFile = dependency.getContainingFile();
-          if (InspectionManagerEx.inspectionResultSuppressed(place, HighlightDisplayKey.ILLEGAL_DEPENDENCY.toString())) return;              
+          if (InspectionManagerEx.inspectionResultSuppressed(place, HighlightDisplayKey.ILLEGAL_DEPENDENCY.toString())) return;
           if (dependencyFile != null && dependencyFile.isPhysical() && dependencyFile.getVirtualFile() != null) {
             DependencyRule[] rules = validationManager.getViolatorDependencyRules(myFile, dependencyFile);
             if (rules.length > 0) {
