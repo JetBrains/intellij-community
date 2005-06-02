@@ -9,8 +9,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -19,7 +19,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.nio.charset.Charset;
-import java.util.Iterator;
 import java.util.SortedMap;
 import java.util.Vector;
 
@@ -148,19 +147,23 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     myComponent.myBrowserPathField.addBrowseFolderListener("Select Path to Browser", null, null, descriptor);
 
     myComponent.myIgnoreFilesField.setText("skdjf arfgvkbdfugbvr");
+    setupCharsetComboModel(myComponent.myCharsetNameCombo);
+
+    return myComponent.myPanel;
+  }
+
+  public static void setupCharsetComboModel(JComboBox charsetNameCombo) {
     Vector<String> charsets = new Vector<String>();
     charsets.add("System Default");
     SortedMap avaliableCharsets = Charset.availableCharsets();
-    for (Iterator iterator = avaliableCharsets.keySet().iterator(); iterator.hasNext();) {
-      String name = (String)iterator.next();
+    for (Object cs : avaliableCharsets.keySet()) {
+      String name = (String)cs;
       if (!name.startsWith("UTF-16")) {
         charsets.add(name);
       }
     }
 
-    myComponent.myCharsetNameCombo.setModel(new DefaultComboBoxModel(charsets));
-
-    return myComponent.myPanel;
+    charsetNameCombo.setModel(new DefaultComboBoxModel(charsets));
   }
 //--------------------------------------------------------
   public String getDisplayName() {

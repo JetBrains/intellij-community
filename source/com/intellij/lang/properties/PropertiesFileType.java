@@ -67,7 +67,10 @@ public class PropertiesFileType extends LanguageFileType {
       return Native2AsciiCharset.INSTANCE.name();
     }
     else {
-      return "ISO-8859-1";
+      String defaultCharsetName = editorSettings.getDefaultPropertiesCharsetName();
+      if ("System Default".equals(defaultCharsetName)) defaultCharsetName = null;
+      return defaultCharsetName;
+      //return "ISO-8859-1";
     }
   }
 }

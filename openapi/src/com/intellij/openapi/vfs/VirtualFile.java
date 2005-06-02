@@ -376,7 +376,9 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
       String charsetName = fileType.getCharset(this);
       if (charsetName != null) {
         myCharset = Charset.forName(charsetName);
-        return new InputStreamReader(stream, myCharset);
+        reader = new BufferedReader(new InputStreamReader(stream, myCharset));
+        skipUTF8BOM(reader);
+        return reader;
       }
     }
 
@@ -396,18 +398,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
       myCharset = CharsetToolkit.getIDEOptionsCharset();
       if (myCharset != null) {
         reader = new BufferedReader(new InputStreamReader(stream, myCharset));
-        if (Patches.SUN_BUG_ID_4508058) {
-          if (myCharset.name().equals("UTF-8")) {
-            reader.mark(1);
-            char c = (char)reader.read();
-            if (c == '\uFEFF') {
-              myBOM = CharsetToolkit.UTF8_BOM;
-            }
-            else {
-              reader.reset();
-            }
-          }
-        }
+        skipUTF8BOM(reader);
       }
       else {
         reader = new BufferedReader(new InputStreamReader(stream));
@@ -415,6 +406,21 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
     }
 
     return reader;
+  }
+
+  private void skipUTF8BOM(final Reader reader) throws IOException {
+    if (Patches.SUN_BUG_ID_4508058) {
+      if (myCharset != null && "UTF-8".equals(myCharset.name())) {
+        reader.mark(1);
+        char c = (char)reader.read();
+        if (c == '\uFEFF') {
+          myBOM = CharsetToolkit.UTF8_BOM;
+        }
+        else {
+          reader.reset();
+        }
+      }
+    }
   }
 
   /**

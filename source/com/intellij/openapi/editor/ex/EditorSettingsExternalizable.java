@@ -37,6 +37,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public boolean IS_WHEEL_FONTCHANGE_ENABLED = true;
     public boolean IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = true;
     public boolean IS_NATIVE2ASCII_FOR_PROPERTIES_FILES;
+    public String DEFAULT_PROPERTIES_FILES_CHARSET_NAME = "System Default";
 
     public Object clone() {
       try {
@@ -288,5 +289,12 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
       myOptions.IS_NATIVE2ASCII_FOR_PROPERTIES_FILES = value;
       PropertiesFilesManager.getInstance().encodingChanged();
     }
+  }
+  public String getDefaultPropertiesCharsetName() {
+    return myOptions.DEFAULT_PROPERTIES_FILES_CHARSET_NAME;
+  }
+
+  public void setDefaultPropertiesCharsetName(final String defaultPropertiesCharsetName) {
+    myOptions.DEFAULT_PROPERTIES_FILES_CHARSET_NAME = defaultPropertiesCharsetName;
   }
 }

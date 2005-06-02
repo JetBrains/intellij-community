@@ -1,5 +1,7 @@
 package com.intellij.util;
 
+import gnu.trove.Equality;
+
 import java.lang.reflect.Array;
 import java.util.Collection;
 
@@ -15,12 +17,14 @@ public class ArrayUtil {
   public static final Class[] EMPTY_CLASS_ARRAY = new Class[0];
 
   public static byte[] realloc (final byte [] array, final int newSize) {
-    if (newSize == 0)
+    if (newSize == 0) {
       return EMPTY_BYTE_ARRAY;
+    }
 
     final int oldSize = array.length;
-    if (oldSize == newSize)
+    if (oldSize == newSize) {
       return array;
+    }
 
     final byte [] result = new byte [newSize];
     System.arraycopy(array, 0, result, 0, Math.min (oldSize, newSize));
@@ -122,18 +126,45 @@ public class ArrayUtil {
   }
 
   public static boolean startsWith(byte[] array, byte[] subArray) {
-    if (array == subArray)
+    if (array == subArray) {
       return true;
-    if (array == null || subArray == null)
+    }
+    if (array == null || subArray == null) {
       return false;
+    }
 
     int length = subArray.length;
-    if (array.length < length)
+    if (array.length < length) {
       return false;
+    }
 
-    for (int i = 0; i < length; i++)
-      if (array[i] != subArray[i])
+    for (int i = 0; i < length; i++) {
+      if (array[i] != subArray[i]) {
         return false;
+      }
+    }
+
+    return true;
+  }
+
+  public static <T> boolean equals(T[] a1, T[] a2, Equality<? super T> comparator) {
+    if (a1 == a2) {
+      return true;
+    }
+    if (a1 == null || a2 == null) {
+      return false;
+    }
+
+    int length = a2.length;
+    if (a1.length != length) {
+      return false;
+    }
+
+    for (int i = 0; i < length; i++) {
+      if (!comparator.equals(a1[i], a2[i])) {
+        return false;
+      }
+    }
 
     return true;
   }

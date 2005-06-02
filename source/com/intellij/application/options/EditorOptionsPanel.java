@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.folding.impl.CodeFoldingSettings;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.GeneralSettingsConfigurable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -12,6 +13,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Comparing;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -88,6 +90,7 @@ public class EditorOptionsPanel {
   private JCheckBox myCbEnableWheelFontChange;
   private JCheckBox myCbHonorCamelHumpsWhenSelectingByClicking;
   private JCheckBox myCbNative2Ascii;
+  private JComboBox myDefaultPropertiesFilesCharset;
 
   public JPanel getPanel() {
     return myPanel;
@@ -144,7 +147,7 @@ public class EditorOptionsPanel {
 
     myCbModifiedTabsMarkedWithAsterisk.setSelected(uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);
     myCbBlinkCaret.setSelected(editorSettings.isBlinkCaret());
-    myBlinkIntervalField.setText(""+editorSettings.getBlinkPeriod());
+    myBlinkIntervalField.setText(Integer.toString(editorSettings.getBlinkPeriod()));
     myBlinkIntervalField.setEnabled(editorSettings.isBlinkCaret());
 
     myCbBlockCursor.setSelected(editorSettings.isBlockCursor());
@@ -271,6 +274,11 @@ public class EditorOptionsPanel {
     myCbEnableWheelFontChange.setSelected(editorSettings.isWheelFontChangeEnabled());
     myCbHonorCamelHumpsWhenSelectingByClicking.setSelected(editorSettings.isMouseClickSelectionHonorsCamelWords());
     myCbNative2Ascii.setSelected(editorSettings.isNative2AsciiForPropertiesFiles());
+    GeneralSettingsConfigurable.setupCharsetComboModel(myDefaultPropertiesFilesCharset);
+    myDefaultPropertiesFilesCharset.setSelectedItem(editorSettings.getDefaultPropertiesCharsetName());
+    if (myDefaultPropertiesFilesCharset.getSelectedIndex() == -1) {
+      myDefaultPropertiesFilesCharset.setSelectedIndex(0);
+    }
   }
 
   public void apply() {
@@ -399,15 +407,18 @@ public class EditorOptionsPanel {
     editorSettings.setWheelFontChangeEnabled(myCbEnableWheelFontChange.isSelected());
     editorSettings.setMouseClickSelectionHonorsCamelWords(myCbHonorCamelHumpsWhenSelectingByClicking.isSelected());
     editorSettings.setNative2AsciiForPropertiesFiles(myCbNative2Ascii.isSelected());
+    String charsetName = (String)myDefaultPropertiesFilesCharset.getSelectedItem();
+    if (charsetName == null) charsetName = "System Default";
+    editorSettings.setDefaultPropertiesCharsetName(charsetName);
 
     Editor[] editors = EditorFactory.getInstance().getAllEditors();
-    for(int i = 0; i < editors.length; i++){
-      ((EditorEx)editors[i]).reinitSettings();
+    for (Editor editor : editors) {
+      ((EditorEx)editor).reinitSettings();
     }
 
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for(int i = 0; i < projects.length; i++){
-      DaemonCodeAnalyzer.getInstance(projects[i]).settingsChanged();
+    for (Project project : projects) {
+      DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     }
   }
 
@@ -503,7 +514,10 @@ public class EditorOptionsPanel {
     isModified |= isModified(myCbEnableDnD, editorSettings.isDndEnabled());
     isModified |= isModified(myCbEnableWheelFontChange, editorSettings.isWheelFontChangeEnabled());
     isModified |= isModified(myCbHonorCamelHumpsWhenSelectingByClicking, editorSettings.isMouseClickSelectionHonorsCamelWords());
+
+    // properties
     isModified |= isModified(myCbNative2Ascii, editorSettings.isNative2AsciiForPropertiesFiles());
+    isModified |= !Comparing.strEqual(editorSettings.getDefaultPropertiesCharsetName(), (String)myDefaultPropertiesFilesCharset.getSelectedItem());
 
     return isModified;
   }
