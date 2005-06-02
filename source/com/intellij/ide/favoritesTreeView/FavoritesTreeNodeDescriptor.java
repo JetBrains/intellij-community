@@ -35,25 +35,7 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
     myOpenIcon = myElement.getPresentation().getIcon(true);
     myClosedIcon = myElement.getPresentation().getIcon(false);
     myName = myElement.getPresentation().getPresentableText();
-    final Object value = myElement.getValue();
-    if (value instanceof PsiElement){
-      if (((PsiElement)value).getContainingFile() != null){
-        final VirtualFile virtualFile = ((PsiElement)value).getContainingFile().getVirtualFile();
-        if (virtualFile != null){
-          myColor = FileStatusManager.getInstance(myProject).getStatus(virtualFile).getColor();
-        } else {
-          myColor = FileStatus.NOT_CHANGED.getColor();
-        }
-        int flags = ((PsiElement)value).getContainingFile() instanceof PsiJavaFile  ?  Iconable.ICON_FLAG_VISIBILITY : 0;
-        if (isMarkReadOnly()) {
-          flags |= Iconable.ICON_FLAG_READ_STATUS;
-        }
-        Icon icon = ((PsiElement)value).getIcon(flags);
-        myOpenIcon = icon;
-        myClosedIcon = icon;
-      }
-
-    }
+    myColor = myElement.getFileStatus().getColor();
     return true;
   }
 
