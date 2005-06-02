@@ -13,14 +13,15 @@ import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
 public class CanBeFinalTest extends InspectionTestCase {
   protected void setUp() throws Exception {
     super.setUp();
-    CanBeFinalInspection tool = (CanBeFinalInspection)getManager().getCurrentProfile().getInspectionTool(CanBeFinalInspection.SHORT_NAME);
-    tool.REPORT_CLASSES = true;
-    tool.REPORT_FIELDS = true;
-    tool.REPORT_METHODS = true;
   }
 
   private void doTest() throws Exception {
-    doTest("canBeFinal/" + getTestName(false), getManager().getCurrentProfile().getInspectionTool(CanBeFinalInspection.SHORT_NAME));
+    final CanBeFinalInspection tool = new CanBeFinalInspection();
+    tool.initialize(getManager());
+    tool.REPORT_CLASSES = true;
+    tool.REPORT_FIELDS = true;
+    tool.REPORT_METHODS = true;
+    doTest("canBeFinal/" + getTestName(false), tool);
   }
 
   public void testsimpleClassInheritance() throws Exception {
@@ -64,7 +65,8 @@ public class CanBeFinalTest extends InspectionTestCase {
   }
 
   public void testSCR7737() throws Exception {
-    CanBeFinalInspection tool = (CanBeFinalInspection)getManager().getCurrentProfile().getInspectionTool(CanBeFinalInspection.SHORT_NAME);
+    CanBeFinalInspection tool = new CanBeFinalInspection();
+    tool.initialize(getManager());
     tool.REPORT_CLASSES = false;
     tool.REPORT_FIELDS = false;
     tool.REPORT_METHODS = true;

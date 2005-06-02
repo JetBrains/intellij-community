@@ -2,17 +2,16 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.defUse.DefUseInspection;
 import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 
 public class DefUseTest extends InspectionTestCase {
   private void doTest() throws Exception {
-    doTest("defUse/" + getTestName(false), getTool());
+    final InspectionTool tool = new LocalInspectionToolWrapper(new DefUseInspection());
+    tool.initialize(getManager());
+    doTest("defUse/" + getTestName(false), tool);
   }
 
-  private InspectionTool getTool() {
-    return getManager().getCurrentProfile().getInspectionTool(DefUseInspection.SHORT_NAME);
-  }
-
-
+ 
   public void testSCR5144() throws Exception {
     doTest();
   }
@@ -33,7 +32,7 @@ public class DefUseTest extends InspectionTestCase {
     doTest();
   }
   */
-  
+
   public void testSCR40364() throws Exception {
     doTest();
   }

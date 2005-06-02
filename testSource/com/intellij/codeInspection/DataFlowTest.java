@@ -9,16 +9,21 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 
 public class DataFlowTest extends InspectionTestCase {
   private void doTest() throws Exception {
+    final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new DataFlowInspection());
+    tool.initialize(getManager());
     doTest("dataFlow/" + getTestName(false),
-           getManager().getCurrentProfile().getInspectionTool(DataFlowInspection.SHORT_NAME));
+           tool);
   }
 
   private void doTest15() throws Exception {
+    final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new DataFlowInspection());
+    tool.initialize(getManager());
     doTest("dataFlow/" + getTestName(false),
-           getManager().getCurrentProfile().getInspectionTool(DataFlowInspection.SHORT_NAME), "java 1.5");
+           tool, "java 1.5");
   }
 
   public void testnpe1() throws Exception {
@@ -125,7 +130,7 @@ public class DataFlowTest extends InspectionTestCase {
   public void testNotNullableParameter() throws Exception {
     doTest15();
   }
-  
+
   public void testNotNullableParameter2() throws Exception {
     doTest15();
   }
@@ -145,7 +150,7 @@ public class DataFlowTest extends InspectionTestCase {
   public void testNullableAssignment() throws Exception {
     doTest15();
   }
-  
+
   public void testNullableLocalVariable() throws Exception {
     doTest15();
   }
@@ -153,7 +158,7 @@ public class DataFlowTest extends InspectionTestCase {
   public void testNotNullLocalVariable() throws Exception {
     doTest15();
   }
-  
+
   public void testNullableReturn() throws Exception {
     doTest15();
   }

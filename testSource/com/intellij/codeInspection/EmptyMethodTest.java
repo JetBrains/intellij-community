@@ -7,7 +7,9 @@ import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
  */
 public class EmptyMethodTest extends InspectionTestCase {
   private void doTest() throws Exception {
-    doTest("emptyMethod/" + getTestName(false), getManager().getCurrentProfile().getInspectionTool(EmptyMethodInspection.SHORT_NAME));
+    final EmptyMethodInspection tool = new EmptyMethodInspection();
+    tool.initialize(getManager());
+    doTest("emptyMethod/" + getTestName(false), tool);
   }
 
   public void testsuperCall() throws Exception {
