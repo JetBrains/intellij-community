@@ -52,7 +52,7 @@ public class Tree extends JTree {
 
   private class MyMouseListener extends MouseAdapter {
     public void mousePressed(MouseEvent mouseevent) {
-      if(SwingUtilities.isRightMouseButton(mouseevent)) {
+      if(SwingUtilities.isRightMouseButton(mouseevent) || SwingUtilities.isMiddleMouseButton(mouseevent)) {
         TreePath treepath = getPathForLocation(mouseevent.getX(), mouseevent.getY());
         if (treepath != null) {
           if (getSelectionModel().getSelectionMode() != TreeSelectionModel.SINGLE_TREE_SELECTION) {
