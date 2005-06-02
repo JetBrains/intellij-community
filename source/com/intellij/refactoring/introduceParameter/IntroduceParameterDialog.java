@@ -218,7 +218,9 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     if (myOccurenceNumber > 1 && !myIsInvokedOnDeclaration) {
       gbConstraints.gridy++;
       myCbReplaceAllOccurences = new NonFocusableCheckBox("Replace all occurences (" + myOccurenceNumber + " occurences)");
-      myCbReplaceAllOccurences.setMnemonic('e');
+      myCbReplaceAllOccurences.setMnemonic('a');
+      myCbReplaceAllOccurences.setDisplayedMnemonicIndex("Replace ".length());
+
       panel.add(myCbReplaceAllOccurences, gbConstraints);
       myCbReplaceAllOccurences.setSelected(false);
     }
@@ -227,7 +229,8 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
     gbConstraints.gridy++;
     myCbDeclareFinal = new NonFocusableCheckBox("Declare final");
-    myCbDeclareFinal.setMnemonic('n');
+    myCbDeclareFinal.setMnemonic('f');
+
     final Boolean settingsFinals = settings.INTRODUCE_PARAMETER_CREATE_FINALS;
     myCbDeclareFinal.setSelected(settingsFinals == null ?
                                  CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS :
@@ -238,6 +241,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     if(myIsLocalVariable && !myIsInvokedOnDeclaration) {
       myCbDeleteLocalVariable = new StateRestoringCheckBox("Delete variable definition");
       myCbDeleteLocalVariable.setMnemonic('D');
+
       if(myCbReplaceAllOccurences != null) {
         gbConstraints.insets = new Insets(0, 16, 4, 8);
       }
@@ -248,7 +252,8 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       gbConstraints.insets = new Insets(4, 0, 4, 8);
       if(myHasInitializer) {
         myCbUseInitializer = new StateRestoringCheckBox("Use variable initializer to initialize parameter");
-        myCbUseInitializer.setMnemonic('U');
+        myCbUseInitializer.setMnemonic('p');
+
         gbConstraints.gridy++;
         panel.add(myCbUseInitializer, gbConstraints);
       }
@@ -302,15 +307,14 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     radioButtonPanel.add(
             new JLabel("Replace fields used in expressions with their getters"), gbConstraints);
 
-    myReplaceFieldsWithGettersNoneRadio =
-            new JRadioButton("Do not replace");
-    myReplaceFieldsWithGettersNoneRadio.setMnemonic('N');
-    myReplaceFieldsWithGettersInaccessibleRadio =
-            new JRadioButton("Replace fields inaccessible in usage context");
-    myReplaceFieldsWithGettersInaccessibleRadio.setMnemonic('I');
-    myReplaceFieldsWithGettersAllRadio =
-            new JRadioButton("Replace all fields");
-    myReplaceFieldsWithGettersAllRadio.setMnemonic('A');
+    myReplaceFieldsWithGettersNoneRadio = new JRadioButton("Do not replace");
+    myReplaceFieldsWithGettersNoneRadio.setMnemonic('n');
+
+    myReplaceFieldsWithGettersInaccessibleRadio = new JRadioButton("Replace fields inaccessible in usage context");
+    myReplaceFieldsWithGettersInaccessibleRadio.setMnemonic('i');
+
+    myReplaceFieldsWithGettersAllRadio = new JRadioButton("Replace all fields");
+    myReplaceFieldsWithGettersAllRadio.setMnemonic('R');
 
     gbConstraints.gridy++;
     radioButtonPanel.add(myReplaceFieldsWithGettersNoneRadio, gbConstraints);
