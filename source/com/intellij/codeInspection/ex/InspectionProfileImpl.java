@@ -4,6 +4,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -490,7 +491,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     if (myBaseProfile != null && myBaseProfile.myTools.isEmpty()) {
       myBaseProfile.getInspectionTools();
     }
-    if (myTools.isEmpty()) {
+    if (myTools.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
       final InspectionTool[] tools = InspectionToolRegistrar.getInstance().createTools();
       for (int i = 0; i < tools.length; i++) {
         myTools.put(tools[i].getShortName(), tools[i]);
