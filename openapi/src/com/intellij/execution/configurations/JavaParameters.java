@@ -18,6 +18,8 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jetbrains.annotations.Nullable;
+
 public class JavaParameters {
   private ProjectJdk myJdk;
   private final PathsList myClassPath = new PathsList();
@@ -36,7 +38,12 @@ public class JavaParameters {
     return myMainClass;
   }
 
-  public ProjectJdk getJdk() {
+  /**
+   * @return jdk used to launch the application.
+   * If the instance of the JavaParameters is used to configure app server startup script, 
+   * then null is returned.
+   */
+  public @Nullable ProjectJdk getJdk() {
     return myJdk;
   }
 
