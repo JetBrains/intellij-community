@@ -216,10 +216,9 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
 
     HighlightInfoFilter[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
 
-    for (PsiElement element1 : elements) {
+    for (PsiElement element : elements) {
       ProgressManager.getInstance().checkCanceled();
 
-      PsiElement element = element1;
       if (skipParentsSet.contains(element)) {
         skipParentsSet.add(element.getParent());
         continue;
@@ -231,9 +230,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
         visitor.visit(element, holder);
       }
 
-      HighlightInfo[] highlights = holder.toArray(new HighlightInfo[holder.size()]);
-
-      for (HighlightInfo info : highlights) {
+      for (HighlightInfo info : holder) {
         // have to filter out already obtained highlights
         if (gotHighlights.contains(info)) continue;
 
@@ -308,10 +305,9 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>();
-    for (PsiElement element1 : elements) {
+    for (PsiElement element : elements) {
       ProgressManager.getInstance().checkCanceled();
 
-      PsiElement element = element1;
       LineMarkerInfo info = getLineMarkerInfo(element);
       if (info != null) {
         array.add(info);

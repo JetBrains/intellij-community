@@ -4,20 +4,16 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import org.jdom.Element;
-
+import com.intellij.util.containers.HashMap;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -85,8 +81,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     newScheme.setEditorFontName(getEditorFontName());
 
     final Set<EditorFontType> types = myFonts.keySet();
-    for (Iterator<EditorFontType> i = types.iterator(); i.hasNext();) {
-      EditorFontType type = i.next();
+    for (EditorFontType type : types) {
       Font font = myFonts.get(type);
       newScheme.setFont(type, font);
     }
@@ -153,8 +148,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     if ("scheme".equals(parentNode.getName())) {
       readScheme(parentNode);
     } else {
-      for (Iterator iterator = parentNode.getChildren("scheme").iterator(); iterator.hasNext();) {
-        Element element = (Element)iterator.next();
+      for (final Object o : parentNode.getChildren("scheme")) {
+        Element element = (Element)o;
         readScheme(element);
       }
     }
@@ -173,13 +168,15 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
         myParentScheme = myDefaultColorSchemesManager.getScheme(parentSchemeName);
       }
 
-      for (Iterator iterator = node.getChildren().iterator(); iterator.hasNext();) {
-        Element childNode = (Element)iterator.next();
+      for (final Object o : node.getChildren()) {
+        Element childNode = (Element)o;
         if ("option".equals(childNode.getName())) {
           readSettings(childNode);
-        } else if ("colors".equals(childNode.getName())) {
+        }
+        else if ("colors".equals(childNode.getName())) {
           readColors(childNode);
-        } else if ("attributes".equals(childNode.getName())) {
+        }
+        else if ("attributes".equals(childNode.getName())) {
           readAttributes(childNode);
         }
       }
@@ -200,8 +197,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private void readAttributes(Element childNode) throws InvalidDataException {
-    for (Iterator iterator = childNode.getChildren("option").iterator(); iterator.hasNext();) {
-      Element e = (Element)iterator.next();
+    for (final Object o : childNode.getChildren("option")) {
+      Element e = (Element)o;
       TextAttributesKey name = TextAttributesKey.find(e.getAttributeValue("name"));
       TextAttributes attr = new TextAttributes();
       Element value = e.getChild("value");
@@ -211,8 +208,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   }
 
   private void readColors(Element childNode) {
-    for (Iterator iterator = childNode.getChildren("option").iterator(); iterator.hasNext();) {
-      Element colorElement = (Element)iterator.next();
+    for (final Object o : childNode.getChildren("option")) {
+      Element colorElement = (Element)o;
       Color valueColor = readColorValue(colorElement);
       final String colorName = colorElement.getAttributeValue("name");
       if ("BACKGROUND".equals(colorName)) {
@@ -225,7 +222,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     }
   }
 
-  private Color readColorValue(final Element colorElement) {
+  private static Color readColorValue(final Element colorElement) {
     String value = colorElement.getAttributeValue("value");
     Color valueColor = null;
     if (value != null && value.trim().length() > 0) {
@@ -282,20 +279,24 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     parentNode.addContent(attrElements);
   }
 
+  private boolean haveToWrite(final TextAttributesKey key, final TextAttributes value, final TextAttributes defaultAttr) {
+    if (value.equals(defaultAttr)) return false;
+    if (myParentScheme == null) return true;
+    if (EditorColorsManager.getInstance().getGlobalScheme() == this
+        && myParentScheme instanceof AbstractColorsScheme
+        && !((AbstractColorsScheme)myParentScheme).myAttributesMap.containsKey(key)) return true;
+    return !value.equals(myParentScheme.getAttributes(key));
+  }
+
   private void writeAttributes(Element attrElements) throws WriteExternalException {
     Element element;
     List<TextAttributesKey> list = new ArrayList<TextAttributesKey>(myAttributesMap.keySet());
     Collections.sort(list);
-    Iterator<TextAttributesKey> itr = list.iterator();
 
-    while (itr.hasNext()) {
-      TextAttributesKey key = itr.next();
+    TextAttributes defaultAttr = new TextAttributes();
+    for (TextAttributesKey key: list) {
       TextAttributes value = myAttributesMap.get(key);
-      if (myParentScheme != null) {
-        if (value.equals(myParentScheme.getAttributes(key))) {
-          continue;
-        }
-      }
+      if (!haveToWrite(key,value,defaultAttr)) continue;
       element = new Element("option");
       element.setAttribute("name", key.getExternalName());
       Element valueElement = new Element("value");
@@ -309,8 +310,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     List<ColorKey> list = new ArrayList<ColorKey>(myColorsMap.keySet());
     Collections.sort(list);
 
-    for (Iterator<ColorKey> itr = list.iterator();  itr.hasNext();) {
-      ColorKey key = itr.next();
+    for (ColorKey key : list) {
       Color value = myColorsMap.get(key);
       if (myParentScheme != null) {
         if (Comparing.equal(myParentScheme.getColor(key), value)) {
@@ -319,7 +319,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       }
       Element element = new Element("option");
       element.setAttribute("name", key.getExternalName());
-      element.setAttribute("value", value != null? Integer.toString(value.getRGB() & 0xFFFFFF, 16) : "");
+      element.setAttribute("value", value != null ? Integer.toString(value.getRGB() & 0xFFFFFF, 16) : "");
       colorElements.addContent(element);
     }
   }

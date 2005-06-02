@@ -46,7 +46,7 @@ public class HighlightInfoHolder extends SmartList<HighlightInfo>{
 
   private boolean accepted(HighlightInfo info) {
     for (HighlightInfoFilter filter : myFilters) {
-      if (!filter.accept(info.type, myContextFile)) return false;
+      if (!filter.accept(info, myContextFile)) return false;
     }
     return true;
   }

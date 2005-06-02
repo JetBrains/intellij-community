@@ -46,6 +46,7 @@ public class PatternPackageSet implements PackageSet {
 
   private boolean matchesScope(PsiFile file, ProjectFileIndex fileIndex) {
     VirtualFile vFile = file.getVirtualFile();
+    if (vFile == null) return false;
     boolean isSource = fileIndex.isInSourceContent(vFile);
     if (myScope == SCOPE_ANY) return !isSource && myModulePattern == null || isSource && matchesModule(vFile, fileIndex);
     if (myScope == SCOPE_SOURCE) {

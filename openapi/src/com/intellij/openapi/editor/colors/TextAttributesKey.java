@@ -33,6 +33,7 @@ package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -55,7 +56,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     }
   }
 
-  public static TextAttributesKey find(String externalName) {
+  @NotNull public static TextAttributesKey find(String externalName) {
     TextAttributesKey key = ourRegistry.get(externalName);
     return key != null ? key : new TextAttributesKey(externalName);
   }

@@ -6,9 +6,9 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiFile;
 
 public class HighlightInfoFilterImpl implements HighlightInfoFilter, ApplicationComponent {
-  public boolean accept(HighlightInfoType type, PsiFile file) {
-    TextAttributes attributes = HighlightInfo.getAttributesByType(type);
-    if (attributes == null || attributes.isEmpty() && type.getSeverity() == HighlightSeverity.INFORMATION) return false; // optimization
+  public boolean accept(HighlightInfo info, PsiFile file) {
+    TextAttributes attributes = info.getTextAttributes();
+    if (attributes == null || attributes.isEmpty() && info.getSeverity() == HighlightSeverity.INFORMATION) return false; // optimization
     return true;
   }
 

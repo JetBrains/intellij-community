@@ -36,7 +36,7 @@ public class HighlightInfo {
   public TextAttributes getTextAttributes() {
     return forcedTextAttributes == null ? getAttributesByType(type) : forcedTextAttributes;
   }
-  static TextAttributes getAttributesByType(HighlightInfoType type) {
+  public static TextAttributes getAttributesByType(HighlightInfoType type) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributesKey key = type.getAttributesKey();
     return scheme.getAttributes(key);
@@ -73,15 +73,14 @@ public class HighlightInfo {
   }
 
   public static HighlightInfo createHighlightInfo(HighlightInfoType type, int start, int end, String description, String toolTip) {
-    Object[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
-    for (Object filter1 : filters) {
-      HighlightInfoFilter filter = (HighlightInfoFilter)filter1;
-      if (!filter.accept(type, null)) {
+    HighlightInfoFilter[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
+    HighlightInfo highlightInfo = new HighlightInfo(type, start, end, description, toolTip);
+    for (HighlightInfoFilter filter : filters) {
+      if (!filter.accept(highlightInfo, null)) {
         return null;
       }
     }
-
-    return new HighlightInfo(type, start, end, description, toolTip);
+    return highlightInfo;
   }
 
   public static HighlightInfo createHighlightInfo(HighlightInfoType type, int start, int end, String description) {

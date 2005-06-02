@@ -25,7 +25,9 @@ public class SegmentArrayWithData extends SegmentArray {
   }
 
   public short getSegmentData(int index) {
-    if(index < 0 || index >= mySegmentCount) throw new IndexOutOfBoundsException("Wrong index: " + index);
+    if(index < 0 || index >= mySegmentCount) {
+      throw new IndexOutOfBoundsException("Wrong index: " + index);
+    }
     return myData[index];
   }
 

@@ -9,14 +9,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
+import com.intellij.util.Icons;
+import com.intellij.util.containers.GenericHashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.Icons;
+import gnu.trove.TObjectHashingStrategy;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -94,7 +97,15 @@ public class TreeModelBuilder {
 
   private void createMaps(ScopeType scopeType) {
     myModulePackageNodes.put(scopeType, new HashMap<Pair<Module, PsiPackage>, PackageNode>());
-    myLibraryPackageNodes.put(scopeType, new HashMap<Pair<OrderEntry, PsiPackage>, PackageNode>());
+    myLibraryPackageNodes.put(scopeType, new GenericHashMap<Pair<OrderEntry, PsiPackage>, PackageNode>(new TObjectHashingStrategy<Pair<OrderEntry, PsiPackage>>() {
+      public int computeHashCode(final Pair<OrderEntry, PsiPackage> key) {
+        return key.getSecond() == null ? 0 : key.getSecond().hashCode();
+      }
+
+      public boolean equals(final Pair<OrderEntry, PsiPackage> o1, final Pair<OrderEntry, PsiPackage> o2) {
+        return Comparing.equal(o1.getSecond(), o2.getSecond());
+      }
+    }));
     myModuleNodes.put(scopeType, new HashMap<Module, ModuleNode>());
     myLibraryNodes.put(scopeType, new HashMap<OrderEntry, LibraryNode>());
   }
@@ -132,11 +143,10 @@ public class TreeModelBuilder {
     return new TreeModelBuilder(project, showIndividualLibs, marker, new DependenciesPanel.DependencyPanelSettings()).build(project, showProgress);
   }
 
-  private VirtualFile[] getLibraryRoots(Project project) {
+  private static VirtualFile[] getLibraryRoots(Project project) {
     Set<VirtualFile> roots = new HashSet<VirtualFile>();
     final Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (int i = 0; i < modules.length; i++) {
-      Module module = modules[i];
+    for (Module module : modules) {
       roots.addAll(Arrays.asList(ModuleRootManager.getInstance(module).getFiles(OrderRootType.SOURCES)));
     }
     return roots.toArray(new VirtualFile[roots.size()]);
@@ -155,8 +165,8 @@ public class TreeModelBuilder {
     });
 
     VirtualFile[] roots = getLibraryRoots(project);
-    for (int i = 0; i < roots.length; i++) {
-      countFilesRecursively(roots[i]);
+    for (VirtualFile root : roots) {
+      countFilesRecursively(root);
     }
   }
 
@@ -198,8 +208,8 @@ public class TreeModelBuilder {
   private void processFilesRecursively(VirtualFile file, PsiManager psiManager) {
     if (file.isDirectory()) {
       VirtualFile[] children = file.getChildren();
-      for (int i = 0; i < children.length; i++) {
-        processFilesRecursively(children[i], psiManager);
+      for (VirtualFile aChildren : children) {
+        processFilesRecursively(aChildren, psiManager);
       }
     }
     else if (myFileIndex.isInLibrarySource(file) && myFileIndex.isJavaSourceFile(file)) {
@@ -210,8 +220,8 @@ public class TreeModelBuilder {
   private void countFilesRecursively(VirtualFile file) {
     if (file.isDirectory()) {
       VirtualFile[] children = file.getChildren();
-      for (int i = 0; i < children.length; i++) {
-        countFilesRecursively(children[i]);
+      for (VirtualFile aChildren : children) {
+        countFilesRecursively(aChildren);
       }
     }
     else if (myFileIndex.isInLibrarySource(file) && myFileIndex.isJavaSourceFile(file)) {
@@ -223,7 +233,7 @@ public class TreeModelBuilder {
     if (files.size() == 1) {
       myShowFiles = true;
     }
-    
+
     Runnable buildingRunnable = new Runnable() {
       public void run() {
         for (Iterator<PsiFile> iterator = files.iterator(); iterator.hasNext();) {
@@ -294,8 +304,7 @@ public class TreeModelBuilder {
 
   private OrderEntry getLibraryForFile(PsiFile file) {
     OrderEntry[] orders = myFileIndex.getOrderEntriesForFile(file.getVirtualFile());
-    for (int i = 0; i < orders.length; i++) {
-      OrderEntry order = orders[i];
+    for (OrderEntry order : orders) {
       if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) return order;
     }
     return null;

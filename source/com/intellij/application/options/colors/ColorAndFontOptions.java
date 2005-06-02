@@ -27,21 +27,23 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.peer.PeerFactory;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashSet;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 
 public class ColorAndFontOptions extends BaseConfigurable implements ApplicationComponent {
   private ColorAndFontPanel myPanel;
   private HashMap<String,MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
   public static final String DIFF_GROUP = "Diff";
-  private static final String FILE_STATUS_GROUP = "File Status";
+  public static final String FILE_STATUS_GROUP = "File Status";
+  public static final String SCOPES_GROUP = "Scope Based";
 
   public void disposeComponent() {
   }
@@ -75,7 +77,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
     return mySelectedScheme.getDescriptors();
   }
 
-  public boolean isDefault(EditorColorsScheme scheme) {
+  public static boolean isDefault(EditorColorsScheme scheme) {
     return ((MyColorScheme)scheme).isDefault();
   }
 
@@ -204,6 +206,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
     initPluggedDescriptions(descriptions, scheme);
     initDiffDescriptors(descriptions, scheme);
     initFileStatusDescriptors(descriptions, scheme);
+    initScopesDescriptors(descriptions, scheme);
 
     scheme.setDescriptors(descriptions.toArray(new EditorSchemeAttributeDescriptor[descriptions.size()]));
   }
@@ -251,13 +254,38 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
 
     }
   }
+  private static void initScopesDescriptors(ArrayList<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
+    Collection<NamedScope> namedScopes = new THashSet<NamedScope>();
+    Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    for (Project project : projects) {
+      NamedScope[] scopes = NamedScopeManager.getInstance(project).getScopes();
+      namedScopes.addAll(Arrays.asList(scopes));
+    }
+    for (NamedScope namedScope : namedScopes) {
+      String name = namedScope.getName();
+      TextAttributesKey textAttributesKey = getScopeTextAttributeKey(name);
+      if (scheme.getAttributes(textAttributesKey) == null) {
+        scheme.setAttributes(textAttributesKey, new TextAttributes());
+      }
+      addSchemedDescription(descriptions,
+                            name,
+                            SCOPES_GROUP,
+                            textAttributesKey,
+                            scheme);
+    }
+  }
+
+  public static TextAttributesKey getScopeTextAttributeKey(final String scope) {
+    TextAttributesKey textAttributesKey = TextAttributesKey.find("SCOPE_KEY_" + scope);
+    return textAttributesKey;
+  }
 
   private static ColorAndFontDescription addEditorSettingDescription(ArrayList<EditorSchemeAttributeDescriptor> array,
-                                           String name,
-                                           String group,
-                                           ColorKey backgroundKey,
-                                           ColorKey foregroundKey,
-                                           EditorColorsScheme scheme) {
+                                                                     String name,
+                                                                     String group,
+                                                                     ColorKey backgroundKey,
+                                                                     ColorKey foregroundKey,
+                                                                     EditorColorsScheme scheme) {
     String type = null;
     if (foregroundKey != null) {
       type = foregroundKey.getExternalName();
@@ -273,10 +301,10 @@ public class ColorAndFontOptions extends BaseConfigurable implements Application
   }
 
   private static ColorAndFontDescription addSchemedDescription(ArrayList<EditorSchemeAttributeDescriptor> array,
-                                                        String name,
-                                                        String group,
-                                                        TextAttributesKey key,
-                                                        EditorColorsScheme scheme) {
+                                                               String name,
+                                                               String group,
+                                                               TextAttributesKey key,
+                                                               EditorColorsScheme scheme) {
     ColorAndFontDescription descr = new SchemeTextAttributesDescription(name, group, key, scheme);
     array.add(descr);
     return descr;
