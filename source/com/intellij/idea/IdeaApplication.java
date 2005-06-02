@@ -1,10 +1,8 @@
 package com.intellij.idea;
 
-import com.incors.plaf.alloy.AlloyLookAndFeel;
-import com.incors.plaf.alloy.IdeaAlloyLAF;
+import com.incors.plaf.alloy.*;
 import com.intellij.ExtensionPoints;
 import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginDescriptor;
@@ -20,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.ui.Splash;
@@ -27,7 +26,6 @@ import org.jdom.Element;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.awt.*;
 
 
 public class IdeaApplication {
@@ -85,7 +83,13 @@ public class IdeaApplication {
   private static void initAlloy() {
     AlloyLookAndFeel.setProperty("alloy.licenseCode", "4#JetBrains#1ou2uex#6920nk");
     AlloyLookAndFeel.setProperty("alloy.isToolbarEffectsEnabled", "false");
-    UIManager.installLookAndFeel("Alloy", IdeaAlloyLAF.class.getName());
+    if (SystemInfo.isWindows) {
+      UIManager.installLookAndFeel("Alloy. IDEA Theme", AlloyIdea.class.getName());
+    }
+    UIManager.installLookAndFeel("Alloy. Default Theme", AlloyDefault.class.getName());
+    UIManager.installLookAndFeel("Alloy. Bedoin Theme", AlloyBedouin.class.getName());
+    UIManager.installLookAndFeel("Alloy. Acid Theme", AlloyAcid.class.getName());
+    UIManager.installLookAndFeel("Alloy. Glass Theme", AlloyGlass.class.getName());
   }
 
   private class IdeStarter implements ApplicationStarter {

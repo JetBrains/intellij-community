@@ -1,6 +1,7 @@
 package com.intellij.ide.ui;
 
-import com.incors.plaf.alloy.IdeaAlloyLAF;
+import com.incors.plaf.alloy.AlloyBedouin;
+import com.incors.plaf.alloy.AlloyIdea;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -180,7 +181,7 @@ public final class LafManager implements ApplicationComponent,JDOMExternalizable
       return laf;
     }
     else {
-      UIManager.LookAndFeelInfo alloy = findLaf(IdeaAlloyLAF.class.getName());
+      UIManager.LookAndFeelInfo alloy = findLaf(SystemInfo.isWindows ? AlloyIdea.class.getName() : AlloyBedouin.class.getName());
       return alloy != null ? alloy : findLaf(IDEA_LAF_CLASSNAME);
     }
   }
