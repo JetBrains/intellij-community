@@ -12,10 +12,9 @@ import java.util.LinkedHashMap;
  * @author ven
  */
 public class MoveInstanceMembersUtil {
-  //Set<PsiMember> may contain nulls in case no member is needed, but class itself is
-
   /**
    * @param member  nonstatic class member to search for class references in
+   * @return Set<PsiMember> in result map may be null in case no member is needed, but class itself is.
    */
   public static Map<PsiClass, Set<PsiMember>> getThisClassesToMembers(final PsiMember member) {
     Map<PsiClass, Set<PsiMember>> map = new LinkedHashMap<PsiClass, Set<PsiMember>>();
