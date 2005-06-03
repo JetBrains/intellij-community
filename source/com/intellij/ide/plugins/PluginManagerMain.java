@@ -254,7 +254,7 @@ public class PluginManagerMain {
           pluginInfoUpdate(null);
 
           // load plugin list, if required
-          loadAvailablePlugins(true);
+          loadAvailablePlugins();
           if (availablePluginTable != null) {
             pluginInfoUpdate(availablePluginTable.getSelectedObject());
           }
@@ -409,18 +409,9 @@ public class PluginManagerMain {
     };
   }
 
-  private void loadAvailablePlugins (boolean askForDownload) {
+  private void loadAvailablePlugins() {
     try {
       if (root == null) {
-        if (askForDownload) {
-          if (Messages.showYesNoDialog(main, "Latest information from the Plugin Repository is required.\n" +
-                                             "Would you like to download it?", "Plugins",
-                                       Messages.getQuestionIcon()) != 0) {
-            tabs.setSelectedIndex(INSTALLED_TAB);
-            return;
-          }
-        }
-
         root = loadPluginList();
         if (root == null) {
           Messages.showErrorDialog(getMainPanel(), "List of plugins was not loaded.", "Plugins");
@@ -600,7 +591,7 @@ public class PluginManagerMain {
         public void actionPerformed(AnActionEvent e) {
           root = null;
           pluginInfoUpdate(null);
-          loadAvailablePlugins(false);
+          loadAvailablePlugins();
         }
       };
       syncAction.registerCustomShortcutSet(
@@ -612,7 +603,7 @@ public class PluginManagerMain {
 
         public void actionPerformed(AnActionEvent e) {
           if (availablePluginTable == null) {
-            loadAvailablePlugins(true);
+            loadAvailablePlugins();
           }
 
           if (root != null)
