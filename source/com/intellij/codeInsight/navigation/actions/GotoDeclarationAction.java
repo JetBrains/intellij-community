@@ -13,14 +13,11 @@ import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.ListPopup;
-import com.intellij.lang.properties.PropertyReference;
-import com.intellij.lang.properties.psi.Property;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -116,22 +113,20 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
         PsiResolveHelper helper = manager.getResolveHelper();
         PsiElement[] candidates = PsiUtil.mapElements(helper.getReferencedMethodCandidates(callExpr, false));
         ArrayList<PsiElement> methods = new ArrayList<PsiElement>();
-        for (int i = 0; i < candidates.length; i++) {
-          PsiMethod candidate = (PsiMethod) candidates[i];
-          if (candidate.hasModifierProperty(PsiModifier.STATIC) &&  !allowStatics) continue;
+        for (PsiElement candidate1 : candidates) {
+          PsiMethod candidate = (PsiMethod)candidate1;
+          if (candidate.hasModifierProperty(PsiModifier.STATIC) && !allowStatics) continue;
           List<PsiMethod> supers = Arrays.asList(PsiSuperMethodUtil.findSuperMethods(candidate));
           if (supers.isEmpty()) {
             methods.add(candidate);
-          } else {
+          }
+          else {
             methods.addAll(supers);
           }
         }
         return methods.toArray(new PsiElement[methods.size()]);
       }
-      if (reference instanceof PropertyReference) {
-        List<Property> properties = ((PropertyReference)reference).suggestProperties();
-        return properties.toArray(new PsiElement[properties.size()]);
-      } else if (reference instanceof PsiPolyVariantReference) {
+      if (reference instanceof PsiPolyVariantReference) {
         return PsiUtil.mapElements(((PsiPolyVariantReference)reference).multiResolve(false));
       }
     }

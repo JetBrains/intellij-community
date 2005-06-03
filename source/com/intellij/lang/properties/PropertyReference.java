@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * @author cdr
  */
-public class PropertyReference implements PsiReference {
+public class PropertyReference implements PsiPolyVariantReference {
   private final String myKey;
   private final PsiLiteralExpression myLiteralExpression;
 
@@ -34,9 +34,26 @@ public class PropertyReference implements PsiReference {
   }
 
   public PsiElement resolve() {
-    List<Property> properties = PropertiesUtil.findPropertiesByKey(getElement().getProject(), myKey);
+    ResolveResult[] resolveResults = multiResolve(false);
+    return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
+  }
 
-    return properties.size() == 1 ? properties.get(0) : null;
+  public ResolveResult[] multiResolve(final boolean incompleteCode) {
+    List<Property> properties = PropertiesUtil.findPropertiesByKey(getElement().getProject(), myKey);
+    final ResolveResult[] result = new ResolveResult[properties.size()];
+    for (int i = 0; i < properties.size(); i++) {
+      final Property property = properties.get(i);
+      result[i] = new ResolveResult() {
+        public PsiElement getElement() {
+          return property;
+        }
+
+        public boolean isValidResult() {
+          return property.isValid();
+        }
+      };
+    }
+    return result;
   }
 
   public String getCanonicalText() {
