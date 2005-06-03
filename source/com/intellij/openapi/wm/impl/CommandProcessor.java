@@ -1,6 +1,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 
@@ -44,7 +45,9 @@ public final class CommandProcessor implements Runnable {
         if (LOG.isDebugEnabled()) {
           LOG.debug("CommandProcessor.run " + command);
         }
-        ApplicationManager.getApplication().invokeLater(command);
+        // max. I'm not actually quite sure this should have NON_MODAL modality but it should
+        // definitely have some since runnables in command list may (and do) request some PSI activity
+        ApplicationManager.getApplication().invokeLater(command, ModalityState.NON_MMODAL);
       }
     }
   }
