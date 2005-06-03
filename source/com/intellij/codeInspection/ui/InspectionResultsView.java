@@ -456,6 +456,10 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     mySeverityGroupNodes.clear();
   }
 
+  public String getCurrentProfileName(){
+    return myInspectionProfile.getName();
+  }
+
   public boolean update() {
     InspectionTool[] tools = myInspectionProfile.getInspectionTools();
     clearTree();

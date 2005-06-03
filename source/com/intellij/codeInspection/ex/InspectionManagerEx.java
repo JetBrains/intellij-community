@@ -178,7 +178,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
 
     Content content = PeerFactory.getInstance().getContentFactory().createContent(view, "FOOO", false);
 
-    content.setDisplayName("Inspection Results");
+    content.setDisplayName("Results for Inspection Profile \'" + view.getCurrentProfileName() + "\'");
     contentManager.addContent(content);
     contentManager.setSelectedContent(content);
 
