@@ -56,7 +56,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   public static final String COMPONENT_NAME = "ProjectModuleManager";
   private static final String MODULE_GROUP_SEPARATOR = "/";
   private ModulePath[] myModulePaths;
-  private ModulePath[] myFailedModulePaths = new ModulePath[0];
+  private List<ModulePath> myFailedModulePaths = new ArrayList<ModulePath>();
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -134,7 +134,8 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     if (myModulePaths != null && myModulePaths.length > 0) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          final List<ModulePath> failedPaths = new ArrayList<ModulePath>(Arrays.asList(myModulePaths));
+          myFailedModulePaths.clear();
+          myFailedModulePaths.addAll(Arrays.asList(myModulePaths));
           final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
           for (int idx = 0; idx < myModulePaths.length; idx++) {
             final ModulePath modulePath = myModulePaths[idx];
@@ -148,39 +149,19 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
                 final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
                 setModuleGroupPath(module, groupPath);
               }
-              failedPaths.remove(modulePath);
+              myFailedModulePaths.remove(modulePath);
             }
             catch (final IOException e) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  Messages.showMessageDialog("Cannot load module: " + e.getMessage(), "Cannot Load Module",
-                                             Messages.getErrorIcon());
-                }
-              });
+              fireError("Cannot load module: " + e.getMessage(), modulePath);
             }
             catch (JDOMException e) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  Messages.showMessageDialog("Corruped module file: " + modulePath, "Cannot Load Module",
-                                             Messages.getErrorIcon());
-                }
-              });
+              fireError("Corruped module file: " + modulePath, modulePath);
             }
             catch (InvalidDataException e) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  Messages.showMessageDialog("Corruped module data at: " + modulePath, "Cannot Load Module",
-                                             Messages.getErrorIcon());
-                }
-              });
+              fireError("Corruped module data at: " + modulePath, modulePath);
             }
             catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  Messages.showMessageDialog(moduleWithNameAlreadyExists.getMessage(), "Cannot Load Module",
-                                             Messages.getErrorIcon());
-                }
-              });
+              fireError(moduleWithNameAlreadyExists.getMessage(), modulePath);
             }
             catch (final LoadCancelledException e) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -197,7 +178,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
               });
             }
           }
-          myFailedModulePaths = failedPaths.toArray(new ModulePath[failedPaths.size()]);
           if (!ApplicationManager.getApplication().isHeadlessEnvironment() && modulesWithUnknownTypes.size() > 0) {
             final StringBuffer message = new StringBuffer("Cannot determine module type for the following ");
             if (modulesWithUnknownTypes.size() == 1) {
@@ -226,6 +206,23 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
         }
       });
     }
+  }
+
+  private void fireError(final String message, final ModulePath modulePath) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        final int answer = Messages.showDialog(
+          message + "\nWould you like to remove the module from the project?",
+          "Cannot Load Module",
+          new String[]{"&Yes", "&No"},
+          1,
+          Messages.getErrorIcon()
+        );
+        if (answer == 0) { // yes
+          myFailedModulePaths.remove(modulePath);
+        }
+      }
+    });
   }
 
   public ModifiableModuleModel getModifiableModel() {
@@ -316,7 +313,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     final Element modules = new Element("modules");
     final Collection<Module> collection = getModulesToWrite();
 
-    ArrayList<SaveItem> sorted = new ArrayList<SaveItem>(collection.size() + myFailedModulePaths.length);
+    ArrayList<SaveItem> sorted = new ArrayList<SaveItem>(collection.size() + myFailedModulePaths.size());
     for (Module module : collection) {
       sorted.add(new ModuleSaveItem(module));
     }
