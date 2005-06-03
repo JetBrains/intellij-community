@@ -22,9 +22,6 @@ class ObjectEqualityPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiExpression lhs = expression.getLOperand();
-        if(lhs == null){
-            return false;
-        }
         final PsiType lhsType = lhs.getType();
         if(lhsType == null){
             return false;

@@ -174,6 +174,10 @@ public class ControlFlowUtils{
             super.visitBreakStatement(breakStatement);
             final PsiStatement exitedStatement =
                     breakStatement.findExitedStatement();
+            if(exitedStatement == null)
+            {
+                return;
+            }
             if(exitedStatement.equals(m_target)){
                 m_found = true;
             }

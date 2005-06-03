@@ -33,9 +33,6 @@ class CharToStringPredicate implements PsiElementPredicate{
             final PsiAssignmentExpression parentExpression =
                     (PsiAssignmentExpression) parent;
             final PsiJavaToken sign = parentExpression.getOperationSign();
-            if(sign == null){
-                return false;
-            }
             final IElementType tokenType = sign.getTokenType();
             if(!JavaTokenType.PLUSEQ.equals(tokenType)){
                 return false;

@@ -29,6 +29,8 @@ public class FlipConditionalIntention extends Intention{
         final PsiExpression condition = exp.getCondition();
         final PsiExpression elseExpression = exp.getElseExpression();
         final PsiExpression thenExpression = exp.getThenExpression();
+        assert elseExpression != null;
+        assert thenExpression != null;
         final String newExpression =
                 BoolUtils.getNegatedExpressionText(condition) + '?' +
                         elseExpression.getText() +

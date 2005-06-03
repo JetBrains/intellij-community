@@ -4,7 +4,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.Nullable;
 
 class ConstantSubexpressionPredicate implements PsiElementPredicate{
     public boolean satisfiedBy(PsiElement element){
@@ -50,6 +50,7 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate{
      * variable + 2 + 3 normally gets evaluated left to right -> (variable + 2)
      * + 3 this method returns the right most legal subexpression -> 2 + 3
      */
+    @Nullable
     private static PsiBinaryExpression getSubexpression(PsiBinaryExpression expression){
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) expression.copy();
         final PsiExpression rhs = binaryExpression.getROperand();

@@ -42,6 +42,7 @@ public class CreateAssertIntention extends Intention{
             } else{
                 comparedExpression = lhs;
             }
+            assert comparedExpression != null;
             final String newExpression = "assertNull(" +
                     comparedExpression.getText() + ");";
             replaceStatement(newExpression,
@@ -60,6 +61,7 @@ public class CreateAssertIntention extends Intention{
                 comparedExpression = lhs;
                 comparingExpression = rhs;
             }
+            assert comparingExpression != null;
             final PsiType type = lhs.getType();
             final String newExpression;
             if(PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)){
@@ -142,9 +144,6 @@ public class CreateAssertIntention extends Intention{
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression) expression;
         final PsiJavaToken sign = binaryExpression.getOperationSign();
-        if(sign == null){
-            return false;
-        }
         final IElementType tokenType = sign.getTokenType();
         return JavaTokenType.EQEQ.equals(tokenType);
     }
@@ -156,9 +155,6 @@ public class CreateAssertIntention extends Intention{
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression) expression;
         final PsiJavaToken sign = binaryExpression.getOperationSign();
-        if(sign == null){
-            return false;
-        }
         final IElementType tokenType = sign.getTokenType();
         if(!JavaTokenType.EQEQ.equals(tokenType)){
             return false;

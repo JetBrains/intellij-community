@@ -26,6 +26,7 @@ public class RemoveConditionalIntention extends Intention{
         final PsiConditionalExpression exp = (PsiConditionalExpression) element;
         final PsiExpression condition = exp.getCondition();
         final PsiExpression thenExpression = exp.getThenExpression();
+        assert thenExpression != null;
         final String thenExpressionText = thenExpression.getText();
         if("true".equals(thenExpressionText)){
             final String newExpression = condition.getText();

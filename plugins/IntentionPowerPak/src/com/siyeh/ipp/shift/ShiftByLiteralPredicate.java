@@ -24,9 +24,6 @@ class ShiftByLiteralPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiExpression lhs = expression.getLExpression();
-        if(lhs == null){
-            return false;
-        }
         final PsiType lhsType = lhs.getType();
         if(lhsType == null){
             return false;

@@ -60,7 +60,7 @@ class ReplaceConditionalWithIfPredicate implements PsiElementPredicate{
                 (PsiAssignmentExpression) expressionStatement.getExpression();
         final PsiExpression lhs = assignmentExpression.getLExpression();
         final PsiExpression rhs = assignmentExpression.getRExpression();
-        if(lhs == null || rhs == null){
+        if(rhs == null){
             return false;
         }
         if(!(rhs instanceof PsiConditionalExpression)){

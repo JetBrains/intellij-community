@@ -14,17 +14,12 @@ public class ConcatenationUtils{
         }
         final PsiBinaryExpression expression = (PsiBinaryExpression) element;
         final PsiJavaToken sign = expression.getOperationSign();
-        if(sign == null){
-            return false;
-        }
+
         final IElementType tokenType = sign.getTokenType();
         if(!tokenType.equals(JavaTokenType.PLUS)){
             return false;
         }
         final PsiExpression lhs = expression.getLOperand();
-        if(lhs == null){
-            return false;
-        }
         final PsiType lhsType = lhs.getType();
         if(lhsType == null){
             return false;

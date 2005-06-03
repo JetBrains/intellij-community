@@ -56,7 +56,7 @@ public class ConditionalUtils{
                 (PsiAssignmentExpression) expression;
         final PsiExpression rhs = assignment.getRExpression();
         final PsiExpression lhs = assignment.getLExpression();
-        if(lhs == null || rhs == null){
+        if(rhs == null){
             return false;
         }
         final String rhsText = rhs.getText();

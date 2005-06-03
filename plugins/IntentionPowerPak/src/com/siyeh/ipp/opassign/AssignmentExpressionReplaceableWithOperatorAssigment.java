@@ -25,7 +25,7 @@ class AssignmentExpressionReplaceableWithOperatorAssigment
         }
         final PsiExpression lhs = assignment.getLExpression();
         final PsiExpression rhs = assignment.getRExpression();
-        if(lhs == null || rhs == null){
+        if(rhs == null){
             return false;
         }
         if(!(rhs instanceof PsiBinaryExpression)){
@@ -35,8 +35,7 @@ class AssignmentExpressionReplaceableWithOperatorAssigment
         final PsiExpression rhsRhs = binaryRhs.getROperand();
         final PsiExpression rhsLhs = binaryRhs.getLOperand();
 
-        if(rhsRhs == null || rhsLhs == null || !rhsLhs.isValid() ||
-                !rhsRhs.isValid()){
+        if(rhsRhs == null){
             return false;
         }
         final PsiJavaToken operatorSign = binaryRhs.getOperationSign();

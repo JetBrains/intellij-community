@@ -130,7 +130,7 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiExpression thenLhs = thenExpression.getLExpression();
-        if(thenExpression.getRExpression() == null || thenLhs == null){
+        if(thenExpression.getRExpression() == null){
             return false;
         }
         if(elseExpression.getRExpression() == null ||
@@ -138,11 +138,16 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiExpression thenRhs = thenExpression.getRExpression();
+        assert thenRhs != null;
         final PsiType thenType = thenRhs.getType();
         if(thenType == null){
             return false;
         }
         final PsiExpression elseRhs = elseExpression.getRExpression();
+       if(elseRhs == null)
+       {
+           return false;
+       }
         final PsiType elseType = elseRhs.getType();
         if(elseType == null){
             return false;

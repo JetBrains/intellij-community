@@ -31,6 +31,7 @@ public class ExpandBooleanIntention extends Intention{
             final PsiAssignmentExpression assignmentExpression =
                     (PsiAssignmentExpression) assignmentStatement.getExpression();
             final PsiExpression rhs = assignmentExpression.getRExpression();
+            assert rhs != null;
             final String rhsText = rhs.getText();
             final PsiExpression lhs = assignmentExpression.getLExpression();
             final String lhsText = lhs.getText();

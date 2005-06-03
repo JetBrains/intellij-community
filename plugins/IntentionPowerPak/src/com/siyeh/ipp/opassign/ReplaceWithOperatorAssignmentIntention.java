@@ -11,6 +11,7 @@ public class ReplaceWithOperatorAssignmentIntention
         final PsiAssignmentExpression exp = (PsiAssignmentExpression) element;
         final PsiBinaryExpression rhs =
                 (PsiBinaryExpression) exp.getRExpression();
+        assert rhs != null;
         final PsiJavaToken sign = rhs.getOperationSign();
         final String operator = sign.getText();
         return "Replace = with " + operator + '=';
@@ -30,9 +31,11 @@ public class ReplaceWithOperatorAssignmentIntention
         final PsiBinaryExpression rhs =
                 (PsiBinaryExpression) exp.getRExpression();
         final PsiExpression lhs = exp.getLExpression();
+        assert rhs != null;
         final PsiJavaToken sign = rhs.getOperationSign();
         final String operand = sign.getText();
         final PsiExpression rhsrhs = rhs.getROperand();
+        assert rhsrhs != null;
         final String expString =
                 lhs.getText() + operand + '=' + rhsrhs.getText();
         replaceExpression(expString, exp);

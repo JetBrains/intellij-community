@@ -32,6 +32,8 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention{
         }
         final PsiJavaToken operationSign = binaryExpression.getOperationSign();
         final PsiExpression rhs = binaryExpression.getROperand();
+        assert rhs != null;
+        assert leftSide != null;
         return "Compute constant value of " + leftSide.getText() + ' ' +
                 operationSign.getText() + ' ' + rhs.getText();
     }
@@ -91,6 +93,7 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention{
             result = lhsText;
         }
         final PsiExpression rhs = expression.getROperand();
+        assert rhs != null;
         final String rhsText = rhs.getText();
         if(rhsText.charAt(0) == '\'' || rhsText.charAt(0) == '"'){
             result += rhsText.substring(1, rhsText.length() - 1);

@@ -23,9 +23,6 @@ class MultiplyByPowerOfTwoPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiExpression lhs = expression.getLExpression();
-        if(lhs == null){
-            return false;
-        }
         final PsiType lhsType = lhs.getType();
         if(lhsType == null){
             return false;
@@ -48,9 +45,6 @@ class MultiplyByPowerOfTwoPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiExpression lhs = expression.getLOperand();
-        if(lhs == null){
-            return false;
-        }
         final PsiType lhsType = lhs.getType();
         if(lhsType == null){
             return false;

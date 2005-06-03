@@ -74,6 +74,7 @@ public abstract class Intention implements IntentionAction{
                     ComparisonUtils.getNegatedComparison(operator);
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
+            assert rhs != null;
             expString = lhs.getText() + negatedComparison + rhs.getText();
         } else{
             if(ParenthesesUtils.getPrecendence(newExpression) >

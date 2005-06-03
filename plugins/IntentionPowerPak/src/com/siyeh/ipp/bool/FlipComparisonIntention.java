@@ -42,6 +42,7 @@ public class FlipComparisonIntention extends MutablyNamedIntention{
         final PsiExpression rhs = exp.getROperand();
         final PsiJavaToken sign = exp.getOperationSign();
         final String operand = sign.getText();
+        assert rhs != null;
         final String expString =
                 rhs.getText() + ComparisonUtils.getFlippedComparison(operand) +
                         lhs.getText();

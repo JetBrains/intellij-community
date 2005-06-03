@@ -40,7 +40,7 @@ class StringToCharPredicate implements PsiElementPredicate{
             final PsiExpression otherOperand;
             final PsiExpression lhs = parentExpression.getLOperand();
             final PsiExpression rhs = parentExpression.getROperand();
-            if(lhs == null || rhs == null){
+            if(rhs == null){
                 return false;
             }
             if(lhs.equals(element)){
@@ -59,9 +59,6 @@ class StringToCharPredicate implements PsiElementPredicate{
             final PsiAssignmentExpression parentExpression =
                     (PsiAssignmentExpression) parent;
             final PsiJavaToken sign = parentExpression.getOperationSign();
-            if(sign == null){
-                return false;
-            }
             final IElementType tokenType = sign.getTokenType();
             if(!JavaTokenType.PLUSEQ.equals(tokenType)){
                 return false;

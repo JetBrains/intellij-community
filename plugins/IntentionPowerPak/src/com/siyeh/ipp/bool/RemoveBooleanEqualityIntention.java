@@ -33,6 +33,7 @@ public class RemoveBooleanEqualityIntention extends MutablyNamedIntention{
         final PsiExpression lhs = exp.getLOperand();
         final String lhsText = lhs.getText();
         final PsiExpression rhs = exp.getROperand();
+        assert rhs != null;
         final String rhsText = rhs.getText();
         if("true".equals(lhsText)){
             if(isEquals){

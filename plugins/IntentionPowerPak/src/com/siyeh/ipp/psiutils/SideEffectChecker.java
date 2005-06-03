@@ -36,21 +36,21 @@ public class SideEffectChecker{
         }
 
         public void visitPrefixExpression(PsiPrefixExpression expression){
+            super.visitPrefixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
 
-            super.visitPrefixExpression(expression);
             if(tokenType.equals(JavaTokenType.PLUSPLUS) ||
                     tokenType.equals(JavaTokenType.MINUSMINUS)){
                 mayHaveSideEffects = true;
             }
         }
 
-        public void visitPostfixExpostssion(PsiPostfixExpression expostssion){
-            final PsiJavaToken sign = expostssion.getOperationSign();
+        public void visitPostfixExpression(PsiPostfixExpression expression){
+            super.visitPostfixExpression(expression);
+            final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
 
-            super.visitPostfixExpression(expostssion);
             if(tokenType.equals(JavaTokenType.PLUSPLUS) ||
                     tokenType.equals(JavaTokenType.MINUSMINUS)){
                 mayHaveSideEffects = true;

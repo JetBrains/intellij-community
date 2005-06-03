@@ -42,9 +42,12 @@ public class ReplaceConditionalWithIfIntention extends Intention{
         final String lhsText = lhs.getText();
         final PsiJavaToken sign = assigmentExpression.getOperationSign();
         final String operator = sign.getText();
+        assert rhs != null;
         final PsiExpression condition = rhs.getCondition();
         final PsiExpression thenExpression = rhs.getThenExpression();
         final PsiExpression elseExpression = rhs.getElseExpression();
+        assert thenExpression != null;
+        assert elseExpression != null;
         final String ifStatementString = "if(" + condition.getText() + ')' +
                 '{' +
                 lhsText + operator + thenExpression.getText() + ';' +
@@ -74,6 +77,8 @@ public class ReplaceConditionalWithIfIntention extends Intention{
         final PsiExpression condition = rhs.getCondition();
         final PsiExpression thenExpression = rhs.getThenExpression();
         final PsiExpression elseExpression = rhs.getElseExpression();
+        assert thenExpression != null;
+        assert elseExpression != null;
         final String ifStatementString = "if(" + condition.getText() + ')' +
                 '{' +
                 lhsText + '=' + thenExpression.getText() + ';' +
@@ -107,6 +112,8 @@ public class ReplaceConditionalWithIfIntention extends Intention{
                 returnValue.getThenExpression();
         final PsiExpression elseExpression =
                 returnValue.getElseExpression();
+        assert thenExpression != null;
+        assert elseExpression != null;
         final String ifStatementString = "if(" + condition.getText() + ')' +
                 '{' +
                 "return " + thenExpression.getText() + ';' +

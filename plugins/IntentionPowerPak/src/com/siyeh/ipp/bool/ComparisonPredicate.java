@@ -19,7 +19,7 @@ class ComparisonPredicate implements PsiElementPredicate{
 
         final PsiExpression lhs = expression.getLOperand();
         final PsiExpression rhs = expression.getROperand();
-        if(lhs == null || rhs == null){
+        if(rhs == null){
             return false;
         }
         return ComparisonUtils.isComparison((PsiExpression) element);

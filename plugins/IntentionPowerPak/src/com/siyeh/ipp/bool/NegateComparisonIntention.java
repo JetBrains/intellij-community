@@ -45,10 +45,10 @@ public class NegateComparisonIntention extends MutablyNamedIntention{
         final String negatedOperator =
                 ComparisonUtils.getNegatedComparison(operator);
         final String lhsText = lhs.getText();
+        assert rhs != null;
         final String rhsText = rhs.getText();
         replaceExpressionWithNegatedExpressionString(lhsText +
                 negatedOperator +
-                rhsText,
-                                                     exp);
+                rhsText, exp);
     }
 }

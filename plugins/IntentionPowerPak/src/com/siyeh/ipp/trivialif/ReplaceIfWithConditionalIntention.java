@@ -43,6 +43,7 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             final String operator = sign.getText();
             final String thenValue;
             final PsiExpression thenRhs = thenAssign.getRExpression();
+            assert thenRhs != null;
             if(ParenthesesUtils.getPrecendence(thenRhs)
                     <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
                 thenValue = thenRhs.getText();
@@ -51,6 +52,7 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             }
             final String elseValue;
             final PsiExpression elseRhs = elseAssign.getRExpression();
+            assert elseRhs != null;
             if(ParenthesesUtils.getPrecendence(elseRhs)
                     <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
                 elseValue = elseRhs.getText();
