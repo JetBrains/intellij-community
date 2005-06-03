@@ -10,11 +10,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.ui.NameSuggestionsField;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.NonFocusableCheckBox;
@@ -30,7 +30,6 @@ public class MoveInnerDialog extends RefactoringDialog {
   private MoveInnerProcessor myProcessor;
 
   private EditorTextField myClassNameField = new EditorTextField("");
-//  private JTextField myParameterField  = new JTextField();
   private NameSuggestionsField myParameterField;
   private JCheckBox myCbPassOuterClass;
   private JCheckBox myCbSearchInComments;
@@ -150,10 +149,9 @@ public class MoveInnerDialog extends RefactoringDialog {
     options.add(Box.createVerticalStrut(10));
 
     if (myCbPassOuterClass.isEnabled()) {
-      final MyClassReferencesVisitor visitor = new MyClassReferencesVisitor();
-      myInnerClass.accept(visitor);
-      myCbPassOuterClass.setSelected(visitor.myIsFound);
-      myParameterField.setEnabled(visitor.myIsFound);
+      final boolean thisNeeded = MoveInstanceMembersUtil.getThisClassesToMembers(myInnerClass).containsKey(myOuterClass);
+      myCbPassOuterClass.setSelected(thisNeeded);
+      myParameterField.setEnabled(thisNeeded);
     }
 
     final Box searchOptions = Box.createHorizontalBox();
@@ -205,8 +203,7 @@ public class MoveInnerDialog extends RefactoringDialog {
           PsiClass targetClass = (PsiClass)targetContainer;
           PsiClass[] classes = targetClass.getInnerClasses();
           if (classes != null) {
-            for (int idx = 0; idx < classes.length; idx++) {
-              PsiClass aClass = classes[idx];
+            for (PsiClass aClass : classes) {
               if (className.equals(aClass.getName())) {
                 message =
                 "Inner class named '" + className + "' is already defined\n" +
@@ -237,24 +234,6 @@ public class MoveInnerDialog extends RefactoringDialog {
     }
 
     myProcessor.run(this);
-  }
-
-  class MyClassReferencesVisitor extends PsiRecursiveElementVisitor {
-    boolean myIsFound = false;
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-      if (expression.getQualifierExpression() != null) {
-        expression.getQualifierExpression().accept(this);
-      }
-      else {
-        final PsiElement psiElement = expression.resolve();
-        if (psiElement instanceof PsiMember && !((PsiMember)psiElement).hasModifierProperty(PsiModifier.STATIC)) {
-          final PsiClass containingClass = ((PsiMember)psiElement).getContainingClass();
-          if (InheritanceUtil.isInheritorOrSelf(myOuterClass, containingClass, true)) {
-            myIsFound = true;
-          }
-        }
-      }
-    }
   }
 
   protected void doHelpAction() {

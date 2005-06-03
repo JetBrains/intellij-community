@@ -77,8 +77,8 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
     PsiReference[] innerClassRefs = helper.findReferences(myInnerClass, GlobalSearchScope.projectScope(myProject), false);
     ArrayList<UsageInfo> usageInfos = new ArrayList<UsageInfo>(innerClassRefs.length);
-    for (int idx = 0; idx < innerClassRefs.length; idx++) {
-      PsiElement ref = innerClassRefs[idx].getElement();
+    for (PsiReference innerClassRef : innerClassRefs) {
+      PsiElement ref = innerClassRef.getElement();
       if (!PsiTreeUtil.isAncestor(myInnerClass, ref, true)) { // do not show self-references
         usageInfos.add(new UsageInfo(ref));
       }
@@ -177,24 +177,23 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       // replace references in a new class to old inner class with references to itself
       PsiReference[] refs = manager.getSearchHelper().findReferences(myInnerClass, new LocalSearchScope(newClass),
                                                                      true);
-      for (int idx = 0; idx < refs.length; idx++) {
-        PsiElement ref = refs[idx].getElement();
-        if (ref.getParent() instanceof PsiJavaCodeReferenceElement) {
-          PsiJavaCodeReferenceElement parentRef = (PsiJavaCodeReferenceElement)ref.getParent();
+      for (PsiReference ref : refs) {
+        PsiElement element = ref.getElement();
+        if (element.getParent() instanceof PsiJavaCodeReferenceElement) {
+          PsiJavaCodeReferenceElement parentRef = (PsiJavaCodeReferenceElement)element.getParent();
           PsiElement parentRefElement = parentRef.resolve();
           if (parentRefElement instanceof PsiClass) { // reference to inner class inside our inner
             parentRef.getQualifier().delete();
             continue;
           }
         }
-        ref.getReference().bindToElement(newClass);
+        element.getReference().bindToElement(newClass);
       }
 
       myInnerClass.delete();
 
       // correct references in usages
-      for (int idx = 0; idx < usages.length; idx++) {
-        UsageInfo usage = usages[idx];
+      for (UsageInfo usage : usages) {
         if (usage.isNonCodeUsage) continue;
         PsiElement ref = usage.getElement();
         if (myParameterNameOuterClass != null) { // should pass outer as parameter
@@ -396,8 +395,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     PsiMethod[] constructors = aClass.getConstructors();
     PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
     if (constructors.length > 0) {
-      for (int idx = 0; idx < constructors.length; idx++) {
-        PsiMethod constructor = constructors[idx];
+      for (PsiMethod constructor : constructors) {
         if (parameterName != null) {
           PsiParameterList parameterList = constructor.getParameterList();
           PsiParameter parameter = factory.createParameter(parameterName, field.getType());

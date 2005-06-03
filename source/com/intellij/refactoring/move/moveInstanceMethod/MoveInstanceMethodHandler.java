@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 
 import java.util.*;
@@ -73,7 +74,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
       return;
     }
 
-    final Set<PsiClass> classes = MoveMethodUtil.getThisClassesToMembers(method).keySet();
+    final Set<PsiClass> classes = MoveInstanceMembersUtil.getThisClassesToMembers(method).keySet();
     for (PsiClass aClass : classes) {
       if (aClass instanceof JspClass) {
         String message = "Cannot perform the refactoring.\n" +
@@ -139,7 +140,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
   }
 
   public static Map<PsiClass, String> suggestParameterNames(final PsiMethod method, final PsiVariable targetVariable) {
-    final Map<PsiClass, Set<PsiMember>> classesToMembers = MoveMethodUtil.getThisClassesToMembers(method);
+    final Map<PsiClass, Set<PsiMember>> classesToMembers = MoveInstanceMembersUtil.getThisClassesToMembers(method);
     Map<PsiClass, String> result = new LinkedHashMap<PsiClass, String>();
     for (Map.Entry<PsiClass,Set<PsiMember>> entry : classesToMembers.entrySet()) {
       PsiClass aClass = entry.getKey();

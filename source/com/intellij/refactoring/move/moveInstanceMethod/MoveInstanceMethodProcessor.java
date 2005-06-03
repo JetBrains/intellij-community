@@ -9,6 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
+import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -138,14 +139,14 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     if (body != null) {
       body.accept(new PsiRecursiveElementVisitor() {
         public void visitNewExpression(PsiNewExpression expression) {
-          if (MoveMethodUtil.getClassReferencedByThis(expression) != null) {
+          if (MoveInstanceMembersUtil.getClassReferencedByThis(expression) != null) {
             usages.add(new InternalUsageInfo(expression));
           }
           super.visitNewExpression(expression);
         }
 
         public void visitReferenceExpression(PsiReferenceExpression expression) {
-          if (MoveMethodUtil.getClassReferencedByThis(expression) != null) {
+          if (MoveInstanceMembersUtil.getClassReferencedByThis(expression) != null) {
             usages.add(new InternalUsageInfo(expression));
           } else if (!expression.isQualified()) {
             final PsiElement resolved = expression.resolve();
@@ -245,7 +246,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
         newQualifier = manager.getElementFactory().createExpressionFromText(myTargetVariable.getName(), null);
       }
 
-      final PsiClass classReferencedByThis = MoveMethodUtil.getClassReferencedByThis(methodExpression);
+      final PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(methodExpression);
       if (classReferencedByThis != null) {
         String thisArgumentText = null;
         if (manager.areElementsEquivalent(myMethod.getContainingClass(), classReferencedByThis)) {
@@ -305,7 +306,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       if (body != null) {
         body.accept(new PsiRecursiveElementVisitor() {
           public void visitThisExpression(PsiThisExpression expression) {
-            final PsiClass classReferencedByThis = MoveMethodUtil.getClassReferencedByThis(expression);
+            final PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
             if (classReferencedByThis != null) {
               final PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
               String paramName = getParameterNameToCreate(classReferencedByThis);
@@ -333,7 +334,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
                   expression.replace(thisExpression);
                   return;
                 } else {
-                  PsiClass classReferencedByThis = MoveMethodUtil.getClassReferencedByThis(expression);
+                  PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
                   if (classReferencedByThis != null) {
                     final String paramName = getParameterNameToCreate(classReferencedByThis);
                     PsiReferenceExpression qualified = (PsiReferenceExpression)factory.createExpressionFromText(paramName + ".f", null);
@@ -357,7 +358,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
                 //Target is a field, replace target.new A() -> new A()
                 qualifier.delete();
               } else {
-                final PsiClass classReferencedByThis = MoveMethodUtil.getClassReferencedByThis(expression);
+                final PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
                 if (classReferencedByThis != null) {
                   if (qualifier != null) qualifier.delete();
                   final String paramName = getParameterNameToCreate(classReferencedByThis);

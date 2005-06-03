@@ -7,6 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.HashMap;
+import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
@@ -80,7 +81,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
   }
 
   private JPanel createParametersPanel () {
-    myThisClassesMap = MoveMethodUtil.getThisClassesToMembers(myMethod);
+    myThisClassesMap = MoveInstanceMembersUtil.getThisClassesToMembers(myMethod);
     myOldClassParameterNameFields = new HashMap<PsiClass, EditorTextField>();
     if (myThisClassesMap.size() == 0) return null;
     JPanel panel = new JPanel(new VerticalFlowLayout());
