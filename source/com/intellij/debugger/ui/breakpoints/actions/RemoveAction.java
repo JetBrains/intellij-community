@@ -37,6 +37,9 @@ public class RemoveAction extends BreakpointPanelAction {
     getPanel().getTable().registerKeyboardAction(
       this, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
     );
+    getPanel().getTree().registerKeyboardAction(
+      this, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+    );
   }
 
   public void actionPerformed(ActionEvent e) {

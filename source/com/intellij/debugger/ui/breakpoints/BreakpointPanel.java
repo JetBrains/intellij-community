@@ -378,6 +378,17 @@ public class BreakpointPanel {
       runnable.run();
     }
     myDisposeActions.clear();
+
+    final KeyStroke[] treeStrokes = myTree.getRegisteredKeyStrokes();
+    for (KeyStroke stroke : treeStrokes) {
+      myTree.unregisterKeyboardAction(stroke);
+    }
+
+    final KeyStroke[] tableStrokes = myTable.getRegisteredKeyStrokes();
+    for (KeyStroke stroke : tableStrokes) {
+      myTable.unregisterKeyboardAction(stroke);
+    }
+
     myPropertiesPanel.dispose();
   }
 
