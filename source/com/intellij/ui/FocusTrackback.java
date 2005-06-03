@@ -62,7 +62,7 @@ public class FocusTrackback {
         myFocusOwner.requestFocus();
       }
 
-      stack.remove(this);
+      dispose();
     }
   }
 
@@ -99,6 +99,10 @@ public class FocusTrackback {
 
   public String toString() {
     return getClass().getName() + " requestor: " + myRequestor;
+  }
+
+  public void dispose() {
+    getStackForRoot(myRoot).remove(this);
   }
 
 
