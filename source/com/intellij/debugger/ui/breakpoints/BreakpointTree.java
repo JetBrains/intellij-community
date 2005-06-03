@@ -436,7 +436,29 @@ public class BreakpointTree extends CheckboxTree {
     myBreakpoints.addAll(Arrays.asList(breakpoints));
     rebuildTree();
   }
-  
+
+  public Breakpoint getPreviousSibling(Breakpoint breakpoint) {
+    return getSibling(breakpoint, false);
+  }
+
+
+  public Breakpoint getNextSibling(Breakpoint breakpoint) {
+    return getSibling(breakpoint, true);
+  }
+
+  private Breakpoint getSibling(Breakpoint breakpoint, boolean nextSibling) {
+    final CheckedTreeNode node = myDescriptorToNodeMap.get(new BreakpointDescriptor(breakpoint));
+    if (node == null) {
+      return null;
+    }
+    final CheckedTreeNode sibling = (CheckedTreeNode) (nextSibling? node.getNextSibling() : node.getPreviousSibling());
+    if (sibling == null) {
+      return null;
+    }
+    final TreeDescriptor descriptor = (TreeDescriptor)sibling.getUserObject();
+    return descriptor instanceof BreakpointDescriptor ? ((BreakpointDescriptor)descriptor).getBreakpoint() : null;
+  }
+
   private void rebuildTree() {
     final TreeStateSnapshot treeStateSnapshot = new TreeStateSnapshot(this);
     myRootNode.removeAllChildren();

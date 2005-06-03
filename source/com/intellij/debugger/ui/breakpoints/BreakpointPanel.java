@@ -10,15 +10,14 @@ import com.intellij.psi.PsiField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.tree.TreeModelAdapter;
 
 import javax.swing.*;
-import javax.swing.tree.TreeSelectionModel;
-import javax.swing.tree.TreeModel;
 import javax.swing.event.*;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.util.EventListener;
 import java.util.ArrayList;
+import java.util.EventListener;
 
 /**
  * @author Jeka
@@ -253,10 +252,15 @@ public class BreakpointPanel {
   }
 
   public void selectBreakpoint(Breakpoint breakpoint) {
-    int index = myTable.getModel().getBreakpointIndex(breakpoint);
-    ListSelectionModel model = myTable.getSelectionModel();
-    model.clearSelection();
-    model.addSelectionInterval(index, index);
+    if (isTreeShowing()) {
+      myTree.selectBreakpoint(breakpoint);
+    }
+    else {
+      int index = myTable.getModel().getBreakpointIndex(breakpoint);
+      ListSelectionModel model = myTable.getSelectionModel();
+      model.clearSelection();
+      model.addSelectionInterval(index, index);
+    }
   }
 
   public void setBreakpoints(Breakpoint[] breakpoints) {
@@ -275,10 +279,27 @@ public class BreakpointPanel {
 
   public void removeSelectedBreakpoints() {
     final Breakpoint[] selectedBreakpoints = getSelectedBreakpoints();
+    Breakpoint breakpointToSelect = null;
+    if (selectedBreakpoints.length > 0) {
+      if (isTreeShowing()) {
+        breakpointToSelect = myTree.getPreviousSibling(selectedBreakpoints[0]);
+      }
+      else {
+        final int index = myTable.getModel().getBreakpointIndex(selectedBreakpoints[0]) - 1;
+        if (index >= 0 && index < (myTable.getRowCount() - selectedBreakpoints.length)) {
+          breakpointToSelect = myTable.getModel().getBreakpoint(index);
+        }
+      }
+    }
     myTree.removeBreakpoints(selectedBreakpoints);
     myTable.getModel().removeBreakpoints(selectedBreakpoints);
     myCurrentViewableBreakpoint = null;
-    updateCurrentBreakpointPropertiesPanel();
+    if (breakpointToSelect != null) {
+      selectBreakpoint(breakpointToSelect);
+    }
+    else {
+      updateCurrentBreakpointPropertiesPanel();
+    }
   }
 
   public void insertBreakpointAt(Breakpoint breakpoint, int index) {

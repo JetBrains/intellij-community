@@ -42,20 +42,18 @@ public class RemoveAction extends BreakpointPanelAction {
   public void actionPerformed(ActionEvent e) {
     Breakpoint[] breakpoints = getPanel().getSelectedBreakpoints();
     if (breakpoints != null) {
-      for (int idx = 0; idx < breakpoints.length; idx++) {
-        if (breakpoints[idx] instanceof AnyExceptionBreakpoint) {
+      for (Breakpoint breakpoint1 : breakpoints) {
+        if (breakpoint1 instanceof AnyExceptionBreakpoint) {
           return;
         }
       }
       getPanel().removeSelectedBreakpoints();
       BreakpointManager manager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
-      for (int idx = 0; idx < breakpoints.length; idx++) {
-        final Breakpoint breakpoint = breakpoints[idx];
+      for (final Breakpoint breakpoint : breakpoints) {
         getPanel().getTree().removeBreakpoint(breakpoint);
         manager.removeBreakpoint(breakpoint);
       }
     }
-    getPanel().getTable().requestFocus();
   }
 
   public void update() {
