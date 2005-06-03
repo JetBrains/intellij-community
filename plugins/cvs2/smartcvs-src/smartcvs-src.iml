@@ -11,6 +11,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="javacvs-src" />
+    <orderEntry type="module" module-name="util" />
     <orderEntryProperties />
   </component>
 </module>
