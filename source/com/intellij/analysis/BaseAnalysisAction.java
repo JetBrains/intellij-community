@@ -167,11 +167,13 @@ public abstract class BaseAnalysisAction extends AnAction {
       group.add(myProjectButton);
       group.add(myFileButton);
       panel.add(myProjectButton);
+      boolean useModuleScope = false;
       if (myModuleName != null) {
         myModuleButton = new JRadioButton(myAnalysisVerb + " module \'" + myModuleName + "\'");
         myModuleButton.setMnemonic(KeyEvent.VK_M);
         group.add(myModuleButton);
-        myModuleButton.setSelected(uiOptions.SCOPE_TYPE == AnalysisScope.MODULE);          
+        useModuleScope = uiOptions.SCOPE_TYPE == AnalysisScope.MODULE;
+        myModuleButton.setSelected(useModuleScope);
         panel.add(myModuleButton);
       }
       panel.add(myFileButton);
@@ -179,7 +181,7 @@ public abstract class BaseAnalysisAction extends AnAction {
       myInspectTestSource = new JCheckBox("Include Test Sources", uiOptions.ANALYZE_TEST_SOURCES);
       wholePanel.add(myInspectTestSource, BorderLayout.SOUTH);
       myProjectButton.setSelected(uiOptions.SCOPE_TYPE == AnalysisScope.PROJECT);
-      myFileButton.setSelected(uiOptions.SCOPE_TYPE != AnalysisScope.PROJECT && uiOptions.SCOPE_TYPE != AnalysisScope.MODULE);
+      myFileButton.setSelected(uiOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope);
       return wholePanel;
     }
 
