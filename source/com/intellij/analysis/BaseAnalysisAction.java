@@ -40,15 +40,14 @@ public abstract class BaseAnalysisAction extends AnAction {
     final Module module = (Module)dataContext.getData(DataConstants.MODULE);
     if (project != null) {
       AnalysisScope scope;
-      boolean calledFromNonJavaFile = false;
       PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
       if (psiFile != null && !(psiFile instanceof PsiJavaFile)) {
         scope = new AnalysisScope(psiFile);
-        calledFromNonJavaFile = true;
       }
       else {
         scope = getInspectionScope(dataContext);
       }
+      final InspectionManagerEx.UIOptions uiOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).getUIOptions();
       FileProjectOrModuleDialog dlg = new FileProjectOrModuleDialog(project,
                                                                     scope.getDisplayName(),
                                                                     module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtil.getModuleNameInReadAction(module) : null,
@@ -57,13 +56,17 @@ public abstract class BaseAnalysisAction extends AnAction {
       if (!dlg.isOK()) return;
       if (dlg.isProjectScopeSelected()) {
         scope = getProjectScope(dataContext);
+        uiOptions.SCOPE_TYPE = AnalysisScope.PROJECT;
       }
       else {
         if (dlg.isModuleScopeSelected()) {
           scope = getModuleScope(dataContext);
+          uiOptions.SCOPE_TYPE = AnalysisScope.MODULE;
+        } else {
+          uiOptions.SCOPE_TYPE = AnalysisScope.FILE;//just not project scope
         }
       }
-      ((InspectionManagerEx)InspectionManagerEx.getInstance(project)).getUIOptions().ANALYZE_TEST_SOURCES = dlg.isInspectTestSources();
+      uiOptions.ANALYZE_TEST_SOURCES = dlg.isInspectTestSources();
       scope.setIncludeTestSource(dlg.isInspectTestSources());
       FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -144,7 +147,6 @@ public abstract class BaseAnalysisAction extends AnAction {
       myModuleName = moduleName;
       init();
       setTitle("Specify " + myTitle + " Scope");
-      myFileButton.setSelected(true);
       if (isProjectScope){
         myFileButton.setVisible(false);
         myProjectButton.setSelected(true);
@@ -152,6 +154,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     }
 
     protected JComponent createCenterPanel() {
+      final InspectionManagerEx.UIOptions uiOptions = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject)).getUIOptions();
       JPanel wholePanel = new JPanel(new BorderLayout());
       JPanel panel = new JPanel();
       panel.setBorder(IdeBorderFactory.createTitledBorder(myAnalysisNoon + " scope"));
@@ -168,12 +171,15 @@ public abstract class BaseAnalysisAction extends AnAction {
         myModuleButton = new JRadioButton(myAnalysisVerb + " module \'" + myModuleName + "\'");
         myModuleButton.setMnemonic(KeyEvent.VK_M);
         group.add(myModuleButton);
+        myModuleButton.setSelected(uiOptions.SCOPE_TYPE == AnalysisScope.MODULE);          
         panel.add(myModuleButton);
       }
       panel.add(myFileButton);
       wholePanel.add(panel, BorderLayout.CENTER);
-      myInspectTestSource = new JCheckBox("Include Test Sources", ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject)).getUIOptions().ANALYZE_TEST_SOURCES);
+      myInspectTestSource = new JCheckBox("Include Test Sources", uiOptions.ANALYZE_TEST_SOURCES);
       wholePanel.add(myInspectTestSource, BorderLayout.SOUTH);
+      myProjectButton.setSelected(uiOptions.SCOPE_TYPE == AnalysisScope.PROJECT);
+      myFileButton.setSelected(uiOptions.SCOPE_TYPE != AnalysisScope.PROJECT && uiOptions.SCOPE_TYPE != AnalysisScope.MODULE);
       return wholePanel;
     }
 

@@ -795,6 +795,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
       public float SPLITTER_PROPORTION = 0.5f;
       public boolean GROUP_BY_SEVERITY = false;
       public boolean ANALYZE_TEST_SOURCES = true;
+      public int SCOPE_TYPE = 1;
       public final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
       public final GroupBySeverityAction myGroupBySeverityAction;
       public UIOptions() {
