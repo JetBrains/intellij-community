@@ -2,9 +2,7 @@ package com.siyeh.ig.jdk;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
@@ -104,8 +102,46 @@ public class AutoUnboxingInspection extends ExpressionInspection{
 
     private static class AutoUnboxingVisitor extends BaseInspectionVisitor{
 
-        public void visitExpression(PsiExpression expression){
-            super.visitExpression(expression);
+        public void visitConditionalExpression(PsiConditionalExpression expression)
+        {
+            super.visitConditionalExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitReferenceExpression(PsiReferenceExpression expression){
+            super.visitReferenceExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitNewExpression(PsiNewExpression expression){
+            super.visitNewExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitMethodCallExpression(PsiMethodCallExpression expression)
+        {
+            super.visitMethodCallExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitTypeCastExpression(PsiTypeCastExpression expression){
+            super.visitTypeCastExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitAssignmentExpression(PsiAssignmentExpression expression)
+        {
+            super.visitAssignmentExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitParenthesizedExpression(PsiParenthesizedExpression expression)
+        {
+            super.visitParenthesizedExpression(expression);
+            checkExpression(expression);
+        }
+
+        private void checkExpression(PsiExpression expression){
             final PsiType expressionType = expression.getType();
             if(expressionType == null){
                 return;

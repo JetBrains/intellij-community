@@ -29,8 +29,7 @@ public class ClassReferencesSubclassInspection extends ClassInspection{
         return new ClassReferencesSubclassVisitor();
     }
 
-    private static class ClassReferencesSubclassVisitor
-                                                        extends BaseInspectionVisitor{
+    private static class ClassReferencesSubclassVisitor extends BaseInspectionVisitor{
         private boolean m_inClass = false;
         private PsiClass containingClass = null;
 

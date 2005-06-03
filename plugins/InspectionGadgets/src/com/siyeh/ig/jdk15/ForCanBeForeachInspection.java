@@ -57,6 +57,10 @@ public class ForCanBeForeachInspection extends StatementInspection{
                 throws IncorrectOperationException{
 
             final PsiElement forElement = descriptor.getPsiElement();
+            if(!(forElement.getParent() instanceof PsiForStatement))
+            {
+                return;
+            }
             final PsiForStatement forStatement =
                     (PsiForStatement) forElement.getParent();
             if(isArrayLoopStatement(forStatement)){

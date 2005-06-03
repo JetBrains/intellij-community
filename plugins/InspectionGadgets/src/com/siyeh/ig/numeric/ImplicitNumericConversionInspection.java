@@ -165,8 +165,9 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
         }
 
         private static boolean isNegatedLiteral(PsiExpression expression) {
-            if (!(expression instanceof PsiPrefixExpression))
-            return false;
+            if(!(expression instanceof PsiPrefixExpression)){
+                return false;
+            }
             final PsiPrefixExpression prefixExpression = (PsiPrefixExpression) expression;
             final PsiJavaToken sign = prefixExpression.getOperationSign();
             if(sign == null)
@@ -193,28 +194,78 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
 
     private class ImplicitNumericConversionVisitor extends BaseInspectionVisitor {
 
-        public void visitExpression(PsiExpression exp) {
-            super.visitExpression(exp);
-            final PsiElement parent = exp.getParent();
+        public void visitBinaryExpression(PsiBinaryExpression expression){
+            super.visitBinaryExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitConditionalExpression(PsiConditionalExpression expression){
+            super.visitConditionalExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitLiteralExpression(PsiLiteralExpression expression){
+            super.visitLiteralExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitPostfixExpression(PsiPostfixExpression expression){
+            super.visitPostfixExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitPrefixExpression(PsiPrefixExpression expression){
+            super.visitPrefixExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitReferenceExpression(PsiReferenceExpression expression){
+            super.visitReferenceExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitMethodCallExpression(PsiMethodCallExpression expression){
+            super.visitMethodCallExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitTypeCastExpression(PsiTypeCastExpression expression){
+            super.visitTypeCastExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitAssignmentExpression(PsiAssignmentExpression expression){
+            super.visitAssignmentExpression(expression);
+            checkExpression(expression);
+        }
+
+        public void visitParenthesizedExpression(PsiParenthesizedExpression expression)
+        {
+            super.visitParenthesizedExpression(expression);
+            checkExpression(expression);
+        }
+
+        private void checkExpression(PsiExpression expression){
+            final PsiElement parent = expression.getParent();
             if(parent != null && parent instanceof PsiParenthesizedExpression){
                 return;
             }
-            final PsiType expressionType = exp.getType();
-            if (!ClassUtils.isPrimitiveNumericType(expressionType)) {
+            final PsiType expressionType = expression.getType();
+            if(!ClassUtils.isPrimitiveNumericType(expressionType)){
                 return;
             }
-            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(exp);
-            if (!ClassUtils.isPrimitiveNumericType(expectedType)) {
+            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression);
+            if(!ClassUtils.isPrimitiveNumericType(expectedType)){
                 return;
             }
-            if(expectedType.equals(expressionType))
-            {
+            if(expectedType.equals(expressionType)){
                 return;
             }
-            if (m_ignoreWideningConversions && hasLowerPrecision(expressionType, expectedType)) {
+            if(m_ignoreWideningConversions && hasLowerPrecision(expressionType,
+                                                                expectedType)){
                 return;
             }
-            registerError(exp);
+            registerError(expression);
         }
     }
 

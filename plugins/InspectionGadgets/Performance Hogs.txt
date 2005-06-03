@@ -1,8 +1,8 @@
 
-13 implicit numeric conversion
+13 implicit numeric conversion !
 17 method may be static
 15 unnecessary fully qualified name
-11 Accessing a non-public class of another object
+11 Accessing a non-public field of another object
 11 Class references subclass
 8 Non-synchronized method overrides synchronized method
 8 Overly coupled class
@@ -25,7 +25,6 @@
 3 Malformed Regular Expression
 3 Abstract which has no concrete subclass
 3 mismatched query and update of collection
-10Method may be static
 
 Performance TODOs:
 
