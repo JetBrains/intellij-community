@@ -65,7 +65,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
           public void run() {
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           }
-        }, 300);
+        }, 300, ModalityState.stateForComponent(myTree));
       }
     };
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentsListener);
