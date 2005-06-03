@@ -7,9 +7,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
@@ -254,7 +254,7 @@ public class TreeModelBuilder {
   }
 
   private void buildFileNode(PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) return;
+    //if (!(file instanceof PsiJavaFile)) return;
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText("Scanning packages");
@@ -265,7 +265,7 @@ public class TreeModelBuilder {
     boolean isMarked = myMarker == null ? false : myMarker.isMarked(file);
     if (isMarked) myMarkedFileCount++;
     if (isMarked || myAddUnmarkedFiles) {
-      PackageDependenciesNode dirNode = getFileParentNode((PsiJavaFile)file);
+      PackageDependenciesNode dirNode = getFileParentNode(file);
 
       if (myShowFiles) {
         FileNode fileNode = new FileNode(file, isMarked);
@@ -277,15 +277,18 @@ public class TreeModelBuilder {
     }
   }
 
-  private PackageDependenciesNode getFileParentNode(PsiJavaFile file) {
+  private PackageDependenciesNode getFileParentNode(PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
-    PsiPackage aPackage = getFilePackage(file);
-    if (myFileIndex.isInLibrarySource(vFile) || myFileIndex.isInLibraryClasses(vFile)) {
-      return getLibraryDirNode(aPackage, getLibraryForFile(file));
+    if (file instanceof PsiJavaFile) {
+      PsiPackage aPackage = getFilePackage((PsiJavaFile)file);
+      if (myFileIndex.isInLibrarySource(vFile) || myFileIndex.isInLibraryClasses(vFile)) {
+        return getLibraryDirNode(aPackage, getLibraryForFile(file));
+      }
+      else {
+        return getModuleDirNode(aPackage, myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
+      }
     }
-    else {
-      return getModuleDirNode(aPackage, myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
-    }
+    return getModuleNode(myFileIndex.getModuleForFile(vFile), getFileScopeType(vFile));
   }
 
   private PsiPackage getFilePackage(PsiJavaFile file) {

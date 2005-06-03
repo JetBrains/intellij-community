@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 
@@ -163,7 +164,7 @@ public class AnalysisScope {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
     final HashSet<Module> modules = new HashSet<Module>();
     if (myType == FILE) {
-      if (myElement instanceof PsiJavaFile) {
+      if (myElement instanceof PsiJavaFile && !(myElement instanceof JspFile)) {
         PsiJavaFile psiJavaFile = (PsiJavaFile)myElement;
         final PsiClass[] classes = psiJavaFile.getClasses();
         boolean onlyPackLocalClasses = true;
@@ -260,7 +261,7 @@ public class AnalysisScope {
       projectFileIndex.iterateContent(new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
           if (fileOrDir.isDirectory()) return true;
-          if (projectFileIndex.isInSourceContent(fileOrDir) && (myIncludeTestSource ? true : !projectFileIndex.isInTestSourceContent(fileOrDir))) {
+          if (projectFileIndex.isInContent(fileOrDir) && (myIncludeTestSource ? true : !projectFileIndex.isInTestSourceContent(fileOrDir))) {
             PsiFile psiFile = PsiManager.getInstance(myProject).findFile(fileOrDir);
             if (psiFile == null) return true; //skip .class files under src directory
             psiFile.accept(visitor);
@@ -274,7 +275,7 @@ public class AnalysisScope {
       moduleFileIndex.iterateContent(new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
           if (fileOrDir.isDirectory()) return true;
-          if (moduleFileIndex.isInSourceContent(fileOrDir) && (myIncludeTestSource ? true : !moduleFileIndex.isInTestSourceContent(fileOrDir))) {
+          if (moduleFileIndex.isInContent(fileOrDir) && (myIncludeTestSource ? true : !moduleFileIndex.isInTestSourceContent(fileOrDir))) {
             PsiFile psiFile = PsiManager.getInstance(myModule.getProject()).findFile(fileOrDir);
             if (psiFile == null) return true; //skip .class files under src directory
             psiFile.accept(visitor);
@@ -290,7 +291,7 @@ public class AnalysisScope {
         moduleFileIndex.iterateContent(new ContentIterator() {
           public boolean processFile(VirtualFile fileOrDir) {
             if (fileOrDir.isDirectory()) return true;
-            if (moduleFileIndex.isInSourceContent(fileOrDir) && (myIncludeTestSource ? true : !moduleFileIndex.isInTestSourceContent(fileOrDir))) {
+            if (moduleFileIndex.isInContent(fileOrDir) && (myIncludeTestSource ? true : !moduleFileIndex.isInTestSourceContent(fileOrDir))) {
               PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(fileOrDir);
               if (psiFile == null) return true; //skip .class files under src directory
               psiFile.accept(visitor);

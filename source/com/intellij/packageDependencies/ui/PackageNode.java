@@ -1,5 +1,6 @@
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.cyclicDependencies.ui.CyclicDependenciesPanel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
@@ -19,7 +20,7 @@ public class PackageNode extends PackageDependenciesNode {
     myPackage = aPackage;
     myPackageName = showFQName ? aPackage.getQualifiedName() : aPackage.getName();
     if (myPackageName == null || myPackageName.length() == 0) {
-      myPackageName = "<default package>";
+      myPackageName = CyclicDependenciesPanel.DEFAULT_PACKAGE_ABBREVIATION;
     }
     myPackageQName = aPackage.getQualifiedName();
     if (myPackageQName != null && myPackageQName.length() == 0) {
