@@ -574,34 +574,37 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
 
     if (myRefCountHolder != null && attributeDescriptor.hasIdType()) {
-      String unquotedValue = getUnquotedValue(value, tag);
-      XmlTag xmlTag = myRefCountHolder.getTagById(unquotedValue);
+      final String unquotedValue = getUnquotedValue(value, tag);
 
-      if (xmlTag == null ||
-          !xmlTag.isValid() ||
-          xmlTag == tag
-         ) {
-        myRefCountHolder.registerTagWithId(unquotedValue,tag);
-      } else {
-        XmlAttribute anotherTagIdValue = xmlTag.getAttribute("id", null);
+      if (XmlUtil.isValidXmlId(unquotedValue)) {
+        XmlTag xmlTag = myRefCountHolder.getTagById(unquotedValue);
 
-        if (anotherTagIdValue!=null &&
-            getUnquotedValue(anotherTagIdValue.getValueElement(), xmlTag).equals(unquotedValue)
+        if (xmlTag == null ||
+            !xmlTag.isValid() ||
+            xmlTag == tag
            ) {
-          myResult.add(HighlightInfo.createHighlightInfo(
-            HighlightInfoType.WRONG_REF,
-              value,
-              "Duplicate id reference")
-          );
-          myResult.add(HighlightInfo.createHighlightInfo(
-            HighlightInfoType.WRONG_REF,
-              xmlTag.getAttribute("id",null).getValueElement(),
-              "Duplicate id reference")
-          );
-          return;
-        } else {
-          // tag previously has that id
           myRefCountHolder.registerTagWithId(unquotedValue,tag);
+        } else {
+          XmlAttribute anotherTagIdValue = xmlTag.getAttribute("id", null);
+
+          if (anotherTagIdValue!=null &&
+              getUnquotedValue(anotherTagIdValue.getValueElement(), xmlTag).equals(unquotedValue)
+             ) {
+            myResult.add(HighlightInfo.createHighlightInfo(
+              HighlightInfoType.WRONG_REF,
+                value,
+                "Duplicate id reference")
+            );
+            myResult.add(HighlightInfo.createHighlightInfo(
+              HighlightInfoType.WRONG_REF,
+                xmlTag.getAttribute("id",null).getValueElement(),
+                "Duplicate id reference")
+            );
+            return;
+          } else {
+            // tag previously has that id
+            myRefCountHolder.registerTagWithId(unquotedValue,tag);
+          }
         }
       }
     }
@@ -626,14 +629,16 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     if (attributeDescriptor.hasIdRefType()) {
       String unquotedValue = getUnquotedValue(value, tag);
-      XmlTag xmlTag = holder.getTagById(unquotedValue);
+      if (XmlUtil.isValidXmlId(unquotedValue)) {
+        XmlTag xmlTag = holder.getTagById(unquotedValue);
 
-      if (xmlTag == null || !xmlTag.isValid()) {
-        return HighlightInfo.createHighlightInfo(
-          HighlightInfoType.WRONG_REF,
-            value,
-            "Invalid id reference"
-        );
+        if (xmlTag == null || !xmlTag.isValid()) {
+          return HighlightInfo.createHighlightInfo(
+            HighlightInfoType.WRONG_REF,
+              value,
+              "Invalid id reference"
+          );
+        }
       }
     }
 

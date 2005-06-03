@@ -741,6 +741,16 @@ public class XmlUtil {
     return new Pair<XmlTagChild, XmlTagChild>(first, last);
   }
 
+  public static boolean isValidXmlId(final String unquotedValue) {
+    for(int i = 0; i < unquotedValue.length(); ++i) {
+      final char ch = unquotedValue.charAt(i);
+      if (!Character.isJavaIdentifierPart(ch) && ch != ':' && ch != '-') {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private static class MyAttributeInfo implements Comparable {
     boolean myRequired = true;
     String myName = null;
