@@ -4,12 +4,17 @@
  */
 package com.intellij.openapi.fileEditor;
 
+import com.intellij.ide.FileEditorProvider;
+import com.intellij.ide.SelectInContext;
+import com.intellij.ide.SelectInManager;
+import com.intellij.ide.SelectInTarget;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiManager;
 
 public class OpenFileDescriptor implements Navigatable {
   private final VirtualFile myFile;
@@ -22,21 +27,21 @@ public class OpenFileDescriptor implements Navigatable {
 
   /**
    * @throws java.lang.IllegalArgumentException if <code>file</code> is <code>null</code>
-   */ 
+   */
   public OpenFileDescriptor(Project project, VirtualFile file, int offset) {
     this(project, file, -1, -1, offset);
   }
 
   /**
    * @throws java.lang.IllegalArgumentException if <code>file</code> is <code>null</code>
-   */ 
+   */
   public OpenFileDescriptor(Project project, VirtualFile file, int line, int col) {
     this(project, file, line, col, -1);
   }
 
   /**
    * @throws java.lang.IllegalArgumentException if <code>file</code> is <code>null</code>
-   */ 
+   */
   public OpenFileDescriptor(Project project, VirtualFile file) {
     this(project, file, -1, -1, -1);
   }
@@ -79,7 +84,30 @@ public class OpenFileDescriptor implements Navigatable {
 
   public void navigate(boolean requestFocus) {
     Editor editor = openFileAskingType(myProject, requestFocus);
-    if (editor == null) return;
+    if (editor == null) {
+      final SelectInTarget projectSelector = SelectInManager.getInstance(myProject).getTarget("Project");
+      if (projectSelector != null) {
+        projectSelector.selectIn(new SelectInContext() {
+          public Project getProject() {
+            return myProject;
+          }
+
+          public VirtualFile getVirtualFile() {
+            return myFile;
+          }
+
+          public Object getSelectorInFile() {
+            return PsiManager.getInstance(myProject).findFile(myFile);
+          }
+
+          public FileEditorProvider getFileEditorProvider() {
+            return null;
+          }
+        }, true);
+      }
+
+      return;
+    }
 
     Document document = editor.getDocument();
     LogicalPosition position;
@@ -96,6 +124,7 @@ public class OpenFileDescriptor implements Navigatable {
   private Editor openFileAskingType(Project project, boolean focusEditor) {
     FileType type = FileTypeManager.getInstance().getKnownFileTypeOrAssociate(myFile);
     if (type == null || myFile == null || !myFile.isValid()) return null;
+
     return FileEditorManager.getInstance(project).openTextEditor(this, focusEditor);
   }
 

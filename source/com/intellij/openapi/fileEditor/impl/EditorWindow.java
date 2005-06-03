@@ -333,7 +333,7 @@ public class EditorWindow {
           myTabbedPane.insertTab(file.getPresentableName(), null, new TComp(editor), null, indexToInsert);
           trimToSize(UISettings.getInstance().EDITOR_TAB_LIMIT, file);
           setSelectedEditor(editor);
-          myOwner.updateFileIcon(file, false);
+          myOwner.updateFileIcon(file);
           myOwner.updateFileColor(file);
         }
         myOwner.setCurrentWindow(this, false);

@@ -1,5 +1,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
@@ -15,6 +16,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ArrayListSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,6 +36,7 @@ public final class EditorsSplitters extends JPanel {
   protected int myInsideChange;
   private MyFocusWatcher myFocusWatcher;
   private EditorWithProviderComposite myCurrentSelectedEditor;
+  private final Alarm myIconUpdaterAlarm = new Alarm();
 
   public EditorsSplitters(final FileEditorManagerImpl manager) {
     super(new BorderLayout());
@@ -66,6 +69,7 @@ public final class EditorsSplitters extends JPanel {
     myFocusWatcher.deinstall(this);
   }
 
+  @Nullable
   public VirtualFile getCurrentFile() {
     if (myCurrentWindow != null) {
       return myCurrentWindow.getSelectedFile();
@@ -203,6 +207,7 @@ public final class EditorsSplitters extends JPanel {
           }
         }
         catch (InvalidDataException e) {
+          // OK
         }
         finally {
           window.myInsideTabChange--;
@@ -267,15 +272,9 @@ public final class EditorsSplitters extends JPanel {
     return editors.toArray(new FileEditor[editors.size()]);
   }
 
-  private static final Alarm ALARM = new Alarm();
-  protected void updateFileIcon(final VirtualFile file, final boolean useAlarm) {
+  protected void updateFileIcon(final VirtualFile file) {
     LOG.assertTrue(file != null);
-    if (useAlarm) {
-      updateFileIconLater(file);
-    }
-    else {
-      updateFileIconImmediately(file);
-    }
+    updateFileIconLater(file);
   }
 
   private void updateFileIconImmediately(final VirtualFile file) {
@@ -291,15 +290,15 @@ public final class EditorsSplitters extends JPanel {
 
   private void updateFileIconLater(VirtualFile file) {
     myFilesToUpdateIconsFor.add(file);
-    ALARM.cancelAllRequests();
-    ALARM.addRequest(new Runnable() {
+    myIconUpdaterAlarm.cancelAllRequests();
+    myIconUpdaterAlarm.addRequest(new Runnable() {
       public void run() {
         for (VirtualFile file : myFilesToUpdateIconsFor) {
           updateFileIconImmediately(file);
         }
         myFilesToUpdateIconsFor.clear();
       }
-    }, 200);
+    }, 200, ModalityState.stateForComponent(this));
   }
 
   public void updateFileColor(final VirtualFile file) {

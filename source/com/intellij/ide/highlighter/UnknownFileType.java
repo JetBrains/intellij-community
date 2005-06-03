@@ -32,7 +32,6 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -82,10 +81,6 @@ public class UnknownFileType implements FileType {
   }
 
   public StructureViewBuilder getStructureViewBuilder(VirtualFile file, Project project) {
-    return null;
-  }
-
-  public Language getLanguage() {
     return null;
   }
 }

@@ -10,6 +10,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,6 +82,14 @@ public class SelectInManager implements JDOMExternalizable, ProjectComponent {
     return targets;
   }
 
+  @Nullable
+  public SelectInTarget getTarget(@NotNull String name) {
+    for (SelectInTarget target : myTargets) {
+      if (name.equals(target.toString())) return target;
+    }
+    return null;
+  }
+
   public static SelectInManager getInstance(Project project) {
     return project.getComponent(SelectInManager.class);
   }
@@ -93,7 +103,7 @@ public class SelectInManager implements JDOMExternalizable, ProjectComponent {
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
-    for(Iterator iterator = myOrder.iterator(); iterator.hasNext();){
+    for (Iterator iterator = myOrder.iterator(); iterator.hasNext();) {
       String targetName = (String)iterator.next();
       Element e = new Element("target");
       e.setAttribute("name", targetName);

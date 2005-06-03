@@ -17,6 +17,7 @@ import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
@@ -1173,7 +1174,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
                 }
               }
             }
-          }, 400);
+          }, 400, ModalityState.NON_MMODAL);
         }
       };
       FileEditorManager.getInstance(myProject).addFileEditorManagerListener(myEditorManagerListener);

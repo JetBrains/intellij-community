@@ -1,17 +1,14 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
-import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
+import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -35,7 +32,9 @@ public class GotoFileAction extends GotoActionBase {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               OpenFileDescriptor descriptor=new OpenFileDescriptor(project, file.getVirtualFile());
-              FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+              if (descriptor.canNavigate()) {
+                descriptor.navigate(true);
+              }
             }
           }, ModalityState.NON_MMODAL);
         }

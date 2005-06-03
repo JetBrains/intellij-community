@@ -164,8 +164,8 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * Updates tab icon for the specified <code>file</code>. The <code>file</code>
    * should be opened in the myEditor, otherwise the method throws an assertion.
    */
-  private void updateFileIcon(final VirtualFile file, boolean useAlarm) {
-    mySplitters.updateFileIcon(file, useAlarm);
+  private void updateFileIcon(final VirtualFile file) {
+    mySplitters.updateFileIcon(file);
   }
 
   /**
@@ -983,14 +983,14 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
         final VirtualFile file = e.getFile();
         if(isFileOpen(file)){
           updateFileName(file);
-          updateFileIcon(file, false); // file type can change after renaming
+          updateFileIcon(file); // file type can change after renaming
         }
       }
       else if(VirtualFile.PROP_WRITABLE.equals(e.getPropertyName())){
         assertThread();
         final VirtualFile file = e.getFile();
         if(isFileOpen(file)){
-          updateFileIcon(file, false);
+          updateFileIcon(file);
           if(file.equals(getSelectedFiles()[0])){ // update "write" status
             final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
             LOG.assertTrue(statusBar != null);
@@ -1064,7 +1064,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
         final FileEditor editor = (FileEditor)e.getSource();
         final EditorComposite composite = getEditorComposite(editor);
         if (composite != null) {
-          updateFileIcon(composite.getFile(), true);
+          updateFileIcon(composite.getFile());
         }
       }
       else if (FileEditor.PROP_VALID.equals(propertyName)) {
@@ -1111,7 +1111,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
     private void updateFileStatus(final VirtualFile file) {
       updateFileColor(file);
-      updateFileIcon(file, false);
+      updateFileIcon(file);
     }
   }
 
@@ -1128,7 +1128,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       for (int i = openFiles.length - 1; i >= 0; i--) {
         final VirtualFile file = openFiles[i];
         LOG.assertTrue(file != null);
-        updateFileIcon(file, false);
+        updateFileIcon(file);
       }
     }
   }
@@ -1155,7 +1155,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       final VirtualFile[] openFiles = getOpenFiles();
       for (int i = openFiles.length - 1; i >= 0; i--) {
         final VirtualFile file = openFiles[i];
-        updateFileIcon(file, false);
+        updateFileIcon(file);
         updateFileName(file);
       }
     }
@@ -1172,7 +1172,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
         for (int i = openFiles.length - 1; i >= 0; i--) {
           final VirtualFile file = openFiles[i];
           LOG.assertTrue(file != null);
-          updateFileIcon(file, true);
+          updateFileIcon(file);
         }
       }
     }
@@ -1201,7 +1201,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       final PsiFile psiFile = event.getFile();
       final VirtualFile currentFile = getCurrentFile();
       if (currentFile != null && psiFile != null && psiFile.getVirtualFile() == currentFile) {
-        updateFileIcon(currentFile, true);
+        updateFileIcon(currentFile);
       }
     }
   }
