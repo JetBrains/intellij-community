@@ -69,7 +69,7 @@ public class ShowModuleDependenciesAction extends AnAction{
     private JRadioButton myModuleScope;
     protected MyModuleOrProjectScope(String moduleName) {
       super(false);
-      setTitle("Choose Analyze Module Dependencies Scope");
+      setTitle("Specify Analysis Scope");
       ButtonGroup group = new ButtonGroup();
       myProjectScope = new JRadioButton("Inspect the whole project");
       myProjectScope.setMnemonic('p');
