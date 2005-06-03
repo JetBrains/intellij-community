@@ -176,8 +176,15 @@
     <action id="CompareTwoFiles" class="com.intellij.openapi.diff.actions.CompareFiles" text="Compare Two _Files" description="Compare two selected files"/>
     <action id="CompareFileWithEditor" class="com.intellij.openapi.diff.actions.CompareFileWithEditor" text="Co_mpare File with Editor" description="Compare selected file with editor"/>
 
-    <group id ="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsActionGroup" text="Version _Control" popup="true">
+    <group id="LocalVcsGroup" class="com.intellij.localVcs.actions.LocalVcsGroup" text="Local _History" popup="true">
+      <action id="LocalVcs.ShowHistory" class="com.intellij.localVcs.actions.ShowHistoryAction" text="Show _History" description="Show local history"/>
+      <action id="LocalVcs.HistoryForBlock" class="com.intellij.localVcs.actions.HistoryForSelectedBlockAction" text="Show History for _Selection" description="Show local history for editor selection"/>
+      <action id="LocalVcs.AddLabel" class="com.intellij.localVcs.actions.AddLabelAction" text="Add _Label..." description="Add label"/>
+    </group>
 
+    <group id ="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsActionGroup" text="Version _Control" popup="true">
+      <reference ref="LocalVcsGroup"/>
+      <separator/>
       <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup" test="Version Control" text="Version Control">
         <action id="Vcs.FileView" class="com.intellij.openapi.vcs.actions.FileViewAction" text="Show File _View" description="Show version control related information for all local files"/>
         <reference ref="CheckinProject"/>
@@ -198,11 +205,7 @@
     </group>
 
     <group id="VersionControlsGroup">
-      <group id="LocalVcsGroup" class="com.intellij.localVcs.actions.LocalVcsGroup" text="Local _History" popup="true">
-        <action id="LocalVcs.ShowHistory" class="com.intellij.localVcs.actions.ShowHistoryAction" text="Show _History" description="Show local history"/>
-        <action id="LocalVcs.HistoryForBlock" class="com.intellij.localVcs.actions.HistoryForSelectedBlockAction" text="Show History for _Selection" description="Show local history for editor selection"/>
-        <action id="LocalVcs.AddLabel" class="com.intellij.localVcs.actions.AddLabelAction" text="Add _Label..." description="Add label"/>
-      </group>
+      <reference ref="LocalVcsGroup"/>
       <reference ref="VcsFileGroupPopup"/>
     </group>
 
@@ -526,8 +529,6 @@
           <action id="ValidateXml" class="com.intellij.xml.actions.ValidateXmlAction" text="_Validate" description="Validate the current xml file"/>
           <action id="AddAntBuildFile" class="com.intellij.ant.actions.AddAntBuildFile" text="Add as Ant Build File" description="Add current XML file to the list of project's Ant build files"/>
         </group>
-        <separator/>
-        <reference ref="LocalVcsGroup"/>
         <separator/>
         <action id="GenerateDTD" class="com.intellij.codeInsight.actions.GenerateDTDAction" text="Generate DTD from XML file"/>
 
