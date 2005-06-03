@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TableUtil;
 import com.intellij.util.EventDispatcher;
 
 import javax.swing.*;
@@ -18,6 +19,8 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.EventListener;
+
+import gnu.trove.TIntArrayList;
 
 /**
  * @author Jeka
@@ -56,7 +59,9 @@ public class BreakpointPanel {
   }
 
   public void switchViews() {
+    final Breakpoint[] selectedBreakpoints = getSelectedBreakpoints();
     showView(isTreeShowing() ? TABLE_VIEW : TREE_VIEW);
+    selectBreakpoints(selectedBreakpoints);
   }
 
   public void showView(final String viewId) {
@@ -263,6 +268,23 @@ public class BreakpointPanel {
     }
   }
 
+  public void selectBreakpoints(Breakpoint[] breakpoints) {
+    if (isTreeShowing()) {
+      myTree.selectBreakpoints(breakpoints);
+    }
+    else {
+      final TIntArrayList rows = new TIntArrayList(breakpoints.length);
+      for (Breakpoint breakpoint : breakpoints) {
+        final int index = myTable.getModel().getBreakpointIndex(breakpoint);
+        if (index >= 0) {
+          rows.add(index);
+        }
+      }
+      myTable.getSelectionModel().clearSelection();
+      TableUtil.selectRows(myTable, rows.toNativeArray());
+    }
+  }
+
   public void setBreakpoints(Breakpoint[] breakpoints) {
     myTable.setBreakpoints(breakpoints);
     myTree.setBreakpoints(breakpoints);
@@ -271,10 +293,7 @@ public class BreakpointPanel {
   }
 
   public Breakpoint[] getSelectedBreakpoints() {
-    if (isTreeShowing()) {
-      return myTree.getSelectedBreakpoints();
-    }
-    return myTable.getSelectedBreakpoints();
+    return isTreeShowing() ? myTree.getSelectedBreakpoints() : myTable.getSelectedBreakpoints();
   }
 
   public void removeSelectedBreakpoints() {

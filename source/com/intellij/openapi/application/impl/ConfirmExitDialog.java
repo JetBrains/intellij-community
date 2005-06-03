@@ -4,10 +4,9 @@
  */
 package com.intellij.openapi.application.impl;
 
-import com.intellij.util.ui.OptionsDialog;
 import com.intellij.ide.GeneralSettings;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
 import java.awt.*;

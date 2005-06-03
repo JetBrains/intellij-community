@@ -113,6 +113,20 @@ public class BreakpointTree extends CheckboxTree {
     TreeUtil.selectNode(this, node);
   }
 
+  public void selectBreakpoints(Breakpoint[] breakpoints) {
+    final List<CheckedTreeNode> nodes = new ArrayList<CheckedTreeNode>(breakpoints.length);
+    for (Breakpoint breakpoint : breakpoints) {
+      final CheckedTreeNode node = myDescriptorToNodeMap.get(new BreakpointDescriptor(breakpoint));
+      if (node != null) {
+        nodes.add(node);
+      }
+    }
+    clearSelection();
+    for (CheckedTreeNode node : nodes) {
+      addSelectionPath(new TreePath(node.getPath()));
+    }
+  }
+
   public void selectFirstBreakpoint() {
     TreeUtil.traverseDepth(myRootNode, new TreeUtil.Traverse() {
       public boolean accept(Object node) {
