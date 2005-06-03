@@ -515,6 +515,7 @@ public class TypedHandler implements TypedActionHandler {
     if(tag == null) return;
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) != null) return;
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return;
+    if (PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class) != null) return;
 
     EditorModificationUtil.insertStringAtCaret(editor, ">");
   }
