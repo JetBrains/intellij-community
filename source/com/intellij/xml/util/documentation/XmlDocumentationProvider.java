@@ -129,10 +129,10 @@ public class XmlDocumentationProvider implements JavaDocManager.DocumentationPro
 
         if (elementDescriptor instanceof AnyXmlElementDescriptor) {
           final XmlNSDescriptor nsDescriptor = xmlTag.getNSDescriptor(xmlTag.getNamespaceByPrefix(namespacePrefix), true);
-          elementDescriptor = nsDescriptor.getElementDescriptor(tagFromText);
+          elementDescriptor = (nsDescriptor != null)?nsDescriptor.getElementDescriptor(tagFromText):null;
         }
 
-        if (elementDescriptor!=null) {
+        if (elementDescriptor != null) {
           PsiElement declaration = elementDescriptor.getDeclaration();
           if (declaration!=null) declaration.putUserData(DESCRIPTOR_KEY,elementDescriptor);
           return declaration;
