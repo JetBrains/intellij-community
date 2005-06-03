@@ -262,7 +262,7 @@ public class AnalysisScope {
           if (fileOrDir.isDirectory()) return true;
           if (projectFileIndex.isInSourceContent(fileOrDir) && (myIncludeTestSource ? true : !projectFileIndex.isInTestSourceContent(fileOrDir))) {
             PsiFile psiFile = PsiManager.getInstance(myProject).findFile(fileOrDir);
-            LOG.assertTrue(psiFile != null);
+            LOG.assertTrue(psiFile != null, fileOrDir.getName());
             psiFile.accept(visitor);
           }
           return true;
@@ -276,7 +276,7 @@ public class AnalysisScope {
           if (fileOrDir.isDirectory()) return true;
           if (moduleFileIndex.isInSourceContent(fileOrDir) && (myIncludeTestSource ? true : !moduleFileIndex.isInTestSourceContent(fileOrDir))) {
             PsiFile psiFile = PsiManager.getInstance(myModule.getProject()).findFile(fileOrDir);
-            LOG.assertTrue(psiFile != null);
+            LOG.assertTrue(psiFile != null, fileOrDir.getName());
             psiFile.accept(visitor);
           }
           return true;
@@ -292,7 +292,7 @@ public class AnalysisScope {
             if (fileOrDir.isDirectory()) return true;
             if (moduleFileIndex.isInSourceContent(fileOrDir) && (myIncludeTestSource ? true : !moduleFileIndex.isInTestSourceContent(fileOrDir))) {
               PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(fileOrDir);
-              LOG.assertTrue(psiFile != null);
+              LOG.assertTrue(psiFile != null, fileOrDir.getName());
               psiFile.accept(visitor);
             }
             return true;
