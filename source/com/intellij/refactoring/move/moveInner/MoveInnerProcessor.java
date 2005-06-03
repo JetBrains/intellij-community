@@ -187,7 +187,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
             continue;
           }
         }
-        element.getReference().bindToElement(newClass);
+        ref.bindToElement(newClass);
       }
 
       myInnerClass.delete();
