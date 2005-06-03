@@ -517,7 +517,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         inspectionClasses.add(InstanceVariableUninitializedUseInspection.class);
         inspectionClasses.add(NonThreadSafeLazyInitializationInspection.class);
         inspectionClasses.add(NonFinalStaticVariableUsedInClassInitializationInspection.class);
-    }
+    }            
 
     private void registerConfusingInspections(){
         final List<Class> inspectionClasses = m_inspectionClasses;
