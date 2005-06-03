@@ -95,22 +95,6 @@ public class ClassReferencesSubclassInspection extends ClassInspection{
             registerError(typeElement);
         }
 
-        private boolean checkType(PsiType type){
-            if(type == null){
-                return false;
-            }
-            final PsiType componentType = type.getDeepComponentType();
-            if(!(componentType instanceof PsiClassType)){
-                return false;
-            }
-
-            final PsiClassType classType = (PsiClassType) componentType;
-
-            if(!isSubclass(classType, containingClass)){
-                return false;
-            }
-            return true;
-        }
         private static boolean isSubclass(PsiClassType childClass,
                                           PsiClass parent){
             final PsiClass child = childClass.resolve();

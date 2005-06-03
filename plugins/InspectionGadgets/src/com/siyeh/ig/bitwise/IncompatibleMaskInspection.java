@@ -8,7 +8,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +48,7 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression){
             super.visitBinaryExpression(expression);
-            if(!WellFormednessUtils.isWellFormed(expression)){
+            if(!(expression.getROperand() != null)){
                 return;
             }
             if(!ComparisonUtils.isEqualityComparison(expression)){
@@ -150,9 +149,6 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
         final PsiBinaryExpression binaryExpression =
                 (PsiBinaryExpression) expression;
         final PsiJavaToken sign = binaryExpression.getOperationSign();
-        if(sign == null){
-            return false;
-        }
         final IElementType tokenType = sign.getTokenType();
         if(!tokenType.equals(JavaTokenType.OR) &&
                    !tokenType.equals(JavaTokenType.AND)){

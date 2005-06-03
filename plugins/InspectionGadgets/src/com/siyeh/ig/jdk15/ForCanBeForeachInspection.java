@@ -171,6 +171,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             final String indexName = lhs.getText();
             final PsiReferenceExpression arrayLengthExpression =
                     (PsiReferenceExpression) condition.getROperand();
+            assert arrayLengthExpression != null;
             final PsiReferenceExpression arrayReference =
                     (PsiReferenceExpression) arrayLengthExpression.getQualifierExpression();
             final PsiArrayType arrayType =
@@ -340,9 +341,6 @@ public class ForCanBeForeachInspection extends StatementInspection{
             }
             final PsiExpression arrayExpression =
                     arrayAccess.getArrayExpression();
-            if(arrayExpression == null){
-                return false;
-            }
             return arrayName.equals(arrayExpression.getText());
         }
 
@@ -722,10 +720,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
         final PsiBinaryExpression binaryExp =
                 (PsiBinaryExpression) strippedCondition;
         final PsiJavaToken sign = binaryExp.getOperationSign();
-        if(sign == null){
-            return false;
-        }
-        if(!sign.getTokenType().equals(JavaTokenType.LT)){
+       if(!sign.getTokenType().equals(JavaTokenType.LT)){
             return false;
         }
         final PsiExpression lhs = binaryExp.getLOperand();
@@ -791,11 +786,9 @@ public class ForCanBeForeachInspection extends StatementInspection{
             }
             super.visitAssignmentExpression(exp);
             final PsiExpression lhs = exp.getLExpression();
-            if(lhs != null){
                 if(arrayName.equals(lhs.getText())){
                     arrayAssigned = true;
                 }
-            }
         }
 
         public boolean isArrayAssigned(){
@@ -864,11 +857,9 @@ public class ForCanBeForeachInspection extends StatementInspection{
             }
             super.visitAssignmentExpression(exp);
             final PsiExpression lhs = exp.getLExpression();
-            if(lhs != null){
-                final String lhsText = lhs.getText();
-                if(iteratorName.equals(lhsText)){
-                    iteratorAssigned = true;
-                }
+            final String lhsText = lhs.getText();
+            if(iteratorName.equals(lhsText)){
+                iteratorAssigned = true;
             }
         }
 
@@ -999,9 +990,6 @@ public class ForCanBeForeachInspection extends StatementInspection{
                     (PsiArrayAccessExpression) parent;
             final PsiExpression arrayExpression =
                     arrayAccess.getArrayExpression();
-            if(arrayExpression == null){
-                return;
-            }
             if(!arrayExpression.getText().equals(arrayName)){
                 indexVariableUsedOnlyAsIndex = false;
                 return;

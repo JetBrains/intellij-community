@@ -78,6 +78,7 @@ public class AssignmentToCatchBlockParameterInspection
                                                                    catchSection,
                                                                    false);
                 final String className = type.getPresentableText();
+                assert body != null;
                 final PsiElement[] children = body.getChildren();
                 final StringBuffer buffer = new StringBuffer();
                 for(int i = 1; i < children.length; i++){

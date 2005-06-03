@@ -9,7 +9,6 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -59,6 +58,7 @@ public class TrivialStringConcatenationInspection extends ExpressionInspection{
 
             replacement = lOperand;
         }
+        assert replacement != null;
         final PsiType type = replacement.getType();
         final String text = type.getCanonicalText();
         if(s_typeToWrapperMap.containsKey(text)){
@@ -109,7 +109,7 @@ public class TrivialStringConcatenationInspection extends ExpressionInspection{
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression exp){
             super.visitBinaryExpression(exp);
-            if(!WellFormednessUtils.isWellFormed(exp))
+            if(!(exp.getROperand() != null))
             {
                 return;
             }

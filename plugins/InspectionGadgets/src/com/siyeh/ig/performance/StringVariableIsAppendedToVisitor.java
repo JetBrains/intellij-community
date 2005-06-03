@@ -19,9 +19,6 @@ class StringVariableIsAppendedToVisitor extends PsiRecursiveElementVisitor {
         }
         super.visitAssignmentExpression(assignment);
         final PsiExpression lhs = assignment.getLExpression();
-        if (lhs == null) {
-            return;
-        }
         final PsiExpression rhs = assignment.getRExpression();
         if (rhs == null) {
             return;
@@ -35,9 +32,6 @@ class StringVariableIsAppendedToVisitor extends PsiRecursiveElementVisitor {
             return;
         }
         final PsiJavaToken operationSign = assignment.getOperationSign();
-        if (operationSign == null) {
-            return;
-        }
         final IElementType tokenType = operationSign.getTokenType();
         if (tokenType.equals(JavaTokenType.PLUSEQ)) {
             appendedTo = true;

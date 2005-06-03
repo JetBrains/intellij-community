@@ -40,6 +40,10 @@ public class ContinueOrBreakFromFinallyBlockInspection extends StatementInspecti
                 return;
             }
             final PsiStatement continuedStatement = statement.findContinuedStatement();
+            if(continuedStatement == null)
+            {
+                return;
+            }
             if (ControlFlowUtils.isInFinallyBlock(continuedStatement)) {
                 return;
             }
@@ -52,6 +56,10 @@ public class ContinueOrBreakFromFinallyBlockInspection extends StatementInspecti
                 return;
             }
             final PsiStatement exitedStatement = statement.findExitedStatement();
+            if(exitedStatement == null)
+            {
+                return;
+            }
             if (ControlFlowUtils.isInFinallyBlock(exitedStatement)) {
                 return;
             }

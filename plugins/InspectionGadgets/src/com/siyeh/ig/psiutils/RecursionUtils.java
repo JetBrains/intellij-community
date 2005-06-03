@@ -245,12 +245,10 @@ public class RecursionUtils {
             return true;
         }
         final PsiJavaToken sign = expression.getOperationSign();
-        if (sign != null) {
-            final IElementType tokenType = sign.getTokenType();
-            if (tokenType.equals(JavaTokenType.ANDAND) ||
-                    tokenType.equals(JavaTokenType.OROR)) {
-                return false;
-            }
+        final IElementType tokenType = sign.getTokenType();
+        if (tokenType.equals(JavaTokenType.ANDAND) ||
+                tokenType.equals(JavaTokenType.OROR)) {
+            return false;
         }
         final PsiExpression rhs = expression.getROperand();
         return expressionMustRecurse(rhs, method);

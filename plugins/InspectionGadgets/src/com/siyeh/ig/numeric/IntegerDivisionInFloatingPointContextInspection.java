@@ -6,7 +6,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -49,7 +48,7 @@ public class IntegerDivisionInFloatingPointContextInspection extends ExpressionI
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!WellFormednessUtils.isWellFormed(expression)){
+            if(!(expression.getROperand() != null)){
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
@@ -63,6 +62,10 @@ public class IntegerDivisionInFloatingPointContextInspection extends ExpressionI
                 return;
             }
             final PsiExpression rhs = expression.getROperand();
+            if(rhs== null)
+            {
+                return;
+            }
             final PsiType rhsType = rhs.getType();
             if (!isIntegral(rhsType)) {
                 return;

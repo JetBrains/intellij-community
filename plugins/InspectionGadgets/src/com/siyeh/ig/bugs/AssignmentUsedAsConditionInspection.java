@@ -41,6 +41,7 @@ public class AssignmentUsedAsConditionInspection extends ExpressionInspection {
                     (PsiAssignmentExpression) descriptor.getPsiElement();
             final PsiExpression leftExpression = expression.getLExpression();
             final PsiExpression rightExpression = expression.getRExpression();
+            assert rightExpression != null;
             final String newExpression = leftExpression.getText() + "==" + rightExpression.getText();
             replaceExpression(expression, newExpression);
         }
@@ -58,9 +59,6 @@ public class AssignmentUsedAsConditionInspection extends ExpressionInspection {
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
-                return;
-            }
             final PsiElement parent = expression.getParent();
             if(parent == null)
             {

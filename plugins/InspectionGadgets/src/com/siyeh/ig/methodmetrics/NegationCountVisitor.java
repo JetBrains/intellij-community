@@ -10,9 +10,6 @@ class NegationCountVisitor extends PsiRecursiveElementVisitor {
     public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
         super.visitBinaryExpression(expression);
         final PsiJavaToken sign = expression.getOperationSign();
-        if (sign == null) {
-            return;
-        }
         final IElementType tokenType = sign.getTokenType();
         if (tokenType.equals(JavaTokenType.NE)) {
             m_count++;

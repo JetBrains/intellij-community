@@ -51,9 +51,6 @@ public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {
                 }
                 final PsiJavaCodeReferenceElement classNameIdentifier =
                         anAnonymousClass.getBaseClassReference();
-                if(classNameIdentifier == null){
-                    return;
-                }
                 registerError(classNameIdentifier);
             }
         }

@@ -56,6 +56,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
         private static String getSystemArrayCopyText(PsiForStatement forStatement) {
             final PsiBinaryExpression condition = (PsiBinaryExpression) forStatement.getCondition();
             final PsiExpression limit = condition.getROperand();
+            assert limit != null;
             final String lengthText = limit.getText();
             final PsiExpressionStatement body = getBody(forStatement);
             final PsiAssignmentExpression assignment = (PsiAssignmentExpression) body.getExpression();
@@ -63,6 +64,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             final PsiExpression lArray = lhs.getArrayExpression();
             final String toArrayText = lArray.getText();
             final PsiArrayAccessExpression rhs = (PsiArrayAccessExpression) assignment.getRExpression();
+            assert rhs != null;
             final PsiExpression rArray = rhs.getArrayExpression();
             final String fromArrayText = rArray.getText();
             final PsiExpression rhsIndex = rhs.getIndexExpression();
@@ -88,6 +90,7 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             if (indexExpression instanceof PsiBinaryExpression) {
                 final PsiBinaryExpression binaryExp = (PsiBinaryExpression) indexExpression;
                 final PsiExpression rhs = binaryExp.getROperand();
+                assert rhs != null;
                 final String rhsText = rhs.getText();
                 final PsiJavaToken sign = binaryExp.getOperationSign();
                 if (sign.getTokenType().equals(JavaTokenType.MINUS)) {
@@ -156,9 +159,6 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                 return expressionIsArrayMove(expression, var);
             } else if (body instanceof PsiBlockStatement) {
                 final PsiCodeBlock codeBlock = ((PsiBlockStatement) body).getCodeBlock();
-                if (codeBlock == null) {
-                    return false;
-                }
                 final PsiStatement[] statements = codeBlock.getStatements();
                 if (statements == null) {
                     return false;
@@ -181,16 +181,11 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             }
             final PsiAssignmentExpression assignment = (PsiAssignmentExpression) strippedExpression;
             final PsiJavaToken sign = assignment.getOperationSign();
-            if (sign == null) {
-                return false;
-            }
-            if (!(sign.getTokenType().equals(JavaTokenType.EQ))) {
+            if (!sign.getTokenType().equals(JavaTokenType.EQ)) {
                 return false;
             }
             final PsiExpression lhs = assignment.getLExpression();
-            if (lhs == null) {
-                return false;
-            }
+
             if (SideEffectChecker.mayHaveSideEffects(lhs)) {
                 return false;
             }
@@ -262,9 +257,6 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             }
             final PsiBinaryExpression binaryExp = (PsiBinaryExpression) strippedCondition;
             final PsiJavaToken sign = binaryExp.getOperationSign();
-            if (sign == null) {
-                return false;
-            }
             if (!sign.getTokenType().equals(JavaTokenType.LT)) {
                 return false;
             }
@@ -297,9 +289,6 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
                 return false;
             }
             final PsiJavaToken sign = binaryExp.getOperationSign();
-            if (sign == null) {
-                return false;
-            }
             final IElementType tokenType = sign.getTokenType();
             return !(!tokenType.equals(JavaTokenType.PLUS) &&
                     !tokenType.equals(JavaTokenType.MINUS));

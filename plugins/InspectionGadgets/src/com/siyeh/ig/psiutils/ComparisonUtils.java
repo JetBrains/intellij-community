@@ -55,19 +55,12 @@ public class ComparisonUtils {
         return s_comparisonStrings.contains(operation);
     }
 
-    public static boolean isComparison(@NotNull String str) {
-        return s_comparisonStrings.contains(str);
-    }
-
     public static String getFlippedComparison(@NotNull String str) {
         return s_swappedComparisons.get(str);
     }
 
     public static boolean isEqualityComparison(@NotNull PsiBinaryExpression operator) {
         final PsiJavaToken sign = operator.getOperationSign();
-        if (sign == null) {
-            return false;
-        }
         final IElementType tokenType = sign.getTokenType();
         return tokenType.equals(JavaTokenType.EQEQ) || tokenType.equals(JavaTokenType.NE);
     }

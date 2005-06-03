@@ -28,6 +28,7 @@ public class AssignmentToDateFieldFromParameterInspection extends ExpressionInsp
         final PsiField field = (PsiField) element;
         assert field != null;
         final PsiType type = field.getType();
+        assert rhs != null;
         return "assignment to " + type.getPresentableText() + " field #ref from parameter " + rhs.getText() + "#loc";
     }
 
@@ -43,10 +44,6 @@ public class AssignmentToDateFieldFromParameterInspection extends ExpressionInsp
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
-            if(sign == null)
-            {
-                return;
-            }
             final IElementType tokenType = sign.getTokenType();
             if (!JavaTokenType.EQ.equals(tokenType)) {
                 return;

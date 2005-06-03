@@ -6,7 +6,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +30,7 @@ public class SubtractionInCompareToInspection extends ExpressionInspection{
                                                        extends BaseInspectionVisitor{
         public void visitBinaryExpression(@NotNull PsiBinaryExpression exp){
             super.visitBinaryExpression(exp);
-            if(!WellFormednessUtils.isWellFormed(exp)){
+            if(!(exp.getROperand() != null)){
                 return;
             }
             if(!isSubtraction(exp)){
@@ -48,17 +47,11 @@ public class SubtractionInCompareToInspection extends ExpressionInspection{
 
         private static boolean isSubtraction(PsiBinaryExpression exp){
             final PsiExpression lhs = exp.getLOperand();
-            if(lhs == null){
-                return false;
-            }
             final PsiExpression rhs = exp.getROperand();
             if(rhs == null){
                 return false;
             }
             final PsiJavaToken sign = exp.getOperationSign();
-            if(sign == null){
-                return false;
-            }
             final IElementType tokenType = sign.getTokenType();
             return tokenType.equals(JavaTokenType.MINUS);
         }

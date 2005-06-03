@@ -10,7 +10,6 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ComparisonToNaNInspection extends ExpressionInspection{
@@ -66,6 +65,7 @@ public class ComparisonToNaNInspection extends ExpressionInspection{
                 qualifier = lhs;
             }
 
+            assert qualifier != null;
             final String qualifierText = qualifier.getText();
             final PsiJavaToken sign = comparison.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
@@ -84,7 +84,7 @@ public class ComparisonToNaNInspection extends ExpressionInspection{
     private static class ComparisonToNaNVisitor extends BaseInspectionVisitor{
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression){
             super.visitBinaryExpression(expression);
-            if(!WellFormednessUtils.isWellFormed(expression)){
+            if(!(expression.getROperand() != null)){
                 return;
             }
             if(!ComparisonUtils.isEqualityComparison(expression)){

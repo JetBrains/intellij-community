@@ -8,7 +8,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ComparisonOfShortAndCharInspection extends ExpressionInspection{
@@ -35,7 +34,7 @@ public class ComparisonOfShortAndCharInspection extends ExpressionInspection{
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression){
             super.visitBinaryExpression(expression);
-            if(!WellFormednessUtils.isWellFormed(expression)){
+            if(!(expression.getROperand() != null)){
                 return;
             }
             if(!ComparisonUtils.isEqualityComparison(expression)){
@@ -44,6 +43,10 @@ public class ComparisonOfShortAndCharInspection extends ExpressionInspection{
             final PsiExpression lhs = expression.getLOperand();
             final PsiType lhsType = lhs.getType();
             final PsiExpression rhs = expression.getROperand();
+            if(rhs == null)
+            {
+                return;
+            }
             final PsiType rhsType = rhs.getType();
             if(PsiType.SHORT.equals(lhsType)&&
                        PsiType.CHAR.equals(rhsType)){

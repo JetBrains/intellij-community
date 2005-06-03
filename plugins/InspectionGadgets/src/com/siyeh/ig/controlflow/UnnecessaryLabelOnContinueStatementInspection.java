@@ -85,8 +85,7 @@ public class UnnecessaryLabelOnContinueStatementInspection extends StatementInsp
             if (labelIdentifier == null) {
                 return;
             }
-            final PsiIdentifier identifier = statement.getLabelIdentifier();
-            final String labelText = identifier.getText();
+            final String labelText = labelIdentifier.getText();
             if (labelText == null || labelText.length() == 0) {
                 return;
             }

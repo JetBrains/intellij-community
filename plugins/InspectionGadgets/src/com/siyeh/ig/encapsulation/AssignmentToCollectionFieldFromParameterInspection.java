@@ -27,6 +27,7 @@ public class AssignmentToCollectionFieldFromParameterInspection
         final PsiAssignmentExpression assignment = (PsiAssignmentExpression) location.getParent();
         final PsiExpression lhs = assignment.getLExpression();
         final PsiExpression rhs = assignment.getRExpression();
+        assert rhs != null;
         final PsiElement element = ((PsiReference) lhs).resolve();
 
         final PsiField field = (PsiField) element;

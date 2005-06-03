@@ -145,10 +145,6 @@ public class ExpectedTypeUtils{
                 expectedType = type;
             } else if(isEqualityOperation(tokenType)){
                 final PsiExpression lhs = binaryExp.getLOperand();
-                if(lhs == null){
-                    expectedType = null;
-                    return;
-                }
                 final PsiType lhsType = lhs.getType();
                 if(ClassUtils.isPrimitive(lhsType)){
                     expectedType = lhsType;

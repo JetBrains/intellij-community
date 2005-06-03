@@ -30,7 +30,7 @@ public class ArithmeticOnVolatileFieldInspection extends ExpressionInspection{
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression){
             super.visitBinaryExpression(expression);
-            if(!WellFormednessUtils.isWellFormed(expression)){
+            if(!(expression.getROperand() != null)){
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();

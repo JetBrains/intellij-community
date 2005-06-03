@@ -138,17 +138,4 @@ public class SerializationUtils{
         return TypeUtils.isJavaLangObject(returnType);
     }
 
-    public static boolean typeIsSerializable(@NotNull PsiType type){
-        final PsiType componentType = type.getDeepComponentType();
-        if(TypeConversionUtil.isPrimitiveAndNotNull(componentType)){
-            return true;
-        }
-        final PsiType[] superTypes = componentType.getSuperTypes();
-        for(PsiType superType : superTypes){
-            if(TypeUtils.typeEquals(SERIALIZABLE_CLASS_NAME, superType)){
-                return true;
-            }
-        }
-        return false;
-    }
 }

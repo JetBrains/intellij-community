@@ -12,7 +12,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class StringEqualityInspection extends ExpressionInspection {
@@ -84,7 +83,7 @@ public class StringEqualityInspection extends ExpressionInspection {
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!WellFormednessUtils.isWellFormed(expression)){
+            if(!(expression.getROperand() != null)){
                 return;
             }
             if (!ComparisonUtils.isEqualityComparison(expression)) {
@@ -102,6 +101,7 @@ public class StringEqualityInspection extends ExpressionInspection {
             if ("null".equals(lhsText)) {
                 return;
             }
+            assert rhs != null;
             final String rhsText = rhs.getText();
             if ("null".equals(rhsText)) {
                 return;

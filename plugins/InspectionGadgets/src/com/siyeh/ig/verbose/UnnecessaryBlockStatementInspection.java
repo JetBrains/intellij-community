@@ -76,9 +76,6 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
                 return;
             }
             final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-            if(codeBlock == null){
-                return;
-            }
             final PsiJavaToken brace = codeBlock.getLBrace();
             if(brace == null){
                 return;

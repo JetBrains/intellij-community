@@ -40,8 +40,10 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
         final PsiBinaryExpression rhs =
                 (PsiBinaryExpression) expression.getRExpression();
         final PsiExpression lhs = expression.getLExpression();
+        assert rhs != null;
         final PsiJavaToken sign = rhs.getOperationSign();
         final PsiExpression rhsRhs = rhs.getROperand();
+        assert rhsRhs != null;
         String signText = sign.getText();
         if("&&".equals(signText)){
             signText = "&";
@@ -69,6 +71,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
             super();
             final PsiBinaryExpression rhs =
                     (PsiBinaryExpression) expression.getRExpression();
+            assert rhs != null;
             final PsiJavaToken sign = rhs.getOperationSign();
             String signText = sign.getText();
             if("&&".equals(signText)){
@@ -114,7 +117,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
                 return;
             }
             final PsiBinaryExpression binaryRhs = (PsiBinaryExpression) rhs;
-            if(!WellFormednessUtils.isWellFormed(binaryRhs)){
+            if(!(binaryRhs.getROperand() != null)){
                 return;
             }
             final PsiExpression lOperand = binaryRhs.getLOperand();

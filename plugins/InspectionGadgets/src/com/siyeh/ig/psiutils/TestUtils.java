@@ -17,27 +17,9 @@ public class TestUtils{
         final PsiFile file = aClass.getContainingFile();
         final VirtualFile virtualFile = file.getVirtualFile();
         final Project project = manager.getProject();
-        return TestUtils.isTest(project, virtualFile);
-    }
-
-    public static boolean isTest(@NotNull PsiDirectory directory){
-        final PsiManager manager = directory.getManager();
-        final VirtualFile virtualFile = directory.getVirtualFile();
-        final Project project = manager.getProject();
-        return TestUtils.isTest(project, virtualFile);
-    }
-
-    public static boolean isTest(@NotNull PsiJavaFile file){
-        final PsiManager manager = file.getManager();
-        final VirtualFile virtualFile = file.getVirtualFile();
-        final Project project = manager.getProject();
-        return TestUtils.isTest(project, virtualFile);
-    }
-
-    private static boolean isTest(@NotNull Project project,
-                                   @NotNull VirtualFile virtualFile){
         final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
         final ProjectFileIndex fileIndex = rootManager.getFileIndex();
         return fileIndex.isInTestSourceContent(virtualFile);
     }
+
 }

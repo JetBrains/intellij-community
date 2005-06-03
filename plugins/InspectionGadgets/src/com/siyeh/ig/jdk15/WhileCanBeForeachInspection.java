@@ -536,11 +536,9 @@ public class WhileCanBeForeachInspection extends StatementInspection{
         public void visitAssignmentExpression(@NotNull PsiAssignmentExpression exp){
             super.visitAssignmentExpression(exp);
             final PsiExpression lhs = exp.getLExpression();
-            if(lhs != null){
-                final String lhsText = lhs.getText();
-                if(iteratorName.equals(lhsText)){
-                    iteratorAssigned = true;
-                }
+            final String lhsText = lhs.getText();
+            if(iteratorName.equals(lhsText)){
+                iteratorAssigned = true;
             }
         }
 

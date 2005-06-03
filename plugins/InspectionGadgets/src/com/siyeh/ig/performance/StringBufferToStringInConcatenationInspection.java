@@ -61,9 +61,6 @@ public class StringBufferToStringInConcatenationInspection extends ExpressionIns
             }
             final PsiBinaryExpression parentBinary = (PsiBinaryExpression) parent;
             final PsiJavaToken sign = parentBinary.getOperationSign();
-            if (sign == null) {
-                return;
-            }
             if (!(sign.getTokenType().equals(JavaTokenType.PLUS))) {
                 return;
             }

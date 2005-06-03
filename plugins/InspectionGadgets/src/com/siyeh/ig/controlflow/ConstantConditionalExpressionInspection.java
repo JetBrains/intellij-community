@@ -42,6 +42,8 @@ public class ConstantConditionalExpressionInspection
         final PsiExpression thenExpression = exp.getThenExpression();
         final PsiExpression elseExpression = exp.getElseExpression();
         final PsiExpression condition = exp.getCondition();
+        assert thenExpression != null;
+        assert elseExpression != null;
 
         if (isFalse(condition) && isTrue(elseExpression)) {
             return thenExpression.getText();
@@ -74,11 +76,7 @@ public class ConstantConditionalExpressionInspection
         public void visitConditionalExpression(PsiConditionalExpression exp) {
             super.visitConditionalExpression(exp);
             final PsiExpression condition = exp.getCondition();
-            if(condition == null)
-            {
-              return;
-            }
-                final PsiExpression thenExpression = exp.getThenExpression();
+            final PsiExpression thenExpression = exp.getThenExpression();
             if (thenExpression == null) {
                 return;
             }

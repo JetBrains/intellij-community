@@ -41,6 +41,7 @@ public class BoolUtils {
             final String negatedComparison = ComparisonUtils.getNegatedComparison(operator);
             final PsiExpression lhs = binaryExpression.getLOperand();
             final PsiExpression rhs = binaryExpression.getROperand();
+            assert rhs != null;
             return lhs.getText() + negatedComparison + rhs.getText();
         } else if(ParenthesesUtils.getPrecendence(condition) >
                 ParenthesesUtils.PREFIX_PRECEDENCE){

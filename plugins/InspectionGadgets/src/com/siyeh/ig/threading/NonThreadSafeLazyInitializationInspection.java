@@ -85,7 +85,7 @@ public class NonThreadSafeLazyInitializationInspection
             }
             final PsiExpression lhs = comparison.getLOperand();
             final PsiExpression rhs = comparison.getROperand();
-            if(lhs == null || rhs == null)
+            if( rhs == null)
             {
                 return false;
             }

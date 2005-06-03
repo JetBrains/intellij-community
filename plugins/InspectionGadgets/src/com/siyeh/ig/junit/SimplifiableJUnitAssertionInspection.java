@@ -154,6 +154,7 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
             assert lhs != null;
             newExpression.append(lhs.getText());
             newExpression.append(',');
+            assert rhs != null;
             newExpression.append(rhs.getText());
             if(isFloatingPoint(lhs) || isFloatingPoint(rhs)){
                 newExpression.append(",0.0");
@@ -440,17 +441,11 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
         if(testArg instanceof PsiBinaryExpression){
             final PsiJavaToken sign =
                     ((PsiBinaryExpression) testArg).getOperationSign();
-            if(sign == null){
-                return false;
-            }
             if(!sign.getTokenType().equals(JavaTokenType.EQEQ)){
                 return false;
             }
             final PsiExpression lhs =
                     ((PsiBinaryExpression) testArg).getLOperand();
-            if(lhs == null){
-                return false;
-            }
             final PsiExpression rhs =
                     ((PsiBinaryExpression) testArg).getROperand();
             if(rhs == null){

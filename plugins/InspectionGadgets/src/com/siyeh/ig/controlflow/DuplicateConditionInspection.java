@@ -103,8 +103,6 @@ public class DuplicateConditionInspection extends ExpressionInspection{
             {
                 final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) condition;
                 final PsiJavaToken sign = binaryExpression.getOperationSign();
-                if(sign!=null)
-                {
                     final IElementType tokenType = sign.getTokenType();
                     if(JavaTokenType.OROR.equals(tokenType))
                     {
@@ -114,7 +112,6 @@ public class DuplicateConditionInspection extends ExpressionInspection{
                         collectConditionsForExpression(rhs, conditions);
                         return;
                     }
-                }
             }
             conditions.add(condition);
         }

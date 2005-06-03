@@ -55,21 +55,11 @@ public class ConditionalUtils{
         final PsiAssignmentExpression assignment =
                 (PsiAssignmentExpression) expression;
         final PsiExpression rhs = assignment.getRExpression();
-        final PsiExpression lhs = assignment.getLExpression();
-        if(lhs == null || rhs == null){
+        if(rhs == null){
             return false;
         }
         final String rhsText = rhs.getText();
         return value.equals(rhsText);
     }
 
-    public static boolean isAssignment(PsiStatement statement){
-        if(!(statement instanceof PsiExpressionStatement)){
-            return false;
-        }
-        final PsiExpressionStatement expressionStatement =
-                (PsiExpressionStatement) statement;
-        final PsiExpression expression = expressionStatement.getExpression();
-        return expression instanceof PsiAssignmentExpression;
-    }
 }

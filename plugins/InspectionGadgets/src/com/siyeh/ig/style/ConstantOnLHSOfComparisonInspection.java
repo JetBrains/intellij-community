@@ -13,7 +13,6 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantOnLHSOfComparisonInspection extends ExpressionInspection {
@@ -56,6 +55,7 @@ public class ConstantOnLHSOfComparisonInspection extends ExpressionInspection {
             final PsiJavaToken operation = expression.getOperationSign();
             final String sign = operation.getText();
             final String flippedSign = ComparisonUtils.getFlippedComparison(sign);
+            assert rhs != null;
             final String rhsText = rhs.getText();
             final String lhsText = lhs.getText();
             replaceExpression(expression,
@@ -69,7 +69,7 @@ public class ConstantOnLHSOfComparisonInspection extends ExpressionInspection {
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!WellFormednessUtils.isWellFormed(expression))
+            if(!(expression.getROperand() != null))
             {
                 return;
             }

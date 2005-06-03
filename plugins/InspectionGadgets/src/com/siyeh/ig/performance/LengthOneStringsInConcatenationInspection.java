@@ -91,9 +91,6 @@ public class LengthOneStringsInConcatenationInspection extends ExpressionInspect
             }
             final PsiBinaryExpression binaryExp = (PsiBinaryExpression) parent;
             final PsiJavaToken sign = binaryExp.getOperationSign();
-            if (sign == null) {
-                return false;
-            }
             if (!sign.getTokenType().equals(JavaTokenType.PLUS)) {
                 return false;
             }

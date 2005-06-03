@@ -42,6 +42,7 @@ public class ConditionalExpressionWithIdenticalBranchesInspection extends Expres
                     (PsiConditionalExpression) descriptor.getPsiElement();
 
             final PsiExpression thenExpression = expression.getThenExpression();
+            assert thenExpression != null;
             final String bodyText = thenExpression.getText();
             replaceExpression(expression, bodyText);
         }

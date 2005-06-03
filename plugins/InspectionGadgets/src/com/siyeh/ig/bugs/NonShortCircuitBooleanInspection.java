@@ -9,7 +9,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class NonShortCircuitBooleanInspection extends ExpressionInspection {
@@ -46,6 +45,7 @@ public class NonShortCircuitBooleanInspection extends ExpressionInspection {
             final PsiExpression rhs = expression.getROperand();
             final PsiJavaToken operationSign = expression.getOperationSign();
             final IElementType tokenType = operationSign.getTokenType();
+            assert rhs != null;
             final String newExpression = lhs.getText() + getShortCircuitOperand(tokenType) + rhs.getText();
             replaceExpression(expression, newExpression);
         }
@@ -68,7 +68,7 @@ public class NonShortCircuitBooleanInspection extends ExpressionInspection {
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!WellFormednessUtils.isWellFormed(expression)){
+            if(!(expression.getROperand() != null)){
                 return;
             }
 

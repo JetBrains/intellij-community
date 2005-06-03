@@ -13,7 +13,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -92,17 +91,11 @@ public class ObjectEqualityInspection extends ExpressionInspection {
                     expression = (PsiBinaryExpression) comparisonToken.getParent();
             boolean negated = false;
             final PsiJavaToken sign = expression.getOperationSign();
-            if (sign == null) {
-                return;
-            }
             final IElementType tokenType = sign.getTokenType();
             if (JavaTokenType.NE.equals(tokenType)) {
                 negated = true;
             }
             final PsiExpression lhs = expression.getLOperand();
-            if (lhs == null) {
-                return;
-            }
             final PsiExpression strippedLhs = ParenthesesUtils.stripParentheses(lhs);
             final PsiExpression rhs = expression.getROperand();
             if (rhs == null) {
@@ -131,7 +124,7 @@ public class ObjectEqualityInspection extends ExpressionInspection {
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!WellFormednessUtils.isWellFormed(expression)){
+            if(!(expression.getROperand() != null)){
                 return;
             }
             if (!ComparisonUtils.isEqualityComparison(expression)) {

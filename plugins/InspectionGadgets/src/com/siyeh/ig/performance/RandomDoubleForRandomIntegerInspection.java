@@ -60,6 +60,7 @@ public class RandomDoubleForRandomIntegerInspection extends ExpressionInspection
             {
                 multiplierExpression = multiplication.getLOperand();
             }
+            assert multiplierExpression != null;
             final String multiplierText = multiplierExpression.getText();
             replaceExpression(cast, qualifierText + ".nextInt((int) " + multiplierText + ')');
         }
@@ -121,10 +122,6 @@ public class RandomDoubleForRandomIntegerInspection extends ExpressionInspection
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) expression;
             final PsiJavaToken sign = binaryExpression.getOperationSign();
-            if(sign == null)
-            {
-                return false;
-            }
             final IElementType tokenType = sign.getTokenType();
             return JavaTokenType.ASTERISK.equals(tokenType);
         }

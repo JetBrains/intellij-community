@@ -11,7 +11,6 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -45,6 +44,7 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
         final PsiJavaToken sign = exp.getOperationSign();
         lhs = exp.getLOperand();
         rhs = exp.getROperand();
+        assert rhs != null;
         final IElementType tokenType = sign.getTokenType();
         if (tokenType.equals(JavaTokenType.PLUS)) {
             if (isZero(lhs)) {
@@ -111,7 +111,7 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!WellFormednessUtils.isWellFormed(expression)){
+            if(!(expression.getROperand() != null)){
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();

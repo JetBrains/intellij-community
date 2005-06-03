@@ -65,6 +65,8 @@ public class NegatedConditionalInspection extends ExpressionInspection{
             final PsiExpression condition = exp.getCondition();
             final String negatedCondition =
                     BoolUtils.getNegatedExpressionText(condition);
+            assert elseBranch != null;
+            assert thenBranch != null;
             final String newStatement =
             negatedCondition + '?' + elseBranch.getText() + ':' +
                     thenBranch.getText();
@@ -86,9 +88,6 @@ public class NegatedConditionalInspection extends ExpressionInspection{
             }
 
             final PsiExpression condition = expression.getCondition();
-            if(condition == null){
-                return;
-            }
             if(!isNegation(condition)){
                 return;
             }
@@ -108,7 +107,7 @@ public class NegatedConditionalInspection extends ExpressionInspection{
                 final PsiJavaToken sign = binaryExpression.getOperationSign();
                 final PsiExpression lhs = binaryExpression.getLOperand();
                 final PsiExpression rhs = binaryExpression.getROperand();
-                if(lhs == null || rhs == null){
+                if(rhs == null){
                     return false;
                 }
                 final IElementType tokenType = sign.getTokenType();

@@ -41,6 +41,7 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
         final PsiExpression rhs = exp.getROperand();
         final PsiJavaToken sign = exp.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
+        assert rhs != null;
         final PsiType expressionType = exp.getType();
         if (tokenType.equals(JavaTokenType.AND)) {
             if (isZero(lhs, expressionType) || isAllOnes(rhs, expressionType)) {
@@ -117,9 +118,6 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
-            if(sign == null){
-                return;
-            }
             final IElementType tokenType = sign.getTokenType();
             if(!bitwiseTokens.contains(tokenType))
             {
@@ -145,9 +143,6 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
-            if (lhs == null) {
-                return;
-            }
             final PsiType lhsType = lhs.getType();
             if (lhsType == null) {
                 return;

@@ -107,7 +107,7 @@ public class NegatedIfElseInspection extends StatementInspection {
                 final PsiJavaToken sign = binaryExpression.getOperationSign();
                 final PsiExpression lhs = binaryExpression.getLOperand();
                 final PsiExpression rhs = binaryExpression.getROperand();
-                if (lhs == null || rhs == null) {
+                if (rhs == null) {
                     return false;
                 }
                 final IElementType tokenType = sign.getTokenType();

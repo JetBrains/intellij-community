@@ -10,7 +10,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -160,7 +159,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression){
             super.visitBinaryExpression(expression);
-            if(!WellFormednessUtils.isWellFormed(expression)){
+            if(!(expression.getROperand() != null)){
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
@@ -171,6 +170,10 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
             }
 
             final PsiExpression rhs = expression.getROperand();
+            if(rhs == null)
+            {
+                return;
+            }
             final PsiType rhsType = rhs.getType();
             if(rhsType == null){
                 return;

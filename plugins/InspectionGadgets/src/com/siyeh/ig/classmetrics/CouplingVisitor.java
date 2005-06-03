@@ -74,9 +74,6 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
     public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression exp) {
         super.visitClassObjectAccessExpression(exp);
         final PsiTypeElement operand = exp.getOperand();
-        if (operand == null) {
-            return;
-        }
         final PsiType classType = operand.getType();
         addDependency(classType);
     }
