@@ -192,7 +192,9 @@ public class PackageUtil {
       for (int i = 0; i < orderEntries.length; i++) {
         OrderEntry orderEntry = orderEntries[i];
         if (NamedLibraryElementNode.orderEntryContainsFile(orderEntry, file)) {
-          return orderEntry instanceof ModuleJdkOrderEntry || orderEntry instanceof LibraryOrderEntry;
+          return orderEntry instanceof ModuleJdkOrderEntry
+                 || orderEntry instanceof JdkOrderEntry
+                 || orderEntry instanceof LibraryOrderEntry;
         }
       }
       return false;
