@@ -27,7 +27,7 @@ public final class ToggleFullScreenModeAction extends ToggleAction{
 
   public boolean isSelected(AnActionEvent e){
     IdeFrame frame=getFrame(e);
-    return frame.getGraphicsConfiguration().getDevice().getFullScreenWindow()==frame;
+    return frame != null && frame.getGraphicsConfiguration().getDevice().getFullScreenWindow()==frame;
   }
 
   public void setSelected(AnActionEvent e,boolean state){
