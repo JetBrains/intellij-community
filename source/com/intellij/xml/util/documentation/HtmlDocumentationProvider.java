@@ -212,10 +212,12 @@ public class HtmlDocumentationProvider implements JavaDocManager.DocumentationPr
     else {
       XmlTag tagContext = findTagContext(context);
       HtmlAttributeDescriptor myAttributeDescriptor = getDescriptor(key,tagContext);
-      if (myAttributeDescriptor!=null && tagContext!=null) {
+
+      if (myAttributeDescriptor != null && tagContext != null) {
         XmlElementDescriptor tagDescriptor = tagContext.getDescriptor();
         XmlAttributeDescriptor attributeDescriptor = tagDescriptor.getAttributeDescriptor(text);
-        return attributeDescriptor.getDeclaration();
+        
+        return (attributeDescriptor != null)?attributeDescriptor.getDeclaration():null;
       }
     }
     return null;
