@@ -28,11 +28,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
   }
 
   public void childReplaced(PsiTreeChangeEvent event) {
-    updateByChange(event.getParent());
-  }
-
-  public void beforeChildReplacement(PsiTreeChangeEvent event) {
-    updateByChange(event.getOldChild());
+    updateByChange(event.getNewChild());
   }
 
   public void childrenChanged(PsiTreeChangeEvent event) {

@@ -16,11 +16,10 @@ import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
 
 import java.util.*;
 
@@ -31,10 +30,11 @@ import java.util.*;
  * Time: 16:50:37
  * To change this template use Options | File Templates.
  */
-public class PsiClassImplUtil{
+public class PsiClassImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiClassImplUtil");
-  private static final Key MAP_IN_CLASS_KEY = Key.create("MAP_IN_CLASS_KEY");
   private static final Key<String> ALL_MAPS_BUILT_FLAG = Key.create("ALL_MAPS_BUILT_FLAG");
+
+  private static final Key<CachedValue<Map>> MAP_IN_CLASS_KEY = Key.create("MAP_KEY");
 
   public static PsiField[] getAllFields(final PsiClass aClass) {
     return getAllByMap(aClass, PsiField.class);
@@ -59,7 +59,7 @@ public class PsiClassImplUtil{
 
   public static PsiMethod findMethodBySignature(final PsiClass aClass, final PsiMethod patternMethod, final boolean checkBases) {
     final PsiMethod[] result = findMethodsBySignature(aClass, patternMethod, checkBases, true);
-    return (result.length != 0 ? result [0] : null);
+    return (result.length != 0 ? result[0] : null);
   }
 
   // ----------------------------- findMethodsBySignature -----------------------------------
@@ -68,16 +68,18 @@ public class PsiClassImplUtil{
     return findMethodsBySignature(aClass, patternMethod, checkBases, false);
   }
 
-  private static PsiMethod[] findMethodsBySignature(final PsiClass aClass, final PsiMethod patternMethod, final boolean checkBases, final boolean stopOnFirst) {
+  private static PsiMethod[] findMethodsBySignature(final PsiClass aClass,
+                                                    final PsiMethod patternMethod,
+                                                    final boolean checkBases,
+                                                    final boolean stopOnFirst) {
     final PsiMethod[] methodsByName = aClass.findMethodsByName(patternMethod.getName(), checkBases);
     final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>();
     final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);
-    for (int i = 0; i < methodsByName.length; i++) {
-      final PsiMethod method = methodsByName[i];
+    for (final PsiMethod method : methodsByName) {
       final PsiClass superClass = method.getContainingClass();
       final PsiSubstitutor substitutor;
       if (checkBases && !aClass.equals(superClass)) {
-        substitutor =  TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
+        substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
         LOG.assertTrue(substitutor != null);
       }
       else {
@@ -101,41 +103,41 @@ public class PsiClassImplUtil{
     return byMap.length >= 1 ? byMap[0] : null;
   }
 
-  private static final<T> T[] emptyArrayByType(Class<T> type){
-    if(type.isAssignableFrom(PsiMethod.class)) return (T[])PsiMethod.EMPTY_ARRAY;
-    if(type.isAssignableFrom(PsiField.class)) return (T[])PsiField.EMPTY_ARRAY;
-    if(type.isAssignableFrom(PsiClass.class)) return (T[])PsiClass.EMPTY_ARRAY;
+  private static final <T> T[] emptyArrayByType(Class<T> type) {
+    if (type.isAssignableFrom(PsiMethod.class)) return (T[])PsiMethod.EMPTY_ARRAY;
+    if (type.isAssignableFrom(PsiField.class)) return (T[])PsiField.EMPTY_ARRAY;
+    if (type.isAssignableFrom(PsiClass.class)) return (T[])PsiClass.EMPTY_ARRAY;
 
+    LOG.assertTrue(false);
     return (T[])ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  private static <T extends PsiNamedElement> T[] findByMap(PsiClass aClass, String name, boolean checkBases, Class<T> type) {
-    if(name == null) return emptyArrayByType(type);
+  private static <T extends PsiMember> T[] findByMap(PsiClass aClass, String name, boolean checkBases, Class<T> type) {
+    if (name == null) return emptyArrayByType(type);
 
     if (!checkBases) {
-      Object[] members = null;
-      if(type.isAssignableFrom(PsiMethod.class)){
-        members = aClass.getMethods();
+      T[] members = null;
+      if (type.isAssignableFrom(PsiMethod.class)) {
+        members = (T[])aClass.getMethods();
       }
-      else if(type.isAssignableFrom(PsiClass.class)){
-        members = aClass.getInnerClasses();
+      else if (type.isAssignableFrom(PsiClass.class)) {
+        members = (T[])aClass.getInnerClasses();
       }
-      else if(type.isAssignableFrom(PsiField.class)){
-        members = aClass.getFields();
+      else if (type.isAssignableFrom(PsiField.class)) {
+        members = (T[])aClass.getFields();
       }
-      if(members == null) return emptyArrayByType(type);
+      if (members == null) return emptyArrayByType(type);
 
       List<T> list = new ArrayList<T>();
-      for (int i = 0; i < members.length; i++) {
-        final T method = (T)members[i];
-        if(name.equals(method.getName())) list.add(method);
+      for (T member : members) {
+        if (name.equals(member.getName())) list.add(member);
       }
-      return list.toArray(emptyArrayByType(type));
+      return list.toArray(members);
     }
     else {
       final Map<String, List<Pair<T, PsiSubstitutor>>> allMethodsMap = getMap(aClass, type);
       final List<Pair<T, PsiSubstitutor>> list = allMethodsMap.get(name);
-      if(list == null) return emptyArrayByType(type);
+      if (list == null) return emptyArrayByType(type);
       final List<T> ret = new ArrayList<T>();
       final Iterator<Pair<T, PsiSubstitutor>> iterator = list.iterator();
       while (iterator.hasNext()) {
@@ -147,13 +149,13 @@ public class PsiClassImplUtil{
     }
   }
 
-  public static <T extends PsiNamedElement> List<Pair<T, PsiSubstitutor>> getAllWithSubstitutorsByMap(PsiClass aClass, Class<T> type) {
+  public static <T extends PsiMember> List<Pair<T, PsiSubstitutor>> getAllWithSubstitutorsByMap(PsiClass aClass, Class<T> type) {
     final Map<String, List<Pair<T, PsiSubstitutor>>> allMap = getMap(aClass, type);
     final List<Pair<T, PsiSubstitutor>> pairs = allMap.get(ALL);
     return pairs;
   }
 
-  private static <T extends PsiNamedElement> T[] getAllByMap(PsiClass aClass, Class<T> type) {
+  private static <T extends PsiMember> T[] getAllByMap(PsiClass aClass, Class<T> type) {
     final Map<String, List<Pair<T, PsiSubstitutor>>> allMap = getMap(aClass, type);
     final List<Pair<T, PsiSubstitutor>> pairs = allMap.get(ALL);
 
@@ -162,68 +164,17 @@ public class PsiClassImplUtil{
     }
 
     final List<T> ret = new ArrayList<T>(pairs.size());
-    final Iterator<Pair<T,PsiSubstitutor>> iterator = pairs.iterator();
+    final Iterator<Pair<T, PsiSubstitutor>> iterator = pairs.iterator();
     while (iterator.hasNext()) {
-      final Pair<T,PsiSubstitutor> pair = iterator.next();
+      final Pair<T, PsiSubstitutor> pair = iterator.next();
       ret.add(pair.getFirst());
     }
     return ret.toArray(emptyArrayByType(type));
   }
 
-  private static final String NULL = "Intellij-IDEA-NULL";
   private static final String ALL = "Intellij-IDEA-ALL";
 
-  private static <T extends PsiNamedElement> void buildMap(PsiClass psiClass,
-                                                           Map<String, List<Pair<T, PsiSubstitutor>>> map,
-                                                           final Class<T> type) {
-    final Object data;
-    synchronized (PsiLock.LOCK) {
-      data = psiClass.getUserData(ALL_MAPS_BUILT_FLAG);
-    }
-    if (data != null) return;
-    if (map.containsKey(NULL)) return;
-
-    final List<Pair<T, PsiSubstitutor>> list = new ArrayList<Pair<T, PsiSubstitutor>>();
-    processDeclarationsInClassNotCached(psiClass, new FilterScopeProcessor(new ClassFilter(type), null, list) {
-      protected void add(PsiElement element, PsiSubstitutor substitutor) {
-        list.add(new Pair<T, PsiSubstitutor>((T)element, substitutor));
-      }
-    }, PsiSubstitutor.EMPTY, new HashSet<PsiClass>(), null, psiClass, false);
-
-
-    synchronized (map) {
-      map.put(ALL, list);
-      final Iterator<Pair<T, PsiSubstitutor>> iterator = list.iterator();
-      while (iterator.hasNext()) {
-        final Pair<T, PsiSubstitutor> info = iterator.next();
-        final T element = info.getFirst();
-        final String currentName = element.getName();
-        List<Pair<T, PsiSubstitutor>> elementsList = map.get(currentName);
-        if (elementsList == null) {
-          elementsList = new ArrayList<Pair<T, PsiSubstitutor>>(1);
-          map.put(currentName, elementsList);
-        }
-        elementsList.add(info);
-      }
-      map.put(NULL, null);
-    }
-  }
-
-  private static <T extends PsiNamedElement> Map<String, List<Pair<T, PsiSubstitutor>>> buildAllMaps(final PsiClass psiClass, Class<T> type) {
-    if (!psiClass.isPhysical()) return getMapInner(psiClass, type);
-    final Object data;
-    synchronized (PsiLock.LOCK) {
-      data = psiClass.getUserData(ALL_MAPS_BUILT_FLAG);
-    }
-
-    if (data != null) {
-      final Map<String, List<Pair<T, PsiSubstitutor>>> mapInner = getMapInner(psiClass, type);
-      if (mapInner.isEmpty()) {
-        LOG.assertTrue(false);
-      }
-      return mapInner;
-    }
-
+  private static Map<Class<? extends PsiMember>, Map<String, List>> buildAllMaps(final PsiClass psiClass) {
     final List<Pair<PsiClass, PsiSubstitutor>> classes = new ArrayList<Pair<PsiClass, PsiSubstitutor>>();
     final List<Pair<PsiField, PsiSubstitutor>> fields = new ArrayList<Pair<PsiField, PsiSubstitutor>>();
     final List<Pair<PsiMethod, PsiSubstitutor>> methods = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
@@ -249,96 +200,55 @@ public class PsiClassImplUtil{
     }, PsiSubstitutor.EMPTY, new HashSet<PsiClass>(), null, psiClass, false);
 
     synchronized (PsiLock.LOCK) {
-      //This is quite a critical doubled check. Actually, the first check might be removed
-//But at least one check should be performed inside the non-cancelable action
-//In order not to put uncomplete data to map
-      if (psiClass.getUserData(ALL_MAPS_BUILT_FLAG) != null) {
-        final Map<String, List<Pair<T, PsiSubstitutor>>> mapInner = getMapInner(psiClass, type);
-        if (mapInner.isEmpty()) {
-          LOG.assertTrue(false);
-        }
-        return mapInner;
-      }
-      final Map<String, List<Pair<PsiClass, PsiSubstitutor>>> classesMap = getMapInner(psiClass, PsiClass.class);
-      final Map<String, List<Pair<PsiField, PsiSubstitutor>>> fieldsMap = getMapInner(psiClass, PsiField.class);
-      final Map<String, List<Pair<PsiMethod, PsiSubstitutor>>> methodsMap = getMapInner(psiClass, PsiMethod.class);
-      if (classesMap.isEmpty()) {
-        generateMapByList(classesMap, classes);
-      }
-      ;
-      if (fieldsMap.isEmpty()) {
-        generateMapByList(fieldsMap, fields);
-      }
-      ;
-      if (methodsMap.isEmpty()) {
-        generateMapByList(methodsMap, methods);
-      }
-      ;
+      Map<Class<? extends PsiMember>, Map<String, List>> result = new HashMap<Class<? extends PsiMember>, Map<String, List>>(3);
+      result.put(PsiClass.class, generateMapByList(classes));
+      result.put(PsiMethod.class, generateMapByList(methods));
+      result.put(PsiField.class, generateMapByList(fields));
       psiClass.putUserData(ALL_MAPS_BUILT_FLAG, "");
-      return getMapInner(psiClass, type);
+      return result;
     }
   }
 
-  private static <T extends PsiNamedElement> void generateMapByList(final Map<String, List<Pair<T, PsiSubstitutor>>> map,
-                                            final List<Pair<T, PsiSubstitutor>> list) {
+  private static <T extends PsiMember> Map<String, List> generateMapByList(final List<Pair<T, PsiSubstitutor>> list) {
     LOG.assertTrue(list != null);
-    synchronized(map){
-      map.put(ALL, list);
-      final Iterator<Pair<T, PsiSubstitutor>> iterator = list.iterator();
-      while (iterator.hasNext()) {
-        final Pair<T, PsiSubstitutor> info = iterator.next();
-        final T element = info.getFirst();
-        final String currentName = element.getName();
-        List<Pair<T, PsiSubstitutor>> listByName = map.get(currentName);
-        if(listByName == null){
-          listByName = new ArrayList<Pair<T, PsiSubstitutor>>(1);
-          map.put(currentName, listByName);
-        }
-        listByName.add(info);
+    Map<String, List> map = new HashMap<String, List>();
+    map.put(ALL, list);
+    final Iterator<Pair<T, PsiSubstitutor>> iterator = list.iterator();
+    while (iterator.hasNext()) {
+      final Pair<T, PsiSubstitutor> info = iterator.next();
+      final T element = info.getFirst();
+      final String currentName = element.getName();
+      List<Pair<T, PsiSubstitutor>> listByName = map.get(currentName);
+      if (listByName == null) {
+        listByName = new ArrayList<Pair<T, PsiSubstitutor>>(1);
+        map.put(currentName, listByName);
       }
-    }
-  }
-
-  private static <T extends PsiNamedElement> Map<String, List<Pair<T, PsiSubstitutor>>> getMap(final PsiClass psiClass, final Class<T> type){
-    return buildAllMaps(psiClass, type);
-  }
-
-  private static <T extends PsiNamedElement> Map<String, List<Pair<T, PsiSubstitutor>>> getMapInner(final PsiClass psiClass, final Class<T> type) {
-    if (!psiClass.isPhysical()) {
-      final Map<String, List<Pair<T, PsiSubstitutor>>> hashMap = new HashMap<String, List<Pair<T, PsiSubstitutor>>>();
-      buildMap(psiClass, hashMap, type);
-      return hashMap;
-    }
-    final Map<String, List<Pair<T, PsiSubstitutor>>> map;
-    synchronized (PsiLock.LOCK) {
-      Map<String, Pair<Map<String, List<Pair<T, PsiSubstitutor>>>, Runnable>> mapInClass = (Map<String, Pair<Map<String, List<Pair<T, PsiSubstitutor>>>, Runnable>>)psiClass.getUserData(MAP_IN_CLASS_KEY);
-      if (mapInClass == null) {
-        mapInClass = new HashMap<String, Pair<Map<String, List<Pair<T, PsiSubstitutor>>>, Runnable>>();
-        psiClass.putUserData(MAP_IN_CLASS_KEY, mapInClass);
-      }
-      final String typeName = type.getName();
-      final Pair<Map<String, List<Pair<T, PsiSubstitutor>>>, Runnable> value = mapInClass.get(typeName);
-      if (value == null) {
-        map = Collections.synchronizedMap(new HashMap<String, List<Pair<T, PsiSubstitutor>>>());
-        final Map<String, Pair<Map<String, List<Pair<T, PsiSubstitutor>>>, Runnable>> mapInClass1 = mapInClass;
-        final Runnable cleaner = new Runnable() {
-          public void run() {
-            synchronized (PsiLock.LOCK) {
-              psiClass.putUserData(ALL_MAPS_BUILT_FLAG, null);
-              mapInClass1.remove(typeName);
-            }
-          }
-        };
-        mapInClass.put(typeName, new Pair<Map<String, List<Pair<T, PsiSubstitutor>>>, Runnable>(map, cleaner));
-        PsiManagerImpl manager = (PsiManagerImpl)psiClass.getManager();
-        manager.registerWeakRunnableToRunOnChange(cleaner);
-      }
-      else {
-        map = value.first;
-      }
-      ;
+      listByName.add(info);
     }
     return map;
+  }
+
+  private static <T extends PsiMember> Map<String, List<Pair<T, PsiSubstitutor>>> getMap(final PsiClass psiClass, Class<T> memberClazz) {
+    CachedValue<Map> cachedValue = psiClass.getUserData(MAP_IN_CLASS_KEY);
+    if (cachedValue == null) {
+      final CachedValueProvider<Map> provider = new MyCachedValueProvider(psiClass);
+      cachedValue = psiClass.getManager().getCachedValuesManager().createCachedValue(provider, false);
+      psiClass.putUserData(MAP_IN_CLASS_KEY, cachedValue);
+    }
+    return ((Map<String, List<Pair<T, PsiSubstitutor>>>)cachedValue.getValue().get(memberClazz));
+  }
+
+  private static class MyCachedValueProvider implements CachedValueProvider<Map> {
+    private PsiClass myClass;
+
+    public MyCachedValueProvider(final PsiClass aClass) {
+      myClass = aClass;
+    }
+
+    public Result<Map> compute() {
+      final Map<Class<? extends PsiMember>, Map<String, List>> map = buildAllMaps(myClass);
+      return new Result<Map>(map, new Object[]{PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT});
+    }
   }
 
   public static boolean processDeclarationsInClass(PsiClass aClass, PsiScopeProcessor processor,
@@ -425,8 +335,8 @@ public class PsiClassImplUtil{
           if (methodResolverProcessor.isConstructor()) {
             final PsiMethod[] constructors = aClass.getConstructors();
             methodResolverProcessor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
-            for (int i = 0; i < constructors.length; i++) {
-              if (!methodResolverProcessor.execute(constructors[i], substitutor)) return false;
+            for (PsiMethod constructor : constructors) {
+              if (!methodResolverProcessor.execute(constructor, substitutor)) return false;
             }
             return true;
           }
@@ -498,15 +408,14 @@ public class PsiClassImplUtil{
       }
       else {
         final PsiField[] fields = aClass.getFields();
-        for (int i = 0; i < fields.length; i++) {
-          final PsiField field = fields[i];
+        for (final PsiField field : fields) {
           if (!processor.execute(field, substitutor)) return false;
         }
       }
 
       final PsiField[] introducedFields = manager.getAspectManager().getIntroducedFields(aClass);
-      for (int i = 0; i < introducedFields.length; i++) {
-        if (!processor.execute(introducedFields[i], substitutor)) return false;
+      for (PsiField introducedField : introducedFields) {
+        if (!processor.execute(introducedField, substitutor)) return false;
       }
     }
 
@@ -523,8 +432,8 @@ public class PsiClassImplUtil{
       }
 
       PsiMethod[] introducedMethods = manager.getAspectManager().getIntroducedMethods(aClass);
-      for (int i = 0; i < introducedMethods.length; i++) {
-        if (!processor.execute(introducedMethods[i], substitutor)) return false;
+      for (PsiMethod introducedMethod : introducedMethods) {
+        if (!processor.execute(introducedMethod, substitutor)) return false;
       }
     }
 
@@ -537,16 +446,15 @@ public class PsiClassImplUtil{
 
       if (!(last instanceof PsiReferenceList) && !(last instanceof PsiModifierList)) {
         // Inners
-        if(nameHint != null){
+        if (nameHint != null) {
           final PsiClass inner = aClass.findInnerClassByName(nameHint.getName(), false);
           if (inner != null) {
             if (!processor.execute(inner, substitutor)) return false;
           }
         }
-        else{
+        else {
           final PsiClass[] inners = aClass.getInnerClasses();
-          for (int i = 0; i < inners.length; i++) {
-            final PsiClass inner = inners[i];
+          for (final PsiClass inner : inners) {
             if (!processor.execute(inner, substitutor)) return false;
           }
         }
@@ -556,9 +464,9 @@ public class PsiClassImplUtil{
     visited.add(aClass);
     if (!(last instanceof PsiReferenceList)) {
       if (!processSuperTypes(
-            aClass.getSuperTypes(),
-            processor, visited, last, place, aClass, substitutor, isRaw)) {
-          return false;
+        aClass.getSuperTypes(),
+        processor, visited, last, place, aClass, substitutor, isRaw)) {
+        return false;
       }
     }
     return true;
@@ -572,8 +480,7 @@ public class PsiClassImplUtil{
                                            PsiClass aClass,
                                            PsiSubstitutor substitutor,
                                            boolean isRaw) {
-    for (int i = 0; i < superTypes.length; i++) {
-      final PsiClassType superType = superTypes[i];
+    for (final PsiClassType superType : superTypes) {
       final PsiClassType.ClassResolveResult superTypeResolveResult = superType.resolveGenerics();
       PsiClass superClass = superTypeResolveResult.getElement();
       if (superClass == null) continue;
@@ -609,7 +516,7 @@ public class PsiClassImplUtil{
     PsiReferenceList[] introducedImplementsList = new PsiReferenceList[1];
 
     manager.getAspectManager().getIntroducedParents(psiClass, introducedExtendsList,
-                                                                  introducedImplementsList);
+                                                    introducedImplementsList);
     final PsiClassType[] referenceElements;
     if (introducedExtendsList[0] != null) {
       referenceElements = introducedExtendsList[0].getReferencedTypes();
@@ -626,8 +533,7 @@ public class PsiClassImplUtil{
 
   public static PsiClass[] getSupers(PsiClass psiClass) {
     final PsiClass[] supers = getSupersInner(psiClass);
-    for (int i = 0; i < supers.length; i++) {
-      final PsiClass aSuper = supers[i];
+    for (final PsiClass aSuper : supers) {
       LOG.assertTrue(aSuper != null);///
     }
     return supers;
@@ -698,7 +604,8 @@ public class PsiClassImplUtil{
         return new PsiClassType[]{baseClassType};
       }
       else {
-        PsiClassType objectType = psiClass.getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", psiClass.getResolveScope());
+        PsiClassType objectType = psiClass.getManager().getElementFactory().createTypeByFQClassName("java.lang.Object",
+                                                                                                    psiClass.getResolveScope());
         return new PsiClassType[]{objectType, baseClassType};
       }
     }
@@ -754,8 +661,8 @@ public class PsiClassImplUtil{
       }
       else {
         superType = new PsiImmediateClassType(enumClass, PsiSubstitutor.EMPTY.put(
-                              typeParameters[0], manager.getElementFactory().createType(psiClass)
-                            ));
+          typeParameters[0], manager.getElementFactory().createType(psiClass)
+        ));
       }
     }
     return superType;
@@ -764,8 +671,7 @@ public class PsiClassImplUtil{
   private static void addReferenceTypes(final PsiReferenceList referenceList, List<PsiClassType> result) {
     if (referenceList != null) {
       final PsiClassType[] referenceElements = referenceList.getReferencedTypes();
-      for (int i = 0; i < referenceElements.length; i++) {
-        final PsiClassType referenceElement = referenceElements[i];
+      for (final PsiClassType referenceElement : referenceElements) {
         LOG.assertTrue(referenceElement != null);
         result.add(referenceElement);
       }
@@ -775,8 +681,7 @@ public class PsiClassImplUtil{
   public static PsiClass[] getInterfaces(PsiTypeParameter typeParameter) {
     final ArrayList<PsiClass> result = new ArrayList<PsiClass>();
     final PsiClassType[] referencedTypes = typeParameter.getExtendsListTypes();
-    for (int i = 0; i < referencedTypes.length; i++) {
-      PsiClassType referencedType = referencedTypes[i];
+    for (PsiClassType referencedType : referencedTypes) {
       final PsiClass psiClass = referencedType.resolve();
       if (psiClass != null && psiClass.isInterface()) {
         result.add(psiClass);
@@ -821,7 +726,8 @@ public class PsiClassImplUtil{
   }
 
   private static PsiClass[] resolveClassReferenceList(final PsiClassType[] listOfTypes,
-                                                      final PsiManager manager, final GlobalSearchScope resolveScope, boolean includeObject) {
+                                                      final PsiManager manager, final GlobalSearchScope resolveScope, boolean includeObject)
+  {
     PsiClass objectClass = manager.findClass("java.lang.Object", resolveScope);
     if (objectClass == null) includeObject = false;
     if (listOfTypes == null || listOfTypes.length == 0) {
@@ -836,8 +742,7 @@ public class PsiClassImplUtil{
     int resolvedCount = 0;
 
     if (includeObject) resolved[resolvedCount++] = objectClass;
-    for (int i = 0; i < listOfTypes.length; i++) {
-      PsiClassType reference = listOfTypes[i];
+    for (PsiClassType reference : listOfTypes) {
       PsiClass refResolved = reference.resolve();
       if (refResolved != null) resolved[resolvedCount++] = refResolved;
     }
@@ -851,25 +756,25 @@ public class PsiClassImplUtil{
     return resolved;
   }
 
-  public static List<Pair<PsiMethod,PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(PsiClass psiClass, String name, boolean checkBases) {
-    if(!checkBases){
+  public static List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(PsiClass psiClass, String name, boolean checkBases) {
+    if (!checkBases) {
       final PsiMethod[] methodsByName = psiClass.findMethodsByName(name, false);
-      final List<Pair<PsiMethod,PsiSubstitutor>> ret = new ArrayList<Pair<PsiMethod,PsiSubstitutor>>(methodsByName.length);
-      for (int i = 0; i < methodsByName.length; i++) {
-        final PsiMethod method = methodsByName[i];
-        ret.add(new Pair<PsiMethod,PsiSubstitutor>(method, PsiSubstitutor.EMPTY));
+      final List<Pair<PsiMethod, PsiSubstitutor>> ret = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>(methodsByName.length);
+      for (final PsiMethod method : methodsByName) {
+        ret.add(new Pair<PsiMethod, PsiSubstitutor>(method, PsiSubstitutor.EMPTY));
       }
       return ret;
     }
-    final Map<String,List<Pair<PsiMethod,PsiSubstitutor>>> map = getMap(psiClass, PsiMethod.class);
-    final List<Pair<PsiMethod,PsiSubstitutor>> list = map.get(name);
+    final Map<String, List<Pair<PsiMethod, PsiSubstitutor>>> map = getMap(psiClass, PsiMethod.class);
+    final List<Pair<PsiMethod, PsiSubstitutor>> list = map.get(name);
     return list == null ? Collections.EMPTY_LIST : Collections.unmodifiableList(list);
   }
 
   public static PsiClassType[] getExtendsListTypes(PsiClass psiClass) {
     if (psiClass.isEnum()) {
       return new PsiClassType[]{getEnumSuperType(psiClass)};
-    } else if (psiClass.isAnnotationType()) {
+    }
+    else if (psiClass.isAnnotationType()) {
       return new PsiClassType[]{getAnnotationSuperType(psiClass)};
     }
     final PsiReferenceList extendsList = psiClass.getExtendsList();
