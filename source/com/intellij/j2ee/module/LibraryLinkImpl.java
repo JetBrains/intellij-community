@@ -311,9 +311,9 @@ public class LibraryLinkImpl extends LibraryLink implements ResolvableElement{
     String url = urls.get(0);
 
     Module[] modules = getAllDependentModules();
-    for (int i = 0; i < modules.length; i++) {
-      Library moduleLibrary = findModuleLibrary(modules[i], url);
-      if (moduleLibrary != null){
+    for (Module module : modules) {
+      Library moduleLibrary = findModuleLibrary(module, url);
+      if (moduleLibrary != null) {
         myLibraryInfo = new LibraryInfoBasedOnLibrary(moduleLibrary);
         return true;
       }
@@ -335,8 +335,8 @@ public class LibraryLinkImpl extends LibraryLink implements ResolvableElement{
     if (result.contains(module)) return;
     result.add(module);
     Module[] dependencies = ModuleRootManager.getInstance(module).getDependencies();
-    for (int i = 0; i < dependencies.length; i++) {
-      addDependencies(dependencies[i], result);
+    for (Module dependency : dependencies) {
+      addDependencies(dependency, result);
     }
   }
 

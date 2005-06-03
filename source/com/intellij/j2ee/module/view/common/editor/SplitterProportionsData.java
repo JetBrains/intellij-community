@@ -30,8 +30,7 @@ public class SplitterProportionsData implements JDOMExternalizable{
     }
     if (root instanceof Container) {
       Component[] children = ((Container)root).getComponents();
-      for (int i = 0; i < children.length; i++) {
-        Component child = children[i];
+      for (Component child : children) {
         doSaveSplitterProportions(child);
       }
     }
@@ -48,8 +47,7 @@ public class SplitterProportionsData implements JDOMExternalizable{
     }
     if (root instanceof Container) {
       Component[] children = ((Container)root).getComponents();
-      for (int i = 0; i < children.length; i++) {
-        Component child = children[i];
+      for (Component child : children) {
         index = restoreSplitterProportions(child, index);
       }
     }

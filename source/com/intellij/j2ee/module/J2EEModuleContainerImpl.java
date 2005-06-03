@@ -57,8 +57,8 @@ public abstract class J2EEModuleContainerImpl
 
   private void migrateRootsWatcher() {
     final Set<ExternalizableString> keys = myOrderInfo.keySet();
-    for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
-      ExternalizableString key = (ExternalizableString)iterator.next();
+    for (final ExternalizableString key1 : keys) {
+      ExternalizableString key = (ExternalizableString)key1;
       final OrderEntryInfo orderEntryInfo = myOrderInfo.get(key);
       if (!orderEntryInfo.copy) continue;
       final OrderEntry orderEntry = myModuleRootsWatcher.find(getModule(), key);
@@ -86,8 +86,8 @@ public abstract class J2EEModuleContainerImpl
       }
       containerElement.setURI(orderEntryInfo.URI);
       final Map<String, String> attributes = orderEntryInfo.getAttributes();
-      for (Iterator iterator1 = attributes.keySet().iterator(); iterator1.hasNext();) {
-        String name = (String)iterator1.next();
+      for (final String s : attributes.keySet()) {
+        String name = (String)s;
         String value = attributes.get(name);
         containerElement.setAttribute(name, value);
       }
@@ -204,8 +204,8 @@ public abstract class J2EEModuleContainerImpl
   public void writeExternal(Element element) throws WriteExternalException {
     if (!isActive()) return;
 
-    for (Iterator iterator = myContents.iterator(); iterator.hasNext();) {
-      ContainerElement containerElement = (ContainerElement)iterator.next();
+    for (final ContainerElement myContent : myContents) {
+      ContainerElement containerElement = (ContainerElement)myContent;
       final Element child = new Element(CONTAINER_ELEMENT_NAME);
       if (containerElement instanceof ModuleLink) {
         child.setAttribute(TYPE_ATTRIBUTE_NAME, MODULE_TYPE);
@@ -234,8 +234,7 @@ public abstract class J2EEModuleContainerImpl
     final List<ModuleLink> moduleLinks = new ArrayList<ModuleLink>();
 
     ContainerElement[] elements = getElements();
-    for (int i = 0; i < elements.length; i++) {
-      ContainerElement element = elements[i];
+    for (ContainerElement element : elements) {
       if (element instanceof ModuleLink) {
         moduleLinks.add((ModuleLink)element);
       }
@@ -247,8 +246,7 @@ public abstract class J2EEModuleContainerImpl
   public LibraryLink[] getContainingLibraries() {
     final List<LibraryLink> libraryLinks = new ArrayList<LibraryLink>();
     ContainerElement[] elements = getElements();
-    for (int i = 0; i < elements.length; i++) {
-      ContainerElement element = elements[i];
+    for (ContainerElement element : elements) {
       if (element instanceof LibraryLink) {
         libraryLinks.add((LibraryLink)element);
       }
@@ -262,8 +260,8 @@ public abstract class J2EEModuleContainerImpl
 
   public ContainerElement[] getElements(ModuleByNameProvider provider) {
     ArrayList<ContainerElement> result = new ArrayList<ContainerElement>();
-    for (Iterator iterator = myContents.iterator(); iterator.hasNext();) {
-      ContainerElement containerElement = (ContainerElement)iterator.next();
+    for (final ContainerElement myContent : myContents) {
+      ContainerElement containerElement = (ContainerElement)myContent;
       if (((ResolvableElement)containerElement).resolveElement(provider)) {
         result.add(containerElement);
       }
@@ -277,8 +275,8 @@ public abstract class J2EEModuleContainerImpl
   }
 
   public void removeModule(Module module) {
-    for (Iterator iterator = myContents.iterator(); iterator.hasNext();) {
-      ContainerElement element = (ContainerElement)iterator.next();
+    for (final ContainerElement myContent : myContents) {
+      ContainerElement element = (ContainerElement)myContent;
       if (element instanceof ModuleLink && ((ModuleLink)element).getModule() == module) {
         myContents.remove(element);
         break;
@@ -332,8 +330,7 @@ public abstract class J2EEModuleContainerImpl
   private void copyContainerInfoFrom(J2EEModuleContainerImpl from) {
     clearContainer();
     final ContainerElement[] elements = from.getElements();
-    for (int i = 0; i < elements.length; i++) {
-      final ContainerElement element = elements[i];
+    for (final ContainerElement element : elements) {
       addElement(element.clone());
     }
   }

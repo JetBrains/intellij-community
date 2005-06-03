@@ -124,17 +124,16 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
     ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
 
     String[] urls = manager.getAvailableUrls();
-    for (int i = 0; i < urls.length; i++) {
-      String loc = manager.getResourceLocation(urls[i]);
-      myPairs.add(new Pair(urls[i], loc));
+    for (String url : urls) {
+      String loc = manager.getResourceLocation(url);
+      myPairs.add(new Pair(url, loc));
     }
 
     Collections.sort(myPairs);
 
     myIgnoredUrls = new ArrayList();
     final String[] ignoredResources = manager.getIgnoredResources();
-    for (int i = 0; i < ignoredResources.length; i++) {
-      String ignoredResource = ignoredResources[i];
+    for (String ignoredResource : ignoredResources) {
       myIgnoredUrls.add(ignoredResource);
     }
 

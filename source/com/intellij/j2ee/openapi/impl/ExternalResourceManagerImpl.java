@@ -124,20 +124,20 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     final List<String> result = new LinkedList<String>();
     final Set<String> keySet = myResources.keySet();
 
-    for (Iterator<String> iterator = keySet.iterator(); iterator.hasNext();) {
-      String key = iterator.next();
+    for (String key : keySet) {
       String resource = myResources.get(key);
 
-      if (fileType!=null) {
+      if (fileType != null) {
         String defaultExtension = fileType.getDefaultExtension();
 
         if (resource.endsWith(defaultExtension) &&
             resource.length() > defaultExtension.length() &&
-            resource.charAt(resource.length()-defaultExtension.length()-1) == '.'
-            ) {
+            resource.charAt(resource.length() - defaultExtension.length() - 1) == '.'
+          ) {
           result.add(key);
         }
-      } else {
+      }
+      else {
         result.add(key);
       }
     }
@@ -193,21 +193,20 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     macroExpands.substitute(element, SystemInfo.isFileSystemCaseSensitive);
 
     myModificationCount++;
-    for (Iterator iterator = element.getChildren("resource").iterator(); iterator.hasNext();) {
-      Element e = (Element)iterator.next();
+    for (final Object o1 : element.getChildren("resource")) {
+      Element e = (Element)o1;
       addResource(e.getAttributeValue("url"), e.getAttributeValue("location").replace('/', File.separatorChar));
     }
 
-    for (Iterator i = element.getChildren("ignored-resource").iterator(); i.hasNext();) {
-      Element e = (Element)i.next();
+    for (final Object o : element.getChildren("ignored-resource")) {
+      Element e = (Element)o;
       addIgnoredResource(e.getAttributeValue("url"));
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     final String[] urls = getAvailableUrls();
-    for (int i = 0; i < urls.length; i++) {
-      String url = urls[i];
+    for (String url : urls) {
       String location = getResourceLocation(url);
 
       final Element e = new Element("resource");
@@ -218,9 +217,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     }
 
     final String[] ignoredResources = getIgnoredResources();
-    for (int i = 0; i < ignoredResources.length; i++) {
-      String ignoredResource = ignoredResources[i];
-
+    for (String ignoredResource : ignoredResources) {
       final Element e = new Element("ignored-resource");
 
       e.setAttribute("url", ignoredResource);
@@ -246,8 +243,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   private void fireExternalResourceChanged() {
     ExternalResourceListener[] listeners = myListeners.toArray(new ExternalResourceListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      ExternalResourceListener listener = listeners[i];
+    for (ExternalResourceListener listener : listeners) {
       listener.externalResourceChanged();
     }
   }

@@ -182,8 +182,8 @@ public class EnvVariablesTable extends Observable {
 
     private Set<String> collectAllNames() {
       HashSet<String> result = new HashSet<String>();
-      for (Iterator iterator = myVariables.iterator(); iterator.hasNext();) {
-        EnvironmentVariable environmentVariable = (EnvironmentVariable)iterator.next();
+      for (final EnvironmentVariable myVariable : myVariables) {
+        EnvironmentVariable environmentVariable = (EnvironmentVariable)myVariable;
         result.add(environmentVariable.getName());
       }
       return result;

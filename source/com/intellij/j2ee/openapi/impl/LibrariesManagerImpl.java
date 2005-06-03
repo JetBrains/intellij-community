@@ -28,8 +28,7 @@ public class LibrariesManagerImpl extends LibrariesManager implements Applicatio
   }
 
   public boolean isClassAvailable(final String[] urls, String fqn) {
-    for (int i = 0; i < urls.length; i++) {
-      String url = urls[i];
+    for (String url : urls) {
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       if (file == null) continue;
       if (file.getFileSystem() != JarFileSystem.getInstance() && !file.isDirectory()) {

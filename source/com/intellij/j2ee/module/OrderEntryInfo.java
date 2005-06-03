@@ -32,12 +32,11 @@ class OrderEntryInfo implements JDOMExternalizable {
     Element root = new Element("attributes");
     element.addContent(root);
     Set<String> names = attributes.keySet();
-    for (Iterator<String> iterator = names.iterator(); iterator.hasNext();) {
-      String name = iterator.next();
+    for (String name : names) {
       String value = attributes.get(name);
       Element attr = new Element("attribute");
-      attr.setAttribute("name",name);
-      attr.setAttribute("value",value);
+      attr.setAttribute("name", name);
+      attr.setAttribute("value", value);
       root.addContent(attr);
     }
   }
