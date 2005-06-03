@@ -128,14 +128,16 @@ public abstract class ChooseByNameBase{
         }
       }
       else if (dataId.equals(DataConstantsEx.PSI_ELEMENT_ARRAY)) {
-        List<PsiElement> result = new ArrayList<PsiElement>();
         final Object[] chosenElements = getChosenElements();
-        for (Object element : chosenElements) {
-          if (element instanceof PsiElement) {
-            result.add((PsiElement)element);
+        if (chosenElements != null) {
+          List<PsiElement> result = new ArrayList<PsiElement>();
+          for (Object element : chosenElements) {
+            if (element instanceof PsiElement) {
+              result.add((PsiElement)element);
+            }
           }
+          return result.toArray(new PsiElement[result.size()]);
         }
-        return result.toArray(new PsiElement[result.size()]);
       }
       return null;
     }
