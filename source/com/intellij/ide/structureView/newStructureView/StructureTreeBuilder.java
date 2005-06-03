@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.*;
 import com.intellij.util.Alarm;
 
@@ -130,7 +131,6 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
 
     public void childMoved(PsiTreeChangeEvent event) {
       childrenChanged();
-      childrenChanged();
     }
 
     public void childrenChanged(PsiTreeChangeEvent event) {
@@ -143,11 +143,11 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
         public void run() {
           addRootToUpdate();
         }
-      }, 300);
+      }, 300, ModalityState.stateForComponent(myTree));
     }
 
     public void propertyChanged(PsiTreeChangeEvent event) {
-      addRootToUpdate();
+      childrenChanged();
     }
   }
 
