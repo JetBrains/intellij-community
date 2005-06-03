@@ -25,6 +25,9 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
     if (recentEntries != null) {
       setHistory(recentEntries.toArray(new String[recentEntries.size()]));
     }
+    if (text != null && text.length() > 0) {
+      prependItem(text);
+    }
   }
 
   private static Document createDocument(final String text, PsiManager manager, boolean isClassesAccepted) {

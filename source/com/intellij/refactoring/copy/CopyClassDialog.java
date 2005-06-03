@@ -46,7 +46,7 @@ class CopyClassDialog extends DialogWrapper{
     if (myDefaultTargetDirectory != null) {
       PsiPackage aPackage = myDefaultTargetDirectory.getPackage();
       if (aPackage != null) {
-        myTfPackage.setText(aPackage.getQualifiedName());
+        myTfPackage.prependItem(aPackage.getQualifiedName());
       }
     }
     if (myDoClone) {
