@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
 import com.intellij.ui.SpeedSearchBase;
+import com.intellij.ui.FocusTrackback;
 
 import javax.swing.*;
 import java.awt.*;
@@ -342,7 +343,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
 
-  private static class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider {
+  private static class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider, FocusTrackback.Provider {
     private final WeakReference<DialogWrapper> myDialogWrapper;
     /**
      * Initial size of the dialog. When the dialog is being closed and
@@ -351,6 +352,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
      */
     private Dimension myInitialSize;
     private String myDimensionServiceKey;
+
+    private FocusTrackback myFocusTrackback;
 
     public MyDialog(Dialog owner, DialogWrapper dialogWrapper) {
       super(owner);
@@ -364,6 +367,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       myDialogWrapper = new WeakReference<DialogWrapper>(dialogWrapper);
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       addWindowListener(new MyWindowListener());
+    }
+
+    public FocusTrackback getFocusTrackback() {
+      return myFocusTrackback;
     }
 
     public DialogWrapper getDialogWrapper() {
@@ -380,6 +387,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         return ((DataProvider)wrapper).getData(dataId);
       }
       return null;
+    }
+
+    @Deprecated
+    public void hide() {
+      super.hide();
+      myFocusTrackback.restoreFocus();
     }
 
     protected JRootPane createRootPane() {
@@ -409,6 +422,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     public void show() {
+      myFocusTrackback = new FocusTrackback(myDialogWrapper, getOwner());
+
       final DialogWrapper dialogWrapper = getDialogWrapper();
 
       pack();
