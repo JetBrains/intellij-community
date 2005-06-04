@@ -3,6 +3,7 @@ package com.intellij.ide;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocatorEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -130,7 +131,7 @@ public class SaveAndSyncHandler implements ApplicationComponent,PropertyChangeLi
             }
           }
         },
-        200
+        200, ModalityState.NON_MMODAL
       );
     }
   }
