@@ -9,6 +9,7 @@ import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -21,11 +22,15 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -39,6 +44,7 @@ import junit.framework.TestCase;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.io.File;
 import java.util.List;
 
 /**
@@ -129,6 +135,9 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
 
         final ContentEntry contentEntry = rootModel.addContentEntry(ourSourceRoot);
         contentEntry.addSourceFolder(ourSourceRoot, false);
+
+        addStandardAnnotationsToProject(rootModel);
+
         rootModel.commit();
 
         ProjectRootManager.getInstance(ourProject).addModuleRootListener(new ModuleRootListener() {
@@ -164,6 +173,16 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
         ((StartupManagerImpl)StartupManager.getInstance(getProject())).runStartupActivities();
       }
     });
+  }
+
+  private void addStandardAnnotationsToProject(final ModifiableRootModel rootModel) {
+    LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(getProject());
+    Library library = libraryTable.createLibrary();
+    Library.ModifiableModel libModel = library.getModifiableModel();
+    VirtualFile annots = LocalFileSystem.getInstance().findFileByIoFile(new File(PathManager.getHomePath() + "/Annotations/classes"));
+    libModel.addRoot(annots, OrderRootType.CLASSES);
+    libModel.commit();
+    rootModel.addLibraryEntry(library);
   }
 
   protected Module createMainModule() {

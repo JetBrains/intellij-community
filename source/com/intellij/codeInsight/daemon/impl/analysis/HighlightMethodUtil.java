@@ -923,8 +923,7 @@ public class HighlightMethodUtil {
     return null;
   }
 
-  private static HighlightInfo checkInterfaceInheritedMethodsReturnTypes(
-    List<MethodSignatureBackedByPsiMethod> superMethodSignatures) {
+  private static HighlightInfo checkInterfaceInheritedMethodsReturnTypes(List<MethodSignatureBackedByPsiMethod> superMethodSignatures) {
     if (superMethodSignatures.size() < 2) return null;
     MethodSignatureBackedByPsiMethod returnTypeSubstitutable = superMethodSignatures.get(0);
     for (int i = 1; i < superMethodSignatures.size(); i++) {

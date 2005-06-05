@@ -1,18 +1,20 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashSet;
 
 import java.text.MessageFormat;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -325,4 +327,57 @@ public class AnnotationsHighlightUtil {
     }
     return null;
   }
+
+  public static HighlightInfo checkAnnotationDeclaration(final PsiElement parent, final PsiReferenceList list) {
+    if (parent instanceof PsiAnnotationMethod) {
+      PsiAnnotationMethod method = (PsiAnnotationMethod)parent;
+      if (list == method.getThrowsList()) {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, "@interface members may not have throws list");
+      }
+    }
+    else if (parent instanceof PsiClass && ((PsiClass)parent).isAnnotationType()) {
+      if ("extends".equals(list.getFirstChild().getText())) {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, "@interface may not have extends list");
+      }
+    }
+    return null;
+  }
+  public static HighlightInfo checkNullableStuff(PsiMethod method, List<MethodSignatureBackedByPsiMethod> superMethodSignatures) {
+    boolean isDeclaredNotNull = AnnotationUtil.isAnnotated(method, AnnotationUtil.NOT_NULL, false);
+    boolean isDeclaredNullable = AnnotationUtil.isAnnotated(method, AnnotationUtil.NULLABLE, false);
+    if (isDeclaredNullable && isDeclaredNotNull) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, method.getNameIdentifier(),
+                                               "Cannot annotate with both @Nullable and @NotNull");
+    }
+
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+
+    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
+      PsiMethod superMethod = superMethodSignature.getMethod();
+      if (isDeclaredNullable && AnnotationUtil.isNotNull(superMethod)) {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, method.getNameIdentifier(),
+                                                 "Method annotated with @Nullable must not override @NotNull method");
+      }
+      if (!isDeclaredNullable && !isDeclaredNotNull && AnnotationUtil.isNotNull(superMethod)) {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, method.getNameIdentifier(),
+                                                 "Not annotated method overrides method annotated with @NotNull");
+      }
+      PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
+      if (superParameters.length != parameters.length) {
+        continue;
+      }
+      for (int i = 0; i < parameters.length; i++) {
+        PsiParameter parameter = parameters[i];
+        PsiParameter superParameter = superParameters[i];
+        if (AnnotationUtil.isAnnotated(parameter, AnnotationUtil.NOT_NULL, false) && AnnotationUtil.isAnnotated(superParameter, AnnotationUtil.NULLABLE, false)) {
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameter.getNameIdentifier(),
+                                                   "Parameter annotated @NonNull must not override @Nullable parameter");
+        }
+      }
+    }
+
+    return null;
+  }
+
+
 }

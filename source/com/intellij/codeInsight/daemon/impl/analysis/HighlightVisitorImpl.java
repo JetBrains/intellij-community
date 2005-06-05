@@ -49,7 +49,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   private final Project myProject;
 
   private final DaemonCodeAnalyzerSettings mySettings;
-  private final PsiManager myManager;
   private PsiResolveHelper myResolveHelper;
 
   /**
@@ -93,14 +92,13 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   public HighlightVisitorImpl(Project project, DaemonCodeAnalyzerSettings settings, PsiManager manager) {
     myProject = project;
     mySettings = settings;
-    myManager = manager;
 
     myXmlVisitor = new XmlHighlightVisitor();
     myJavadocVisitor = new JavadocHighlightVisitor(settings);
 
     myAspectHighlightVisitor = new AspectHighlighter();
 
-    myResolveHelper = myManager.getResolveHelper();
+    myResolveHelper = manager.getResolveHelper();
   }
 
   public boolean suitableForFile(PsiFile file) {
@@ -556,28 +554,15 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
       PsiMethod method = (PsiMethod)parent;
       MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
       if (!method.isConstructor()) {
-        List<MethodSignatureBackedByPsiMethod> superMethodSignatures = PsiSuperMethodUtil.findSuperMethodSignaturesIncludingStatic(
-          method, true);
-        List<MethodSignatureBackedByPsiMethod> superMethodCandidateSignatures = PsiSuperMethodUtil.findSuperMethodSignaturesIncludingStatic(
-          method, false);
-        if (!myHolder.hasErrorResults()) {
-          myHolder.add(HighlightMethodUtil.checkMethodWeakerPrivileges(methodSignature, superMethodCandidateSignatures, true));
-        }
-        if (!myHolder.hasErrorResults()) {
-          myHolder.add(HighlightMethodUtil.checkMethodIncompatibleReturnType(methodSignature, superMethodSignatures, true));
-        }
-        if (!myHolder.hasErrorResults()) {
-          myHolder.add(HighlightMethodUtil.checkMethodIncompatibleThrows(methodSignature, superMethodSignatures, true));
-        }
-        if (!myHolder.hasErrorResults()) {
-          myHolder.add(HighlightMethodUtil.checkMethodOverridesFinal(methodSignature, superMethodSignatures));
-        }
-        if (!myHolder.hasErrorResults()) {
-          myHolder.add(HighlightMethodUtil.checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, mySettings));
-        }
-        if (!myHolder.hasErrorResults()) {
-          myHolder.add(GenericsHighlightUtil.checkUncheckedOverriding(method, superMethodSignatures));
-        }
+        List<MethodSignatureBackedByPsiMethod> superMethodSignatures = PsiSuperMethodUtil.findSuperMethodSignaturesIncludingStatic(method, true);
+        List<MethodSignatureBackedByPsiMethod> superMethodCandidateSignatures = PsiSuperMethodUtil.findSuperMethodSignaturesIncludingStatic(method, false);
+        if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodWeakerPrivileges(methodSignature, superMethodCandidateSignatures, true));
+        if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodIncompatibleReturnType(methodSignature, superMethodSignatures, true));
+        if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodIncompatibleThrows(methodSignature, superMethodSignatures, true));
+        if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodOverridesFinal(methodSignature, superMethodSignatures));
+        if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, mySettings));
+        if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkUncheckedOverriding(method, superMethodSignatures));
+        if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkNullableStuff(method, superMethodSignatures));
       }
       PsiClass aClass = method.getContainingClass();
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodMustHaveBody(method, aClass));
@@ -782,11 +767,12 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
     PsiMethod method = null;
-    if (initializer.getParent() instanceof PsiNameValuePair) {
-      method = (PsiMethod)(initializer.getParent()).getReference().resolve();
+    PsiElement parent = initializer.getParent();
+    if (parent instanceof PsiNameValuePair) {
+      method = (PsiMethod)parent.getReference().resolve();
     }
-    else if (initializer.getParent() instanceof PsiAnnotationMethod) {
-      method = (PsiMethod)initializer.getParent();
+    else if (parent instanceof PsiAnnotationMethod) {
+      method = (PsiMethod)parent;
     }
     if (method != null) {
       PsiType type = method.getReturnType();
@@ -836,21 +822,12 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     if (list.getFirstChild() == null) return;
     PsiElement parent = list.getParent();
     if (!(parent instanceof PsiTypeParameter)) {
-      if (parent instanceof PsiAnnotationMethod) {
-        PsiAnnotationMethod method = (PsiAnnotationMethod)parent;
-        if (list == method.getThrowsList()) {
-          myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, "@interface members may not have throws list"));
-        }
-      }
-      else if (parent instanceof PsiClass && ((PsiClass)parent).isAnnotationType()) {
-        if ("extends".equals(list.getFirstChild().getText())) {
-          myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, "@interface may not have extends list"));
-        }
-      }
+      myHolder.add(AnnotationsHighlightUtil.checkAnnotationDeclaration(parent, list));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkImplementsAllowed(list));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkClassExtendsOnlyOneClass(list));
     }
   }
+
 
   public void visitReferenceParameterList(PsiReferenceParameterList list) {
     myHolder.add(GenericsHighlightUtil.checkParametersOnRaw(list));

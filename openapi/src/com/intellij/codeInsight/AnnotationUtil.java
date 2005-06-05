@@ -60,6 +60,18 @@ public class AnnotationUtil {
 
     return null;
   }
+  public static boolean isAnnotated(PsiModifierListOwner listOwner, String annotationFQN, boolean checkHierarchy) {
+    PsiAnnotation annotation = listOwner.getModifierList().findAnnotation(annotationFQN);
+    if (annotation != null) return true;
+    if (checkHierarchy && listOwner instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)listOwner;
+      final PsiMethod[] superMethods = method.findSuperMethods();
+      for (PsiMethod superMethod : superMethods) {
+        if (isAnnotated(superMethod, annotationFQN, checkHierarchy)) return true;
+      }
+    }
+    return false;
+  }
 
   public static boolean isAnnotatingApplicable(PsiElement elt) {
     final PsiManager manager = elt.getManager();
