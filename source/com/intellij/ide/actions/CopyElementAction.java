@@ -42,7 +42,7 @@ public class CopyElementAction extends AnAction {
   }
 
   protected void doCopy(PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
-    CopyHandler.doCopy(elements, defaultTargetDirectory);
+    CopyHandler.doCopy(elements, null, defaultTargetDirectory);
   }
 
   public void update(AnActionEvent event){

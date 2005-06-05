@@ -123,7 +123,7 @@ public class CopyHandler {
   }
 
 
-  public static void doCopy(PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
+  public static void doCopy(PsiElement[] elements, final PsiPackage defaultPackage, PsiDirectory defaultTargetDirectory) {
     int type = getCopyType(elements);
     if (type == NOT_SUPPORTED) {
       return;
@@ -140,7 +140,7 @@ public class CopyHandler {
           defaultTargetDirectory = containingFile.getContainingDirectory();
         }
       }
-      CopyClassDialog dialog = new CopyClassDialog(aClass, defaultTargetDirectory, project, false);
+      CopyClassDialog dialog = new CopyClassDialog(aClass, defaultTargetDirectory, defaultPackage, project, false);
       dialog.setTitle("Copy Class");
       dialog.show();
       if (dialog.isOK()) {
@@ -224,7 +224,7 @@ public class CopyHandler {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.copyClass");
       PsiClass aClass = (PsiClass)element;
 
-      CopyClassDialog dialog = new CopyClassDialog(aClass, null, project, true);
+      CopyClassDialog dialog = new CopyClassDialog(aClass, null, null,project, true);
       dialog.setTitle("Clone Class");
       dialog.show();
       if (dialog.isOK()) {

@@ -35,7 +35,7 @@ class CopyClassDialog extends DialogWrapper{
   private boolean myDoClone;
   private final PsiDirectory myDefaultTargetDirectory;
 
-  public CopyClassDialog(PsiClass aClass, PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
+  public CopyClassDialog(PsiClass aClass, PsiDirectory defaultTargetDirectory, PsiPackage defaultTargetPackage,Project project, boolean doClone) {
     super(project, true);
     myProject = project;
     init();
@@ -43,7 +43,10 @@ class CopyClassDialog extends DialogWrapper{
     myInformationLabel.setText((myDoClone ? "Clone " : "Copy ") + UsageViewUtil.getType(aClass) + " " + UsageViewUtil.getLongName(aClass));
     myNameField.setText(UsageViewUtil.getShortName(aClass));
     myDefaultTargetDirectory = defaultTargetDirectory;
-    if (myDefaultTargetDirectory != null) {
+    if (defaultTargetPackage != null) {
+      myTfPackage.prependItem(defaultTargetPackage.getQualifiedName());
+    }
+    else if (myDefaultTargetDirectory != null) {
       PsiPackage aPackage = myDefaultTargetDirectory.getPackage();
       if (aPackage != null) {
         myTfPackage.prependItem(aPackage.getQualifiedName());
