@@ -271,6 +271,23 @@ public class TypedHandler implements TypedActionHandler {
       super(new IElementType[] { JavaTokenType.STRING_LITERAL, JavaTokenType.CHARACTER_LITERAL});
     }
 
+    public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
+      boolean openingQuote = super.isOpeningQuote(iterator, offset);
+
+      if (openingQuote) {
+        // check escape next
+        if (!iterator.atEnd()) {
+          iterator.retreat();
+
+          if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.isInSet( iterator.getTokenType() )) {
+            openingQuote = false;
+          }
+          iterator.advance();
+        }
+      }
+      return openingQuote;
+    }
+
     public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
       boolean closingQuote = super.isClosingQuote(iterator, offset);
 
