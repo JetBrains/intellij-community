@@ -207,6 +207,15 @@ abstract class SelectInContextImpl implements SelectInContext {
         }
       };
     }
+
+    public Object getSelectorInFile() {
+      final int offset = myEditor.getEditor().getCaretModel().getOffset();
+      if (offset >= 0 && offset < myPsiFile.getTextLength()) {
+        return myPsiFile.findElementAt(offset);
+      } else {
+        return super.getSelectorInFile();
+      }
+    }
   }
 
   private static class OpenFileDescriptorContext extends SelectInContextImpl {
