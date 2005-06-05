@@ -12,6 +12,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.util.graph.Graph;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -22,21 +23,21 @@ public abstract class ModuleManager {
     return project.getComponent(ModuleManager.class);
   }
 
-  public abstract Module newModule(String filePath) throws LoadCancelledException;
+  @NotNull public abstract Module newModule(String filePath) throws LoadCancelledException;
 
-  public abstract Module newModule(String filePath, ModuleType moduleType) throws LoadCancelledException;
+  @NotNull public abstract Module newModule(String filePath, ModuleType moduleType) throws LoadCancelledException;
 
-  public abstract Module loadModule(String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists, ModuleCircularDependencyException, LoadCancelledException;
+  @NotNull public abstract Module loadModule(String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists, ModuleCircularDependencyException, LoadCancelledException;
 
   public abstract void disposeModule(Module module);
 
-  public abstract Module[] getModules();
+  @NotNull public abstract Module[] getModules();
 
-  public abstract Module findModuleByName(String name);
+  @Nullable public abstract Module findModuleByName(String name);
 
-  public abstract Module[] getSortedModules();
+  @NotNull public abstract Module[] getSortedModules();
 
-  public abstract Comparator<Module> moduleDependencyComparator();
+  @NotNull public abstract Comparator<Module> moduleDependencyComparator();
 
   /**
    * Returns list of <i>modules that depend on</i> given module.
@@ -51,11 +52,11 @@ public abstract class ModuleManager {
 
   public abstract void removeModuleListener(ModuleListener listener);
 
-  public abstract Graph<Module> moduleGraph();
+  @NotNull public abstract Graph<Module> moduleGraph();
 
-  public abstract ModifiableModuleModel getModifiableModel();
+  @NotNull public abstract ModifiableModuleModel getModifiableModel();
 
   public abstract void dispatchPendingEvent(ModuleListener listener);
 
-  public abstract String[] getModuleGroupPath(Module module);
+  @Nullable public abstract String[] getModuleGroupPath(Module module);
 }
