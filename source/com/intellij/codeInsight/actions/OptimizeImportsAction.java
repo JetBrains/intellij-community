@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 
 public class OptimizeImportsAction extends AnAction {
@@ -16,6 +18,8 @@ public class OptimizeImportsAction extends AnAction {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
 
+    final VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstantsEx.VIRTUAL_FILE_ARRAY);
+
     PsiFile file = null;
     PsiDirectory dir;
 
@@ -23,6 +27,13 @@ public class OptimizeImportsAction extends AnAction {
       file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null) return;
       dir = file.getContainingDirectory();
+    }
+    else if (ReformatCodeAction.areFiles(files)) {
+      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
+      if (!operationStatus.hasReadonlyFiles()) {
+        new OptimizeImportsProcessor(project, ReformatCodeAction.convertToPsiFiles(files, project), null).run();
+      }
+      return;
     }
     else{
       Project projectContext = (Project)dataContext.getData(DataConstantsEx.PROJECT_CONTEXT);
@@ -64,7 +75,6 @@ public class OptimizeImportsAction extends AnAction {
     dialog.show();
     if (!dialog.isOK()) return;
 
-    String commandName = getTemplatePresentation().getText();
     if (dialog.isProcessDirectory()){
       new OptimizeImportsProcessor(project, dir, dialog.isIncludeSubdirectories()).run();
     }
@@ -82,12 +92,24 @@ public class OptimizeImportsAction extends AnAction {
       return;
     }
 
+    final VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstantsEx.VIRTUAL_FILE_ARRAY);
+
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     if (editor != null){
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null || !(file instanceof PsiJavaFile)){
         presentation.setEnabled(false);
         return;
+      }
+    }
+    else if (files != null && ReformatCodeAction.areFiles(files)) {
+      for (int i = 0; i < files.length; i++) {
+        VirtualFile virtualFile = files[i];
+        PsiFile file = PsiManager.getInstance(project).findFile(virtualFile);
+        if (file == null || !(file instanceof PsiJavaFile)){
+          presentation.setEnabled(false);
+          return;
+        }
       }
     }
     else if (dataContext.getData(DataConstantsEx.MODULE_CONTEXT) == null &&

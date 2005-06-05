@@ -1,10 +1,9 @@
 package com.intellij.codeInsight.actions;
 
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.help.HelpManager;
 
 import javax.swing.*;
 import java.awt.*;

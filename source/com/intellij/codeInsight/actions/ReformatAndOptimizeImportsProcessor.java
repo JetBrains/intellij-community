@@ -28,6 +28,12 @@ public class ReformatAndOptimizeImportsProcessor extends AbstractLayoutCodeProce
     myReformatCodeProcessor = new ReformatCodeProcessor(project, module);
   }
 
+  public ReformatAndOptimizeImportsProcessor(Project project, PsiFile[] files) {
+    super(project, files, PROGRESS_TEXT, COMMAND_NAME, null);
+    myOptimizeImportsProcessor = new OptimizeImportsProcessor(project);
+    myReformatCodeProcessor = new ReformatCodeProcessor(project);
+  }
+
   public ReformatAndOptimizeImportsProcessor(Project project, PsiDirectory directory, boolean includeSubdirs) {
     super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME);
     myOptimizeImportsProcessor = new OptimizeImportsProcessor(project, directory, includeSubdirs);

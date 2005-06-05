@@ -1,10 +1,9 @@
 package com.intellij.codeInsight.actions;
 
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
@@ -15,7 +14,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 public class LayoutCodeDialog extends DialogWrapper {
-
   private final PsiFile myFile;
   private final PsiDirectory myDirectory;
   private final Boolean myTextSelected;
@@ -25,7 +23,7 @@ public class LayoutCodeDialog extends DialogWrapper {
   private JRadioButton myRbDirectory;
   private JCheckBox myCbIncludeSubdirs;
   private JCheckBox myCbOptimizeImports;
-  private static final String OPTIMIZE_IMPORTS_KEY = "LayoutCode.optimizeImports";
+  public static final String OPTIMIZE_IMPORTS_KEY = "LayoutCode.optimizeImports";
   private final String myHelpId;
 
   public LayoutCodeDialog(Project project,
@@ -165,7 +163,7 @@ public class LayoutCodeDialog extends DialogWrapper {
   }
 
   protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(),getHelpAction()};
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
   protected void doHelpAction() {

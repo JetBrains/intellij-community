@@ -1,13 +1,18 @@
 package com.intellij.codeInsight.actions;
 
+import com.intellij.newCodeFormatting.FormattingModelBuilder;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
+
+import java.util.ArrayList;
 
 public class ReformatCodeAction extends AnAction {
   private static final String HELP_ID = "editing.codeReformatting";
@@ -17,6 +22,7 @@ public class ReformatCodeAction extends AnAction {
     final Project project = (Project)dataContext.getData(DataConstants.PROJECT);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    final VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstantsEx.VIRTUAL_FILE_ARRAY);
 
     PsiFile file = null;
     final PsiDirectory dir;
@@ -27,6 +33,21 @@ public class ReformatCodeAction extends AnAction {
       if (file == null) return;
       dir = file.getContainingDirectory();
       hasSelection = editor.getSelectionModel().hasSelection();
+    }
+    else if (areFiles(files)) {
+      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
+      if (!operationStatus.hasReadonlyFiles()) {
+        final ReformatFilesDialog reformatFilesDialog = new ReformatFilesDialog(project);
+        reformatFilesDialog.show();
+        if (reformatFilesDialog.optimizeImports()) {
+          new ReformatAndOptimizeImportsProcessor(project, convertToPsiFiles(files, project)).run();
+        }
+        else {
+          new ReformatCodeProcessor(project, convertToPsiFiles(files, project), null).run();
+        }
+      }
+
+      return;
     }
     else{
       Project projectContext = (Project)dataContext.getData(DataConstantsEx.PROJECT_CONTEXT);
@@ -106,6 +127,17 @@ public class ReformatCodeAction extends AnAction {
     }
   }
 
+  public static PsiFile[] convertToPsiFiles(final VirtualFile[] files,Project project) {
+    final PsiManager manager = PsiManager.getInstance(project);
+    final ArrayList<PsiFile> result = new ArrayList<PsiFile>();
+    for (int i = 0; i < files.length; i++) {
+      VirtualFile virtualFile = files[i];
+      final PsiFile psiFile = manager.findFile(virtualFile);
+      if (psiFile != null) result.add(psiFile);
+    }
+    return result.toArray(new PsiFile[result.size()]);
+  }
+
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
@@ -116,6 +148,9 @@ public class ReformatCodeAction extends AnAction {
     }
 
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+
+    final VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstantsEx.VIRTUAL_FILE_ARRAY);
+
     if (editor != null){
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null || file.getVirtualFile() == null) {
@@ -128,8 +163,27 @@ public class ReformatCodeAction extends AnAction {
         return;
       }
     }
+    else if (files!= null && areFiles(files)) {
+      for (int i = 0; i < files.length; i++) {
+        VirtualFile virtualFile = files[i];
+        if (virtualFile.isDirectory()) {
+          presentation.setEnabled(false);
+          return;
+        }
+        final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+        if (psiFile == null) {
+          presentation.setEnabled(false);
+          return;
+        }
+        final FormattingModelBuilder builder = psiFile.getLanguage().getFormattingModelBuilder();
+        if (builder == null) {
+          presentation.setEnabled(false);
+          return;
+        }
+      }
+    }
     else if (dataContext.getData(DataConstantsEx.MODULE_CONTEXT) == null &&
-            dataContext.getData(DataConstantsEx.PROJECT_CONTEXT) == null) {
+             dataContext.getData(DataConstantsEx.PROJECT_CONTEXT) == null) {
       PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
       if (element == null){
         presentation.setEnabled(false);
@@ -144,5 +198,15 @@ public class ReformatCodeAction extends AnAction {
       }
     }
     presentation.setEnabled(true);
+  }
+
+  public static boolean areFiles(final VirtualFile[] files) {
+    if (files == null) return false;
+    if (files.length < 2) return false;
+    for (int i = 0; i < files.length; i++) {
+      VirtualFile virtualFile = files[i];
+      if (virtualFile.isDirectory()) return false;
+    }
+    return true;
   }
 }
