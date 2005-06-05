@@ -1,5 +1,6 @@
 package com.intellij.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrame;
@@ -24,6 +25,8 @@ public class FocusTrackback {
 
   public FocusTrackback(Object requestor, Window parent) {
     myRequestor = requestor;
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     register(parent);
 
