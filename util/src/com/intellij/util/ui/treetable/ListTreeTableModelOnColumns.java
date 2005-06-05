@@ -1,8 +1,6 @@
 package com.intellij.util.ui.treetable;
 
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.treetable.TreeTableModel;
-import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 
 import javax.swing.tree.DefaultTreeModel;
@@ -86,6 +84,9 @@ public class ListTreeTableModelOnColumns extends DefaultTreeModel
   }
 
   public void sortByColumn(int columnIndex) {
+  }
+
+  public void sortByColumn(int columnIndex, int sortingType) {
   }
 
   public int getSortedColumnIndex() {

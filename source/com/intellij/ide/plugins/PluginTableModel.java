@@ -2,8 +2,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.SortableColumnModel;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.Collections;
@@ -69,5 +67,9 @@ abstract public class PluginTableModel <T> extends AbstractTableModel implements
   public void sortByColumn(int columnIndex) {
     Collections.sort(view, columns[columnIndex].getComparator());
     fireTableDataChanged();
+  }
+
+  public void sortByColumn(int columnIndex, int sortingType) {
+    sortByColumn(columnIndex);
   }
 }

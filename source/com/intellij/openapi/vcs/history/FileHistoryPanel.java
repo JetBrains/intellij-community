@@ -34,10 +34,7 @@ import com.intellij.ui.dualView.DualView;
 import com.intellij.util.Icons;
 import com.intellij.util.TreeItem;
 import com.intellij.util.text.LineReader;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.IdeaUIManager;
-import com.intellij.util.ui.LabelWithTooltip;
-import com.intellij.util.ui.TableViewModel;
+import com.intellij.util.ui.*;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -74,7 +71,7 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
 
   private static final String COMMIT_MESSAGE_TITLE = "Commit Message";
 
-  public static final DualViewColumnInfo REVISION = new VcsColumnInfo("Version", true) {
+  public static final DualViewColumnInfo REVISION = new VcsColumnInfo("Version") {
     protected Comparable getDataOf(Object object) {
       return ((VcsFileRevision)object).getRevisionNumber();
     }
@@ -172,7 +169,7 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
       myDualView.switchToTheFlatMode();
     }
 
-    createDualView();
+    createDualView(vcs.getVcsHistoryProvider().getDefaultColumnToSortBy());
 
     myPopupActions = createPopupActions();
 
@@ -230,7 +227,7 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
     addToGroup(false, group);
   }
 
-  private void createDualView() {
+  private void createDualView(final ColumnInfo defaultColumnToSortBy) {
     myDualView.setShowGrid(true);
     myDualView.getTreeView().addMouseListener(new PopupHandler() {
                                                 public void invokePopup(Component comp, int x, int y) {
@@ -266,66 +263,31 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
 
     final TreeCellRenderer defaultCellRenderer = myDualView.getTree().getCellRenderer();
 
-    myDualView.setTreeCellRenderer(new TreeCellRenderer() {
-                                     public Component getTreeCellRendererComponent(JTree tree,
-                                                                                   Object value,
-                                                                                   boolean selected,
-                                                                                   boolean expanded,
-                                                                                   boolean leaf,
-                                                                                   int row,
-                                                                                   boolean hasFocus) {
-                                       Component result =
-                                       defaultCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row,
-                                                                                                           hasFocus);
+    myDualView.setTreeCellRenderer(new MyTreeCellRenderer(defaultCellRenderer, myHistorySession));
 
-                                       TreePath path = tree.getPathForRow(row);
-                                       if (path == null) return result;
-                                       VcsFileRevision revision = row >= 0 ? (VcsFileRevision)path.getLastPathComponent() : null;
-
-                                       if (revision != null) {
-
-                                         if (Comparing.equal(revision.getRevisionNumber(), myHistorySession.getCurrentRevisionNumber())) {
-                                           makeBold(result);
-                                         }
-                                         if (!selected &&
-                                             Comparing.equal(revision.getRevisionNumber(), myHistorySession.getCurrentRevisionNumber())) {
-                                           result.setBackground(new Color(188, 227, 231));
-                                             ((JComponent)result).setOpaque(false);
-                                         }
-                                       }
-                                       else if (selected) {
-                                         result.setBackground(IdeaUIManager.getTableSelectionBackgroung());
-                                       }
-                                       else {
-                                         result.setBackground(IdeaUIManager.getTableBackgroung());
-                                       }
-
-                                       return result;
-                                     }
-                                   });
-
-    myDualView.setCellWrapper(new CellWrapper() {
-                                public void wrap(Component component,
-                                                 JTable table,
-                                                 Object value,
-                                                 boolean isSelected,
-                                                 boolean hasFocus,
-                                                 int row,
-                                                 int column,
-                                                 Object treeNode) {
-                                  VcsFileRevision revision = (VcsFileRevision)treeNode;
-                                  if (revision == null) return;
-                                  if (myHistorySession.getCurrentRevisionNumber() == null) return;
-                                  if (revision.getRevisionNumber().compareTo(myHistorySession.getCurrentRevisionNumber()) == 0) {
-                                    makeBold(component);
-                                  }
-                                }
-                              });
+    myDualView.setCellWrapper(new MyCellWrapper(myHistorySession));
 
     TableViewModel sortableModel = myDualView.getFlatView().getTableViewModel();
     sortableModel.setSortable(true);
-    sortableModel.sortByColumn(0);
 
+    if (defaultColumnToSortBy == null) {
+      sortableModel.sortByColumn(0, SortableColumnModel.SORT_DESCENDING);
+    } else {
+      sortableModel.sortByColumn(getColumnIndex(defaultColumnToSortBy), SortableColumnModel.SORT_DESCENDING);
+    }
+
+  }
+
+  private int getColumnIndex(final ColumnInfo defaultColumnToSortBy) {
+    for (int i = 0; i < COLUMNS.length; i++) {
+      DualViewColumnInfo dualViewColumnInfo = COLUMNS[i];
+      if (dualViewColumnInfo instanceof MyColumnWrapper) {
+        if (((MyColumnWrapper)dualViewColumnInfo).getOriginalColumn() == defaultColumnToSortBy){
+          return i;
+        }
+      }
+    }
+    return 0;
   }
 
   private void makeBold(Component component) {
@@ -900,15 +862,8 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
   }
 
   abstract static class VcsColumnInfo extends DualViewColumnInfo implements Comparator {
-    private boolean myIsReverse = false;
-
     public VcsColumnInfo(String name) {
       super(name);
-    }
-
-    public VcsColumnInfo(String name, boolean isReverse) {
-      super(name);
-      myIsReverse = isReverse;
     }
 
     protected abstract Comparable getDataOf(Object o);
@@ -923,13 +878,7 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
     }
 
     public int compare(Object o1, Object o2) {
-      int result = compareObjects(getDataOf(o1), getDataOf(o2));
-      if (myIsReverse) {
-        return result ;
-      }
-      else {
-        return result * -1;
-      }
+      return compareObjects(getDataOf(o1), getDataOf(o2));
     }
 
     private int compareObjects(Comparable data1, Comparable data2) {
@@ -1024,6 +973,10 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
     public Object valueOf(TreeNodeOnVcsRevision o) {
       return myBaseColumn.valueOf(o.myRevision);
     }
+
+    public ColumnInfo getOriginalColumn() {
+      return myBaseColumn;
+    }
   }
 
   private VirtualFile getVirtualFile() {
@@ -1035,4 +988,73 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
   }
 
 
+  private class MyTreeCellRenderer implements TreeCellRenderer {
+    private final TreeCellRenderer myDefaultCellRenderer;
+    private final VcsHistorySession myHistorySession;
+
+    public MyTreeCellRenderer(final TreeCellRenderer defaultCellRenderer, final VcsHistorySession historySession) {
+      myDefaultCellRenderer = defaultCellRenderer;
+      myHistorySession = historySession;
+    }
+
+    public Component getTreeCellRendererComponent(JTree tree,
+                                                  Object value,
+                                                  boolean selected,
+                                                  boolean expanded,
+                                                  boolean leaf,
+                                                  int row,
+                                                  boolean hasFocus) {
+      Component result =
+      myDefaultCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row,
+                                                         hasFocus);
+
+      TreePath path = tree.getPathForRow(row);
+      if (path == null) return result;
+      VcsFileRevision revision = row >= 0 ? (VcsFileRevision)path.getLastPathComponent() : null;
+
+      if (revision != null) {
+
+        if (Comparing.equal(revision.getRevisionNumber(), myHistorySession.getCurrentRevisionNumber())) {
+          makeBold(result);
+        }
+        if (!selected &&
+            Comparing.equal(revision.getRevisionNumber(), myHistorySession.getCurrentRevisionNumber())) {
+          result.setBackground(new Color(188, 227, 231));
+            ((JComponent)result).setOpaque(false);
+        }
+      }
+      else if (selected) {
+        result.setBackground(IdeaUIManager.getTableSelectionBackgroung());
+      }
+      else {
+        result.setBackground(IdeaUIManager.getTableBackgroung());
+      }
+
+      return result;
+    }
+  }
+
+  private class MyCellWrapper implements CellWrapper {
+    private final VcsHistorySession myHistorySession;
+
+    public MyCellWrapper(final VcsHistorySession historySession) {
+      myHistorySession = historySession;
+    }
+
+    public void wrap(Component component,
+                     JTable table,
+                     Object value,
+                     boolean isSelected,
+                     boolean hasFocus,
+                     int row,
+                     int column,
+                     Object treeNode) {
+      VcsFileRevision revision = (VcsFileRevision)treeNode;
+      if (revision == null) return;
+      if (myHistorySession.getCurrentRevisionNumber() == null) return;
+      if (revision.getRevisionNumber().compareTo(myHistorySession.getCurrentRevisionNumber()) == 0) {
+        makeBold(component);
+      }
+    }
+  }
 }

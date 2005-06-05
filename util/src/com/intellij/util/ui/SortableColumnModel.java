@@ -14,6 +14,7 @@ public interface SortableColumnModel {
   ColumnInfo[] getColumnInfos();
 
   void sortByColumn(int columnIndex);
+  void sortByColumn(int columnIndex, int sortingType);
 
   int getSortedColumnIndex();
 

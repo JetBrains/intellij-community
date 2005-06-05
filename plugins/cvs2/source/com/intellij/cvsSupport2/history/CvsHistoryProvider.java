@@ -31,6 +31,7 @@ import com.intellij.util.ui.ColumnInfo;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.log.Revision;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -121,6 +122,11 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     return new ColumnInfo[]{
         STATE, TAG, BRANCHES
       };
+  }
+
+  @Nullable
+  public ColumnInfo getDefaultColumnToSortBy() {
+    return null;
   }
 
   public String getHelpId() {

@@ -76,6 +76,12 @@ public class ListTableModel <Item> extends TableViewModel<Item> implements ItemR
     resort();
   }
 
+  public void sortByColumn(int columnIndex, int sortingType) {
+    mySortByColumn = columnIndex;
+    mySortingType = sortingType;
+    resort();
+  }
+
   private void switchSorting() {
     if (mySortingType == SortableColumnModel.SORT_ASCENDING) {
       mySortingType = SortableColumnModel.SORT_DESCENDING;
