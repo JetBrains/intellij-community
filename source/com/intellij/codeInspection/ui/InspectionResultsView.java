@@ -54,6 +54,8 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -80,13 +82,13 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   private Project myProject;
   private InspectionTree myTree;
   private Browser myBrowser;
-  private Splitter mySplitter;
   private Map<HighlightDisplayLevel, Map<String, InspectionGroupNode>> myGroups = null;
   private OccurenceNavigator myOccurenceNavigator;
   private InspectionProfile myInspectionProfile;
   private AnalysisScope myScope;
   public static final String HELP_ID = "codeInspection";
-  public final Map<HighlightDisplayLevel, InspectionSeverityGroupNode> mySeverityGroupNodes = new java.util.HashMap<HighlightDisplayLevel, InspectionSeverityGroupNode>();
+  public final Map<HighlightDisplayLevel, InspectionSeverityGroupNode> mySeverityGroupNodes = new HashMap<HighlightDisplayLevel, InspectionSeverityGroupNode>();
+
   public InspectionResultsView(final Project project, InspectionProfile inspectionProfile, AnalysisScope scope) {
     setLayout(new BorderLayout());
 
@@ -95,6 +97,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     myScope = scope;
     myTree = new InspectionTree(project);
     myOccurenceNavigator = new OccurenceNavigatorSupport(myTree) {
+      @Nullable
       protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
         if (node instanceof RefElementNode) {
           final RefElementNode refNode = (RefElementNode)node;
@@ -131,12 +134,13 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     myBrowser = new Browser(this);
 
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
-    mySplitter = new Splitter(false, manager.getUIOptions().SPLITTER_PROPORTION);
+    final Splitter splitter;
+    splitter = new Splitter(false, manager.getUIOptions().SPLITTER_PROPORTION);
 
-    mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
-    mySplitter.setSecondComponent(myBrowser);
+    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
+    splitter.setSecondComponent(myBrowser);
 
-    mySplitter.addPropertyChangeListener(new PropertyChangeListener() {
+    splitter.addPropertyChangeListener(new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent evt) {
         if (Splitter.PROP_PROPORTION.equals(evt.getPropertyName())) {
           final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
@@ -193,7 +197,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       }
     });
 
-    add(mySplitter, BorderLayout.CENTER);
+    add(splitter, BorderLayout.CENTER);
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new CloseAction());
     group.add(new RerunAction(this));
@@ -264,7 +268,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           manager.setExternalProfile(null);
-          if (dlg.isOK()){
+          if (dlg.isOK()) {
             myInspectionProfile = manager.getCurrentProfile();
             manager.setProfile(InspectionProfileManager.getInstance().getProfile(currentProfileName));
             InspectionResultsView.this.update();
@@ -291,19 +295,19 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         final Runnable exportRunnable = new Runnable() {
-      public void run() {
-        HTMLExportFrameMaker maker = new HTMLExportFrameMaker(outputDirectoryName, myProject);
-        maker.start();
-        try {
-          exportHTML(maker);
-        }
-        catch (ProcessCanceledException e) {
-          // Do nothing here.
-        }
+          public void run() {
+            HTMLExportFrameMaker maker = new HTMLExportFrameMaker(outputDirectoryName, myProject);
+            maker.start();
+            try {
+              exportHTML(maker);
+            }
+            catch (ProcessCanceledException e) {
+              // Do nothing here.
+            }
 
-        maker.done();
-      }
-    };
+            maker.done();
+          }
+        };
 
         if (!ApplicationManager.getApplication()
           .runProcessWithProgressSynchronously(exportRunnable, "Generating HTML...", true, myProject)) {
@@ -422,7 +426,9 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     tool.updateContent();
     if (tool.hasReportedProblems()) {
       final InspectionNode toolNode = new InspectionNode(tool);
-      initToolNode(tool, toolNode, getToolParentNode(tool.getGroupDisplayName().length() > 0 ? tool.getGroupDisplayName() : "General", errorLevel, groupedBySeverity));
+      initToolNode(tool, toolNode,
+                   getToolParentNode(tool.getGroupDisplayName().length() > 0 ? tool.getGroupDisplayName() : "General", errorLevel,
+                                     groupedBySeverity));
       if (tool instanceof DeadCodeInspection) {
         final DummyEntryPointsTool entryPoints = new DummyEntryPointsTool((DeadCodeInspection)tool);
         entryPoints.updateContent();
@@ -434,8 +440,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
   private void initToolNode(InspectionTool tool, InspectionNode toolNode, InspectionTreeNode parentNode) {
     final InspectionTreeNode[] contents = tool.getContents();
-    for (int i = 0; i < contents.length; i++) {
-      InspectionTreeNode content = contents[i];
+    for (InspectionTreeNode content : contents) {
       toolNode.add(content);
     }
     parentNode.add(toolNode);
@@ -444,19 +449,18 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   private void regsisterActionShortcuts(InspectionTool tool) {
     final QuickFixAction[] fixes = tool.getQuickFixes();
     if (fixes != null) {
-      for (int i = 0; i < fixes.length; i++) {
-        QuickFixAction fix = fixes[i];
+      for (QuickFixAction fix : fixes) {
         fix.registerCustomShortcutSet(fix.getShortcutSet(), this);
       }
     }
   }
 
-  private void clearTree(){
+  private void clearTree() {
     myTree.removeAllNodes();
     mySeverityGroupNodes.clear();
   }
 
-  public String getCurrentProfileName(){
+  public String getCurrentProfileName() {
     return myInspectionProfile.getName();
   }
 
@@ -466,9 +470,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     boolean resultsFound = false;
     final InspectionManagerEx manager = ((InspectionManagerEx)InspectionManagerEx.getInstance(myProject));
     final boolean isGroupedBySeverity = manager.getUIOptions().GROUP_BY_SEVERITY;
-    myGroups = new java.util.HashMap<HighlightDisplayLevel, Map<String, InspectionGroupNode>>();
-    for (int i = 0; i < tools.length; i++) {
-      InspectionTool tool = tools[i];
+    myGroups = new HashMap<HighlightDisplayLevel, Map<String, InspectionGroupNode>>();
+    for (InspectionTool tool : tools) {
       final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
       if (myInspectionProfile.isToolEnabled(key)) {
         addTool(tool, myInspectionProfile.getErrorLevel(key), isGroupedBySeverity);
@@ -481,12 +484,12 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   }
 
   private InspectionTreeNode getToolParentNode(String groupName, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
-    if ((groupName == null || groupName.length() == 0)){
+    if ((groupName == null || groupName.length() == 0)) {
       return getRelativeRootNode(groupedBySeverity, errorLevel);
     }
     Map<String, InspectionGroupNode> map = myGroups.get(errorLevel);
-    if (map == null){
-      map = new java.util.HashMap<String, InspectionGroupNode>();
+    if (map == null) {
+      map = new HashMap<String, InspectionGroupNode>();
       myGroups.put(errorLevel, map);
     }
     InspectionGroupNode group = map.get(groupName);
@@ -498,17 +501,19 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     return group;
   }
 
-  private InspectionTreeNode getRelativeRootNode(boolean isGroupedBySeverity, HighlightDisplayLevel level){
-    if (isGroupedBySeverity){
-      if (mySeverityGroupNodes.containsKey(level)){
+  private InspectionTreeNode getRelativeRootNode(boolean isGroupedBySeverity, HighlightDisplayLevel level) {
+    if (isGroupedBySeverity) {
+      if (mySeverityGroupNodes.containsKey(level)) {
         return mySeverityGroupNodes.get(level);
-      } else {
+      }
+      else {
         final InspectionSeverityGroupNode severityGroupNode = new InspectionSeverityGroupNode(level);
         mySeverityGroupNodes.put(level, severityGroupNode);
         myTree.getRoot().add(severityGroupNode);
         return severityGroupNode;
       }
-    } else {
+    }
+    else {
       return myTree.getRoot();
     }
   }
@@ -534,7 +539,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   private void exportHTML(HTMLExportFrameMaker frameMaker, InspectionNode node) {
     InspectionTool tool = node.getTool();
     HTMLExporter exporter = new HTMLExporter(frameMaker.getRootFolder() + "/" + tool.getFolderName(),
-      tool.getComposer(), myProject);
+                                             tool.getComposer(), myProject);
     frameMaker.startInspection(tool);
     exportHTML(tool, exporter);
     exporter.generateReferencedPages();
@@ -641,7 +646,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       if (psiElement != null && psiElement.isValid()) {
         if (!psiElement.isWritable()) {
           final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(myProject)
-              .ensureFilesWritable(new VirtualFile[]{psiElement.getContainingFile().getVirtualFile()});
+            .ensureFilesWritable(new VirtualFile[]{psiElement.getContainingFile().getVirtualFile()});
           if (operationStatus.hasReadonlyFiles()) {
             return;
           }
@@ -650,13 +655,16 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             Runnable command = new Runnable() {
-          public void run() {
-            CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
-            fix.applyFix(myProject, descriptor);
-          }
-        };
+              public void run() {
+                CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
+                fix.applyFix(myProject, descriptor);
+              }
+            };
             CommandProcessor.getInstance().executeCommand(myProject, command, fix.getName(), null);
-            ((DescriptorProviderInspection)getSelectedTool()).ignoreProblem(element, descriptor);
+            final DescriptorProviderInspection tool = ((DescriptorProviderInspection)getSelectedTool());
+            if (tool != null) {
+              tool.ignoreProblem(element, descriptor);
+            }
             update();
           }
         });
@@ -678,7 +686,9 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         return;
       }
 
-      final QuickFixAction[] quickFixes = getSelectedTool().getQuickFixes();
+      //noinspection ConstantConditions
+      final @NotNull InspectionTool tool = getSelectedTool();
+      final QuickFixAction[] quickFixes = tool.getQuickFixes();
       if (quickFixes == null || quickFixes.length == 0) {
         e.getPresentation().setEnabled(false);
         return;
@@ -690,18 +700,21 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         }
       };
 
-      e.getPresentation().setEnabled(!ActionListPopup.isGroupEmpty(fixes, e, new java.util.HashMap<AnAction, Presentation>()));
+      e.getPresentation().setEnabled(!ActionListPopup.isGroupEmpty(fixes, e, new HashMap<AnAction, Presentation>()));
     }
 
     public void actionPerformed(AnActionEvent e) {
-      DataContext dataContext = e.getDataContext();
-      final QuickFixAction[] quickFixes = getSelectedTool().getQuickFixes();
+      final InspectionTool tool = getSelectedTool();
+      if (tool == null) return;
+
+      final QuickFixAction[] quickFixes = tool.getQuickFixes();
       ActionGroup fixes = new ActionGroup() {
         public AnAction[] getChildren(AnActionEvent e) {
           return quickFixes;
         }
       };
 
+      DataContext dataContext = e.getDataContext();
       ListPopup popup = ActionListPopup.createListPopup(" Accept Resolution ", fixes, dataContext, false, false);
 
       Point location = getSelectedTreeNodeBounds();
@@ -709,6 +722,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       popup.show(location.x, location.y);
     }
 
+    @Nullable
     private Point getSelectedTreeNodeBounds() {
       int row = myTree.getLeadSelectionRow();
       if (row == -1) return null;
@@ -720,7 +734,9 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
   }
 
-  public Project getProject() { return myProject; }
+  public Project getProject() {
+    return myProject;
+  }
 
   public Object getData(String dataId) {
     if (dataId.equals(DataConstantsEx.INSPECTION_VIEW)) return this;
@@ -781,8 +797,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   private PsiElement[] collectPsiElements() {
     RefElement[] refElements = getSelectedElements();
     List<PsiElement> psiElements = new ArrayList<PsiElement>();
-    for (int i = 0; i < refElements.length; i++) {
-      RefElement refElement = refElements[i];
+    for (RefElement refElement : refElements) {
       PsiElement psiElement = refElement.getElement();
       if (psiElement != null && psiElement.isValid()) {
         psiElements.add(psiElement);
@@ -810,10 +825,12 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     actions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES));
 
     final InspectionTool tool = getSelectedTool();
+    if (tool == null) return;
+
     final QuickFixAction[] quickFixes = tool.getQuickFixes();
     if (quickFixes != null) {
-      for (int i = 0; i < quickFixes.length; i++) {
-        actions.add(quickFixes[i]);
+      for (QuickFixAction quickFixe : quickFixes) {
+        actions.add(quickFixe);
       }
     }
     actions.add(new AnAction("Edit Tool Settings") {
@@ -836,8 +853,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     if (myTree.getSelectionCount() == 0 || !(getSelectedTool() instanceof DescriptorProviderInspection)) return EMPTY_DESCRIPTORS;
     final TreePath[] paths = myTree.getSelectionPaths();
     Set<ProblemDescriptor> descriptors = new HashSet<ProblemDescriptor>();
-    for (int i = 0; i < paths.length; i++) {
-      Object node = paths[i].getLastPathComponent();
+    for (TreePath path : paths) {
+      Object node = path.getLastPathComponent();
       if (node instanceof ProblemDescriptionNode) {
         final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
         descriptors.add(problemNode.getDescriptor());
@@ -846,8 +863,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
     final RefElement[] elements = getSelectedElements();
     final DescriptorProviderInspection tool = (DescriptorProviderInspection)getSelectedTool();
-    for (int i = 0; i < elements.length; i++) {
-      RefElement element = elements[i];
+    for (RefElement element : elements) {
       final ProblemDescriptor[] descriptions = tool.getDescriptions(element);
       if (descriptions != null) descriptors.addAll(Arrays.asList(descriptions));
     }
@@ -861,8 +877,8 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       if (selectedTool == null) return EMPTY_ELEMENTS_ARRAY;
 
       Set<RefElement> result = new HashSet<RefElement>();
-      for (int i = 0; i < selectionPaths.length; i++) {
-        final InspectionTreeNode node = (InspectionTreeNode)selectionPaths[i].getLastPathComponent();
+      for (TreePath selectionPath : selectionPaths) {
+        final InspectionTreeNode node = (InspectionTreeNode)selectionPath.getLastPathComponent();
         addElementsInNode(node, result);
       }
       return result.toArray(new RefElement[result.size()]);
@@ -884,12 +900,13 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     }
   }
 
+  @Nullable
   public InspectionTool getSelectedTool() {
     final TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) return null;
     InspectionTool tool = null;
-    for (int i = 0; i < paths.length; i++) {
-      Object[] nodes = paths[i].getPath();
+    for (TreePath path : paths) {
+      Object[] nodes = path.getPath();
       for (int j = nodes.length - 1; j >= 0; j--) {
         Object node = nodes[j];
         if (node instanceof InspectionNode) {
@@ -940,7 +957,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   }
 
 
-  private class InspectionCodeSettingsPanel extends InspectCodePanel {
+  private static class InspectionCodeSettingsPanel extends InspectCodePanel {
     public InspectionCodeSettingsPanel(final InspectionManagerEx manager, final AnalysisScope scope) {
       super(manager, scope);
       setOKButtonText("OK");

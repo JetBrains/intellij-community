@@ -12,6 +12,9 @@ import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.JspxFileImpl;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -213,6 +216,16 @@ public class RefUtil {
       return "anonymous (" + (psiBaseClass != null ? psiBaseClass.getQualifiedName() : "") + ")";
     }
 
+    if (element instanceof JspClass) {
+      final JspClass jspClass = (JspClass)element;
+      final JspxFileImpl jspxFile = jspClass.getJspxFile();
+      return "<" + jspxFile.getName() + ">";
+    }
+
+    if (element instanceof JspHolderMethod) {
+      return "<% page content %>";
+    }
+
     String name = null;
     if (element instanceof PsiNamedElement) {
       name = ((PsiNamedElement)element).getName();
@@ -295,33 +308,33 @@ public class RefUtil {
   }
 
   public static String getQualifiedName(RefEntity refEntity) {
-    String result;
 
     if (refEntity == null || refEntity instanceof RefElement && !((RefElement)refEntity).isValid()) return "invalid";
 
     if (refEntity instanceof RefPackage) {
-      result = ((RefPackage)refEntity).getQualifiedName();
+      return ((RefPackage)refEntity).getQualifiedName();
     }
     else if (refEntity.getOwner() == null) {
-      result = refEntity.getName();
+      return refEntity.getName();
     }
     else if (refEntity instanceof RefClass && ((RefClass)refEntity).isAnonymous()) {
-      result = refEntity.getName() + " in " + getQualifiedName(refEntity.getOwner());
+      return refEntity.getName() + " in " + getQualifiedName(refEntity.getOwner());
     }
     else if (refEntity instanceof RefMethod && ((RefMethod)refEntity).getOwnerClass().isAnonymous()) {
-      result = "anonymous." + refEntity.getName();
+      return "anonymous." + refEntity.getName();
     }
     else {
-      result = refEntity.getName();
+      StringBuffer result = new StringBuffer(refEntity.getName());
 
       RefEntity refParent = refEntity.getOwner();
       while (refParent != null && !(refParent instanceof RefProject) && !(refParent instanceof RefPackage)) {
-        result = refParent.getName() + "." + result;
+        result.insert(0, '.');
+        result.insert(0, refParent.getName());
         refParent = refParent.getOwner();
       }
-    }
 
-    return result;
+      return result.toString();
+    }
   }
 
   public static String getAccessModifier(PsiModifierListOwner psiElement) {

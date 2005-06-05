@@ -28,6 +28,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
+import org.jdom.Element;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -204,8 +205,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     if (!parameters[0].getType().equalsToText("java.io.ObjectOutputStream")) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();
-    if (aClass != null && !isSerializable(aClass)) return false;
-    return true;
+    return !(aClass != null && !isSerializable(aClass));
   }
 
   private static boolean isReadObjectMethod(PsiMethod method) {
@@ -215,8 +215,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     if (!parameters[0].getType().equalsToText("java.io.ObjectInputStream")) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();
-    if (aClass != null && !isSerializable(aClass)) return false;
-    return true;
+    return !(aClass != null && !isSerializable(aClass));
   }
 
   private static boolean isWriteReplaceMethod(PsiMethod method) {
@@ -226,8 +225,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     if (!method.getReturnType().equalsToText("java.lang.Object")) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();
-    if (aClass != null && !isSerializable(aClass)) return false;
-    return true;
+    return !(aClass != null && !isSerializable(aClass));
   }
 
   private static boolean isReadResolveMethod(PsiMethod method) {
@@ -237,8 +235,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     if (!method.getReturnType().equalsToText("java.lang.Object")) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();
-    if (aClass != null && !isSerializable(aClass)) return false;
-    return true;
+    return !(aClass != null && !isSerializable(aClass));
   }
 
   private static boolean isSerializable(PsiClass aClass) {
@@ -322,8 +319,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     RefClass refClass = (RefClass)getRefManager().getReference(testClass);
     getEntryPointsManager().addEntryPoint(refClass, false);
     PsiMethod[] testMethods = testClass.getMethods();
-    for (int j = 0; j < testMethods.length; j++) {
-      PsiMethod psiMethod = testMethods[j];
+    for (PsiMethod psiMethod : testMethods) {
       if (psiMethod.hasModifierProperty(PsiModifier.PUBLIC) &&
           !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
           psiMethod.getName().startsWith("test") || "suite".equals(psiMethod.getName())) {
@@ -336,7 +332,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   private static class StrictUnreferencedFilter extends RefFilter {
     public int getElementProblemCount(RefElement refElement) {
       if (refElement instanceof RefParameter) return 0;
-      if (refElement.isEntry() || !refElement.isSuspicious()) return 0;
+      if (refElement.isEntry() || !refElement.isSuspicious() || refElement.isSyntheticJSP()) return 0;
 
       if (refElement instanceof RefField) {
         RefField refField = (RefField)refElement;
@@ -452,8 +448,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   private void addEjbMethodToEntries(RefMethod refMethod) {
     getEntryPointsManager().addEntryPoint(refMethod, false);
-    for (Iterator<RefMethod> iterator = refMethod.getSuperMethods().iterator(); iterator.hasNext();) {
-      RefMethod refSuper = iterator.next();
+    for (RefMethod refSuper : refMethod.getSuperMethods()) {
       addEjbMethodToEntries(refSuper);
     }
   }
@@ -468,8 +463,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       });
     }
     else {
-      for (Iterator<RefMethod> iterator = refMethod.getSuperMethods().iterator(); iterator.hasNext();) {
-        RefMethod refSuper = iterator.next();
+      for (RefMethod refSuper : refMethod.getSuperMethods()) {
         enqueueMethodUsages(refSuper);
       }
     }
@@ -489,7 +483,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     return myComposer;
   }
 
-  public void exportResults(final org.jdom.Element parentNode) {
+  public void exportResults(final Element parentNode) {
     final RefUnreferencedFilter filter = new RefUnreferencedFilter();
     final DeadHTMLComposer composer = new DeadHTMLComposer(this);
 
@@ -499,12 +493,12 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       public void accept(RefElement refElement) {
         if (filter.accepts(refElement)) {
           if (refElement instanceof RefImplicitConstructor) return;
-          org.jdom.Element element = XMLExportUtl.createElement(refElement, parentNode, -1);
-          org.jdom.Element problemClassElement = new org.jdom.Element("problem_class");
+          Element element = XMLExportUtl.createElement(refElement, parentNode, -1);
+          Element problemClassElement = new Element("problem_class");
           problemClassElement.addContent("unused declaration");
           element.addContent(problemClassElement);
 
-          org.jdom.Element descriptionElement = new org.jdom.Element("description");
+          Element descriptionElement = new Element("description");
           StringBuffer buf = new StringBuffer();
           composer.appendProblemSynopsis(refElement, buf);
           descriptionElement.addContent(buf.toString());
@@ -514,10 +508,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     });
   }
 
-  public QuickFixAction[] getQuickFixes(final Project project) {
-    if (myQuickFixActions == null){
-
-    }
+  public QuickFixAction[] getQuickFixes() {
     return myQuickFixActions;
   }
 
@@ -577,8 +568,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     protected boolean applyFix(RefElement[] refElements) {
       ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
       final ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
-      for (int i = 0; i < refElements.length; i++) {
-        RefElement refElement = refElements[i];
+      for (RefElement refElement : refElements) {
         PsiElement psiElement = refElement.getElement();
         if (psiElement == null) continue;
         psiElements.add(psiElement);
@@ -587,7 +577,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          new SafeDeleteHandler().invoke(getManager().getProject(), psiElements.toArray(new PsiElement[psiElements.size()]), false);
+          SafeDeleteHandler.invoke(getManager().getProject(), psiElements.toArray(new PsiElement[psiElements.size()]), false);
         }
       });
 
@@ -604,8 +594,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
     protected boolean applyFix(RefElement[] refElements) {
       ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
-      for (int i = 0; i < refElements.length; i++) {
-        RefElement refElement = refElements[i];
+      for (RefElement refElement : refElements) {
         PsiElement psiElement = refElement.getElement();
         if (psiElement == null) continue;
         commentOutDead(psiElement);
@@ -628,8 +617,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     }
 
     protected boolean applyFix(RefElement[] refElements) {
-      for (int i = 0; i < refElements.length; i++) {
-        RefElement refElement = refElements[i];
+      for (RefElement refElement : refElements) {
         EntryPointsManager.getInstance(getManager().getProject()).addEntryPoint(refElement, true);
       }
 
@@ -637,7 +625,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     }
   }
 
-  public void checkForReachables() {
+  private void checkForReachables() {
     CodeScanner codeScanner = new CodeScanner();
 
     // Cleanup previous reachability information.
@@ -649,10 +637,9 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
 
     SmartRefElementPointer[] entryPoints = getEntryPointsManager().getEntryPoints();
-    for (int i = 0; i < entryPoints.length; i++) {
-      SmartRefElementPointer entry = entryPoints[i];
+    for (SmartRefElementPointer entry : entryPoints) {
       if (entry.getRefElement() != null) {
-        processEntryPoint(entry.getRefElement(), codeScanner);
+        entry.getRefElement().accept(codeScanner);
       }
     }
 
@@ -698,8 +685,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
             addDelayedMethod(method);
           }
 
-          for (Iterator<RefMethod> iterator = method.getDerivedMethods().iterator(); iterator.hasNext();) {
-            RefMethod refSub = iterator.next();
+          for (RefMethod refSub : method.getDerivedMethods()) {
             visitMethod(refSub);
           }
         }
@@ -737,8 +723,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
           refMethod.accept(this);
         }
 
-        for (Iterator<RefClass> iterator = refClass.getBaseClasses().iterator(); iterator.hasNext();) {
-          RefClass baseClass = iterator.next();
+        for (RefClass baseClass : refClass.getBaseClasses()) {
           addInstantiatedClass(baseClass);
         }
       }
@@ -746,15 +731,13 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
     private void makeContentReachable(RefElement refElement) {
       refElement.setReachable(true);
-      for (Iterator<RefElement> iterator = refElement.getOutReferences().iterator(); iterator.hasNext();) {
-        RefElement refCallee = iterator.next();
+      for (RefElement refCallee : refElement.getOutReferences()) {
         refCallee.accept(this);
       }
     }
 
     private void makeClassInitializersReachable(RefClass refClass) {
-      for (Iterator<RefElement> iterator = refClass.getOutReferences().iterator(); iterator.hasNext();) {
-        RefElement refCallee = iterator.next();
+      for (RefElement refCallee : refClass.getOutReferences()) {
         refCallee.accept(this);
       }
     }
@@ -782,23 +765,18 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
     private void processDelayedMethods() {
       RefClass[] instClasses = myInstantiatedClasses.toArray(new RefClass[myInstantiatedClasses.size()]);
-      for (int i = 0; i < instClasses.length; i++) {
-        RefClass refClass = instClasses[i];
+      for (RefClass refClass : instClasses) {
         if (isClassInstantiated(refClass)) {
           HashSet<RefMethod> methods = myClassIDtoMethods.get(refClass);
           if (methods != null) {
             RefMethod[] arMethods = methods.toArray(new RefMethod[methods.size()]);
-            for (int j = 0; j < arMethods.length; j++) {
-              arMethods[j].accept(this);
+            for (RefMethod arMethod : arMethods) {
+              arMethod.accept(this);
             }
           }
         }
       }
     }
-  }
-
-  private void processEntryPoint(RefElement refEntry, CodeScanner codeScanner) {
-    refEntry.accept(codeScanner);
   }
 
   public void cleanup() {

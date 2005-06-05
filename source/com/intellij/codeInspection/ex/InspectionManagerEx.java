@@ -44,6 +44,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -715,6 +716,13 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
     try {
       scope.accept(new PsiRecursiveElementVisitor() {
         public void visitReferenceExpression(PsiReferenceExpression expression) {
+        }
+
+        @Override
+        public void visitJspFile(JspFile file) {
+          if (file instanceof PsiJavaFile) {
+            visitJavaFile((PsiJavaFile)file);
+          }
         }
 
         public void visitJavaFile(PsiJavaFile file) {

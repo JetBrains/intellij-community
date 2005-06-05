@@ -14,10 +14,10 @@ import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -44,12 +44,13 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     });
   }
 
+  @Nullable
   private ProblemDescriptor[] checkMethod(RefMethod refMethod) {
     if (!refMethod.isBodyEmpty()) return null;
     if (refMethod.isConstructor()) return null;
+    if (refMethod.isSyntheticJSP()) return null;
 
-    for (Iterator<RefMethod> iterator = refMethod.getSuperMethods().iterator(); iterator.hasNext();) {
-      RefMethod refSuper = iterator.next();
+    for (RefMethod refSuper : refMethod.getSuperMethods()) {
       if (checkMethod(refSuper) != null) return null;
     }
 
@@ -90,8 +91,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
   }
 
   private static RefMethod findSuperWithBody(RefMethod refMethod) {
-    for (Iterator<RefMethod> iterator = refMethod.getSuperMethods().iterator(); iterator.hasNext();) {
-      RefMethod refSuper = iterator.next();
+    for (RefMethod refSuper : refMethod.getSuperMethods()) {
       if (refSuper.hasBody()) return refSuper;
     }
     return null;
@@ -100,8 +100,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
   private boolean areAllImplementationsEmpty(RefMethod refMethod) {
     if (refMethod.hasBody() && !refMethod.isBodyEmpty()) return false;
 
-    for (Iterator<RefMethod> iterator = refMethod.getDerivedMethods().iterator(); iterator.hasNext();) {
-      RefMethod refDerived = iterator.next();
+    for (RefMethod refDerived : refMethod.getDerivedMethods()) {
       if (!areAllImplementationsEmpty(refDerived)) return false;
     }
 
@@ -109,8 +108,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
   }
 
   private static boolean hasEmptySuperImplementation(RefMethod refMethod) {
-    for (Iterator<RefMethod> iterator = refMethod.getSuperMethods().iterator(); iterator.hasNext();) {
-      RefMethod refSuper = iterator.next();
+    for (RefMethod refSuper : refMethod.getSuperMethods()) {
       if (refSuper.hasBody() && refSuper.isBodyEmpty()) return true;
     }
 
@@ -210,8 +208,8 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            new SafeDeleteHandler().invoke(getManager().getProject(),
-                                           psiElements.toArray(new PsiElement[psiElements.size()]), false);
+            SafeDeleteHandler.invoke(getManager().getProject(),
+                                     psiElements.toArray(new PsiElement[psiElements.size()]), false);
           }
         });
       }
@@ -220,8 +218,7 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
     private void deleteHierarchy(RefMethod refMethod, List<PsiElement> result, List<RefElement> refElements) {
       Collection<RefMethod> derivedMethods = refMethod.getDerivedMethods();
       RefMethod[] refMethods = derivedMethods.toArray(new RefMethod[derivedMethods.size()]);
-      for (int i = 0; i < refMethods.length; i++) {
-        RefMethod refDerived = refMethods[i];
+      for (RefMethod refDerived : refMethods) {
         deleteMethod(refDerived, result, refElements);
       }
       deleteMethod(refMethod, result, refElements);

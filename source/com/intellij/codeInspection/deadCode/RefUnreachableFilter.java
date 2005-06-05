@@ -15,6 +15,7 @@ import com.intellij.codeInspection.util.RefFilter;
 public class RefUnreachableFilter extends RefFilter {
   public int getElementProblemCount(RefElement refElement) {
     if (refElement instanceof RefParameter) return 0;
+    if (refElement.isSyntheticJSP()) return 0;
     return refElement.isSuspicious() ? 1 : 0;
   }
 }

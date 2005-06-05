@@ -15,6 +15,6 @@ import com.intellij.codeInspection.util.RefFilter;
 public class RefEntryPointFilter extends RefFilter {
   public int getElementProblemCount(RefElement refElement) {
     if (refElement instanceof RefParameter) return 0;
-    return refElement.isEntry() ? 1 : 0;
+    return refElement.isEntry() && !refElement.isSyntheticJSP() ? 1 : 0;
   }
 }

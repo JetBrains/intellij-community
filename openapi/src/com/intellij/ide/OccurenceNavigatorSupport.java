@@ -2,6 +2,7 @@ package com.intellij.ide;
 
 import com.intellij.pom.Navigatable;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -17,6 +18,7 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
     myTree = tree;
   }
 
+  @Nullable
   protected abstract Navigatable createDescriptorForNode(DefaultMutableTreeNode node);
 
   public OccurenceNavigator.OccurenceInfo goNextOccurence() {

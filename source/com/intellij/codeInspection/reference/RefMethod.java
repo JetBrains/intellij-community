@@ -18,6 +18,7 @@ import com.intellij.j2ee.ejb.role.EjbMethodRole;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -474,10 +475,16 @@ public class RefMethod extends RefElement {
       final Runnable runnable = new Runnable() {
         public void run() {
           PsiMethod psiMethod = (PsiMethod) getElement();
-          result[0] = PsiFormatUtil.formatMethod(psiMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME |
-            PsiFormatUtil.SHOW_PARAMETERS,
-            PsiFormatUtil.SHOW_TYPE
-          );
+          if (psiMethod instanceof JspHolderMethod) {
+            result[0] = RefMethod.super.getName();
+          }
+          else {
+            result[0] = PsiFormatUtil.formatMethod(psiMethod,
+                                                   PsiSubstitutor.EMPTY,
+                                                   PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+                                                   PsiFormatUtil.SHOW_TYPE
+            );
+          }
         }
       };
 

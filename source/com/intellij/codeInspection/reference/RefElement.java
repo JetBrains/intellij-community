@@ -10,12 +10,13 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Stack;
 
 public abstract class RefElement extends RefEntity {
@@ -34,6 +35,7 @@ public abstract class RefElement extends RefEntity {
   private static final int IS_ENTRY_MASK = 0x80;
   private static final int IS_PERMANENT_ENTRY_MASK = 0x100;
   private static final int IS_USES_DEPRECATION_MASK = 0x200;
+  private static final int IS_SYNTHETIC_JSP_ELEMENT = 0x400;
 
 
   private SmartPsiElementPointer myID;
@@ -71,6 +73,11 @@ public abstract class RefElement extends RefEntity {
     }
 
     myFlags = ((myFlags >> 2) << 2) | access_id;
+
+    final boolean synthOwner = owner.isSyntheticJSP();
+    if (synthOwner) {
+      setSyntheticJSP(true);
+    }
   }
 
   protected RefElement(PsiModifierListOwner elem, RefManager manager) {
@@ -83,6 +90,12 @@ public abstract class RefElement extends RefEntity {
     setCanBeFinal(true);
 
     setAccessModifier(RefUtil.getAccessModifier(elem));
+
+    //TODO[ik?] need more proper way to identify synthetic JSP holders
+    final boolean isSynth = elem instanceof JspHolderMethod || elem instanceof JspClass;
+    if (isSynth) {
+      setSyntheticJSP(true);
+    }
 
     myOutReferences = new ArrayList<RefElement>(0);
     myInReferences = new ArrayList<RefElement>(0);
@@ -131,8 +144,7 @@ public abstract class RefElement extends RefEntity {
   }
 
   public boolean hasSuspiciousCallers() {
-    for (Iterator<RefElement> iterator = getInReferences().iterator(); iterator.hasNext();) {
-      RefElement refCaller = iterator.next();
+    for (RefElement refCaller : getInReferences()) {
       if (refCaller.isSuspicious()) return true;
     }
 
@@ -144,20 +156,18 @@ public abstract class RefElement extends RefEntity {
   }
 
   private boolean isCalledOnlyFrom(RefElement refElement, Stack<RefElement> callStack) {
-    if (callStack.contains(this)) return refElement == this ? true : false;
+    if (callStack.contains(this)) return refElement == this;
     if (getInReferences().size() == 0) return false;
 
     if (refElement instanceof RefMethod) {
       RefMethod refMethod = (RefMethod) refElement;
-      for (Iterator<RefMethod> iterator = refMethod.getSuperMethods().iterator(); iterator.hasNext();) {
-        RefMethod refSuper = iterator.next();
+      for (RefMethod refSuper : refMethod.getSuperMethods()) {
         if (refSuper.getInReferences().size() > 0) return false;
       }
     }
 
     callStack.push(this);
-    for (Iterator<RefElement> iterator = getInReferences().iterator(); iterator.hasNext();) {
-      RefElement refCaller = iterator.next();
+    for (RefElement refCaller : getInReferences()) {
       if (!refCaller.isSuspicious() || !refCaller.isCalledOnlyFrom(refElement, callStack)) {
         callStack.pop();
         return false;
@@ -267,6 +277,14 @@ public abstract class RefElement extends RefEntity {
     setFlag(reachable, IS_REACHABLE_MASK);
   }
 
+  public boolean isSyntheticJSP() {
+    return checkFlag(IS_SYNTHETIC_JSP_ELEMENT);
+  }
+
+  public void setSyntheticJSP(boolean b) {
+    setFlag(b, IS_SYNTHETIC_JSP_ELEMENT);
+  }
+
   public boolean isSuspicious() {
     return !isReachable();
   }
@@ -304,13 +322,11 @@ public abstract class RefElement extends RefEntity {
       getOwner().removeChild(this);
     }
 
-    for (Iterator<RefElement> iterator = getOutReferences().iterator(); iterator.hasNext();) {
-      RefElement refCallee = iterator.next();
+    for (RefElement refCallee : getOutReferences()) {
       refCallee.getInReferences().remove(this);
     }
 
-    for (Iterator<RefElement> iterator = getInReferences().iterator(); iterator.hasNext();) {
-      RefElement refCaller = iterator.next();
+    for (RefElement refCaller : getInReferences()) {
       refCaller.getOutReferences().remove(this);
     }
   }

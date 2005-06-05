@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -38,6 +39,14 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     file.accept(new PsiRecursiveElementVisitor() {
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitElement(expression);
+      }
+
+      @Override
+      public void visitJspFile(JspFile file) {
+        final PsiFile[] roots = file.getPsiRoots();
+        for (PsiFile root : roots) {
+          visitElement(root);
+        }
       }
 
       public void visitField(PsiField field) {

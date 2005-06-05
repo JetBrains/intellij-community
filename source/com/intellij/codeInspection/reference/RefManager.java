@@ -20,7 +20,6 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class RefManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefManager");
@@ -190,6 +189,14 @@ public class RefManager {
       }
     }
 
+    @Override
+    public void visitFile(PsiFile file) {
+      final PsiFile[] roots = file.getPsiRoots();
+      for (PsiFile root : roots) {
+        visitElement(root);
+      }
+    }
+
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitElement(expression);
     }
@@ -204,8 +211,8 @@ public class RefManager {
         refClass.buildReferences();
         ArrayList children = refClass.getChildren();
         if (children != null) {
-          for (Iterator iterator = children.iterator(); iterator.hasNext();) {
-            RefElement refChild = (RefElement)iterator.next();
+          for (Object aChildren : children) {
+            RefElement refChild = (RefElement)aChildren;
             refChild.buildReferences();
           }
         }

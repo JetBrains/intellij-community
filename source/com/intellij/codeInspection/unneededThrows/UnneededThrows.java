@@ -36,7 +36,7 @@ public class UnneededThrows extends DescriptorProviderInspection {
 
     getRefManager().iterate(new RefManager.RefIterator() {
       public void accept(RefElement refElement) {
-        if (refElement instanceof RefMethod) {
+        if (refElement instanceof RefMethod && !refElement.isSyntheticJSP()) {
           RefMethod refMethod = (RefMethod)refElement;
           ProblemDescriptorImpl[] descriptors = checkMethod(refMethod);
           if (descriptors != null) {
