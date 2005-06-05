@@ -4,6 +4,7 @@ import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.projectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ToolbarPanel;
+import com.intellij.j2ee.J2EEModuleUtil;
 import com.intellij.j2ee.module.J2EEModuleUtilEx;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -22,14 +23,13 @@ import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
+import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Icons;
@@ -217,8 +217,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private ModuleEditor getModuleEditor(Module module) {
-    for (Iterator it = myModuleEditors.iterator(); it.hasNext();) {
-      final ModuleEditor moduleEditor = (ModuleEditor)it.next();
+    for (final ModuleEditor moduleEditor : myModuleEditors) {
       if (module.equals(moduleEditor.getModule())) {
         return moduleEditor;
       }
@@ -253,8 +252,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private void disposeModuleEditors() {
-    for (Iterator<ModuleEditor> it = myModuleEditors.iterator(); it.hasNext();) {
-      final ModuleEditor moduleEditor = it.next();
+    for (final ModuleEditor moduleEditor : myModuleEditors) {
       removeModuleEditorUIComponent(moduleEditor);
       final ModifiableRootModel model = moduleEditor.dispose();
       if (model != null) {
@@ -264,8 +262,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private void resetModuleEditors() {
-    for (Iterator it = myModuleEditors.iterator(); it.hasNext();) {
-      final ModuleEditor moduleEditor = (ModuleEditor)it.next();
+    for (final ModuleEditor moduleEditor : myModuleEditors) {
       moduleEditor.removeChangeListener(this);
     }
     myModuleEditors.clear();
@@ -273,12 +270,12 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     listModel.clear();
     final Module[] modules = myModuleModel.getModules();
     if (modules.length > 0) {
-      for (int idx = 0; idx < modules.length; idx++) {
-        createModuleEditor(modules[idx]);
+      for (Module module : modules) {
+        createModuleEditor(module);
       }
       Collections.sort(myModuleEditors, myModuleEditorComparator);
-      for (Iterator<ModuleEditor> it = myModuleEditors.iterator(); it.hasNext();) {
-        listModel.addElement(new ModuleEditorWrapper(it.next()));
+      for (final ModuleEditor myModuleEditor : myModuleEditors) {
+        listModel.addElement(new ModuleEditorWrapper(myModuleEditor));
       }
     }
     updateCircularDependencyWarning();
@@ -300,8 +297,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     String warningMessage = "";
     try {
       List<ModifiableRootModel> modelsToCheck = new ArrayList<ModifiableRootModel>(myModuleEditors.size());
-      for (Iterator<ModuleEditor> it = myModuleEditors.iterator(); it.hasNext();) {
-        final ModuleEditor moduleEditor = it.next();
+      for (final ModuleEditor moduleEditor : myModuleEditors) {
         final ModifiableRootModel model = moduleEditor.getModifiableRootModel();
         if (model != null) {
           modelsToCheck.add(model);
@@ -321,8 +317,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
     try {
       final List<ModifiableRootModel> models = new ArrayList<ModifiableRootModel>(myModuleEditors.size());
-      for (Iterator<ModuleEditor> it = myModuleEditors.iterator(); it.hasNext();) {
-        final ModuleEditor moduleEditor = it.next();
+      for (final ModuleEditor moduleEditor : myModuleEditors) {
         removeModuleEditorUIComponent(moduleEditor);
         final ModifiableRootModel model = moduleEditor.applyAndDispose();
         if (model != null) {
@@ -345,8 +340,12 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
           }
         }
       });
-      ApplicationManager.getApplication().saveAll();
 
+      if (!J2EEModuleUtilEx.checkDependentModulesOutputPathConsistency(myProject, J2EEModuleUtil.getAllJ2EEModules(myProject), true)) {
+        throw new ConfigurationException(null);
+      }
+
+      ApplicationManager.getApplication().saveAll();
     }
     finally {
       refreshUI();
@@ -430,8 +429,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   private ModuleEditor findModuleEditor(String name) {
-    for (Iterator it = myModuleEditors.iterator(); it.hasNext();) {
-      ModuleEditor moduleEditor = (ModuleEditor)it.next();
+    for (final ModuleEditor moduleEditor : myModuleEditors) {
       if (name.equals(moduleEditor.getModule().getName())) {
         return moduleEditor;
       }
@@ -541,9 +539,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         final Module moduleToRemove = selectedEditor.getModule();
         // remove all dependencies on the module that is about to be removed
         List<ModifiableRootModel> modifiableRootModels = new ArrayList<ModifiableRootModel>();
-        for (Iterator it = myModuleEditors.iterator(); it.hasNext();) {
-          final ModuleEditor moduleEditor = (ModuleEditor)it.next();
-          if (moduleToRemove.equals(moduleEditor.getModule()))  {
+        for (final ModuleEditor moduleEditor : myModuleEditors) {
+          if (moduleToRemove.equals(moduleEditor.getModule())) {
             continue; // skip self
           }
           final ModifiableRootModel modifiableRootModel = moduleEditor.getModifiableRootModelProxy();
@@ -568,8 +565,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   private void processModuleCountChanged(int oldCount, int newCount) {
     //updateTitle();
-    for (Iterator<ModuleEditor> it = myModuleEditors.iterator(); it.hasNext();) {
-      ModuleEditor moduleEditor = it.next();
+    for (ModuleEditor moduleEditor : myModuleEditors) {
       moduleEditor.moduleCountChanged(oldCount, newCount);
     }
   }
@@ -593,8 +589,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     if (myModuleModel.isChanged()) {
       return true;
     }
-    for (Iterator<ModuleEditor> it = myModuleEditors.iterator(); it.hasNext();) {
-      ModuleEditor moduleEditor = it.next();
+    for (ModuleEditor moduleEditor : myModuleEditors) {
       if (moduleEditor.isModified()) {
         return true;
       }
@@ -609,6 +604,10 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         return true;
       }
     }
+    if (!J2EEModuleUtilEx.checkDependentModulesOutputPathConsistency(myProject, J2EEModuleUtil.getAllJ2EEModules(myProject), false)) {
+      return true;
+    }
+
     return false;
   }
 

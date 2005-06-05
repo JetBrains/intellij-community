@@ -28,6 +28,7 @@ import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -446,7 +447,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     return myModuleModel.moduleGraph();
   }
 
-  public List<Module> getModuleDependentModules(Module module) {
+  @NotNull public List<Module> getModuleDependentModules(Module module) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return myModuleModel.getModuleDependentModules(module);
   }
@@ -683,11 +684,10 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       return graph;
     }
 
-    private List<Module> getModuleDependentModules(Module module) {
+    @NotNull private List<Module> getModuleDependentModules(Module module) {
       List<Module> result = new ArrayList<Module>();
       Module[] modules = getModules();
-      for (int i = 0; i < modules.length; i++) {
-        Module aModule = modules[i];
+      for (Module aModule : modules) {
         if (isModuleDependent(aModule, module)) {
           result.add(aModule);
         }

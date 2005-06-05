@@ -150,7 +150,9 @@ public class ExplorerSettingsEditor extends DialogWrapper {
       return true;
     }
     catch (ConfigurationException e) {
-      Messages.showMessageDialog(e.getMessage(), e.getTitle(), Messages.getErrorIcon());
+      if (e.getMessage() != null) {
+        Messages.showMessageDialog(e.getMessage(), e.getTitle(), Messages.getErrorIcon());
+      }
       return false;
     }
   }
@@ -350,7 +352,9 @@ public class ExplorerSettingsEditor extends DialogWrapper {
           mySelectedConfigurable.apply();
         }
         catch (ConfigurationException exc) {
-          Messages.showMessageDialog(exc.getMessage(), exc.getTitle(), Messages.getErrorIcon());
+          if (exc.getMessage() != null) {
+            Messages.showMessageDialog(exc.getMessage(), exc.getTitle(), Messages.getErrorIcon());
+          }
           return;
         }
       }

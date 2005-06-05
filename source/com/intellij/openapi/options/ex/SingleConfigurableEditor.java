@@ -95,11 +95,13 @@ public class SingleConfigurableEditor extends DialogWrapper {
       if (myConfigurable.isModified()) myConfigurable.apply();
     }
     catch (ConfigurationException e) {
-      if (myProject != null) {
-        Messages.showMessageDialog(myProject, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
-      }
-      else {
-        Messages.showMessageDialog(myParentComponent, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
+      if (e.getMessage() != null) {
+        if (myProject != null) {
+          Messages.showMessageDialog(myProject, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
+        }
+        else {
+          Messages.showMessageDialog(myParentComponent, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
+        }
       }
       return;
     }

@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.util.graph.Graph;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -42,7 +43,7 @@ public abstract class ModuleManager {
    * @param module
    * @return
    */
-  public abstract List<Module> getModuleDependentModules(Module module);
+  @NotNull public abstract List<Module> getModuleDependentModules(Module module);
 
   public abstract boolean isModuleDependent(Module module, Module onModule);
 

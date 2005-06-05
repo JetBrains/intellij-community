@@ -12,6 +12,7 @@ import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.make.MakeUtil;
 import com.intellij.compiler.progress.CompilerProgressIndicator;
 import com.intellij.j2ee.make.impl.MakeUtilImpl;
+import com.intellij.j2ee.module.J2EEModuleUtilEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
@@ -1502,6 +1503,9 @@ public class CompileDriver {
       if (!compiler.validateConfiguration(scope)) {
         return false;
       }
+    }
+    if (!J2EEModuleUtilEx.checkDependentModulesOutputPathConsistency(myProject, scopeModules, true)) {
+      return false;
     }
     return true;
   }
