@@ -235,7 +235,7 @@ public class HighlightClassUtil {
     PsiJavaFile file = (PsiJavaFile)aClass.getContainingFile();
     VirtualFile virtualFile = file.getVirtualFile();
     HighlightInfo errorResult = null;
-    if (virtualFile != null && !aClass.getName().equals(virtualFile.getNameWithoutExtension())) {
+    if (virtualFile != null && !aClass.getName().equals(virtualFile.getNameWithoutExtension()) && aClass.getNameIdentifier() != null) {
       String message = MessageFormat.format("Class ''{0}'' is public, should be declared in a file named ''{0}.java''",
                                             new Object[]{aClass.getName()});
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
