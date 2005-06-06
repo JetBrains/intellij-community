@@ -22,7 +22,7 @@ public class CloseEditorAction extends AnAction {
             window = fileEditorManager.getCurrentWindow ();
           }
           final VirtualFile vFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
-          if (window != null && vFile != null) {
+          if (window != null && vFile != null && window.isFileOpen(vFile)) {
             window.closeFile(vFile);
           }
         }
