@@ -925,51 +925,12 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     try {
       startElement(expression);
 
+      if (processSpecialMethods(expression)) {
+        return;
+      }
+
       PsiReferenceExpression methodExpression = expression.getMethodExpression();
       PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-
-      if (qualifierExpression != null) {
-        final String text = qualifierExpression.getText();
-        if ("System".equals(text)) {
-          PsiMethod resolved = expression.resolveMethod();
-          if (resolved != null) {
-            if ("exit".equals(resolved.getName())) {
-              addInstruction(new ReturnInstruction());
-              return;
-            }
-          }
-        }
-        else if ("LOG".equals(text)) {
-          final PsiType qualifierType = qualifierExpression.getType();
-          if (qualifierType != null && qualifierType.equalsToText("com.intellij.openapi.diagnostic.Logger")) {
-            PsiMethod resolved = expression.resolveMethod();
-            if (resolved != null) {
-              final String methodName = resolved.getName();
-              if ("error".equals(methodName)) {
-                PsiExpression[] params = expression.getArgumentList().getExpressions();
-                for (PsiExpression param : params) {
-                  param.accept(this);
-                  addInstruction(new PopInstruction());
-                }
-                addInstruction(new ReturnInstruction());
-                return;
-              }
-              else if ("assertTrue".equals(methodName)) {
-                PsiExpression[] params = expression.getArgumentList().getExpressions();
-                params[0].accept(this);
-                for (int i = 1; i < params.length; i++) {
-                  params[i].accept(this);
-                  addInstruction(new PopInstruction());
-                }
-                addInstruction(new ConditionalGotoInstruction(getEndOffset(expression) - 1, false, null));
-                addInstruction(new ReturnInstruction());
-                pushUnknown();
-                return;
-              }
-            }
-          }
-        }
-      }
 
       PsiExpression[] params = expression.getArgumentList().getExpressions();
       for (PsiExpression param : params) {
@@ -991,6 +952,112 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     }
     finally {
       finishElement(expression);
+    }
+  }
+
+  private boolean processSpecialMethods(PsiMethodCallExpression expression) {
+    PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+
+    PsiMethod resolved = expression.resolveMethod();
+    if (resolved != null) {
+      final PsiExpressionList argList = expression.getArgumentList();
+      assert argList != null;
+
+      PsiExpression[] params = argList.getExpressions();
+      PsiClass owner = resolved.getContainingClass();
+      final int exitPoint = getEndOffset(expression) - 1;
+      if (owner != null) {
+        final String className = owner.getQualifiedName();
+        if ("java.lang.System".equals(className)) {
+          if ("exit".equals(resolved.getName())) {
+            pushParameters(params, false);
+            addInstruction(new ReturnInstruction());
+            return true;
+          }
+        }
+        else if ("junit.framework.Assert".equals(className)) {
+          String methodName = resolved.getName();
+          if ("fail".equals(methodName)) {
+            pushParameters(params, false);
+            addInstruction(new ReturnInstruction());
+            return true;
+          }
+          else if ("assertTrue".equals(methodName)) {
+            pushParameters(params, true);
+            conditionalExit(exitPoint, false);
+            return true;
+          }
+          else if ("assertFalse".equals(methodName)) {
+            pushParameters(params, true);
+            conditionalExit(exitPoint, true);
+            return true;
+          }
+          else if ("assertNull".equals(methodName)) {
+            pushParameters(params, true);
+
+            addInstruction(new PushInstruction(myFactory.getConstFactory().getNull()));
+            addInstruction(new BinopInstruction("==", null));
+            conditionalExit(exitPoint, false);
+            return true;
+          }
+          else if ("assertNotNull".equals(methodName)) {
+            pushParameters(params, true);
+
+            addInstruction(new PushInstruction(myFactory.getConstFactory().getNull()));
+            addInstruction(new BinopInstruction("==", null));
+            conditionalExit(exitPoint, true);
+            return true;
+          }
+          return false;
+        }
+      }
+
+      // Idea project only.
+      if (qualifierExpression != null) {
+        final String text = qualifierExpression.getText();
+        if ("LOG".equals(text)) {
+          final PsiType qualifierType = qualifierExpression.getType();
+          if (qualifierType != null && qualifierType.equalsToText("com.intellij.openapi.diagnostic.Logger")) {
+            final String methodName = resolved.getName();
+            if ("error".equals(methodName)) {
+              for (PsiExpression param : params) {
+                param.accept(this);
+                addInstruction(new PopInstruction());
+              }
+              addInstruction(new ReturnInstruction());
+              return true;
+            }
+            else if ("assertTrue".equals(methodName)) {
+              params[0].accept(this);
+              for (int i = 1; i < params.length; i++) {
+                params[i].accept(this);
+                addInstruction(new PopInstruction());
+              }
+              conditionalExit(exitPoint, false);
+              return true;
+            }
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private void conditionalExit(final int exitPoint, final boolean negated) {
+    addInstruction(new ConditionalGotoInstruction(exitPoint, negated, null));
+    addInstruction(new ReturnInstruction());
+    pushUnknown();
+  }
+
+  private void pushParameters(final PsiExpression[] params, final boolean leaveLastOnStack) {
+    for (int i = 0; i < params.length; i++) {
+      PsiExpression param = params[i];
+      param.accept(this);
+      if (!leaveLastOnStack || i < params.length - 1) {
+        addInstruction(new PopInstruction());
+      }
     }
   }
 
