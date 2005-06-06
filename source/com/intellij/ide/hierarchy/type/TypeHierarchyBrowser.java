@@ -39,6 +39,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.type.TypeHierarchyBrowser");
 
   private final static String HELP_ID = "viewingStructure.classHierarchy";
+  static final String TYPE_HIERARCHY_BROWSER_ID="TYPE_HIERARCHY_BROWSER_ID";
 
   private Content myContent;
   private final Project myProject;
@@ -93,6 +94,14 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
       myTreePanel.add(new JScrollPane(tree), key);
     }
     add(myTreePanel, BorderLayout.CENTER);
+  }
+
+  public String getCurrentViewName() {
+    return myCurrentViewName;
+  }
+
+  public boolean isInterface() {
+    return myIsInterface;
   }
 
   private JTree createTree() {
@@ -225,70 +234,6 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
     return toolBar;
   }
 
-  private abstract class ChangeViewTypeActionBase extends ToggleAction {
-    public ChangeViewTypeActionBase(final String shortDescription, final String longDescription, final Icon icon) {
-      super(shortDescription, longDescription, icon);
-    }
-
-    public final boolean isSelected(final AnActionEvent event) {
-      return getTypeName().equals(myCurrentViewName);
-    }
-
-    protected abstract String getTypeName();
-
-    public final void setSelected(final AnActionEvent event, final boolean flag) {
-      if (flag) {
-        //        setWaitCursor();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            changeView(getTypeName());
-          }
-        });
-      }
-    }
-
-    public void update(final AnActionEvent event) {
-      super.update(event);
-      final Presentation presentation = event.getPresentation();
-      presentation.setEnabled(isValidBase());
-    }
-  }
-
-  final class ViewSubtypesHierarchyAction extends ChangeViewTypeActionBase {
-    public ViewSubtypesHierarchyAction() {
-      super("Subtypes Hierarchy", "Subtypes Hierarchy", IconLoader.getIcon("/hierarchy/subtypes.png"));
-    }
-
-    protected final String getTypeName() {
-      return SubtypesHierarchyTreeStructure.TYPE;
-    }
-  }
-
-  final class ViewSupertypesHierarchyAction extends ChangeViewTypeActionBase {
-    public ViewSupertypesHierarchyAction() {
-      super("Supertypes Hierarchy", "Supertypes Hierarchy", IconLoader.getIcon("/hierarchy/supertypes.png"));
-    }
-
-    protected final String getTypeName() {
-      return SupertypesHierarchyTreeStructure.TYPE;
-    }
-  }
-
-  final class ViewClassHierarchyAction extends ChangeViewTypeActionBase {
-    public ViewClassHierarchyAction() {
-      super("Class Hierarchy", "Class Hierarchy", IconLoader.getIcon("/hierarchy/class.png"));
-    }
-
-    protected final String getTypeName() {
-      return TypeHierarchyTreeStructure.TYPE;
-    }
-
-    public final void update(final AnActionEvent event) {
-      super.update(event);
-      event.getPresentation().setVisible(!myIsInterface);
-    }
-  }
-
   final class RefreshAction extends com.intellij.ide.actions.RefreshAction {
     public RefreshAction() {
       super("Refresh", "Refresh", IconLoader.getIcon("/actions/sync.png"));
@@ -329,7 +274,7 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
     }
   }
 
-  private boolean isValidBase() {
+  boolean isValidBase() {
     if (PsiDocumentManager.getInstance(myProject).getUncommittedDocuments().length > 0) {
       return myCachedIsValidBase;
     }
@@ -391,21 +336,25 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
     if (DataConstants.PSI_ELEMENT.equals(dataId)) {
       return getSelectedClass();
     }
-    else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
-      return getNavigatables();
-    }
-    else if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    if (DataConstantsEx.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
       return myDeleteElementProvider;
     }
-    else if (TYPE_HIERARCHY_BROWSER_DATA_CONSTANT.equals(dataId)) {
-      return this;
-    }
-    else if (DataConstantsEx.HELP_ID.equals(dataId)) {
+    if (DataConstantsEx.HELP_ID.equals(dataId)) {
       return HELP_ID;
     }
-    else if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
+    if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
+      return getNavigatables();
+    }
+    if (TYPE_HIERARCHY_BROWSER_DATA_CONSTANT.equals(dataId)) {
+      return this;
+    }
+    if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
       return getSelectedClasses();
     }
+    if (TYPE_HIERARCHY_BROWSER_ID.equals(dataId)) {
+      return this;
+    }
+
     return null;
   }
 

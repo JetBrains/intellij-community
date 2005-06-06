@@ -939,7 +939,11 @@
     </group>
 
     <group id="TypeHierarchyPopupMenu">
-      <action id="TypeHierarchy.BaseOnThisType" text="Base On This Type" class="com.intellij.ide.hierarchy.type.TypeHierarchyBrowser$BaseOnThisTypeAction" description="Show hierarchy for selected class/interface"/>
+      <action id="TypeHierarchy.BaseOnThisType" text="Base On This Type" class="com.intellij.ide.hierarchy.type.TypeHierarchyBrowser$BaseOnThisTypeAction"/>
+      <action id="TypeHierarchy.Class" text="Class Hierarchy" class="com.intellij.ide.hierarchy.type.ViewClassHierarchyAction" />
+      <action id="TypeHierarchy.Subtypes" text="Subtypes Hierarchy" class="com.intellij.ide.hierarchy.type.ViewSubtypesHierarchyAction" />
+      <action id="TypeHierarchy.Supertypes" text="Supertypes Hierarchy" class="com.intellij.ide.hierarchy.type.ViewSupertypesHierarchyAction" />        
+      <separator/>
       <reference ref="EditSource"/>
       <separator/>
       <reference ref="FindUsages"/>
