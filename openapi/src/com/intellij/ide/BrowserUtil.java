@@ -111,10 +111,6 @@ public class BrowserUtil {
         showErrorMessage("Please specify a path to web browser in File | Settings | General", "Browser Not Found");
         return;
       }
-      else if (url.startsWith("jar:")) {
-        showErrorMessage("Cannot show \"" + url + "\" in external browser", "Cannot start browser");
-        return;
-      }
 
       command = new String[]{browserPath};
     }
@@ -134,6 +130,10 @@ public class BrowserUtil {
 
 
   public static void launchBrowser(final String url, String name) {
+    if (url.startsWith("jar:")) {
+      showErrorMessage("Cannot show \"" + url + "\" in external browser", "Cannot start browser");
+      return;
+    }
     if (canStartDefaultBrowser() && isUseDefaultBrowser()) {
       launchBrowser(url, getDefaultBrowserCommand(name));
     }
