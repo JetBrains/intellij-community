@@ -14,6 +14,10 @@ import org.jetbrains.annotations.NotNull;
 public class MissingOverrideAnnotationInspection extends MethodInspection{
     private final MissingOverrideAnnotationFix fix = new MissingOverrideAnnotationFix();
 
+    public String getID(){
+        return "override";
+    }
+
     public String getDisplayName(){
         return "Missing @Override annotation";
     }

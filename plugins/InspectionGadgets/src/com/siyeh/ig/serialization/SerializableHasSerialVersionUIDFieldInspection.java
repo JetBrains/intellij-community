@@ -18,7 +18,7 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
     private final AddSerialVersionUIDFix fix = new AddSerialVersionUIDFix();
 
     public String getID(){
-        return "SerializableClassWithoutSerialVersionUID";
+        return "serial";
     }
     public String getDisplayName() {
         return "Serializable class without serialVersionUID";
@@ -46,7 +46,7 @@ public class SerializableHasSerialVersionUIDFieldInspection extends ClassInspect
     }
 
     private class SerializableDefinesSerialVersionUIDVisitor extends BaseInspectionVisitor {
-     
+
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
 

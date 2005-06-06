@@ -4,20 +4,21 @@ import com.intellij.codeInspection.LocalInspectionTool;
 
 import java.util.Comparator;
 
-class InspectionComparator implements Comparator<Class> {
+class InspectionComparator implements Comparator<Class<? extends LocalInspectionTool>> {
     InspectionComparator() {
         super();
     }
 
-    public int compare(Class class1, Class class2) {
+    public int compare(Class<? extends LocalInspectionTool> class1,
+                       Class<? extends LocalInspectionTool> class2) {
         final LocalInspectionTool inspection1;
         final LocalInspectionTool inspection2;
         try {
-            inspection1 = (LocalInspectionTool) class1.newInstance();
-            inspection2 = (LocalInspectionTool)class2.newInstance();
-        } catch (InstantiationException e) {
+            inspection1 = class1.newInstance();
+            inspection2 = class2.newInstance();
+        } catch (InstantiationException ignore) {
             return -1;
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException ignore) {
             return -1;
         }
         final String groupName1 = inspection1.getGroupDisplayName();

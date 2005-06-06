@@ -1,14 +1,16 @@
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.StatementInspection;
+import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class FallthruInSwitchStatementInspection extends StatementInspection {
     public String getID(){
-        return "FallthroughInSwitchStatement";
+        return "fallthrough";
     }
     public String getDisplayName() {
         return "Fallthrough in 'switch' statement";

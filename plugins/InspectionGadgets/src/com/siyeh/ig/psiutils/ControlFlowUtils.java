@@ -138,7 +138,7 @@ public class ControlFlowUtils{
                        statementIsBreakTarget(statement);
     }
 
-    private static boolean codeBlockMayCompleteNormally(@Nullable PsiCodeBlock block){
+    public static boolean codeBlockMayCompleteNormally(@Nullable PsiCodeBlock block){
         if(block == null){
             return true;
         }
