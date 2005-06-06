@@ -118,8 +118,10 @@ class TagNameReference implements PsiReference {
         // Don't use default namespace in case there are other namespaces in scope
         // If there are tags from default namespace they will be handeled via
         // their element descriptors (prev if section)
+        if (namespace == null) continue;
         if(namespace.length() == 0 && !visited.isEmpty()) continue;
         final XmlNSDescriptor NSDescriptor = element.getNSDescriptor(namespace, false);
+
         if(NSDescriptor != null && !visited.contains(NSDescriptor)){
           visited.add(NSDescriptor);
           variants.addAll(Arrays.asList(NSDescriptor.getRootElementsDescriptors()));
