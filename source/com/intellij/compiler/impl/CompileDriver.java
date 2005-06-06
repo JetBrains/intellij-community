@@ -863,7 +863,7 @@ public class CompileDriver {
               if (fileTypeManager.getFileTypeByFile(file) == StdFileTypes.JAVA) {
                 final PsiFile psiFile = psiManager.findFile(file);
                 if (psiFile != null) {
-                  addDependentFiles(psiFile, toCompile, cache, snapshot, sourcesWithOutputRemoved);
+                  addDependentFiles(psiFile, toCompile, cache, snapshot, sourcesWithOutputRemoved, compiler, context);
                 }
               }
             }
@@ -1112,14 +1112,13 @@ public class CompileDriver {
                                  Set<VirtualFile> toCompile,
                                  final TranslatingCompilerStateCache cache,
                                  VfsSnapshot snapshot,
-                                 Set<String> sourcesWithOutputRemoved) {
+                                 Set<String> sourcesWithOutputRemoved, TranslatingCompiler compiler, CompileContextImpl context) {
     final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(psiFile));
     builder.analyze();
     final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
     final Set<PsiFile> dependentFiles = dependencies.get(psiFile);
     if (dependentFiles != null && dependentFiles.size() > 0) {
-      for (Iterator it = dependentFiles.iterator(); it.hasNext();) {
-        final PsiFile dependentFile = (PsiFile)it.next();
+      for (final PsiFile dependentFile : dependentFiles) {
         if (dependentFile instanceof PsiCompiledElement) {
           continue;
         }
@@ -1136,8 +1135,11 @@ public class CompileDriver {
             continue;
           }
         }
+        if (!compiler.isCompilableFile(vFile, context)) {
+          continue;
+        }
         toCompile.add(vFile);
-        addDependentFiles(dependentFile, toCompile, cache, snapshot, sourcesWithOutputRemoved);
+        addDependentFiles(dependentFile, toCompile, cache, snapshot, sourcesWithOutputRemoved, compiler, context);
       }
     }
   }
