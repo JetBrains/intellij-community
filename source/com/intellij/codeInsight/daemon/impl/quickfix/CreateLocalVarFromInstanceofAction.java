@@ -30,7 +30,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction");
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpression(editor, file);
+    PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(editor, file);
     if (instanceOfExpression != null) {
       PsiTypeElement checkType = instanceOfExpression.getCheckType();
       if (checkType == null) return false;
@@ -46,15 +46,32 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     return false;
   }
 
-  private static PsiInstanceOfExpression getInstanceOfExpression(Editor editor, PsiFile file) {
+  private static PsiInstanceOfExpression getInstanceOfExpressionAtCaret(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     PsiInstanceOfExpression expression = PsiTreeUtil.getParentOfType(element, PsiInstanceOfExpression.class);
-    return expression;
+    if (expression != null) {
+      return expression;
+    }
+    PsiStatement statement = (PsiStatement)PsiTreeUtil.getParentOfType(element, new Class[]{PsiIfStatement.class, PsiWhileStatement.class});
+    if (statement instanceof PsiIfStatement) {
+      PsiExpression condition = ((PsiIfStatement)statement).getCondition();
+      if (condition instanceof PsiInstanceOfExpression && atSameLine(condition, editor)) return (PsiInstanceOfExpression)condition;
+    }
+    else if (statement instanceof PsiWhileStatement) {
+      PsiExpression condition = ((PsiWhileStatement)statement).getCondition();
+      if (condition instanceof PsiInstanceOfExpression && atSameLine(condition, editor)) return (PsiInstanceOfExpression)condition;
+    }
+    return null;
+  }
+
+  private static boolean atSameLine(final PsiExpression condition, final Editor editor) {
+    int line = editor.getCaretModel().getLogicalPosition().line;
+    return editor.offsetToLogicalPosition(condition.getTextOffset()).line == line;
   }
 
   public void invoke(final Project project, final Editor editor, final PsiFile file) {
-    PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpression(editor, file);
+    PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(editor, file);
 
     try {
       final PsiDeclarationStatement decl = createLocalVariableDeclaration(instanceOfExpression);
@@ -73,9 +90,11 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
           PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
           CaretModel caretModel = editor.getCaretModel();
-          PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(file.findElementAt(caretModel.getOffset()),
-                                                                                     PsiDeclarationStatement.class);
-          caretModel.moveToOffset(declarationStatement.getTextRange().getEndOffset());
+          PsiElement elementAt = file.findElementAt(caretModel.getOffset());
+          PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementAt, PsiDeclarationStatement.class);
+          if (declarationStatement != null) {
+            caretModel.moveToOffset(declarationStatement.getTextRange().getEndOffset());
+          }
           new EnterAction().actionPerformed(editor, DataManager.getInstance().getDataContext());
         }
       });
