@@ -814,10 +814,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   private <T>List<T> getSelectedElements(Class<T> klass) {
-    final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-    if (viewPane == null) return null;
-    final Object[] elements = viewPane.getSelectedElements();
     ArrayList<T> result = new ArrayList<T>();
+    final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
+    if (viewPane == null) return result;
+    final Object[] elements = viewPane.getSelectedElements();
     for (Object element : elements) {
       //element still valid
       if (element != null && klass.isAssignableFrom(element.getClass())) {
