@@ -33,6 +33,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.jsp.impl.JspElementDescriptor;
 
 import java.text.MessageFormat;
 import java.util.HashSet;
@@ -313,101 +314,105 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     if (requiredAttributes != null) {
       for (final String attrName : requiredAttributes) {
         if (tag.getAttribute(attrName, tag.getNamespace()) == null) {
-          addElementsForTag(
-            tag,
-            "Element " + name + " doesn't have required attribute " + attrName,
-            myResult,
-            HighlightInfoType.WRONG_REF,
-            new IntentionAction() {
-              public String getText() {
-                return "Insert Required Attribute";
-              }
-
-              public String getFamilyName() {
-                return "Insert Required Attribute";
-              }
-
-              public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-                return true;
-              }
-
-              public void invoke(final Project project, final Editor editor, PsiFile file) {
-                if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-                ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(tag);
-                PsiElement anchor = SourceTreeToPsiMap.treeElementToPsi(
-                  XmlChildRole.EMPTY_TAG_END_FINDER.findChild(treeElement)
-                );
-
-                if (anchor == null) {
-                  anchor = SourceTreeToPsiMap.treeElementToPsi(
-                    XmlChildRole.START_TAG_END_FINDER.findChild(treeElement)
-                  );
+          if (!(elementDescriptor instanceof JspElementDescriptor) ||
+              !((JspElementDescriptor)elementDescriptor).isRequiredAttributeImplicitlyPresent(tag, attrName)
+              ) {
+            addElementsForTag(
+              tag,
+              "Element " + name + " doesn't have required attribute " + attrName,
+              myResult,
+              HighlightInfoType.WRONG_REF,
+              new IntentionAction() {
+                public String getText() {
+                  return "Insert Required Attribute";
                 }
 
-                if (anchor == null) return;
+                public String getFamilyName() {
+                  return "Insert Required Attribute";
+                }
 
-                final Template template = TemplateManager.getInstance(project).createTemplate("", "");
-                template.addTextSegment(" " + attrName + "=\"");
+                public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+                  return true;
+                }
 
-                Expression expression = new Expression() {
-                  TextResult result = new TextResult("");
+                public void invoke(final Project project, final Editor editor, PsiFile file) {
+                  if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+                  ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(tag);
+                  PsiElement anchor = SourceTreeToPsiMap.treeElementToPsi(
+                    XmlChildRole.EMPTY_TAG_END_FINDER.findChild(treeElement)
+                  );
 
-                  public Result calculateResult(ExpressionContext context) {
-                    return result;
-                  }
-
-                  public Result calculateQuickResult(ExpressionContext context) {
-                    return null;
-                  }
-
-                  public LookupItem[] calculateLookupItems(ExpressionContext context) {
-                    return new LookupItem[0];
-                  }
-                };
-                template.addVariable("name", expression, expression, true);
-                template.addTextSegment("\"");
-
-                final PsiElement anchor1 = anchor;
-
-                final Runnable runnable = new Runnable() {
-                  public void run() {
-                    ApplicationManager.getApplication().runWriteAction(
-                      new Runnable() {
-                        public void run() {
-                          int textOffset = anchor1.getTextOffset();
-                          editor.getCaretModel().moveToOffset(textOffset);
-                          TemplateManager.getInstance(project).startTemplate(editor, template, null);
-                        }
-                      }
+                  if (anchor == null) {
+                    anchor = SourceTreeToPsiMap.treeElementToPsi(
+                      XmlChildRole.START_TAG_END_FINDER.findChild(treeElement)
                     );
                   }
-                };
 
-                if (!ApplicationManager.getApplication().isUnitTestMode()) {
-                  Runnable commandRunnable = new Runnable() {
+                  if (anchor == null) return;
+
+                  final Template template = TemplateManager.getInstance(project).createTemplate("", "");
+                  template.addTextSegment(" " + attrName + "=\"");
+
+                  Expression expression = new Expression() {
+                    TextResult result = new TextResult("");
+
+                    public Result calculateResult(ExpressionContext context) {
+                      return result;
+                    }
+
+                    public Result calculateQuickResult(ExpressionContext context) {
+                      return null;
+                    }
+
+                    public LookupItem[] calculateLookupItems(ExpressionContext context) {
+                      return new LookupItem[0];
+                    }
+                  };
+                  template.addVariable("name", expression, expression, true);
+                  template.addTextSegment("\"");
+
+                  final PsiElement anchor1 = anchor;
+
+                  final Runnable runnable = new Runnable() {
                     public void run() {
-                      CommandProcessor.getInstance().executeCommand(
-                        project,
-                        runnable,
-                        getText(),
-                        getFamilyName()
+                      ApplicationManager.getApplication().runWriteAction(
+                        new Runnable() {
+                          public void run() {
+                            int textOffset = anchor1.getTextOffset();
+                            editor.getCaretModel().moveToOffset(textOffset);
+                            TemplateManager.getInstance(project).startTemplate(editor, template, null);
+                          }
+                        }
                       );
                     }
                   };
 
-                  ApplicationManager.getApplication().invokeLater(commandRunnable);
-                }
-                else {
-                  runnable.run();
-                }
-              }
+                  if (!ApplicationManager.getApplication().isUnitTestMode()) {
+                    Runnable commandRunnable = new Runnable() {
+                      public void run() {
+                        CommandProcessor.getInstance().executeCommand(
+                          project,
+                          runnable,
+                          getText(),
+                          getFamilyName()
+                        );
+                      }
+                    };
 
-              public boolean startInWriteAction() {
-                return true;
+                    ApplicationManager.getApplication().invokeLater(commandRunnable);
+                  }
+                  else {
+                    runnable.run();
+                  }
+                }
+
+                public boolean startInWriteAction() {
+                  return true;
+                }
               }
-            }
-          );
-          return;
+            );
+            return;
+          }
         }
       }
     }

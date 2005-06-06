@@ -2,6 +2,7 @@ package com.intellij.jsp.impl;
 
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
+import com.intellij.psi.xml.XmlTag;
 
 import javax.servlet.jsp.tagext.TagExtraInfo;
 
@@ -14,4 +15,5 @@ import javax.servlet.jsp.tagext.TagExtraInfo;
  */
 public interface JspElementDescriptor extends XmlElementDescriptor {
   TagExtraInfo getExtraInfo(WebModuleProperties moduleProperties);
+  boolean isRequiredAttributeImplicitlyPresent(XmlTag tag,String attributeName);
 }
