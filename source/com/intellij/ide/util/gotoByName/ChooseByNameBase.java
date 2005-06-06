@@ -523,7 +523,7 @@ public abstract class ChooseByNameBase{
         };
 
         if (delay > 0) {
-          myAlarm.addRequest(request, delay);
+          myAlarm.addRequest(request, delay, ModalityState.stateForComponent(myTextField));
         }
         else {
           request.run();
