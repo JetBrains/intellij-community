@@ -380,7 +380,7 @@ public class FileManagerImpl implements FileManager {
     LOG.assertTrue(!myDisposed);
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    LOG.assertTrue(vFile.isValid());
+    LOG.assertTrue(vFile.isValid(), vFile.getName());
 
     if (!vFile.isDirectory()) return null;
 

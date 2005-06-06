@@ -19,7 +19,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -28,11 +27,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.Introspector;
 import java.util.*;
-
-import org.jetbrains.annotations.Nullable;
 
 public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl");
@@ -258,11 +256,12 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     final ASTNode elementAtOffset = SourceTreeToPsiMap.psiElementToTree(file.findElementAt(offset));
     if (file instanceof PsiJavaFile) {
       ASTNode current = elementAtOffset;
-      while (current != null && !isSignificantJavaElement(current)) {
+      while (current != null && !(current.getPsi() instanceof PsiBinaryExpression ||
+                                  current.getPsi() instanceof PsiConditionalExpression)) {
         current = current.getTreeParent();
       }
       if (current == null) {
-        return file.getTextRange();
+        return elementAtOffset.getTextRange();
       }
       else {
         return current.getTextRange();
@@ -273,11 +272,10 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
   }
 
   private boolean isSignificantJavaElement(final ASTNode current) {
-    if (current.getTreeParent() != null && current.getTreeParent().getElementType() == ElementType.CLASS) return true;
-    if (current.getElementType() == ElementType.METHOD) return true;
-    if (current.getElementType() == ElementType.CLASS) return true;
-    if (ElementType.STATEMENT_BIT_SET.isInSet(current.getElementType())) return true;
-    return false;
+    final ASTNode treeParent = current.getTreeParent();
+    if (treeParent == null) return true;
+    if (treeParent.getElementType() == ElementType.BINARY_EXPRESSION) return false;
+    return true;
   }
 
   public boolean isLineToBeIndented(PsiFile file, int offset) {
