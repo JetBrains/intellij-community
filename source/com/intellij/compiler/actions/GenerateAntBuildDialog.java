@@ -8,17 +8,18 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import com.intellij.util.ListWithSelection;
+import com.intellij.openapi.util.Pair;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ListWithSelection;
 import com.intellij.util.ui.ComboBoxTableCellEditor;
 import com.intellij.util.ui.Table;
-import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableColumn;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -124,10 +125,12 @@ public class GenerateAntBuildDialog extends DialogWrapper{
 
     myTableModel = new MyTableModel(chunks);
     myTable = new Table(myTableModel);
-    myTable.fixColumnWidthToHeader(MyTableModel.NUMBER_COLUMN);
+    final MyTableCellRenderer cellRenderer = new MyTableCellRenderer();
     final TableColumn nameColumn = myTable.getColumnModel().getColumn(MyTableModel.NAME_COLUMN);
     nameColumn.setCellEditor(ComboBoxTableCellEditor.INSTANCE);
-    nameColumn.setCellRenderer(new MyTableCellRenderer());
+    nameColumn.setCellRenderer(cellRenderer);
+    final TableColumn labelColumn = myTable.getColumnModel().getColumn(MyTableModel.NUMBER_COLUMN);
+    labelColumn.setCellRenderer(cellRenderer);
 
     final Dimension preferredSize = new Dimension(myTable.getPreferredSize());
     preferredSize.height = (myTableModel.getRowCount() + 2) * myTable.getRowHeight() + myTable.getTableHeader().getHeight();
@@ -167,27 +170,37 @@ public class GenerateAntBuildDialog extends DialogWrapper{
     private static final int NUMBER_COLUMN = 0;
     private static final int NAME_COLUMN = 1;
 
-    private final List<ListWithSelection> myItems = new ArrayList<ListWithSelection>();
+    private final List<Pair<String, ListWithSelection>> myItems = new ArrayList<Pair<String, ListWithSelection>>();
 
     public MyTableModel(List<Chunk<Module>> chunks) {
-      for (Iterator<Chunk<Module>> it = chunks.iterator(); it.hasNext();) {
-        final Chunk<Module> chunk = it.next();
+      for (final Chunk<Module> chunk : chunks) {
         final ListWithSelection item = new ListWithSelection();
-        for (Iterator<Module> modulesIterator = chunk.getNodes().iterator(); modulesIterator.hasNext();) {
-          final Module module = (Module)modulesIterator.next();
+        for (final Module module : chunk.getNodes()) {
           item.add(module.getName());
         }
         item.selectFirst();
-        myItems.add(item);
+        myItems.add(new Pair<String, ListWithSelection>(createCycleName(chunk), item));
       }
+    }
+
+    private String createCycleName(Chunk<Module> chunk) {
+      final StringBuffer buf = new StringBuffer();
+      for (Module module : chunk.getNodes()) {
+        if (buf.length() > 0) {
+          buf.append(", ");
+        }
+        buf.append(module.getName());
+      }
+      buf.insert(0, "[");
+      buf.append("]");
+      return buf.toString();
     }
 
     public String[] getModuleRepresentatives() {
       final String[] names = new String[myItems.size()];
       int index = 0;
-      for (Iterator<ListWithSelection> it = myItems.iterator(); it.hasNext();) {
-        final ListWithSelection listWithSelection = it.next();
-        names[index++] = (String)listWithSelection.getSelection();
+      for (final Pair<String,ListWithSelection> pair : myItems) {
+        names[index++] = (String)pair.getSecond().getSelection();
       }
       return names;
     }
@@ -206,29 +219,29 @@ public class GenerateAntBuildDialog extends DialogWrapper{
 
     public Class getColumnClass(int columnIndex) {
       switch (columnIndex) {
-        case NUMBER_COLUMN : return Integer.class;
+        case NUMBER_COLUMN : return String.class;
         case NAME_COLUMN : return ListWithSelection.class;
-        default: return null;
+        default: return super.getColumnClass(columnIndex);
       }
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch (columnIndex) {
-        case NUMBER_COLUMN: return new Integer(rowIndex + 1);
-        case NAME_COLUMN: return myItems.get(rowIndex);
+        case NUMBER_COLUMN: return myItems.get(rowIndex).getFirst();
+        case NAME_COLUMN: return myItems.get(rowIndex).getSecond();
         default: return null;
       }
     }
 
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       if (columnIndex == NAME_COLUMN) {
-        myItems.get(rowIndex).select(aValue);
+        myItems.get(rowIndex).getSecond().select(aValue);
       }
     }
 
     public String getColumnName(int columnIndex) {
       switch (columnIndex) {
-        case NUMBER_COLUMN : return "N";
+        case NUMBER_COLUMN : return "Cycle";
         case NAME_COLUMN : return "Main Module";
       }
       return super.getColumnName(columnIndex);

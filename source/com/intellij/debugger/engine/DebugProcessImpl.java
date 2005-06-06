@@ -103,7 +103,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   private RemoteConnection myConnection;
 
   private ConnectionServiceWrapper myConnectionService;
-  private Map myArguments;
+  private Map<String, Connector.Argument> myArguments;
 
   private LinkedList<String> myStatusStack = new LinkedList<String>();
   private String myStatusText;
