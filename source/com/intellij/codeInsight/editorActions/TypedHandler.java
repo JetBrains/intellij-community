@@ -456,18 +456,12 @@ public class TypedHandler implements TypedActionHandler {
   private boolean handleELClosingBrace(final Editor editor, final PsiFile file, final Project project) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final int offset = editor.getCaretModel().getOffset();
-    PsiElement elementAt = file.findElementAt(offset-1);
-    elementAt = PsiTreeUtil.getParentOfType(elementAt,ELExpressionHolder.class);
-    elementAt = (elementAt!=null)?elementAt.getFirstChild():null;
+    PsiElement elementAt = file.findElementAt(offset);
+    PsiElement parent = PsiTreeUtil.getParentOfType(elementAt,ELExpressionHolder.class);
 
     // TODO: handle it with insertAfterRParen(...)
-    if (elementAt!=null && !JspxCompletionData.isJavaContext(elementAt)) {
-      while(!elementAt.getText().startsWith("${")) {
-        elementAt = elementAt.getPrevSibling();
-        if (elementAt==null) break;
-      }
-
-      if (elementAt!=null) {
+    if (parent != null) { 
+      if (elementAt != null && elementAt.getText().equals("}")) {
         editor.getCaretModel().moveToOffset(offset + 1);
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         return true;
