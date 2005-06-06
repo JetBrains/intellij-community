@@ -49,6 +49,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
   private static PsiInstanceOfExpression getInstanceOfExpressionAtCaret(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
+    if (element == null) return null;
     PsiInstanceOfExpression expression = PsiTreeUtil.getParentOfType(element, PsiInstanceOfExpression.class);
     if (expression != null) {
       return expression;
