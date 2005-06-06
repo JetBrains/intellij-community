@@ -69,7 +69,7 @@ public class GeneralColorsPage implements ColorSettingsPage {
     new ColorDescriptor("Right margin", EditorColors.RIGHT_MARGIN_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor("Whitespaces", EditorColors.WHITESPACES_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor("Line number", EditorColors.LINE_NUMBERS_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    new ColorDescriptor("CVS annotations", EditorColors.ANNOTATIONS_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor("VCS annotations", EditorColors.ANNOTATIONS_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor("Folding outline", EditorColors.FOLDING_TREE_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor("Selected folding outline", EditorColors.SELECTED_FOLDING_TREE_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor("Added lines", EditorColors.ADDED_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND),
