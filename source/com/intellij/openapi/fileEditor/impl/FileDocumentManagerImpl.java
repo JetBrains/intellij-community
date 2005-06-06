@@ -51,6 +51,8 @@ import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.ref.WeakReference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.Reference;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -62,6 +64,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
   private static final Key<WeakReference<Document>> DOCUMENT_KEY = Key.create("DOCUMENT_KEY");
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
+  private static final Key<LocalFileSystem.WatchRequest> WATCH_REQUEST_KEY = Key.create("WATCH_REQUEST_KEY");
 
   private Set<Document> myUnsavedDocuments = new HashSet<Document>();
   private EditReadOnlyListener myReadOnlyListener = new MyEditReadOnlyListener();
@@ -69,6 +72,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private ProjectEx myDummyProject = null;
   private boolean myDummyProjectInitialized = false;
   private Object myDummyProjectInitializationLock = new Object();
+  private final ReferenceQueue<Document> myFilesWithDocumentReferenceQueue = new ReferenceQueue<Document>();
 
   private EventDispatcher<FileDocumentManagerListener> myEventDispatcher = EventDispatcher.create(FileDocumentManagerListener.class);
   private final PsiManagerConfiguration myPsiManagerConfiguration;
@@ -109,7 +113,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       document.setModificationStamp(file.getModificationStamp());
       final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
       document.setReadOnly(!file.isWritable() || fileType.isBinary());
-      file.putUserData(DOCUMENT_KEY, new WeakReference<Document>(document));
+      file.putUserData(DOCUMENT_KEY, new WeakReference<Document>(document, myFilesWithDocumentReferenceQueue));
+      final VirtualFile parentDir = file.getParent();
+      if (parentDir != null) {
+        final LocalFileSystem.WatchRequest request = LocalFileSystem.getInstance().addRootToWatch(parentDir, false);
+        document.putUserData(WATCH_REQUEST_KEY, request);
+      }
       document.putUserData(FILE_KEY, file);
       document.addDocumentListener(
         new DocumentAdapter() {
@@ -131,9 +140,25 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       catch (Exception e) {
         LOG.error(e);
       }
+
+      processQueue();
     }
 
     return document;
+  }
+
+  private void processQueue() {
+    while (true) {
+      final Reference<? extends Document> ref = myFilesWithDocumentReferenceQueue.poll();
+      if (ref == null) return;
+      final Document document = ref.get();
+      if (document != null) {
+        final LocalFileSystem.WatchRequest request = document.getUserData(WATCH_REQUEST_KEY);
+        if (request != null) {
+          LocalFileSystem.getInstance().removeWatchedRoot(request);
+        }
+      }
+    }
   }
 
   private static Document createDocument(final CharSequence text) {
@@ -218,12 +243,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       final Document[] unsavedDocuments = getUnsavedDocuments();
 
       int count = 0;
-      for(int i = 0; i < unsavedDocuments.length; i++){
-        Document document = unsavedDocuments[i];
+      for (Document document : unsavedDocuments) {
         if (failedToSave.contains(document)) continue;
         saveDocument(document);
         count++;
-        if (myUnsavedDocuments.contains(document)){
+        if (myUnsavedDocuments.contains(document)) {
           failedToSave.add(document);
         }
       }

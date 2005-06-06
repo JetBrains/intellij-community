@@ -290,8 +290,13 @@ public class FileManagerImpl implements FileManager {
       //TODO: exclude project content
       OrderEntry[] orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
       if (orderEntries.length == 0) return GlobalSearchScope.allScope(myManager.getProject());
-      Module ownerModule = orderEntries[0].getOwnerModule();
-      return GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(ownerModule);
+      for (OrderEntry entry : orderEntries) {
+        if (entry instanceof LibraryOrderEntry) {
+          Module ownerModule = entry.getOwnerModule();
+          return GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(ownerModule);
+        }
+      }
+      return GlobalSearchScope.allScope(myManager.getProject());
     }
   }
 

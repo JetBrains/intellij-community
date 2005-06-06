@@ -24,6 +24,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.pom.java.LanguageLevel;
@@ -60,6 +61,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private LanguageLevel myLanguageLevel = LanguageLevel.JDK_1_3;
   private FileTypeListener myFileTypeListener;
   private long myModificationCount = 0;
+  private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new HashSet<LocalFileSystem.WatchRequest>();
 
   static ProjectRootManagerImpl getInstanceImpl(Project project) {
     return (ProjectRootManagerImpl)getInstance(project);
@@ -92,11 +94,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
 
   public void multiCommit(ModifiableRootModel[] rootModels) {
-    ModuleRootManagerImpl.multiCommit(myProject, rootModels, ModuleManager.getInstance(myProject).getModifiableModel());
+    ModuleRootManagerImpl.multiCommit(rootModels, ModuleManager.getInstance(myProject).getModifiableModel());
   }
 
   public void multiCommit(ModifiableModuleModel moduleModel, ModifiableRootModel[] rootModels) {
-    ModuleRootManagerImpl.multiCommit(myProject, rootModels, moduleModel);
+    ModuleRootManagerImpl.multiCommit(rootModels, moduleModel);
   }
 
   public void checkCircularDependency(ModifiableRootModel[] rootModels, ModifiableModuleModel moduleModel)
@@ -157,8 +159,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   public VirtualFile[] getContentRoots() {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     final Module[] modules = getModuleManager().getModules();
-    for (int i = 0; i < modules.length; i++) {
-      final VirtualFile[] contentRoots = ModuleRootManager.getInstance(modules[i]).getContentRoots();
+    for (Module module : modules) {
+      final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       result.addAll(Arrays.asList(contentRoots));
     }
     return result.toArray(new VirtualFile[result.size()]);
@@ -167,8 +169,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   public VirtualFile[] getContentSourceRoots() {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
     final Module[] modules = getModuleManager().getModules();
-    for (int i = 0; i < modules.length; i++) {
-      final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(modules[i]).getSourceRoots();
+    for (Module module : modules) {
+      final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
       result.addAll(Arrays.asList(sourceRoots));
     }
     return result.toArray(new VirtualFile[result.size()]);
@@ -177,8 +179,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private VirtualFile[] getFilesFromAllModules(OrderRootType type) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     final Module[] modules = getModuleManager().getSortedModules();
-    for (int i = 0; i < modules.length; i++) {
-      Module module = modules[i];
+    for (Module module : modules) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getFiles(type);
       result.addAll(Arrays.asList(files));
     }
@@ -188,8 +189,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private VirtualFile[] getExcludeRootsFromAllModules() {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     final Module[] modules = getModuleManager().getSortedModules();
-    for (int i = 0; i < modules.length; i++) {
-      Module module = modules[i];
+    for (Module module : modules) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getExcludeRoots();
       result.addAll(Arrays.asList(files));
     }
@@ -199,8 +199,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private VirtualFile[] getContentRootsFromAllModules() {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     final Module[] modules = getModuleManager().getSortedModules();
-    for (int i = 0; i < modules.length; i++) {
-      Module module = modules[i];
+    for (Module module : modules) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       result.addAll(Arrays.asList(files));
     }
@@ -270,10 +269,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
 
   public void projectOpened() {
+    addRootsToWatch();
     myProjectOpened = true;
   }
 
   public void projectClosed() {
+    LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
     myProjectOpened = false;
   }
 
@@ -351,6 +352,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
       myModuleRootEventDispatcher.getMulticaster().beforeRootsChange(new ModuleRootEventImpl(myProject, filetypes));
     }
+
+    LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
+    myRootsToWatch.clear();
     myRootsChangeCounter++;
   }
 
@@ -360,8 +364,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     if (myRootsChangeCounter > 0) return;
 
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    for (int i = 0; i < modules.length; i++) {
-      Module module = modules[i];
+    for (Module module : modules) {
       ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).dropCaches();
     }
 
@@ -385,7 +388,49 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       synchronizer.execute();
     }
 
+    addRootsToWatch();
+
     myModificationCount++;
+  }
+
+  private void addRootsToWatch() {
+    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    Set<VirtualFile> contentRoots = new HashSet<VirtualFile>();
+    for (Module module : modules) {
+      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      contentRoots.addAll(Arrays.asList(moduleRootManager.getContentRoots()));
+    }
+
+    myRootsToWatch.addAll(LocalFileSystem.getInstance().addRootsToWatch(contentRoots, true));
+
+
+    Set<VirtualFile> libraryRoots = new HashSet<VirtualFile>();
+    for (Module module : modules) {
+      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
+      for (OrderEntry entry : orderEntries) {
+        if (entry instanceof LibraryOrderEntry) {
+          final Library library = ((LibraryOrderEntry)entry).getLibrary();
+          libraryRoots.addAll(getRootsToTrack(library, OrderRootType.CLASSES));
+          libraryRoots.addAll(getRootsToTrack(library, OrderRootType.SOURCES));
+          libraryRoots.addAll(getRootsToTrack(library, OrderRootType.JAVADOC));
+        }
+      }
+    }
+
+    myRootsToWatch.addAll(LocalFileSystem.getInstance().addRootsToWatch(libraryRoots, false));
+  }
+
+  private Collection<VirtualFile> getRootsToTrack(final Library library, final OrderRootType rootType) {
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    if (library != null) {
+      final VirtualFile[] files = library.getFiles(rootType);
+      for (VirtualFile file : files) {
+        while (file != null && !(file.getFileSystem() instanceof LocalFileSystem)) file = file.getParent();
+        if (file != null) result.add(file);
+      }
+    }
+    return result;
   }
 
   private ModuleManager getModuleManager() {
@@ -412,8 +457,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   private class MyVirtualFilePointerListener implements VirtualFilePointerListener {
     private void assertPointersCorrect(VirtualFilePointer[] pointers) {
-      for (int i = 0; i < pointers.length; i++) {
-        VirtualFilePointer pointer = pointers[i];
+      for (VirtualFilePointer pointer : pointers) {
         final RootModelImpl rootModel = pointer.getUserData(RootModelImpl.ORIGINATING_ROOT_MODEL);
         LOG.assertTrue(rootModel != null);
         LOG.assertTrue(!rootModel.isDisposed());

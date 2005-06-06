@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -39,7 +40,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   private final ModuleFileIndexImpl myFileIndex;
   private boolean myIsDisposed = false;
   private boolean isModuleAdded = false;
-
   private Map<OrderRootType, VirtualFile[]> myCachedFiles;
 
   public ModuleRootManagerImpl(Module module,
@@ -163,8 +163,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
         else {
           files = entry.getFiles(type);
         }
-        for (int i = 0; i < files.length; i++) {
-          VirtualFile file = files[i];
+        for (VirtualFile file : files) {
           if (file != null) {
             result.add(file);
           }
@@ -203,7 +202,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
     final Project project = myModule.getProject();
     final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-    multiCommit(project, new ModifiableRootModel[]{rootModel}, moduleModel);  
+    multiCommit(new ModifiableRootModel[]{rootModel}, moduleModel);
   }
 
   private void commitModelWithoutEvents(RootModelImpl rootModel) {
@@ -226,8 +225,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
 
-  static void multiCommit(Project project,
-                          ModifiableRootModel[] _rootModels,
+  static void multiCommit(ModifiableRootModel[] _rootModels,
                           ModifiableModuleModel moduleModel) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
@@ -249,15 +247,15 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
         }
       }
     };
-    ((ModuleManagerImpl)ModuleManager.getInstance(project)).commitModelWithRunnable(moduleModel, runnable);
+    ModuleManagerImpl.commitModelWithRunnable(moduleModel, runnable);
 
   }
 
   static List<RootModelImpl> getSortedChangedModels(ModifiableRootModel[] _rootModels,
-                                                     final ModifiableModuleModel moduleModel) {
+                                                    final ModifiableModuleModel moduleModel) {
     List<RootModelImpl> rootModels = new ArrayList<RootModelImpl>();
-    for (int i = 0; i < _rootModels.length; i++) {
-      RootModelImpl rootModel = (RootModelImpl)_rootModels[i];
+    for (ModifiableRootModel _rootModel : _rootModels) {
+      RootModelImpl rootModel = (RootModelImpl)_rootModel;
       if (rootModel.isChanged()) {
         rootModels.add((RootModelImpl)rootModel);
       }
@@ -429,8 +427,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       nameToModel.put(name, rootModel);
     }
     final Module[] modules = moduleModel.getModules();
-    for (int i = 0; i < modules.length; i++) {
-      final Module module = modules[i];
+    for (final Module module : modules) {
       final String name = module.getName();
       if (!nameToModel.containsKey(name)) {
         final RootModelImpl rootModel = ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).myRootModel;
@@ -490,8 +487,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   static void checkCircularDependencies(ModifiableRootModel[] _rootModels, ModifiableModuleModel moduleModel)
     throws ModuleCircularDependencyException {
     List<RootModelImpl> rootModels = new ArrayList<RootModelImpl>();
-    for (int i = 0; i < _rootModels.length; i++) {
-      RootModelImpl rootModel = (RootModelImpl)_rootModels[i];
+    for (ModifiableRootModel _rootModel : _rootModels) {
+      RootModelImpl rootModel = (RootModelImpl)_rootModel;
       if (rootModel.isChanged()) {
         rootModels.add((RootModelImpl)rootModel);
       }

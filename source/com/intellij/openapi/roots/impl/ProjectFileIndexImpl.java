@@ -33,12 +33,9 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
 
   public boolean iterateContent(ContentIterator iterator) {
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    for (int i = 0; i < modules.length; i++) {
-      Module module = modules[i];
-
+    for (Module module : modules) {
       VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-      for (int j = 0; j < contentRoots.length; j++) {
-        VirtualFile contentRoot = contentRoots[j];
+      for (VirtualFile contentRoot : contentRoots) {
         DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(contentRoot);
         if (info == null) continue; // is exluded or ignored
         if (!module.equals(info.module)) continue; // maybe 2 modules have the same content root?
