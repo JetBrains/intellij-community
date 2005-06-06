@@ -103,7 +103,9 @@ public final class EditorHistoryManager implements ProjectComponent, JDOMExterna
     final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders = editorManager.getEditorsWithProviders(file);
     final FileEditor         []      editors = editorsWithProviders.getFirst();
     final FileEditorProvider [] oldProviders = editorsWithProviders.getSecond();
-    LOG.assertTrue(editors.length > 0);
+    if (editors.length <= 0) {
+      LOG.assertTrue(false, "No editors for file " + file.getPresentableUrl());
+    }
     final FileEditor selectedEditor = editorManager.getSelectedEditor(file);
     LOG.assertTrue(selectedEditor != null);
     final int selectedProviderIndex = ArrayUtil.find(editors, selectedEditor);

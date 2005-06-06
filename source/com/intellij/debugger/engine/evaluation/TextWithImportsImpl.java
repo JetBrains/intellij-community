@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -20,23 +21,24 @@ public class TextWithImportsImpl implements TextWithImports{
   private final String myImports;
   private final CodeFragmentFactory myCodeFragmentFactory;
 
-  public TextWithImportsImpl (CodeFragmentFactory factory, String text, String imports) {
+  public TextWithImportsImpl (@NotNull CodeFragmentFactory factory, @NotNull String text, @NotNull String imports) {
     LOG.assertTrue(factory != null);
+    LOG.assertTrue(imports != null);
     myCodeFragmentFactory = factory;
     myText = text;
     myImports = imports;
-    LOG.assertTrue(myImports != null);
   }
 
   public TextWithImportsImpl (CodeFragmentFactory factory, String text) {
     LOG.assertTrue(factory != null);
     myCodeFragmentFactory = factory;
     text = text.trim();
-    int separator = text.indexOf(DebuggerEditorImpl.SEPARATOR);
-    if(separator != -1){
-      myText = text.substring(0, separator);
-      myImports = text.substring(separator + 1);
-    } else {
+    final int separatorIndex = text.indexOf(DebuggerEditorImpl.SEPARATOR);
+    if(separatorIndex >= 0){
+      myText = text.substring(0, separatorIndex);
+      myImports = text.substring(separatorIndex + 1);
+    }
+    else {
       myText = text;
       myImports = "";
     }
@@ -47,12 +49,14 @@ public class TextWithImportsImpl implements TextWithImports{
     return myText;
   }
 
-  public String getImports() {
+  public @NotNull String getImports() {
     return myImports;
   }
 
   public boolean equals(Object object) {
-    if(!(object instanceof TextWithImportsImpl)) return false;
+    if(!(object instanceof TextWithImportsImpl)) {
+      return false;
+    }
     TextWithImportsImpl item = ((TextWithImportsImpl)object);
     return Comparing.equal(item.myText, myText) && Comparing.equal(item.myImports, myImports);
   }
