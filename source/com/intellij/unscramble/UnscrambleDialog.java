@@ -240,8 +240,7 @@ public class UnscrambleDialog extends DialogWrapper{
   private static List<UnscrambleSupport> getRegisteredUnscramblers() {
     List<UnscrambleSupport> unscrambleComponents = new ArrayList<UnscrambleSupport>();
     Class[] interfaces = ApplicationManager.getApplication().getComponentInterfaces();
-    for (int i = 0; i < interfaces.length; i++) {
-      final Class anInterface = interfaces[i];
+    for (final Class anInterface : interfaces) {
       Object component = ApplicationManager.getApplication().getComponent(anInterface);
       if (component instanceof UnscrambleSupport) {
         unscrambleComponents.add((UnscrambleSupport)component);
@@ -281,13 +280,19 @@ public class UnscrambleDialog extends DialogWrapper{
 
   private final class SplitAction extends AbstractAction {
     public SplitAction(){
-      putValue(Action.NAME, "Split using 'at'");
+      putValue(Action.NAME, "&Normalize");
       putValue(DEFAULT_ACTION, Boolean.FALSE);
     }
 
     public void actionPerformed(ActionEvent e){
       String text = myEditor.getDocument().getText();
-      final String newText = StringUtil.replace(text, "at ", "\nat ");
+      // move 'at' to the line start
+      text = text.replaceAll("(\\S)[\\s&&[^\\n]]*at ", "$1\n at ");
+      text = text.replaceAll("(\\S)\\nat ", "$1\n at ");
+      // merge (inadvertently) splitted lines
+      text = text.replaceAll("\\n\\s*(([\\S&&[^a]])([\\S&&[^t]])?)", "$1");
+
+      final String newText = text;
       CommandProcessor.getInstance().executeCommand(
           myProject, new Runnable() {
           public void run(){
