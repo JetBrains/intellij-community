@@ -4,10 +4,10 @@
  */
 package com.intellij.util.ui.update;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.Disposable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -119,8 +119,8 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
     };
 
     if (invokeLaterIfNotDispatch && !ApplicationManager.getApplication().isDispatchThread()) {
-      SwingUtilities.invokeLater(toRun);
-    } 
+      ApplicationManager.getApplication().invokeLater(toRun, ModalityState.NON_MMODAL);
+    }
     else {
       toRun.run();
     }

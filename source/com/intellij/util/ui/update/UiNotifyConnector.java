@@ -5,6 +5,8 @@
 package com.intellij.util.ui.update;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 
 import javax.swing.*;
 import java.awt.event.HierarchyEvent;
@@ -25,7 +27,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
 
   public void hierarchyChanged(HierarchyEvent e) {
     if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0) {
-      SwingUtilities.invokeLater(new Runnable() {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           if (myComponent.isShowing()) {
             myTarget.showNotify();
@@ -34,7 +36,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
             myTarget.hideNotify();
           }
         }
-      });
+      }, ModalityState.stateForComponent(myComponent));
     }
   }
 
