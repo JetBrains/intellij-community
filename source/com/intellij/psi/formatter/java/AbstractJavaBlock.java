@@ -7,12 +7,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.tree.IElementType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Iterator;
+
+import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlock{
   protected final CodeStyleSettings mySettings;
@@ -44,9 +48,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     if (isBlockType(elementType)) {
       return new BlockContainingJavaBlock(child, wrap,  alignment, actualIndent, settings);
-    }    
+    }
     if (isStatement(child, child.getTreeParent())) {
-      return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings);      
+      return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings);
     }
     if (child instanceof LeafElement) {
       return new LeafBlock(child, wrap, alignment, actualIndent);
@@ -100,13 +104,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return Formatter.getInstance().getNoneIndent();
     }
 
-    if (child.getElementType() == ElementType.DOC_TAG) return Formatter.getInstance().getNoneIndent();    
+    if (child.getElementType() == ElementType.DOC_TAG) return Formatter.getInstance().getNoneIndent();
     if (child.getElementType() == ElementType.DOC_COMMENT_LEADING_ASTERISKS) return Formatter.getInstance().createSpaceIndent(1);
     if (parent != null) {
       final Indent defaultChildIndent = getChildIndent(parent);
       if (defaultChildIndent != null) return defaultChildIndent;
     }
-    
+
     return null;
   }
 
@@ -129,8 +133,12 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (parent.getElementType() == JavaDocElementType.DOC_TAG) return Formatter.getInstance().getNoneIndent();
     if (parent.getElementType() == JavaDocElementType.DOC_INLINE_TAG) return Formatter.getInstance().getNoneIndent();
     if (parent.getElementType() == ElementType.IMPORT_LIST) return Formatter.getInstance().getNoneIndent();
-    if (SourceTreeToPsiMap.treeElementToPsi(parent) instanceof PsiFile) return Formatter.getInstance().getNoneIndent();
-    else return null;
+    if (SourceTreeToPsiMap.treeElementToPsi(parent) instanceof PsiFile) {
+      return Formatter.getInstance().getNoneIndent();
+    }
+    else {
+      return null;
+    }
   }
 
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
@@ -153,7 +161,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (parentNode.getElementType() == ElementType.FOR_STATEMENT) return role == ChildRole.LOOP_BODY;
       if (parentNode.getElementType() == ElementType.WHILE_STATEMENT) return role == ChildRole.LOOP_BODY;
       if (parentNode.getElementType() == ElementType.DO_WHILE_STATEMENT) return role == ChildRole.LOOP_BODY;
-      if (parentNode.getElementType() == ElementType.FOREACH_STATEMENT) return role == ChildRole.LOOP_BODY;      
+      if (parentNode.getElementType() == ElementType.FOREACH_STATEMENT) return role == ChildRole.LOOP_BODY;
     }
     return false;
   }
@@ -186,7 +194,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return Formatter.getInstance().createWrap(getWrapType(mySettings.THROWS_LIST_WRAP), true);
     }
     else if (myNode.getElementType() == ElementType.CODE_BLOCK) {
-      return Formatter.getInstance().createWrap(Wrap.NORMAL, true);      
+      return Formatter.getInstance().createWrap(Wrap.NORMAL, true);
     }
     else {
       return null;
@@ -244,7 +252,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                  Alignment defaultAlignment,
                                  final Wrap defaultWrap,
                                  final Indent childIndent) {
-    if (child.getElementType() == ElementType.ARRAY_INITIALIZER_EXPRESSION) {
+    if (child.getElementType() == ElementType.METHOD_CALL_EXPRESSION) {
+      result.add(createMethodCallExpressiobBlock(child));
+    }
+    else if (child.getElementType() == ElementType.ARRAY_INITIALIZER_EXPRESSION) {
       result.addAll(new CodeBlockBlock(child, null, null, null, mySettings).buildChildren());
     }
     else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.EXPRESSION_LIST){
@@ -266,7 +277,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       child = processParenBlock(result, child,
                                 WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
                                 mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
-    }    
+    }
     else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.PARENTH_EXPRESSION){
       child = processParenBlock(result, child,
                                 WrappingStrategy.DO_NOT_WRAP,
@@ -282,7 +293,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (child.getElementType() == ElementType.MODIFIER_LIST && containsAnnotations(child)) {
         myAnnotationWrap = Formatter.getInstance().createWrap(getWrapType(getAnnotationWrapType()), true);
       }
-      
+
       if (block instanceof AbstractJavaBlock) {
         final AbstractJavaBlock javaBlock = ((AbstractJavaBlock)block);
         if (myNode.getElementType() == ElementType.METHOD_CALL_EXPRESSION && child.getElementType() == ElementType.REFERENCE_EXPRESSION) {
@@ -306,10 +317,76 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return child;
   }
 
+  private Block createMethodCallExpressiobBlock(final ASTNode node) {
+    final ArrayList<ASTNode> nodes = new ArrayList<ASTNode>();
+    final ArrayList<Block> subBlocks = new ArrayList<Block>();
+    collectNodes(nodes, node);
+
+    while (!nodes.isEmpty()) {
+      ArrayList<ASTNode> subNodes = readToNextDot(nodes);
+      subBlocks.add(createSynthBlock(subNodes));
+    }
+
+    return new SynteticCodeBlock(subBlocks, null, mySettings, Formatter.getInstance().createContinuationWithoutFirstIndent(), null);
+  }
+
+  private Block createSynthBlock(final ArrayList<ASTNode> subNodes) {
+    final ArrayList<Block> subBlocks = new ArrayList<Block>();
+    final ASTNode firstNode = subNodes.get(0);
+    if (firstNode.getElementType() == ElementType.DOT) {
+      subBlocks.add(createJavaBlock(firstNode, getSettings(), Formatter.getInstance().createContinuationIndent(), null, null));
+      subNodes.remove(0);
+      if (!subNodes.isEmpty()) {
+        subBlocks.add(createSynthBlock(subNodes));
+      }
+      return new SynteticCodeBlock(subBlocks, null, mySettings, Formatter.getInstance().getNoneIndent(), null);
+    } else {
+      return new SynteticCodeBlock(createJavaBlocks(subNodes), null, mySettings,
+                                   Formatter.getInstance().createContinuationWithoutFirstIndent(), null);
+    }
+  }
+
+  private List<Block> createJavaBlocks(final ArrayList<ASTNode> subNodes) {
+    final ArrayList<Block> result = new ArrayList<Block>();
+    for (Iterator<ASTNode> iterator = subNodes.iterator(); iterator.hasNext();) {
+      ASTNode node = iterator.next();
+      result.add(createJavaBlock(node, getSettings(), Formatter.getInstance().createContinuationWithoutFirstIndent(), null, null));
+    }
+    return result;
+  }
+
+  private ArrayList<ASTNode> readToNextDot(final ArrayList<ASTNode> nodes) {
+    final ArrayList<ASTNode> result = new ArrayList<ASTNode>();
+    result.add(nodes.remove(0));
+    for (Iterator<ASTNode> iterator = nodes.iterator(); iterator.hasNext();) {
+      ASTNode node = iterator.next();
+      if (node.getElementType() == ElementType.DOT) return result;
+      result.add(node);
+      iterator.remove();
+    }
+    return result;
+  }
+
+  private static void collectNodes(List<ASTNode> nodes, ASTNode node) {
+    ChameleonTransforming.transformChildren(node);
+    ASTNode child = node.getFirstChildNode();
+    while (child != null) {
+      if (!containsWhiteSpacesOnly(child)) {
+        if (child.getElementType() ==ElementType.METHOD_CALL_EXPRESSION || child.getElementType() == ElementType.REFERENCE_EXPRESSION) {
+          collectNodes(nodes, child);
+        } else {
+          nodes.add(child);
+        }
+      }
+      child = child.getTreeNext();
+    }
+
+  }
+
   private boolean lastChildIsAnnotation(final ASTNode child) {
     ASTNode current = child.getLastChildNode();
     while (current != null && current.getElementType() == ElementType.WHITE_SPACE) {
-      current = current.getTreePrev();      
+      current = current.getTreePrev();
     }
     if (current == null) return false;
     return current.getElementType() == ElementType.ANNOTATION;
@@ -339,7 +416,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   protected Alignment arrangeChildAlignment(final ASTNode child, final Alignment defaultAlignment) {
-    int role = ((CompositeElement)myNode).getChildRole(child);
+    int role = ((CompositeElement)child.getTreeParent()).getChildRole(child);
     if (myNode.getElementType() == ElementType.FOR_STATEMENT) {
       if (role == ChildRole.FOR_INITIALIZATION || role == ChildRole.CONDITION || role == ChildRole.FOR_UPDATE) {
         return defaultAlignment;
@@ -393,7 +470,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         myAnnotationWrap = null;
       }
     }
-    int role = ((CompositeElement)myNode).getChildRole(child);
+    final ASTNode parent = child.getTreeParent();
+    int role = ((CompositeElement)parent).getChildRole(child);
     if (myNode.getElementType() == ElementType.BINARY_EXPRESSION) {
       if (role == ChildRole.OPERATION_SIGN && !mySettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE) return null;
       if (role == ChildRole.ROPERAND && mySettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE) return null;
@@ -445,7 +523,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         return null;
       }
     }
-    
+
     else if (myNode.getElementType() == ElementType.MODIFIER_LIST) {
       if (child.getElementType() == ElementType.ANNOTATION) {
         return getReservedWrap();
@@ -502,13 +580,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
     final IElementType from = ElementType.LPARENTH;
     final IElementType to = ElementType.RPARENTH;
-    
+
     final Indent externalIndent = Formatter.getInstance().getNoneIndent();
     final Indent internalIndent = Formatter.getInstance().createContinuationIndent();
     AlignmentStrategy alignmentStrategy = AlignmentStrategy.createDoNotAlingCommaStrategy(createAlignment(doAlign, null));
     setChildIndent(internalIndent);
     setChildAlignment(alignmentStrategy.getAlignment(null));
-    
+
     ASTNode prev = child;
     while (child != null) {
       if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
@@ -520,8 +598,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         } else {
           final IElementType elementType = child.getElementType();
           result.add(createJavaBlock(child, mySettings, internalIndent,
-                                        wrappingStrategy.getWrap(elementType),
-                                        alignmentStrategy.getAlignment(elementType)));
+                                     wrappingStrategy.getWrap(elementType),
+                                     alignmentStrategy.getAlignment(elementType)));
           if (to == null) {//process only one statement
             return child;
           }
@@ -536,22 +614,22 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   private ASTNode processEnumBlock(List<Block> result,
-                                    ASTNode child,
-                                    ASTNode last) {
+                                   ASTNode child,
+                                   ASTNode last) {
 
     final WrappingStrategy wrappingStrategy = WrappingStrategy.createDoNotWrapCommaStrategy(Formatter.getInstance()
       .createWrap(getWrapType(mySettings.ENUM_CONSTANTS_WRAP), true));
     while (child != null) {
       if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
-        result.add(createJavaBlock(child, mySettings, Formatter.getInstance().createNormalIndent(), 
+        result.add(createJavaBlock(child, mySettings, Formatter.getInstance().createNormalIndent(),
                                    wrappingStrategy.getWrap(child.getElementType()), null));
-        if (child == last) return child; 
+        if (child == last) return child;
       }
       child = child.getTreeNext();
     }
     return null;
   }
-  
+
   private void setChildAlignment(final Alignment alignment) {
     myChildAlignment = alignment;
   }
@@ -582,7 +660,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     final int braceStyle = getBraceStyle();
-    return braceStyle == CodeStyleSettings.NEXT_LINE_SHIFTED ? 
+    return braceStyle == CodeStyleSettings.NEXT_LINE_SHIFTED ?
            Formatter.getInstance().createNormalIndent(baseChildrenIndent - 1)
            : Formatter.getInstance().createNormalIndent(baseChildrenIndent);
   }
@@ -617,6 +695,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
+  @Override
+  @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (myUseChildAttributes) {
       return new ChildAttributes(myChildIndent, myChildAlignment);
@@ -627,5 +707,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   protected Indent getChildIndent() {
     return getChildIndent(myNode);
+  }
+
+  public CodeStyleSettings getSettings() {
+    return mySettings;
   }
 }

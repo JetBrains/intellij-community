@@ -128,11 +128,13 @@ public class AbstractBlockWrapper {
       return childIndent;
     }
 
+    /*
     if (child.getStartOffset() == getStartOffset()) {
       myCanUseFirstChildIndentAsBlockIndent = myCanUseFirstChildIndentAsBlockIndent &&
                                               child.myCanUseFirstChildIndentAsBlockIndent &&
                                               childIndent.isEmpty();
     }
+    */
 
     if (getStartOffset() == tokenBlockStartOffset) {
       if (myParent == null) {
