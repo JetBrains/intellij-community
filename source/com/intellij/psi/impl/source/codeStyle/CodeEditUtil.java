@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.newCodeFormatting.Formatter;
@@ -276,7 +277,12 @@ public class CodeEditUtil {
   private static void replaceTwoSpacesWithOne(final ASTNode elementBeforeNext,
                                               final ASTNode prevElement,
                                               final CodeStyleSettings.IndentOptions options) {
-    if (!elementBeforeNext.textContains('\n') && prevElement.textContains('\n')) {
+    if (!canModifyWS(elementBeforeNext.getPsi().getContainingFile())) {
+      final String text = prevElement.getText() + elementBeforeNext.getText();
+      delete(elementBeforeNext);
+      replace(prevElement, text);      
+    }
+    else if (!elementBeforeNext.textContains('\n') && prevElement.textContains('\n')) {
       /*
           void foo1(){}
           static void foo2(){}
@@ -288,6 +294,10 @@ public class CodeEditUtil {
       delete(elementBeforeNext);
       replace(prevElement, text);
     }
+  }
+
+  private static boolean canModifyWS(final PsiFile containingFile) {
+    return containingFile.getLanguage() != StdLanguages.XHTML;
   }
 
   private static void replaceInvalidWhiteSpace(final ASTNode elementBeforeNext) {
@@ -472,7 +482,7 @@ public class CodeEditUtil {
     final PsiFile file = psi.getContainingFile();
     final FormattingModelBuilder builder = file.getLanguage().getFormattingModelBuilder();
     final FormattingModelBuilder elementBuilder = psi.getLanguage().getFormattingModelBuilder();
-    if (builder != null && elementBuilder != null) {
+    if (builder != null && elementBuilder != null && canModifyWS(file)) {
       Formatter.getInstance().adjustTextRange(builder.createModel(file, settings), settings,
                                               settings.getIndentOptions(file.getFileType()),
                                               first.getTextRange(),
