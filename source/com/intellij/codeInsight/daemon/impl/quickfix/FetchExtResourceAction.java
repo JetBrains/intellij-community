@@ -188,6 +188,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
 
     try {
       final String resPath = fetchOneFile(indicator, dtdUrl, project, extResourcesPath);
+      if (resPath == null) return;
       resourceUrls.add(dtdUrl);
       downloadedResources.add(resPath);
 
@@ -282,7 +283,7 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     );
 
     byte[] bytes = fetchData(project, resourceUrl, indicator);
-    //if (bytes == null) return;
+    if (bytes == null) return null;
     int slashIndex = resourceUrl.lastIndexOf("/");
     String resPath = extResourcesPath + File.separatorChar +
                            Integer.toHexString(resourceUrl.hashCode()) + "_" +
@@ -360,6 +361,16 @@ public class FetchExtResourceAction extends BaseIntentionAction {
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       InputStream in = urlConnection.getInputStream();
+      String contentType = urlConnection.getContentType();
+
+      if (!ApplicationManager.getApplication().isUnitTestMode() && contentType.equals("text/html")) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            Messages.showMessageDialog(project, "No xml at the location: \n" + dtdUrl, "Invalid URL", Messages.getErrorIcon());
+          }
+        }, indicator.getModalityState());
+        return null;
+      }
 
       byte[] buffer = new byte[256];
 
