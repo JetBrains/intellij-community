@@ -322,24 +322,28 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     collectNodes(nodes, node);
 
+    final Wrap wrap = Formatter.getInstance().createWrap(getWrapType(mySettings.METHOD_CALL_CHAIN_WRAP), false);
+
     while (!nodes.isEmpty()) {
       ArrayList<ASTNode> subNodes = readToNextDot(nodes);
-      subBlocks.add(createSynthBlock(subNodes));
+      subBlocks.add(createSynthBlock(subNodes, wrap));
     }
 
     return new SynteticCodeBlock(subBlocks, null, mySettings, Formatter.getInstance().createContinuationWithoutFirstIndent(), null);
   }
 
-  private Block createSynthBlock(final ArrayList<ASTNode> subNodes) {
+  private Block createSynthBlock(final ArrayList<ASTNode> subNodes, final Wrap wrap)  {
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     final ASTNode firstNode = subNodes.get(0);
     if (firstNode.getElementType() == ElementType.DOT) {
-      subBlocks.add(createJavaBlock(firstNode, getSettings(), Formatter.getInstance().createContinuationIndent(), null, null));
+      subBlocks.add(createJavaBlock(firstNode, getSettings(), Formatter.getInstance().createContinuationIndent(),
+                                    null,
+                                    null));
       subNodes.remove(0);
       if (!subNodes.isEmpty()) {
-        subBlocks.add(createSynthBlock(subNodes));
+        subBlocks.add(createSynthBlock(subNodes, wrap));
       }
-      return new SynteticCodeBlock(subBlocks, null, mySettings, Formatter.getInstance().getNoneIndent(), null);
+      return new SynteticCodeBlock(subBlocks, null, mySettings, Formatter.getInstance().getNoneIndent(), wrap);
     } else {
       return new SynteticCodeBlock(createJavaBlocks(subNodes), null, mySettings,
                                    Formatter.getInstance().createContinuationWithoutFirstIndent(), null);

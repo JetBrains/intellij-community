@@ -36,10 +36,6 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
       child = child.getTreeNext();
     }
     
-    if (myNode.getElementType() == ElementType.METHOD_CALL_EXPRESSION) {
-      if (getReservedWrap() == null) setReservedWrap(Formatter.getInstance().createWrap(getWrapType(mySettings.METHOD_CALL_CHAIN_WRAP), false));
-    }
-
     Alignment childAlignment = createChildAlignment();
     Wrap childWrap = createChildWrap();
     while (child != null) {
