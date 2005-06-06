@@ -19,7 +19,7 @@ public class SuperTypesGrouper implements Grouper{
   public static final String ID = "SHOW_INTERFACES";
 
   public Collection<Group> group(final AbstractTreeNode parent, Collection<TreeElement> children) {
-    if (parent.getValue() instanceof SuperTypeGroup) return Collections.EMPTY_LIST;
+    if (isParentGrouped(parent)) return Collections.EMPTY_LIST;
     Map<Group, SuperTypeGroup> groups = new THashMap<Group, SuperTypeGroup>();
 
     for (TreeElement child : children) {
@@ -43,6 +43,14 @@ public class SuperTypesGrouper implements Grouper{
       }
     }
     return groups.keySet();
+  }
+
+  private static boolean isParentGrouped(AbstractTreeNode parent) {
+    while (parent != null) {
+      if (parent.getValue() instanceof SuperTypeGroup) return true;
+      parent = parent.getParent();
+    }
+    return false;
   }
 
   private static boolean methodOverridesSuper(PsiMethod method, PsiMethod superMethod) {
