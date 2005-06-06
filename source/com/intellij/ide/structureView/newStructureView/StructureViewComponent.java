@@ -336,6 +336,11 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     }
 
     JTree tree = myAbstractTreeBuilder.getTree();
+
+    if (pathToElement.size() == 1) {
+      return (DefaultMutableTreeNode)tree.getModel().getRoot();
+    }
+    
     DefaultMutableTreeNode currentTreeNode = (DefaultMutableTreeNode)tree.getModel().getRoot();
     pathToElement.remove(0);
     DefaultMutableTreeNode result = null;

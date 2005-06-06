@@ -69,6 +69,6 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
   }
 
   protected Class[] getSuitableClasses() {
-    return new Class[]{XmlTag.class};
+    return new Class[]{XmlTag.class, XmlFile.class};
   }
 }

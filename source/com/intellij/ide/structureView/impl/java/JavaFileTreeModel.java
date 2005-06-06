@@ -38,6 +38,6 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel {
   }
 
   protected Class[] getSuitableClasses() {
-    return new Class[]{PsiClass.class, PsiMethod.class, PsiField.class};
+    return new Class[]{PsiClass.class, PsiMethod.class, PsiField.class, PsiJavaFile.class};
   }
 }
