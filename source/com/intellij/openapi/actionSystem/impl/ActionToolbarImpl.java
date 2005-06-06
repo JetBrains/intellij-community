@@ -141,7 +141,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbarEx {
     }
   }
 
-  private ActionButton createToolbarButton(final AnAction action) {
+  /**
+   * @fabrique
+   */
+  protected ActionButton createToolbarButton(final AnAction action) {
     if (action.displayTextInToolbar()) {
       return new ActionButtonWithText(action, myPresentationFactory.getPresentation(action), myPlace,
                                       ActionToolbarEx.DEFAULT_MINIMUM_BUTTON_SIZE);
