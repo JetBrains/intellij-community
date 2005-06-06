@@ -336,14 +336,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     final ASTNode firstNode = subNodes.get(0);
     if (firstNode.getElementType() == ElementType.DOT) {
-      subBlocks.add(createJavaBlock(firstNode, getSettings(), Formatter.getInstance().createContinuationIndent(),
+      subBlocks.add(createJavaBlock(firstNode, getSettings(), Formatter.getInstance().getNoneIndent(),
                                     null,
                                     null));
       subNodes.remove(0);
       if (!subNodes.isEmpty()) {
         subBlocks.add(createSynthBlock(subNodes, wrap));
       }
-      return new SynteticCodeBlock(subBlocks, null, mySettings, Formatter.getInstance().getNoneIndent(), wrap);
+      return new SynteticCodeBlock(subBlocks, null, mySettings, Formatter.getInstance().createContinuationIndent(), wrap);
     } else {
       return new SynteticCodeBlock(createJavaBlocks(subNodes), null, mySettings,
                                    Formatter.getInstance().createContinuationWithoutFirstIndent(), null);
