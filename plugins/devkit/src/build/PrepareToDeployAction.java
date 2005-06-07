@@ -37,7 +37,7 @@ import java.util.zip.ZipOutputStream;
 public class PrepareToDeployAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final Module module = (Module)e.getDataContext().getData(DataConstants.MODULE);
-
+    if (module == null) return;
     try {
 
       HashSet<Module> modules = new HashSet<Module>();
@@ -147,7 +147,9 @@ public class PrepareToDeployAction extends AnAction {
 
         final HashSet<String> writtenItemRelativePaths = new HashSet<String>();
         for (Module module1 : modules) {
-          ZipUtil.addDirToZipRecursively(jarPlugin, jarFile, new File(ModuleRootManager.getInstance(module1).getCompilerOutputPath().getPath()), "", new FileFilter() {
+          final VirtualFile compilerOutputPath = ModuleRootManager.getInstance(module1).getCompilerOutputPath();
+          if (compilerOutputPath == null) continue; //pre-condition: output dirs for all modules are up-to-date 
+          ZipUtil.addDirToZipRecursively(jarPlugin, jarFile, new File(compilerOutputPath.getPath()), "", new FileFilter() {
             public boolean accept(File pathname) {
               return true;
             }
