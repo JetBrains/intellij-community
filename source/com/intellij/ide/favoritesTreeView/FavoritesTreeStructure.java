@@ -56,6 +56,9 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
   private Set<AbstractTreeNode> myFavorites = new HashSet<AbstractTreeNode>();
   private HashMap<AbstractUrl, String> myAbstractUrls = new HashMap<AbstractUrl, String>();
   private FavoritesTreeViewConfiguration myFavoritesConfiguration = new FavoritesTreeViewConfiguration();
+  private static final String CLASS_NAME = "klass";
+  private static final String FAVORITES_ROOT = "favorite_root";
+
   public FavoritesTreeStructure(Project project) {
     super(project);
     myRoot = new AbstractTreeNode<String>(myProject, "") {
@@ -93,7 +96,6 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     final AbstractTreeNode favoritesTreeElement = (AbstractTreeNode)element;
     try {
       if (element == myRoot) {
-        //todo
         Set<AbstractTreeNode> result = new HashSet<AbstractTreeNode>();
         for (Iterator<AbstractTreeNode> iterator = myFavorites.iterator(); iterator.hasNext();) {
           AbstractTreeNode abstractTreeNode = iterator.next();
@@ -103,7 +105,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
               continue;
             }
             if (val instanceof SmartPsiElementPointer &&
-               (((SmartPsiElementPointer)val).getElement() == null || !((SmartPsiElementPointer)val).getElement().isValid())){
+               (((SmartPsiElementPointer)val).getElement() == null )){
               continue;
             }
             if (val instanceof Form){
@@ -230,7 +232,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
         for (int i = 0; i < forms.length; i++) {
           PsiFile psiFile = forms[i];
           final VirtualFile virtualFile = psiFile.getVirtualFile();
-          if (virtualFile == null ? vFile == null : virtualFile.equals(vFile)){
+          if (virtualFile != null && virtualFile.equals(vFile)){
             return true;
           }
         }
@@ -284,6 +286,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
     return null;
   }
 
+  @Nullable
   private static AbstractUrl readUrlFromElement(Element element) {
     final String type = element.getAttributeValue("type");
     final String urlValue = element.getAttributeValue("url");
@@ -299,9 +302,9 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
 
   public void readExternal(Element element) throws InvalidDataException {
     myAbstractUrls.clear();
-    for (Iterator<Element> iterator = element.getChildren("favorite_root").iterator(); iterator.hasNext();) {
+    for (Iterator<Element> iterator = element.getChildren(FAVORITES_ROOT).iterator(); iterator.hasNext();) {
       Element favorite = iterator.next();
-      final String klass = favorite.getAttributeValue("klass");
+      final String klass = favorite.getAttributeValue(CLASS_NAME);
       final AbstractUrl abstractUrl = readUrlFromElement(favorite);
       if (abstractUrl != null) {
         myAbstractUrls.put(abstractUrl, klass);
@@ -311,13 +314,20 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (Iterator<AbstractTreeNode> iterator = myFavorites.iterator(); iterator.hasNext();) {
-      AbstractTreeNode favoritesTreeElement = iterator.next();
-      Element favorite = new Element("favorite_root");
+    final Object[] favorites = getChildElements(myRoot);
+    for (Object favoriteElement : favorites) {
+      final AbstractTreeNode favoritesTreeElement = (AbstractTreeNode)favoriteElement;
+      final Element favorite = new Element(FAVORITES_ROOT);
       final Object value = favoritesTreeElement.getValue();
-      createUrlByElement(value instanceof SmartPsiElementPointer ? ((SmartPsiElementPointer)value).getElement() : value ).write(favorite);
-      favorite.setAttribute("klass", favoritesTreeElement.getClass().getName());
-      element.addContent(favorite);
+      if (value instanceof String ){ //favorites are empty
+        continue;
+      }
+      final AbstractUrl url = createUrlByElement(value instanceof SmartPsiElementPointer ? ((SmartPsiElementPointer)value).getElement() : value);
+      if (url != null) {
+        url.write(favorite);
+        favorite.setAttribute(CLASS_NAME, favoritesTreeElement.getClass().getName());
+        element.addContent(favorite);
+      }
     }
     myFavoritesConfiguration.writeExternal(element);
   }
