@@ -17,6 +17,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.ide.DataManager;
 
 import java.util.LinkedHashSet;
@@ -40,8 +41,50 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       setText("Insert '("+castTo+")"+instanceOfExpression.getOperand().getText()+"' declaration");
 
       PsiStatement statement = PsiTreeUtil.getParentOfType(instanceOfExpression, PsiStatement.class);
-      return statement instanceof PsiIfStatement && PsiTreeUtil.isAncestor(((PsiIfStatement)statement).getCondition(), instanceOfExpression, false)
-             || statement instanceof PsiWhileStatement && PsiTreeUtil.isAncestor(((PsiWhileStatement)statement).getCondition(), instanceOfExpression, false);
+      boolean insideIf = statement instanceof PsiIfStatement
+                         && PsiTreeUtil.isAncestor(((PsiIfStatement)statement).getCondition(), instanceOfExpression, false);
+      boolean insideWhile = statement instanceof PsiWhileStatement
+                            && PsiTreeUtil.isAncestor(((PsiWhileStatement)statement).getCondition(), instanceOfExpression, false);
+      return (insideIf || insideWhile) && !isAlreadyCastedTo(type, instanceOfExpression, statement);
+    }
+    return false;
+  }
+
+  private static boolean isAlreadyCastedTo(final PsiType type, final PsiInstanceOfExpression instanceOfExpression, final PsiStatement statement) {
+    boolean negated = isNegated(instanceOfExpression);
+    PsiElement anchor = null;
+    if (negated) {
+      PsiElement parent = statement.getParent();
+      if (parent instanceof PsiCodeBlock) {
+        PsiStatement[] statements = ((PsiCodeBlock)parent).getStatements();
+        int i = ArrayUtil.find(statements, statement);
+        anchor = i != -1 && i < statements.length - 1 ? statements[i+1] : null;
+      }
+    }
+    else {
+      anchor = statement instanceof PsiIfStatement ? ((PsiIfStatement)statement).getThenBranch() : ((PsiWhileStatement)statement).getBody();
+    }
+    if (anchor instanceof PsiBlockStatement) {
+      anchor = ((PsiBlockStatement)anchor).getCodeBlock();
+    }
+    if (anchor instanceof PsiCodeBlock) {
+      PsiStatement[] statements = ((PsiCodeBlock)anchor).getStatements();
+      if (statements.length == 0) return false;
+      anchor = statements[0];
+    }
+    if (anchor instanceof PsiDeclarationStatement) {
+      PsiElement[] declaredElements = ((PsiDeclarationStatement)anchor).getDeclaredElements();
+      for (PsiElement element : declaredElements) {
+        if (!(element instanceof PsiLocalVariable)) continue;
+        PsiExpression initializer = ((PsiLocalVariable)element).getInitializer();
+        if (!(initializer instanceof PsiTypeCastExpression)) continue;
+
+        PsiTypeElement castTypeElement = ((PsiTypeCastExpression)initializer).getCastType();
+        if (castTypeElement == null) continue;
+        PsiType castType = castTypeElement.getType();
+        if (castType == null) continue;
+        if (castType.equals(type)) return true;
+      }
     }
     return false;
   }
@@ -118,13 +161,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
   }
 
   private static PsiDeclarationStatement insertAtAnchor(final PsiInstanceOfExpression instanceOfExpression, PsiDeclarationStatement toInsert) throws IncorrectOperationException {
-    PsiElement element = instanceOfExpression.getParent();
-    while (element instanceof PsiParenthesizedExpression) {
-      element = element.getParent();
-    }
-    boolean negated = element instanceof PsiPrefixExpression &&
-                      ((PsiPrefixExpression)element).getOperationSign().getTokenType() ==
-                      JavaTokenType.EXCL;
+    boolean negated = isNegated(instanceOfExpression);
     PsiStatement statement = PsiTreeUtil.getParentOfType(instanceOfExpression, PsiStatement.class);
     PsiElementFactory factory = toInsert.getManager().getElementFactory();
     PsiElement anchorAfter = null;
@@ -188,6 +225,16 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       return null;
     }
     return (PsiDeclarationStatement)anchorAfter.getParent().addAfter(toInsert, anchorAfter);
+  }
+
+  private static boolean isNegated(final PsiInstanceOfExpression instanceOfExpression) {
+    PsiElement element = instanceOfExpression.getParent();
+    while (element instanceof PsiParenthesizedExpression) {
+      element = element.getParent();
+    }
+    boolean negated = element instanceof PsiPrefixExpression &&
+                      ((PsiPrefixExpression)element).getOperationSign().getTokenType() == JavaTokenType.EXCL;
+    return negated;
   }
 
   private static Template generateTemplate(Project project, PsiExpression initializer, PsiType type) {
