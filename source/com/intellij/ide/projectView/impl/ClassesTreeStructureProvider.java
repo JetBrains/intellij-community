@@ -32,19 +32,17 @@ public class ClassesTreeStructureProvider implements TreeStructureProvider, Proj
         final VirtualFile virtualFile = psiJavaFile.getVirtualFile();
         if (virtualFile.getFileType() == StdFileTypes.JAVA || virtualFile.getFileType() == StdFileTypes.CLASS) {
           PsiClass[] classes = psiJavaFile.getClasses();
-          for (PsiClass aClass : classes) {
-            if (aClass.isValid()) {
-              result.add(new ClassTreeNode(myProject, aClass, ((ProjectViewNode)parent).getSettings()));
+          if (classes.length != 0) {
+            for (PsiClass aClass : classes) {
+              if (aClass.isValid()) {
+                result.add(new ClassTreeNode(myProject, aClass, ((ProjectViewNode)parent).getSettings()));
+              }
             }
+            continue;
           }
         }
-        else {
-          result.add(treeNode);
-        }
       }
-      else {
-        result.add(treeNode);
-      }
+      result.add(treeNode);
     }
     return result;
   }
