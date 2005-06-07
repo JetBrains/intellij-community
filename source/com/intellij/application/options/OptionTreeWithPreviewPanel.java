@@ -2,6 +2,7 @@ package com.intellij.application.options;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -11,6 +12,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElementFactory;
@@ -182,7 +184,7 @@ public abstract class OptionTreeWithPreviewPanel extends JPanel {
   private Editor createEditor() {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document doc = editorFactory.createDocument("");
-    EditorEx editor = (EditorEx)editorFactory.createViewer(doc);
+    EditorEx editor = (EditorEx)editorFactory.createEditor(doc);
 
     setupEditorSettings(editor);
 
@@ -202,6 +204,15 @@ public abstract class OptionTreeWithPreviewPanel extends JPanel {
       return;
     }
 
+    CommandProcessor.getInstance().executeCommand(ProjectManager.getInstance().getDefaultProject(),
+      new Runnable() {
+        public void run() {
+          replaceText();
+        }
+      }, null, null);
+  }
+
+  private void replaceText() {
     final Project project = ProjectManagerEx.getInstanceEx().getDefaultProject();
     final PsiManager manager = PsiManager.getInstance(project);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

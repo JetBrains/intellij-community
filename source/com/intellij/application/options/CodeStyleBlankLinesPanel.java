@@ -2,6 +2,7 @@ package com.intellij.application.options;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -119,7 +120,7 @@ public class CodeStyleBlankLinesPanel extends JPanel {
   private static Editor createEditor() {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document editorDocument = editorFactory.createDocument("");
-    EditorEx editor = (EditorEx) editorFactory.createViewer(editorDocument);
+    EditorEx editor = (EditorEx) editorFactory.createEditor(editorDocument);
 
     EditorSettings editorSettings = editor.getSettings();
     editorSettings.setWhitespacesShown(true);
@@ -157,6 +158,15 @@ public class CodeStyleBlankLinesPanel extends JPanel {
        "  }\n\n" +
        "}";
 
+    CommandProcessor.getInstance().executeCommand(ProjectManager.getInstance().getDefaultProject(),
+      new Runnable() {
+        public void run() {
+          replaceText(text);
+        }
+      }, null, null);
+  }
+
+  private void replaceText(final String text) {
     final Project project = ProjectManager.getInstance().getDefaultProject();
     final PsiManager manager = PsiManager.getInstance(project);
     ApplicationManager.getApplication().runWriteAction(
