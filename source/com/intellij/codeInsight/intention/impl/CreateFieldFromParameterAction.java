@@ -27,10 +27,6 @@ public class CreateFieldFromParameterAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction");
   private PsiParameter myParameter;
 
-  public CreateFieldFromParameterAction() {
-    myParameter = null;
-  }
-
   private  PsiType getType() {
     if (myParameter == null) return null;
     PsiType type = myParameter.getType();
@@ -59,7 +55,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
       ;
   }
 
-  private static boolean isParameterAssignedToField(final PsiParameter parameter) {
+  static boolean isParameterAssignedToField(final PsiParameter parameter) {
     final PsiSearchHelper searchHelper = parameter.getManager().getSearchHelper();
     final PsiReference[] references = searchHelper.findReferences(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false);
     for (PsiReference reference : references) {
@@ -77,7 +73,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     return false;
   }
 
-  private static PsiParameter findParameterAtCursor(final PsiFile file, final Editor editor) {
+  static PsiParameter findParameterAtCursor(final PsiFile file, final Editor editor) {
     final int offset = editor.getCaretModel().getOffset();
     final PsiParameterList parameterList = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiParameterList.class, false);
     if (parameterList == null) return null;
@@ -226,7 +222,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
 
           String stmtText = fieldName + " = " + parameterName + ";";
           if (fieldName.equals(parameterName)) {
-            String prefix = isMethodStatic ? (targetClass.getName() == null ? "" : targetClass.getName() + ".") : "this.";
+            String prefix = isMethodStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
             stmtText = prefix + stmtText;
           }
 

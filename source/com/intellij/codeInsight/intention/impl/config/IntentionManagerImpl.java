@@ -34,6 +34,7 @@ public class IntentionManagerImpl extends IntentionManager {
     registerIntentionAndMetaData(new RemoveRedundantElseAction(), new String[]{"Control Flow"});
 
     registerIntentionAndMetaData(new CreateFieldFromParameterAction(), new String[]{"Declaration"});
+    registerIntentionAndMetaData(new AssignFieldFromParameterAction(), new String[]{"Declaration"});
     registerIntentionAndMetaData(new CreateLocalVarFromInstanceofAction(), new String[]{"Declaration"});
     registerIntentionAndMetaData(new ImplementAbstractClassAction(), new String[]{"Declaration"});
     registerIntentionAndMetaData(new ImplementAbstractMethodAction(), new String[]{"Declaration"});
