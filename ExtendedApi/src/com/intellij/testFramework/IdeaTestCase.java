@@ -434,7 +434,7 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
   public static File createTempDir(final String prefix) throws IOException {
     final File tempDirectory = FileUtil.createTempDirectory(prefix, null);
     myFilesToDelete.add(tempDirectory);
-    getVirtualFile(tempDirectory);
+    LocalFileSystem.getInstance().refresh(false);
     return tempDirectory;
   }
 
