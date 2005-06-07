@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.WorkerThread;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.vfs.local.win32.FileWatcher;
@@ -44,7 +45,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
   private Alarm mySynchronizeQueueAlarm;
 
-  private File[] myCachedRoots;
+  private String[] myCachedRootPaths;
 
   private final Map<VirtualFile,Key> myRefreshStatusMap = new WeakHashMap<VirtualFile, Key>(); // VirtualFile --> 'status'
   private static final Key DIRTY_STATUS = Key.create("DIRTY_STATUS");
@@ -67,7 +68,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
   }
 
   public LocalFileSystemImpl() {
-    myCachedRoots = File.listRoots();
+    myCachedRootPaths = getCachedRootPaths();
 
     mySynchronizeQueueAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD){
       public void addRequest(Runnable request, int delay) {
@@ -82,6 +83,16 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
       myWatchForChangesThread.start();
       new StoreRefreshStatusThread().start();
     }
+  }
+
+  private String[] getCachedRootPaths() {
+    final File[] files = File.listRoots();
+    if (files.length == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+    String[] result = new String[files.length];;
+    for (int i = 0; i < files.length; i++) {
+      result[i] = files[i].getPath();
+    }
+    return result;
   }
 
   public void initComponent() {
@@ -127,8 +138,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
   private boolean isPhysicalRoot(String path) {
     path = path.replace('/', File.separatorChar);
-    for (File root : myCachedRoots) {
-      String rootPath = root.getPath();
+    for (String rootPath : myCachedRootPaths) {
       if (equal(path, rootPath)) {
         return true;
       }
@@ -362,7 +372,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
 
         storeRefreshStatusToFiles();
 
-        myCachedRoots = File.listRoots();
+        myCachedRootPaths = getCachedRootPaths();
 
         WatchRequest[] requests;
         synchronized (LOCK) {

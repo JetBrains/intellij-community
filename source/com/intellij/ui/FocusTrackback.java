@@ -4,10 +4,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrame;
+import com.intellij.util.containers.WeakList;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -19,7 +19,7 @@ public class FocusTrackback {
   private Window myRoot;
   private Component myFocusOwner;
 
-  private static Map ourRootWindowToParentsStack = new WeakHashMap();
+  private static Map<Window,WeakList<FocusTrackback>> ourRootWindowToParentsStack = new WeakHashMap<Window, WeakList<FocusTrackback>>();
 
   private Object myRequestor;
 
@@ -42,7 +42,7 @@ public class FocusTrackback {
 
   private void register(final Window parent) {
     myRoot = findUtlimateParent(parent);
-    ArrayList stack = getStackForRoot(myRoot);
+    WeakList<FocusTrackback> stack = getStackForRoot(myRoot);
     stack.remove(this);
     stack.add(this);
   }
@@ -58,7 +58,7 @@ public class FocusTrackback {
 
   private void _restoreFocus() {
     if (myFocusOwner != null) {
-      final ArrayList stack = getStackForRoot(myRoot);
+      final WeakList<FocusTrackback> stack = getStackForRoot(myRoot);
 
       final boolean isLastInFocusChain = stack.contains(this) && stack.indexOf(this) == stack.size() - 1;
       if (isLastInFocusChain) {
@@ -69,10 +69,10 @@ public class FocusTrackback {
     }
   }
 
-  private ArrayList getStackForRoot(final Window root) {
-    ArrayList stack = (ArrayList)ourRootWindowToParentsStack.get(root);
+  private WeakList<FocusTrackback> getStackForRoot(final Window root) {
+    WeakList<FocusTrackback> stack = ourRootWindowToParentsStack.get(root);
     if (stack == null) {
-      stack = new ArrayList();
+      stack = new WeakList<FocusTrackback>();
       ourRootWindowToParentsStack.put(root, stack);
     }
     return stack;
