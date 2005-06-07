@@ -424,6 +424,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       }
       else if (child instanceof PsiFile) {
         files.add((PsiFile)child);
+        return;
       }
       else {
         collectFilesForElement(child, files);
