@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -15,6 +16,19 @@ import com.intellij.util.IncorrectOperationException;
  */
 public class SemicolonFixer implements Fixer {
   public void apply(Editor editor, SmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
+    if (psiElement instanceof PsiReturnStatement) {
+      PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
+      if (method != null && PsiType.VOID == method.getReturnType()) {
+        PsiReturnStatement stmt = (PsiReturnStatement)psiElement;
+        if (stmt.getReturnValue() != null) {
+          Document doc = editor.getDocument();
+          doc.insertString(stmt.getTextRange().getStartOffset() + "return".length(), ";");
+          return;
+        }
+      }
+    }
+
+
     if (psiElement instanceof PsiExpressionStatement ||
         psiElement instanceof PsiDeclarationStatement ||
         psiElement instanceof PsiDoWhileStatement ||
