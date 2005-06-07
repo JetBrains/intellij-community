@@ -187,7 +187,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   private static boolean isInspectionToolIdMentioned(String inspectionsList, String inspectionToolID) {
-    String[] ids = inspectionsList.split("[, \t]");
+    String[] ids = inspectionsList.split("[{}, \t]");
     for (String id : ids) {
       if (id.equals(inspectionToolID) || id.equals("ALL")) return true;
     }
@@ -225,10 +225,15 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
           return true;
         }
         final PsiAnnotationMemberValue attributeValue = attributes[0].getValue();
-        if (attributeValue instanceof PsiLiteralExpression) {
-          String value = (String)((PsiLiteralExpression) attributeValue).getValue();
-          if (isInspectionToolIdMentioned(value, inspectionToolID)) {
-            return false;
+        if (attributeValue instanceof PsiArrayInitializerMemberValue) {
+          final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)attributeValue).getInitializers();
+          for (PsiAnnotationMemberValue annotationMemberValue : initializers) {
+            if (annotationMemberValue instanceof PsiLiteralExpression) {
+              String value = (String)((PsiLiteralExpression) annotationMemberValue).getValue();
+              if (isInspectionToolIdMentioned(value, inspectionToolID)) {
+                return false;
+              }
+            }
           }
         }
       }
