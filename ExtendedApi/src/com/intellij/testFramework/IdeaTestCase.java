@@ -28,6 +28,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -434,7 +435,7 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
   public static File createTempDir(final String prefix) throws IOException {
     final File tempDirectory = FileUtil.createTempDirectory(prefix, null);
     myFilesToDelete.add(tempDirectory);
-    LocalFileSystem.getInstance().refresh(false);
+    VirtualFileManager.getInstance().refresh(false);
     return tempDirectory;
   }
 
