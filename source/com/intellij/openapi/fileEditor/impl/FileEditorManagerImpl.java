@@ -21,10 +21,7 @@ import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -57,6 +54,7 @@ import java.util.ArrayList;
  */
 public final class FileEditorManagerImpl extends FileEditorManagerEx implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl");
+  private static final Key<LocalFileSystem.WatchRequest> WATCH_REQUEST_KEY = Key.create("WATCH_REQUEST_KEY");
 
   private static final FileEditor[] EMPTY_EDITOR_ARRAY = new FileEditor[]{};
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = new FileEditorProvider[]{};
@@ -329,6 +327,9 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     }
     assertThread();
 
+    final LocalFileSystem.WatchRequest request = file.getUserData(WATCH_REQUEST_KEY);
+    if (request != null) LocalFileSystem.getInstance().removeWatchedRoot(request);
+
     Runnable runnable = new Runnable() {
       public void run() {
         closeFileImpl(file);
@@ -402,6 +403,11 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   public Pair<FileEditor[], FileEditorProvider[]> openFileImpl(final VirtualFile file,
                                                                final boolean focusEditor,
                                                                final HistoryEntry entry) {
+    final VirtualFile parentDir = file.getParent();
+    if (parentDir != null) {
+      final LocalFileSystem.WatchRequest request = LocalFileSystem.getInstance().addRootToWatch(parentDir, false);
+      file.putUserData(WATCH_REQUEST_KEY, request);
+    }
     return openFileImpl2(mySplitters.getOrCreateCurrentWindow(), file, focusEditor, entry);
   }
 
