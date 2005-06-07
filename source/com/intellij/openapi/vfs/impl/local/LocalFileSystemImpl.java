@@ -62,7 +62,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
       myToWatchRecursively = toWatchRecursively;
     }
 
-    public VirtualFile getRoot() { return myRoot; }
+    @NotNull public VirtualFile getRoot() { return myRoot; }
 
     public boolean isToWatchRecursively() { return myToWatchRecursively; }
   }
@@ -101,7 +101,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
   public void disposeComponent() {
   }
 
-  public void cleanupForNextTest() {
+  public void cleanupForNextTest() throws IOException {
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         public void run() {
@@ -110,10 +110,14 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
       }
     );
 
-    myRoots.clear();
     myRootsToWatch.clear();
+    myRoots.clear();
     myDirtyFiles.clear();
     myDeletedFiles.clear();
+
+    VirtualFile tempVFile = findFileByIoFile(new File(FileUtil.getTempDirectory()));
+    LOG.assertTrue(tempVFile != null);
+    addRootToWatch(tempVFile, true);
   }
 
   final VirtualFileManagerEx getManager() {

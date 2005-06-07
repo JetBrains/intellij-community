@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.psi.PsiDocumentManager;
 import junit.framework.TestCase;
 
@@ -42,7 +41,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -158,7 +156,7 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
     return module;
   }
 
-  private static void cleanupVfs() {
+  private static void cleanupVfs() throws IOException {
     LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
     if (localFileSystem != null) {
       localFileSystem.cleanupForNextTest();
@@ -179,8 +177,8 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
       try {
         ((ProjectEx)myProject).dispose();
 
-        for (Iterator iterator = myFilesToDelete.iterator(); iterator.hasNext();) {
-          File file = (File)iterator.next();
+        for (final File fileToDelete : myFilesToDelete) {
+          File file = fileToDelete;
           delete(file);
         }
 
@@ -223,8 +221,8 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
   private void delete(File file) {
     if (file.isDirectory()) {
       File[] files = file.listFiles();
-      for (int i = 0; i < files.length; i++) {
-        delete(files[i]);
+      for (File fileToDelete : files) {
+        delete(fileToDelete);
       }
     }
 
