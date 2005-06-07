@@ -10,6 +10,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
+import com.intellij.codeInsight.intention.impl.AddAnnotationAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -20,10 +21,7 @@ import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -322,20 +320,9 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       }
     }
 
-    private void annotateMethod(final PsiMethod method) {
-      final PsiModifierList modList = method.getModifierList();
-      if (modList.findAnnotation(AnnotationUtil.NULLABLE) != null) return;
-
-      if (ReadonlyStatusHandler.getInstance(method.getProject()).ensureFilesWritable(
-        new VirtualFile[]{method.getContainingFile().getVirtualFile()}).hasReadonlyFiles()) {
-        return;
-      }
-
+    private static void annotateMethod(final PsiMethod method) {
       try {
-        PsiAnnotation annotation = method.getManager().getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NULLABLE, method);
-        modList.addBefore(annotation, modList.getFirstChild());
-
-        CodeStyleManager.getInstance(method.getProject()).shortenClassReferences(modList);
+        new AddAnnotationAction(AnnotationUtil.NULLABLE, method).invoke(method.getProject(), null, method.getContainingFile());
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

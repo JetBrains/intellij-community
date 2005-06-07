@@ -26,23 +26,22 @@ public class AddOverrideAnnotationAction implements IntentionAction {
     if (method == null) return false;
     if (method.getModifierList().findAnnotation(ourFQName) != null) return false;
     PsiMethod[] superMethods = method.findSuperMethods();
-    for (int i = 0; i < superMethods.length; i++) {
-      PsiMethod superMethod = superMethods[i];
-      if (!superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return true;
+    for (PsiMethod superMethod : superMethods) {
+      if (!superMethod.hasModifierProperty(PsiModifier.ABSTRACT)
+          && new AddAnnotationAction(ourFQName, method).isAvailable(project, editor, file)) {
+        return true;
+      }
     }
 
     return false;
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiManager manager = file.getManager();
-    PsiElementFactory factory = manager.getElementFactory();
     PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
-    PsiAnnotation annotation = factory.createAnnotationFromText("@" + ourFQName, method);
-    method.getModifierList().addAfter(annotation, null);
+    new AddAnnotationAction(ourFQName, method).invoke(project, editor, file);
   }
 
-  private PsiMethod findMethod(PsiFile file, int offset) {
+  private static PsiMethod findMethod(PsiFile file, int offset) {
     PsiElement element = file.findElementAt(offset);
     PsiMethod res = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     if (res == null) return null;
@@ -58,5 +57,4 @@ public class AddOverrideAnnotationAction implements IntentionAction {
   public boolean startInWriteAction() {
     return true;
   }
-
 }

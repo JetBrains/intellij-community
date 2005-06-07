@@ -1,8 +1,10 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.intention.impl.AddAnnotationAction;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -359,8 +361,10 @@ public class AnnotationsHighlightUtil {
                                                  "Method annotated with @Nullable must not override @NotNull method");
       }
       if (!isDeclaredNullable && !isDeclaredNotNull && AnnotationUtil.isNotNull(superMethod)) {
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, method.getNameIdentifier(),
-                                                 "Not annotated method overrides method annotated with @NotNull");
+        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, method.getNameIdentifier(),
+                                                                     "Not annotated method overrides method annotated with @NotNull");
+        QuickFixAction.registerQuickFixAction(info, new AddAnnotationAction(AnnotationUtil.NOT_NULL, method), null);
+        return info;
       }
       PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
       if (superParameters.length != parameters.length) {
