@@ -358,12 +358,7 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
         myResult = Formatter.getInstance().createDependentLFProperty(0, 1, block.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
     } else if (myRole1 == ChildRole.STATEMENT_IN_BLOCK && myRole2 == ChildRole.STATEMENT_IN_BLOCK) {
-      if (!keepInOneLine) {
-        myResult = Formatter.getInstance().createSpaceProperty(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
-      } else {
-        myResult = Formatter.getInstance().createDependentLFProperty(1, 1, block.getTextRange(), mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
-      }
-
+      myResult = Formatter.getInstance().createSpaceProperty(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
   }
 
