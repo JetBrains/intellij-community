@@ -28,6 +28,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   public static final Icon SDK_CLOSED = IconLoader.getIcon("/sdk_closed.png");
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit");
+  private ProjectJdk myInternalJdk = null;
 
   public IdeaJdk() {
     super("IDEA JDK");
@@ -82,21 +83,35 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   private Sdk getInternalJavaSdk(final String sdkHome) {
-    String jreHome;
-    if (SystemInfo.isLinux || SystemInfo.isWindows) {
-      jreHome = sdkHome + File.separator + "jre";
-      if (!new File(jreHome).exists()) {
-        jreHome = System.getProperty("java.home");
-        if (!new File(new File(jreHome, "lib"), "tools.jar").exists()){
-          jreHome = new File(jreHome).getParent();
+    if (myInternalJdk == null) {
+      String toolsPath = null;
+      String jreHome;
+      if (SystemInfo.isLinux || SystemInfo.isWindows) {
+        jreHome = sdkHome + File.separator + "jre";
+        if (!new File(jreHome).exists()) {
+          jreHome = System.getProperty("java.home");
+          final File tools = new File(new File(jreHome, "lib"), "tools.jar");
+          if (tools.exists()){
+            toolsPath = tools.getPath();
+            jreHome = jreHome + File.separator + "jre";
+          } else {
+            toolsPath = new File(jreHome).getParent() + File.separator + "lib" + File.separator + "tools.jar";
+          }
         }
       }
+      else {
+        jreHome = System.getProperty("java.home");
+      }
+      myInternalJdk = JavaSdk.getInstance().createJdk("", jreHome);
+      toolsPath = toolsPath != null ? toolsPath : myInternalJdk.getToolsPath();
+      final VirtualFile tools = LocalFileSystem.getInstance().findFileByPath(toolsPath.replace(File.separatorChar, '/'));
+      if (tools != null) {
+        final SdkModificator sdkModificator = myInternalJdk.getSdkModificator();
+        sdkModificator.addRoot(tools, ProjectRootType.CLASS);
+        sdkModificator.commitChanges();
+      }
     }
-    else {
-      jreHome = System.getProperty("java.home");
-    }
-
-    return JavaSdk.getInstance().createJdk("", jreHome);
+    return myInternalJdk;
   }
 
   public String suggestSdkName(String currentSdkName, String sdkHome) {
@@ -236,6 +251,23 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   public AdditionalDataConfigurable createAdditionalDataConfigurable(final SdkModel sdkModel, SdkModificator sdkModificator) {
+    sdkModel.addListener(new SdkModel.Listener() {
+      public void sdkAdded(Sdk sdk) {
+        myInternalJdk = null;
+      }
+
+      public void beforeSdkRemove(Sdk sdk) {
+        myInternalJdk = null;
+      }
+
+      public void sdkChanged(Sdk sdk) {
+        myInternalJdk = null;
+      }
+
+      public void sdkHomeSelected(final Sdk sdk, final String newSdkHome) {
+        myInternalJdk = null;
+      }
+    });
     return new IdeaJdkConfigurable();
   }
 
