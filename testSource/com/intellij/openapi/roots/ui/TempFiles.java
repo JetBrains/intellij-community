@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -8,12 +9,11 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.Iterator;
 import java.util.List;
 
 public class TempFiles {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.TempFiles");
   private List<File> myFilesToDelete;
 
   public TempFiles(List<File> filesToDelete) {
@@ -44,8 +44,17 @@ public class TempFiles {
   }
 
   public static VirtualFile getVFileByFile(File tempFile) {
+    final File parentFile = tempFile.getParentFile();
+    LOG.assertTrue(parentFile != null);
+
+    final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    final VirtualFile parentVFile = fileSystem.findFileByIoFile(parentFile);
+    LOG.assertTrue(parentVFile != null);
+    //Needed in order to refresh to work
+    fileSystem.addRootToWatch(parentVFile, false);
+
     refreshVfs();
-    return LocalFileSystem.getInstance().findFileByIoFile(tempFile);
+    return fileSystem.findFileByIoFile(tempFile);
   }
 
   public static void refreshVfs() {
@@ -89,8 +98,7 @@ public class TempFiles {
   }
 
   public void deleteAll() {
-    for (Iterator<File> iterator = myFilesToDelete.iterator(); iterator.hasNext();) {
-      File file = iterator.next();
+    for (File file : myFilesToDelete) {
       file.delete();
     }
   }
