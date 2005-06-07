@@ -15,8 +15,9 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 
 import java.io.File;
 import java.io.IOException;
@@ -86,6 +87,27 @@ public class VcsUtil {
     if (!psiElement.isValid()) {
       return null;
     }
+
+    final String selectedAreaName;
+
+    if (psiElement instanceof PsiClass) {
+      selectedAreaName = "Class";
+    } else if (psiElement instanceof PsiField) {
+      selectedAreaName = "Field";
+    } else if (psiElement instanceof PsiMethod) {
+      selectedAreaName = "Method";
+    } else if (psiElement instanceof XmlTag) {
+      selectedAreaName = "Tag";
+    } else if (psiElement instanceof XmlText) {
+      selectedAreaName = "Text";
+    } else if (psiElement instanceof PsiCodeBlock) {
+      selectedAreaName = "Code Block";
+    } else if (psiElement instanceof PsiStatement) {
+      selectedAreaName = "Statement";
+    } else {
+      return null;
+    }
+
     TextRange textRange = psiElement.getTextRange();
     if (textRange == null) {
       return null;
@@ -100,10 +122,7 @@ public class VcsUtil {
     }
 
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-
-    PsiDocumentManager.getInstance(psiElement.getProject()).commitDocument(document);
-
-    return new VcsSelection(document, textRange);
+    return new VcsSelection(document, textRange, selectedAreaName);
   }
 
   private static VcsSelection getSelectionFromEditor(VcsContext context) {
