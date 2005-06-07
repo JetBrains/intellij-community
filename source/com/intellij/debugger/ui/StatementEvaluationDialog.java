@@ -12,11 +12,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.psi.*;
-import com.intellij.ui.GuiUtils;
+import com.intellij.openapi.util.DimensionService;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 
 import javax.swing.*;
 import java.awt.*;
@@ -97,11 +98,10 @@ public class StatementEvaluationDialog extends EvaluationDialog{
     PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
     PsiElement[] children = psiFile.getChildren();
     int nonWhite = 0;
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
-      if(!(child instanceof PsiWhiteSpace)) {
+    for (PsiElement child : children) {
+      if (!(child instanceof PsiWhiteSpace)) {
         nonWhite++;
-        if(nonWhite > 1) {
+        if (nonWhite > 1) {
           mySwitchAction.setEnabled(false);
           return;
         }

@@ -4,7 +4,6 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -16,10 +15,12 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 
 import javax.swing.*;
 import java.util.Iterator;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,25 +30,11 @@ import java.util.Iterator;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class EvaluationDialog extends DialogWrapper {
-  private MyEvaluationPanel myEvaluationPanel;
-  private Project myProject;
+  private final MyEvaluationPanel myEvaluationPanel;
+  private final Project myProject;
   private final DebuggerContextListener myContextListener;
   private final DebuggerEditorImpl myEditor;
-
-  //TODO:[lex] move this code to DebuggerEditorImpl
-  private final PsiTreeChangeListener myPsiListener = new PsiTreeChangeAdapter() {
-      public void childRemoved(PsiTreeChangeEvent event)           { checkContext(); }
-      public void childReplaced(PsiTreeChangeEvent event)          { checkContext(); }
-      public void childMoved(PsiTreeChangeEvent event)             { checkContext(); }
-    };
-
-  private void checkContext() {
-    if(getContext() != null) {
-      if(!getContext().isValid()) {
-        setDebuggerContext(DebuggerManagerEx.getInstanceEx(myProject).getContextManager().getContext());
-      }
-    }
-  }
+  private final List<Runnable> myDisposeRunnables = new ArrayList<Runnable>();
 
   public EvaluationDialog(Project project, TextWithImports text) {
     super(project, true);
@@ -75,7 +62,8 @@ public abstract class EvaluationDialog extends DialogWrapper {
 
         if(close) {
           close(CANCEL_EXIT_CODE);
-        } else {
+        }
+        else {
           setDebuggerContext(newContext);
         }
       }
@@ -84,14 +72,11 @@ public abstract class EvaluationDialog extends DialogWrapper {
 
     setHorizontalStretch(1f);
     setVerticalStretch(1f);
-
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiListener);
   }
 
   protected void doOKAction() {
     if (isOKActionEnabled()) {
       doEvaluate();
-      //getDebuggerContext().getDebuggerSession().refresh();
     }
   }
 
@@ -137,8 +122,16 @@ public abstract class EvaluationDialog extends DialogWrapper {
     return "#com.intellij.debugger.ui.EvaluationDialog2";
   }
 
+  protected void addDisposeRunnable (Runnable runnable) {
+    myDisposeRunnables.add(runnable);
+  }
+
   protected void dispose() {
-    PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiListener);
+    for (Runnable runnable : myDisposeRunnables) {
+      runnable.run();
+    }
+    myDisposeRunnables.clear();
+    myEditor.dispose();
     DebuggerManagerEx.getInstanceEx(myProject).getContextManager().removeListener(myContextListener);
     myEvaluationPanel.dispose();
     super.dispose();
@@ -164,7 +157,7 @@ public abstract class EvaluationDialog extends DialogWrapper {
       if(debuggerSession != null && debuggerSession.getState() == DebuggerSession.STATE_WAIT_EVALUATION) {
         return;
       }
-      
+
       super.changeEvent(newContext, event);
     }
   }

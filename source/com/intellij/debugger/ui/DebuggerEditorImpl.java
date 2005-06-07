@@ -2,14 +2,14 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -35,10 +35,31 @@ public abstract class DebuggerEditorImpl extends CompletionEditor {
   private List<DocumentListener> myDocumentListeners = new ArrayList<DocumentListener>();
   private Document myCurrentDocument;
 
+  private final PsiTreeChangeListener myPsiListener = new PsiTreeChangeAdapter() {
+    public void childRemoved(PsiTreeChangeEvent event) {
+      checkContext();
+    }
+    public void childReplaced(PsiTreeChangeEvent event) {
+      checkContext();
+    }
+    public void childMoved(PsiTreeChangeEvent event) {
+      checkContext();
+    }
+    private void checkContext() {
+      if(getContext() != null) {
+        if(!getContext().isValid()) {
+          final DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(myProject).getContextManager().getContext();
+          setContext(PositionUtil.getContextElement(context));
+        }
+      }
+    }
+  };
+
   public DebuggerEditorImpl(Project project, PsiElement context, String recentsId) {
     myProject = project;
     myContext = context;
     myRecentsId = recentsId;
+    PsiManager.getInstance(project).addPsiTreeChangeListener(myPsiListener);
   }
 
   protected TextWithImports createItem(Document document, Project project) {
@@ -121,5 +142,9 @@ public abstract class DebuggerEditorImpl extends CompletionEditor {
     if(myCurrentDocument != null) {
       myCurrentDocument.removeDocumentListener(listener);
     }
+  }
+
+  public void dispose() {
+    PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiListener);
   }
 }
