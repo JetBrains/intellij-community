@@ -3,6 +3,7 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.CharArrayUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,13 +23,15 @@ public class MethodCallFixer implements Fixer {
 
     if (args == null) return;
 
-    final PsiElement parenth = args.getLastChild();
+    PsiElement parenth = args.getLastChild();
+
     if (parenth == null || !")".equals(parenth.getText())) {
       int endOffset = args.getTextRange().getEndOffset();
       final PsiExpression[] params = args.getExpressions();
       if (params.length > 0 && startLine(editor, args) != startLine(editor, params[0])) {
         endOffset = args.getTextRange().getStartOffset() + 1;
       }
+      endOffset = CharArrayUtil.shiftBackward(editor.getDocument().getCharsSequence(), endOffset - 1, " \t\n") + 1;
       editor.getDocument().insertString(endOffset, ")");
     }
   }
