@@ -5,8 +5,9 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.engine.evaluation.EvaluationManager;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -71,7 +72,7 @@ public class EvaluateAction extends DebuggerAction {
 
   public static void showEvaluationDialog(Project project, TextWithImports defaultExpression, String dialogType) {
     if(defaultExpression == null) {
-      defaultExpression = EvaluationManager.getInstance().getEmptyExpressionFragment();
+      defaultExpression = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
     }
 
     final DialogWrapper dialog;

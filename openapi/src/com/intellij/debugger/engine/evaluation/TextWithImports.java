@@ -3,6 +3,7 @@ package com.intellij.debugger.engine.evaluation;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -10,10 +11,9 @@ import com.intellij.openapi.project.Project;
  */
 
 public interface TextWithImports {
-  public String getText();
-  public PsiCodeFragment createCodeFragment(PsiElement context, Project project);
-  public boolean isEmpty();
-
+  String getText();
   void setText(String newText);
-  boolean isExpressionText();
+  @NotNull String getImports();
+  CodeFragmentKind getKind();
+  boolean isEmpty();
 }

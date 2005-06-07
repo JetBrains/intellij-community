@@ -5,10 +5,10 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.ClassFilter;
-import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.engine.evaluation.EvaluationManager;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.InstanceFilter;
+import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.impl.UIUtil;
@@ -19,15 +19,16 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public abstract class BreakpointPropertiesPanel {
   protected final Project myProject;
@@ -235,10 +236,9 @@ public abstract class BreakpointPropertiesPanel {
     myLogExpressionCheckBox.setSelected(breakpoint.LOG_EXPRESSION_ENABLED);
 
     myConditionCombo.setContext(context);
-    final TextWithImports empty = EvaluationManager.getInstance().getEmptyExpressionFragment();
-    myConditionCombo.setText(breakpoint.getCondition() != null ? breakpoint.getCondition() : empty);
+    myConditionCombo.setText(breakpoint.getCondition() != null ? breakpoint.getCondition() : new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
     myLogExpressionCombo.setContext(context);
-    myLogExpressionCombo.setText(breakpoint.getLogMessage() != null? breakpoint.getLogMessage() : empty);
+    myLogExpressionCombo.setText(breakpoint.getLogMessage() != null? breakpoint.getLogMessage() : new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
 
     myLogExpressionCombo.setEnabled(breakpoint.LOG_EXPRESSION_ENABLED);
 

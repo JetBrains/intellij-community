@@ -264,7 +264,7 @@ public class DebuggerTreeNodeExpression {
 
         if (expressionText == null) return null;
 
-        return EvaluationManager.getInstance().createExpressionFragment(expressionText);
+        return new TextWithImportsImpl(expressionText);
       }
     });
   }

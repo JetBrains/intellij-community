@@ -1,41 +1,37 @@
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.DebuggerInvocationUtil;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
-import com.intellij.debugger.ui.*;
+import com.intellij.debugger.ui.DebuggerExpressionComboBox;
+import com.intellij.debugger.ui.EditorEvaluationCommand;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
-import com.intellij.debugger.ui.impl.tree.TreeBuilder;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.debugger.ui.tree.render.ValueLabelRenderer;
-import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.debugger.ui.tree.render.HexRenderer;
-import com.intellij.debugger.ui.tree.DebuggerTreeNode;
-import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.debugger.ui.tree.render.ValueLabelRenderer;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.sun.jdi.*;
 
 import javax.swing.*;
-import javax.swing.event.TreeModelListener;
-import javax.swing.event.TreeModelEvent;
 
 /*
  * Class SetValueAction
@@ -297,7 +293,7 @@ public class SetValueAction extends DebuggerAction {
           final Project project = debuggerContext.getProject();
           DebuggerInvocationUtil.invokeLater(project, new Runnable() {
             public void run() {
-              showEditor(EvaluationManager.getInstance().createExpressionFragment(initialString1), node, debuggerContext, setValueRunnable);
+              showEditor(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, initialString1), node, debuggerContext, setValueRunnable);
             }
           });
         }

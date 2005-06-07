@@ -145,7 +145,7 @@ public class ValueHint {
             final EvaluationContextImpl evaluationContext = debuggerContext.createEvaluationContext();
             final Value value = evaluator.evaluate(evaluationContext);
 
-            TextWithImports text = EvaluationManager.getInstance().createExpressionFragment(myCurrentExpression.getText());
+            TextWithImports text = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myCurrentExpression.getText());
             final WatchItemDescriptor descriptor = new WatchItemDescriptor(myProject, text, value, false);
             descriptor.setContext(evaluationContext);
             if (myType == MOUSE_OVER_HINT) {

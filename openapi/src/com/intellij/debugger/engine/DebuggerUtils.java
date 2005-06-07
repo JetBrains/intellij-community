@@ -345,7 +345,6 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
   public abstract void            writeTextWithImports(Element root, String name, TextWithImports value);
   public abstract TextWithImports readTextWithImports (Element root, String name);
 
-  public abstract TextWithImports    createExpressionText          (PsiExpression expression);
   public abstract TextWithImports    createExpressionWithImports   (String          expression);
 
   public abstract PsiElement getContextElement(final StackFrameContext context);

@@ -38,6 +38,26 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static final int MAX_LABEL_SIZE = 255;
   public static Runnable DO_NOTHING = EmptyRunnable.getInstance();
 
+  /**
+   * @param context
+   * @return all CodeFragmentFactoryProviders that provide code fragment factories sutable in the context given
+   */
+  public static List<CodeFragmentFactory> getCodeFragmentFactories(PsiElement context) {
+    final DefaultCodeFragmentFactory defaultFactry = DefaultCodeFragmentFactory.getInstance();
+    final CodeFragmentFactory[] providers = ApplicationManager.getApplication().getComponents(CodeFragmentFactory.class);
+    final List<CodeFragmentFactory> suitableFactories = new ArrayList<CodeFragmentFactory>(providers.length);
+    if (providers.length > 0) {
+      for (CodeFragmentFactory factory : providers) {
+        if (factory != defaultFactry && factory.isContextAccepted(context)) {
+          suitableFactories.add(factory);
+        }
+      }
+    }
+    suitableFactories.add(defaultFactry); // let default factory be the last one
+    return suitableFactories;
+  }
+
+
   public static PsiMethod findPsiMethod(PsiFile file, int offset) {
     PsiElement element = null;
 
@@ -335,7 +355,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
 
     if(defaultExpression != null) {
-      return EvaluationManager.getInstance().createExpressionFragment(defaultExpression);
+      return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, defaultExpression);
     } else {
       return null;
     }

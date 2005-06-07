@@ -5,8 +5,9 @@
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.actions.DebuggerActions;
-import com.intellij.debugger.engine.evaluation.EvaluationManager;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.impl.PositionUtil;
@@ -62,9 +63,7 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
   }
 
   public void newWatch() {
-    final TextWithImports empty = EvaluationManager.getInstance().getEmptyExpressionFragment();
-    final DebuggerTreeNodeImpl node = getWatchTree().addWatch(empty);
-
+    final DebuggerTreeNodeImpl node = getWatchTree().addWatch(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
     editNode(node);
   }
 

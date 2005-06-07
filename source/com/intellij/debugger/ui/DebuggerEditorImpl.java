@@ -1,5 +1,6 @@
 package com.intellij.debugger.ui;
 
+import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -12,7 +13,6 @@ import com.intellij.psi.PsiFile;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -83,18 +83,16 @@ public abstract class DebuggerEditorImpl extends CompletionEditor {
     if(item == null) {
       item = createText("");
     }
-    PsiCodeFragment codeFragment = item.createCodeFragment(getContext(), getProject());
+    PsiCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(item, getContext(), getProject());
 
     if(myCurrentDocument != null) {
-      for (Iterator<DocumentListener> iterator = myDocumentListeners.iterator(); iterator.hasNext();) {
-        DocumentListener documentListener = iterator.next();
+      for (DocumentListener documentListener : myDocumentListeners) {
         myCurrentDocument.removeDocumentListener(documentListener);
       }
     }
     myCurrentDocument = PsiDocumentManager.getInstance(getProject()).getDocument(codeFragment);
 
-    for (Iterator<DocumentListener> iterator = myDocumentListeners.iterator(); iterator.hasNext();) {
-      DocumentListener documentListener = iterator.next();
+    for (DocumentListener documentListener : myDocumentListeners) {
       myCurrentDocument.addDocumentListener(documentListener);
     }
 

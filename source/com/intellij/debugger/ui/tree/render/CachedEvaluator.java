@@ -1,10 +1,10 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.project.Project;
@@ -25,7 +25,8 @@ public abstract class CachedEvaluator {
     protected ExpressionEvaluator myEvaluator;
     protected EvaluateException   myException;
     protected PsiExpression       myPsiChildrenExpression;
-  };
+  }
+  
   SoftReference<Cache> myCache = new SoftReference<Cache>(null);
   private TextWithImports myReferenceExpression;
 
@@ -53,7 +54,7 @@ public abstract class CachedEvaluator {
       }
       final PsiType contextType = DebuggerUtils.getType(getClassName(), project);
       cache.myPsiChildrenExpression = null;
-      PsiCodeFragment codeFragment = myReferenceExpression.createCodeFragment(contextClass, project);
+      PsiCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(myReferenceExpression, contextClass, project);
       codeFragment.setThisType(contextType);
       DebuggerUtils.checkSyntax(codeFragment);
       cache.myPsiChildrenExpression = ((PsiExpressionCodeFragment)codeFragment).getExpression();

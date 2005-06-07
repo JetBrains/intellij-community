@@ -62,7 +62,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     Element element = new Element("TextWithImports");
 
     element.setAttribute("text", text.toString());
-    element.setAttribute("type", text.isExpressionText() ? "expression" : "code fragment");
+    element.setAttribute("type", text.getKind() == CodeFragmentKind.EXPRESSION ? "expression" : "code fragment");
     return element;
   }
 
@@ -71,30 +71,25 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
 
     String text = element.getAttributeValue("text");
     if ("expression".equals(element.getAttributeValue("type"))) {
-      return EvaluationManager.getInstance().createExpressionFragment(text);
+      return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, text);
     } else {
-      return EvaluationManager.getInstance().createCodeBlockFragment(text);
+      return new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, text);
     }
   }
 
   public void writeTextWithImports(Element root, String name, TextWithImports value) {
-    LOG.assertTrue(value.isExpressionText());
+    LOG.assertTrue(value.getKind() == CodeFragmentKind.EXPRESSION);
     JDOMExternalizerUtil.writeField(root, name, value.toString());
   }
 
   public TextWithImports readTextWithImports(Element root, String name) {
     String s = JDOMExternalizerUtil.readField(root, name);
     if(s == null) return null;
-    return EvaluationManager.getInstance().createExpressionFragment(s);
-  }
-
-  public TextWithImports createExpressionText(PsiExpression expression) {
-    LOG.assertTrue(expression.isValid());
-    return EvaluationManager.getInstance().createExpressionFragment(expression);
+    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, s);
   }
 
   public TextWithImports createExpressionWithImports(String expression) {
-    return EvaluationManager.getInstance().createExpressionFragment(expression);
+    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression);
   }
 
   public PsiElement getContextElement(StackFrameContext context) {
@@ -111,7 +106,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     return new DebuggerExpressionComboBox(project, context, recentsId);
   }
 
-  private static final int findAvailableSocketPort() throws ExecutionException {
+  private static int findAvailableSocketPort() throws ExecutionException {
     int port;
     try {
       final ServerSocket serverSocket = new ServerSocket(0);

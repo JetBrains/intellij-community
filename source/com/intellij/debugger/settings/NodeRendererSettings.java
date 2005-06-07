@@ -14,7 +14,6 @@ import org.jdom.Element;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Iterator;
 
 /**
  * User: lex
@@ -79,8 +78,8 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
   }
   
   public void setAlternateCollectionViewsEnabled(boolean enabled) {
-    for (int idx = 0; idx < myAlternateCollectionRenderers.length; idx++) {
-      myAlternateCollectionRenderers[idx].setEnabled(enabled);
+    for (NodeRenderer myAlternateCollectionRenderer : myAlternateCollectionRenderers) {
+      myAlternateCollectionRenderer.setEnabled(enabled);
     }
   }
 
@@ -140,8 +139,8 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
     }
 
     final List rendererElements = root.getChildren(RENDERER_TAG);
-    for (Iterator it = rendererElements.iterator(); it.hasNext();) {
-      final Element elem = (Element)it.next();
+    for (final Object rendererElement : rendererElements) {
+      final Element elem = (Element)rendererElement;
       final String id = elem.getAttributeValue(RENDERER_ID);
       if (id == null) {
         continue;
@@ -221,8 +220,8 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
         return true;
       }
     });
-    for (int idx = 0; idx < myAlternateCollectionRenderers.length; idx++) {
-      allRenderers.add(myAlternateCollectionRenderers[idx]);
+    for (NodeRenderer myAlternateCollectionRenderer : myAlternateCollectionRenderers) {
+      allRenderers.add(myAlternateCollectionRenderer);
     }
     allRenderers.add(myToStringRenderer);
     allRenderers.add(myArrayRenderer);
@@ -308,9 +307,9 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
 
   private ExpressionChildrenRenderer createExpressionChildrenRenderer(String expressionText, String childrenExpandableText) {
     final ExpressionChildrenRenderer childrenRenderer = new ExpressionChildrenRenderer();
-    childrenRenderer.setChildrenExpression(EvaluationManager.getInstance().createExpressionFragment(expressionText));
+    childrenRenderer.setChildrenExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText));
     if (childrenExpandableText != null) {
-      childrenRenderer.setChildrenExpandable(EvaluationManager.getInstance().createExpressionFragment(childrenExpandableText));
+      childrenRenderer.setChildrenExpandable(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, childrenExpandableText));
     }
     return childrenRenderer;
   }
@@ -319,9 +318,8 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
     final EnumerationChildrenRenderer childrenRenderer = new EnumerationChildrenRenderer();
     if (expressions != null && expressions.length > 0) {
       final ArrayList<Pair<String, TextWithImports>> childrenList = new ArrayList<Pair<String, TextWithImports>>(expressions.length);
-      for (int idx = 0; idx < expressions.length; idx++) {
-        final String[] expression = expressions[idx];
-        childrenList.add(new Pair<String, TextWithImports>(expression[0], EvaluationManager.getInstance().createExpressionFragment(expression[1])));
+      for (final String[] expression : expressions) {
+        childrenList.add(new Pair<String, TextWithImports>(expression[0], new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression[1])));
       }
       childrenRenderer.setChildren(childrenList);
     }
@@ -344,7 +342,7 @@ public class NodeRendererSettings implements ApplicationComponent, NamedJDOMExte
         return evaluated + postfix;
       }
     };
-    labelRenderer.setLabelExpression(EvaluationManager.getInstance().createExpressionFragment(expressionText));
+    labelRenderer.setLabelExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText));
     return labelRenderer;
   }
 

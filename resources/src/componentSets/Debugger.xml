@@ -20,10 +20,6 @@
       <interface-class>com.intellij.j2ee.deployment.JspDeploymentManager</interface-class>
       <implementation-class>com.intellij.debugger.impl.JspDeploymentManagerImpl</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.debugger.engine.evaluation.EvaluationManager</interface-class>
-      <implementation-class>com.intellij.debugger.engine.evaluation.EvaluationManagerImpl</implementation-class>
-    </component>
     <!--standard breakpoint factories -->
     <component>
       <implementation-class>com.intellij.debugger.ui.breakpoints.LineBreakpointFactory</implementation-class>
@@ -39,6 +35,9 @@
     </component>
     <component>
       <implementation-class>com.intellij.debugger.ui.breakpoints.MethodBreakpointFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory</implementation-class>
     </component>
   </application-components>
 

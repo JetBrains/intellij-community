@@ -5,8 +5,9 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.evaluation.EvaluationManager;
+import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.debugger.ui.tree.render.*;
@@ -299,7 +300,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
   }
 
   public void reset() {
-    final TextWithImports emptyExpressionFragment = EvaluationManager.getInstance().getEmptyExpressionFragment();
+    final TextWithImports emptyExpressionFragment = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
     ((CardLayout)myMainPanel.getLayout()).show(myMainPanel, myRenderer == null? EMPTY_PANEL_ID : DATA_PANEL_ID);
     if (myRenderer == null) {
       return;
@@ -473,7 +474,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
       }
 
       public Row() {
-        this("", EvaluationManager.getInstance().getEmptyExpressionFragment());
+        this("", new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
       }
     }
   }

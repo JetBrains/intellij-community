@@ -47,7 +47,7 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
 
   public FilteredRequestor(Project project) {
     myProject = project;
-    myCondition = EvaluationManager.getInstance().getEmptyExpressionFragment();
+    myCondition = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
   }
 
   public InstanceFilter[] getInstanceFilters() {
@@ -98,7 +98,7 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
     DefaultJDOMExternalizer.readExternal(this, parentNode);
     String condition = JDOMExternalizerUtil.readField(parentNode, CONDITION_OPTION_NAME);
     if (condition != null) {
-      setCondition(EvaluationManager.getInstance().createExpressionFragment(condition));
+      setCondition(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, condition));
     }
 
     myClassFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(FILTER_OPTION_NAME));

@@ -1,9 +1,6 @@
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.engine.evaluation.EvaluationManagerImpl;
-import com.intellij.debugger.engine.evaluation.EvaluationManager;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -16,8 +13,6 @@ import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 
 import javax.swing.*;
-import javax.swing.event.PopupMenuListener;
-import javax.swing.event.PopupMenuEvent;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -104,9 +99,8 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     if(getRecentsId() != null) {
       LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
       ArrayList<TextWithImports> singleLine = new ArrayList<TextWithImports>();
-      for (Iterator<TextWithImports> iterator = recents.iterator(); iterator.hasNext();) {
-        TextWithImports evaluationText = iterator.next();
-        if(evaluationText.getText().indexOf('\n') == -1) {
+      for (TextWithImports evaluationText : recents) {
+        if (evaluationText.getText().indexOf('\n') == -1) {
           singleLine.add(evaluationText);
         }
       }
@@ -138,12 +132,11 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     }
 
   public TextWithImports createText(String text, String importsString) {
-    return new TextWithImportsImpl(EvaluationManagerImpl.EXPRESSION_FACTORY, text, importsString);
+    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, text, importsString);
   }
 
   private void addRecents(List<TextWithImports> expressions) {
-    for (Iterator<TextWithImports> iterator = expressions.iterator(); iterator.hasNext();) {
-      final TextWithImports text = iterator.next();
+    for (final TextWithImports text : expressions) {
       myComboBox.addItem(text);
     }
     if (myComboBox.getItemCount() > 0) {
@@ -164,7 +157,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
     setLayout(new BorderLayout());
     add(myComboBox);
 
-    setText(EvaluationManager.getInstance().createExpressionFragment(""));
+    setText(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
     myItem =  createText("");
     setEnabled(true);
   }

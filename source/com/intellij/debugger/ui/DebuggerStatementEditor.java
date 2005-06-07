@@ -1,9 +1,8 @@
 package com.intellij.debugger.ui;
 
+import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
-import com.intellij.debugger.engine.evaluation.EvaluationManagerImpl;
-import com.intellij.debugger.engine.evaluation.EvaluationManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -77,13 +76,13 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
     add(ActionManager.getInstance().createActionToolbar(ActionPlaces.COMBO_PAGER, actionGroup, false).getComponent(),
         BorderLayout.EAST);
 
-    setText(EvaluationManager.getInstance().getEmptyExpressionFragment());
+    setText(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
   }
 
   private void updateTextFromRecents() {
     LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
     LOG.assertTrue(myRecentIdx <= recents.size());
-    setText(myRecentIdx < recents.size() ? recents.get(myRecentIdx) : EvaluationManager.getInstance().getEmptyExpressionFragment());
+    setText(myRecentIdx < recents.size() ? recents.get(myRecentIdx) : new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -99,7 +98,7 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
   }
 
   public TextWithImports createText(String text, String importsString) {
-    return new TextWithImportsImpl(EvaluationManagerImpl.CODE_BLOCK_FACTORY, text, importsString);
+    return new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, text, importsString);
   }
 
   private static abstract class ItemAction extends AnAction {
