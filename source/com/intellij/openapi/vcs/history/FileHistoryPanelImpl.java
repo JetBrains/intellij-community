@@ -56,7 +56,7 @@ import java.util.List;
 /**
  * author: lesya
  */
-public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
+public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton implements FileHistoryPanel{
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.ui.FileHistoryDialog");
 
   private JTextArea myComments;
@@ -137,11 +137,11 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
   private Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = new HashMap<VcsFileRevision, VirtualFile>();
 
 
-  public FileHistoryPanel(Project project,
-                          FilePath filePath,
-                          VcsHistorySession session,
-                          AbstractVcs vcs,
-                          ContentManager contentManager) {
+  public FileHistoryPanelImpl(Project project,
+                              FilePath filePath,
+                              VcsHistorySession session,
+                              AbstractVcs vcs,
+                              ContentManager contentManager) {
     super(contentManager, vcs.getVcsHistoryProvider().getHelpId());
     myVcs = vcs;
     myProject = project;
@@ -455,12 +455,7 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
     }
     result.add(new AnAction("Refresh", "Refresh file history", IconLoader.getIcon("/actions/sync.png")) {
                  public void actionPerformed(AnActionEvent e) {
-                   try {
-                     refresh(getHistoryProvider().createSessionFor(myFilePath));
-                   }
-                   catch (VcsException e1) {
-                     Messages.showErrorDialog("Cannot refresh: " + e1.getLocalizedMessage(), "Refresh");
-                   }
+                   refresh();
 
                  }
                });
@@ -470,6 +465,15 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
     }
 
     return result;
+  }
+
+  public void refresh() {
+    try {
+      refresh(getHistoryProvider().createSessionFor(myFilePath));
+    }
+    catch (VcsException e1) {
+      Messages.showErrorDialog("Cannot refresh: " + e1.getLocalizedMessage(), "Refresh");
+    }
   }
 
   private boolean supportsTree() {
@@ -497,7 +501,7 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
 
   private class MyDiffAction extends AbstractActionForSomeSelection {
     public MyDiffAction() {
-      super("Compare", "Compare versions", "diff", 2, FileHistoryPanel.this);
+      super("Compare", "Compare versions", "diff", 2, FileHistoryPanelImpl.this);
     }
 
     protected void actionPerformed() {
@@ -518,7 +522,7 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
 
   private class MyDiffWithCurrentAction extends AbstractActionForSomeSelection {
     public MyDiffWithCurrentAction() {
-      super("Compare with Local", "Compare with local version", "diffWithCurrent", 1, FileHistoryPanel.this);
+      super("Compare with Local", "Compare with local version", "diffWithCurrent", 1, FileHistoryPanelImpl.this);
     }
 
     protected void actionPerformed() {
@@ -536,7 +540,7 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
 
   private class MyGetVersionAction extends AbstractActionForSomeSelection {
     public MyGetVersionAction() {
-      super("Get", "Get version from cvs", "get", 1, FileHistoryPanel.this);
+      super("Get", "Get version from cvs", "get", 1, FileHistoryPanelImpl.this);
     }
 
     public void update(AnActionEvent e) {
@@ -749,6 +753,9 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
         return null;
       }
     }
+    else if (VcsDataConstants.FILE_HISTORY_PANEL.equals(dataId)) {
+      return this;
+    }
     else {
       return null;
     }
@@ -831,13 +838,13 @@ public class FileHistoryPanel extends PanelWithActionsAndCloseButton {
 
   abstract class AbstractActionForSomeSelection extends AnAction {
     private final int mySuitableSelectedElements;
-    private final FileHistoryPanel mySelectionProvider;
+    private final FileHistoryPanelImpl mySelectionProvider;
 
     public AbstractActionForSomeSelection(String name,
                                           String description,
                                           String iconName,
                                           int suitableSelectionSize,
-                                          FileHistoryPanel tableProvider) {
+                                          FileHistoryPanelImpl tableProvider) {
       super(name, description, IconLoader.getIcon("/actions/" + iconName + ".png"));
       mySuitableSelectedElements = suitableSelectionSize;
       mySelectionProvider = tableProvider;

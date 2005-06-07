@@ -11,4 +11,5 @@ public interface VcsDataConstants {
   String VCS_VIRTUAL_FILE = "VCS_VIRTUAL_FILE";
   String FILE_PATH = "FILE_PATH";
   String FILE_PATH_ARRAY = "FILE_PATH_ARRAY";
+  String FILE_HISTORY_PANEL = "FILE_HISTORY_PANEL";
 }

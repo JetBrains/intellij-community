@@ -8,10 +8,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
-import com.intellij.openapi.vcs.history.FileHistoryPanel;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsHistoryProvider;
-import com.intellij.openapi.vcs.history.VcsHistorySession;
+import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -95,8 +92,8 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
 
       ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).getContentManager();
 
-      FileHistoryPanel fileHistoryPanel = new FileHistoryPanel(project,
-                                                               path, session, activeVcs, contentManager);
+      FileHistoryPanelImpl fileHistoryPanel = new FileHistoryPanelImpl(project,
+                                                                                                    path, session, activeVcs, contentManager);
       Content content = PeerFactory.getInstance().getContentFactory().createContent(fileHistoryPanel, actionName, true);
       contentManager.addContent(content);
 
