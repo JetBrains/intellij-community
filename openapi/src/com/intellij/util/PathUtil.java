@@ -17,6 +17,7 @@ import java.util.Stack;
 import java.util.StringTokenizer;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -66,7 +67,7 @@ public class PathUtil {
       return null;
     }
     try {
-      ZipEntry entry = manifestJarFile.getEntry("META-INF/MANIFEST.MF");
+      ZipEntry entry = manifestJarFile.getEntry(JarFile.MANIFEST_NAME);
       if (entry == null) {
         return null;
       }
