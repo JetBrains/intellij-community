@@ -26,10 +26,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
@@ -265,6 +262,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       Object element = elements[i];
       if (element instanceof PsiElement) {
         result.add((PsiElement)element);
+      } else if (element instanceof SmartPsiElementPointer){
+        result.add(((SmartPsiElementPointer)element).getElement());
       }
     }
     return result.isEmpty() ? null : result.toArray(new PsiElement[result.size()]);
@@ -305,7 +304,9 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         return null;
       }
       final PsiElement psiElement;
-      if (elements[0] instanceof PsiElement) {
+      if (elements[0] instanceof SmartPsiElementPointer){
+        psiElement = ((SmartPsiElementPointer)elements[0]).getElement();
+      } else if (elements[0] instanceof PsiElement) {
         psiElement = (PsiElement)elements[0];
       }
       else if (elements[0] instanceof PackageElement) {
@@ -416,7 +417,11 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     for (int i = 0; i < selectedNodeDescriptors.length; i++) {
       FavoritesTreeNodeDescriptor selectedNodeDescriptor = selectedNodeDescriptors[i];
       if (selectedNodeDescriptor != null) {
-        result.add(selectedNodeDescriptor.getElement().getValue());
+        Object value = selectedNodeDescriptor.getElement().getValue();
+        if (value instanceof SmartPsiElementPointer){
+          value = ((SmartPsiElementPointer)value).getElement();
+        }
+        result.add(value);
       }
     }
     return result.toArray(new Object[result.size()]);
