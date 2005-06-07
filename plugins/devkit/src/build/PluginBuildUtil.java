@@ -32,6 +32,7 @@ public class PluginBuildUtil {
       return null;
     }
     String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
+    if (sandboxHome == null) return null;
     try {
       sandboxHome = new File(sandboxHome).getCanonicalPath();
     }
