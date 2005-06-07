@@ -15,9 +15,9 @@ public class SshPasswordDialog extends DialogWrapper{
   private JLabel myLabel;
 
 
-  public SshPasswordDialog(String cvsRoot) {
+  public SshPasswordDialog(String cvsRoot, final String request) {
     super(true);
-    myLabel.setText("Enter password for " + cvsRoot);
+    myLabel.setText(request + cvsRoot);
     setTitle("SSH Password");
     init();
   }

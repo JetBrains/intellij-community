@@ -13,7 +13,6 @@ import java.awt.event.ActionListener;
  * author: lesya
  */
 public class SshConnectionSettingsPanel {
-  private JPasswordField myPrivateKeyFilePassphrase;
   private TextFieldWithBrowseButton myPathToPrivateKeyFile;
   private JCheckBox myUsePrivateKeyFile;
   private JRadioButton myForceSSH2;
@@ -42,7 +41,6 @@ public class SshConnectionSettingsPanel {
   public void updateFrom(SshSettings ssh_configuration) {
     myUsePrivateKeyFile.setSelected(ssh_configuration.USE_PPK);
     myPathToPrivateKeyFile.setText(ssh_configuration.PATH_TO_PPK);
-    myPrivateKeyFilePassphrase.setText(ssh_configuration.PPK_PASSPHRASE);
     myPort.setText(ssh_configuration.PORT);
 
     ButtonGroup buttonGroup = new ButtonGroup();
@@ -66,11 +64,9 @@ public class SshConnectionSettingsPanel {
   private void setPathToPPKEnabled() {
     if (!myUsePrivateKeyFile.isSelected()) {
       myPathToPrivateKeyFile.setEnabled(false);
-      myPrivateKeyFilePassphrase.setEnabled(false);
     }
     else {
       myPathToPrivateKeyFile.setEnabled(true);
-      myPrivateKeyFilePassphrase.setEnabled(true);
 
     }
   }
@@ -81,7 +77,6 @@ public class SshConnectionSettingsPanel {
     }
     ssh_configuration.USE_PPK = myUsePrivateKeyFile.isSelected();
     ssh_configuration.PATH_TO_PPK = myPathToPrivateKeyFile.getText().trim();
-    ssh_configuration.PPK_PASSPHRASE = new String(myPrivateKeyFilePassphrase.getPassword());
     ssh_configuration.PORT = myPort.getText().trim();
     ssh_configuration.SSH_TYPE = getSelectedSshType();
   }
@@ -102,7 +97,6 @@ public class SshConnectionSettingsPanel {
   public boolean equalsTo(SshSettings ssh_configuration) {
     if (ssh_configuration.USE_PPK != myUsePrivateKeyFile.isSelected()) return false;
     if (!ssh_configuration.PATH_TO_PPK.equals(myPathToPrivateKeyFile.getText().trim())) return false;
-    if (!ssh_configuration.PPK_PASSPHRASE.equals(new String(myPrivateKeyFilePassphrase.getPassword()))) return false;
     if (!ssh_configuration.PORT.equals(myPort.getText().trim())) return false;
 
     return ssh_configuration.SSH_TYPE == getSelectedSshType();

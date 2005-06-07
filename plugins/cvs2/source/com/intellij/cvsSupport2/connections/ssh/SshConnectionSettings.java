@@ -97,7 +97,7 @@ public class SshConnectionSettings extends CvsConnectionSettings {
     if (sshConfiguration.USE_PPK) {
       return new SshPublicKeyMaverickConnection(connectionSettings, settings.USER,
                                                 new File(sshConfiguration.PATH_TO_PPK),
-                                                sshConfiguration.PPK_PASSPHRASE,
+                                                SSHPasswordProvider.getInstance().getPPKPasswordForCvsRoot(settings.getCvsRootAsString()),
                                                 sshConfiguration.SSH_TYPE,
                                                 new PublicKeyVerification() {
                                                   public boolean allowsPublicKey(String host,
@@ -137,7 +137,7 @@ public class SshConnectionSettings extends CvsConnectionSettings {
       String password = sshPasswordProvider.getPasswordForCvsRoot(cvsRoot);
 
       if (password == null) {
-        SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(cvsRoot);
+        SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(cvsRoot, "Enter password for ");
         sshPasswordDialog.show();
         if (!sshPasswordDialog.isOK()) return false;
         password = sshPasswordDialog.getPassword();
@@ -145,6 +145,20 @@ public class SshConnectionSettings extends CvsConnectionSettings {
       }
 
       if (password == null) return false;
+    } else {
+      SSHPasswordProvider sshPasswordProvider = SSHPasswordProvider.getInstance();
+      String password = sshPasswordProvider.getPPKPasswordForCvsRoot(cvsRoot);
+
+      if (password == null) {
+        SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(cvsRoot, "Enter PPK password for ");
+        sshPasswordDialog.show();
+        if (!sshPasswordDialog.isOK()) return false;
+        password = sshPasswordDialog.getPassword();
+        sshPasswordProvider.storePPKPasswordForCvsRoot(cvsRoot, password, sshPasswordDialog.saveThisPassword());
+      }
+
+      if (password == null) return false;
+
     }
 
     return true;
@@ -175,10 +189,13 @@ public class SshConnectionSettings extends CvsConnectionSettings {
         Messages.showMessageDialog(e.getLocalizedMessage(),
                                    "Cannot Connect", Messages.getErrorIcon());
 
-        if (getSshConfiguration().USE_PPK) return false;
-        SSHPasswordProvider.getInstance().removePasswordFor(myStringRepsentation);
-        return login(executor);
-
+        if (getSshConfiguration().USE_PPK) {
+          SSHPasswordProvider.getInstance().removePPKPasswordFor(myStringRepsentation);
+          return login(executor);
+        } else {
+          SSHPasswordProvider.getInstance().removePasswordFor(myStringRepsentation);
+          return login(executor);
+        }
       } else {
         Messages.showMessageDialog(e.getLocalizedMessage(),
                                    "Cannot Connect", Messages.getErrorIcon());
