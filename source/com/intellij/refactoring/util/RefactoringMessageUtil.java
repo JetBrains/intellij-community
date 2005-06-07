@@ -10,9 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class RefactoringMessageUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.RefactoringMessageUtil");
@@ -27,125 +25,106 @@ public class RefactoringMessageUtil {
   }
 
   public static boolean checkReadOnlyStatus(PsiElement element, Project project, String messagePrefix) {
-    return checkReadOnlyStatus(element, project, messagePrefix, false);
+    return checkReadOnlyStatus(Collections.singleton(element), project, messagePrefix, false);
   }
 
-  public static boolean checkReadOnlyStatusRecursively (Project project, PsiElement element) {
+  public static boolean checkReadOnlyStatusRecursively (Project project, Collection<PsiElement> element) {
     return checkReadOnlyStatus(element, project, "Refactoring cannot be performed", true);
   }
 
-  private static boolean checkReadOnlyStatus(PsiElement element,
-                                            Project project,
-                                            final String messagePrefix,
-                                            boolean recursively
+  private static boolean checkReadOnlyStatus(Collection<PsiElement> elements,
+                                             Project project,
+                                             final String messagePrefix,
+                                             boolean recursively
     ) {
-    if (element instanceof PsiDirectory) {
-      PsiDirectory dir = (PsiDirectory)element;
-      final VirtualFile vFile = dir.getVirtualFile();
-      if (vFile.getFileSystem() instanceof JarFileSystem) {
-        String message1 = messagePrefix + ".\n Directory " + vFile.getPresentableUrl() + " is located in a jar file.";
-        showErrorMessage("Cannot Modify Jar", message1, null, project);
-        return false;
-      }
-      else {
-        VirtualFile[] vFiles;
-        if (recursively) {
-          List<VirtualFile> list = new ArrayList<VirtualFile>();
-          addVirtualFiles(vFile, list);
-          vFiles = list.toArray(new VirtualFile[list.size()]);
-        } else vFiles = new VirtualFile[]{vFile};
-        final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(vFiles);
-        final VirtualFile[] readonlyFiles = status.getReadonlyFiles();
-        if (readonlyFiles.length > 0) {
-          String subj = readonlyFiles[0].isDirectory() ? "Directory" : "File";
-          String message1 = messagePrefix + ".\n " + subj + " " + readonlyFiles[0].getPresentableUrl() + " is read-only.";
-          showErrorMessage("Read-only " + subj, message1, null, project);
-          return false;
-        }
-        return true;
-      }
-    }
-    else if (element instanceof PsiPackage) {
-      final PsiDirectory[] directories = ((PsiPackage) element).getDirectories();
-      final List<VirtualFile> readonlyList = new ArrayList<VirtualFile>();
-      final List<VirtualFile> failedDirs = new ArrayList<VirtualFile>();
-      for (PsiDirectory directory : directories) {
-        VirtualFile virtualFile = directory.getVirtualFile();
-        if (recursively) {
-          if (virtualFile.getFileSystem() instanceof JarFileSystem) {
-            failedDirs.add(virtualFile);
-          }
-          else {
-            addVirtualFiles(virtualFile, readonlyList);
-          }
+    //Not writable, but could be checked out
+    final List<VirtualFile> readonly = new ArrayList<VirtualFile>();
+    //Those located in jars
+    final List<VirtualFile> failed = new ArrayList<VirtualFile>();
+
+    for (PsiElement element : elements) {
+      if (element.isWritable()) continue;
+
+      if (element instanceof PsiDirectory) {
+        PsiDirectory dir = (PsiDirectory)element;
+        final VirtualFile vFile = dir.getVirtualFile();
+        if (vFile.getFileSystem() instanceof JarFileSystem) {
+          /*String message1 = messagePrefix + ".\n Directory " + vFile.getPresentableUrl() + " is located in a jar file.";
+         showErrorMessage("Cannot Modify Jar", message1, null, project);
+         return false;*/
+          failed.add(vFile);
         }
         else {
-          if (!directory.isWritable()) {
+          if (recursively) {
+            addVirtualFiles(vFile, readonly);
+
+          }
+          else {
+            readonly.add(vFile);
+          }
+        }
+      }
+      else if (element instanceof PsiPackage) {
+        final PsiDirectory[] directories = ((PsiPackage)element).getDirectories();
+        for (PsiDirectory directory : directories) {
+          VirtualFile virtualFile = directory.getVirtualFile();
+          if (recursively) {
             if (virtualFile.getFileSystem() instanceof JarFileSystem) {
-              failedDirs.add(virtualFile);
+              failed.add(virtualFile);
             }
             else {
-              readonlyList.add(virtualFile);
+              addVirtualFiles(virtualFile, readonly);
+            }
+          }
+          else {
+            if (!directory.isWritable()) {
+              if (virtualFile.getFileSystem() instanceof JarFileSystem) {
+                failed.add(virtualFile);
+              }
+              else {
+                readonly.add(virtualFile);
+              }
             }
           }
         }
       }
-      final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readonlyList.toArray(new VirtualFile[readonlyList.size()]));
-      failedDirs.addAll(Arrays.asList(status.getReadonlyFiles()));
-      if (failedDirs.size() > 0) {
-        StringBuffer message = new StringBuffer(messagePrefix);
-        message.append('\n');
-        for (VirtualFile virtualFile : failedDirs) {
-          final String presentableUrl = virtualFile.getPresentableUrl();
-          final String subj = virtualFile.isDirectory() ? "Directory " : "File ";
-          if (virtualFile.getFileSystem() instanceof JarFileSystem) {
-            message.append(subj + presentableUrl + " is located in a jar file.\n");
-          }
-          else {
-            message.append(subj + presentableUrl + " is read-only.\n");
-          }
+      else if (element instanceof PsiCompiledElement) {
+        final PsiFile file = element.getContainingFile();
+        if (file != null) {
+          failed.add(file.getVirtualFile());
         }
-        return false;
-      }
-      return true;
-    }
-    else if (element instanceof PsiCompiledElement) {
-      PsiFile file = element.getContainingFile();
-      String qName = ((PsiJavaFile)file).getClasses()[0].getQualifiedName();
-      showErrorMessage("Compiled Class", messagePrefix + " on compiled class " + qName + ".", null, project);
-      return false;
-    }
-    else{
-      PsiFile file = element.getContainingFile();
-      if (file == null) {
-
-        if (element instanceof PsiVariable) {
-          String message1 = "Variable " + element.getText() + " cannot be renamed.";
-          showErrorMessage("Read-only entity", message1, null, project);
-        }
-        else {
-          String message1 = "Cannot rename " + element.getText() + ".";
-          showErrorMessage("Read-only entity", message1, null, project);
-        }
-
-        return false;
-      }
-      VirtualFile vFile = file.getVirtualFile();
-      if (vFile.getFileSystem() instanceof JarFileSystem) {
-        String message1 = messagePrefix + ".\n File " + vFile.getPresentableUrl() + " is located in a jar file.";
-        showErrorMessage("Cannot Modify Jar", message1, null, project);
-        return false;
       }
       else {
-        final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[]{vFile});
-        if (status.hasReadonlyFiles()) {
-          String message1 = messagePrefix + ".\n File " + vFile.getPresentableUrl() + " is read-only.";
-          showErrorMessage("Read-only File", message1, null, project);
-          return false;
+        PsiFile file = element.getContainingFile();
+        if (!file.isWritable()) {
+          final VirtualFile vFile = file.getVirtualFile();
+          if (vFile != null) {
+            readonly.add(vFile);
+          }
         }
-        return true;
       }
     }
+
+    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
+      .ensureFilesWritable(readonly.toArray(new VirtualFile[readonly.size()]));
+    failed.addAll(Arrays.asList(status.getReadonlyFiles()));
+    if (failed.size() > 0) {
+      StringBuffer message = new StringBuffer(messagePrefix);
+      message.append('\n');
+      for (VirtualFile virtualFile : failed) {
+        final String presentableUrl = virtualFile.getPresentableUrl();
+        final String subj = virtualFile.isDirectory() ? "Directory " : "File ";
+        if (virtualFile.getFileSystem() instanceof JarFileSystem) {
+          message.append(subj + presentableUrl + " is located in a jar file.\n");
+        }
+        else {
+          message.append(subj + presentableUrl + " is read-only.\n");
+        }
+      }
+      return false;
+    }
+
+    return true;
   }
 
   private static void addVirtualFiles(final VirtualFile vFile, final List<VirtualFile> list) {
@@ -181,7 +160,7 @@ public class RefactoringMessageUtil {
     if (method != null && method != refactoredMethod) {
       String methodInfo = PsiFormatUtil.formatMethod(
         method,
-          PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+        PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
         PsiFormatUtil.SHOW_TYPE
       );
       if (scope instanceof PsiClass) {
@@ -201,7 +180,7 @@ public class RefactoringMessageUtil {
           if (!method.hasModifierProperty(PsiModifier.PRIVATE)) {
             String protoMethodInfo = PsiFormatUtil.formatMethod(
               prototype,
-                PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+              PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
               PsiFormatUtil.SHOW_TYPE
             );
             String className = method.getContainingClass().getName();

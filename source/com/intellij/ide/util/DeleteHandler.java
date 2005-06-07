@@ -24,11 +24,12 @@ import com.intellij.util.io.ReadOnlyAttributeUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class DeleteHandler {
   public static class DefaultDeleteProvider implements DeleteProvider {
     public boolean canDeleteElement(DataContext dataContext) {
-      if ((Project)dataContext.getData(DataConstants.PROJECT) == null) return false;
+      if (dataContext.getData(DataConstants.PROJECT) == null) return false;
       final PsiElement[] elements = getPsiElements(dataContext);
       if (elements == null) return false;
       return DeleteHandler.shouldEnableDeleteAction(elements);
@@ -82,9 +83,7 @@ public class DeleteHandler {
     if (safeDeleteApplicable) {
       DeleteDialog dialog = new DeleteDialog(project, elements, new DeleteDialog.Callback() {
         public void run(final DeleteDialog dialog) {
-          for (int i = 0; i < elements.length; i++) {
-            if (!RefactoringMessageUtil.checkReadOnlyStatusRecursively(project, elements[i])) return;
-          }
+          if (!RefactoringMessageUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements))) return;
           SafeDeleteProcessor.createInstance(project, new Runnable() {
             public void run() {
               dialog.close(DeleteDialog.CANCEL_EXIT_CODE);
@@ -103,8 +102,7 @@ public class DeleteHandler {
 
       boolean anyDirectories = false;
       String directoryName = null;
-      for (int i = 0; i < elementsToDelete.length; i++) {
-        PsiElement psiElement = elementsToDelete[i];
+      for (PsiElement psiElement : elementsToDelete) {
         if (psiElement instanceof PsiDirectory) {
           anyDirectories = true;
           directoryName = ((PsiDirectory)psiElement).getName();
@@ -246,16 +244,15 @@ public class DeleteHandler {
     }
     if (file.isDirectory()) {
       VirtualFile[] children = file.getChildren();
-      for (int i = 0; i < children.length; i++) {
-        getReadOnlyVirtualFiles(children[i], readOnlyFiles);
+      for (VirtualFile child : children) {
+        getReadOnlyVirtualFiles(child, readOnlyFiles);
       }
     }
   }
 
   public static boolean shouldEnableDeleteAction(PsiElement[] elements) {
     if (elements == null || elements.length == 0) return false;
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
+    for (PsiElement element : elements) {
       if (element instanceof PsiCompiledElement) {
         return false;
       }

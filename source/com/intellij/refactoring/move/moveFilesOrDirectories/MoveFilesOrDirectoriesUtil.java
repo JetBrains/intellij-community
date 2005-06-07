@@ -16,6 +16,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.HashSet;
+import java.util.Arrays;
 
 public class MoveFilesOrDirectoriesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil");
@@ -43,23 +44,13 @@ public class MoveFilesOrDirectoriesUtil {
    * @param elements should contain PsiDirectories or PsiFiles only
    */
   public static void doMove(final Project project, final PsiElement[] elements, PsiDirectory initialTargetElement, final MoveCallback moveCallback) {
-    for (int idx = 0; idx < elements.length; idx++) {
-      PsiElement element = elements[idx];
-      if (element instanceof PsiDirectory) {
-        PsiPackage aPackage = ((PsiDirectory)element).getPackage();
-        LOG.assertTrue(aPackage == null);
-        if (!RefactoringMessageUtil.checkReadOnlyStatusRecursively(project, element)) return;
-      }
-      else if (element instanceof PsiFile) {
-        PsiFile aFile = (PsiFile)element;
-        if (!aFile.isWritable()) {
-          if (!RefactoringMessageUtil.checkReadOnlyStatus(project, aFile)) return;
-        }
-      }
-      else {
+    for (PsiElement element : elements) {
+      if (!(element instanceof PsiFile) && !(element instanceof PsiDirectory)) {
         throw new IllegalArgumentException("unexpected element type: " + element);
       }
     }
+
+    if (!RefactoringMessageUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements))) return;
 
     final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(initialTargetElement, elements);
 
@@ -113,17 +104,16 @@ public class MoveFilesOrDirectoriesUtil {
   private static PsiDirectory getCommonDirectory(PsiElement[] movedElements) {
     PsiDirectory commonDirectory = null;
 
-    for (int i = 0; i < movedElements.length; i++) {
-      PsiElement movedElement = movedElements[i];
+    for (PsiElement movedElement : movedElements) {
       final PsiFile containingFile = movedElement.getContainingFile();
-      if(containingFile != null) {
+      if (containingFile != null) {
         final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
-        if(containingDirectory != null) {
-          if(commonDirectory == null) {
+        if (containingDirectory != null) {
+          if (commonDirectory == null) {
             commonDirectory = containingDirectory;
           }
           else {
-            if(commonDirectory != containingDirectory) {
+            if (commonDirectory != containingDirectory) {
               return null;
             }
           }
@@ -169,17 +159,16 @@ public class MoveFilesOrDirectoriesUtil {
     if (elements == null) {
       throw new IllegalArgumentException("elements cannot be null");
     }
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
-      if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile &&!(element instanceof JspFile))) {
+    for (PsiElement element : elements) {
+      if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile && !(element instanceof JspFile))) {
         return false;
       }
     }
 
     // the second 'for' statement is for effectivity - to prevent creation of the 'names' array
     HashSet<String> names = new HashSet<String>();
-    for (int i = 0; i < elements.length; i++) {
-      PsiFile file = (PsiFile)elements[i];
+    for (PsiElement element : elements) {
+      PsiFile file = (PsiFile)element;
       String name = file.getName();
       if (names.contains(name)) {
         return false;
@@ -197,8 +186,7 @@ public class MoveFilesOrDirectoriesUtil {
     if (ProjectRootManager.getInstance(project).getContentSourceRoots().length == 1) {
       return false;
     }
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
+    for (PsiElement element : elements) {
       if (!(element instanceof PsiDirectory)) return false;
       final PsiDirectory directory = ((PsiDirectory)element);
       if (RefactoringUtil.isSourceRoot(directory)) {
@@ -207,7 +195,8 @@ public class MoveFilesOrDirectoriesUtil {
       final PsiPackage aPackage = directory.getPackage();
       if (aPackage == null) return false;
       if ("".equals(aPackage.getQualifiedName())) return false;
-      final VirtualFile sourceRootForFile = ProjectRootManager.getInstance(element.getProject()).getFileIndex().getSourceRootForFile(directory.getVirtualFile());
+      final VirtualFile sourceRootForFile = ProjectRootManager.getInstance(element.getProject()).getFileIndex()
+        .getSourceRootForFile(directory.getVirtualFile());
       if (sourceRootForFile == null) return false;
     }
     return true;
@@ -217,17 +206,16 @@ public class MoveFilesOrDirectoriesUtil {
     if (elements == null) {
       throw new IllegalArgumentException("elements cannot be null");
     }
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
+    for (PsiElement element : elements) {
       if (!(element instanceof PsiDirectory)) {
         return false;
       }
     }
 
-    for (int i = 0; i < elements.length; i++) {
-      PsiDirectory directory = (PsiDirectory)elements[i];
+    for (PsiElement element : elements) {
+      PsiDirectory directory = (PsiDirectory)element;
 
-     if (hasPackages(directory)) {
+      if (hasPackages(directory)) {
         return false;
       }
     }
@@ -246,8 +234,7 @@ public class MoveFilesOrDirectoriesUtil {
       return true;
     }
     PsiDirectory[] subdirectories = directory.getSubdirectories();
-    for (int i = 0; i < subdirectories.length; i++) {
-      PsiDirectory subdirectory = subdirectories[i];
+    for (PsiDirectory subdirectory : subdirectories) {
       if (hasPackages(subdirectory)) {
         return true;
       }

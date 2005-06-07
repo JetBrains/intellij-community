@@ -25,7 +25,7 @@ import java.awt.*;
 import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Arrays;
 
 public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwner, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.CopyPasteManagerEx");
@@ -179,8 +179,8 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     if (myRecentData.isCopied()) return false;
     PsiElement[] elements = myRecentData.getElements();
     if (elements == null) return false;
-    for (int i = 0; i < elements.length; i++) {
-      if (elements[i] == element) return true;
+    for (PsiElement aElement : elements) {
+      if (aElement == element) return true;
     }
     return false;
   }
@@ -203,8 +203,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
       if (selectedElements == null){
         return null;
       }
-      for (int i = 0; i < selectedElements.length; i++) {
-        PsiElement element = selectedElements[i];
+      for (PsiElement element : selectedElements) {
         if (!element.isValid()) {
           return null;
         }
@@ -251,10 +250,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
         if (elements == null) {
           return;
         }
-        for (int i = 0; i < elements.length; i++) {
-          if (!RefactoringMessageUtil.checkReadOnlyStatusRecursively(myProject, elements[i])) return;
-        }
-        ((CopyPasteManagerEx)CopyPasteManager.getInstance()).setElements(elements, false);
+        if (!RefactoringMessageUtil.checkReadOnlyStatusRecursively(myProject, Arrays.asList(elements))) return;        ((CopyPasteManagerEx)CopyPasteManager.getInstance()).setElements(elements, false);
         updateView();
       }
 
@@ -323,8 +319,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
         }
 
         // disable cross-project paste
-        for (int i = 0; i < elements.length; i++) {
-          PsiElement element = elements[i];
+        for (PsiElement element : elements) {
           PsiManager manager = element.getManager();
           if (manager == null || manager.getProject() != project) {
             return false;
@@ -360,8 +355,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
       int validElementsCount = 0;
 
-      for (int i = 0; i < myElements.length; i++) {
-        PsiElement element = myElements[i];
+      for (PsiElement element : myElements) {
         if (element.isValid()) {
           validElementsCount++;
         }
@@ -373,8 +367,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
       PsiElement[] validElements = new PsiElement[validElementsCount];
       int j=0;
-      for (int i = 0; i < myElements.length; i++) {
-        PsiElement element = myElements[i];
+      for (PsiElement element : myElements) {
         if (element.isValid()) {
           validElements[j++] = element;
         }
@@ -422,8 +415,8 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   private void fireContentChanged(final Transferable oldTransferable) {
-    for (Iterator iterator = myListeners.iterator(); iterator.hasNext();) {
-      ContentChangedListener listener = (ContentChangedListener)iterator.next();
+    for (final Object aListener : myListeners) {
+      ContentChangedListener listener = (ContentChangedListener)aListener;
       listener.contentChanged(oldTransferable, getContents());
     }
   }

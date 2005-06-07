@@ -65,9 +65,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
       }
     }
 
-    for (PsiElement psiElement : elementsToDelete) {
-      if (!RefactoringMessageUtil.checkReadOnlyStatusRecursively(project, psiElement)) return;
-    }
+    if (!RefactoringMessageUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elementsToDelete))) return;
 
     SafeDeleteDialog dialog = new SafeDeleteDialog(project, elementsToDelete, new SafeDeleteDialog.Callback() {
       public void run(final SafeDeleteDialog dialog) {
