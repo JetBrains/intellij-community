@@ -482,14 +482,25 @@ public class CodeEditUtil {
     final PsiFile file = psi.getContainingFile();
     final FormattingModelBuilder builder = file.getLanguage().getFormattingModelBuilder();
     final FormattingModelBuilder elementBuilder = psi.getLanguage().getFormattingModelBuilder();
-    if (builder != null && elementBuilder != null && canModifyWS(file)) {
-      Formatter.getInstance().adjustTextRange(builder.createModel(file, settings), settings,
-                                              settings.getIndentOptions(file.getFileType()),
-                                              first.getTextRange(),
-                                              keepBlankLines,
-                                              keepLineBreaks,
-                                              changeWSBeforeFirstElement,
-                                              changeLineFeedsBeforeFirstElement, new MyIndentInfoStorage(file, null));
+
+    final boolean keepWhiteSpaces = settings.HTML_KEEP_WHITESPACES;
+    if (!canModifyWS(file)) {
+      settings.HTML_KEEP_WHITESPACES = true;
+    }
+
+    try {
+      if (builder != null && elementBuilder != null) {
+        Formatter.getInstance().adjustTextRange(builder.createModel(file, settings), settings,
+                                                settings.getIndentOptions(file.getFileType()),
+                                                first.getTextRange(),
+                                                keepBlankLines,
+                                                keepLineBreaks,
+                                                changeWSBeforeFirstElement,
+                                                changeLineFeedsBeforeFirstElement, new MyIndentInfoStorage(file, null));
+      }
+    }
+    finally {
+      settings.HTML_KEEP_WHITESPACES = keepWhiteSpaces;
     }
   }
 
