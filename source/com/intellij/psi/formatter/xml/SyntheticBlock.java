@@ -34,6 +34,9 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
   */
 
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
+    if (!(child1 instanceof AbstractBlock) || !(child2 instanceof AbstractBlock)) {
+      return null;
+    }
     final IElementType type1 = ((AbstractBlock)child1).getNode().getElementType();
     final IElementType type2 = ((AbstractBlock)child2).getNode().getElementType();
 

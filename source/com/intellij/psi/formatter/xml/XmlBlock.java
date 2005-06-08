@@ -53,7 +53,7 @@ public class XmlBlock extends AbstractXmlBlock {
       ASTNode child = myNode.getFirstChildNode();
       while (child != null) {
         if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
-          result.add(createChildBlock(child, null, null, null));
+          result.add(createChildBlock(child, null, null, getChildDefaultIndent()));
         }
         child = child.getTreeNext();
       }
@@ -61,7 +61,19 @@ public class XmlBlock extends AbstractXmlBlock {
     return result;
   }
 
+  private Indent getChildDefaultIndent() {
+    if (myNode.getElementType() == ElementType.HTML_DOCUMENT) {
+      return Formatter.getInstance().getNoneIndent();
+    } else {
+      return null;
+    }    
+  }
+
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
+    if (!(child1 instanceof AbstractBlock) || !(child2 instanceof AbstractBlock)) {
+      return null;
+    }
+
     final IElementType elementType = myNode.getElementType();
     final IElementType type1 = ((AbstractBlock)child1).getNode().getElementType();
     final IElementType type2 = ((AbstractBlock)child2).getNode().getElementType();
@@ -82,9 +94,9 @@ public class XmlBlock extends AbstractXmlBlock {
     if (type1 == ElementType.XML_PROLOG) {
       return createDefaultSpace(true);
     }
-    
+
     if (elementType == ElementType.XML_DOCTYPE) {
-      return createDefaultSpace(true);      
+      return createDefaultSpace(true);
     }
 
     return createDefaultSpace(false);

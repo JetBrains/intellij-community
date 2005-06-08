@@ -3,6 +3,7 @@ package com.intellij.psi.formatter.xml;
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
@@ -20,11 +21,33 @@ public abstract class AbstractSyntheticBlock implements Block{
   private final XmlTag myTag;
 
   public AbstractSyntheticBlock(List<Block> subBlocks, Block parent, XmlFormattingPolicy policy, Indent indent) {
-    myEndTreeNode = ((AbstractXmlBlock)subBlocks.get(subBlocks.size() - 1)).getTreeNode();
-    myStartTreeNode = ((AbstractXmlBlock)subBlocks.get(0)).getTreeNode();
+    myEndTreeNode = getLastNode(subBlocks);
+    myStartTreeNode = getFirstNode(subBlocks);
     myIndent = indent;
     myXmlFormattingPolicy = policy;
     myTag = ((AbstractXmlBlock)parent).getTag();
+  }
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.AbstractSyntheticBlock");
+
+  private ASTNode getFirstNode(final List<Block> subBlocks) {
+    LOG.assertTrue(!subBlocks.isEmpty());
+    final Block firstBlock = subBlocks.get(0);
+    if (firstBlock instanceof AbstractXmlBlock) {
+      return ((AbstractXmlBlock)firstBlock).getTreeNode();
+    } else {
+      return getFirstNode(firstBlock.getSubBlocks());
+    }
+  }
+
+  private ASTNode getLastNode(final List<Block> subBlocks) {
+    LOG.assertTrue(!subBlocks.isEmpty());
+    final Block lastBlock = subBlocks.get(subBlocks.size() - 1);
+    if (lastBlock instanceof AbstractXmlBlock) {
+      return ((AbstractXmlBlock)lastBlock).getTreeNode();
+    } else {
+      return getLastNode(lastBlock.getSubBlocks());
+    }
   }
 
   private boolean isEndOfTag() {
@@ -112,7 +135,8 @@ public abstract class AbstractSyntheticBlock implements Block{
                                                   final Block parent,
                                                   final Indent indent,
                                                   XmlFormattingPolicy policy) {
-    if (!isTagDescription(((AbstractBlock)subBlocks.get(0)).getNode())
+    final Block firstBlock = subBlocks.get(0);
+    if (firstBlock instanceof AbstractBlock && !isTagDescription(((AbstractBlock)firstBlock).getNode())
         && (policy.getShouldKeepWhiteSpaces()
         || policy.keepWhiteSpacesInsideTag(((XmlTagBlock)parent).getTag()))) {
       return new ReadOnlySyntheticBlock(subBlocks, parent, policy, indent);

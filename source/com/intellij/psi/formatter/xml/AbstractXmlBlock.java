@@ -5,15 +5,19 @@ import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
+
+import java.util.ArrayList;
 
 
 public abstract class AbstractXmlBlock extends AbstractBlock {
@@ -95,8 +99,12 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     final Language myLanguage = myNode.getPsi().getLanguage();
     final Language childLanguage = child.getPsi().getLanguage();
     if (useMyFormatter(myLanguage, childLanguage)) {
-      if (child.getElementType() == ElementType.JSP_XML_TEXT) {
-        final ASTNode javaElement = JspTextBlock.findJavaElementAt(child);
+      Block jspScriptletNode = buildBlockForScriptletNode(child,indent);
+      if (jspScriptletNode != null) {
+        return jspScriptletNode;
+      }
+      if (child.getElementType() == ElementType.JSP_XML_TEXT || child.getPsi() instanceof JspText) {
+        final Pair<ASTNode, Language> javaElement = JspTextBlock.findAnotherTreeElementAt(child);
         if (javaElement != null) {
           return new JspTextBlock(child, myXmlFormattingPolicy, javaElement);
         }
@@ -105,7 +113,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
         return new XmlTagBlock(child, wrap, alignment, myXmlFormattingPolicy, indent != null ? indent : getFormatter().getNoneIndent());
       }
       else if (child.getElementType() == ElementType.JSP_SCRIPTLET_END) {
-        return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, getFormatter().getNoneIndent());      
+        return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, getFormatter().getNoneIndent());
       }
       else {
         return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent);
@@ -117,13 +125,29 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     }
   }
 
+  private Block buildBlockForScriptletNode(final ASTNode child, final Indent indent) {
+    if (!(child.getPsi() instanceof JspText)) return null;
+    ASTNode element = child.getPsi().getContainingFile()
+      .getPsiRoots()[0].getNode().findLeafElementAt(child.getTextRange().getStartOffset());
+    if (element != null && element.getElementType() == ElementType.JSP_SCRIPTLET_START) {
+      final ArrayList<Block> subBlocks = new ArrayList<Block>();
+      while (element != null && element.getTextRange().getEndOffset() <=child.getTextRange().getEndOffset()) {
+        subBlocks.add(createChildBlock(element, null, null, Formatter.getInstance().getNoneIndent()));
+        element = element.getTreeNext();
+      }
+      return new SyntheticBlock(subBlocks, this, indent, myXmlFormattingPolicy);
+    } else {
+      return null;
+    }
+  }
+
   private boolean useMyFormatter(final Language myLanguage, final Language childLanguage) {
-    return myLanguage == childLanguage 
-           || childLanguage == StdLanguages.JAVA  
-           || childLanguage == StdLanguages.HTML  
-           || childLanguage == StdLanguages.XML  
-           || childLanguage == StdLanguages.JSP  
-           || childLanguage == StdLanguages.JSPX  
+    return myLanguage == childLanguage
+           || childLanguage == StdLanguages.JAVA
+           || childLanguage == StdLanguages.HTML
+           || childLanguage == StdLanguages.XML
+           || childLanguage == StdLanguages.JSP
+           || childLanguage == StdLanguages.JSPX
            || childLanguage.getFormattingModelBuilder() == null;
   }
 
@@ -139,7 +163,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       return false;
     }
     if (child.getText().trim().length() == 0) return false;
-    return JspTextBlock.findJavaElementAt(child) != null;
+    return JspTextBlock.findAnotherTreeElementAt(child) != null;
   }
 
   public ASTNode getTreeNode() {
@@ -151,7 +175,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   public abstract boolean removeLineBreakBeforeTag();
 
   protected SpaceProperty createDefaultSpace(boolean forceKeepLineBreaks) {
-    boolean shouldKeepLineBreaks = myXmlFormattingPolicy.getShouldKeepLineBreaks() || forceKeepLineBreaks;    
+    boolean shouldKeepLineBreaks = myXmlFormattingPolicy.getShouldKeepLineBreaks() || forceKeepLineBreaks;
     return getFormatter().createSpaceProperty(0, Integer.MAX_VALUE, 0, shouldKeepLineBreaks, myXmlFormattingPolicy.getKeepBlankLines());
   }
 
@@ -164,19 +188,19 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     LOG.assertTrue(psiRoots.length == 4);
     final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(psiRoots[1]);
     if (settings.JSPX_USE_HTML_FORMATTER) {
-      return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.HTML_TAG), null);      
+      return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.HTML_TAG), null);
     } else {
       return new XmlBlock(rootNode, null, null, new XmlPolicy(settings, ElementType.HTML_TAG), null);
     }
   }
-  
+
   public static Block creareJspxRoot(final PsiElement element, final CodeStyleSettings settings) {
     final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(element);
     if (settings.JSPX_USE_HTML_FORMATTER) {
-      return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.XML_TAG), null);      
+      return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.XML_TAG), null);
     } else {
       return new XmlBlock(rootNode, null, null, new XmlPolicy(settings, ElementType.XML_TAG), null);
     }
   }
-  
+
 }
