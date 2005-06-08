@@ -248,7 +248,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   }
 
   private PsiFile calcSelectedClass() {
-    if (myTabbedPane.getSelectedIndex() == 0) {
+    if (myTabbedPane.getSelectedIndex() == 1) {
       return (PsiFile)myGotoByNamePanel.getChosenElement();
     }
     else {

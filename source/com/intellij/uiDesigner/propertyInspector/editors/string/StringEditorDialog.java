@@ -10,8 +10,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.uiDesigner.ResourceBundleLoader;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 
@@ -21,6 +25,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ResourceBundle;
+import java.net.URL;
 
 /**
  * @author Anton Katilin
@@ -35,7 +40,7 @@ final class StringEditorDialog extends DialogWrapper{
   private final MyForm myForm;
 
   StringEditorDialog(
-    final Component parent, 
+    final Component parent,
     final StringDescriptor descriptor,
     final Module module
   ) {
@@ -189,8 +194,14 @@ final class StringEditorDialog extends DialogWrapper{
         new ActionListener() {
           public void actionPerformed(final ActionEvent e) {
             Project project = myModule.getProject();
-            TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser("Choose Resource Bundle", null,
-                                                                                                               PropertiesFileType.FILE_TYPE, null);
+            VirtualFile initialVirtualFile = null;
+            URL resource = new ResourceBundleLoader(myModule).getResource(myTfBundleName.getText()+".properties");
+            if (resource != null) {
+              initialVirtualFile = VfsUtil.findFileByURL(resource);
+            }
+            PsiFile initialPropertiesFile = initialVirtualFile == null ? null : PsiManager.getInstance(project).findFile(initialVirtualFile);
+            TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser("Choose Poperties File", initialPropertiesFile,
+                                                                                                         PropertiesFileType.FILE_TYPE, null);
             fileChooser.showDialog();
             PropertiesFile propertiesFile = (PropertiesFile)fileChooser.getSelectedFile();
             if (propertiesFile == null) return;
