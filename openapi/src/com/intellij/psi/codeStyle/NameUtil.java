@@ -88,8 +88,13 @@ public class NameUtil {
         buffer.append(c);
       }
       else {
-        buffer.append("\\u");
-        buffer.append(Integer.toHexString(c + 0x20000).substring(1));
+        // for standard RegExp engine
+        // buffer.append("\\u");
+        // buffer.append(Integer.toHexString(c + 0x20000).substring(1));
+
+        // for OROMATCHER RegExp engine
+        buffer.append("\\x");
+        buffer.append(Integer.toHexString(c + 0x20000).substring(3));
       }
     }
     for (int i = exactPrefixLen; i < pattern.length(); i++) {
@@ -101,7 +106,7 @@ public class NameUtil {
           if (!uppercaseOnly && !caseSencetive) {
             buffer.append('(');
           }
-          if (i > 0) buffer.append("[a-z0-9]*");
+          if (i > 0) buffer.append("[a-z0-9_\\$]*");
           buffer.append(c);
           if (!uppercaseOnly && !caseSencetive) {
             buffer.append('|');
@@ -125,8 +130,13 @@ public class NameUtil {
         buffer.append(".*");
       }
       else {
-        buffer.append("\\u");
-        buffer.append(Integer.toHexString(c + 0x20000).substring(1));
+        // for standard RegExp engine
+        // buffer.append("\\u");
+        // buffer.append(Integer.toHexString(c + 0x20000).substring(1));
+
+        // for OROMATCHER RegExp engine
+        buffer.append("\\x");
+        buffer.append(Integer.toHexString(c + 0x20000).substring(3));
       }
     }
 
@@ -134,8 +144,9 @@ public class NameUtil {
       buffer.append(".*");
     }
     else if (lastIsUppercase) {
-      buffer.append("[a-z0-9]*");
+      buffer.append("[a-z0-9_\\$]*");
     }
+
     final String regex = buffer.toString();
     return regex;
   }
