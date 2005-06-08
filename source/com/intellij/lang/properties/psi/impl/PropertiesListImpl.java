@@ -9,7 +9,7 @@ public class PropertiesListImpl extends ASTWrapperPsiElement {
     super(node);
   }
 
-  @Override public String toString() {
+  public String toString() {
     return "PropertiesList";
   }
 }

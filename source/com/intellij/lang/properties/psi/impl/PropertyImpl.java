@@ -20,7 +20,7 @@ import javax.swing.*;
  * To change this template use File | Settings | File Templates.
  */
 public class PropertyImpl extends PropertiesElementImpl implements Property {
-  public PropertyImpl(final ASTNode node) {
+  public PropertyImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -28,7 +28,7 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
     return "Property";
   }
 
-  public PsiElement setName(String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), name,"xxx");
     ASTNode keyNode = getKeyNode();
     @NotNull ASTNode newKeyNode = property.getKeyNode();

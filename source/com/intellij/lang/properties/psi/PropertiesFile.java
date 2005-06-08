@@ -17,10 +17,10 @@ import java.util.List;
 
 public interface PropertiesFile extends PsiFile {
   @NotNull List<Property> getProperties();
-  @Nullable Property findPropertyByKey(String key);
-  @NotNull List<Property> findPropertiesByKey(String key);
+  @Nullable Property findPropertyByKey(@NotNull String key);
+  @NotNull List<Property> findPropertiesByKey(@NotNull String key);
 
   @NotNull ResourceBundle getResourceBundle();
 
-  PsiElement addProperty(Property property) throws IncorrectOperationException;
+  @NotNull PsiElement addProperty(@NotNull Property property) throws IncorrectOperationException;
 }

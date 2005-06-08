@@ -4,18 +4,19 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
  */
 public class PropertiesElementFactory {
-  public static Property createProperty(Project project, String name, String value) {
+  public static @NotNull Property createProperty(@NotNull Project project, @NotNull String name, @NotNull String value) {
     ParserDefinition def = PropertiesFileType.FILE_TYPE.getLanguage().getParserDefinition();
     String filename = "dummy." + PropertiesFileType.FILE_TYPE.getDefaultExtension();
     String text = escape(name) + "=" + value;
     final PropertiesFile dummyFile = (PropertiesFile)def.createFile(project, filename, text);
     return dummyFile.getProperties().get(0);
-  }                   
+  }
 
   private static String escape(String name) {
     if (StringUtil.startsWithChar(name, '#')) {

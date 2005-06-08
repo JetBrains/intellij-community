@@ -52,6 +52,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return "Property file:" + getName();
   }
 
+  @NotNull
   public List<Property> getProperties() {
     ensurePropertiesLoaded();
     return myProperties;
@@ -82,13 +83,14 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     }
   }
 
-  public Property findPropertyByKey(String key) {
+  public Property findPropertyByKey(@NotNull String key) {
     ensurePropertiesLoaded();
     List<Property> list = myPropertiesMap.get(key);
     return list == null ? null : list.get(0);
   }
 
-  public List<Property> findPropertiesByKey(String key) {
+  @NotNull
+  public List<Property> findPropertiesByKey(@NotNull String key) {
     ensurePropertiesLoaded();
     List<Property> list = myPropertiesMap.get(key);
     return list == null ? Collections.EMPTY_LIST : list;
@@ -106,7 +108,8 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return super.add(element);
   }
 
-  public PsiElement addProperty(Property property) throws IncorrectOperationException {
+  @NotNull
+  public PsiElement addProperty(@NotNull Property property) throws IncorrectOperationException {
     final List<Property> properties = getProperties();
     if (properties.size() != 0) {
       Property lastProperty = properties.get(properties.size() - 1);
