@@ -4,13 +4,15 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.Patches;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.Patches;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.*;
@@ -38,6 +40,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    *
    * @return  the {@link VirtualFileSystem}
    */
+  @NotNull
   public abstract VirtualFileSystem getFileSystem();
 
   /**
@@ -99,6 +102,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    *
    * @return file name
    */
+  @NotNull
   public abstract String getName();
 
   /**
@@ -107,6 +111,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    *
    * @return the extension or null if file name doesn't contain '.'
    */
+  @Nullable
   public String getExtension(){
     String name = getName();
     int index = name.lastIndexOf('.');
@@ -121,6 +126,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @return the name without extension
    * if there is no '.' in it
    */
+  @NotNull
   public String getNameWithoutExtension(){
     String name = getName();
     int index = name.lastIndexOf('.');
@@ -174,6 +180,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    *
    * @return the parent file or <code>null</code> if this file is a root directory
    */
+  @Nullable
   public abstract VirtualFile getParent();
 
   /**
@@ -213,6 +220,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
    * @param relPath the relative path to search by
    * @return the file if found any, <code>null</code> otherwise
    */
+  @Nullable
   public VirtualFile findFileByRelativePath(String relPath){
     int index = relPath.indexOf('/');
     if (index < 0) index = relPath.length();

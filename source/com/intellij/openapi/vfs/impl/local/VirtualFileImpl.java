@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.concurrency.WorkerThread;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.*;
@@ -101,7 +102,7 @@ public class VirtualFileImpl extends VirtualFile {
 
   PhysicalFile getPhysicalFile() {
     String path = getPath(File.separatorChar);
-    return new IoFile(path);  
+    return new IoFile(path);
   }
 
   public VirtualFileSystem getFileSystem() {
@@ -245,6 +246,7 @@ public class VirtualFileImpl extends VirtualFile {
     }
   }
 
+  @Nullable
   public VirtualFile getParent() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -299,12 +301,13 @@ public class VirtualFileImpl extends VirtualFile {
     }
 
     PhysicalFile physicalFile = getPhysicalFile().createChild(name);
-    VirtualFile file = findChild(name);
-    if (file != null || physicalFile.exists()) {
-      throw new IOException("Cannot create file " + physicalFile.getPath() + ". File already exists.");
-    }
 
     if (!myFileSystem.auxCreateDirectory(this, name)) {
+      VirtualFile file = findChild(name);
+      if (file != null || physicalFile.exists()) {
+        throw new IOException("Cannot create file " + physicalFile.getPath() + ". File already exists.");
+      }
+
       if (!physicalFile.mkdir()) {
         throw new IOException("Cannot create file " + physicalFile.getPath() + ".");
       }
@@ -325,13 +328,13 @@ public class VirtualFileImpl extends VirtualFile {
       throw new IOException("Invalid file name: \"" + name + "\"");
     }
 
-    PhysicalFile physicalFile = getPhysicalFile().createChild(name);
-    VirtualFile file = findChild(name);
-    if (file != null || physicalFile.exists()) {
-      throw new IOException("Cannot create file " + physicalFile.getPath() + ". File already exists.");
-    }
 
+    PhysicalFile physicalFile = getPhysicalFile().createChild(name);
     if (!myFileSystem.auxCreateFile(this, name)) {
+      VirtualFile file = findChild(name);
+      if (file != null || physicalFile.exists()) {
+        throw new IOException("Cannot create file " + physicalFile.getPath() + ". File already exists.");
+      }
       physicalFile.createOutputStream().close();
     }
 
@@ -500,7 +503,7 @@ public class VirtualFileImpl extends VirtualFile {
     byte[] bytes = new byte[(int)getLength()];
     try {
       int count = 0;
-      for (; ;) {
+      while (true) {
         int n = in.read(bytes, count, bytes.length - count);
         if (n <= 0) break;
         count += n;
@@ -846,8 +849,7 @@ public class VirtualFileImpl extends VirtualFile {
 
   private static boolean isInvalidName(String name){
     if (name.indexOf('\\') >= 0) return true;
-    if (name.indexOf('/') >= 0) return true;
-    return false;
+    return name.indexOf('/') >= 0;
   }
 
   public String toString() {
