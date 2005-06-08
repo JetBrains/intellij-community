@@ -12,7 +12,10 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.*;
-import java.util.regex.Matcher;
+
+import org.apache.oro.text.regex.PatternMatcher;
+import org.apache.oro.text.regex.Pattern;
+import org.apache.oro.text.regex.Perl5Matcher;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,7 +37,8 @@ public class CompletionProcessor extends BaseScopeProcessor
   private boolean myMembersFlag = false;
   private PsiType myQualifierType = null;
   private PsiClass myQualifierClass = null;
-  private final Matcher myMatcher;
+  private final PatternMatcher myMatcher;
+  private final Pattern myPattern;
 
   private CompletionProcessor(String prefix, PsiElement element, List<CompletionElement> container, ElementFilter filter){
     mySettings = CodeInsightSettings.getInstance();
@@ -64,7 +68,8 @@ public class CompletionProcessor extends BaseScopeProcessor
         }
       }
 
-    myMatcher = CompletionUtil.createCampelHumpsMatcher(myPrefix);
+    myMatcher = new Perl5Matcher();
+    myPattern = CompletionUtil.createCampelHumpsMatcher(myPrefix);
   }
 
   public CompletionProcessor(String prefix, PsiElement element, ElementFilter filter){
@@ -92,8 +97,8 @@ public class CompletionProcessor extends BaseScopeProcessor
       }
       else{
         if(!mySettings.SHOW_STATIC_AFTER_INSTANCE
-          && modifierListOwner.hasModifierProperty(PsiModifier.STATIC)
-          && !myMembersFlag){
+           && modifierListOwner.hasModifierProperty(PsiModifier.STATIC)
+           && !myMembersFlag){
           // according settings we don't need to process such fields/methods
           return true;
         }
@@ -112,7 +117,7 @@ public class CompletionProcessor extends BaseScopeProcessor
     PsiResolveHelper resolveHelper = myElement.getManager().getResolveHelper();
     if(!(element instanceof PsiMember) || resolveHelper.isAccessible(((PsiMember)element), myElement, myQualifierClass)){
       final String name = PsiUtil.getName(element);
-      if(name != null && (CompletionUtil.checkName(name, myPrefix) || myMatcher.reset(name).matches())
+      if(name != null && (CompletionUtil.checkName(name, myPrefix) || myMatcher.matches(name, myPattern))
          && myFilter.isClassAcceptable(element.getClass())
          && myFilter.isAcceptable(new CandidateInfo(element, substitutor), myElement))
         add(new CompletionElement(myQualifierType, element, substitutor));

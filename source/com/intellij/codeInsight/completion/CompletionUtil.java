@@ -32,8 +32,11 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashMap;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import org.apache.oro.text.regex.PatternMatcher;
+import org.apache.oro.text.regex.Pattern;
+import org.apache.oro.text.regex.Perl5Compiler;
+import org.apache.oro.text.regex.MalformedPatternException;
 
 public class CompletionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionUtil");
@@ -181,7 +184,7 @@ public class CompletionUtil {
   public static boolean checkName(String name, String prefix){
     return checkName(name, prefix, false);
   }
-  
+
   public static boolean checkName(String name, String prefix, boolean forceCaseInsensitive){
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (name == null) {
@@ -200,7 +203,7 @@ public class CompletionUtil {
           if(name.length() > 0){
             if(prefix.length() > 0){
               ret = (name.charAt(0) == prefix.charAt(0))
-                      && name.toLowerCase().startsWith(prefix.substring(1).toLowerCase(), 1);
+                    && name.toLowerCase().startsWith(prefix.substring(1).toLowerCase(), 1);
             }
           }
           else{
@@ -219,25 +222,30 @@ public class CompletionUtil {
   }
 
 
-  public static Matcher createCampelHumpsMatcher(String pattern){
-    final Pattern pat;
+  public static Pattern createCampelHumpsMatcher(String pattern){
+    Pattern pat = null;
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     int variant = settings.COMPLETION_CASE_SENSITIVE;
+    Perl5Compiler compiler = new Perl5Compiler();
 
-    switch(variant){
-      case CodeInsightSettings.NONE:
-        pat = Pattern.compile(NameUtil.buildRegexp(pattern, 0, false));
-        break;
-      case CodeInsightSettings.FIRST_LETTER:
-        pat = Pattern.compile(NameUtil.buildRegexp(pattern, 1, false));
-        break;
-      case CodeInsightSettings.ALL:
-        pat = Pattern.compile(NameUtil.buildRegexp(pattern, 0, true));
-        break;
-      default:
-        pat = Pattern.compile(NameUtil.buildRegexp(pattern, 0, false));
+    try {
+      switch(variant){
+        case CodeInsightSettings.NONE:
+          pat = compiler.compile(NameUtil.buildRegexp(pattern, 0, false));
+          break;
+        case CodeInsightSettings.FIRST_LETTER:
+          pat = compiler.compile(NameUtil.buildRegexp(pattern, 1, false));
+          break;
+        case CodeInsightSettings.ALL:
+          pat = compiler.compile(NameUtil.buildRegexp(pattern, 0, true));
+          break;
+        default:
+          pat = compiler.compile(NameUtil.buildRegexp(pattern, 0, false));
+      }
     }
-    return pat.matcher("");
+    catch(MalformedPatternException me) {
+    }
+    return pat;
   }
 
 

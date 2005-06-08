@@ -16,6 +16,9 @@ import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
+import org.apache.oro.text.regex.Pattern;
+import org.apache.oro.text.regex.Perl5Matcher;
+import org.apache.oro.text.regex.PatternMatcher;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -229,9 +232,10 @@ implements JDOMExternalizable{
         ret.setAttribute(key, myItemProperties.get(key));
       }
     }
-    final Matcher matcher = CompletionUtil.createCampelHumpsMatcher(prefix);
+    final Pattern pattern = CompletionUtil.createCampelHumpsMatcher(prefix);
+    PatternMatcher matcher = new Perl5Matcher();
     final String lookupString = ret.getLookupString();
-    if(CompletionUtil.checkName(lookupString, prefix, caseInsensitive) || matcher.reset(lookupString).matches()){
+    if(CompletionUtil.checkName(lookupString, prefix, caseInsensitive) || matcher.matches(lookupString, pattern)){
       set.add(ret);
       return ret;
     }

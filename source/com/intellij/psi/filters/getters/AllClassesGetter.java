@@ -11,7 +11,10 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
 
 import java.util.*;
-import java.util.regex.Matcher;
+
+import org.apache.oro.text.regex.PatternMatcher;
+import org.apache.oro.text.regex.Pattern;
+import org.apache.oro.text.regex.Perl5Matcher;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,7 +25,9 @@ import java.util.regex.Matcher;
  */
 public class AllClassesGetter implements ContextGetter{
   private String myPrefixStr = null;
-  private Matcher myMatcher = null;
+  private PatternMatcher myMatcher = null;
+  private Pattern myPattern = null;
+
   public Object[] get(PsiElement context, CompletionContext completionContext) {
     if(context == null || !context.isValid()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
@@ -33,7 +38,8 @@ public class AllClassesGetter implements ContextGetter{
     final String prefix = context.getUserData(CompletionUtil.COMPLETION_PREFIX);
 
     if(myPrefixStr != prefix){
-      myMatcher = CompletionUtil.createCampelHumpsMatcher(prefix);
+      myMatcher = new Perl5Matcher();
+      myPattern = CompletionUtil.createCampelHumpsMatcher(prefix);
     }
 
     final GlobalSearchScope scope = context.getContainingFile().getResolveScope();
@@ -41,7 +47,7 @@ public class AllClassesGetter implements ContextGetter{
     final String[] names = cache.getAllClassNames(true);
     for (int i = 0; i < names.length; i++) {
       final String name = names[i];
-      if(prefix != null && !(CompletionUtil.checkName(name, prefix) || myMatcher.reset(name).matches())) continue;
+      if(prefix != null && !(CompletionUtil.checkName(name, prefix) || myMatcher.matches(name, myPattern))) continue;
       classesList.addAll(Arrays.asList(cache.getClassesByName(name, scope)));
     }
 

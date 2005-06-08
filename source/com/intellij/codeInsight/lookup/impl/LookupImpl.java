@@ -22,7 +22,10 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.regex.Matcher;
+
+import org.apache.oro.text.regex.PatternMatcher;
+import org.apache.oro.text.regex.Perl5Matcher;
+import org.apache.oro.text.regex.Pattern;
 
 public class LookupImpl extends LightweightHint implements Lookup {
   static final Object EMPTY_ITEM_ATTRIBUTE = Key.create("emptyItem");
@@ -139,8 +142,8 @@ public class LookupImpl extends LightweightHint implements Lookup {
                   finishLookup(NORMAL_SELECT_CHAR);
                 }
               },
-              "",
-              null
+                "",
+                null
             );
           }
         }
@@ -186,7 +189,8 @@ public class LookupImpl extends LightweightHint implements Lookup {
   }
 
   void updateList(){
-    final Matcher matcher = CompletionUtil.createCampelHumpsMatcher(myPrefix);
+    final PatternMatcher matcher = new Perl5Matcher();
+    final Pattern pattern = CompletionUtil.createCampelHumpsMatcher(myPrefix);
     Object oldSelected = myList.getSelectedValue();
     DefaultListModel model = new DefaultListModel();
     ArrayList<LookupItem> array = new ArrayList<LookupItem>();
@@ -194,7 +198,7 @@ public class LookupImpl extends LightweightHint implements Lookup {
     for(int i = 0; i < myItems.length; i++){
       LookupItem item = myItems[i];
       String text = item.getLookupString();
-      if (text.toLowerCase().startsWith(prefix) || matcher.reset(text).matches()){
+      if (text.toLowerCase().startsWith(prefix) || matcher.matches(text, pattern)){
         model.addElement(item);
         array.add(item);
       }
@@ -318,8 +322,8 @@ public class LookupImpl extends LightweightHint implements Lookup {
 
   public void show(){
     int offset = myEditor.getSelectionModel().hasSelection()
-      ? myEditor.getSelectionModel().getSelectionStart()
-      : myEditor.getCaretModel().getOffset();
+                 ? myEditor.getSelectionModel().getSelectionStart()
+                 : myEditor.getCaretModel().getOffset();
     int lookupStart = offset - myPrefix.length();
     myLookupStartMarker = myEditor.getDocument().createRangeMarker(lookupStart, lookupStart);
     myLookupStartMarker.setGreedyToLeft(true);
@@ -480,8 +484,8 @@ public class LookupImpl extends LightweightHint implements Lookup {
           EditorModificationUtil.insertStringAtCaret(myEditor, _commonPrefix);
         }
       },
-      null,
-      null
+        null,
+        null
     );
     myList.repaint(); // to refresh prefix highlighting
     return true;

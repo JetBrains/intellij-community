@@ -23,6 +23,7 @@ import com.intellij.ui.ListScrollingUtilEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.diff.Diff;
+import org.apache.oro.text.regex.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -33,9 +34,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 public abstract class ChooseByNameBase{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameBase");
@@ -935,9 +933,9 @@ public abstract class ChooseByNameBase{
   }
 
   private boolean getNamesByPattern(final boolean checkboxState,
-                                  final boolean[] cancelled,
-                                  final List<String> list,
-                                  final String pattern) throws ProcessCanceledException {
+                                    final boolean[] cancelled,
+                                    final List<String> list,
+                                    final String pattern) throws ProcessCanceledException {
     if (!isShowListForEmptyPattern()) {
       LOG.assertTrue(pattern.length() > 0);
     }
@@ -947,18 +945,26 @@ public abstract class ChooseByNameBase{
     final String regex = NameUtil.buildRegexp(pattern, myExactPrefixLen, false);
 
     try {
-      final Pattern compiledPattern = Pattern.compile(regex);
-      final Matcher matcher = compiledPattern.matcher("");
+
+      Perl5Compiler compiler = new Perl5Compiler();
+      final Pattern compiledPattern = compiler.compile(regex);
+      final PatternMatcher matcher = new Perl5Matcher();
+
+
+
       for (String name : names) {
         if (cancelled != null && cancelled[0]) {
           throw new ProcessCanceledException();
         }
-        if (matcher.reset(name).matches()) {
-          list.add(name);
+
+        if(name.length() >= pattern.length()) {
+          if(matcher.matches(name, compiledPattern)) {
+            list.add(name);
+          }
         }
       }
     }
-    catch (PatternSyntaxException e) {
+    catch (MalformedPatternException e) {
     }
 
     return overflow;
