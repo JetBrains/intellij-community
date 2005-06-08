@@ -33,8 +33,8 @@ public abstract class AbstractSyntheticBlock implements Block{
   private ASTNode getFirstNode(final List<Block> subBlocks) {
     LOG.assertTrue(!subBlocks.isEmpty());
     final Block firstBlock = subBlocks.get(0);
-    if (firstBlock instanceof AbstractXmlBlock) {
-      return ((AbstractXmlBlock)firstBlock).getTreeNode();
+    if (firstBlock instanceof AbstractBlock) {
+      return ((AbstractBlock)firstBlock).getTreeNode();
     } else {
       return getFirstNode(firstBlock.getSubBlocks());
     }
@@ -43,8 +43,8 @@ public abstract class AbstractSyntheticBlock implements Block{
   private ASTNode getLastNode(final List<Block> subBlocks) {
     LOG.assertTrue(!subBlocks.isEmpty());
     final Block lastBlock = subBlocks.get(subBlocks.size() - 1);
-    if (lastBlock instanceof AbstractXmlBlock) {
-      return ((AbstractXmlBlock)lastBlock).getTreeNode();
+    if (lastBlock instanceof AbstractBlock) {
+      return ((AbstractBlock)lastBlock).getTreeNode();
     } else {
       return getLastNode(lastBlock.getSubBlocks());
     }
@@ -136,13 +136,17 @@ public abstract class AbstractSyntheticBlock implements Block{
                                                   final Indent indent,
                                                   XmlFormattingPolicy policy) {
     final Block firstBlock = subBlocks.get(0);
+    /*
     if (firstBlock instanceof AbstractBlock && !isTagDescription(((AbstractBlock)firstBlock).getNode())
         && (policy.getShouldKeepWhiteSpaces()
         || policy.keepWhiteSpacesInsideTag(((XmlTagBlock)parent).getTag()))) {
-      return new ReadOnlySyntheticBlock(subBlocks, parent, policy, indent);
+      return new ReadOnlyBlock(subBlocks, parent, policy, indent);
     } else {
       return new SyntheticBlock(subBlocks, parent, indent, policy);
     }
+    */
+
+    return new SyntheticBlock(subBlocks, parent, indent, policy);
   }
 
   public boolean isIncomplete() {

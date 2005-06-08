@@ -1,13 +1,13 @@
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.newCodeFormatting.Block;
+import com.intellij.newCodeFormatting.ChildAttributes;
 import com.intellij.newCodeFormatting.Indent;
 import com.intellij.newCodeFormatting.SpaceProperty;
-import com.intellij.newCodeFormatting.ChildAttributes;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.formatter.common.AbstractBlock;
 
 import java.util.List;
 
@@ -34,7 +34,10 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
   */
 
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
-    if (!(child1 instanceof AbstractBlock) || !(child2 instanceof AbstractBlock)) {
+    if (child1 instanceof ReadOnlyBlock || child2 instanceof ReadOnlyBlock) {
+      return getFormatter().getReadOnlySpace();
+    }
+    if (!(child1 instanceof AbstractXmlBlock) || !(child2 instanceof AbstractXmlBlock)) {
       return null;
     }
     final IElementType type1 = ((AbstractBlock)child1).getNode().getElementType();

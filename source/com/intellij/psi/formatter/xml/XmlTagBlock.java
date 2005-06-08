@@ -8,6 +8,8 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class XmlTagBlock extends AbstractXmlBlock{
   private final Indent myIndent;
 
@@ -31,9 +33,9 @@ public class XmlTagBlock extends AbstractXmlBlock{
     final Alignment textAlignment = formatter.createAlignment();
     final ArrayList<Block> result = new ArrayList<Block>();
     ArrayList<Block> localResult = new ArrayList<Block>();
-    
+
     boolean insideTag = false;
-    
+
     while (child != null) {
       if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
 
@@ -49,7 +51,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
           if (!localResult.isEmpty()) {
             result.add(createTagContentNode(localResult));
             localResult = new ArrayList<Block>();
-          }          
+          }
           localResult.add(createChildBlock(child, wrap, alignment, null));
         } else if (child.getElementType() == ElementType.XML_EMPTY_ELEMENT_END) {
           localResult.add(createChildBlock(child, wrap, alignment, null));
@@ -57,35 +59,35 @@ public class XmlTagBlock extends AbstractXmlBlock{
           localResult = new ArrayList<Block>();
         }
         else if (isJspxJavaContainingNode(child)) {
-          localResult.add(new JspTextBlock(child, myXmlFormattingPolicy, JspTextBlock.findAnotherTreeElementAt(child)));      
-        }                
+          localResult.add(new JspTextBlock(child, myXmlFormattingPolicy, JspTextBlock.findAnotherTreeElementAt(child)));
+        }
         else if (child.getElementType() == ElementType.XML_TEXT) {
           createXmlTextBlocks(localResult, child, wrap, alignment);
         }
         else {
           final Indent indent;
-    
+
           if (localResult.size() == 1 && localResult.get(0) instanceof JspTextBlock) {
-            indent = Formatter.getInstance().getNoneIndent();     
+            indent = Formatter.getInstance().getNoneIndent();
           } else if (!insideTag) {
-            indent = null;            
+            indent = null;
           }
           else {
             indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
                                 ? getFormatter().createNormalIndent()
                                 : getFormatter().getNoneIndent();
           }
-          
+
           localResult.add(createChildBlock(child, wrap, alignment, indent));
         }
       }
       child = child.getTreeNext();
     }
-    
+
     if (!localResult.isEmpty()) {
       result.add(createTagContentNode(localResult));
     }
-    
+
     return result;
 
   }
@@ -95,6 +97,9 @@ public class XmlTagBlock extends AbstractXmlBlock{
   }
 
   private void createXmlTextBlocks(final ArrayList<Block> list, final ASTNode textNode, final Wrap wrap, final Alignment alignment) {
+    if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag()) || myXmlFormattingPolicy.getShouldKeepWhiteSpaces()) {
+      list.add(new ReadOnlyBlock(textNode));
+    } else {
     ChameleonTransforming.transformChildren(myNode);
     ASTNode child = textNode.getFirstChildNode();
     while (child != null) {
@@ -105,6 +110,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
         list.add(createChildBlock(child,  wrap, alignment, indent));
       }
       child = child.getTreeNext();
+    }
     }
   }
 
@@ -119,9 +125,9 @@ public class XmlTagBlock extends AbstractXmlBlock{
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
     final AbstractSyntheticBlock syntheticBlock1 = ((AbstractSyntheticBlock)child1);
     final AbstractSyntheticBlock syntheticBlock2 = ((AbstractSyntheticBlock)child2);
-    
+
     if (syntheticBlock2.isJspTextBlock()) {
-      return getFormatter().createSpaceProperty(0, 0, 1, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());      
+      return getFormatter().createSpaceProperty(0, 0, 1, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag())) return getFormatter().getReadOnlySpace();
@@ -143,7 +149,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     } else if (syntheticBlock1.isTagDescription() && syntheticBlock2.startsWithTag()) {
       return getFormatter().createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
     } else if (syntheticBlock1.endsWithTag() && syntheticBlock2.isTagDescription()) {
-      return getFormatter().createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());      
+      return getFormatter().createSpaceProperty(0, 0, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
     }
     else {
       return createDefaultSpace(true);
@@ -163,11 +169,13 @@ public class XmlTagBlock extends AbstractXmlBlock{
     return myXmlFormattingPolicy.isTextElement(getTag());
   }
 
+  @Override
+  @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (myXmlFormattingPolicy.indentChildrenOf(getTag())) {
       return new ChildAttributes(Formatter.getInstance().createNormalIndent(), null);
     } else {
-      return new ChildAttributes(Formatter.getInstance().getNoneIndent(), null);  
-    }    
+      return new ChildAttributes(Formatter.getInstance().getNoneIndent(), null);
+    }
   }
 }
