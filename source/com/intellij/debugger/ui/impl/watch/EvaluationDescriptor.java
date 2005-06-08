@@ -10,7 +10,6 @@ import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -28,6 +27,7 @@ import com.sun.jdi.ObjectReference;
 public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
   private Modifier myModifier;
   protected TextWithImports myText;
+  protected CodeFragmentFactory myCodeFragmentFactory = DefaultCodeFragmentFactory.getInstance();
 
   protected EvaluationDescriptor(TextWithImports text, Project project, Value value) {
     super(project, value);
@@ -40,7 +40,12 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     myText = text;
   }
 
+  public void setCodeFragmentFactory(CodeFragmentFactory codeFragmentFactory) {
+    myCodeFragmentFactory = codeFragmentFactory;
+  }
+
   protected abstract EvaluationContextImpl getEvaluationContext (EvaluationContextImpl evaluationContext);
+
   protected abstract PsiCodeFragment getEvaluationCode(StackFrameContext context) throws EvaluateException;
 
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
@@ -54,9 +59,13 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
       });
 
 
-      if(!thisEvaluationContext.getDebugProcess().isAttached()) throw EvaluateExceptionUtil.PROCESS_EXITED;
+      if (!thisEvaluationContext.getDebugProcess().isAttached()) {
+        throw EvaluateExceptionUtil.PROCESS_EXITED;
+      }
       StackFrameProxyImpl frameProxy = thisEvaluationContext.getFrameProxy();
-      if (frameProxy == null) throw EvaluateExceptionUtil.NULL_STACK_FRAME;
+      if (frameProxy == null) {
+        throw EvaluateExceptionUtil.NULL_STACK_FRAME;
+      }
 
       final Value value = evaluator.evaluate(thisEvaluationContext);
       if (value instanceof ObjectReference) {
@@ -80,7 +89,8 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
     PsiElement evaluationCode = getEvaluationCode(context);
     if(evaluationCode instanceof PsiExpressionCodeFragment) {
       return ((PsiExpressionCodeFragment)evaluationCode).getExpression();
-    } else {
+    }
+    else {
       throw new EvaluateException("Cannot create expression from code fragment.", null); 
     }
   }

@@ -4,6 +4,7 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.EvaluateAction;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -36,6 +37,7 @@ public class StatementEvaluationDialog extends EvaluationDialog{
   private final Action mySwitchAction = new SwitchAction();
   private static final String STATEMENT_EDITOR_DIMENSION_KEY = "#com.intellij.debugger.ui.StatementEvaluationDialog.StatementEditor";
   private static final String EVALUATION_PANEL_DIMENSION_KEY = "#com.intellij.debugger.ui.StatementEvaluationDialog.EvaluationPanel";
+  private JLabel myLanguageLabel;
 
   public StatementEvaluationDialog(final Project project, TextWithImports text) {
     super(project, text);
@@ -44,10 +46,27 @@ public class StatementEvaluationDialog extends EvaluationDialog{
 
     final Splitter splitter = new Splitter(true);
     splitter.setHonorComponentsMinimumSize(true);
-    final DebuggerStatementEditor statementEditor = getStatementEditor();
-    splitter.setFirstComponent(statementEditor);
+
+    final JPanel editorPanel = new JPanel(new GridBagLayout());
+    myLanguageLabel = new JLabel("Language:");
+    myLanguageLabel.setVisible(getCodeFragmentFactoryChooserComponent().isVisible());
+    editorPanel.add(myLanguageLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+    editorPanel.add(getCodeFragmentFactoryChooserComponent(), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+
+    final JLabel statementsLabel = new JLabel("Statements to evaluate:");
+    statementsLabel.setDisplayedMnemonic('e');
+    editorPanel.add(statementsLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+    editorPanel.add(getStatementEditor(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(2, 0, 0, 0), 0, 0));
+
+    splitter.setFirstComponent(editorPanel);
+
     final EvaluationDialog.MyEvaluationPanel evaluationPanel = getEvaluationPanel();
-    splitter.setSecondComponent(evaluationPanel);
+    final JPanel ep = new JPanel(new BorderLayout());
+    final JLabel resultLabel = new JLabel("Result:");
+    resultLabel.setDisplayedMnemonic('R');
+    ep.add(resultLabel, BorderLayout.NORTH);
+    ep.add(evaluationPanel, BorderLayout.CENTER);
+    splitter.setSecondComponent(ep);
     final Dimension statementSize = DimensionService.getInstance().getSize(STATEMENT_EDITOR_DIMENSION_KEY);
     final Dimension evaluationSize = DimensionService.getInstance().getSize(EVALUATION_PANEL_DIMENSION_KEY);
     if (statementSize != null && evaluationSize != null) {
@@ -58,29 +77,49 @@ public class StatementEvaluationDialog extends EvaluationDialog{
 
     setDebuggerContext(getDebuggerContext());
 
-    KeyStroke codeFragment = KeyStroke.getKeyStroke(KeyEvent.VK_E,     KeyEvent.ALT_MASK);
-    KeyStroke resultStroke = KeyStroke.getKeyStroke(KeyEvent.VK_R,     KeyEvent.ALT_MASK);
-    KeyStroke altEnter     = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.CTRL_MASK);
+    final KeyStroke codeFragment = KeyStroke.getKeyStroke(KeyEvent.VK_E,     KeyEvent.ALT_MASK);
+    final KeyStroke resultStroke = KeyStroke.getKeyStroke(KeyEvent.VK_R,     KeyEvent.ALT_MASK);
+    final KeyStroke altEnter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.CTRL_MASK);
 
-    new AnAction() {
+    final JRootPane rootPane = getRootPane();
+    final AnAction toStatementAction = new AnAction() {
       public void actionPerformed(AnActionEvent e) {
         getStatementEditor().requestFocus();
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(codeFragment), getRootPane());
+    };
+    toStatementAction.registerCustomShortcutSet(new CustomShortcutSet(codeFragment), rootPane);
+    addDisposeRunnable(new Runnable() {
+      public void run() {
+        toStatementAction.unregisterCustomShortcutSet(rootPane);
+      }
+    });
 
-    new AnAction() {
+    final AnAction toEvaluationAction = new AnAction() {
       public void actionPerformed(AnActionEvent e) {
         getEvaluationPanel().getWatchTree().requestFocus();
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(resultStroke), getRootPane());
+    };
+    toEvaluationAction.registerCustomShortcutSet(new CustomShortcutSet(resultStroke), rootPane);
+    addDisposeRunnable(new Runnable() {
+      public void run() {
+        toEvaluationAction.unregisterCustomShortcutSet(rootPane);
+      }
+    });
 
-    new AnAction() {
+    final AnAction okAction = new AnAction() {
       public void actionPerformed(AnActionEvent e) {
         doOKAction();
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(altEnter), getRootPane());
+    };
+    okAction.registerCustomShortcutSet(new CustomShortcutSet(altEnter), rootPane);
+    addDisposeRunnable(new Runnable() {
+      public void run() {
+        okAction.unregisterCustomShortcutSet(rootPane);
+      }
+    });
 
-    getEditor().addDocumentListener(new DocumentAdapter() {
+    final DebuggerEditorImpl editor = getEditor();
+    final DocumentAdapter docListener = new DocumentAdapter() {
       public void documentChanged(final DocumentEvent e) {
         DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
           public void run() {
@@ -88,9 +127,22 @@ public class StatementEvaluationDialog extends EvaluationDialog{
           }
         });
       }
+    };
+    editor.addDocumentListener(docListener);
+    addDisposeRunnable(new Runnable() {
+      public void run() {
+        editor.removeDocumentListener(docListener);
+      }
     });
 
     this.init();
+  }
+
+  protected void setDebuggerContext(DebuggerContextImpl context) {
+    super.setDebuggerContext(context);
+    if (myLanguageLabel != null) {
+      myLanguageLabel.setVisible(getCodeFragmentFactoryChooserComponent().isVisible());
+    }
   }
 
   private void updateSwitchButton(Document document) {

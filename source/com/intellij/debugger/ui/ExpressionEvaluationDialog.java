@@ -4,6 +4,7 @@ import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.actions.EvaluateAction;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -16,6 +17,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
 public class ExpressionEvaluationDialog extends EvaluationDialog {
+  private JLabel myLanguageLabel;
 
   public ExpressionEvaluationDialog(Project project, TextWithImports defaultExpression) {
     super(project, makeOnLine(defaultExpression));
@@ -58,18 +60,31 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
   }
 
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
+    final JPanel panel = new JPanel(new GridBagLayout());
+
+    myLanguageLabel = new JLabel("Language:");
+    myLanguageLabel.setVisible(getCodeFragmentFactoryChooserComponent().isVisible());
+    panel.add(myLanguageLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+    panel.add(getCodeFragmentFactoryChooserComponent(), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+
     final JLabel expressionLabel = new JLabel("Expression:");
     expressionLabel.setDisplayedMnemonic('E');
-    panel.add(expressionLabel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
-    panel.add(getExpressionCombo(), new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), 0, 0));
+    panel.add(expressionLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+    panel.add(getExpressionCombo(), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), 0, 0));
 
     final JLabel resultLabel = new JLabel("Result:");
     resultLabel.setDisplayedMnemonic('R');
-    panel.add(resultLabel, new GridBagConstraints(0, 1, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
-    panel.add(getEvaluationPanel(), new GridBagConstraints(0, 2, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(5, 0, 0, 0), 0, 0));
+    panel.add(resultLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+    panel.add(getEvaluationPanel(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(5, 0, 0, 0), 0, 0));
 
     return panel;
+  }
+
+  protected void setDebuggerContext(DebuggerContextImpl context) {
+    super.setDebuggerContext(context);
+    if (myLanguageLabel != null) {
+      myLanguageLabel.setVisible(getCodeFragmentFactoryChooserComponent().isVisible());
+    }
   }
 
   private static TextWithImports makeOnLine(TextWithImports text) {

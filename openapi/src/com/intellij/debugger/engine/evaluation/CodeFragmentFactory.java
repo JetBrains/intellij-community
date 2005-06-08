@@ -18,4 +18,9 @@ public interface CodeFragmentFactory extends ApplicationComponent {
   PsiCodeFragment createCodeFragment(TextWithImports item, PsiElement context, Project project);
 
   boolean isContextAccepted(PsiElement contextElement);
+
+  /**
+   * @return the name dsiplayed in UI (normally the language name this factory deals with)
+   */
+  String getDisplayName();
 }

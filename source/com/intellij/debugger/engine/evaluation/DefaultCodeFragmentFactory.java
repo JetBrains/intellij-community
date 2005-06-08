@@ -24,6 +24,10 @@ public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
     return ApplicationManager.getApplication().getComponent(DefaultCodeFragmentFactory.class);
   }
 
+  public String getDisplayName() {
+    return "Java";
+  }
+
   public PsiCodeFragment createCodeFragment(TextWithImports item, PsiElement context, Project project) {
     final PsiElementFactory elementFactory = PsiManager.getInstance(project).getElementFactory();
     final String text = item.getText();
