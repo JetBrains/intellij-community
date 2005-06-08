@@ -74,6 +74,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       new JavaClassReferenceProvider()
     );
     RegisterInPsi.referenceProviders(this);
+
     registerReferenceProvider(
       new ScopeFilter(
         new ParentElementFilter(
@@ -101,6 +102,33 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       new JavaClassReferenceProvider()
     );
 
+    registerReferenceProvider(
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new TextFilter("type"),
+            new ParentElementFilter(
+              new AndFilter(
+                new OrFilter(
+                  new AndFilter(
+                    new ClassFilter(XmlTag.class),
+                    new TextFilter("directive.attribute")
+                  ),
+                  new AndFilter(
+                    new ClassFilter(JspDirective.class),
+                    new TextFilter("attribute")
+                  )
+                ),
+                new NamespaceFilter(XmlUtil.JSP_URI)
+              )
+            )
+          )
+        )
+      ),
+      XmlAttributeValue.class,
+      new JavaClassReferenceProvider()
+    );
+    
     registerReferenceProvider(
       new ScopeFilter(
         new ParentElementFilter(
