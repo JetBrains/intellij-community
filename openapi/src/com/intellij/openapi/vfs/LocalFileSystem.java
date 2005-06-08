@@ -5,13 +5,12 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Set;
 import java.util.Collection;
-
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
+import java.util.Set;
 
 public abstract class LocalFileSystem extends VirtualFileSystem {
   public static final String PROTOCOL = "file";
@@ -47,4 +46,7 @@ public abstract class LocalFileSystem extends VirtualFileSystem {
   public abstract void removeWatchedRoots(final @NotNull Set<WatchRequest> rootsToWatch);
 
   public abstract void removeWatchedRoot(final @NotNull WatchRequest watchRequest);
+
+  public abstract void registerAuxularyFileOperationsHandler(LocalFileOperationsHandler handler);
+  public abstract void unregisterAuxularyFileOperationsHandler(LocalFileOperationsHandler handler);
 }

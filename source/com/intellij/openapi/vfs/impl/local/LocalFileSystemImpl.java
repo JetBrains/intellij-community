@@ -5,12 +5,12 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashSet;
+import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,16 +18,16 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.WorkerThread;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.vfs.local.win32.FileWatcher;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
@@ -50,6 +50,8 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
   private final Map<VirtualFile,Key> myRefreshStatusMap = new WeakHashMap<VirtualFile, Key>(); // VirtualFile --> 'status'
   private static final Key DIRTY_STATUS = Key.create("DIRTY_STATUS");
   private static final Key DELETED_STATUS = Key.create("DELETED_STATUS");
+
+  private List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
 
   private WatchForChangesThread myWatchForChangesThread;
 
@@ -813,6 +815,66 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     synchronized (LOCK) {
       if (myRootsToWatch.remove(watchRequest)) setUpFileWatcher();
     }
+  }
+
+  public void registerAuxularyFileOperationsHandler(LocalFileOperationsHandler handler) {
+    LOG.assertTrue(!myHandlers.contains(handler), "Handler " + handler + " already registered.");
+    myHandlers.add(handler);
+  }
+
+  public void unregisterAuxularyFileOperationsHandler(LocalFileOperationsHandler handler) {
+    LOG.assertTrue(myHandlers.remove(handler), "Handler" + handler + " haven't been registered or already unregistered.");
+  }
+
+  public boolean auxDelete(VirtualFile file) throws IOException {
+    for (LocalFileOperationsHandler handler : myHandlers) {
+      if (handler.canHandleFileOperation(file)) {
+        handler.delete(file);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public boolean auxMove(VirtualFile file, VirtualFile toDir) throws IOException {
+    for (LocalFileOperationsHandler handler : myHandlers) {
+      if (handler.canHandleFileOperation(file)) {
+        handler.move(file, toDir);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean auxRename(VirtualFile file, String newName) throws IOException {
+    for (LocalFileOperationsHandler handler : myHandlers) {
+      if (handler.canHandleFileOperation(file)) {
+        handler.rename(file, newName);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean auxCreateFile(VirtualFile dir, String name) throws IOException {
+    for (LocalFileOperationsHandler handler : myHandlers) {
+      if (handler.canHandleFileOperation(dir)) {
+        handler.createFile(dir, name);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean auxCreateDirectory(VirtualFile dir, String name) throws IOException {
+    for (LocalFileOperationsHandler handler : myHandlers) {
+      if (handler.canHandleFileOperation(dir)) {
+        handler.createDirectory(dir, name);
+        return true;
+      }
+    }
+    return false;
   }
 
   public void removeWatchedRoots(final Set<WatchRequest> rootsToWatch) {
