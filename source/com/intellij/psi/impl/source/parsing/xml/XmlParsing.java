@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.CharTable;
 
 import java.util.HashSet;
@@ -226,13 +227,19 @@ public class XmlParsing implements ElementType {
         names.add(openedName);
         setFlag = true;
       }
+      
+      CompositeElement text = null;
       while (true) {
         if (parseProcessingInstruction(tag, lexer)) {
         }
         else if (_parseTag(tag, lexer, names)) {
         }
         else if (lexer.getTokenType() == XML_DATA_CHARACTERS) {
-          addToken(tag, lexer);
+          if (text == null) {
+            text = Factory.createCompositeElement(XML_TEXT);
+            TreeUtil.addChildren(tag, text);
+          }
+          addToken(text, lexer);
         }
         else if (lexer.getTokenType() == XML_CDATA_START) {
           addToken(tag, lexer);
