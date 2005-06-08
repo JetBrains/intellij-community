@@ -392,7 +392,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Deprecated
     public void hide() {
       super.hide();
-      myFocusTrackback.restoreFocus();
+      if (myFocusTrackback != null) {
+        myFocusTrackback.restoreFocus();
+      }
     }
 
     protected JRootPane createRootPane() {
