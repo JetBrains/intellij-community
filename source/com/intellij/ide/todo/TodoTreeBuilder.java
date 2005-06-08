@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import org.jetbrains.annotations.Nullable;
@@ -388,48 +387,17 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
-  PsiFile[] getFilesForNode(DefaultMutableTreeNode node) {
+  PsiFile getFileForNode(DefaultMutableTreeNode node) {
     Object obj = node.getUserObject();
-    if (
-      (obj instanceof ToDoRootNode) ||
-      (obj instanceof SummaryNode) ||
-      (obj instanceof TodoDirNode) ||
-      (obj instanceof TodoPackageNode) ||
-      (obj instanceof ModuleToDoNode)
-    ) {
-      HashSet<PsiFile> files = new HashSet<PsiFile>();
-      NodeDescriptor descriptor = (NodeDescriptor)obj;
-      collectFilesForElement(descriptor.getElement(), files);
-      return files.toArray(new PsiFile[files.size()]);
-    }
-    else if (obj instanceof TodoFileNode) {
+    if (obj instanceof TodoFileNode) {
       PsiFile psiFile = ((TodoFileNode)obj).getValue();
-      return new PsiFile[]{psiFile};
+      return psiFile;
     }
     else if (obj instanceof TodoItemNode) {
       SmartTodoItemPointer pointer = (((TodoItemNode)obj).getValue());
-      return new PsiFile[]{pointer.getTodoItem().getFile()};
+      return pointer.getTodoItem().getFile();
     }
-    else {
-      throw new IllegalArgumentException(String.valueOf(obj));
-    }
-  }
-
-  private void collectFilesForElement(Object element, HashSet<PsiFile> files) {
-    Object[] children = myTreeStructure.getChildElements(element);
-    for (int i = 0; i < children.length; i++) {
-      Object child = children[i];
-      if (child instanceof TodoItem) {
-        continue;
-      }
-      else if (child instanceof PsiFile) {
-        files.add((PsiFile)child);
-        return;
-      }
-      else {
-        collectFilesForElement(child, files);
-      }
-    }
+    return null;
   }
 
   void collapseAll() {

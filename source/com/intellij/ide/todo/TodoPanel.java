@@ -26,7 +26,6 @@ import com.intellij.openapi.wm.impl.VisibilityWatcher;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.Content;
@@ -35,12 +34,13 @@ import com.intellij.util.Icons;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -106,7 +106,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     group.addSeparator();
     group.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));
     PopupHandler.installPopupHandler(myTree, group, ActionPlaces.TODO_VIEW_POPUP, ActionManager.getInstance());
-    
+
     myTree.addKeyListener(
       new KeyAdapter() {
         public void keyPressed(KeyEvent e) {
@@ -226,7 +226,8 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
   /**
    * @return list of all selected virtual files.
    */
-  protected VirtualFile getSelectedFile() {
+  @Nullable
+  protected PsiFile getSelectedFile() {
     TreePath path = myTree.getSelectionPath();
     if (path == null) {
       return null;
@@ -236,15 +237,10 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     if(node.getUserObject() == null){
       return null;
     }
-    PsiFile[] psiFiles = myTodoTreeBuilder.getFilesForNode(node);
-    if (psiFiles.length > 0) {
-      return psiFiles[0].getVirtualFile();
-    }
-    else {
-      return null;
-    }
+    return myTodoTreeBuilder.getFileForNode(node);
   }
 
+  @Nullable
   private PsiElement getSelectedElement() {
     TreePath path = myTree.getSelectionPath();
     if (path == null) {
@@ -265,12 +261,8 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       return descriptor.getValue();
     }
     else {
-      VirtualFile file = getSelectedFile();
-      if (file != null) {
-        return PsiManager.getInstance(myProject).findFile(file);
-      }
+      return getSelectedFile();
     }
-    return null;
   }
 
   public Object getData(String dataId) {
@@ -299,15 +291,16 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       }
     }
     else if (DataConstants.VIRTUAL_FILE.equals(dataId)) {
-      return getSelectedFile();
+      final PsiFile file = getSelectedFile();
+      return file != null ? file.getVirtualFile() : null;
     }
     else if (DataConstants.PSI_ELEMENT.equals(dataId)) {
       return getSelectedElement();
     }
     else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
-      VirtualFile file = getSelectedFile();
+      PsiFile file = getSelectedFile();
       if (file != null) {
-        return new VirtualFile[]{file};
+        return new VirtualFile[]{file.getVirtualFile()};
       }
       else {
         return ourEmptyArray;
@@ -412,7 +405,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
         return false;
       }
       Object element = userObject.getElement();
-      return !isFirst(node);      
+      return !isFirst(node);
     }
 
     private boolean isFirst(final TreeNode node) {
@@ -453,7 +446,7 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
       TreeUtil.selectPath(myTree, new TreePath(node.getPath()));
       return new OccurenceInfo(
         new OpenFileDescriptor(myProject, pointer.getValue().getTodoItem().getFile().getVirtualFile(),
-          pointer.getValue().getRangeMarker().getStartOffset()),
+                               pointer.getValue().getRangeMarker().getStartOffset()),
         -1,
         -1
       );
