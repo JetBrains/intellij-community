@@ -5,7 +5,9 @@ import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -155,8 +157,12 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   public abstract boolean isTextElement();
 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.AbstractXmlBlock");
+
   public static Block creareJspRoot(final PsiElement element, final CodeStyleSettings settings) {
-    final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(element);
+    final PsiFile[] psiRoots = (element.getContainingFile()).getPsiRoots();
+    LOG.assertTrue(psiRoots.length == 4);
+    final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(psiRoots[1]);
     if (settings.JSPX_USE_HTML_FORMATTER) {
       return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.HTML_TAG), null);      
     } else {
