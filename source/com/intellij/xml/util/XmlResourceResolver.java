@@ -6,7 +6,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -14,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Map;
 import java.net.URL;
 import java.net.MalformedURLException;
 
@@ -56,10 +54,12 @@ public class XmlResourceResolver implements XMLEntityResolver {
           baseFile = (XmlFile)resolve(null,baseSystemId);
 
           if (baseFile == null) {
-            File workingFile = new File("");
-            String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
-            String id = StringUtil.replace(baseSystemId, workingDir, myFile.getVirtualFile().getParent().getPath());
-            vFile = VfsUtil.findRelativeFile(id, null);
+            if (myFile != null) {
+              File workingFile = new File("");
+              String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
+              String id = StringUtil.replace(baseSystemId, workingDir, myFile.getVirtualFile().getParent().getPath());
+              vFile = VfsUtil.findRelativeFile(id, null);
+            }
 
             if (vFile == null) {
               vFile = VfsUtil.findRelativeFile(baseSystemId, null);
