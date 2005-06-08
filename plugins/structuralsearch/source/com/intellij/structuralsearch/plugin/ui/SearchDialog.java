@@ -221,6 +221,10 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     recursiveMatching.setSelected(
       isRecursiveSearchEnabled() && matchOptions.isRecursiveSearch()
     );
+
+    caseSensitiveMatch.setSelected(
+      matchOptions.isCaseSensitiveMatch()
+    );
     //distinctResults.setSelected(matchOptions.isDistinct());
 
     if (matchOptions.getMaxMatchesCount() != Integer.MAX_VALUE) {
