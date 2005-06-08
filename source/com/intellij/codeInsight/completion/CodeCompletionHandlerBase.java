@@ -307,16 +307,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       completionData = getCompletionData(context, lastElement);
     }
 
-    //// Trim for file names
-    //// TODO: remove this shit
-    //final int dirEndIndex = Math.max(context.prefix.lastIndexOf('/'), context.prefix.lastIndexOf('\\'));
-    //if (dirEndIndex >= 0) {
-    //  final int protocolIndex = context.prefix.indexOf("://");
-    //  if (protocolIndex==-1 || dirEndIndex > protocolIndex+2 ) {
-    //    context.prefix = context.prefix.substring(dirEndIndex + 1);
-    //  }
-    //}
-
     if(completionData == null) return new LookupData(new LookupItem[0], context.prefix);
 
     complete(context, insertedElement, completionData, lookupSet);
