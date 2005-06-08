@@ -802,17 +802,22 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
           result.add(request);
         }
       }
+
+      if (myRootsToWatch.addAll(result)) setUpFileWatcher();
     }
 
-    if (myRootsToWatch.addAll(result)) setUpFileWatcher();
     return result;
   }
 
   public void removeWatchedRoot(final WatchRequest watchRequest) {
-    if (myRootsToWatch.remove(watchRequest)) setUpFileWatcher();
+    synchronized (LOCK) {
+      if (myRootsToWatch.remove(watchRequest)) setUpFileWatcher();
+    }
   }
 
   public void removeWatchedRoots(final Set<WatchRequest> rootsToWatch) {
-    if (myRootsToWatch.removeAll(rootsToWatch)) setUpFileWatcher();
+    synchronized (LOCK) {
+      if (myRootsToWatch.removeAll(rootsToWatch)) setUpFileWatcher();
+    }
   }
 }
