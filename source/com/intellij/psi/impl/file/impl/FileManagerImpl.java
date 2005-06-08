@@ -345,39 +345,45 @@ public class FileManagerImpl implements FileManager {
   }
 
   private PsiFile createPsiFile(VirtualFile vFile, String name) {
-    if (vFile.isDirectory()) return null;
-    if (myFileTypeManager.isFileIgnored(name)) return null; // cannot use ProjectFileIndex because of "name"!
+    try {
+      if (vFile.isDirectory()) return null;
+      if (myFileTypeManager.isFileIgnored(name)) return null; // cannot use ProjectFileIndex because of "name"!
 
-    VirtualFile parent = vFile.getParent();
-    if (parent == null) return null;
-    PsiDirectory psiDir = findDirectory(parent); // need to cache parent directory - used for firing events
-    if (psiDir == null) return null;
+      VirtualFile parent = vFile.getParent();
+      if (parent == null) return null;
+      PsiDirectory psiDir = findDirectory(parent); // need to cache parent directory - used for firing events
+      if (psiDir == null) return null;
 
-    FileType fileType = myFileTypeManager.getFileTypeByFileName(name);
-    final Project project = myManager.getProject();
-    if (fileType instanceof LanguageFileType) {
-      final Language language = ((LanguageFileType)fileType).getLanguage();
-      return language.getParserDefinition().createFile(project, vFile);
-    }
-
-    if (fileType instanceof JavaClassFileType) {
-      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      if (fileIndex.isInLibraryClasses(vFile)) {
-        // skip inners & anonymous
-        int dotIndex = name.lastIndexOf('.');
-        if (dotIndex < 0) dotIndex = name.length();
-        int index = name.lastIndexOf('$', dotIndex);
-        if (index >= 0) return null;
-
-        return new ClsFileImpl((PsiManagerImpl)PsiManager.getInstance(project), vFile);
+      FileType fileType = myFileTypeManager.getFileTypeByFileName(name);
+      final Project project = myManager.getProject();
+      if (fileType instanceof LanguageFileType) {
+        final Language language = ((LanguageFileType)fileType).getLanguage();
+        return language.getParserDefinition().createFile(project, vFile);
       }
+
+      if (fileType instanceof JavaClassFileType) {
+        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+        if (fileIndex.isInLibraryClasses(vFile)) {
+          // skip inners & anonymous
+          int dotIndex = name.lastIndexOf('.');
+          if (dotIndex < 0) dotIndex = name.length();
+          int index = name.lastIndexOf('$', dotIndex);
+          if (index >= 0) return null;
+
+          return new ClsFileImpl((PsiManagerImpl)PsiManager.getInstance(project), vFile);
+        }
+        return null;
+      }
+
+      if (fileType.isBinary()) {
+        return new PsiBinaryFileImpl(myManager, vFile);
+      }
+      return new PsiPlainTextFileImpl(project, vFile);
+    }
+    catch (Throwable e) {
+      LOG.error(e);
       return null;
     }
-
-    if (fileType.isBinary()) {
-      return new PsiBinaryFileImpl(myManager, vFile);
-    }
-    return new PsiPlainTextFileImpl(project, vFile);
   }
 
   public PsiDirectory findDirectory(VirtualFile vFile) {
