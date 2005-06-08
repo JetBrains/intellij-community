@@ -6,6 +6,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 
 import java.awt.*;
 
@@ -18,6 +19,9 @@ public abstract class FileStatusManager {
   }
 
   public abstract FileStatus getStatus(VirtualFile virtualFile);
+
+  public abstract void registerProvider(FileStatusProvider provider, VirtualFileSystem fileSystem);
+  public abstract void unregisterProvider(FileStatusProvider provider, VirtualFileSystem fileSystem);
 
   public abstract void fileStatusesChanged();
   public abstract void fileStatusChanged(VirtualFile file);

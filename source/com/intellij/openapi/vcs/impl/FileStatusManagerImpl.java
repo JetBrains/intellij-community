@@ -40,6 +40,8 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   private MyDocumentAdapter myDocumentListener;
   private ModuleRootListener myModuleRootListener;
 
+  private final Map<VirtualFileSystem, FileStatusProvider> myVFSToProviderMap = new HashMap<VirtualFileSystem, FileStatusProvider>();
+
   public FileStatusManagerImpl(Project project, StartupManager startupManager) {
     myProject = project;
 
@@ -57,8 +59,20 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   public FileStatus calcStatus(VirtualFile virtualFile) {
     LOG.assertTrue(virtualFile != null);
 
-    if (!(virtualFile.getFileSystem() instanceof LocalFileSystem)) return FileStatus.NOT_CHANGED;
+    final VirtualFileSystem fileSystem = virtualFile.getFileSystem();
+    if (fileSystem == LocalFileSystem.getInstance()) {
+      return calcLocalFileStatus(virtualFile);
+    } else {
+      final FileStatusProvider fileStatusProvider = myVFSToProviderMap.get(fileSystem);
+      if (fileStatusProvider!= null) {
+        return fileStatusProvider.getStatus(virtualFile);
+      } else {
+        return FileStatus.NOT_CHANGED;
+      }
+    }
+  }
 
+  private FileStatus calcLocalFileStatus(final VirtualFile virtualFile) {
     if (!fileIsInContent(virtualFile)) return FileStatus.NOT_CHANGED;
 
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(virtualFile);
@@ -119,6 +133,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
 
   public void disposeComponent() {
     myCachedStatuses.clear();
+    myVFSToProviderMap.clear();
   }
 
   public String getComponentName() {
@@ -182,6 +197,17 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     }
 
     return status;
+  }
+
+  public void registerProvider(FileStatusProvider provider, VirtualFileSystem fileSystem) {
+    myVFSToProviderMap.put(fileSystem, provider);
+  }
+
+  public void unregisterProvider(FileStatusProvider provider, VirtualFileSystem fileSystem) {
+    final FileStatusProvider currentProvider = myVFSToProviderMap.get(fileSystem);
+    if (currentProvider == provider) {
+      myVFSToProviderMap.remove(fileSystem);
+    }
   }
 
   private FileStatus getCachedStatus(final VirtualFile file) {
