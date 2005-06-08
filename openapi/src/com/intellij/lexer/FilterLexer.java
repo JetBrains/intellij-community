@@ -64,7 +64,7 @@ public class FilterLexer extends LexerBase {
     return myOriginal.getState();
   }
 
-  public final IElementType getTokenType() {
+  public IElementType getTokenType() {
     return myOriginal.getTokenType();
   }
 

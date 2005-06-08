@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.lang.BracePair;
-import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.Language;
+import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
@@ -34,7 +33,6 @@ public class BraceMatchingUtil {
   private static final int XML_TAG_TOKEN_GROUP = 1;
   private static final int XML_VALUE_DELIMITER_GROUP = 2;
   private static final int JSP_TOKEN_GROUP = 3;
-  private static final int JSP_VALUE_DELIMITER_GROUP = 4;
   private static final int DOC_TOKEN_GROUP = 5;
 
   public interface BraceMatcher {
@@ -129,10 +127,6 @@ public class BraceMatchingUtil {
       PAIRING_TOKENS.put(JspTokenType.JSP_EXPRESSION_START, JspTokenType.JSP_EXPRESSION_END);
       PAIRING_TOKENS.put(JspTokenType.JSP_DECLARATION_START, JspTokenType.JSP_DECLARATION_END);
       PAIRING_TOKENS.put(JspTokenType.JSP_DIRECTIVE_START, JspTokenType.JSP_DIRECTIVE_END);
-      PAIRING_TOKENS.put(JspTokenType.JSP_ACTION_END, JspTokenType.JSP_ACTION_START);
-      PAIRING_TOKENS.put(JspTokenType.JSP_EMPTY_ACTION_END, JspTokenType.JSP_ACTION_START);
-      PAIRING_TOKENS.put(JspTokenType.JSP_ACTION_ATTRIBUTE_VALUE_START_DELIMITER, JspTokenType.JSP_ACTION_ATTRIBUTE_VALUE_END_DELIMITER);
-      PAIRING_TOKENS.put(JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_START_DELIMITER, JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_END_DELIMITER);
       PAIRING_TOKENS.put(JavaDocTokenType.DOC_INLINE_TAG_START, JavaDocTokenType.DOC_INLINE_TAG_END);
       PAIRING_TOKENS.put(ELTokenType.JSP_EL_RBRACKET, ELTokenType.JSP_EL_LBRACKET);
       PAIRING_TOKENS.put(ELTokenType.JSP_EL_RPARENTH, ELTokenType.JSP_EL_LPARENTH);
@@ -146,12 +140,6 @@ public class BraceMatchingUtil {
         return tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER || tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER
                ? XML_VALUE_DELIMITER_GROUP
                : XML_TAG_TOKEN_GROUP;
-      }
-      else if (tokenType instanceof IJspElementType) {
-        return tokenType == JspTokenType.JSP_ACTION_ATTRIBUTE_VALUE_START_DELIMITER ||
-               tokenType == JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_START_DELIMITER ||
-               tokenType == JspTokenType.JSP_ACTION_ATTRIBUTE_VALUE_END_DELIMITER ||
-               tokenType == JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_END_DELIMITER ? JSP_VALUE_DELIMITER_GROUP : JSP_TOKEN_GROUP;
       }
       else if (tokenType instanceof IJavaDocElementType) {
         return DOC_TOKEN_GROUP;
@@ -172,9 +160,6 @@ public class BraceMatchingUtil {
              tokenType == JspTokenType.JSP_EXPRESSION_START ||
              tokenType == JspTokenType.JSP_DECLARATION_START ||
              tokenType == JspTokenType.JSP_DIRECTIVE_START ||
-             tokenType == JspTokenType.JSP_ACTION_START ||
-             tokenType == JspTokenType.JSP_ACTION_ATTRIBUTE_VALUE_START_DELIMITER ||
-             tokenType == JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_START_DELIMITER ||
              tokenType == ELTokenType.JSP_EL_LBRACKET ||
              tokenType == ELTokenType.JSP_EL_LPARENTH ||
              tokenType == JavaDocTokenType.DOC_INLINE_TAG_START;
@@ -192,9 +177,6 @@ public class BraceMatchingUtil {
           tokenType == JspTokenType.JSP_EXPRESSION_END ||
           tokenType == JspTokenType.JSP_DECLARATION_END ||
           tokenType == JspTokenType.JSP_DIRECTIVE_END ||
-          tokenType == JspTokenType.JSP_EMPTY_ACTION_END ||
-          tokenType == JspTokenType.JSP_ACTION_ATTRIBUTE_VALUE_END_DELIMITER ||
-          tokenType == JspTokenType.JSP_DIRECTIVE_ATTRIBUTE_VALUE_END_DELIMITER ||
           tokenType == ELTokenType.JSP_EL_RBRACKET ||
           tokenType == ELTokenType.JSP_EL_RPARENTH ||
           tokenType == JavaDocTokenType.DOC_INLINE_TAG_END) {
@@ -207,9 +189,6 @@ public class BraceMatchingUtil {
         }
 
         return result;
-      }
-      else if (tokenType == JspTokenType.JSP_ACTION_END) {
-        return findTokenBack(iterator, JspTokenType.JSP_ACTION_END_TAG_START, JspTokenType.JSP_ACTION_START);
       }
       else {
         return false;
@@ -614,33 +593,6 @@ public class BraceMatchingUtil {
               break;
             }
           } else if (tokenType1 == XmlTokenType.XML_TAG_NAME) {
-            name = fileText.subSequence(iterator.getStart(), iterator.getEnd()).toString();
-            break;
-          }
-        }
-        for (int i = 0; i < count; i++) {
-          iterator.advance();
-        }
-      }
-    }
-    else if (tokenType == JspTokenType.JSP_ACTION_START) {
-      {
-        iterator.advance();
-        if (!iterator.atEnd() && iterator.getTokenType() == JspTokenType.JSP_ACTION_NAME) {
-          name = fileText.subSequence(iterator.getStart(), iterator.getEnd()).toString();
-        }
-        iterator.retreat();
-      }
-    }
-    else if (tokenType == JspTokenType.JSP_ACTION_END || tokenType == JspTokenType.JSP_EMPTY_ACTION_END) {
-      {
-        int count = 0;
-        while (true) {
-          iterator.retreat();
-          count++;
-          if (iterator.atEnd()) break;
-          IElementType tokenType1 = iterator.getTokenType();
-          if (tokenType1 == JspTokenType.JSP_ACTION_NAME) {
             name = fileText.subSequence(iterator.getStart(), iterator.getEnd()).toString();
             break;
           }

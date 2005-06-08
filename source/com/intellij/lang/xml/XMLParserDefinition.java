@@ -9,10 +9,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.XmlElementType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,8 +27,8 @@ public class XMLParserDefinition implements ParserDefinition {
     return null;
   }
 
-  public IElementType getFileNodeType() {
-    return null;
+  public IFileElementType getFileNodeType() {
+    return XmlElementType.XML_FILE;
   }
 
   public TokenSet getWhitespaceTokens() {

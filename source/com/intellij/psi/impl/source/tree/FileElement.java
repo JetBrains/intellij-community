@@ -31,7 +31,8 @@ public class FileElement extends RepositoryTreeElement{
   public PsiManager getManager() {
     final PsiManager manager = getUserData(MANAGER_KEY);
     if (manager == null) {
-      return SourceTreeToPsiMap.treeElementToPsi(this).getManager(); //TODO: cache?
+      if(parent != null) return parent.getManager();
+      else return SourceTreeToPsiMap.treeElementToPsi(this).getManager(); //TODO: cache?
     }
     else {
       return manager;

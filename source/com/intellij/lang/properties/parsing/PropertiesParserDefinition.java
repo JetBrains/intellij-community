@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.IFileElementType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -30,7 +31,7 @@ public class PropertiesParserDefinition implements ParserDefinition {
     return new PropertiesLexer();
   }
 
-  public IElementType getFileNodeType() {
+  public IFileElementType getFileNodeType() {
     return PropertiesElementTypes.FILE;
   }
 

@@ -15,6 +15,10 @@ import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.source.parsing.jsp.JspHighlightLexer;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.util.text.CharArrayUtil;
 
 import java.util.HashMap;
@@ -75,6 +79,11 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
 
   public synchronized void documentChanged(DocumentEvent e) {
     Document document = e.getDocument();
+    if(myLexer instanceof JspHighlightLexer && myEditor != null && myEditor.getProject() != null){
+      final PsiDocumentManager instance = PsiDocumentManager.getInstance(myEditor.getProject());
+      final PsiFile psiFile = instance.getPsiFile(document);
+      if(psiFile instanceof JspFile) ((JspHighlightLexer)myLexer).setBaseFile((JspFile)psiFile);
+    }
     if(mySegments.getSegmentCount() == 0) {
       setText(document.getCharsSequence());
       return;
@@ -162,6 +171,11 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
   public void setText(CharSequence text) {
     int startOffset = 0;
     char[] chars = CharArrayUtil.fromSequence(text);
+    if(myLexer instanceof JspHighlightLexer && myEditor != null && myEditor.getProject() != null){
+      final PsiDocumentManager instance = PsiDocumentManager.getInstance(myEditor.getProject());
+      final PsiFile psiFile = instance.getPsiFile(myEditor.getDocument());
+      if(psiFile instanceof JspFile) ((JspHighlightLexer)myLexer).setBaseFile((JspFile)psiFile);
+    }
     myLexer.start(chars, startOffset, text.length());
     int i = 0;
     mySegments.removeAll();

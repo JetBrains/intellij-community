@@ -28,7 +28,7 @@ public class PropertiesLanguage extends Language {
   private static final Annotator ANNOTATOR = new PropertiesAnnotator();
 
   public PropertiesLanguage() {
-    super("Properties");
+    super("Properties", "text/properties");
   }
 
   public ParserDefinition getParserDefinition() {

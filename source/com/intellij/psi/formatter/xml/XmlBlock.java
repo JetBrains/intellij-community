@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.jsp.JspElementType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -121,7 +122,7 @@ public class XmlBlock extends AbstractXmlBlock {
     }
     
     /*
-    if (myNode.getElementType() == ElementType.JSP_SCRIPTLET || myNode.getElementType() == ElementType.JSP_DECLARATION_NEW) {
+    if (myNode.getElementType() == ElementType.JSP_SCRIPTLET || myNode.getElementType() == ElementType.JSP_DECLARATION) {
       return getFormatter().getNoneIndent();
     }
     if (myNode.getElementType() == ElementType.JSP_XML_TEXT) {
@@ -169,7 +170,7 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    if (myNode.getElementType() == ElementType.JSP_DECLARATION_NEW || myNode.getElementType() == ElementType.JSP_SCRIPTLET) {
+    if (myNode.getElementType() == ElementType.JSP_DECLARATION || myNode.getElementType() == JspElementType.JSP_SCRIPTLET) {
       return new ChildAttributes(Formatter.getInstance().createNormalIndent(), null);
     }
     else {

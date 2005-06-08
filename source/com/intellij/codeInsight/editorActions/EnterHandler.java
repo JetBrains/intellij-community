@@ -27,7 +27,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -184,9 +183,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       }
     }
 
-    if (file instanceof XmlFile && isBetweenXmlTags(editor, caretOffset) ||
-        file instanceof JspFile && isBetweenJspTags(editor, caretOffset)
-        ) {
+    if (file instanceof XmlFile && isBetweenXmlTags(editor, caretOffset)) {
       myOriginalHandler.execute(editor, dataContext);
       text = document.getCharsSequence();
       forceIndent = true;
@@ -332,11 +329,6 @@ public class EnterHandler extends EditorWriteActionHandler {
 
   private static boolean isBetweenXmlTags(Editor editor, int offset) {
     return isBetweenTags(editor,offset,XmlTokenType.XML_TAG_END,XmlTokenType.XML_END_TAG_START);
-  }
-
-  private static boolean isBetweenJspTags(Editor editor, int offset) {
-    return isBetweenTags(editor,offset,JspTokenType.JSP_ACTION_END,JspTokenType.JSP_ACTION_END_TAG_START) ||
-           isBetweenXmlTags(editor,offset);
   }
 
   private static boolean isBetweenTags(Editor editor, int offset, IElementType first, IElementType second) {

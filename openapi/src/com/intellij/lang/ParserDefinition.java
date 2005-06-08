@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 
 /**
@@ -19,7 +19,7 @@ public interface ParserDefinition {
   Lexer createLexer(Project project);
   PsiParser createParser(Project project);
 
-  IElementType getFileNodeType();
+  IFileElementType getFileNodeType();
 
   TokenSet getWhitespaceTokens();
   TokenSet getCommentTokens();

@@ -4,11 +4,9 @@ import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.parsing.jsp.JspStep1Lexer;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.jsp.IJspElementType;
 
 public class StatementParsing extends Parsing {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.StatementParsing");
@@ -72,8 +70,7 @@ public class StatementParsing extends Parsing {
   public TreeElement parseCodeBlock(Lexer lexer, boolean deep) {
     if (lexer.getTokenType() != LBRACE) return null;
     if (lexer instanceof FilterLexer){
-      if (((FilterLexer)lexer).getOriginal() instanceof JspStep1Lexer ||
-          ((FilterLexer)lexer).getOriginal() instanceof JavaWithJspTemplateDataLexer){
+      if (((FilterLexer)lexer).getOriginal() instanceof JavaWithJspTemplateDataLexer){
         deep = true; // deep parsing of code blocks in JSP would lead to incorrect parsing on transforming
       }
     }

@@ -9,13 +9,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 
 /**
@@ -30,8 +31,8 @@ public class JavaParserDefinition implements ParserDefinition {
     return new JavaLexer(PsiManager.getInstance(project).getEffectiveLanguageLevel());
   }
 
-  public IElementType getFileNodeType() {
-    return null;
+  public IFileElementType getFileNodeType() {
+    return JavaElementType.JAVA_FILE;
   }
 
   public TokenSet getWhitespaceTokens() {

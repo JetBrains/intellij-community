@@ -3,17 +3,18 @@ package com.intellij.lang.html;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
-import com.intellij.lexer.Lexer;
 import com.intellij.lexer.HtmlLexer;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.impl.source.html.HtmlFileImpl;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.XmlElementType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,8 +28,8 @@ public class HTMLParserDefinition implements ParserDefinition {
     return new HtmlLexer();
   }
 
-  public IElementType getFileNodeType() {
-    return null;
+  public IFileElementType getFileNodeType() {
+    return XmlElementType.HTML_FILE;
   }
 
   public TokenSet getWhitespaceTokens() {

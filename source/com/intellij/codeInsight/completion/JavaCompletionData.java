@@ -12,7 +12,7 @@ import com.intellij.psi.filters.getters.UpWalkGetter;
 import com.intellij.psi.filters.position.*;
 import com.intellij.psi.filters.types.TypeCodeFragmentIsVoidEnabledFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.impl.source.tree.JspElementType;
+import com.intellij.psi.jsp.JspElementType;
 
 public class JavaCompletionData extends CompletionData{
 

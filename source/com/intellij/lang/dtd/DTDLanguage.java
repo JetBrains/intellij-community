@@ -1,19 +1,16 @@
 package com.intellij.lang.dtd;
 
-import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.xml.XmlCommenter;
 import com.intellij.lang.xml.XmlFindUsagesProvider;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.tree.IElementType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,7 +21,7 @@ import com.intellij.psi.xml.XmlTokenType;
  */
 public class DTDLanguage extends Language {
   public DTDLanguage() {
-    super("DTD");
+    super("DTD", "text/dtd");
   }
 
   public SyntaxHighlighter getSyntaxHighlighter(Project project) {

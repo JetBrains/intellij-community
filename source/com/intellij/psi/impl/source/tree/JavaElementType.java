@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IErrorCounterChameleonElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.CharTable;
@@ -96,7 +97,7 @@ public interface JavaElementType {
   IElementType NAME_VALUE_PAIR = new IJavaElementType("NAME_VALUE_PAIR");
   IElementType ANNOTATION_PARAMETER_LIST = new IJavaElementType("ANNOTATION_PARAMETER_LIST");
 
-  IElementType JAVA_FILE = new IChameleonElementType("JAVA_FILE_TEXT", StdLanguages.JAVA){
+  IFileElementType JAVA_FILE = new IFileElementType("JAVA_FILE", StdLanguages.JAVA){
     public ASTNode parseContents(ASTNode chameleon) {
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
       final PsiManager manager = chameleon.getTreeParent().getPsi().getManager();

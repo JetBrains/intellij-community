@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.xml.IXmlElementType;
 import com.intellij.util.text.CharArrayUtil;
 
@@ -45,7 +46,7 @@ public interface XmlElementType {
   IElementType XML_TEXT = new IXmlElementType("XML_TEXT");
 
 
-  IElementType HTML_FILE = new IChameleonElementType("HTML_FILE", StdLanguages.HTML){
+  IFileElementType HTML_FILE = new IFileElementType(StdLanguages.HTML){
     public ASTNode parseContents(ASTNode chameleon) {
       final Grammar grammarByName = GrammarUtil.getGrammarByName(StdFileTypes.HTML.getName());
       final char[] chars = ((LeafElement)chameleon).textToCharArray();
@@ -54,7 +55,7 @@ public interface XmlElementType {
     public boolean isParsable(CharSequence buffer, final Project project) {return true;}
   };
 
-  IElementType XML_FILE = new IChameleonElementType("XML_FILE", StdLanguages.XML){
+  IFileElementType XML_FILE = new IFileElementType(StdLanguages.XML){
     public ASTNode parseContents(ASTNode chameleon) {
       final Grammar grammarByName = GrammarUtil.getGrammarByName(StdFileTypes.XML.getName());
       final char[] chars = ((LeafElement)chameleon).textToCharArray();

@@ -27,7 +27,7 @@ public class XHTMLLanguage extends XMLLanguage {
   private final FormattingModelBuilder myFormattingModelBuilder;
 
   public XHTMLLanguage() {
-    super("XHTML");
+    super("XHTML", "text/xhtml");
     myFormattingModelBuilder = new FormattingModelBuilder() {
       public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
         return new PsiBasedFormattingModel(element.getContainingFile(), settings, 

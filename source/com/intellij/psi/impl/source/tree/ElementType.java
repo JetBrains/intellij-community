@@ -4,6 +4,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.TokenTypeEx;
+import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.xml.dtd.DTDElementType;
 import com.intellij.psi.tree.IElementType;
@@ -23,7 +24,7 @@ public interface ElementType extends
   IElementType CODE_FRAGMENT = new IElementType("CODE_FRAGMENT", null);
   IElementType DUMMY_HOLDER = new IElementType("DUMMY_HOLDER", null);
 
-  TokenSet WHITE_SPACE_BIT_SET = TokenSet.create(new IElementType[]{WHITE_SPACE, JSP_DIRECTIVE_WHITE_SPACE, JSP_ACTION_WHITE_SPACE, JspElementType.JSP_TEMPLATE_EXPRESSION});
+  TokenSet WHITE_SPACE_BIT_SET = TokenSet.create(new IElementType[]{WHITE_SPACE, JspElementType.JSP_TEMPLATE_EXPRESSION});
 
   TokenSet COMMENT_BIT_SET = TokenSet.create(new IElementType[]{END_OF_LINE_COMMENT, 
     C_STYLE_COMMENT, 

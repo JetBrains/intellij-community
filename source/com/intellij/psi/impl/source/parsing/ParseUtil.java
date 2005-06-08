@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.ParsingContext;
-import com.intellij.psi.impl.source.parsing.jsp.JspStep1Lexer;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.ModifierListElement;
 import com.intellij.psi.tree.IChameleonElementType;
@@ -126,10 +125,10 @@ public class ParseUtil implements Constants {
   }
 
   public static final class CommonParentState {
-    TreeElement startLeafBranchStart = null;
-    ASTNode nextLeafBranchStart = null;
-    CompositeElement strongWhiteSpaceHolder = null;
-    boolean isStrongElementOnRisingSlope = true;
+    public TreeElement startLeafBranchStart = null;
+    public ASTNode nextLeafBranchStart = null;
+    public CompositeElement strongWhiteSpaceHolder = null;
+    public boolean isStrongElementOnRisingSlope = true;
   }
 
   /*public static void insertMissingTokens(CompositeElement root,
@@ -152,7 +151,7 @@ public class ParseUtil implements Constants {
       lexer.start(lexer.getBuffer(), startOffset, endOffset, state);
     }
 
-    boolean gt = lexer instanceof JavaLexer || lexer instanceof JspStep1Lexer || lexer instanceof JavaWithJspTemplateDataLexer;
+    boolean gt = lexer instanceof JavaLexer || lexer instanceof JavaWithJspTemplateDataLexer;
     LeafElement leaf = TreeUtil.findFirstLeaf(root);
     if (leaf == null) {
       final TreeElement firstMissing = processor.process(lexer, context);

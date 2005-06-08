@@ -577,8 +577,6 @@ public class Helper {
         if (!isComment(leaf)
             && leaf.getElementType() != ElementType.WHITE_SPACE
             && leaf.getElementType() != ElementType.JSP_TEMPLATE_DATA
-            && leaf.getElementType() != ElementType.JSP_DIRECTIVE_WHITE_SPACE
-            && leaf.getElementType() != ElementType.JSP_ACTION_WHITE_SPACE
             && leaf.getElementType() != ElementType.XML_DATA_CHARACTERS
             && leaf.getElementType() != ElementType.XML_ATTRIBUTE_VALUE_TOKEN) {
           LOG.error("Error",

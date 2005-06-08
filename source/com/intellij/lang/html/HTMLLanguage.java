@@ -26,7 +26,7 @@ import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 public class HTMLLanguage extends XMLLanguage {
   private final FormattingModelBuilder myFormattingModelBuilder;
   public HTMLLanguage() {
-    super("HTML");
+    super("HTML", "text/html");
     myFormattingModelBuilder = new FormattingModelBuilder() {
       public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
         return new PsiBasedFormattingModel(element.getContainingFile(), settings, 

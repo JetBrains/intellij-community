@@ -37,11 +37,11 @@ public class XMLLanguage extends Language {
   private final FormattingModelBuilder myFormattingModelBuilder;
 
   public XMLLanguage() {
-    this("XML");    
+    this("XML", "text/xml");
   }
 
-  protected XMLLanguage(String str) {
-    super(str);
+  protected XMLLanguage(String name, String mime) {
+    super(name, mime);
     myFormattingModelBuilder = new FormattingModelBuilder() {
       public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
         final ASTNode root = SourceTreeToPsiMap.psiElementToTree(element);

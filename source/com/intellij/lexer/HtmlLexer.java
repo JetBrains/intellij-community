@@ -3,7 +3,7 @@ package com.intellij.lexer;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.psi.jsp.el.ELTokenType;
+import com.intellij.psi.jsp.JspElementType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -93,7 +93,7 @@ public class HtmlLexer extends BaseHtmlLexer {
         final FlexLexer flex = ((FlexAdapter)baseLexer).getFlex();
 
         if (flex instanceof ELHostLexer) {
-          ((ELHostLexer)flex).setElTypes(ELTokenType.JSP_EL_HOLDER,ELTokenType.JSP_EL_HOLDER);
+          ((ELHostLexer)flex).setElTypes(JspElementType.JSP_EL_HOLDER,JspElementType.JSP_EL_HOLDER);
         }
       }
     }

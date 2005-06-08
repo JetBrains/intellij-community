@@ -9,5 +9,5 @@ import com.intellij.psi.PsiComment;
 /**
  * @author Mike
  */
-public interface XmlComment extends XmlElement, PsiComment {
+public interface XmlComment extends XmlElement, PsiComment, XmlTagChild {
 }

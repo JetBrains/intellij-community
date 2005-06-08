@@ -7,6 +7,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
+import com.intellij.newCodeFormatting.FormattingModelBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -14,16 +15,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.newCodeFormatting.FormattingModelBuilder;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Collection;
 import java.util.Collections;
-
-import org.jetbrains.annotations.NotNull;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -38,11 +37,17 @@ public abstract class Language {
   private static SurroundDescriptor[] EMPTY_SURROUND_DESCRIPTORS_ARRAY = new SurroundDescriptor[0];
   private static Map<Class<? extends Language>, Language> ourRegisteredLanguages = new HashMap<Class<? extends Language>, Language>();
   private String myID;
-  public static final Language ANY = new Language("") {};
+  private String myMimeType;
+  public static final Language ANY = new Language("", "") {};
   private static final EmptyFindUsagesProvider EMPTY_FIND_USAGES_PROVIDER = new EmptyFindUsagesProvider();
 
-  protected Language(final String ID) {
+  protected Language(String id) {
+    this(id, "");
+  }
+
+  protected Language(final String ID, final String mime) {
     myID = ID;
+    myMimeType = mime;
     Class<? extends Language> langClass = getClass();
 
     if (ourRegisteredLanguages.containsKey(langClass)) {
@@ -65,7 +70,7 @@ public abstract class Language {
     }
   }
   
-  public Collection<Language> getRegisteredLanguages() {
+  public static Collection<Language> getRegisteredLanguages() {
     return Collections.unmodifiableCollection(ourRegisteredLanguages.values());
   }
 
@@ -119,6 +124,10 @@ public abstract class Language {
 
   public String toString() {
     return "Language: " + myID;
+  }
+
+  public String getMimeType(){
+    return myMimeType;
   }
 
   private static class EmptyFindUsagesProvider implements FindUsagesProvider {
