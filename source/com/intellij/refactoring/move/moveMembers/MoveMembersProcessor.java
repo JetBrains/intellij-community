@@ -12,8 +12,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -39,6 +39,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private LinkedHashSet<PsiMember> myMembersToMove = new LinkedHashSet<PsiMember>();
   private MoveCallback myMoveCallback;
   private String myNewVisibility; // "null" means "as is"
+  private String myCommandName = MoveMembersImpl.REFACTORING_NAME;
 
   public MoveMembersProcessor(Project project, MoveCallback moveCallback, MoveMembersOptions options) {
     super(project);
@@ -52,7 +53,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    return MoveMembersImpl.REFACTORING_NAME;
+    return myCommandName;
   }
 
   private void setOptions(MoveMembersOptions dialog) {
@@ -62,9 +63,26 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     for (PsiMember member : members) {
       myMembersToMove.add(member);
     }
+
+    setCommandName(members);
+
     final PsiManager manager = PsiManager.getInstance(myProject);
     myTargetClass = manager.findClass(myDialog.getTargetClassName(), GlobalSearchScope.allScope(myProject));
     myNewVisibility = dialog.getMemberVisibility();
+  }
+
+  private void setCommandName(final PsiMember[] members) {
+    StringBuffer commandName = new StringBuffer("Move ");
+    boolean first = true;
+    for (PsiMember member : members) {
+      if (!first) commandName.append(", ");
+      commandName.append(UsageViewUtil.getType(member));
+      commandName.append(' ');
+      commandName.append(UsageViewUtil.getShortName(member));
+      first = false;
+    }
+
+    myCommandName = commandName.toString();
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages, FindUsagesCommand refreshCommand) {
