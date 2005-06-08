@@ -37,7 +37,7 @@ public abstract class Language {
   private static SurroundDescriptor[] EMPTY_SURROUND_DESCRIPTORS_ARRAY = new SurroundDescriptor[0];
   private static Map<Class<? extends Language>, Language> ourRegisteredLanguages = new HashMap<Class<? extends Language>, Language>();
   private String myID;
-  private String myMimeType;
+  private String[] myMimeType;
   public static final Language ANY = new Language("", "") {};
   private static final EmptyFindUsagesProvider EMPTY_FIND_USAGES_PROVIDER = new EmptyFindUsagesProvider();
 
@@ -45,7 +45,7 @@ public abstract class Language {
     this(id, "");
   }
 
-  protected Language(final String ID, final String mime) {
+  protected Language(final String ID, final String... mime) {
     myID = ID;
     myMimeType = mime;
     Class<? extends Language> langClass = getClass();
@@ -126,7 +126,7 @@ public abstract class Language {
     return "Language: " + myID;
   }
 
-  public String getMimeType(){
+  public String[] getMimeType(){
     return myMimeType;
   }
 

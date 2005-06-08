@@ -317,6 +317,11 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return myOriginalFile;
   }
 
+  public void setOriginalFile(final PsiFile originalFile) {
+    if(originalFile.getOriginalFile() != null) myOriginalFile = originalFile.getOriginalFile();
+    else myOriginalFile = originalFile;
+  }
+
   public boolean canContainJavaCode() {
     return false;
   }

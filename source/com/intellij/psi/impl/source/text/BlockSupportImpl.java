@@ -163,6 +163,7 @@ public class BlockSupportImpl extends BlockSupport implements Constants, Project
     }
     else{
       final PsiFileImpl newFile = (PsiFileImpl)PsiElementFactoryImpl.createFileFromText((PsiManagerImpl)fileImpl.getManager(), fileType, fileImpl.getName(), newFileText, 0, textLength);
+      newFile.setOriginalFile(fileImpl);
       final ASTNode newFileElement = newFile.getTreeElement();
       fileImpl.getTreeElement().replaceAllChildrenToChildrenOf(newFileElement);
     }
