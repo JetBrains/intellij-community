@@ -15,15 +15,21 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 
 import javax.swing.*;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
+import java.util.Map;
+import java.util.Set;
 
 public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog{
   private final FileChooserDescriptor myChooserDescriptor;
@@ -130,6 +136,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   protected final void dispose() {
     myFileSystemTree.dispose();
+    LocalFileSystem.getInstance().removeWatchedRoots(myRequests.values());
     super.dispose();
   }
 
@@ -174,6 +181,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     JTree tree = myFileSystemTree.getTree();
     tree.setCellRenderer(new NodeRenderer());
     tree.addTreeSelectionListener(new FileTreeSelectionListener());
+    tree.addTreeExpansionListener(new FileTreeExpansionListener());
     setOKActionEnabled(false);
     return tree;
   }
@@ -186,21 +194,51 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     return myFileSystemTree.getChoosenFiles();
   }
 
+  private final Map<VirtualFile, LocalFileSystem.WatchRequest> myRequests = new HashMap<VirtualFile, LocalFileSystem.WatchRequest>();
+
+  private final class FileTreeExpansionListener implements TreeExpansionListener {
+    public void treeExpanded(TreeExpansionEvent event) {
+      final Object[] path = event.getPath().getPath();
+      Set<VirtualFile> toAdd = new HashSet<VirtualFile>();
+
+      for (Object o : path) {
+        final DefaultMutableTreeNode node = ((DefaultMutableTreeNode)o);
+        Object userObject = node.getUserObject();
+        if (userObject instanceof FileNodeDescriptor) {
+          final VirtualFile file = ((FileNodeDescriptor)userObject).getElement().getFile();
+          if (file != null && myRequests.get(file) == null) {
+            toAdd.add(file);
+          }
+        }
+      }
+
+      if (toAdd.size() > 0) {
+        final Set<LocalFileSystem.WatchRequest> requests = LocalFileSystem.getInstance().addRootsToWatch(toAdd, false);
+        for (LocalFileSystem.WatchRequest request : requests) {
+          myRequests.put(request.getRoot(), request);
+        }
+      }
+    }
+
+    public void treeCollapsed(TreeExpansionEvent event) {
+      //Do not unwatch here!!!
+    }
+  }
+
   private final class FileTreeSelectionListener implements TreeSelectionListener {
     public void valueChanged(TreeSelectionEvent e) {
       TreePath[] paths = e.getPaths();
 
       boolean enabled = true;
-      for (int i = 0; i < paths.length; i++) {
-        TreePath treePath = paths[i];
+      for (TreePath treePath : paths) {
         if (!e.isAddedPath(treePath)) continue;
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
         Object userObject = node.getUserObject();
         if (!(userObject instanceof FileNodeDescriptor)) {
           enabled = false;
           break;
         }
-        FileElement descriptor = (FileElement) ((FileNodeDescriptor) userObject).getElement();
+        FileElement descriptor = ((FileNodeDescriptor)userObject).getElement();
         VirtualFile file = descriptor.getFile();
         enabled = myChooserDescriptor.isFileSelectable(file);
       }

@@ -28,12 +28,13 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
   private boolean myFlushing;
 
   private String myName;
-  private ModalityState myModalityState;
+  private final JComponent myComponent;
 
-  public MergingUpdateQueue(String name, int mergingTimeSpan, boolean isActive, ModalityState activeState) {
+  public MergingUpdateQueue(String name, int mergingTimeSpan, boolean isActive, JComponent component) {
+    myComponent = component;
     myWaiterForMerge = new Timer(mergingTimeSpan, this);
     myName = name;
-    myModalityState = activeState;
+
 
     if (isActive) {
       showNotify();
@@ -128,7 +129,8 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
 
   private boolean isModalityStateCorrect() {
     ModalityState current = ApplicationManager.getApplication().getCurrentModalityState();
-    return myModalityState.equals(current) || myModalityState.dominates(current);
+    final ModalityState modalityState = getModalityState();
+    return !current.dominates(modalityState);
   }
 
   private boolean isExpired(Update each) {
@@ -136,15 +138,14 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
   }
 
   protected void execute(final Update[] update) {
-    for (int i = 0; i < update.length; i++) {
-      final Update each = update[i];
+    for (final Update each : update) {
       if (each.executeInWriteAction()) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             each.run();
           }
         });
-      } 
+      }
       else {
         each.run();
       }
@@ -180,8 +181,7 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
     }
 
     final Update[] updates = mySheduledUpdates.toArray(new Update[mySheduledUpdates.size()]);
-    for (int i = 0; i < updates.length; i++) {
-      Update eachInQueue = updates[i];
+    for (Update eachInQueue : updates) {
       if (eachInQueue.canEat(update)) {
         return true;
       }
@@ -219,12 +219,16 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
 
   public boolean containsUpdateOf(int priority) {
     Update[] update = mySheduledUpdates.toArray(new Update[mySheduledUpdates.size()]);
-    for (int i = 0; i < update.length; i++) {
-      Update each = update[i];
+    for (Update each : update) {
       if (each.getPriority() == priority) {
         return true;
       }
     }
     return false;
+  }
+
+  public ModalityState getModalityState() {
+    if (myComponent == null) return ModalityState.NON_MMODAL;
+    return ModalityState.stateForComponent(myComponent);
   }
 }

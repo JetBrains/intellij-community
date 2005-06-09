@@ -46,7 +46,7 @@ public class FileNodeDescriptor extends NodeDescriptor {
     return changed;
   }
 
-  public final Object getElement() {
+  public final FileElement getElement() {
     return myDescriptor;
   }
 

@@ -63,7 +63,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   public Project myProject;
 
   private final EventListenerList myListenerList;
-  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true, ModalityState.NON_MMODAL);
+  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true, null);
 
   /**
    * Updates tabs colors

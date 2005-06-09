@@ -1,9 +1,8 @@
 package com.intellij.ide.util.treeView;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
@@ -26,7 +25,7 @@ public class AbstractTreeUpdater {
   public AbstractTreeUpdater(AbstractTreeBuilder treeBuilder) {
     myTreeBuilder = treeBuilder;
     final JTree tree = myTreeBuilder.getTree();
-    myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 300, tree.isShowing(), ModalityState.stateForComponent(tree));
+    myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 300, tree.isShowing(), tree);
     myDisposable = new UiNotifyConnector(tree, myUpdateQueue);
   }
 
@@ -41,7 +40,7 @@ public class AbstractTreeUpdater {
     myDisposable.dispose();
     myUpdateQueue.dispose();
   }
-  
+
   public void addSubtreeToUpdate(DefaultMutableTreeNode rootNode) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("addSubtreeToUpdate:" + rootNode);
@@ -57,7 +56,7 @@ public class AbstractTreeUpdater {
       }
     }
     myNodesToUpdate.add(rootNode);
-            
+
     myUpdateQueue.queue(new Update("ViewUpdate") {
       public boolean isExpired() {
         return myTreeBuilder.isDisposed();
@@ -71,7 +70,7 @@ public class AbstractTreeUpdater {
         myTreeBuilder.getTreeStructure().commit();
         try {
           performUpdate();
-        } 
+        }
         catch(RuntimeException e) {
           LOG.error(myTreeBuilder.getClass().getName(), e);
         }

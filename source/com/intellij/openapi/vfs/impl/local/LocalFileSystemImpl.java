@@ -817,12 +817,12 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     }
   }
 
-  public void registerAuxularyFileOperationsHandler(LocalFileOperationsHandler handler) {
+  public void registerAuxiliaryFileOperationsHandler(LocalFileOperationsHandler handler) {
     LOG.assertTrue(!myHandlers.contains(handler), "Handler " + handler + " already registered.");
     myHandlers.add(handler);
   }
 
-  public void unregisterAuxularyFileOperationsHandler(LocalFileOperationsHandler handler) {
+  public void unregisterAuxiliaryFileOperationsHandler(LocalFileOperationsHandler handler) {
     LOG.assertTrue(myHandlers.remove(handler), "Handler" + handler + " haven't been registered or already unregistered.");
   }
 
@@ -877,7 +877,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     return false;
   }
 
-  public void removeWatchedRoots(final Set<WatchRequest> rootsToWatch) {
+  public void removeWatchedRoots(final Collection<WatchRequest> rootsToWatch) {
     synchronized (LOCK) {
       if (myRootsToWatch.removeAll(rootsToWatch)) setUpFileWatcher();
     }

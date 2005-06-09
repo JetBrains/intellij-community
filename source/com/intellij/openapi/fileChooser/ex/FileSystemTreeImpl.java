@@ -37,7 +37,6 @@ import java.awt.event.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
 
 public class FileSystemTreeImpl implements FileSystemTree {
   private static final Logger LOG = Logger.getInstance("#com.intellij.chooser.FileSystemTreeImpl");
@@ -119,8 +118,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   public void addOkAction(Runnable action) { myOkActions.add(action); }
 
   private void fireOkAction() {
-    for (Iterator<Runnable> iterator = myOkActions.iterator(); iterator.hasNext();) {
-      Runnable action = iterator.next();
+    for (Runnable action : myOkActions) {
       action.run();
     }
   }
@@ -138,7 +136,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
             if (node.getUserObject() instanceof FileNodeDescriptor) {
               FileNodeDescriptor nodeDescriptor = (FileNodeDescriptor)node.getUserObject();
-              FileElement fileDescriptor = (FileElement)nodeDescriptor.getElement();
+              FileElement fileDescriptor = nodeDescriptor.getElement();
               VirtualFile virtualFile = fileDescriptor.getFile();
               if (virtualFile != null) {
                 virtualFile.refresh(false, false);
@@ -252,7 +250,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
     if (!(node.getUserObject() instanceof FileNodeDescriptor)) return null;
     FileNodeDescriptor descriptor = (FileNodeDescriptor)node.getUserObject();
-    final VirtualFile file = ((FileElement)descriptor.getElement()).getFile();
+    final VirtualFile file = descriptor.getElement().getFile();
     return file;
   }
 
@@ -274,12 +272,11 @@ public class FileSystemTreeImpl implements FileSystemTree {
     if (paths == null) return VirtualFile.EMPTY_ARRAY;
     ArrayList<VirtualFile> files = new ArrayList<VirtualFile>(paths.length);
 
-    for (int i = 0; i < paths.length; i++) {
-      TreePath path = paths[i];
+    for (TreePath path : paths) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       if (!(node.getUserObject() instanceof FileNodeDescriptor)) return VirtualFile.EMPTY_ARRAY;
       FileNodeDescriptor descriptor = (FileNodeDescriptor)node.getUserObject();
-      VirtualFile file = fileConvertor.convert(((FileElement)descriptor.getElement()).getFile());
+      VirtualFile file = fileConvertor.convert(descriptor.getElement().getFile());
       if (file != null && file.isValid()) files.add(file);
     }
     return files.toArray(new VirtualFile[files.size()]);

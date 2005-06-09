@@ -43,10 +43,10 @@ public abstract class LocalFileSystem extends VirtualFileSystem {
   @NotNull
   public abstract Set<WatchRequest> addRootsToWatch(final @NotNull Collection<VirtualFile> rootFiles, final boolean toWatchRecursively);
 
-  public abstract void removeWatchedRoots(final @NotNull Set<WatchRequest> rootsToWatch);
+  public abstract void removeWatchedRoots(final @NotNull Collection<WatchRequest> rootsToWatch);
 
   public abstract void removeWatchedRoot(final @NotNull WatchRequest watchRequest);
 
-  public abstract void registerAuxularyFileOperationsHandler(LocalFileOperationsHandler handler);
-  public abstract void unregisterAuxularyFileOperationsHandler(LocalFileOperationsHandler handler);
+  public abstract void registerAuxiliaryFileOperationsHandler(LocalFileOperationsHandler handler);
+  public abstract void unregisterAuxiliaryFileOperationsHandler(LocalFileOperationsHandler handler);
 }
