@@ -35,6 +35,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
@@ -114,7 +115,8 @@ public class FormatterUtil {
 
   public static String replaceWhiteSpace(final String whiteSpace,
                                          final ASTNode leafElement,
-                                         final IElementType whiteSpaceToken) {
+                                         final IElementType whiteSpaceToken,
+                                         final TextRange textRange) {
     final CharTable charTable = SharedImplUtil.findCharTableByTree(leafElement);
 
     ASTNode treePrev = findPreviousWhiteSpace(leafElement);
@@ -154,6 +156,7 @@ public class FormatterUtil {
       else {
         final CompositeElement treeParent = (CompositeElement)treePrev.getTreeParent();
         if (whiteSpace.length() > 0) {
+//          LOG.assertTrue(textRange == null || treeParent.getTextRange().equals(textRange));
           treeParent.replaceChild(treePrev, whiteSpaceElement);
         }
         else {

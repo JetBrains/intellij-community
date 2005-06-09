@@ -306,7 +306,7 @@ public class CodeEditUtil {
     delete(elementBeforeNext);
     FormatterUtil.replaceWhiteSpace(text,
                                     nextAnchor,
-                                    ElementType.WHITE_SPACE);
+                                    ElementType.WHITE_SPACE, null);
   }
 
   private static boolean isInvalidWhiteSpace(final ASTNode elementBeforeNext) {

@@ -64,7 +64,11 @@ public class XmlBlock extends AbstractXmlBlock {
   private Indent getChildDefaultIndent() {
     if (myNode.getElementType() == ElementType.HTML_DOCUMENT) {
       return Formatter.getInstance().getNoneIndent();
-    } else {
+    }
+    if (myNode.getElementType() == ElementType.DUMMY_HOLDER) {
+      return Formatter.getInstance().getNoneIndent();
+    }
+    else {
       return null;
     }    
   }

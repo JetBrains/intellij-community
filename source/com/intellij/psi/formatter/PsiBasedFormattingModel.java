@@ -9,12 +9,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
-import com.intellij.psi.impl.source.jsp.JspxFileImpl;
+import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.tree.ElementType;
 
 import java.io.IOException;
@@ -59,7 +58,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
           blockLength = blockLength - oldElementLength + newElementLength;
         }
         else {
-          changeWhiteSpaceBeforeLeaf(whiteSpace, leafElement);
+          changeWhiteSpaceBeforeLeaf(whiteSpace, leafElement, textRange);
           if (leafElement.textContains('\n')
               && whiteSpace.indexOf('\n') >= 0) {
             try {
@@ -87,8 +86,8 @@ public class PsiBasedFormattingModel implements FormattingModel {
     FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace);
   }
 
-  protected void changeWhiteSpaceBeforeLeaf(final String whiteSpace, final ASTNode leafElement) {
-    FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, ElementType.WHITE_SPACE);
+  protected void changeWhiteSpaceBeforeLeaf(final String whiteSpace, final ASTNode leafElement, final TextRange textRange) {
+    FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, ElementType.WHITE_SPACE, textRange);
   }
 
   private int calcShift(final Indent lastLineIndent, final Indent whiteSpaceIndent) {
@@ -129,14 +128,15 @@ public class PsiBasedFormattingModel implements FormattingModel {
   }
 
   private ASTNode findElementAt(final int offset) {
-    if (myASTNode.getElementType() == ElementType.JSPX_FILE) {
-      final PsiFile[] psiRoots = ((JspxFileImpl)SourceTreeToPsiMap.treeElementToPsi(myASTNode)).getPsiRoots();
-      for (int i = 0; i < psiRoots.length; i++) {
-        PsiFile psiRoot = psiRoots[i];
-        final PsiElement found = psiRoot.findElementAt(offset);
-        if (found != null && found.getTextRange().getStartOffset() == offset) return SourceTreeToPsiMap.psiElementToTree(found);
+    final PsiFile[] psiRoots = myASTNode.getPsi().getContainingFile().getPsiRoots();
+    for (int i = 0; i < psiRoots.length; i++) {
+      PsiFile psiRoot = psiRoots[i];
+      final ASTNode found = psiRoot.getNode().findLeafElementAt(offset);
+      if (!(found.getPsi()instanceof JspText) && found.getTextRange().getStartOffset() == offset) {
+        return found;
       }
     }
+    LOG.assertTrue(false);
     return myASTNode.findLeafElementAt(offset);
   }
 

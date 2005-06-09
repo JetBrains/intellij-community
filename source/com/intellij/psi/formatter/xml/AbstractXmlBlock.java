@@ -106,7 +106,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       if (child.getElementType() == ElementType.JSP_XML_TEXT || child.getPsi() instanceof JspText) {
         final Pair<ASTNode, Language> javaElement = JspTextBlock.findAnotherTreeElementAt(child);
         if (javaElement != null) {
-          return new JspTextBlock(child, myXmlFormattingPolicy, javaElement);
+          return new JspTextBlock(child, myXmlFormattingPolicy, javaElement, indent);
         }
       }
       if (child.getElementType() == getTagType() || child.getElementType() == ElementType.XML_TAG) {
