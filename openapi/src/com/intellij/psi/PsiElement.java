@@ -29,7 +29,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   PsiElement[] getChildren();
 
-  PsiElement getParent();
+  @Nullable PsiElement getParent();
 
   @Nullable  PsiElement getFirstChild();
 

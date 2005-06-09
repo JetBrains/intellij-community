@@ -3,11 +3,12 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,9 @@ import java.util.List;
 public class SharedPsiElementImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.SharedPsiElementImplUtil");
 
+  private SharedPsiElementImplUtil() {}
+
+  @Nullable
   public static PsiReference findReferenceAt(PsiElement thisElement, int offset) {
     if(thisElement == null)
       return null;
@@ -61,6 +65,7 @@ public class SharedPsiElementImplUtil {
     return new PsiReference[] {ref};
   }
 
+  @Nullable
   public static PsiElement getNextSibling(PsiElement element) {
     PsiElement parent = element.getParent();
     if (parent == null) return null;
@@ -75,6 +80,7 @@ public class SharedPsiElementImplUtil {
     return null;
   }
 
+  @Nullable
   public static PsiElement getPrevSibling(PsiElement element) {
     PsiElement parent = element.getParent();
     if (parent == null) return null;
@@ -106,7 +112,7 @@ public class SharedPsiElementImplUtil {
       if (firstAdded.getElementType() == elementType) return ChangeUtil.decodeInformation(firstAdded).getPsi();
       firstAdded = firstAdded.getTreeNext();
     }
-    
+
     LOG.assertTrue(false, "Could not find element of added class");
     return null;
   }
