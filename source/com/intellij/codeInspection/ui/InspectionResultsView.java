@@ -264,6 +264,13 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       final String currentProfileName = manager.getCurrentProfile().getName();
       manager.setExternalProfile(myInspectionProfile);
       final InspectionCodeSettingsPanel dlg = new InspectionCodeSettingsPanel(manager, myScope);
+      final TreePath selectionPath = myTree.getSelectionPath();
+      if (selectionPath != null){
+        final Object node = selectionPath.getLastPathComponent();
+        if (node instanceof InspectionNode){
+          dlg.selectInspectionTool(((InspectionNode)node).getTool().getShortName());
+        } 
+      }
       dlg.show();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
