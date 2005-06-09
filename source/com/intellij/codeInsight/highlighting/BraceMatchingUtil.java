@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.impl.source.parsing.jsp.JspHighlightLexer;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
@@ -618,11 +617,7 @@ public class BraceMatchingUtil {
   }
 
   private static IElementType getToken(final HighlighterIterator iterator) {
-    IElementType token = iterator.getTokenType();
-    if (token instanceof JspHighlightLexer.ScriptletJavaElementTypeToken) {
-      token = ((JspHighlightLexer.ScriptletJavaElementTypeToken)token).getBase();
-    }
-    return token;
+      return iterator.getTokenType();
   }
 
   private static boolean findTokenBack(HighlighterIterator iterator, IElementType tokenType, IElementType stopTokenType) {

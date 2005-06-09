@@ -14,11 +14,11 @@ import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.editor.ex.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.source.parsing.jsp.JspHighlightLexer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.parsing.jsp.JspHighlightLexer;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 
 import java.util.HashMap;
@@ -226,7 +226,7 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
     }
 
     public TextAttributes getTextAttributes() {
-      IElementType tokenType = getTokenType();
+      IElementType tokenType = getRawToken();
       return getAttributes(tokenType);
     }
 
@@ -239,7 +239,15 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
     }
 
     public IElementType getTokenType(){
-      return unpackToken(mySegments.getSegmentData(mySegmentIndex));
+        IElementType token = getRawToken();
+        if (token instanceof JspHighlightLexer.ScriptletJavaElementTypeToken) {
+            token = ((JspHighlightLexer.ScriptletJavaElementTypeToken)token).getBase();
+        }
+        return token;
+    }
+
+    private IElementType getRawToken() {
+        return unpackToken(mySegments.getSegmentData(mySegmentIndex));
     }
 
     public void advance() {
