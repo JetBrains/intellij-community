@@ -44,7 +44,7 @@ public class CreateFieldFromUsageAction extends CreateVarFromUsageAction {
     do {
       enclosingContext = (PsiMember)PsiTreeUtil.getParentOfType(
         enclosingContext == null ? myReferenceExpression : (PsiElement)enclosingContext,
-        new Class[]{PsiMethod.class, PsiField.class, PsiClassInitializer.class});
+        PsiMethod.class, PsiField.class, PsiClassInitializer.class);
       parentClass = enclosingContext == null ? null : enclosingContext.getContainingClass();
     }
     while (parentClass instanceof PsiAnonymousClass);
@@ -83,7 +83,7 @@ public class CreateFieldFromUsageAction extends CreateVarFromUsageAction {
       }
 
       TemplateBuilder builder = new TemplateBuilder(field);
-      PsiElement context = PsiTreeUtil.getParentOfType(myReferenceExpression, new Class[] {PsiClass.class, PsiMethod.class});
+      PsiElement context = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiClass.class, PsiMethod.class);
       new GuessTypeParameters(factory).setupTypeElement(field.getTypeElement(), expectedTypes, getTargetSubstitutor(myReferenceExpression), builder, context, targetClass);
 
       if (createConstantField()) {

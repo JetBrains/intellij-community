@@ -467,7 +467,7 @@ public class RefactoringUtil {
   }
 
   public static final PsiMethod getEnclosingMethod (PsiElement element) {
-    final PsiElement container = PsiTreeUtil.getParentOfType(element, new Class[]{PsiMethod.class, PsiClass.class});
+    final PsiElement container = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
     return container instanceof PsiMethod ? ((PsiMethod)container) : null;
   }
 

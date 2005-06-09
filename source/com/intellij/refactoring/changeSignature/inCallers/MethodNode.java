@@ -78,7 +78,7 @@ public class MethodNode extends CheckedTreeNode {
           final PsiElement element = refs[i].getElement();
           if (!(element instanceof PsiReferenceExpression) ||
               !(((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression)) {
-            final PsiElement enclosingContext = PsiTreeUtil.getParentOfType(element, new Class[]{PsiMethod.class, PsiClass.class});
+            final PsiElement enclosingContext = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
             if (enclosingContext instanceof PsiMethod) {
               callers.add((PsiMethod)enclosingContext);
             }

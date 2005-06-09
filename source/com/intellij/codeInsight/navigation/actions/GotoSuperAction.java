@@ -14,9 +14,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ListPopup;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.*;
+import java.util.List;
 
 /**
  *
@@ -63,10 +62,10 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
 
-    PsiElement e = PsiTreeUtil.getParentOfType(element, new Class[]{PsiMethod.class, PsiClass.class});
+    PsiElement e = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
     if (e instanceof PsiClass) {
       PsiClass aClass = (PsiClass) e;
-      java.util.List<PsiClass> allSupers = new ArrayList<PsiClass>(Arrays.asList(aClass.getSupers()));
+      List<PsiClass> allSupers = new ArrayList<PsiClass>(Arrays.asList(aClass.getSupers()));
       for (Iterator<PsiClass> iterator = allSupers.iterator(); iterator.hasNext();) {
         PsiClass superClass = iterator.next();
         if ("java.lang.Object".equals(superClass.getQualifiedName())) iterator.remove();

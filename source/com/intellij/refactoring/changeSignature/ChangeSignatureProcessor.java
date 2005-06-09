@@ -649,7 +649,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     //methods' throws lists are already modified, may use ExceptionUtil.collectUnhandledExceptions
     newExceptions = filterCheckedExceptions(newExceptions);
 
-    PsiElement context = PsiTreeUtil.getParentOfType(ref, new Class[]{PsiTryStatement.class, PsiMethod.class});
+    PsiElement context = PsiTreeUtil.getParentOfType(ref, PsiTryStatement.class, PsiMethod.class);
     if (context instanceof PsiTryStatement) {
       PsiTryStatement tryStatement = (PsiTryStatement)context;
       PsiCodeBlock tryBlock = tryStatement.getTryBlock();

@@ -42,7 +42,7 @@ public class BringVariableIntoScopeAction implements IntentionAction {
     PsiManager manager = file.getManager();
     if (!myUnresolvedReference.isValid() || !manager.isInProject(myUnresolvedReference)) return false;
 
-    PsiElement container = PsiTreeUtil.getParentOfType(myUnresolvedReference, new Class[] {PsiCodeBlock.class, PsiClass.class});
+    PsiElement container = PsiTreeUtil.getParentOfType(myUnresolvedReference, PsiCodeBlock.class, PsiClass.class);
     if (!(container instanceof PsiCodeBlock)) return false;
 
     myOutOfScopeVariable = null;

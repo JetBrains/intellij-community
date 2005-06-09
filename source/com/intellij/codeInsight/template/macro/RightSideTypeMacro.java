@@ -30,7 +30,7 @@ public class RightSideTypeMacro implements Macro {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
     PsiElement element = file.findElementAt(offset);
-    element = PsiTreeUtil.getParentOfType(element, new Class[] {PsiAssignmentExpression.class, PsiVariable.class});
+    element = PsiTreeUtil.getParentOfType(element, PsiAssignmentExpression.class, PsiVariable.class);
     if (element instanceof PsiAssignmentExpression) {
       PsiAssignmentExpression assignment = (PsiAssignmentExpression) element;
       PsiExpression rhs = assignment.getRExpression();

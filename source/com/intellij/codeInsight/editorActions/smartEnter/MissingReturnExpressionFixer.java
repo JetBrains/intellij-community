@@ -22,8 +22,7 @@ public class MissingReturnExpressionFixer implements Fixer {
         return;
       }
 
-      PsiElement parent = PsiTreeUtil.getParentOfType(psiElement,
-                                                      new Class[]{PsiClassInitializer.class, PsiMethod.class});
+      PsiElement parent = PsiTreeUtil.getParentOfType(psiElement, PsiClassInitializer.class, PsiMethod.class);
       if (parent instanceof PsiMethod) {
         PsiMethod method = (PsiMethod) parent;
         final PsiType returnType = method.getReturnType();

@@ -584,8 +584,7 @@ public class HighlightUtil {
     if (variable instanceof PsiLocalVariable
         || variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiCatchSection
         || variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement) {
-      PsiElement scope = PsiTreeUtil.getParentOfType(variable, new Class[]{PsiFile.class, PsiMethod.class, PsiClassInitializer.class},
-                                                     true);
+      PsiElement scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class);
       VariablesNotProcessor proc = new VariablesNotProcessor(variable, false);
       PsiScopesUtil.treeWalkUp(proc, identifier, scope);
       if (proc.size() > 0) {
@@ -1940,7 +1939,7 @@ public class HighlightUtil {
           options.add(new SwitchOffToolAction(HighlightDisplayKey.JAVADOC_ERROR));
         }
 
-        PsiElement parent = PsiTreeUtil.getParentOfType(ref, new Class[]{PsiNewExpression.class, PsiMethod.class});
+        PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
         HighlightInfo info = HighlightInfo.createHighlightInfo(type, refName, description);
         QuickFixAction.registerQuickFixAction(info, new ImportClassAction(ref), options);
         QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace(), options);

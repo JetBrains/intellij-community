@@ -27,8 +27,7 @@ public class CreateParameterFromUsageAction extends CreateVarFromUsageAction {
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
     if(!CreateFromUsageUtils.isSimpleReference(myReferenceExpression)) return false;
-    Class[] scopes = new Class[] {PsiMethod.class, PsiClass.class};
-    PsiElement scope = PsiTreeUtil.getParentOfType(myReferenceExpression, scopes);
+    PsiElement scope = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiMethod.class, PsiClass.class);
     return scope instanceof PsiMethod && ((PsiMethod)scope).getParameterList().isPhysical();
   }
 

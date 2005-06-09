@@ -50,10 +50,10 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
     }
 
     PsiClass parentClass = PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class);
-    PsiElement enclosingContext = PsiTreeUtil.getParentOfType(myMethodCall, new Class[]{
+    PsiElement enclosingContext = PsiTreeUtil.getParentOfType(myMethodCall,
       PsiMethod.class,
       PsiField.class,
-      PsiClassInitializer.class});
+      PsiClassInitializer.class);
 
     if (targetClass == null) {
       return;
@@ -100,7 +100,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
 
       CreateFromUsageUtils.setupMethodParameters(method, builder, myMethodCall.getArgumentList(), substitutor);
 
-      PsiElement context = PsiTreeUtil.getParentOfType(myMethodCall, new Class[] {PsiClass.class, PsiMethod.class});
+      PsiElement context = PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class, PsiMethod.class);
       new GuessTypeParameters(factory).setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
       if (!targetClass.isInterface()) {
         builder.setEndVariableAfter(method.getBody().getLBrace());

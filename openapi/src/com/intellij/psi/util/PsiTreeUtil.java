@@ -15,8 +15,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 
 public class PsiTreeUtil {
-  private static final Key INDEX = Key.create("PsiTreeUtil.copyElements.INDEX");
-  private static final Key MARKER = Key.create("PsiTreeUtil.copyElements.INDEX");
+  private static final Key<Integer> INDEX = Key.create("PsiTreeUtil.copyElements.INDEX");
+  private static final Key<Object> MARKER = Key.create("PsiTreeUtil.copyElements.INDEX");
 
   public static boolean isAncestor(@NotNull PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
     PsiElement parent = strict ? element.getParent() : element;
@@ -33,21 +33,21 @@ public class PsiTreeUtil {
     final PsiFile containingFile = element1.getContainingFile();
     final PsiElement topLevel = containingFile == element2.getContainingFile() ? containingFile : null;
 
-    ArrayList parents1 = getParents(element1, topLevel);
-    ArrayList parents2 = getParents(element2, topLevel);
+    ArrayList<PsiElement> parents1 = getParents(element1, topLevel);
+    ArrayList<PsiElement> parents2 = getParents(element2, topLevel);
     int size = Math.min(parents1.size(), parents2.size());
     PsiElement parent = topLevel;
     for (int i = 1; i <= size; i++) {
-      PsiElement parent1 = (PsiElement) parents1.get(parents1.size() - i);
-      PsiElement parent2 = (PsiElement) parents2.get(parents2.size() - i);
+      PsiElement parent1 = parents1.get(parents1.size() - i);
+      PsiElement parent2 = parents2.get(parents2.size() - i);
       if (!parent1.equals(parent2)) break;
       parent = parent1;
     }
     return parent;
   }
 
-  private static @NotNull ArrayList getParents(@NotNull PsiElement element, @Nullable PsiElement topLevel) {
-    ArrayList parents = new ArrayList();
+  private static @NotNull ArrayList<PsiElement> getParents(@NotNull PsiElement element, @Nullable PsiElement topLevel) {
+    ArrayList<PsiElement> parents = new ArrayList<PsiElement>();
     PsiElement parent = element;
     while (parent != topLevel && parent != null) {
       parents.add(parent);
@@ -133,7 +133,7 @@ public class PsiTreeUtil {
     return null;
   }
 
-  public static @Nullable PsiElement getParentOfType(PsiElement element, Class[] classes) {
+  public static @Nullable PsiElement getParentOfType(PsiElement element, Class... classes) {
     return getParentOfType(element, classes, true);
   }
 
@@ -171,7 +171,7 @@ public class PsiTreeUtil {
 
   @NotNull
   public static PsiElement[] copyElements(@NotNull PsiElement[] elements) {
-    ArrayList roots = new ArrayList();
+    ArrayList<PsiElement> roots = new ArrayList<PsiElement>();
     for (int i = 0; i < elements.length; i++) {
       PsiElement rootCandidate = elements[i];
       boolean failed = false;
@@ -192,7 +192,7 @@ public class PsiTreeUtil {
     }
     PsiElement[] newRoots = new PsiElement[roots.size()];
     for (int i = 0; i < roots.size(); i++) {
-      PsiElement root = (PsiElement) roots.get(i);
+      PsiElement root = roots.get(i);
       newRoots[i] = root.copy();
     }
 
@@ -204,10 +204,10 @@ public class PsiTreeUtil {
   }
 
   private static void decodeIndices(@NotNull PsiElement element, @NotNull PsiElement[] result) {
-    final Object data = element.getCopyableUserData(INDEX);
+    final Integer data = element.getCopyableUserData(INDEX);
     if (data != null) {
       element.putCopyableUserData(INDEX, null);
-      int index = ((Integer) data).intValue();
+      int index = data.intValue();
       result[index] = element;
     }
     PsiElement child = element.getFirstChild();

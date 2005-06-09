@@ -55,8 +55,8 @@ public class Util {
   }
 
   public static PsiMethod getContainingMethod(PsiElement expr) {
-    final PsiElement parent = PsiTreeUtil.getParentOfType(expr, new Class[]{PsiMethod.class, PsiFile.class});
-    return parent instanceof PsiMethod ? ((PsiMethod)parent) : null;
+    final PsiElement parent = PsiTreeUtil.getParentOfType(expr, PsiMethod.class, PsiFile.class);
+    return parent instanceof PsiMethod ? (PsiMethod)parent : null;
   }
 
   public static boolean anyFieldsWithGettersPresent(List classMemberRefs) {

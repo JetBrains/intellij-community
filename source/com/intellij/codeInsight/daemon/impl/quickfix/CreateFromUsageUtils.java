@@ -182,7 +182,7 @@ public class CreateFromUsageUtils {
       ExpectedTypeInfo info = ExpectedTypesProvider.getInstance(psiManager.getProject()).createInfo(argType,
                                                                                                     ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE);
 
-      PsiElement context = PsiTreeUtil.getParentOfType(argumentList, new Class[] {PsiClass.class, PsiMethod.class});
+      PsiElement context = PsiTreeUtil.getParentOfType(argumentList, PsiClass.class, PsiMethod.class);
       guesser.setupTypeElement(parameter.getTypeElement(), new ExpectedTypeInfo[]{info},
                                substitutor, builder, context, method.getContainingClass());
 

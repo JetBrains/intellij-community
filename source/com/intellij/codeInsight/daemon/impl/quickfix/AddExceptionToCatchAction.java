@@ -118,7 +118,7 @@ public class AddExceptionToCatchAction extends BaseIntentionAction {
     PsiElement element = file.findElementAt(offset);
     if (element instanceof PsiWhiteSpace) element = file.findElementAt(offset - 1);
     if (element == null) return null;
-    PsiElement parent = PsiTreeUtil.getParentOfType(element, new Class[] {PsiTryStatement.class, PsiMethod.class});
+    PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, PsiMethod.class);
     if (parent == null || parent instanceof PsiMethod) return null;
     PsiTryStatement statement = (PsiTryStatement) parent;
     PsiCodeBlock tryBlock = statement.getTryBlock();

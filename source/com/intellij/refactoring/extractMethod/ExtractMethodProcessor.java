@@ -254,7 +254,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       myReturnType = expressionType;
     }
 
-    PsiElement container = PsiTreeUtil.getParentOfType(myElements[0], new Class[]{PsiClass.class, PsiMethod.class});
+    PsiElement container = PsiTreeUtil.getParentOfType(myElements[0], PsiClass.class, PsiMethod.class);
     if (container instanceof PsiMethod) {
       myTypeParameterList = ((PsiMethod)container).getTypeParameterList();
     }
