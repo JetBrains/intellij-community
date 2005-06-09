@@ -958,7 +958,7 @@ public abstract class ChooseByNameBase{
           throw new ProcessCanceledException();
         }
 
-        if(name.length() >= pattern.length()) {
+        if(name.length() >= pattern.trim().length()) {
           if(matcher.matches(name, compiledPattern)) {
             list.add(name);
           }
