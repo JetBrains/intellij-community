@@ -324,6 +324,8 @@ public class ExistingTemplatesComponent {
 
   void addConfigurationToUserTemplates(Configuration configuration) {
     insertNode(configuration,userTemplatesNode,userTemplatesNode.getChildCount());
+    ConfigurationManager configurationManager = StructuralSearchPlugin.getInstance(project).getConfigurationManager();
+    configurationManager.addConfiguration(configuration);
   }
 
   boolean isConfigurationFromHistory(Configuration config) {
