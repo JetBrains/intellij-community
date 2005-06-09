@@ -77,6 +77,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     new AttributesDescriptor("Unused symbol", CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES),
 
     new AttributesDescriptor("Class", CodeInsightColors.CLASS_NAME_ATTRIBUTES),
+    new AttributesDescriptor("Abstract class", CodeInsightColors.ABSTRACT_CLASS_NAME_ATTRIBUTES),
     new AttributesDescriptor("Interface", CodeInsightColors.INTERFACE_NAME_ATTRIBUTES),
     new AttributesDescriptor("Local variable", CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES),
     new AttributesDescriptor("Reassigned local variable", CodeInsightColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES),
@@ -124,6 +125,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
     ourTags.put("static_method", CodeInsightColors.STATIC_METHOD_ATTRIBUTES);
     ourTags.put("param", CodeInsightColors.PARAMETER_ATTRIBUTES);
     ourTags.put("class", CodeInsightColors.CLASS_NAME_ATTRIBUTES);
+    ourTags.put("abstractClass", CodeInsightColors.ABSTRACT_CLASS_NAME_ATTRIBUTES);
     ourTags.put("interface", CodeInsightColors.INTERFACE_NAME_ATTRIBUTES);
     ourTags.put("annotationName", CodeInsightColors.ANNOTATION_NAME_ATTRIBUTES);
     ourTags.put("annotationAttributeName", CodeInsightColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES);
@@ -160,7 +162,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
       " * @see <class>Math</class>#<methodCall>sin</methodCall>(double)\n" +
       " */\n" +
       "<annotationName>@Annotation</annotationName> (<annotationAttributeName>name</annotationAttributeName>=value)\n" +
-      "public class <class>SomeClass</class> { // some comment\n" +
+      "public abstract class <class>SomeClass</class> { // some comment\n" +
       "  private <class>String</class> <field>field</field> = \"Hello World\";\n" +
       "  private double <unusedField>unusedField</unusedField> = 12345.67890;\n" +
       "  private <unknownType>UnknownType</unknownType> <field>anotherString</field> = \"Another\\nStrin\\g\";\n" +
@@ -180,6 +182,9 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
       "interface <interface>AnInterface</interface> {\n" +
       "  int <static>CONSTANT</static> = 2;\n" +
       "  void <methodDeclaration>method</methodDeclaration>();\n" +
+      "}\n" +
+      "\n" +
+      "abstract class <abstractClass>SomeAbstractClass</abstractClass> {\n" +
       "}";
 
     return text;

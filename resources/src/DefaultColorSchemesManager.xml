@@ -344,6 +344,14 @@
           <option name="FONT_TYPE" value="0"/>
         </value>
       </option>
+      <option name="ABSTRACT_CLASS_NAME_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR"/>
+          <option name="FONT_TYPE" value="0"/>
+        </value>
+      </option>
 
       <option name="METHOD_CALL_ATTRIBUTES">
         <value>

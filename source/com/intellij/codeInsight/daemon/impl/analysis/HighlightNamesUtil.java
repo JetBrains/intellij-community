@@ -3,17 +3,17 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.psi.*;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.application.options.colors.ColorAndFontOptions;
+import com.intellij.psi.*;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
 
 public class HighlightNamesUtil {
   public static HighlightInfo highlightMethodName(PsiMethod method, PsiElement elementToHighlight, boolean isDeclaration) {
@@ -98,8 +98,13 @@ public class HighlightNamesUtil {
   }
 
   private static HighlightInfoType getClassNameHighlightType(PsiClass aClass) {
+    if (aClass != null) {
+      if (aClass.isInterface()) return HighlightInfoType.INTERFACE_NAME;
+      final PsiModifierList modList = aClass.getModifierList();
+      if (modList != null && modList.hasModifierProperty(PsiModifier.ABSTRACT)) return HighlightInfoType.ABSTRACT_CLASS_NAME;
+    }
     // use class by default
-    return aClass != null && aClass.isInterface() ? HighlightInfoType.INTERFACE_NAME : HighlightInfoType.CLASS_NAME;
+    return HighlightInfoType.CLASS_NAME;
   }
 
   public static HighlightInfo highlightAnnotationName(PsiAnnotation annotation) {
