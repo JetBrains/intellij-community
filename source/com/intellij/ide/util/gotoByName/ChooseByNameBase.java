@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
@@ -448,7 +449,7 @@ public abstract class ChooseByNameBase{
        JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
     );
 
-    if (myTextField.requestFocusInWindow()) {
+    if (myTextField.requestFocusInWindow() || SystemInfo.isMac) {
       myTextField.requestFocus();
     }
 

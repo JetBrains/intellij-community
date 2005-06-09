@@ -389,14 +389,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return null;
     }
 
-    @Deprecated
-    public void hide() {
-      super.hide();
-      if (myFocusTrackback != null) {
-        myFocusTrackback.restoreFocus();
-      }
-    }
-
     protected JRootPane createRootPane() {
       return new JRootPane() {
         public void reshape(int x, int y, int width, int height) {
@@ -424,7 +416,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
 
     public void show() {
-      myFocusTrackback = new FocusTrackback(myDialogWrapper, getOwner());
+      myFocusTrackback = new FocusTrackback(myDialogWrapper, this);
 
       final DialogWrapper dialogWrapper = getDialogWrapper();
 
@@ -462,6 +454,18 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
 
       super.show();
+    }
+
+    @Deprecated
+    public void hide() {
+      super.hide();
+      if (myFocusTrackback != null) {
+        myFocusTrackback.restoreFocus();
+      }
+    }
+
+    public void dispose() {
+      super.dispose();
     }
 
     private class MyWindowListener extends WindowAdapter {
