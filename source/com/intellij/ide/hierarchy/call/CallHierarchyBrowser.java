@@ -58,6 +58,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider {
 
   private static final String CALL_HIERARCHY_BROWSER_DATA_CONSTANT = "com.intellij.ide.hierarchy.call.CallHierarchyBrowser";
   private List<Runnable> myRunOnDisposeList = new ArrayList<Runnable>();
+  private static final CallHierarchyNodeDescriptor[] EMPTY_DESCRIPTORS = new CallHierarchyNodeDescriptor[0];
 
   public CallHierarchyBrowser(final Project project, final PsiMethod method) {
     myProject = project;
@@ -223,9 +224,8 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider {
     actionGroup.add(new CloseAction());
     actionGroup.add(new ToolbarHelpAction(HELP_ID));
 
-    final ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CALL_HIERARCHY_VIEW_TOOLBAR,
-                                                                            actionGroup, true);
-    return toolBar;
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.CALL_HIERARCHY_VIEW_TOOLBAR,
+                                                           actionGroup, true);
   }
 
   private abstract class ChangeViewTypeActionBase extends ToggleAction {
@@ -255,7 +255,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider {
       super.update(event);
       setEnabled(isValidBase());
     }
-  };
+  }
 
   final class ViewCallerMethodsHierarchyAction extends ChangeViewTypeActionBase {
     public ViewCallerMethodsHierarchyAction() {
@@ -265,7 +265,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider {
     protected final String getTypeName() {
       return CallerMethodsTreeStructure.TYPE;
     }
-  };
+  }
 
   final class ViewCalleeMethodsHierarchyAction extends ChangeViewTypeActionBase {
     public ViewCalleeMethodsHierarchyAction() {
@@ -275,7 +275,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider {
     protected final String getTypeName() {
       return CalleeMethodsTreeStructure.TYPE;
     }
-  };
+  }
 
   final class RefreshAction extends com.intellij.ide.actions.RefreshAction {
     public RefreshAction() {
@@ -377,20 +377,20 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider {
     return psiMethods.toArray(new PsiMethod[psiMethods.size()]);
   }
 
-  private Object[] getSelectedElements() {
+  private CallHierarchyNodeDescriptor[] getSelectedDescriptors() {
     JTree tree = getCurrentTree();
-    if (tree == null) return PsiMethod.EMPTY_ARRAY;
+    if (tree == null) return EMPTY_DESCRIPTORS;
     TreePath[] paths = tree.getSelectionPaths();
-    ArrayList<Object> elements = new ArrayList<Object>();
+    final ArrayList<CallHierarchyNodeDescriptor> result = new ArrayList<CallHierarchyNodeDescriptor>();
     for (int i = 0; i < paths.length; i++) {
       TreePath path = paths[i];
       Object node = path.getLastPathComponent();
       if (!(node instanceof DefaultMutableTreeNode)) continue;
       Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
       if (!(userObject instanceof CallHierarchyNodeDescriptor)) continue;
-      elements.add(((CallHierarchyNodeDescriptor)userObject).getEnclosingElement());
+      result.add((CallHierarchyNodeDescriptor)userObject);
     }
-    return elements.toArray(new Object[elements.size()]);
+    return result.toArray(new CallHierarchyNodeDescriptor[result.size()]);
   }
 
   public final Object getData(final String dataId) {
@@ -416,16 +416,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider {
   }
 
   private Navigatable[] getNavigatables() {
-    final Object[] objects = getSelectedElements();
-    if (objects == null || objects.length == 0 ) return null;
-    final ArrayList<Navigatable> result = new ArrayList<Navigatable>();
-    for (int i = 0; i < objects.length; i++) {
-      final Object object = objects[i];
-      if (object instanceof Navigatable) {
-        result.add((Navigatable)object);
-      }
-    }
-    return result.toArray(new Navigatable[result.size()]);
+    return getSelectedDescriptors();
   }
 
   public final void dispose() {

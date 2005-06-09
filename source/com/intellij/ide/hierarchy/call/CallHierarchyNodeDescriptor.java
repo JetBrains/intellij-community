@@ -2,26 +2,36 @@ package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.pom.Navigatable;
+import com.intellij.codeInsight.highlighting.HighlightManager;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 
-public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
+public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor implements Navigatable {
   private int myUsageCount = 1;
   private final static Class[] ourEnclosingElementClasses = new Class[]{PsiMethod.class, PsiClass.class, JspFile.class};
+  private ArrayList<PsiReference> myReferences = new ArrayList<PsiReference>();
 
   public CallHierarchyNodeDescriptor(
     final Project project,
@@ -136,4 +146,50 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
     return changes;
   }
 
+  public void addReference(final PsiReference reference) {
+    myReferences.add(reference);
+  }
+
+  public void navigate(boolean requestFocus) {
+    final PsiReference firstReference = myReferences.get(0);
+    final PsiElement callElement = firstReference.getElement().getParent();
+    if (callElement instanceof Navigatable) {
+      ((Navigatable)callElement).navigate(requestFocus);
+    } else {
+      FileEditorManager.getInstance(myProject).openFile(callElement.getContainingFile().getVirtualFile(), requestFocus);
+    }
+
+    Editor editor = getEditor(callElement);
+
+    if (editor != null) {
+
+      HighlightManager highlightManager = HighlightManager.getInstance(myProject);
+      EditorColorsManager colorManager = EditorColorsManager.getInstance();
+      TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+      for (Iterator<PsiReference> iterator = myReferences.iterator(); iterator.hasNext();) {
+        PsiReference psiReference = iterator.next();
+        final PsiElement eachMethidCall = psiReference.getElement().getParent();
+        final TextRange textRange = eachMethidCall.getTextRange();
+        highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, false, highlighters);
+      }
+    }
+  }
+
+  private Editor getEditor(final PsiElement callElement) {
+    final FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(callElement.getContainingFile().getVirtualFile());
+    if (editor instanceof TextEditor) {
+      return ((TextEditor)editor).getEditor();
+    } else {
+      return null;
+    }
+  }
+
+  public boolean canNavigate() {
+    return !myReferences.isEmpty();
+  }
+
+  public boolean canNavigateToSource() {
+    return canNavigate();
+  }
 }

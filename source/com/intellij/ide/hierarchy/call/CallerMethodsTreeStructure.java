@@ -100,6 +100,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       else {
         d.incrementUsageCount();
       }
+      d.addReference(reference);
     }
 
     final Collection descriptors = methodToDescriptorMap.values();
