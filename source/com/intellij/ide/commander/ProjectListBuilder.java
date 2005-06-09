@@ -105,13 +105,13 @@ public class ProjectListBuilder extends AbstractListBuilder {
     public void childRemoved(final PsiTreeChangeEvent event) {
       final PsiElement child = event.getOldChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
-      childrenChanged(event.getParent());
+      childrenChanged();
     }
 
     public void childAdded(final PsiTreeChangeEvent event) {
       final PsiElement child = event.getNewChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
-      childrenChanged(event.getParent());
+      childrenChanged();
     }
 
     public void childReplaced(final PsiTreeChangeEvent event) {
@@ -119,79 +119,31 @@ public class ProjectListBuilder extends AbstractListBuilder {
       final PsiElement newChild = event.getNewChild();
       if (oldChild instanceof PsiWhiteSpace && newChild instanceof PsiWhiteSpace) return; //optimization
       if (oldChild instanceof PsiCodeBlock && newChild instanceof PsiCodeBlock) return; //optimization
-      childrenChanged(event.getParent());
+      childrenChanged();
     }
 
     public void childMoved(final PsiTreeChangeEvent event) {
-      childrenChanged(event.getOldParent());
-      childrenChanged(event.getNewParent());
+      childrenChanged();
     }
 
     public void childrenChanged(final PsiTreeChangeEvent event) {
-      childrenChanged(event.getParent());
+      childrenChanged();
     }
 
-    private void childrenChanged(PsiElement parent) {
-      while(true){
-        if (parent == null) break;
-        if (parent instanceof PsiCodeBlock) break;
-        if (parent instanceof PsiFile){
-          parent = ((PsiFile)parent).getContainingDirectory();
-          if (parent == null) break;
-        }
-
-        if (parent instanceof PsiMethod
-            || parent instanceof PsiField
-            || parent instanceof PsiClass
-            || parent instanceof PsiFile
-            || parent instanceof PsiDirectory) {
-          break;
-        }
-        parent = parent.getParent();
-      }
-
-      if (parent == null) {
-        return;
-      }
-      final Object element = getParentNode();
-      if (element instanceof ProjectViewNode && ((ProjectViewNode)element).getValue() instanceof PsiElement){
-        PsiElement psiElement = (PsiElement)((ProjectViewNode)element).getValue();
-
-        if (!psiElement.isValid()){
-          addUpdateRequest();
-          return;
-        }
-
-        PsiElement pparent = parent.getParent();
-        if (pparent instanceof PsiFile){
-          pparent = pparent.getParent();
-        }
-        if (psiElement.equals(pparent)){
-          addUpdateRequest();
-          return;
-        }
-        while(true){
-          if (psiElement == null) return;
-          if (psiElement.equals(parent)){
-            addUpdateRequest();
-            return;
-          }
-          psiElement = psiElement.getParent();
-        }
-      }
+    private void childrenChanged() {
+      addUpdateRequest();
     }
 
     public void propertyChanged(final PsiTreeChangeEvent event) {
       final String propertyName = event.getPropertyName();
-      final PsiElement element = event.getElement();
       if (propertyName.equals(PsiTreeChangeEvent.PROP_ROOTS)) {
         addUpdateRequest();
       }
       else if (propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)){
-        childrenChanged(element);
+        childrenChanged();
       }
       else if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_NAME) || propertyName.equals(PsiTreeChangeEvent.PROP_DIRECTORY_NAME)){
-        childrenChanged(element);
+        childrenChanged();
       }
       else if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_TYPES)){
         addUpdateRequest();
@@ -210,13 +162,13 @@ public class ProjectListBuilder extends AbstractListBuilder {
       if (vFile.isDirectory()) {
         final PsiDirectory directory = manager.findDirectory(vFile);
         if (directory != null) {
-          myPsiTreeChangeListener.childrenChanged(directory.getParent());
+          myPsiTreeChangeListener.childrenChanged();
         }
       }
       else {
         final PsiFile file = manager.findFile(vFile);
         if (file != null){
-          myPsiTreeChangeListener.childrenChanged(file.getContainingDirectory());
+          myPsiTreeChangeListener.childrenChanged();
         }
       }
     }
@@ -231,7 +183,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
     private void updateByTransferable(final Transferable t) {
       final PsiElement[] psiElements = CopyPasteUtil.getElementsInTransferable(t);
       for (int i = 0; i < psiElements.length; i++) {
-        myPsiTreeChangeListener.childrenChanged(psiElements[i]);
+        myPsiTreeChangeListener.childrenChanged();
       }
     }
   }

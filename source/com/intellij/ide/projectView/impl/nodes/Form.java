@@ -62,5 +62,18 @@ public class Form implements Navigatable{
     }
     return false;
   }
+
+  public boolean isValid() {
+    for (Iterator<PsiFile> iterator = myFormFiles.iterator(); iterator.hasNext();) {
+      PsiFile psiFile = iterator.next();
+      if (!psiFile.isValid()) {
+        return false;
+      }
+    }
+    if (!myClassToBind.isValid()) {
+      return false;
+    }
+    return true;
+  }
 }
 

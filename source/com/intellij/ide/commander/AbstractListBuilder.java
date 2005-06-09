@@ -5,11 +5,10 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.Alarm;
-import com.intellij.psi.PsiElement;
 
 import javax.swing.*;
 import java.awt.*;
@@ -327,10 +326,12 @@ public abstract class AbstractListBuilder {
     for (Iterator iterator = elementToIndexMap.keySet().iterator(); iterator.hasNext();) {
       final Object child = iterator.next();
       final Integer index = elementToIndexMap.get(child);
-      final NodeDescriptor childDescr = myTreeStructure.createDescriptor(child, parentDescriptor);
-      childDescr.setIndex(index.intValue());
-      childDescr.update();
-      resultDescriptors.add(childDescr);
+      if (index != null) {
+        final NodeDescriptor childDescr = myTreeStructure.createDescriptor(child, parentDescriptor);
+        childDescr.setIndex(index.intValue());
+        childDescr.update();
+        resultDescriptors.add(childDescr);
+      }
     }
 
     final SelectionInfo selection = storeSelection();

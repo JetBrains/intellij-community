@@ -41,8 +41,12 @@ public class FormNode extends ProjectViewNode<Form>{
   }
 
   public void update(PresentationData presentation) {
-    presentation.setPresentableText(getValue().getName());
-    presentation.setIcons(StdFileTypes.GUI_DESIGNER_FORM.getIcon());
+    if (getValue() == null || !getValue().isValid()) {
+      setValue(null);
+    } else {
+      presentation.setPresentableText(getValue().getName());
+      presentation.setIcons(StdFileTypes.GUI_DESIGNER_FORM.getIcon());
+    }
   }
 
   public void navigate(final boolean requestFocus) {
