@@ -287,7 +287,9 @@ public abstract class IdeaTestCase extends TestCase implements DataProvider {
             myAssertionsInTestDetected = false;
           }
           finally {
-            tearDown();
+            try {
+              tearDown();
+            } catch(Throwable th) { th.printStackTrace(); }
           }
         }
         catch (Throwable throwable) {
