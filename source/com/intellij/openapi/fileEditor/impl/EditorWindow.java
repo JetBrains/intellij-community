@@ -20,6 +20,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Author: msk
@@ -486,18 +487,27 @@ public class EditorWindow {
     checkConsistency();
     final Container parent = myPanel.getParent();
     if (parent instanceof Splitter) {
+      EditorWithProviderComposite editorToSelect = getSelectedEditor();
       final EditorWindow[] siblings = findSiblings();
       final JPanel parent2 = (JPanel)parent.getParent();
-      for (int i = 0; i < siblings.length; i++) {
-        final EditorWindow sibling = siblings[i];
-        final EditorWithProviderComposite[] editors = sibling.getEditors();
-        for (int j = 0; j < editors.length; j++) {
-          final EditorWithProviderComposite editor = editors[j];
-          if (myTabbedPane != null && getTabCount() < UISettings.getInstance().EDITOR_TAB_LIMIT && findFileComposite(editor.getFile()) == null) {
-            setEditor(editor);
-          }
-          else {
-            getManager().disposeComposite(editor);
+      final Set<EditorWithProviderComposite> siblingSelectedEditors = new HashSet<EditorWithProviderComposite>(siblings.length);
+      for (EditorWindow sibling : siblings) {
+        final EditorWithProviderComposite selected = sibling.getSelectedEditor();
+        if (editorToSelect == null) {
+          editorToSelect = selected;
+        }
+        siblingSelectedEditors.add(selected);
+        // selected editors will be added first
+        processSiblingEditor(selected);
+      }
+      for (final EditorWindow sibling : siblings) {
+        final EditorWithProviderComposite[] siblingEditors = sibling.getEditors();
+        for (final EditorWithProviderComposite siblingEditor : siblingEditors) {
+          if (!siblingSelectedEditors.contains(siblingEditor)) {
+            if (editorToSelect == null) {
+              editorToSelect = siblingEditor;
+            }
+            processSiblingEditor(siblingEditor);
           }
         }
         LOG.assertTrue(sibling != this);
@@ -512,7 +522,19 @@ public class EditorWindow {
       }
       parent2.revalidate();
       myPanel = parent2;
+      if (editorToSelect != null) {
+        setSelectedEditor(editorToSelect);
+      }
       myOwner.setCurrentWindow(this, false);
+    }
+  }
+
+  private void processSiblingEditor(final EditorWithProviderComposite siblingEditor) {
+    if (myTabbedPane != null && getTabCount() < UISettings.getInstance().EDITOR_TAB_LIMIT && findFileComposite(siblingEditor.getFile()) == null) {
+      setEditor(siblingEditor);
+    }
+    else {
+      getManager().disposeComposite(siblingEditor);
     }
   }
 
