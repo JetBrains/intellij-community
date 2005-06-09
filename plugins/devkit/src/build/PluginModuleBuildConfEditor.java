@@ -31,9 +31,8 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   private JLabel myPluginXMLLabel = new JLabel("Choose path to META-INF" + File.separator + "plugin.xml:");
   private TextFieldWithBrowseButton myPluginXML = new TextFieldWithBrowseButton();
 
-  private JLabel myManifestLabel = new JLabel("Choose manifest file");
   private TextFieldWithBrowseButton myManifest = new TextFieldWithBrowseButton();
-  private JCheckBox myUseUserManifest = new JCheckBox("Use user manifest");
+  private JCheckBox myUseUserManifest = new JCheckBox("Use user manifest:");
 
   private boolean myModified = false;
 
@@ -76,7 +75,6 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     gc.insets.left = 0;
     manifestPanel.add(myUseUserManifest, gc);
     gc.insets.left = 2;
-    manifestPanel.add(myManifestLabel, gc);
     gc.weighty = 1.0;
     manifestPanel.add(myManifest, gc);
     myWholePanel.add(manifestPanel, gc);
