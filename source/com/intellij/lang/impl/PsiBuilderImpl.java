@@ -16,6 +16,8 @@ import com.intellij.util.text.CharArrayUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Created by IntelliJ IDEA.
  * User: max
@@ -306,7 +308,7 @@ public class PsiBuilderImpl implements PsiBuilder {
         TreeUtil.addChildren((CompositeElement)curNode, errorElement);
       }
     }
-     
+
     LOG.assertTrue(curToken == myLexems.size(), "Not all of the tokens inserted to the tree");
     LOG.assertTrue(curNode == null, "Unbalanced tree");
 
@@ -322,12 +324,16 @@ public class PsiBuilderImpl implements PsiBuilder {
     while (curToken < lastIdx) {
       Token lexem = myLexems.get(curToken++);
       final LeafPsiElement childNode = createLeaf(lexem);
-      TreeUtil.addChildren((CompositeElement)curNode, childNode);
+      if (childNode != null) {
+        TreeUtil.addChildren((CompositeElement)curNode, childNode);
+      }
     }
     return curToken;
   }
 
+  @Nullable
   private LeafPsiElement createLeaf(final Token lexem) {
+    if (lexem.myTokenStart == lexem.myTokenEnd) return null; // Empty token. Most probably a parser directive like indent/dedent in phyton
     final IElementType type = lexem.getTokenType();
     if (myWhitespaces.isInSet(type)) {
       return new PsiWhiteSpaceImpl(myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
