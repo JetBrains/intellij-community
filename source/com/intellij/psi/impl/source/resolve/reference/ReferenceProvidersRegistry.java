@@ -57,6 +57,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     registerManipulator(PsiPlainTextFile.class, new PlainFileManipulator());
     registerManipulator(XmlToken.class, new XmlTokenManipulator());
     // Binding declarations
+    final JavaClassReferenceProvider classReferenceProvider = new JavaClassReferenceProvider();
     registerReferenceProvider(
       new ScopeFilter(
         new ParentElementFilter(
@@ -71,7 +72,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           )
         )),
       XmlAttributeValue.class,
-      new JavaClassReferenceProvider()
+      classReferenceProvider
     );
     RegisterInPsi.referenceProviders(this);
 
@@ -98,8 +99,8 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           )
         )
       ),
-      XmlAttributeValue.class,
-      new JavaClassReferenceProvider()
+      XmlAttributeValue.class, 
+      classReferenceProvider
     );
 
     registerReferenceProvider(
@@ -125,8 +126,35 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           )
         )
       ),
-      XmlAttributeValue.class,
-      new JavaClassReferenceProvider()
+      XmlAttributeValue.class, 
+      classReferenceProvider
+    );
+    
+    registerReferenceProvider(
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new TextFilter("variable-class"),
+            new ParentElementFilter(
+              new AndFilter(
+                new OrFilter(
+                  new AndFilter(
+                    new ClassFilter(XmlTag.class),
+                    new TextFilter("directive.variable")
+                  ),
+                  new AndFilter(
+                    new ClassFilter(JspDirective.class),
+                    new TextFilter("variable")
+                  )
+                ),
+                new NamespaceFilter(XmlUtil.JSP_URI)
+              )
+            )
+          )
+        )
+      ),
+      XmlAttributeValue.class, 
+      classReferenceProvider
     );
     
     registerReferenceProvider(
@@ -156,6 +184,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       new JspImportListReferenceProvider()
     );
 
+    final JspxIncludePathReferenceProvider pathReferenceProvider = new JspxIncludePathReferenceProvider();
     registerReferenceProvider(
       new ScopeFilter(
         new AndFilter(
@@ -177,7 +206,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
         )
       ),
       XmlAttributeValue.class,
-      new JspxIncludePathReferenceProvider()
+      pathReferenceProvider
     );
 
     registerReferenceProvider(
@@ -200,8 +229,8 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           )
         )
       ),
-      XmlAttributeValue.class,
-      new JspxIncludePathReferenceProvider()
+      XmlAttributeValue.class, 
+      pathReferenceProvider
     );
 
     registerReferenceProvider(
@@ -211,16 +240,16 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           new ParentElementFilter(
             new AndFilter(
               new NamespaceFilter(XmlUtil.JSP_URI),
-                new AndFilter(
-                  new ClassFilter(XmlTag.class),
-                  new TextFilter("include")
-                )
+              new AndFilter(
+                new ClassFilter(XmlTag.class),
+                new TextFilter("include")
+              )
             ), 2
           )
         )
       ),
-      XmlAttributeValue.class,
-      new JspxIncludePathReferenceProvider()
+      XmlAttributeValue.class, 
+      pathReferenceProvider
     );
 
     registerReferenceProvider(
@@ -238,8 +267,8 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           )
         )
       ),
-      XmlAttributeValue.class,
-      new JspxIncludePathReferenceProvider()
+      XmlAttributeValue.class, 
+      pathReferenceProvider
     );
     
     //registerReferenceProvider(new ScopeFilter(new ParentElementFilter(new AndFilter(new TextFilter("target"),
