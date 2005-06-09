@@ -52,7 +52,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private CompletionTextField formalArgType;
   private JTextField customScriptCode;
   private JCheckBox maxoccursUnlimited;
-  private JCheckBox minoccursUnlimited;
+  private JPanel scriptConstraints;
 
   EditVarConstraintsDialog(Project project,SearchModel _model,List<Variable> _variables, boolean replaceContext, FileType fileType) {
     super(project,false);
@@ -141,22 +141,20 @@ class EditVarConstraintsDialog extends DialogWrapper {
       }
     );
 
-    minoccursUnlimited.addChangeListener(
-      new MyChangeListener(minoccurs)
-    );
-
     maxoccursUnlimited.addChangeListener(
       new MyChangeListener(maxoccurs)
     );
 
+    scriptConstraints.setVisible(false);
+    
     init();
 
-    if (variables.size()>0) parameterList.setSelectedIndex(0);
+    if (variables.size() > 0) parameterList.setSelectedIndex(0);
   }
 
   private boolean validateParameters() {
     return validateRegExp(regexp) && validateRegExp(regexprForExprType) &&
-           (minoccursUnlimited.isSelected() || validateIntOccurence(minoccurs)) &&
+           validateIntOccurence(minoccurs) &&
            (maxoccursUnlimited.isSelected() || validateIntOccurence(maxoccurs));
   }
 
@@ -187,9 +185,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     varInfo.setRegExp(regexp.getText());
     varInfo.setInvertRegExp(notRegexp.isSelected());
 
-    int minCount;
-    if (minoccursUnlimited.isSelected()) minCount = Integer.MAX_VALUE;
-    else minCount = Integer.parseInt( minoccurs.getText() );
+    int minCount = Integer.parseInt( minoccurs.getText() );
     varInfo.setMinCount(minCount);
 
     int maxCount;
@@ -224,7 +220,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
       regexp.setText("");
 
       minoccurs.setText("1");
-      minoccursUnlimited.setSelected(false);
       maxoccurs.setText("1");
       maxoccursUnlimited.setSelected(false);
       applyWithinTypeHierarchy.setSelected(false);
@@ -248,13 +243,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       regexp.setText(varInfo.getRegExp());
       notRegexp.setSelected(varInfo.isInvertRegExp());
 
-      if(varInfo.getMinCount() == Integer.MAX_VALUE) {
-        minoccursUnlimited.setSelected(true);
-        minoccurs.setText("");
-      } else {
-        minoccursUnlimited.setSelected(false);
-        minoccurs.setText(Integer.toString(varInfo.getMinCount()));
-      }
+      minoccurs.setText(Integer.toString(varInfo.getMinCount()));
 
       if(varInfo.getMaxCount() == Integer.MAX_VALUE) {
         maxoccursUnlimited.setSelected(true);

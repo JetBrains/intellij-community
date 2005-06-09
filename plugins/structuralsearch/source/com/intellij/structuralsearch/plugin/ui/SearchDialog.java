@@ -176,15 +176,17 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     maxMatches.setMaximumSize(new Dimension(50,25));
 
     fileTypes = new JComboBox(new String[] {"java", "xml", "html"} );
-    searchOptions.add(
-      UIUtil.createOptionLine(
-        new JComponent[] {
-          new JLabel("File type:"),
-          fileTypes,
-          (JComponent)Box.createHorizontalGlue()
-        }
-      )
-    );
+    if (ourSupportDifferentFileTypes) {
+      searchOptions.add(
+        UIUtil.createOptionLine(
+          new JComponent[] {
+            new JLabel("File type:"),
+            fileTypes,
+            (JComponent)Box.createHorizontalGlue()
+          }
+        )
+      );
+    }
 
     fileTypes.setSelectedItem(ourFileType);
 
@@ -389,8 +391,10 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     return result;
   }
 
+  private static boolean ourSupportDifferentFileTypes = false;
+  
   protected int getRowsCount() {
-    return 4;
+    return (ourSupportDifferentFileTypes)?4:3;
   }
 
   protected JComponent createCenterPanel() {
