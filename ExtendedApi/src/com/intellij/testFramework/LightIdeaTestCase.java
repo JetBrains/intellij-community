@@ -282,7 +282,12 @@ public class LightIdeaTestCase extends TestCase implements DataProvider {
       myAssertionsInTestDetected = false;
     }
     finally {
-      tearDown();
+      try{
+        tearDown();
+      }
+      catch(Throwable th){
+        th.printStackTrace();
+      }
     }
   }
 
