@@ -152,7 +152,7 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
     }
   }
 
-  public final void queue(final Update update) {
+  public void queue(final Update update) {
     final Application app = ApplicationManager.getApplication();
     if (app.isUnitTestMode()) {
       app.invokeLater(update);
