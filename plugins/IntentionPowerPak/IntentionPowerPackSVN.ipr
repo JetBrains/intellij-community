@@ -23,6 +23,7 @@
       <file url="file://$PROJECT_DIR$/test/com/siyeh/ipp/RenameReference.java" />
       <file url="file://$PROJECT_DIR$/test/com/siyeh/ipp/JUnitTest.java" />
       <file url="file://$PROJECT_DIR$/test/com/siyeh/ipp/BasTestCase.java" />
+      <file url="file://$PROJECT_DIR$/test/com/siyeh/ipp/MoveDeclarationTestCase.java" />
     </excludeFromCompile>
     <resourceExtensions>
       <entry name=".+\.(properties|xml|html|dtd|tld)" />
@@ -196,13 +197,16 @@
       <module fileurl="file://$PROJECT_DIR$/IntentionPowerPackSVN.iml" filepath="$PROJECT_DIR$/IntentionPowerPackSVN.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 3353" />
+  <component name="ProjectRootManager" version="2" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA 3354" />
   <component name="RmicSettings">
     <option name="IS_EANABLED" value="false" />
     <option name="DEBUGGING_INFO" value="true" />
     <option name="GENERATE_NO_WARNINGS" value="false" />
     <option name="GENERATE_IIOP_STUBS" value="false" />
     <option name="ADDITIONAL_OPTIONS_STRING" value="" />
+  </component>
+  <component name="ThreadTortureTester">
+    <option name="enabled" value="false" />
   </component>
   <component name="WebServicesPlugin" />
   <component name="com.siyeh.metrics.MetricsReloaded">
