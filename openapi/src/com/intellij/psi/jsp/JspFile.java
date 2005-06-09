@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 
 public interface JspFile extends PsiFile{
   WebModuleProperties getWebModuleProperties();
@@ -22,4 +23,8 @@ public interface JspFile extends PsiFile{
 
   XmlTag[] getDirectiveTags(JspDirectiveKind directiveKind);
   XmlTag createDirective(XmlTag context, JspDirectiveKind page);
+
+  PsiFile getBaseLanguageRoot();
+
+  Language getBaseLanguage();
 }
