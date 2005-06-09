@@ -59,8 +59,9 @@ public abstract class AbstractBlock implements Block {
     if (node.getElementType() == ElementType.JSP_XML_TEXT && node.getText().trim().length() == 0) {
       return true;
     }
-    if (node instanceof LeafElement) return false;
+    
     if (node.getTextLength() == 0) return true;
+    if (node instanceof LeafElement) return false;
 
     ASTNode child = node.getFirstChildNode();
     while (child != null) {

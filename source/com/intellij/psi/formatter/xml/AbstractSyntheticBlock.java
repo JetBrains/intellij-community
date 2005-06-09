@@ -80,8 +80,7 @@ public abstract class AbstractSyntheticBlock implements Block{
     if (type1 == ElementType.XML_NAME && type2 == ElementType.XML_TAG_END) return true;
     if (type1 == ElementType.XML_NAME && type2 == ElementType.XML_EMPTY_ELEMENT_END) return true;
     if (type1 == ElementType.XML_ATTRIBUTE && type2 == ElementType.XML_EMPTY_ELEMENT_END) return true;
-    if (type1 == ElementType.XML_ATTRIBUTE && type2 == ElementType.XML_TAG_END) return true;
-    return false;
+    return type1 == ElementType.XML_ATTRIBUTE && type2 == ElementType.XML_TAG_END;
   }
 
   public boolean endsWithText() {
@@ -114,8 +113,7 @@ public abstract class AbstractSyntheticBlock implements Block{
   public boolean startsWithTextElement() {
     if (startsWithText()) return true;
     if (isStartOfTag() && myXmlFormattingPolicy.isTextElement(getTag())) return true;
-    if (isTextTag(myStartTreeNode)) return true;
-    return false;
+    return isTextTag(myStartTreeNode);
   }
 
   private boolean isTextTag(final ASTNode treeNode) {
@@ -132,21 +130,10 @@ public abstract class AbstractSyntheticBlock implements Block{
   }
 
   public static Block createSynteticBlock(final List<Block> subBlocks,
-                                                  final Block parent,
-                                                  final Indent indent,
-                                                  XmlFormattingPolicy policy) {
-    final Block firstBlock = subBlocks.get(0);
-    /*
-    if (firstBlock instanceof AbstractBlock && !isTagDescription(((AbstractBlock)firstBlock).getNode())
-        && (policy.getShouldKeepWhiteSpaces()
-        || policy.keepWhiteSpacesInsideTag(((XmlTagBlock)parent).getTag()))) {
-      return new ReadOnlyBlock(subBlocks, parent, policy, indent);
-    } else {
-      return new SyntheticBlock(subBlocks, parent, indent, policy);
-    }
-    */
-
-    return new SyntheticBlock(subBlocks, parent, indent, policy);
+                                          final Block parent,
+                                          final Indent indent,
+                                          XmlFormattingPolicy policy, final Indent childIndent) {
+    return new SyntheticBlock(subBlocks, parent, indent, policy, childIndent);
   }
 
   public boolean isIncomplete() {

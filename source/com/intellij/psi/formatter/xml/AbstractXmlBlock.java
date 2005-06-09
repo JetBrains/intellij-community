@@ -132,10 +132,12 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     if (element != null && element.getElementType() == ElementType.JSP_SCRIPTLET_START) {
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
       while (element != null && element.getTextRange().getEndOffset() <=child.getTextRange().getEndOffset()) {
-        subBlocks.add(createChildBlock(element, null, null, Formatter.getInstance().getNoneIndent()));
+        if (!containsWhiteSpacesOnly(element)) {
+          subBlocks.add(createChildBlock(element, null, null, Formatter.getInstance().getNoneIndent()));
+        }
         element = element.getTreeNext();
       }
-      return new SyntheticBlock(subBlocks, this, indent, myXmlFormattingPolicy);
+      return new SyntheticBlock(subBlocks, this, indent, myXmlFormattingPolicy, getFormatter().createNormalIndent());
     } else {
       return null;
     }

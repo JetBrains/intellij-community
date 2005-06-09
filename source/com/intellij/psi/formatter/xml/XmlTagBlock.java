@@ -115,11 +115,17 @@ public class XmlTagBlock extends AbstractXmlBlock{
   }
 
   private Block createTagContentNode(final ArrayList<Block> localResult) {
-    return AbstractSyntheticBlock.createSynteticBlock(localResult, this, getFormatter().getNoneIndent(), myXmlFormattingPolicy);
+    return AbstractSyntheticBlock.createSynteticBlock(
+      localResult, this, getFormatter().getNoneIndent(),
+      myXmlFormattingPolicy,
+      getFormatter().createNormalIndent());
   }
 
   private Block createTagDescriptionNode(final ArrayList<Block> localResult) {
-    return AbstractSyntheticBlock.createSynteticBlock(localResult, this, getFormatter().getNoneIndent(), myXmlFormattingPolicy);
+    return AbstractSyntheticBlock.createSynteticBlock(
+      localResult, this, getFormatter().getNoneIndent(),
+      myXmlFormattingPolicy,
+      null);
   }
 
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {

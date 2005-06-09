@@ -8,30 +8,29 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
   private final List<Block> mySubBlocks;
+  private final Indent myChildIndent;
 
-  SyntheticBlock(final List<Block> subBlocks, final Block parent, final Indent indent, XmlFormattingPolicy policy) {
+  SyntheticBlock(final List<Block> subBlocks, final Block parent, final Indent indent, XmlFormattingPolicy policy, final Indent childIndent) {
     super(subBlocks, parent, policy, indent);
     mySubBlocks = subBlocks;
+    myChildIndent = childIndent;
   }
 
+  @NotNull
   public TextRange getTextRange() {
     return calculateTextRange(mySubBlocks);
   }
 
+  @NotNull
   public List<Block> getSubBlocks() {
     return mySubBlocks;
   }
-
-  /*
-  public Indent getIndent() {
-    return getFormatter().getNoneIndent();
-  }
-  */
 
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
     if (child1 instanceof ReadOnlyBlock || child2 instanceof ReadOnlyBlock) {
@@ -57,7 +56,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
                                                 myXmlFormattingPolicy.getKeepBlankLines());
     }
     else if (type2 == getTagType() && (type1 == ElementType.XML_DATA_CHARACTERS || type1== getTagType())
-               && ((AbstractXmlBlock)child2).removeLineBreakBeforeTag()) {
+             && ((AbstractXmlBlock)child2).removeLineBreakBeforeTag()) {
       //<tag/></tag> text</tag>
       return getFormatter().createSpaceProperty(0, Integer.MAX_VALUE, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
                                                 myXmlFormattingPolicy.getKeepBlankLines());
@@ -86,12 +85,13 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
     return getFormatter().createSpaceProperty(0, Integer.MAX_VALUE, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
   }
 
+  @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    return new ChildAttributes(getIndent(), null);
+    return new ChildAttributes(myChildIndent, null);
   }
 
   public boolean isIncomplete() {
     return getSubBlocks().get(getSubBlocks().size() - 1).isIncomplete();
   }
-  
+
 }

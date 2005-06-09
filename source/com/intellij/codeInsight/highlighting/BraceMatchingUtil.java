@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.source.parsing.jsp.JspHighlightLexer;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
@@ -151,6 +152,14 @@ public class BraceMatchingUtil {
 
     public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
       IElementType tokenType = iterator.getTokenType();
+      if (tokenType instanceof JspHighlightLexer.ScriptletJavaElementTypeToken){
+        return isLBraceToken(((JspHighlightLexer.ScriptletJavaElementTypeToken)tokenType).getBase());
+      } else {
+        return isLBraceToken(tokenType);
+      }
+    }
+
+    private boolean isLBraceToken(final IElementType tokenType) {
       return tokenType == JavaTokenType.LPARENTH ||
              tokenType == JavaTokenType.LBRACE ||
              tokenType == JavaTokenType.LBRACKET ||
@@ -219,14 +228,22 @@ public class BraceMatchingUtil {
                );
       }
       else if (fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX) {
+        return isJspJspxStructuralBrace(tokenType);
+      }
+      else{
+        return false;
+      }
+    }
+
+    private boolean isJspJspxStructuralBrace(final IElementType tokenType) {
+      if (tokenType instanceof JspHighlightLexer.ScriptletJavaElementTypeToken) {
+        return isJspJspxStructuralBrace(((JspHighlightLexer.ScriptletJavaElementTypeToken)tokenType).getBase());
+      } else {
         return tokenType == JavaTokenType.LBRACE ||
                tokenType == JavaTokenType.RBRACE ||
                tokenType == XmlTokenType.XML_START_TAG_START ||
                tokenType == XmlTokenType.XML_TAG_END ||
                tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END;
-      }
-      else{
-        return false;
       }
     }
 
