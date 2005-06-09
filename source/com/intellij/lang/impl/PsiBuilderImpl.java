@@ -12,11 +12,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -161,10 +160,13 @@ public class PsiBuilderImpl implements PsiBuilder {
     return token.myTokenStart;
   }
 
+  @Nullable
   public String getTokenText() {
-    return getCurrentToken().getTokenText();
+    final PsiBuilderImpl.Token token = getCurrentToken();
+    return token != null ? token.getTokenText() : null;
   }
 
+  @Nullable
   public Token getCurrentToken() {
     Token lastToken;
     while (true) {
@@ -181,6 +183,7 @@ public class PsiBuilderImpl implements PsiBuilder {
     return lastToken;
   }
 
+  @Nullable
   private Token getTokenOrWhitespace() {
     if (myCurrentLexem >= myLexems.size()) {
       if (myLexer.getTokenType() == null) return null;
@@ -205,6 +208,7 @@ public class PsiBuilderImpl implements PsiBuilder {
     return getCurrentToken() == null;
   }
 
+  @SuppressWarnings({"SuspiciousMethodCalls"})
   public void rollbackTo(Marker marker) {
     myCurrentLexem = ((StartMarker)marker).myLexemIndex;
     int idx = myProduction.lastIndexOf(marker);
@@ -218,7 +222,7 @@ public class PsiBuilderImpl implements PsiBuilder {
     LOG.assertTrue(removed, "The marker must be added before it is dropped.");
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SuspiciousMethodCalls"})
   public void done(Marker marker) {
     LOG.assertTrue(((StartMarker)marker).myDoneMarker == null, "Marker already done.");
     int idx = myProduction.lastIndexOf(marker);

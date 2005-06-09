@@ -1,6 +1,7 @@
 package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,10 +13,15 @@ import com.intellij.psi.tree.IElementType;
 public interface PsiBuilder {
   CharSequence getOriginalText();
 
-  IElementType getTokenType();
   void advanceLexer();
-  int getCurrentOffset();
+
+  @Nullable(documentation = "Returns null when lexing is over")
+  IElementType getTokenType();
+
+  @Nullable(documentation = "Returns null when lexing is over")
   String getTokenText();
+
+  int getCurrentOffset();
 
   interface Marker {
     Marker preceed();
