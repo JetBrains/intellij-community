@@ -12,10 +12,14 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -31,6 +35,7 @@ public class EditorWindow {
   protected JPanel myPanel;
   private EditorTabbedContainer myTabbedPane;
   public int myInsideTabChange;
+  private MyTabbedContainerChangeListener myChangeListener;
   protected final EditorsSplitters myOwner;
   private static final Icon MODIFIED_ICON = IconLoader.getIcon("/general/modified.png");
   private static final Icon GAP_ICON = EmptyIcon.create(MODIFIED_ICON.getIconWidth(), MODIFIED_ICON.getIconHeight());
@@ -61,6 +66,7 @@ public class EditorWindow {
   private void createTabs(int tabPlacement) {
     LOG.assertTrue (myTabbedPane == null);
     myTabbedPane = new EditorTabbedContainer(this, getManager().myProject, tabPlacement, getManager());
+    myTabbedPane.addChangeListener(myChangeListener = new MyTabbedContainerChangeListener());
     myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
   }
 
@@ -72,11 +78,13 @@ public class EditorWindow {
 
   private void dispose() {
     disposeTabs();
+    myChangeListener = null;
     getWindows ().remove(this);
   }
 
   private void disposeTabs() {
     if (myTabbedPane != null) {
+      myTabbedPane.removeChangeListener(myChangeListener);
       myTabbedPane = null;
     }
     myPanel.removeAll();
@@ -252,6 +260,24 @@ public class EditorWindow {
         return myEditor.getFile();
       }
       return null;
+    }
+  }
+
+  private final class MyTabbedContainerChangeListener implements ChangeListener {
+    public void stateChanged(ChangeEvent e) {
+      //assertThread();
+      if (myInsideTabChange > 0) { // do not react on own events
+        return;
+      }
+      final EditorComposite composite = getSelectedEditor();
+      if (composite != null) {
+        final Project project = getManager().myProject;
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          public void run() {
+            getManager().openFileImpl2(EditorWindow.this, composite.getFile(), true, null);
+          }
+        }, "", null);
+      }
     }
   }
 
