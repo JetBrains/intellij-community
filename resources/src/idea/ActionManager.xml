@@ -769,6 +769,9 @@
       <reference ref="NextTab"/>
       <reference ref="PreviousTab"/>
       <separator />
+      <reference ref="Unsplit" />
+      <reference ref="UnsplitAll" />
+      <separator/>
       <reference ref="AddToFavorites"/>
       <separator />
       <reference ref="AddAllToFavorites"/>

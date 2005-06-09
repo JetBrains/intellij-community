@@ -185,29 +185,6 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
 
 
 
-    /**
-     * Closes all editor in the tabbed container
-     */
-    private final class MyCloseAllAction extends AnAction {
-      public MyCloseAllAction() {
-        super("Close All", "Close all editors in the tab group", null);
-        registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ALL_EDITORS).getShortcutSet(), null);
-      }
-
-      public void actionPerformed(AnActionEvent e) {
-        // Collect files to be closed
-        final VirtualFile[] files = myWindow.getFiles();
-        for (int i = 0; i < files.length; i++) {
-          myWindow.closeFile(files[i]);
-        }
-      }
-
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(getTabCount() > 0);
-      }
-    }
-
-
     private final class MyTabbedPanePopupHandler extends PopupHandler {
       public void invokePopup(final Component comp, final int x, final int y) {
         final ActionGroup group = (ActionGroup)CustomizableActionsSchemas.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP);
