@@ -110,7 +110,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         if(positionedElement!=null) {
           element = PsiTreeUtil.getParentOfType(
             positionedElement,
-            new Class[] { PsiClass.class, PsiCodeBlock.class }
+            PsiClass.class, PsiCodeBlock.class
           );
         }
       }
