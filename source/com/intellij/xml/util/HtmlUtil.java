@@ -6,6 +6,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
@@ -126,6 +127,25 @@ public class HtmlUtil {
     }
   }
 
+  public static XmlDocument getRealXmlDocument(XmlDocument doc) {
+    final PsiFile containingFile = doc.getContainingFile();
+
+    if (containingFile instanceof JspFile) {
+      final PsiFile baseLanguageRoot = ((JspFile)containingFile).getBaseLanguageRoot();
+      final PsiElement[] children = baseLanguageRoot.getChildren();
+
+      for (int i = 0; i < children.length; i++) {
+        PsiElement child = children[i];
+
+        if (child instanceof XmlDocument) {
+          doc = (XmlDocument)child;
+          break;
+        }
+      }
+    }
+    return doc;
+  }
+
   public static class HtmlReferenceProvider implements PsiReferenceProvider {
     private static final Key<PsiReference[]> cachedReferencesKey = Key.create("html.cachedReferences");
     private static final Key<String>         cachedRefsTextKey = Key.create("html.cachedReferences.text");
@@ -151,13 +171,13 @@ public class HtmlUtil {
 
               return
                ( attrName.equalsIgnoreCase("src") &&
-                 (tagName.equalsIgnoreCase("img") ||
-                  tagName.equalsIgnoreCase("script")
-                 )
+                                                  (tagName.equalsIgnoreCase("img") ||
+                                                   tagName.equalsIgnoreCase("script")
+                                                  )
                ) ||
-               ( attrName.equalsIgnoreCase("href") &&
-                 tagName.equalsIgnoreCase("a")
-               );
+                 ( attrName.equalsIgnoreCase("href") &&
+                   tagName.equalsIgnoreCase("a")
+                 );
             }
           }
           return false;
