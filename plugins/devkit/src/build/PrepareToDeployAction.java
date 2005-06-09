@@ -18,10 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -57,9 +54,10 @@ public class PrepareToDeployAction extends AnAction {
       final String defaultPath = new File(module.getModuleFilePath()).getParent() + File.separator + name;
       final String zipPath = defaultPath + ".zip";
       final File zipFile = new File(zipPath);
-      if (libs.size() == 0){
-        if (new File(zipPath).exists()){
-          if (Messages.showYesNoDialog(module.getProject(), "Do you want to delete \'" + zipPath + "\'?", "Info", Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE){
+      if (libs.size() == 0) {
+        if (new File(zipPath).exists()) {
+          if (Messages.showYesNoDialog(module.getProject(), "Do you want to delete \'" + zipPath + "\'?", "Info",
+                                       Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE) {
             FileUtil.delete(zipFile);
           }
         }
@@ -68,8 +66,9 @@ public class PrepareToDeployAction extends AnAction {
       }
 
       if (zipFile.exists() || zipFile.createNewFile()) {
-        if (new File(defaultPath + ".jar").exists()){
-          if (Messages.showYesNoDialog(module.getProject(), "Do you want to delete \'" + defaultPath + ".jar\'?", "Info", Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE){
+        if (new File(defaultPath + ".jar").exists()) {
+          if (Messages.showYesNoDialog(module.getProject(), "Do you want to delete \'" + defaultPath + ".jar\'?", "Info",
+                                       Messages.getInformationIcon()) == DialogWrapper.OK_EXIT_CODE) {
             FileUtil.delete(new File(defaultPath + ".jar"));
           }
         }
@@ -138,35 +137,43 @@ public class PrepareToDeployAction extends AnAction {
   }
 
   private File preparePluginsJar(Module module, final HashSet<Module> modules) throws IOException {
-        File jarFile = FileUtil.createTempFile("temp", "jar");
-        jarFile.deleteOnExit();
-        final Manifest manifest = new Manifest();
-        Attributes mainAttributes = manifest.getMainAttributes();
-        ManifestBuilder.setGlobalAttributes(mainAttributes);
-        ZipOutputStream jarPlugin = new JarOutputStream(new FileOutputStream(jarFile), manifest);
+    final PluginModuleBuildProperties pluginModuleBuildProperties = ((PluginModuleBuildProperties)ModuleBuildProperties.getInstance(module));
+    File jarFile = FileUtil.createTempFile("temp", "jar");
+    jarFile.deleteOnExit();
+    final Manifest manifest = new Manifest();
 
-        final HashSet<String> writtenItemRelativePaths = new HashSet<String>();
-        for (Module module1 : modules) {
-          final VirtualFile compilerOutputPath = ModuleRootManager.getInstance(module1).getCompilerOutputPath();
-          if (compilerOutputPath == null) continue; //pre-condition: output dirs for all modules are up-to-date 
-          ZipUtil.addDirToZipRecursively(jarPlugin, jarFile, new File(compilerOutputPath.getPath()), "", new FileFilter() {
-            public boolean accept(File pathname) {
-              return true;
-            }
-          }, writtenItemRelativePaths);
+    if (pluginModuleBuildProperties.isUseUserManifest() && pluginModuleBuildProperties.getManifestPath() != null) {
+      FileInputStream in = new FileInputStream(new File(pluginModuleBuildProperties.getManifestPath()));
+      manifest.read(in);
+      in.close();
+    } else {
+      Attributes mainAttributes = manifest.getMainAttributes();
+      ManifestBuilder.setGlobalAttributes(mainAttributes);
+    }
+    ZipOutputStream jarPlugin = new JarOutputStream(new FileOutputStream(jarFile), manifest);
+
+    final HashSet<String> writtenItemRelativePaths = new HashSet<String>();
+    for (Module module1 : modules) {
+      final VirtualFile compilerOutputPath = ModuleRootManager.getInstance(module1).getCompilerOutputPath();
+      if (compilerOutputPath == null) continue; //pre-condition: output dirs for all modules are up-to-date
+      ZipUtil.addDirToZipRecursively(jarPlugin, jarFile, new File(compilerOutputPath.getPath()), "", new FileFilter() {
+        public boolean accept(File pathname) {
+          return true;
         }
-        final String pluginXmlPath = ((PluginModuleBuildProperties)ModuleBuildProperties.getInstance(module)).getPluginXmlPath();
-        ZipUtil.addFileToZip(jarPlugin,
-                             new File(pluginXmlPath),
-                             "/META-INF/plugin.xml",
-                             writtenItemRelativePaths,
-                             new FileFilter() {
-                              public boolean accept(File pathname) {
-                                return true;
-                              }
-                             });
-        jarPlugin.close();
-        return jarFile;
+      }, writtenItemRelativePaths);
+    }
+    final String pluginXmlPath = pluginModuleBuildProperties.getPluginXmlPath();
+    ZipUtil.addFileToZip(jarPlugin,
+                         new File(pluginXmlPath),
+                         "/META-INF/plugin.xml",
+                         writtenItemRelativePaths,
+                         new FileFilter() {
+                           public boolean accept(File pathname) {
+                             return true;
+                           }
+                         });
+    jarPlugin.close();
+    return jarFile;
   }
 
   public void update(AnActionEvent e) {

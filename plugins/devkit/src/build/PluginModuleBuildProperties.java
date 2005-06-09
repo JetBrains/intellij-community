@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.module.PluginDescriptorMetaData;
 
 import java.io.File;
@@ -26,7 +27,10 @@ import java.io.File;
 public class PluginModuleBuildProperties extends ModuleBuildProperties implements ModuleComponent, JDOMExternalizable {
   private Module myModule;
   private J2EEDeploymentItem myPluginXML;
-  private VirtualFilePointer myVirtualFilePointer;
+  private VirtualFilePointer myPluginXMLPointer;
+  private VirtualFilePointer myManifestFilePointer;
+  private boolean myUseUserManifest = false;
+
   public PluginModuleBuildProperties(Module module) {
     myModule = module;
   }
@@ -82,31 +86,38 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
     if (url != null) {
       setPluginXMLUrl(VfsUtil.urlToPath(url));
     }
+    url = element.getAttributeValue("manifest");
+    if (url != null) {
+      setManifestUrl(VfsUtil.urlToPath(url));
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    element.setAttribute("url", getVirtualFilePointer().getUrl());
+    element.setAttribute("url", getPluginXMLPointer().getUrl());
+    if (myManifestFilePointer != null){
+      element.setAttribute("manifest", myManifestFilePointer.getUrl());
+    }
   }
 
   public J2EEDeploymentItem getPluginXML() {
     if (myPluginXML == null) {
       myPluginXML = DeploymentDescriptorFactory.getInstance().createDeploymentItem(myModule, new PluginDescriptorMetaData());
-      myPluginXML.setUrl(getVirtualFilePointer().getUrl());
+      myPluginXML.setUrl(getPluginXMLPointer().getUrl());
       myPluginXML.createIfNotExists();
     }
     return myPluginXML;
   }
 
-  public VirtualFilePointer getVirtualFilePointer() {
-    if (myVirtualFilePointer == null) {
+  public VirtualFilePointer getPluginXMLPointer() {
+    if (myPluginXMLPointer == null) {
       final String defaultPluginXMLLocation = new File(myModule.getModuleFilePath()).getParent() + File.separator + "META-INF" + File.separator + "plugin.xml";
       setPluginXMLUrl(defaultPluginXMLLocation);
     }
-    return myVirtualFilePointer;
+    return myPluginXMLPointer;
   }
 
   public String getPluginXmlPath() {
-    return FileUtil.toSystemDependentName(getVirtualFilePointer().getFile().getPath());
+    return FileUtil.toSystemDependentName(getPluginXMLPointer().getFile().getPath());
   }
 
   public void setPluginXMLUrl(final String pluginXMLUrl) {
@@ -115,10 +126,39 @@ public class PluginModuleBuildProperties extends ModuleBuildProperties implement
     myPluginXML.createIfNotExists();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        myVirtualFilePointer = VirtualFilePointerManager.getInstance().create(LocalFileSystem.getInstance().refreshAndFindFileByPath(pluginXMLUrl.replace(File.separatorChar, '/')),
+        myPluginXMLPointer = VirtualFilePointerManager.getInstance().create(LocalFileSystem.getInstance().refreshAndFindFileByPath(pluginXMLUrl.replace(File.separatorChar, '/')),
                                                                               null);
       }
     });
   }
 
+  public void setManifestUrl(final String manifestUrl) {
+    if (manifestUrl == null || manifestUrl.length() == 0){
+      myManifestFilePointer = null;
+      
+    } else {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          myManifestFilePointer = VirtualFilePointerManager.getInstance().create(LocalFileSystem.getInstance().refreshAndFindFileByPath(manifestUrl.replace(File.separatorChar, '/')),
+                                                                                 null);
+        }
+      });
+    }
+  }
+
+  @Nullable
+  public String getManifestPath() {
+    if (myManifestFilePointer != null){
+      return FileUtil.toSystemDependentName(myManifestFilePointer.getFile().getPath());
+    }
+    return null;
+  }
+
+  public boolean isUseUserManifest() {
+    return myUseUserManifest;
+  }
+
+  public void setUseUserManifest(final boolean useUserManifest) {
+    myUseUserManifest = useUserManifest;
+  }
 }

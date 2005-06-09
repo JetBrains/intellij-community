@@ -15,6 +15,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.DocumentAdapter;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.File;
@@ -26,37 +28,59 @@ import java.util.HashSet;
  */
 public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   private JPanel myWholePanel = new JPanel(new GridBagLayout());
-  private JLabel myDesctination = new JLabel();
   private JLabel myPluginXMLLabel = new JLabel("Choose path to META-INF" + File.separator + "plugin.xml:");
   private TextFieldWithBrowseButton myPluginXML = new TextFieldWithBrowseButton();
+
+  private JLabel myManifestLabel = new JLabel("Choose manifest file");
+  private TextFieldWithBrowseButton myManifest = new TextFieldWithBrowseButton();
+  private JCheckBox myUseUserManifest = new JCheckBox("Use user manifest");
+
   private boolean myModified = false;
 
   private PluginModuleBuildProperties myBuildProperties;
-  private ModuleConfigurationState myState;
 
   private HashSet<String> mySetDependencyOnPluginModule = new HashSet<String>();
   private Module myModule;
   public PluginModuleBuildConfEditor(ModuleConfigurationState state) {
     myModule = state.getRootModel().getModule();
     myBuildProperties = (PluginModuleBuildProperties)ModuleBuildProperties.getInstance(myModule);
-    myState = state;
   }
 
   public JComponent createComponent() {
     myPluginXML.addActionListener(new BrowseFilesListener(myPluginXML.getTextField(), "Select META-INF Directory Location", "The META-INF"+ File.separator + "plugin.xml will be saved in selected directory", BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR));
     myPluginXML.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
-        myModified = !myPluginXML.getText().equals(myBuildProperties.getVirtualFilePointer());
+        myModified = !myPluginXML.getText().equals(myBuildProperties.getPluginXmlPath());
       }
     });
-    JPanel pluginXmlPanel = new JPanel(new BorderLayout());
-    pluginXmlPanel.add(myPluginXMLLabel,  BorderLayout.NORTH);
-    pluginXmlPanel.add(myPluginXML, BorderLayout.CENTER);
-    myWholePanel.add(pluginXmlPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                               GridBagConstraints.HORIZONTAL, new Insets(10, 5, 15, 5), 0, 0));
-    myWholePanel.add(myDesctination,  new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.SOUTHWEST,
-                                               GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 0, 0));
-
+    myManifest.addActionListener(new BrowseFilesListener(myManifest.getTextField(), "Select manifest.mf", "Selected manifest.mf will be included in resulting distribution", BrowseFilesListener.SINGLE_FILE_DESCRIPTOR));
+    myManifest.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        myModified = !myManifest.getText().equals(myBuildProperties.getManifestPath());
+      }
+    });
+    myManifest.setEnabled(myBuildProperties.isUseUserManifest());
+    myUseUserManifest.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        final boolean selected = myUseUserManifest.isSelected();
+        myModified = (myBuildProperties.isUseUserManifest() != selected);
+        myManifest.setEnabled(selected);
+      }
+    });
+    final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                         GridBagConstraints.HORIZONTAL, new Insets(2, 2, 2, 2), 0, 0);
+    myWholePanel.add(myPluginXMLLabel, gc);
+    myWholePanel.add(myPluginXML, gc);
+    JPanel manifestPanel = new JPanel(new GridBagLayout());
+    manifestPanel.setBorder(BorderFactory.createTitledBorder("Manifest Settings"));
+    gc.insets.left = 0;
+    manifestPanel.add(myUseUserManifest, gc);
+    gc.insets.left = 2;
+    manifestPanel.add(myManifestLabel, gc);
+    gc.weighty = 1.0;
+    manifestPanel.add(myManifest, gc);
+    myWholePanel.add(manifestPanel, gc);
+    myWholePanel.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
     return myWholePanel;
   }
 
@@ -86,11 +110,15 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
                                                     null);
     }
     myBuildProperties.setPluginXMLUrl(myPluginXML.getText());
+    myBuildProperties.setManifestUrl(myManifest.getText());
+    myBuildProperties.setUseUserManifest(myUseUserManifest.isSelected());
     myModified = false;
   }
 
   public void reset() {
     myPluginXML.setText(myBuildProperties.getPluginXmlPath());
+    myManifest.setText(myBuildProperties.getManifestPath());
+    myUseUserManifest.setSelected(myBuildProperties.isUseUserManifest());
     myModified = false;
   }
 
