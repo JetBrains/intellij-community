@@ -8,7 +8,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
@@ -159,9 +158,9 @@ public abstract class BaseAnalysisAction extends AnAction {
       JPanel panel = new JPanel();
       panel.setBorder(IdeBorderFactory.createTitledBorder(myAnalysisNoon + " scope"));
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-      myFileButton = new JRadioButton(myAnalysisVerb + " " + StringUtil.decapitalize(myFileName));
-      myFileButton.setMnemonic(KeyEvent.VK_P);
-      myProjectButton = new JRadioButton(myAnalysisVerb + " the whole project");
+      myFileButton = new JRadioButton(myFileName);
+      myFileButton.setMnemonic(myFileName.indexOf("F") > -1 ? KeyEvent.VK_F : KeyEvent.VK_M);
+      myProjectButton = new JRadioButton("Whole project");
       myProjectButton.setMnemonic(KeyEvent.VK_W);
       ButtonGroup group = new ButtonGroup();
       group.add(myProjectButton);
@@ -169,7 +168,7 @@ public abstract class BaseAnalysisAction extends AnAction {
       panel.add(myProjectButton);
       boolean useModuleScope = false;
       if (myModuleName != null) {
-        myModuleButton = new JRadioButton(myAnalysisVerb + " module \'" + myModuleName + "\'");
+        myModuleButton = new JRadioButton("Module \'" + myModuleName + "\'");
         myModuleButton.setMnemonic(KeyEvent.VK_M);
         group.add(myModuleButton);
         useModuleScope = uiOptions.SCOPE_TYPE == AnalysisScope.MODULE;

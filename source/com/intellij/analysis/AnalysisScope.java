@@ -354,6 +354,9 @@ public class AnalysisScope {
     if (path != null) {
       File file = new File(path);
       name = file.getName();
+      int index = name.lastIndexOf('.');
+      if (index < 0) return name;
+      return name.substring(0, index);
     }
     return name;
   }
