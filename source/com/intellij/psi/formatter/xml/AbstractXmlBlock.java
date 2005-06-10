@@ -4,11 +4,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.newCodeFormatting.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -129,7 +128,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     if (!(child.getPsi() instanceof JspText)) return null;
     ASTNode element = child.getPsi().getContainingFile()
       .getPsiRoots()[0].getNode().findLeafElementAt(child.getTextRange().getStartOffset());
-    if (element != null && element.getElementType() == ElementType.JSP_SCRIPTLET_START) {
+    if (element != null && (element.getElementType() == ElementType.JSP_SCRIPTLET_START
+        || element.getElementType() == ElementType.JSP_DECLARATION_START)) {
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
       while (element != null && element.getTextRange().getEndOffset() <=child.getTextRange().getEndOffset()) {
         if (!containsWhiteSpacesOnly(element)) {
