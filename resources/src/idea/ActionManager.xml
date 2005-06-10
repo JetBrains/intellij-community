@@ -460,7 +460,7 @@
         <action id="ReplaceConstructorWithFactory" class="com.intellij.refactoring.actions.ReplaceConstructorWithFactoryAction" text="Replace Constructor with F_actory Method..." description="Create a static factory method and use it instead of a constructor"/>
         <separator/>
         <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction" text="Generify..." description="Convert your code to use generic types"/>
-        <action id="Type Migration" class="com.intellij.refactoring.actions.TypeMigrationAction" text="Type Migration..." description="Migrate one type to another"/>
+        <action id="Type Migration" internal="true" class="com.intellij.refactoring.actions.TypeMigrationAction" text="Type Migration..." description="Migrate one type to another"/>
         <separator/>
         <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction" text="Extract Include File..." description="Turn the selected code fragment into included file"/>
       </group>
@@ -703,7 +703,7 @@
     </group>
 
     <group id="EditorPopupMenu" configurable="true" text="Editor Popup Menu" description="Editor Popup Menu">
-      <action id="Add to migration roots" class="com.intellij.refactoring.actions.TypeMigrationAddRootAction" text="_Add to migration roots" description="Add selected element to migration roots"/>
+      <action id="Add to migration roots" internal="true" class="com.intellij.refactoring.actions.TypeMigrationAddRootAction" text="_Add to migration roots" description="Add selected element to migration roots"/>
       <reference ref="CutCopyPasteGroup"/>
       <reference ref="OpenInBrowser"/>
       <separator/>
