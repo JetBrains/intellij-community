@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorHighlighter;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -192,6 +193,11 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     PsiManager psiManager = PsiManager.getInstance(myProject);
     for (int i = 0; i < files.size(); i++) {
       VirtualFile file = files.get(i);
+      final Module module = ModuleUtil.findModuleForPsiElement(psiDirectory);
+      if (module != null) {
+        final boolean isInContent = ModuleRootManager.getInstance(module).getFileIndex().isInContent(file);
+        if (!isInContent) continue;
+      }
       if (file.isValid()) {
         PsiFile psiFile = psiManager.findFile(file);
         if (psiFile != null) {
