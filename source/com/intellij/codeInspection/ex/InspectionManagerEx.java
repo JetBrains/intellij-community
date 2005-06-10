@@ -235,6 +235,11 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
               }
             }
           }
+        } else if (attributeValue instanceof PsiLiteralExpression){
+          String value = (String)((PsiLiteralExpression) attributeValue).getValue();
+          if (isInspectionToolIdMentioned(value, inspectionToolID)) {
+            return false;
+          }
         }
       }
     }
