@@ -111,6 +111,13 @@ public class PropertiesLexerTest extends LightIdeaTestCase {
       "Properties:VALUE_CHARACTERS", "y"
     });
   }
+  public void testHashInValue() throws Exception {
+    doTest("x=# y", new String[]{
+      "Properties:KEY_CHARACTERS", "x",
+      "Properties:KEY_VALUE_SEPARATOR", "=",
+      "Properties:VALUE_CHARACTERS", "# y"
+    });
+  }
   public void testTabs() throws Exception {
     doTest("install/htdocs/imcms/html/link_editor.jsp/1002 = URL\\n\\\n" +
            "\t\\t\\teller meta_id:", new String[]{

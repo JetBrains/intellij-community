@@ -25,13 +25,13 @@ KEY_CHARACTER=[^:=\ \n\r\t\f\\] | "\\"{CRLF} | "\\".
 
 %%
 
-{END_OF_LINE_COMMENT}                    { return PropertiesTokenTypes.END_OF_LINE_COMMENT; }
+^{END_OF_LINE_COMMENT}                   { return PropertiesTokenTypes.END_OF_LINE_COMMENT; }
 
 <YYINITIAL> {KEY_CHARACTER}+             { yybegin(IN_KEY_VALUE_SEPARATOR); return PropertiesTokenTypes.KEY_CHARACTERS; }
 <IN_KEY_VALUE_SEPARATOR> {KEY_SEPARATOR} { yybegin(IN_VALUE); return PropertiesTokenTypes.KEY_VALUE_SEPARATOR; }
 <IN_VALUE> {VALUE_CHARACTER}+            { yybegin(YYINITIAL); return PropertiesTokenTypes.VALUE_CHARACTERS; }
 
 <IN_KEY_VALUE_SEPARATOR> {CRLF}{WHITE_SPACE_CHAR}*  { yybegin(YYINITIAL); return PropertiesTokenTypes.WHITE_SPACE; }
-<IN_VALUE> {CRLF}{WHITE_SPACE_CHAR}*  { yybegin(YYINITIAL); return PropertiesTokenTypes.WHITE_SPACE; }
+<IN_VALUE> {CRLF}{WHITE_SPACE_CHAR}*     { yybegin(YYINITIAL); return PropertiesTokenTypes.WHITE_SPACE; }
 {WHITE_SPACE_CHAR}+                      { return PropertiesTokenTypes.WHITE_SPACE; }
 .                                        { return PropertiesTokenTypes.BAD_CHARACTER; }
