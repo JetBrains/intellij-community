@@ -17,7 +17,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -1537,8 +1536,7 @@ public class HighlightUtil {
     if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.SILLY_ASSIGNMENT)) {
       return null;
     }
-    InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(assignment.getProject());
-    if (iManager.inspectionResultSuppressed(assignment, HighlightDisplayKey.SILLY_ASSIGNMENT.toString())) return null;
+    if (InspectionManagerEx.inspectionResultSuppressed(assignment, HighlightDisplayKey.SILLY_ASSIGNMENT.toString())) return null;
 
     if (assignment.getOperationSign().getTokenType() != JavaTokenType.EQ) return null;
     PsiExpression lExpression = assignment.getLExpression();
@@ -1759,8 +1757,7 @@ public class HighlightUtil {
     if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE)) {
       return null;
     }
-    InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(expr.getProject());
-    if (manager.inspectionResultSuppressed(expr, HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE.toString())) return null;
+    if (InspectionManagerEx.inspectionResultSuppressed(expr, HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE.toString())) return null;
 
     if (!(resolved instanceof PsiMember)) return null;
     PsiExpression qualifierExpression = expr.getQualifierExpression();
@@ -2037,8 +2034,7 @@ public class HighlightUtil {
     if (!(refElement instanceof PsiDocCommentOwner)) return null;
     if (!((PsiDocCommentOwner)refElement).isDeprecated()) return null;
 
-    InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(elementToHighlight.getProject());
-    if (manager.inspectionResultSuppressed(elementToHighlight, HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
+    if (InspectionManagerEx.inspectionResultSuppressed(elementToHighlight, HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
 
     String description = MessageFormat.format("''{0}'' is deprecated", new Object[]{
       HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY)});
