@@ -18,7 +18,7 @@ public class PsiAnchor {
   private int myStartOffset;
   private int myEndOffset;
   private PsiFile myFile;
-  private int myRootIndex = -1;
+  private final int myRootIndex;
   private PsiElement myElement;
 
   public PsiAnchor(PsiElement element) {
@@ -26,19 +26,21 @@ public class PsiAnchor {
 
     if (element instanceof PsiCompiledElement || element instanceof PsiMember) {
       myElement = element;
+      myRootIndex = 0;
     }
     else {
       myElement = null;
       myFile = element.getContainingFile();
+      int rootIndex = 0;
       final PsiElement[] psiRoots = myFile.getPsiRoots();
       for (int i = 0; i < psiRoots.length; i++) {
         PsiElement root = psiRoots[i];
         if (PsiTreeUtil.isAncestor(root, element, false)) {
-          myRootIndex = i;
+          rootIndex = i;
           break;
         }
       }
-      LOG.assertTrue(myRootIndex >= 0);
+      LOG.assertTrue((myRootIndex = rootIndex) >= 0);
 
       myClass = element.getClass();
 
@@ -53,6 +55,7 @@ public class PsiAnchor {
 
   public PsiElement retrieve() {
     if (myElement != null) return myElement;
+    if(myRootIndex < 0) return null;
 
     PsiElement element = myFile.getPsiRoots()[myRootIndex].findElementAt(myStartOffset);
 
