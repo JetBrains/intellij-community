@@ -71,7 +71,10 @@ public class XmlTagBlock extends AbstractXmlBlock{
           final Indent indent;
 
           if (localResult.size() == 1 && localResult.get(0) instanceof JspTextBlock) {
-            indent = Formatter.getInstance().getNoneIndent();
+            //indent = Formatter.getInstance().getNoneIndent();
+            indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
+                                ? getFormatter().createNormalIndent()
+                                : getFormatter().getNoneIndent();
           } else if (!insideTag) {
             indent = null;
           }
