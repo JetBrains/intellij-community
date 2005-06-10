@@ -144,13 +144,13 @@ public class PsiTreeUtil {
     }
 
     while (element != null) {
-      for (Class aClass : classes) {
+      for (Class<? extends T> aClass : classes) {
         if (aClass.isInstance(element)) return (T)element;
       }
       element = element.getParent();
     }
 
-    return (T)element;
+    return null;
   }
 
   public static @NotNull PsiElement[] collectElements(@Nullable PsiElement element, @NotNull PsiElementFilter filter) {
