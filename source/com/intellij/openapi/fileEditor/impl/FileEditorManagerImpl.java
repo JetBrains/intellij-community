@@ -35,13 +35,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -62,7 +62,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   private final JPanel myPanels;
   public Project myProject;
 
-  private final EventListenerList myListenerList;
+  private final EventDispatcher<FileEditorManagerListener> myDispatcher = EventDispatcher.create(FileEditorManagerListener.class);
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true, null);
 
   /**
@@ -100,7 +100,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
 
   FileEditorManagerImpl(final Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myListenerList = new EventListenerList();
     myProject = project;
     myPanels = new JPanel(new BorderLayout());
     mySplitters = new EditorsSplitters(this);
@@ -379,7 +378,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
           }
         }
       }
-      fireFileClosed(file);
+      myDispatcher.getMulticaster().fileClosed(this, file);
     }
     finally {
       --mySplitters.myInsideChange;
@@ -534,20 +533,17 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       }
 
       // Notify editors about selection changes
-
-      final EditorComposite oldSelectedComposite = window.getManager ().getLastSelected ();
-      if (oldSelectedComposite != null) {
-        oldSelectedComposite.getSelectedEditor().deselectNotify();
-      }
-      window.getManager ().mySplitters.setCurrentWindow (window, false);
+      window.getManager().mySplitters.setCurrentWindow (window, false);
       newSelectedComposite.getSelectedEditor().selectNotify();
 
       if (newEditorCreated) {
-        window.getManager().fireFileOpened(file);
+        final FileEditorManagerImpl fileEditorManager = window.getManager();
+        fileEditorManager.myDispatcher.getMulticaster().fileOpened(fileEditorManager, file);
       }
 
-      // Notify listeners about selection changes
-      window.getManager().fireSelectionChanged(oldSelectedComposite, newSelectedComposite);
+      //[jeka] this is a hack to support back-forward navigation
+      // previously here was incorrect call to fireSelectionChanged() with a side-effect
+      ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myProject)).onSelectionChanged();
 
       // Transfer focus into editor
       if (!ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
@@ -767,7 +763,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       throw new IllegalArgumentException("listener cannot be null");
     }
     assertThread();
-    myListenerList.add(FileEditorManagerListener.class, listener);
+    myDispatcher.addListener(listener);
   }
 
   public void removeFileEditorManagerListener(final FileEditorManagerListener listener) {
@@ -775,7 +771,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       throw new IllegalArgumentException("listener cannot be null");
     }
     assertThread();
-    myListenerList.remove(FileEditorManagerListener.class, listener);
+    myDispatcher.removeListener(listener);
   }
 
   // ProjectComponent methods
@@ -874,49 +870,22 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
 
-  //================== Firing events =====================
-  private void fireFileOpened(final VirtualFile file) {
-    final FileEditorManagerListener[] listeners = myListenerList.getListeners(FileEditorManagerListener.class);
-    for (FileEditorManagerListener listener : listeners) {
-      listener.fileOpened(this, file);
-    }
-  }
-
-  public void fireFileClosed(final VirtualFile file) {
-    final FileEditorManagerListener[] listeners = myListenerList.getListeners(FileEditorManagerListener.class);
-    for (FileEditorManagerListener listener : listeners) {
-      listener.fileClosed(this, file);
-    }
-  }
-
-  public void fireSelectionChanged(final EditorComposite oldSelectedComposite,
-                                   final EditorComposite newSelectedComposite) {
+  public void fireSelectionChanged(final EditorComposite oldSelectedComposite, final EditorComposite newSelectedComposite) {
     final VirtualFile oldSelectedFile = oldSelectedComposite != null ? oldSelectedComposite.getFile() : null;
     final VirtualFile newSelectedFile = newSelectedComposite != null ? newSelectedComposite.getFile() : null;
-    if (oldSelectedFile == null? newSelectedFile == null : oldSelectedFile.equals(newSelectedFile)) {
-      return; // no need to notify: files are the same
-    }
     final FileEditor oldSelectedEditor = oldSelectedComposite != null ? oldSelectedComposite.getSelectedEditor() : null;
     final FileEditor newSelectedEditor = newSelectedComposite != null ? newSelectedComposite.getSelectedEditor() : null;
-
+    final boolean filesEqual = oldSelectedFile == null ? newSelectedFile == null : oldSelectedFile.equals(newSelectedFile);
+    final boolean editorsEqual = oldSelectedEditor == null ? newSelectedEditor == null : oldSelectedEditor.equals(newSelectedEditor);
+    if (filesEqual && editorsEqual) {
+      // no need to notify: files are the same
+      return;
+    }
+    if (oldSelectedComposite != null) {
+      oldSelectedComposite.getSelectedEditor().deselectNotify();
+    }
     final FileEditorManagerEvent event = new FileEditorManagerEvent(this, oldSelectedFile, oldSelectedEditor, newSelectedFile, newSelectedEditor);
-    final FileEditorManagerListener[] listeners = myListenerList.getListeners(FileEditorManagerListener.class);
-    for (FileEditorManagerListener listener : listeners) {
-      listener.selectionChanged(event);
-    }
-  }
-
-  private void fireSelectionChanged(final VirtualFile selectedFile,
-                                    final FileEditor oldSelectedEditor,
-                                    final FileEditor newSelectedEditor) {
-    LOG.assertTrue(selectedFile != null);
-    if (!Comparing.equal(oldSelectedEditor, newSelectedEditor)) {
-      final FileEditorManagerEvent event = new FileEditorManagerEvent(this, selectedFile, oldSelectedEditor, selectedFile, newSelectedEditor);
-      final FileEditorManagerListener[] listeners = myListenerList.getListeners(FileEditorManagerListener.class);
-      for (FileEditorManagerListener listener : listeners) {
-        listener.selectionChanged(event);
-      }
-    }
+    myDispatcher.getMulticaster().selectionChanged(event);
   }
 
   public boolean isChanged (final EditorComposite editor) {
@@ -1059,6 +1028,15 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       }
       fireSelectionChanged(oldSelectedFile, event.getOldEditor(), event.getNewEditor());
     }
+
+    private void fireSelectionChanged(final VirtualFile selectedFile, final FileEditor oldSelectedEditor, final FileEditor newSelectedEditor) {
+      LOG.assertTrue(selectedFile != null);
+      if (!Comparing.equal(oldSelectedEditor, newSelectedEditor)) {
+        final FileEditorManagerEvent event = new FileEditorManagerEvent(FileEditorManagerImpl.this, selectedFile, oldSelectedEditor, selectedFile, newSelectedEditor);
+        myDispatcher.getMulticaster().selectionChanged(event);
+      }
+    }
+
   }
 
   private final class MyEditorPropertyChangeListener implements PropertyChangeListener {
