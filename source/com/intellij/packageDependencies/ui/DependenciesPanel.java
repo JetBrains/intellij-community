@@ -273,6 +273,10 @@ public class DependenciesPanel extends JPanel {
   private static void expandNodeIfNotTooWide(Tree tree, PackageDependenciesNode node) {
     int count = node.getChildCount();
     if (count > 5) return;
+    //another level of nesting
+    if (count == 1 && node.getChildAt(0).getChildCount() > 5){
+      return;
+    }
     tree.expandPath(new TreePath(node.getPath()));
   }
 
@@ -361,6 +365,9 @@ public class DependenciesPanel extends JPanel {
     public void setSelected(AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_SHOW_FILES = flag;
       mySettings.UI_SHOW_FILES = flag;
+      if (!flag && myLeftTree.getSelectionPath() != null && myLeftTree.getSelectionPath().getLastPathComponent() instanceof FileNode){
+        TreeUtil.selectPath(myLeftTree, myLeftTree.getSelectionPath().getParentPath());
+      }
       rebuild();
     }
   }

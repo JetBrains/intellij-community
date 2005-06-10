@@ -8,8 +8,8 @@ import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.TreePath;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class TreeExpantionMonitor {
@@ -82,6 +82,9 @@ public class TreeExpantionMonitor {
 
 
   private TreePath findPathByNode(final PackageDependenciesNode node) {
+     if (node.getPsiElement() == null){
+       return new TreePath(node.getPath());
+     }
       PsiManager manager = PsiManager.getInstance(myProject);
       Enumeration enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).breadthFirstEnumeration();
       while (enumeration.hasMoreElements()) {
