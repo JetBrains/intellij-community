@@ -132,11 +132,12 @@ public class PsiBasedFormattingModel implements FormattingModel {
     for (int i = 0; i < psiRoots.length; i++) {
       PsiFile psiRoot = psiRoots[i];
       final ASTNode found = psiRoot.getNode().findLeafElementAt(offset);
-      if (!(found.getPsi()instanceof JspText) && found.getTextRange().getStartOffset() == offset) {
-        return found;
+      if (found != null) {
+        if (!(found.getPsi()instanceof JspText) && found.getTextRange().getStartOffset() == offset) {
+          return found;
+        }
       }
     }
-    LOG.assertTrue(false);
     return myASTNode.findLeafElementAt(offset);
   }
 
