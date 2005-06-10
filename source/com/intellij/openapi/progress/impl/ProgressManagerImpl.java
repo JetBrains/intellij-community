@@ -49,7 +49,7 @@ public class ProgressManagerImpl extends ProgressManager implements ApplicationC
       final ProgressIndicator progress = getInstance().getProgressIndicator();
       if (progress != null) {
         try {
-          //progress.checkCanceled();
+          progress.checkCanceled();
         }
         catch (ProcessCanceledException e) {
           if (!Thread.holdsLock(PsiLock.LOCK)) {
