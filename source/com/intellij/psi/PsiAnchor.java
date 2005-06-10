@@ -3,7 +3,6 @@ package com.intellij.psi;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,7 +17,7 @@ public class PsiAnchor {
   private int myStartOffset;
   private int myEndOffset;
   private PsiFile myFile;
-  private final int myRootIndex;
+  private int myRootIndex = -1;
   private PsiElement myElement;
 
   public PsiAnchor(PsiElement element) {
@@ -26,21 +25,19 @@ public class PsiAnchor {
 
     if (element instanceof PsiCompiledElement || element instanceof PsiMember) {
       myElement = element;
-      myRootIndex = 0;
     }
     else {
       myElement = null;
       myFile = element.getContainingFile();
-      int rootIndex = 0;
-      final PsiElement[] psiRoots = myFile.getPsiRoots();
+      final PsiFile[] psiRoots = myFile.getPsiRoots();
       for (int i = 0; i < psiRoots.length; i++) {
-        PsiElement root = psiRoots[i];
-        if (PsiTreeUtil.isAncestor(root, element, false)) {
-          rootIndex = i;
+        PsiFile root = psiRoots[i];
+        if (PsiUtil.isUnderPsiRoot(root, element)) {
+          myRootIndex = i;
           break;
         }
       }
-      LOG.assertTrue((myRootIndex = rootIndex) >= 0);
+      LOG.assertTrue(myRootIndex >= 0);
 
       myClass = element.getClass();
 
@@ -55,13 +52,12 @@ public class PsiAnchor {
 
   public PsiElement retrieve() {
     if (myElement != null) return myElement;
-    if(myRootIndex < 0) return null;
 
     PsiElement element = myFile.getPsiRoots()[myRootIndex].findElementAt(myStartOffset);
 
     while  (!element.getClass().equals(myClass) ||
-            (element.getTextRange().getStartOffset() != myStartOffset) ||
-            (element.getTextRange().getEndOffset() != myEndOffset)) {
+           (element.getTextRange().getStartOffset() != myStartOffset) ||
+           (element.getTextRange().getEndOffset() != myEndOffset)) {
       element = element.getParent();
       if (element == null || element.getTextRange() == null) return null;
     }
@@ -119,4 +115,4 @@ public class PsiAnchor {
     return result;
   }
 }
-                                                                            
+
