@@ -271,7 +271,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     return StdFileTypes.CLASS;
   }
 
-  public PsiElement[] getPsiRoots() {
+  public PsiFile[] getPsiRoots() {
     return new PsiFile[]{this};
   }
 

@@ -326,7 +326,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return false;
   }
 
-  public PsiElement[] getPsiRoots() {
+  public PsiFile[] getPsiRoots() {
     return new PsiFile[]{this};
   }
 
