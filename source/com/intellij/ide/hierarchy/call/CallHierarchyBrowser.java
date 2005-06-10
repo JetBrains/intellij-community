@@ -340,12 +340,12 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider {
     return enclosingElement instanceof PsiMethod ? (PsiMethod)enclosingElement : null;
   }
 
-  private PsiElement getSelectedEnclosingElement() {
+  private PsiMember getSelectedEnclosingElement() {
     final DefaultMutableTreeNode node = getSelectedNode();
     if (node == null) return null;
     final Object userObject = node.getUserObject();
     if (!(userObject instanceof CallHierarchyNodeDescriptor)) return null;
-    final PsiElement enclosingElement = ((CallHierarchyNodeDescriptor)userObject).getEnclosingElement();
+    final PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)userObject).getEnclosingElement();
     return enclosingElement;
   }
 
@@ -370,7 +370,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider {
       if (!(node instanceof DefaultMutableTreeNode)) continue;
       Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
       if (!(userObject instanceof CallHierarchyNodeDescriptor)) continue;
-      PsiElement enclosingElement = ((CallHierarchyNodeDescriptor)userObject).getEnclosingElement();
+      PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)userObject).getEnclosingElement();
       if (!(enclosingElement instanceof PsiMethod)) continue;
       psiMethods.add((PsiMethod)enclosingElement);
     }

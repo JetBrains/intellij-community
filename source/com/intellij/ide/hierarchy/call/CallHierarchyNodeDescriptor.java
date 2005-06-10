@@ -1,36 +1,35 @@
 package com.intellij.ide.hierarchy.call;
 
+import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.pom.Navigatable;
-import com.intellij.codeInsight.highlighting.HighlightManager;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor implements Navigatable {
   private int myUsageCount = 1;
-  private final static Class[] ourEnclosingElementClasses = new Class[]{PsiMethod.class, PsiClass.class, JspFile.class};
+  private final static Class<? extends PsiMember>[] ourEnclosingElementClasses = new Class[]{PsiMethod.class, PsiClass.class};
   private ArrayList<PsiReference> myReferences = new ArrayList<PsiReference>();
 
   public CallHierarchyNodeDescriptor(
@@ -45,11 +44,11 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
   /**
    * @return PsiMethod or PsiClass or JspFile
    */
-  public final PsiElement getEnclosingElement(){
+  public final PsiMember getEnclosingElement(){
     return getEnclosingElement(myElement);
   }
 
-  static PsiElement getEnclosingElement(final PsiElement element){
+  static PsiMember getEnclosingElement(final PsiElement element){
     return PsiTreeUtil.getParentOfType(element, ourEnclosingElementClasses, false);
   }
 
@@ -167,8 +166,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       EditorColorsManager colorManager = EditorColorsManager.getInstance();
       TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-      for (Iterator<PsiReference> iterator = myReferences.iterator(); iterator.hasNext();) {
-        PsiReference psiReference = iterator.next();
+      for (PsiReference psiReference : myReferences) {
         final PsiElement eachMethidCall = psiReference.getElement().getParent();
         final TextRange textRange = eachMethidCall.getTextRange();
         highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), attributes, false, highlighters);

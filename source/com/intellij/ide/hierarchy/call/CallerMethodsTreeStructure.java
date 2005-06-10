@@ -28,7 +28,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
   }
 
   protected final Object[] buildChildren(final HierarchyNodeDescriptor descriptor) {
-    final PsiElement enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
+    final PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
     if (!(enclosingElement instanceof PsiMethod)) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
@@ -52,13 +52,11 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       methodToFind = deepestSuperMethod;
     }
 
-    final HashMap methodToDescriptorMap = new HashMap();
+    final HashMap<PsiMember,CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<PsiMember, CallHierarchyNodeDescriptor>();
 
     final PsiReference[] refs = searchHelper.findReferencesIncludingOverriding(methodToFind, searchScope, true);
-    for (int i = 0; i < refs.length; i++) {
-      final PsiReference reference = refs[i];
-
-      if (reference instanceof PsiReferenceExpression){
+    for (final PsiReference reference : refs) {
+      if (reference instanceof PsiReferenceExpression) {
         final PsiExpression qualifier = ((PsiReferenceExpression)reference).getQualifierExpression();
         if (qualifier instanceof PsiSuperExpression) { // filter super.foo() call inside foo() and similar cases (bug 8411)
           final PsiClass superClass = PsiUtil.resolveClassInType(qualifier.getType());
@@ -69,18 +67,18 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
         }
       }
       else {
-        if (!(reference instanceof PsiElement)){
+        if (!(reference instanceof PsiElement)) {
           continue;
         }
 
         final PsiElement parent = ((PsiElement)reference).getParent();
-        if (parent instanceof PsiNewExpression){
-          if (((PsiNewExpression)parent).getClassReference() != reference){
+        if (parent instanceof PsiNewExpression) {
+          if (((PsiNewExpression)parent).getClassReference() != reference) {
             continue;
           }
         }
-        else if (parent instanceof PsiAnonymousClass){
-          if (((PsiAnonymousClass)parent).getBaseClassReference() != reference){
+        else if (parent instanceof PsiAnonymousClass) {
+          if (((PsiAnonymousClass)parent).getBaseClassReference() != reference) {
             continue;
           }
         }
@@ -90,9 +88,9 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       }
 
       final PsiElement element = reference.getElement();
-      final PsiElement key = CallHierarchyNodeDescriptor.getEnclosingElement(element);
+      final PsiMember key = CallHierarchyNodeDescriptor.getEnclosingElement(element);
 
-      CallHierarchyNodeDescriptor d = (CallHierarchyNodeDescriptor)methodToDescriptorMap.get(key);
+      CallHierarchyNodeDescriptor d = methodToDescriptorMap.get(key);
       if (d == null) {
         d = new CallHierarchyNodeDescriptor(myProject, descriptor, element, false);
         methodToDescriptorMap.put(key, d);
@@ -103,7 +101,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       d.addReference(reference);
     }
 
-    final Collection descriptors = methodToDescriptorMap.values();
+    final Collection<CallHierarchyNodeDescriptor> descriptors = methodToDescriptorMap.values();
     return descriptors.toArray(new Object[descriptors.size()]);
   }
 }

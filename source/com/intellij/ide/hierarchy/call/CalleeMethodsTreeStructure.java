@@ -26,7 +26,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
   }
 
   protected final Object[] buildChildren(final HierarchyNodeDescriptor descriptor) {
-    final PsiElement enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
+    final PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
     if (!(enclosingElement instanceof PsiMethod)) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
