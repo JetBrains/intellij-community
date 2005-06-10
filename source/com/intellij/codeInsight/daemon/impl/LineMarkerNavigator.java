@@ -111,10 +111,14 @@ class LineMarkerNavigator {
         list,
         new Runnable() {
           public void run() {
-            if (list.getSelectedIndex() < 0) return;
-            PsiElement selected = (PsiElement) list.getSelectedValue();
-            LOG.assertTrue(selected.isValid());
-            ((PsiMember)selected).navigate(true);
+            int[] ids = list.getSelectedIndices();
+            if (ids == null || ids.length == 0) return;
+            Object [] selectedElements = list.getSelectedValues();
+            for (Object element : selectedElements) {
+              PsiElement selected = (PsiElement) element;
+              LOG.assertTrue(selected.isValid());
+              ((PsiMember)selected).navigate(true);
+            }             
           }
         },
         project

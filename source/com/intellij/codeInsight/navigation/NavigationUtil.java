@@ -25,18 +25,19 @@ public final class NavigationUtil {
                                              final String title,
                                              final Project project) {
     final JList list = new JList(elements);
-    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);
     renderer.installSpeedSearch(list);
 
     final Runnable runnable = new Runnable() {
       public void run() {
-        int index = list.getSelectedIndex();
-        if (index < 0) return;
-        PsiElement element = (PsiElement) list.getSelectedValue();
-        Navigatable descriptor = EditSourceUtil.getDescriptor(element);
-        if (descriptor != null && descriptor.canNavigate()) {
-          descriptor.navigate(true);
+        int[] ids = list.getSelectedIndices();
+        if (ids == null || ids.length == 0) return;
+        Object [] selectedElements = list.getSelectedValues();
+        for (Object element : selectedElements) {
+          Navigatable descriptor = EditSourceUtil.getDescriptor((PsiElement)element);
+          if (descriptor != null && descriptor.canNavigate()) {
+            descriptor.navigate(true);
+          }
         }
       }
     };
