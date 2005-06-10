@@ -2,6 +2,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,11 +12,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.lang.java.JavaLanguage;
 
 import java.util.List;
 
@@ -125,18 +122,9 @@ public class SelectWordHandler extends EditorActionHandler {
     if (e.getContainingFile() instanceof JspFile && e.getLanguage() instanceof JavaLanguage) {
       final JspFile psiFile = (JspFile)e.getContainingFile();
       if (e.getParent().getTextLength() == psiFile.getTextLength()) {
-        final PsiFile[] psiRoots = psiFile.getPsiRoots();
-        for (PsiFile root : psiRoots) {
-          if (root instanceof XmlFile) {
-            XmlFile xmlFile = (XmlFile)root;
-            XmlTag tag = PsiTreeUtil.getParentOfType(xmlFile.getDocument().findElementAt(e.getTextRange().getStartOffset()), XmlTag.class);
-            while (tag != null && !tag.getTextRange().contains(selectionRange)) {
-              tag = tag.getParentTag();
-            }
-
-            if (tag != null) return tag;
-          }
-        }
+        PsiFile baseRoot = psiFile.getBaseLanguageRoot();
+        PsiElement elt = baseRoot.findElementAt(e.getTextRange().getStartOffset());
+        return elt;
       }
     }
 
