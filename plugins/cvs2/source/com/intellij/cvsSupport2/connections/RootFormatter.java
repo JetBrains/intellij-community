@@ -59,7 +59,11 @@ public class RootFormatter {
 
   private static CvsConnectionSettings createPServerSettingsOn(CvsRootParser root, CvsRootConfiguration cvsRoot) {
     CvsConnectionSettings result = (CvsConnectionSettings)fillSettings(root, new PServerCvsSettings(cvsRoot));
-    result.PASSWORD = getPServerConnectionPassword(cvsRoot.getCvsRootAsString(), root);
+    if (root.PASSWORD != null) {
+      result.PASSWORD = root.PASSWORD;
+    } else {
+      result.PASSWORD = getPServerConnectionPassword(cvsRoot.getCvsRootAsString(), root);
+    }
     result.METHOD = CvsMethod.PSERVER_METHOD;
     return result;
 
@@ -72,6 +76,14 @@ public class RootFormatter {
 
     if (hostAndPort.length > 1) {
       result.PORT = Integer.parseInt(hostAndPort[1]);
+    }
+    else if (root.PORT != null) {
+      try {
+        result.PORT = Integer.parseInt(root.PORT);
+      }
+      catch (NumberFormatException e) {
+        result.HOST = hostAndPort[0];
+      }
     }
     else {
       result.HOST = hostAndPort[0];

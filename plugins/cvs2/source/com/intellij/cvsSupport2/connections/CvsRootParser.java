@@ -9,8 +9,10 @@ import java.util.regex.Pattern;
  * author: lesya
  */
 public final class CvsRootParser {
+
+  //:pserver;username=lesya;password=password111;hostname=hostname111;port=port111;proxy=proxy111;proxyport=proxyport111;tunnel=tumnnel111;proxyuser=proxyuser111;proxypassword=proxypassword111:c:/RepositoryPath
+
   private static final Pattern ourPattern = Pattern.compile("^((.*?{0,1}(:.*?){0,1})@){0,1}([a-zA-Z0-9\\._-]+)(:(\\d*){0,1}){0,1}(.+)$");
-  private static final Pattern ourProxyPattern = Pattern.compile("(proxy=)(.*)(;proxyport=)(.*)");
 
   private static final int GROUP_USER_NAME_AND_PWD = 2;
   private static final int GROUP_HOST = 4;
@@ -23,6 +25,8 @@ public final class CvsRootParser {
   public String REPOSITORY;
   public String PROXY_HOST;
   public String PROXY_PORT;
+  public String PORT;
+  public String PASSWORD;
 
 
   public static CvsRootParser valueOf(String str, boolean check) {
@@ -50,20 +54,24 @@ public final class CvsRootParser {
       skipTrailingRepositorySlash(result);
     }
     else {
-      Matcher matcher = ourPattern.matcher(suffix);
+      if (suffix.contains("@") || suffix.contains(":")){
+        Matcher matcher = ourPattern.matcher(suffix);
 
-      if (matcher.matches()) {
-        extractUserNameAndPassword(matcher, result);
-        extractHostAndPort(matcher, result);
-        extractRepository(matcher, result);
-      }
-      else {
-        if (check) {
-          throw new IllegalArgumentException("wrong remote repository: " + str);
+        if (matcher.matches()) {
+          extractUserNameAndPassword(matcher, result);
+          extractHostAndPort(matcher, result);
+          extractRepository(matcher, result);
         }
         else {
-          result.REPOSITORY = suffix;
+          if (check) {
+            throw new IllegalArgumentException("wrong remote repository: " + str);
+          }
+          else {
+            result.REPOSITORY = suffix;
+          }
         }
+      } else {
+        result.REPOSITORY = suffix;
       }
     }
 
@@ -101,7 +109,9 @@ public final class CvsRootParser {
 
   private static void extractUserNameAndPassword(Matcher matcher, CvsRootParser cvsRoot) {
     String userNameAndPwd = matcher.group(GROUP_USER_NAME_AND_PWD);
-    cvsRoot.USER_NAME = userNameAndPwd != null ? userNameAndPwd : "";
+    if (userNameAndPwd != null && cvsRoot.USER_NAME.length() == 0) {
+      cvsRoot.USER_NAME = userNameAndPwd;
+    }
   }
 
   private String tryToCutMethod(CvsMethod method, String cvsRoot) {
@@ -119,7 +129,7 @@ public final class CvsRootParser {
       return null;
     }
 
-    String tail = cvsRoot.substring(proxyBegin.length());
+    String tail = cvsRoot.substring(proxyBegin.length() - 1);
 
     int endOfProxySettings = tail.indexOf(':');
     if (endOfProxySettings == -1){
@@ -128,15 +138,41 @@ public final class CvsRootParser {
 
     String proxySettings = tail.substring(0, endOfProxySettings);
 
-    Matcher proxyMatcher = ourProxyPattern.matcher(proxySettings);
-    if (!proxyMatcher.matches()){
-      return null;
+    final String[] paramValueStrings = proxySettings.split(";");
+
+    for (int i = 0; i < paramValueStrings.length; i++) {
+      String paramValueString = paramValueStrings[i];
+      final int eqIndex = paramValueString.indexOf("=");
+      if (eqIndex >=0 ){
+        setValue(paramValueString.substring(0, eqIndex), paramValueString.substring(eqIndex + 1));
+      }
     }
 
-    PROXY_HOST = proxyMatcher.group(2);
-    PROXY_PORT = proxyMatcher.group(4);
-
     return tail.substring(endOfProxySettings + 1);
+  }
+
+  private void setValue(final String paramName, final String paramValue) {
+    if (paramName.length() == 0 || paramValue.length() == 0) return;
+
+    if ("username".equals(paramName)){
+      USER_NAME = paramValue;
+    }
+    else if("password".equals(paramName)){
+      PASSWORD = paramValue;
+    }
+    else if ("hostname".equals(paramName)){
+      HOST=paramValue;
+    }
+    else if ("proxy".equals(paramName)){
+      PROXY_HOST= paramValue;
+    }
+    else if ("proxyport".equals(paramName)){
+      PROXY_PORT= paramValue;
+    }
+    else if ("port".equals(paramName)){
+      PORT= paramValue;
+    }
+
   }
 
   private static String methodEntry(String method) {
@@ -168,5 +204,7 @@ public final class CvsRootParser {
     USER_NAME = "";
     HOST = "";
     REPOSITORY = "";
+    PORT = null;
+    PASSWORD = null;
   }
 }
