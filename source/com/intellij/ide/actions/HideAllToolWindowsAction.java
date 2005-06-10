@@ -16,6 +16,10 @@ public class HideAllToolWindowsAction extends AnAction {
       return;
     }
 
+    performAction(project);
+  }
+
+  public static void performAction(final Project project) {
     ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
 
     DesktopLayout layout = new DesktopLayout();

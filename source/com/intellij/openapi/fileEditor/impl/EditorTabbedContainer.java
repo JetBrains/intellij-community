@@ -1,6 +1,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.Patches;
+import com.intellij.ide.actions.HideAllToolWindowsAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.actionSystem.*;
@@ -129,7 +130,16 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
         
         if (MouseEvent.MOUSE_RELEASED == e.getID()) {
           if (myLastClickedIndex != -1) {
-            setSelectedIndex(myLastClickedIndex);
+            if (e.getClickCount() == 1 ) {
+              setSelectedIndex(myLastClickedIndex);
+            }
+            else if (e.getClickCount() == 2) { // Left double click invokes Hide All Windows
+              HideAllToolWindowsAction.performAction(myProject);
+            }
+            else {
+              // push forward events outside thw tab bounds
+              super.processMouseEvent(e);
+            }
           }
           else {
             // push forward events outside thw tab bounds
