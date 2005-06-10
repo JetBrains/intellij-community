@@ -42,8 +42,8 @@ public class CreateFieldFromUsageAction extends CreateVarFromUsageAction {
     PsiMember enclosingContext = null;
     PsiClass parentClass;
     do {
-      enclosingContext = (PsiMember)PsiTreeUtil.getParentOfType(
-        enclosingContext == null ? myReferenceExpression : (PsiElement)enclosingContext,
+      enclosingContext = PsiTreeUtil.getParentOfType(
+        enclosingContext == null ? myReferenceExpression : enclosingContext,
         PsiMethod.class, PsiField.class, PsiClassInitializer.class);
       parentClass = enclosingContext == null ? null : enclosingContext.getContainingClass();
     }
@@ -63,7 +63,7 @@ public class CreateFieldFromUsageAction extends CreateVarFromUsageAction {
         field = aClass.getFields()[0];
         field.setName(fieldName);
       }
-      if (enclosingContext != null && enclosingContext.getParent() == parentClass && targetClass == parentClass 
+      if (enclosingContext != null && enclosingContext.getParent() == parentClass && targetClass == parentClass
           && (enclosingContext instanceof PsiClassInitializer || enclosingContext instanceof PsiField)) {
         field = (PsiField)targetClass.addBefore(field, enclosingContext);
       }

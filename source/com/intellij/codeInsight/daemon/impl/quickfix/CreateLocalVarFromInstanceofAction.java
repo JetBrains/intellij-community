@@ -97,7 +97,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     if (expression != null) {
       return expression;
     }
-    PsiStatement statement = (PsiStatement)PsiTreeUtil.getParentOfType(element, PsiIfStatement.class, PsiWhileStatement.class);
+    PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class, PsiWhileStatement.class);
     if (statement instanceof PsiIfStatement) {
       PsiExpression condition = ((PsiIfStatement)statement).getCondition();
       if (condition instanceof PsiInstanceOfExpression && atSameLine(condition, editor)) return (PsiInstanceOfExpression)condition;

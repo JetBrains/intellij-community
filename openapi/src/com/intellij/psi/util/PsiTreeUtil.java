@@ -133,24 +133,24 @@ public class PsiTreeUtil {
     return null;
   }
 
-  public static @Nullable PsiElement getParentOfType(PsiElement element, Class... classes) {
+  public static @Nullable <T extends PsiElement> T getParentOfType(PsiElement element, Class<? extends T>... classes) {
     return getParentOfType(element, classes, true);
   }
 
   @Nullable
-  public static PsiElement getParentOfType(@NotNull PsiElement element, @NotNull Class[] classes, boolean strict) {
+  public static <T extends PsiElement> T getParentOfType(@NotNull PsiElement element, @NotNull Class<? extends T>[] classes, boolean strict) {
     if (strict) {
       element = element.getParent();
     }
 
     while (element != null) {
       for (Class aClass : classes) {
-        if (aClass.isInstance(element)) return element;
+        if (aClass.isInstance(element)) return (T)element;
       }
       element = element.getParent();
     }
 
-    return element;
+    return (T)element;
   }
 
   public static @NotNull PsiElement[] collectElements(@Nullable PsiElement element, @NotNull PsiElementFilter filter) {

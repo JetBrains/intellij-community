@@ -845,9 +845,9 @@ public final class PsiUtil {
   }
 
   public static PsiMember findEnclosingConstructorOrInitializer(PsiElement expression) {
-    PsiElement parent = PsiTreeUtil.getParentOfType(expression, PsiClassInitializer.class, PsiMethod.class);
+    PsiMember parent = PsiTreeUtil.getParentOfType(expression, PsiClassInitializer.class, PsiMethod.class);
     if (parent instanceof PsiMethod && !((PsiMethod)parent).isConstructor()) return null;
-    return (PsiMember)parent;
+    return parent;
   }
 
   public static boolean checkName(PsiElement element, String name) {

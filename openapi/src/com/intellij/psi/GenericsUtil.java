@@ -15,6 +15,8 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author ven
  */
@@ -25,6 +27,7 @@ public class GenericsUtil {
     return PsiIntersectionType.createIntersection(new PsiType[]{type1, type2});
   }
 
+  @NotNull
   public static PsiType getLeastUpperBound(PsiType type1, PsiType type2, PsiManager manager) {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type1) || TypeConversionUtil.isPrimitiveAndNotNull(type2)) return null;
     if (TypeConversionUtil.isNullType(type1)) return type2;
@@ -32,6 +35,7 @@ public class GenericsUtil {
     return getLeastUpperBound(type1, type2, new LinkedHashSet<Pair<PsiType, PsiType>>(), manager);
   }
 
+  @NotNull
   private static PsiType getLeastUpperBound(PsiType type1, PsiType type2, Set<Pair<PsiType, PsiType>> compared, PsiManager manager) {
     if (type1 instanceof PsiCapturedWildcardType) {
       return getLeastUpperBound(((PsiCapturedWildcardType)type1).getUpperBound(), type2, compared, manager);
@@ -46,6 +50,17 @@ public class GenericsUtil {
       if (componentType != null) {
         return componentType.createArrayType();
       }
+    }
+    else if (type1 instanceof PsiIntersectionType) {
+      Set<PsiType> newConjuncts = new LinkedHashSet<PsiType>();
+      final PsiType[] conjuncts = ((PsiIntersectionType)type1).getConjuncts();
+      for (PsiType type : conjuncts) {
+        newConjuncts.add(getLeastUpperBound(type, type2, compared, manager));
+      }
+      return PsiIntersectionType.createIntersection(newConjuncts.toArray(new PsiType[newConjuncts.size()]));
+    }
+    else if (type2 instanceof PsiIntersectionType) {
+      return getLeastUpperBound(type2, type1, compared, manager);
     }
     else if (type1 instanceof PsiClassType && type2 instanceof PsiClassType) {
       PsiClassType.ClassResolveResult classResolveResult1 = ((PsiClassType)type1).resolveGenerics();
@@ -109,8 +124,8 @@ public class GenericsUtil {
           return wild1.isExtends() ? PsiWildcardType.createExtends(manager,
                                                                    getLeastUpperBound(wild1.getBound(), wild2.getBound(), compared,
                                                                                       manager)) :
-                 wild1.isSuper() ? PsiWildcardType.createSuper(manager, getGreatestLowerBound(wild1.getBound(), wild2.getBound())) :
-                 wild1;
+                                                                                                wild1.isSuper() ? PsiWildcardType.createSuper(manager, getGreatestLowerBound(wild1.getBound(), wild2.getBound())) :
+                                                                                                                wild1;
         }
         else {
           return wild1.getBound().equals(wild2.getBound()) ? wild1.getBound() : PsiWildcardType.createUnbounded(manager);
@@ -118,8 +133,8 @@ public class GenericsUtil {
       }
       else {
         return wild1.isExtends() ? PsiWildcardType.createExtends(manager, getLeastUpperBound(wild1.getBound(), type2, compared, manager)) :
-               wild1.isSuper() ? PsiWildcardType.createSuper(manager, getGreatestLowerBound(wild1.getBound(), type2)) :
-               wild1;
+                                 wild1.isSuper() ? PsiWildcardType.createSuper(manager, getGreatestLowerBound(wild1.getBound(), type2)) :
+                                                 wild1;
       }
     }
     else if (type2 instanceof PsiWildcardType) {
@@ -144,22 +159,20 @@ public class GenericsUtil {
     }
     else {
       final PsiClass[] aSupers = aClass.getSupers();
-      for (int i = 0; i < aSupers.length; i++) {
-        PsiClass aSuper = aSupers[i];
+      for (PsiClass aSuper : aSupers) {
         getLeastUpperClassesInner(aSuper, bClass, supers);
       }
     }
   }
 
   public static boolean isTypeArgumentsApplicable(PsiTypeParameter[] typeParams, PsiSubstitutor substitutor) {
-    for (int i = 0; i < typeParams.length; i++) {
-      PsiTypeParameter typeParameter = typeParams[i];
+    for (PsiTypeParameter typeParameter : typeParams) {
       PsiType substituted = substitutor.substitute(typeParameter);
       if (substituted == null) return true;
 
       PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
-      for (int j = 0; j < extendsTypes.length; j++) {
-        PsiType extendsType = substitutor.substituteAndFullCapture(extendsTypes[j]);
+      for (PsiClassType type : extendsTypes) {
+        PsiType extendsType = substitutor.substituteAndFullCapture(type);
         if (!extendsType.isAssignableFrom(substituted)) {
           return false;
         }

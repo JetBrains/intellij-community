@@ -50,7 +50,7 @@ public class CreateMethodFromUsageAction extends CreateFromUsageBaseAction {
     }
 
     PsiClass parentClass = PsiTreeUtil.getParentOfType(myMethodCall, PsiClass.class);
-    PsiElement enclosingContext = PsiTreeUtil.getParentOfType(myMethodCall,
+    PsiMember enclosingContext = PsiTreeUtil.getParentOfType(myMethodCall,
       PsiMethod.class,
       PsiField.class,
       PsiClassInitializer.class);
