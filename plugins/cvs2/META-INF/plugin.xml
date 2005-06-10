@@ -29,6 +29,10 @@
       <implementation-class>com.intellij.cvsSupport2.config.ImportConfiguration</implementation-class>
     </component>
 
+    <component>
+      <implementation-class>com.intellij.cvsSupport2.checkout.CvsCheckoutProvider</implementation-class>
+    </component>
+
   </application-components>
 
   <project-components>
@@ -56,7 +60,6 @@
     <group id="CvsFileGroup" text="CVS">
       <separator/>
       <add-to-group group-id="FileMenu" anchor="before" relative-to-action="ExportToHTML"/>
-      <action id="Cvs.CheckoutProject" class="com.intellij.cvsSupport2.actions.CheckoutAction" text="C_heck Out from CVS..." description="Get a copy of files from a CVS repository"/>
       <action id="Cvs.Import" class="com.intellij.cvsSupport2.actions.ImportAction" text="Im_port into CVS..." description="Put files into a CVS repository"/>
       <action id="Cvs.BrowseCVSRepository" class="com.intellij.cvsSupport2.actions.BrowseCvsRepositoryAction" text="_Browse CVS Repository..."
         description="Browse a CVS repository"/>

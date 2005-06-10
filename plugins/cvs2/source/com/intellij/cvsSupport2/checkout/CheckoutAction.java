@@ -1,7 +1,7 @@
-package com.intellij.cvsSupport2.actions;
+package com.intellij.cvsSupport2.checkout;
 
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
-import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.cvsSupport2.actions.AbstractAction;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
@@ -15,9 +15,7 @@ import com.intellij.openapi.vcs.actions.VcsContext;
 import java.io.File;
 
 public class CheckoutAction extends AbstractAction {
-  private File myCheckoutDirectory;
   private CvsElement[] mySelectedElements;
-  private boolean myUseAlternativeCheckoutPath = false;
 
   public CheckoutAction() {
     super(true);
@@ -31,15 +29,15 @@ public class CheckoutAction extends AbstractAction {
     CheckoutWizard checkoutWizard = new CheckoutWizard(context.getProject());
     checkoutWizard.show();
     if (!checkoutWizard.isOK()) return CvsHandler.NULL;
-    myUseAlternativeCheckoutPath = checkoutWizard.useAlternativeCheckoutLocation();
-    myCheckoutDirectory = checkoutWizard.getCheckoutDirectory();
+    final boolean useAlternativeCheckoutPath = checkoutWizard.useAlternativeCheckoutLocation();
+    final File checkoutDirectory = checkoutWizard.getCheckoutDirectory();
 
     mySelectedElements = checkoutWizard.getSelectedElements();
     return CommandCvsHandler.createCheckoutHandler(
       checkoutWizard.getSelectedConfiguration(),
       collectCheckoutPaths(),
-      myCheckoutDirectory,
-      myUseAlternativeCheckoutPath,
+      checkoutDirectory,
+      useAlternativeCheckoutPath,
       CvsApplicationLevelConfiguration.getInstance().MAKE_CHECKED_OUT_FILES_READONLY
     );
   }
@@ -60,39 +58,6 @@ public class CheckoutAction extends AbstractAction {
     super.onActionPerformed(context, tabbedWindow, successfully, handler);
     if (successfully) {
 
-      if (mySelectedElements == null) return;
-      //for (int i = 0; i < mySelectedElements.length; i++) {
-        //CvsElement selectedElement = mySelectedElements[i];
-        //selectedElement.collectProjectElements(new GetContentCallback() {
-        //  public void fillDirectoryContent(List directoryContent) {
-        //    final Collection projectFiles = collectCheckoutFiles(directoryContent);
-        //    if (projectFiles.isEmpty()) return;
-        //    LaterInvocatorEx.invokeLater(new Runnable() {
-        //      public void run() {
-        //        SelectFileToOpenAsProjectDialod dialog = new SelectFileToOpenAsProjectDialod(projectFiles);
-        //        dialog.show();
-        //        if (dialog.isOK()) {
-        //          Project newProject = ProjectUtil.openProject(dialog.getSelectedFile().getAbsolutePath(),
-        //                                                       context.getProject());
-        //          if (newProject != null) {
-        //            ModuleLevelVcsManager.getInstance(newProject).setActiveVcs(CvsVcs2.getInstance(newProject));
-        //            CvsConfiguration.getInstance(newProject).MAKE_NEW_FILES_READONLY = CvsApplicationLevelConfiguration.getInstance()
-        //              .MAKE_CHECKED_OUT_FILES_READONLY;
-        //          }
-        //
-        //        }
-        //      }
-        //    }, ModalityState.NON_MMODAL);
-        //  }
-        //
-        //  public void loginAborted() {
-        //  }
-        //
-        //  public void finished() {
-        //  }
-        //});
-
-//      }
     }
   }
 

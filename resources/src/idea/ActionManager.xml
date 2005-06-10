@@ -230,6 +230,8 @@
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" text="S_ynchronize" icon="/actions/sync.png" description="Detect all externally changed files and reload them from disk"/>
         <action id="ReloadFromDisk" class="com.intellij.ide.actions.ReloadFromDiskAction" text="Reload from Dis_k" description="Reload current file from disk and lose all changes"/>
         <separator/>
+        <group id="Vcs.Checkout" class="com.intellij.openapi.vcs.checkout.CheckoutActionGroup" text="C_heckout from Version Control" popup="true"/>
+        <separator/>
         <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction" text="Export to _HTML..." description="Save file content in HTML format with syntax coloring"/>
         <action id="Print" class="com.intellij.codeEditor.printing.PrintAction" text="_Print..." description="Print file"/>
         <separator/>

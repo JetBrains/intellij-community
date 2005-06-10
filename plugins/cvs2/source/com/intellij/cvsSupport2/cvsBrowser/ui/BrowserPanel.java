@@ -1,7 +1,7 @@
 package com.intellij.cvsSupport2.cvsBrowser.ui;
 
 import com.intellij.cvsSupport2.CvsVcs2;
-import com.intellij.cvsSupport2.actions.CheckoutAction;
+import com.intellij.cvsSupport2.checkout.CheckoutAction;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsDataConstants;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsLightweightFile;

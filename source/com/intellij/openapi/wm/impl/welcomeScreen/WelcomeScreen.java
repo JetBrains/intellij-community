@@ -313,15 +313,8 @@ public class WelcomeScreen {
 
     MyActionButton getFromVCS = new ButtonWithExtension(FROM_VCS_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
-        final AnAction action = new GetFromVcsAction();
-        action.actionPerformed(new AnActionEvent(e, new DataContext() {
-          public Object getData(String dataId) {
-            if (DataConstants.PROJECT.equals(dataId)) {
-              return null;
-            }
-            return button;
-          }
-        }, ActionPlaces.UNKNOWN, new PresentationFactory().getPresentation(action), actionManager, 0));
+        final GetFromVcsAction action = new GetFromVcsAction();
+        action.actionPerformed(button, e);
       }
     };
 
