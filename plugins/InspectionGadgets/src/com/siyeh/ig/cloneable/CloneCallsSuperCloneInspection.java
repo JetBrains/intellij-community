@@ -37,7 +37,8 @@ public class CloneCallsSuperCloneInspection extends MethodInspection {
             if (!"clone".equals(methodName)) {
                 return;
             }
-            if(method.hasModifierProperty(PsiModifier.ABSTRACT))
+            if(method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+                    method.hasModifierProperty(PsiModifier.NATIVE))
             {
                 return;
             }

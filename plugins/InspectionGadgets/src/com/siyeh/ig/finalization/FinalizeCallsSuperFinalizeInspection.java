@@ -1,9 +1,6 @@
 package com.siyeh.ig.finalization;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -51,6 +48,11 @@ public class FinalizeCallsSuperFinalizeInspection extends MethodInspection{
             //note: no call to super;
             final String methodName = method.getName();
             if(!"finalize".equals(methodName)){
+                return;
+            }
+            if(method.hasModifierProperty(PsiModifier.NATIVE) ||
+                    method.hasModifierProperty(PsiModifier.ABSTRACT))
+            {
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
