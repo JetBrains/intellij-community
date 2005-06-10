@@ -134,7 +134,7 @@ public class CyclicDependenciesAction extends AnAction{
       myModuleName = moduleName;
       init();
       setTitle("Specify " + myTitle + " Scope");
-
+      setHorizontalStretch(1.75f);
       if (moduleName == null){
         myModuleButton.setVisible(false);
         myProjectButton.setSelected(true);
