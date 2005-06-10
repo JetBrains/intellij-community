@@ -23,7 +23,7 @@ import java.util.List;
 public interface CheckinEnvironment {
   RevisionsFactory getRevisionsFactory();
 
-  RollbackProvider createRollbackProviderOn(AbstractRevisions[] selectedRevisions);
+  RollbackProvider createRollbackProviderOn(AbstractRevisions[] selectedRevisions, final boolean containsExcluded);
 
   DifferenceType[] getAdditionalDifferenceTypes();
 
