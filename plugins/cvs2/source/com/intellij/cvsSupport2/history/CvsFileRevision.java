@@ -9,7 +9,7 @@ import java.util.Collection;
  */
 public interface CvsFileRevision extends VcsFileRevision{
 
-  String getBranches();
+  Collection<String> getBranches();
 
   String getState();
 

@@ -45,8 +45,29 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return myComparableCvsRevisionOnOperation.getRevision();
   }
 
-  public String getBranches() {
-    return myCvsRevision.getBranches();
+  public Collection<String> getBranches() {
+    final ArrayList<String> result = new ArrayList<String>();
+
+    final String branches = myCvsRevision.getBranches();
+    if (branches == null || branches.length() == 0) {
+      return result;
+    }
+    final String[] branchNames = branches.split(";");
+    for (int i = 0; i < branchNames.length; i++) {
+      String branchName = branchNames[i];
+      final CvsRevisionNumber revisionNumber = new CvsRevisionNumber(branchName.trim());
+      CvsRevisionNumber headRevNumber = revisionNumber.removeTailVersions(1);
+      CvsRevisionNumber symRevNumber = headRevNumber.addTailVersions(new int[]{0, 2});
+      final List symNames = myLogInformation.getSymNamesForRevision(symRevNumber.asString());
+      if (!symNames.isEmpty()) {
+        for (Iterator iterator = symNames.iterator(); iterator.hasNext();) {
+          SymbolicName symbolicName = (SymbolicName)iterator.next();
+          result.add(symbolicName.getName() + " (" + revisionNumber.asString() + ")");
+        }
+      }
+    }
+
+    return result;
   }
 
   public String getAuthor() {

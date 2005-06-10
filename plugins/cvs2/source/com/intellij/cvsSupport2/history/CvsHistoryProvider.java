@@ -28,10 +28,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TreeItem;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.log.Revision;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -59,20 +59,14 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     }
   };
 
-  private final ColumnInfo TAG = new ColumnInfo("Tag") {
-    public Object valueOf(Object object) {
-      if (!(object instanceof CvsFileRevision)) return "";
-      Collection tags = ((CvsFileRevision)object).getTags();
-      if (tags.isEmpty()) return "";
-      if (tags.size() == 1) return tags.iterator().next().toString();
-      return tags;
+  abstract class TagOrBranchColumn extends ColumnInfo {
+    public TagOrBranchColumn(final String name) {
+      super(name);
     }
-
-
     public TableCellRenderer getRenderer(Object object) {
       final TableCellRenderer rendererFromSuper = super.getRenderer(object);
       if (!(object instanceof CvsFileRevision)) return rendererFromSuper;
-      final Collection tags = ((CvsFileRevision)object).getTags();
+      final Collection tags = getValues((CvsFileRevision)object);
       if (tags.size() < 2) return rendererFromSuper;
       return new TagsPanel(myProject);
     }
@@ -95,19 +89,36 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
                                                      int row,
                                                      int column) {
           TagsPanel result = new TagsPanel(myProject);
-          result.setTags(((CvsFileRevision)object).getTags());
+          result.setTags(getValues((CvsFileRevision)object));
           result.setSelected(true, table);
           return result;
         }
       };
     }
+
+
+    protected abstract Collection getValues(CvsFileRevision revision);
+
+    public Object valueOf(Object object) {
+      if (!(object instanceof CvsFileRevision)) return "";
+      Collection values = getValues(((CvsFileRevision)object));
+      if (values.isEmpty()) return "";
+      if (values.size() == 1) return values.iterator().next().toString();
+      return values;
+    }
+
+
+  }
+
+  private final ColumnInfo TAG = new TagOrBranchColumn("Tag") {
+    protected Collection getValues(CvsFileRevision revision) {
+      return revision.getTags();
+    }
   };
 
-  public static final ColumnInfo<VcsFileRevision, String> BRANCHES = new ColumnInfo<VcsFileRevision, String>("Branches") {
-    public String valueOf(VcsFileRevision vcsFileRevision) {
-      if (!(vcsFileRevision instanceof CvsFileRevision)) return "";
-      String result = ((CvsFileRevision)vcsFileRevision).getBranches();
-      return result == null ? "" : result;
+  public final ColumnInfo BRANCHES = new TagOrBranchColumn("Branches") {
+    protected Collection getValues(CvsFileRevision revision) {
+      return revision.getBranches();
     }
   };
 
