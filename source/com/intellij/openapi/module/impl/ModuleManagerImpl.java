@@ -226,6 +226,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     });
   }
 
+  @NotNull
   public ModifiableModuleModel getModifiableModel() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return new ModuleModelImpl(myModuleModel);
@@ -282,7 +283,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
   }
 
-  private class ModulePathSaveItem extends SaveItem{
+  private static class ModulePathSaveItem extends SaveItem{
     private final ModulePath myModulePath;
     private String myFilePath;
     private final String myName;
@@ -292,7 +293,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       myFilePath = modulePath.getPath().replace(File.separatorChar, '/');
 
       final int slashIndex = myFilePath.lastIndexOf('/');
-      final int startIndex = slashIndex >= 0 && (slashIndex + 1) < myFilePath.length() ? slashIndex + 1 : 0;
+      final int startIndex = slashIndex >= 0 && slashIndex + 1 < myFilePath.length() ? slashIndex + 1 : 0;
       final int endIndex = myFilePath.endsWith(".iml")? myFilePath.length() - ".iml".length() : myFilePath.length();
       myName = myFilePath.substring(startIndex, endIndex);
     }
@@ -339,9 +340,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     Collection<Module> actual = new ArrayList<Module>();
     actual.addAll(myModuleModel.myPath2ModelMap.values());
 
-    Iterator<String> cancelled = myModuleModel.myPath2CancelledModelMap.keySet().iterator();
-    while (cancelled.hasNext()) {
-      String cancelledPath = cancelled.next();
+    for (String cancelledPath : myModuleModel.myPath2CancelledModelMap.keySet()) {
       if (!myModuleModel.myPath2ModelMap.containsKey(cancelledPath)) {
         actual.add(myModuleModel.myPath2CancelledModelMap.get(cancelledPath));
       }
@@ -374,6 +373,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     myModuleEventDispatcher.dispatchPendingEvent(listener);
   }
 
+  @NotNull
   public Module newModule(String filePath) {
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.newModule(filePath);
@@ -381,6 +381,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     return module;
   }
 
+  @NotNull
   public Module newModule(String filePath, ModuleType moduleType) {
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.newModule(filePath, moduleType);
@@ -389,6 +390,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   }
 
+  @NotNull
   public Module loadModule(String filePath) throws InvalidDataException,
                                                    IOException,
                                                    JDOMException,
@@ -410,6 +412,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     });
   }
 
+  @NotNull
   public Module[] getModules() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return myModuleModel.getModules();
@@ -417,6 +420,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   private Module[] myCachedSortedModules = null;
 
+  @NotNull
   public Module[] getSortedModules() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     ProjectRootManager.getInstance(myProject).dispatchPendingEvent(myModuleRootListener);
@@ -433,6 +437,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
   private Comparator<Module> myCachedModuleComparator = null;
 
+  @NotNull
   public Comparator<Module> moduleDependencyComparator() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     ProjectRootManager.getInstance(myProject).dispatchPendingEvent(myModuleRootListener);
@@ -442,6 +447,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     return myCachedModuleComparator;
   }
 
+  @NotNull
   public Graph<Module> moduleGraph() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return myModuleModel.moduleGraph();
@@ -574,8 +580,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
     private ModuleImpl getModuleByFilePath(String filePath) {
       final Collection<Module> modules = myPath2ModelMap.values();
-      for (Iterator<Module> iterator = modules.iterator(); iterator.hasNext();) {
-        Module module = iterator.next();
+      for (Module module : modules) {
         if (filePath.equals(module.getModuleFilePath())) {
           return (ModuleImpl)module;
         }
@@ -611,8 +616,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       if (name.endsWith(".iml")) {
         final String moduleName = name.substring(0, name.length() - 4);
         final Module[] modules = getModules();
-        for (int i = 0; i < modules.length; i++) {
-          Module module = modules[i];
+        for (Module module : modules) {
           if (module.getName().equals(moduleName)) {
             throw new ModuleWithNameAlreadyExists(moduleName);
           }
@@ -656,8 +660,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
     public Module findModuleByName(String name) {
       final Module[] allModules = getModules();
-      for (int i = 0; i < allModules.length; i++) {
-        Module module = allModules[i];
+      for (Module module : allModules) {
         if (module.getName().equals(name)) {
           return module;
         }
@@ -729,8 +732,8 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       ApplicationManager.getApplication().assertWriteAccessAllowed();
       final List<Module> list = Arrays.asList(ModuleManagerImpl.this.myModuleModel.getModules());
       final Module[] thisModules = getModules();
-      for (int i = 0; i < thisModules.length; i++) {
-        ModuleImpl thisModule = (ModuleImpl)thisModules[i];
+      for (Module thisModule1 : thisModules) {
+        ModuleImpl thisModule = (ModuleImpl)thisModule1;
         if (!list.contains(thisModule)) {
           thisModule.dispose();
         }
@@ -755,8 +758,8 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
     private void disposeModel() {
       final Collection collection = myPath2ModelMap.values();
-      for (Iterator iterator = collection.iterator(); iterator.hasNext();) {
-        ModuleImpl module = (ModuleImpl)iterator.next();
+      for (final Object aCollection : collection) {
+        ModuleImpl module = (ModuleImpl)aCollection;
         module.dispose();
       }
       myPath2ModelMap.clear();
@@ -764,16 +767,16 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
     public void projectOpened() {
       final Collection<Module> collection = myPath2ModelMap.values();
-      for (Iterator iterator = collection.iterator(); iterator.hasNext();) {
-        ModuleImpl module = (ModuleImpl)iterator.next();
+      for (final Module aCollection : collection) {
+        ModuleImpl module = (ModuleImpl)aCollection;
         module.projectOpened();
       }
     }
 
     public void projectClosed() {
       final Collection<Module> collection = myPath2ModelMap.values();
-      for (Iterator iterator = collection.iterator(); iterator.hasNext();) {
-        ModuleImpl module = (ModuleImpl)iterator.next();
+      for (final Module aCollection : collection) {
+        ModuleImpl module = (ModuleImpl)aCollection;
         module.projectClosed();
       }
     }
@@ -800,8 +803,8 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
       List<Module> neverAddedModules = new ArrayList<Module>(moduleModel.myModulesToDispose);
       neverAddedModules.removeAll(myModuleModel.myPath2ModelMap.values());
-      for (Iterator<Module> iterator = neverAddedModules.iterator(); iterator.hasNext();) {
-        ModuleImpl module = (ModuleImpl)iterator.next();
+      for (final Module neverAddedModule : neverAddedModules) {
+        ModuleImpl module = (ModuleImpl)neverAddedModule;
         module.dispose();
       }
 
@@ -829,8 +832,8 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       final Map<Module, String> modulesToNewNamesMap = moduleModel.myModulesToNewNamesMap;
       final Set<Module> modulesToBeRenamed = modulesToNewNamesMap.keySet();
       final List<Module> modules = new ArrayList<Module>();
-      for (Iterator<Module> iterator = modulesToBeRenamed.iterator(); iterator.hasNext();) {
-        ModuleImpl module = (ModuleImpl)iterator.next();
+      for (final Module aModulesToBeRenamed : modulesToBeRenamed) {
+        ModuleImpl module = (ModuleImpl)aModulesToBeRenamed;
         modules.add(module);
         module.rename(modulesToNewNamesMap.get(module));
         cleanCachedStuff();

@@ -32,6 +32,7 @@ import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,7 +45,7 @@ import java.util.*;
 public class ModuleImpl extends BaseFileConfigurable implements Module {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleImpl");
 
-  private final Project myProject;
+  @NotNull private final Project myProject;
   private VirtualFilePointer myFilePointer;
   private ModuleType myModuleType = null;
   private boolean myIsDisposed = false;
@@ -53,8 +54,8 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   private Map<String, String> myOptions = new HashMap<String, String>();
 
   private static final String MODULE_LAYER = "module-components";
-  private PomModule myPomModule;
-  private PomModel myPomModel;
+  @NotNull private PomModule myPomModule;
+  @NotNull private PomModel myPomModel;
 
   public ModuleImpl(String filePath, Project project, PomModel pomModel, PathMacrosImpl pathMacros) {
     super(false, pathMacros);
@@ -86,8 +87,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
 
     if (PluginManager.shouldLoadPlugins()) {
       final PluginDescriptor[] plugins = PluginManager.getPlugins();
-      for (int i = 0; i < plugins.length; i++) {
-        PluginDescriptor plugin = plugins[i];
+      for (PluginDescriptor plugin : plugins) {
         if (!PluginManager.shouldLoadPlugin(plugin)) continue;
 
         final Element moduleComponents = plugin.getModuleComponents();
@@ -103,8 +103,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     if (options == null) return true;
 
     Set<String> optionNames = options.keySet();
-    for (Iterator<String> iterator = optionNames.iterator(); iterator.hasNext();) {
-      String optionName = iterator.next();
+    for (String optionName : optionNames) {
       if (Comparing.equal("workspace", optionName)) continue;
       if (!parseOptionValue(options.get(optionName)).contains(getOptionValue(optionName))) return false;
     }
@@ -112,7 +111,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     return true;
   }
 
-  private List<String> parseOptionValue(String optionValue) {
+  private static List<String> parseOptionValue(String optionValue) {
     if (optionValue == null) return new ArrayList<String>(0);
     return Arrays.asList(optionValue.split(";"));
   }
@@ -169,6 +168,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     myFilePointer = VirtualFilePointerManager.getInstance().create(newUrl, null);
   }
 
+  @NotNull
   public String getModuleFilePath() {
     String url = myFilePointer.getUrl();
     String protocol = VirtualFileManager.extractProtocol(url);
@@ -272,7 +272,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     }
   }
 
-  private String getModuleDir(String moduleFilePath) {
+  private static String getModuleDir(String moduleFilePath) {
     String moduleDir = new File(moduleFilePath).getParent();
     if (moduleDir == null) return null;
     moduleDir = moduleDir.replace(File.separatorChar, '/');
@@ -290,7 +290,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     }
 
     final String moduleTypeId = getOptionValue("type");
-    final ModuleType moduleType = (moduleTypeId != null) ? ModuleTypeManager.getInstance().findByID(moduleTypeId) : ModuleType.JAVA;
+    final ModuleType moduleType = moduleTypeId == null ? ModuleType.JAVA : ModuleTypeManager.getInstance().findByID(moduleTypeId);
     setModuleType(moduleType);
     super.loadFromXml(root, filePath);
   }
@@ -298,8 +298,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   public Element saveToXml(Element targetRoot, VirtualFile configFile) {
     final Element root = super.saveToXml(targetRoot, configFile);
     Set<String> options = myOptions.keySet();
-    for (Iterator<String> iterator = options.iterator(); iterator.hasNext();) {
-      String option = iterator.next();
+    for (String option : options) {
       root.setAttribute(option, myOptions.get(option));
     }
     return root;
@@ -307,8 +306,8 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
 
   public void projectOpened() {
     final BaseComponent[] components = getComponents(false);
-    for (int i = 0; i < components.length; i++) {
-      ModuleComponent component = (ModuleComponent)components[i];
+    for (BaseComponent component1 : components) {
+      ModuleComponent component = (ModuleComponent)component1;
       try {
         component.projectOpened();
       }
@@ -320,8 +319,8 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
 
   public void projectClosed() {
     final BaseComponent[] components = getComponents(false);
-    for (int i = 0; i < components.length; i++) {
-      ModuleComponent component = (ModuleComponent)components[i];
+    for (BaseComponent component1 : components) {
+      ModuleComponent component = (ModuleComponent)component1;
       try {
         component.projectClosed();
       }
@@ -331,17 +330,20 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     }
   }
 
+  @NotNull
   public ModuleType getModuleType() {
     LOG.assertTrue(myModuleType != null, "Module type not initialized yet");
     return myModuleType;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
 
   private final Map<String, String> myFileToModuleName = new HashMap<String, String>();
 
+  @NotNull
   public String getName() {
     final String fileName = myFilePointer.getFileName();
     String moduleName = myFileToModuleName.get(fileName);
@@ -359,8 +361,8 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   public void moduleAdded() {
     isModuleAdded = true;
     final BaseComponent[] components = getComponents(false);
-    for (int i = 0; i < components.length; i++) {
-      ModuleComponent component = (ModuleComponent) components[i];
+    for (BaseComponent component1 : components) {
+      ModuleComponent component = (ModuleComponent)component1;
       component.moduleAdded();
     }
   }
@@ -382,6 +384,7 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     return myOptions.get(optionName);
   }
 
+  @NotNull
   public PomModule getPom() {
     return myPomModule;
   }
@@ -391,10 +394,6 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
   }
 
   private class MyVirtualFileListener extends VirtualFileAdapter {
-
-    public MyVirtualFileListener() {
-    }
-
     public void propertyChanged(VirtualFilePropertyEvent event) {
       if (!isModuleAdded) return;
       final Object requestor = event.getRequestor();

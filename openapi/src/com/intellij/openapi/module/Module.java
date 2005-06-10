@@ -9,19 +9,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.pom.PomModule;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface Module extends ComponentManager, AreaInstance {
   Module[] EMPTY_ARRAY = new Module[0];
 
   VirtualFile getModuleFile();
 
-  String getModuleFilePath();
+  @NotNull String getModuleFilePath();
 
-  ModuleType getModuleType();
+  @NotNull ModuleType getModuleType();
 
-  Project getProject();
+  @NotNull Project getProject();
 
-  String getName();
+  @NotNull String getName();
 
   boolean isDisposed();
 
@@ -29,9 +31,9 @@ public interface Module extends ComponentManager, AreaInstance {
 
   void setSavePathsRelative(boolean b);
 
-  void setOption(String optionName, String optionValue);
+  void setOption(@NotNull String optionName, @NotNull String optionValue);
 
-  String getOptionValue(String optionName);
+  @Nullable String getOptionValue(@NotNull String optionName);
 
-  PomModule getPom();
+  @NotNull PomModule getPom();
 }
