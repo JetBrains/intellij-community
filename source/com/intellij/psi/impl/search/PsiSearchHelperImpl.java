@@ -45,6 +45,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.TIntArrayList;
@@ -293,9 +294,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     final PsiElementProcessorEx processor1 = new PsiElementProcessorEx() {
+      Set<PsiReference> myRefs = new HashSet<PsiReference>();
       public boolean execute(PsiElement element, int offsetInElement) {
         final PsiReference reference = element.findReferenceAt(offsetInElement);
         if (reference == null) return true;
+        if (!myRefs.add(reference)) return true;  //Hack:(
         if (reference.isReferenceTo(refElement)) {
           return processor.execute(reference);
         }
