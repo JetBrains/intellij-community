@@ -62,7 +62,7 @@ public class GotoSuperAction extends BaseCodeInsightAction implements CodeInsigh
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
 
-    PsiElement e = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
+    PsiMember e = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
     if (e instanceof PsiClass) {
       PsiClass aClass = (PsiClass) e;
       List<PsiClass> allSupers = new ArrayList<PsiClass>(Arrays.asList(aClass.getSupers()));
