@@ -237,5 +237,8 @@
       <interface-class>com.intellij.openapi.roots.ModuleRootManager</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.ModuleRootManagerImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.jar.BuildJarSettings</implementation-class>
+    </component>
   </module-components>
 </components>

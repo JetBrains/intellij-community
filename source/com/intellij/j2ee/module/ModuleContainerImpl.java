@@ -1,6 +1,5 @@
 package com.intellij.j2ee.module;
 
-import com.intellij.j2ee.ex.J2EEModulePropertiesEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -23,11 +22,10 @@ import java.util.*;
 /**
  * @author Alexey Kudravtsev
  */
-public abstract class J2EEModuleContainerImpl
-  extends J2EEModulePropertiesEx implements JDOMExternalizable, ModuleByNameProvider {
+public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.module.J2EEModuleContainerImpl");
 
-  private J2EEModuleContainerImpl myModifiableModel;
+  private ModuleContainerImpl myModifiableModel;
   protected final Module myParentModule;
   private final Set<ContainerElement> myContents = new LinkedHashSet<ContainerElement>();
 
@@ -44,9 +42,10 @@ public abstract class J2EEModuleContainerImpl
   private static final String LIBRARY_TYPE = "library";
   private static final String URL_ELEMENT_NAME = "url";
 
-  protected J2EEModuleContainerImpl(Module module) {
+  public ModuleContainerImpl(Module module) {
     LOG.assertTrue(module != null);
     myParentModule = module;
+    initContainer();
   }
 
   protected void initContainer() {
@@ -57,8 +56,7 @@ public abstract class J2EEModuleContainerImpl
 
   private void migrateRootsWatcher() {
     final Set<ExternalizableString> keys = myOrderInfo.keySet();
-    for (final ExternalizableString key1 : keys) {
-      ExternalizableString key = (ExternalizableString)key1;
+    for (final ExternalizableString key : keys) {
       final OrderEntryInfo orderEntryInfo = myOrderInfo.get(key);
       if (!orderEntryInfo.copy) continue;
       final OrderEntry orderEntry = myModuleRootsWatcher.find(getModule(), key);
@@ -86,8 +84,7 @@ public abstract class J2EEModuleContainerImpl
       }
       containerElement.setURI(orderEntryInfo.URI);
       final Map<String, String> attributes = orderEntryInfo.getAttributes();
-      for (final String s : attributes.keySet()) {
-        String name = (String)s;
+      for (final String name : attributes.keySet()) {
         String value = attributes.get(name);
         containerElement.setAttribute(name, value);
       }
@@ -202,10 +199,7 @@ public abstract class J2EEModuleContainerImpl
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    if (!isActive()) return;
-
-    for (final ContainerElement myContent : myContents) {
-      ContainerElement containerElement = (ContainerElement)myContent;
+    for (final ContainerElement containerElement : myContents) {
       final Element child = new Element(CONTAINER_ELEMENT_NAME);
       if (containerElement instanceof ModuleLink) {
         child.setAttribute(TYPE_ATTRIBUTE_NAME, MODULE_TYPE);
@@ -223,10 +217,6 @@ public abstract class J2EEModuleContainerImpl
       containerElement.writeExternal(child);
       element.addContent(child);
     }
-  }
-
-  protected boolean isActive() {
-    return getInstance(getModule()) == this;
   }
 
   public ModuleLink[] getContainingModules() {
@@ -260,8 +250,7 @@ public abstract class J2EEModuleContainerImpl
 
   public ContainerElement[] getElements(ModuleByNameProvider provider) {
     ArrayList<ContainerElement> result = new ArrayList<ContainerElement>();
-    for (final ContainerElement myContent : myContents) {
-      ContainerElement containerElement = (ContainerElement)myContent;
+    for (final ContainerElement containerElement : myContents) {
       if (((ResolvableElement)containerElement).resolveElement(provider)) {
         result.add(containerElement);
       }
@@ -275,15 +264,17 @@ public abstract class J2EEModuleContainerImpl
   }
 
   public void removeModule(Module module) {
-    for (final ContainerElement myContent : myContents) {
-      ContainerElement element = (ContainerElement)myContent;
-      if (element instanceof ModuleLink && ((ModuleLink)element).getModule() == module) {
-        myContents.remove(element);
+    for (final ContainerElement containerElement : myContents) {
+      if (containerElement instanceof ModuleLink && ((ModuleLink)containerElement).getModule() == module) {
+        myContents.remove(containerElement);
         break;
       }
     }
   }
 
+  public void containedEntriesChanged() {
+
+  }
 
   public Module getModule() {
     return myParentModule;
@@ -293,41 +284,39 @@ public abstract class J2EEModuleContainerImpl
     myContents.clear();
   }
 
-  public void startEdit(ModifiableRootModel rootModel) {
-    myModifiableModel = createInstance(rootModel);
-    myModifiableModel.copyFrom(this, rootModel);
-
-    myModifiableModel.initModifiableModel();
+  public void copyFrom(ModuleContainer from, ModifiableRootModel rootModel) {
+    copyContainerInfoFrom((ModuleContainerImpl)from);
   }
 
-  protected abstract void initModifiableModel();
-
-  protected abstract J2EEModuleContainerImpl createInstance(ModifiableRootModel rootModel);
-
-  protected void copyFrom(J2EEModuleContainer from, ModifiableRootModel rootModel) {
-    copyContainerInfoFrom((J2EEModuleContainerImpl)from);
-  }
-
-  public final J2EEModuleContainer getModifiableModel() {
+  public final ModuleContainer getModifiableModel() {
     return myModifiableModel;
   }
 
   public void commit(ModifiableRootModel model) throws ConfigurationException {
     if (isModified(model)) {
-      final J2EEModuleContainerImpl modified = (J2EEModuleContainerImpl)getModifiableModel();
+      final ModuleContainerImpl modified = (ModuleContainerImpl)getModifiableModel();
       copyContainerInfoFrom(modified);
       containedEntriesChanged();
     }
   }
 
+  public void disposeModifiableModel() {
+    myModifiableModel = null;
+  }
+
+  public void startEdit(ModifiableRootModel rootModel) {
+    myModifiableModel = new ModuleContainerImpl(getModule());
+    myModifiableModel.copyFrom(this,rootModel);
+  }
+
   public boolean isModified(ModifiableRootModel model) {
-    final J2EEModuleContainer modified = getModifiableModel();
+    final ModuleContainer modified = getModifiableModel();
     final ContainerElement[] modifiedElements = modified.getElements();
 
     return !Arrays.equals(modifiedElements, getElements());
   }
 
-  private void copyContainerInfoFrom(J2EEModuleContainerImpl from) {
+  private void copyContainerInfoFrom(ModuleContainerImpl from) {
     clearContainer();
     final ContainerElement[] elements = from.getElements();
     for (final ContainerElement element : elements) {

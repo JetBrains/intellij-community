@@ -6,7 +6,7 @@ import com.intellij.openapi.options.ConfigurationException;
 public interface TransactionalEditable {
   void startEdit(ModifiableRootModel rootModel);
 
-  J2EEModuleContainer getModifiableModel();
+  ModuleContainer getModifiableModel();
 
   void commit(ModifiableRootModel model) throws ConfigurationException;
 

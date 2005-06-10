@@ -86,12 +86,11 @@ public class ModuleEditor {
   }
 
   private void createEditors(Module module) {
-    Object[] providers = module.getComponents(ModuleConfigurationEditorProvider.class);
+    ModuleConfigurationEditorProvider[] providers = module.getComponents(ModuleConfigurationEditorProvider.class);
     ModuleConfigurationState state = new ModuleConfigurationStateImpl(myProject, module, myModulesProvider, myModifiableRootModelProxy);
     List<ModuleLevelConfigurablesEditorProvider> moduleLevelProviders = new ArrayList<ModuleLevelConfigurablesEditorProvider>();
-    for (int i = 0; i < providers.length; i ++) {
-      ModuleConfigurationEditorProvider provider = (ModuleConfigurationEditorProvider)providers[i];
-      if (provider instanceof ModuleLevelConfigurablesEditorProvider){
+    for (ModuleConfigurationEditorProvider provider : providers) {
+      if (provider instanceof ModuleLevelConfigurablesEditorProvider) {
         moduleLevelProviders.add((ModuleLevelConfigurablesEditorProvider)provider);
         continue;
       }
@@ -106,8 +105,7 @@ public class ModuleEditor {
     final ModuleConfigurationEditor[] editors = provider.createEditors(state);
     myEditors.addAll(Arrays.asList(editors));
     if (myDependenciesEditor == null) {
-      for (int idx = 0; idx < editors.length; idx++) {
-        ModuleConfigurationEditor editor = editors[idx];
+      for (ModuleConfigurationEditor editor : editors) {
         if (editor instanceof DependenciesEditor) {
           myDependenciesEditor = (DependenciesEditor)editor;
           break;
@@ -127,8 +125,7 @@ public class ModuleEditor {
     createEditors(getModule());
 
     myTabbedPane = new TabbedPaneWrapper();
-    for (Iterator<ModuleConfigurationEditor> it = myEditors.iterator(); it.hasNext();) {
-      ModuleConfigurationEditor editor = it.next();
+    for (ModuleConfigurationEditor editor : myEditors) {
       if (editor == myDependenciesEditor && myModulesProvider.getModules().length <= 1) {
         continue;
       }
@@ -182,16 +179,16 @@ public class ModuleEditor {
   }
 
   private void updateOrderEntriesInEditors() {
-    for (Iterator<ModuleConfigurationEditor> it = myEditors.iterator(); it.hasNext();) {
-      it.next().moduleStateChanged();
+    for (final ModuleConfigurationEditor myEditor : myEditors) {
+      myEditor.moduleStateChanged();
     }
     myEventDispatcher.getMulticaster().moduleStateChanged(getModifiableRootModelProxy());
   }
 
   public ModifiableRootModel dispose() {
     try {
-      for (Iterator<ModuleConfigurationEditor> it = myEditors.iterator(); it.hasNext();) {
-        it.next().disposeUIResources();
+      for (final ModuleConfigurationEditor myEditor : myEditors) {
+        myEditor.disposeUIResources();
       }
 
       myEditors.clear();
@@ -211,8 +208,7 @@ public class ModuleEditor {
   }
 
   public ModifiableRootModel applyAndDispose() throws ConfigurationException {
-    for (Iterator<ModuleConfigurationEditor> it = myEditors.iterator(); it.hasNext();) {
-      ModuleConfigurationEditor editor = it.next();
+    for (ModuleConfigurationEditor editor : myEditors) {
       editor.saveData();
       editor.apply();
     }

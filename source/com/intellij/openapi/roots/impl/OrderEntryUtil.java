@@ -7,19 +7,19 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 public class OrderEntryUtil {
-  public static OrderEntry[] getDependentOrderEntries(ModifiableRootModel modifiableModel) {
+  public static Collection<OrderEntry> getDependentOrderEntries(ModifiableRootModel modifiableModel) {
     HashSet<Module> processedModules = new HashSet<Module>();
     processedModules.add(modifiableModel.getModule());
     return getDependentOrderEntries(modifiableModel,processedModules);
   }
-  public static OrderEntry[] getDependentOrderEntries(ModifiableRootModel modifiableModel, Set<Module> processedModules) {
+  private static Collection<OrderEntry> getDependentOrderEntries(ModifiableRootModel modifiableModel, Set<Module> processedModules) {
     final Set<OrderEntry> orderEntries = modifiableModel.processOrder(new CollectDependentOrderEntries(processedModules), new HashSet<OrderEntry>());
-    return orderEntries.toArray(new OrderEntry[orderEntries.size()]);
+    return orderEntries;
   }
 
   private static class CollectDependentOrderEntries extends RootPolicy<Set<OrderEntry>> {
@@ -39,8 +39,8 @@ public class OrderEntryUtil {
       if (module != null && myProcessedModules.add(module)) {
         orderEntries.add(moduleOrderEntry);
         final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
-        final OrderEntry[] dependentOrderEntries = getDependentOrderEntries(modifiableModel,myProcessedModules);
-        orderEntries.addAll(Arrays.asList(dependentOrderEntries));
+        final Collection<OrderEntry> dependentOrderEntries = getDependentOrderEntries(modifiableModel,myProcessedModules);
+        orderEntries.addAll(dependentOrderEntries);
       }
       return orderEntries;
     }

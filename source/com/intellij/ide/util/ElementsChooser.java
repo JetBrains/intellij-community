@@ -54,11 +54,11 @@ public class ElementsChooser<T> extends JPanel {
     int width = new JCheckBox().getPreferredSize().width;
     TableColumnModel columnModel = myTable.getColumnModel();
 
-    TableColumn checkMarkColumn = columnModel.getColumn(myTableModel.CHECK_MARK);
+    TableColumn checkMarkColumn = columnModel.getColumn(MyTableModel.CHECK_MARK);
     checkMarkColumn.setPreferredWidth(width);
     checkMarkColumn.setMaxWidth(width);
     checkMarkColumn.setCellRenderer(new CheckMarkColumnCellRenderer(myTable.getDefaultRenderer(Boolean.class)));
-    columnModel.getColumn(myTableModel.ELEMENT).setCellRenderer(new MyElementColumnCellRenderer());
+    columnModel.getColumn(MyTableModel.ELEMENT).setCellRenderer(new MyElementColumnCellRenderer());
 
     add(pane, BorderLayout.CENTER);
     myTable.registerKeyboardAction(
@@ -193,8 +193,7 @@ public class ElementsChooser<T> extends JPanel {
   public List<T> getSelectedElements() {
     final List<T> elements = new ArrayList<T>();
     final int[] selectedRows = myTable.getSelectedRows();
-    for (int idx = 0; idx < selectedRows.length; idx++) {
-      int selectedRow = selectedRows[idx];
+    for (int selectedRow : selectedRows) {
       if (selectedRow < 0) {
         continue;
       }
@@ -210,8 +209,8 @@ public class ElementsChooser<T> extends JPanel {
     }
     final int[] rows = new int[elements.size()];
     int index = 0;
-    for (Iterator<T> it = elements.iterator(); it.hasNext();) {
-      rows[index++] = myTableModel.getElementRow(it.next());
+    for (final T element : elements) {
+      rows[index++] = myTableModel.getElementRow(element);
     }
     TableUtil.selectRows(myTable, rows);
     myTable.requestFocus();
@@ -256,8 +255,8 @@ public class ElementsChooser<T> extends JPanel {
 
   private void notifyElementMarked(T element, boolean isMarked) {
     final Object[] listeners = myListeners.toArray();
-    for (int i = 0; i < listeners.length; i++) {
-      ElementsMarkListener<T> listener = (ElementsMarkListener<T>)listeners[i];
+    for (Object listener1 : listeners) {
+      ElementsMarkListener<T> listener = (ElementsMarkListener<T>)listener1;
       listener.elementMarkChanged(element, isMarked);
     }
   }
@@ -278,8 +277,8 @@ public class ElementsChooser<T> extends JPanel {
   private final class MyTableModel extends AbstractTableModel {
     private final List<T> myElements = new ArrayList<T>();
     private final Map<T, Boolean> myMarkedMap = new HashMap<T, Boolean>();
-    public final int CHECK_MARK = 0;
-    public final int ELEMENT = 1;
+    public static final int CHECK_MARK = 0;
+    public static final int ELEMENT = 1;
 
     public T getElementAt(int index) {
       return myElements.get(index);
@@ -302,10 +301,9 @@ public class ElementsChooser<T> extends JPanel {
       if (elements == null || elements.size() == 0) {
         return;
       }
-      for (Iterator<T> it = elements.iterator(); it.hasNext();) {
-        final T element = it.next();
+      for (final T element : elements) {
         myElements.add(element);
-        myMarkedMap.put(element, isMarked? Boolean.TRUE : Boolean.FALSE);
+        myMarkedMap.put(element, isMarked ? Boolean.TRUE : Boolean.FALSE);
       }
       fireTableRowsInserted(myElements.size() - elements.size(), myElements.size() - 1);
     }
@@ -337,8 +335,8 @@ public class ElementsChooser<T> extends JPanel {
 
     public void removeRows(int[] rows) {
       final List<T> toRemove = new ArrayList<T>();
-      for (int idx = 0; idx < rows.length; idx++) {
-        final T element = myElements.get(rows[idx]);
+      for (int row : rows) {
+        final T element = myElements.get(row);
         toRemove.add(element);
         myMarkedMap.remove(element);
       }
@@ -388,8 +386,7 @@ public class ElementsChooser<T> extends JPanel {
       int firstRow = Integer.MAX_VALUE;
       int lastRow = Integer.MIN_VALUE;
       final Boolean newValue = marked? Boolean.TRUE : Boolean.FALSE;
-      for (int idx = 0; idx < rows.length; idx++) {
-        final int row = rows[idx];
+      for (final int row : rows) {
         final T element = myElements.get(row);
         final Boolean prevValue = myMarkedMap.put(element, newValue);
         if (!newValue.equals(prevValue)) {
@@ -410,7 +407,7 @@ public class ElementsChooser<T> extends JPanel {
 
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       if (ElementsChooser.this.isEnabled()) {
-        return (columnIndex == CHECK_MARK);
+        return columnIndex == CHECK_MARK;
       }
       return false;
     }
@@ -430,10 +427,11 @@ public class ElementsChooser<T> extends JPanel {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       final Color color = UIManager.getColor("Table.focusCellBackground");
       Component component;
+      T t = (T)value;
       try {
         UIManager.put("Table.focusCellBackground", table.getSelectionBackground());
         component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        setText(getItemText((T)value));
+        setText(getItemText(t));
         if (component instanceof JLabel) {
           ((JLabel)component).setBorder(noFocusBorder);
         }
@@ -443,7 +441,7 @@ public class ElementsChooser<T> extends JPanel {
       }
       final MyTableModel model = (MyTableModel)table.getModel();
       component.setEnabled(ElementsChooser.this.isEnabled() && (myColorUnmarkedElements? model.isElementMarked(row) : true));
-      ElementProperties properties = myElementToPropertiesMap.get(value);
+      ElementProperties properties = myElementToPropertiesMap.get(t);
       if (properties != null) {
         if (component instanceof JLabel) {
           ((JLabel)component).setIcon(properties.getIcon());

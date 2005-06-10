@@ -561,6 +561,7 @@
           <separator/>
           <action id="ShowUserActivities" class="com.intellij.localVcs.actions.ShowActivePeriodsAction" text="Show Activities" internal="true"/>
         </group>
+        <action id="BuildJar" class="com.intellij.jar.BuildJarAction" text="Build Jar..." internal="true" />
       </group>
 
       <reference ref="VcsGroups"/>
