@@ -75,8 +75,7 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
 
   private UsageInfo[] filterOverriding(UsageInfo[] usages) {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       if (!(usage instanceof OverridingMethodUsageInfo)) {
         result.add(usage);
       }
@@ -86,9 +85,8 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
 
   private UsageInfo[] filterInternalUsages(UsageInfo[] usage) {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
-    for (int i = 0; i < usage.length; i++) {
-      UsageInfo usageInfo = usage[i];
-      if(!(usageInfo instanceof InternalUsageInfo)) {
+    for (UsageInfo usageInfo : usage) {
+      if (!(usageInfo instanceof InternalUsageInfo)) {
         result.add(usageInfo);
       }
     }
@@ -98,14 +96,12 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
   private String[] getConflictDescriptions(UsageInfo[] usages) {
     ArrayList<String> conflicts = new ArrayList<String>();
     HashSet<PsiElement> processed = new HashSet<PsiElement>();
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usageInfo = usages[i];
-
+    for (UsageInfo usageInfo : usages) {
       if (usageInfo instanceof InternalUsageInfo && !(usageInfo instanceof SelfUsageInfo)) {
-        PsiElement referencedElement = ((InternalUsageInfo) usageInfo).getReferencedElement();
+        PsiElement referencedElement = ((InternalUsageInfo)usageInfo).getReferencedElement();
         if (!mySettings.isMakeClassParameter()) {
           if (referencedElement instanceof PsiModifierListOwner) {
-            if (((PsiModifierListOwner) referencedElement).hasModifierProperty(PsiModifier.STATIC)) {
+            if (((PsiModifierListOwner)referencedElement).hasModifierProperty(PsiModifier.STATIC)) {
               continue;
             }
           }
@@ -113,24 +109,25 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
           if (processed.contains(referencedElement)) continue;
           processed.add(referencedElement);
           if (referencedElement instanceof PsiField) {
-            PsiField field = (PsiField) referencedElement;
+            PsiField field = (PsiField)referencedElement;
 
             if (mySettings.getNameForField(field) == null) {
               String message = "Method uses non-static " + ConflictsUtil.getDescription(field, true)
-                      + ", which is not passed as a parameter";
+                               + ", which is not passed as a parameter";
               conflicts.add(message);
             }
           }
           else {
             String message = "Method uses " + ConflictsUtil.getDescription(referencedElement, true)
-                    + ", which needs class instance.";
+                             + ", which needs class instance.";
             conflicts.add(message);
           }
         }
-      } if (usageInfo instanceof OverridingMethodUsageInfo) {
-        final PsiMethod overridingMethod = ((PsiMethod) usageInfo.getElement());
+      }
+      if (usageInfo instanceof OverridingMethodUsageInfo) {
+        final PsiMethod overridingMethod = ((PsiMethod)usageInfo.getElement());
         String message = "Method " + ConflictsUtil.getDescription(myMethod, false) + " is overriden by " +
-                ConflictsUtil.getDescription(overridingMethod, true) + ".";
+          ConflictsUtil.getDescription(overridingMethod, true) + ".";
         conflicts.add(message);
       }
       else {
@@ -138,12 +135,10 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
         PsiElement container = ConflictsUtil.getContainer(element);
         if (processed.contains(container)) continue;
         processed.add(container);
-        List fieldParameters = mySettings.getParameterOrderList();
+        List<Settings.FieldParameter> fieldParameters = mySettings.getParameterOrderList();
         ArrayList<PsiField> inaccessible = new ArrayList<PsiField>();
 
-        for (Iterator iterator = fieldParameters.iterator(); iterator.hasNext();) {
-          Settings.FieldParameter fieldParameter = (Settings.FieldParameter) iterator.next();
-
+        for (final Settings.FieldParameter fieldParameter : fieldParameters) {
           if (!PsiUtil.isAccessible(fieldParameter.field, element, null)) {
             inaccessible.add(fieldParameter.field);
           }
@@ -191,21 +186,20 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
 
     if (mySettings.isReplaceUsages()) {
       PsiReference[] refs = helper.findReferences(myMethod, GlobalSearchScope.projectScope(myProject), true);
-      for (int i = 0; i < refs.length; i++) {
-        PsiElement ref = refs[i].getElement();
+      for (PsiReference ref : refs) {
+        PsiElement element = ref.getElement();
         PsiElement qualifier = null;
-        if (ref instanceof PsiReferenceExpression) {
-          qualifier = ((PsiReferenceExpression) ref).getQualifierExpression();
+        if (element instanceof PsiReferenceExpression) {
+          qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
           if (qualifier instanceof PsiThisExpression) qualifier = null;
         }
-        if (!PsiTreeUtil.isAncestor(myMethod, ref, true) || qualifier != null) {
-          result.add(new UsageInfo(ref));
+        if (!PsiTreeUtil.isAncestor(myMethod, element, true) || qualifier != null) {
+          result.add(new UsageInfo(element));
         }
       }
     }
     final PsiMethod[] overridingMethods = helper.findOverridingMethods(myMethod, GlobalSearchScope.allScope(myProject), false);
-    for (int i = 0; i < overridingMethods.length; i++) {
-      PsiMethod overridingMethod = overridingMethods[i];
+    for (PsiMethod overridingMethod : overridingMethods) {
       if (overridingMethod != myMethod) {
         result.add(new OverridingMethodUsageInfo(overridingMethod));
       }
@@ -233,13 +227,12 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
     PsiElementFactory factory = manager.getElementFactory();
 
     try {
-      for (int i = 0; i < usages.length; i++) {
-        UsageInfo usage = usages[i];
-        if(usage instanceof SelfUsageInfo) {
-          changeSelfUsage((SelfUsageInfo) usage);
+      for (UsageInfo usage : usages) {
+        if (usage instanceof SelfUsageInfo) {
+          changeSelfUsage((SelfUsageInfo)usage);
         }
         else if (usage instanceof InternalUsageInfo) {
-          changeInternalUsage((InternalUsageInfo) usage, factory);
+          changeInternalUsage((InternalUsageInfo)usage, factory);
         }
         else {
           changeExternalUsage(usage, factory);
@@ -266,11 +259,10 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
     }
 
     if(mySettings.isMakeFieldParameters()) {
-      List parameters = mySettings.getParameterOrderList();
-      for (Iterator iterator = parameters.iterator(); iterator.hasNext();) {
-        Settings.FieldParameter fieldParameter = (Settings.FieldParameter) iterator.next();
+      List<Settings.FieldParameter> parameters = mySettings.getParameterOrderList();
+      for (Settings.FieldParameter fieldParameter : parameters) {
         PsiElement arg = factory.createExpressionFromText(fieldParameter.name, null);
-        if(addParameterAfter == null) {
+        if (addParameterAfter == null) {
           addParameterAfter = args.addAfter(arg, null);
         }
         else {
@@ -303,10 +295,9 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
     }
 
     if (mySettings.isMakeFieldParameters()) {
-      List parameters = mySettings.getParameterOrderList();
+      List<Settings.FieldParameter> parameters = mySettings.getParameterOrderList();
 
-      for (Iterator iterator = parameters.iterator(); iterator.hasNext();) {
-        Settings.FieldParameter fieldParameter = (Settings.FieldParameter) iterator.next();
+      for (Settings.FieldParameter fieldParameter : parameters) {
         final PsiType fieldParameterType = fieldParameter.field.getType();
         final PsiParameter parameter = factory.createParameter(fieldParameter.name, fieldParameterType);
         addedTypes.add(fieldParameterType);
@@ -330,8 +321,7 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
     final List<PsiTypeParameter> typeParametersToAdd = new ArrayList<PsiTypeParameter>();
 
     final PsiMethod methodFromText = factory.createMethodFromText("void utterGarbage();", myMethod);
-    for (Iterator<PsiType> iterator = addedTypes.iterator(); iterator.hasNext();) {
-      final PsiType type = iterator.next();
+    for (final PsiType type : addedTypes) {
       methodFromText.getParameterList().add(factory.createParameter("p", type));
     }
     final LocalSearchScope searchScope = new LocalSearchScope(methodFromText);    
@@ -343,21 +333,19 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
       }
     }
     Collections.reverse(typeParametersToAdd);
-    for (Iterator<PsiTypeParameter> iterator = typeParametersToAdd.iterator(); iterator.hasNext();) {
-      final PsiTypeParameter typeParameter = iterator.next();
+    for (final PsiTypeParameter typeParameter : typeParametersToAdd) {
       myMethod.getTypeParameterList().add(typeParameter);
     }
   }
 
   private boolean makeClassParameterFinal(UsageInfo[] usages) {
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
-      if(usage instanceof InternalUsageInfo) {
-        final InternalUsageInfo internalUsageInfo = (InternalUsageInfo) usage;
+    for (UsageInfo usage : usages) {
+      if (usage instanceof InternalUsageInfo) {
+        final InternalUsageInfo internalUsageInfo = (InternalUsageInfo)usage;
         PsiElement referencedElement = internalUsageInfo.getReferencedElement();
-        if(!(referencedElement instanceof PsiField)
-                || mySettings.getNameForField((PsiField) referencedElement) == null) {
-          if(internalUsageInfo.isInsideAnonymous()) {
+        if (!(referencedElement instanceof PsiField)
+            || mySettings.getNameForField((PsiField)referencedElement) == null) {
+          if (internalUsageInfo.isInsideAnonymous()) {
             return true;
           }
         }
@@ -367,10 +355,9 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
   }
 
   private boolean makeFieldParameterFinal(PsiField field, UsageInfo[] usages) {
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       if (usage instanceof InternalUsageInfo) {
-        final InternalUsageInfo internalUsageInfo = (InternalUsageInfo) usage;
+        final InternalUsageInfo internalUsageInfo = (InternalUsageInfo)usage;
         PsiElement referencedElement = internalUsageInfo.getReferencedElement();
         if (referencedElement instanceof PsiField && field.equals(referencedElement)) {
           if (internalUsageInfo.isInsideAnonymous()) {
@@ -473,19 +460,17 @@ public class MakeMethodStaticProcessor extends BaseRefactoringProcessor {
 
 
     if (mySettings.isMakeFieldParameters()) {
-      List parameters = mySettings.getParameterOrderList();
+      List<Settings.FieldParameter> parameters = mySettings.getParameterOrderList();
 
-      for (Iterator iterator = parameters.iterator(); iterator.hasNext();) {
-        Settings.FieldParameter fieldParameter = (Settings.FieldParameter) iterator.next();
-
+      for (Settings.FieldParameter fieldParameter : parameters) {
         PsiReferenceExpression fieldRef;
         if (newQualifier != null) {
-          fieldRef = (PsiReferenceExpression) factory.createExpressionFromText(
-                  "a." + fieldParameter.field.getName(), null);
+          fieldRef = (PsiReferenceExpression)factory.createExpressionFromText(
+            "a." + fieldParameter.field.getName(), null);
           fieldRef.getQualifierExpression().replace(instanceRef);
         }
         else {
-          fieldRef = (PsiReferenceExpression) factory.createExpressionFromText(fieldParameter.field.getName(), null);
+          fieldRef = (PsiReferenceExpression)factory.createExpressionFromText(fieldParameter.field.getName(), null);
         }
 
         if (anchor != null) {
