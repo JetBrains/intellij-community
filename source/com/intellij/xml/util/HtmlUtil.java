@@ -161,7 +161,7 @@ public class HtmlUtil {
               file.getFileType() == StdFileTypes.JSPX ||
               file.getFileType() == StdFileTypes.JSP
               ) {
-            final PsiElement parent = ((PsiElement)element).getParent();
+            final PsiElement parent = element.getParent();
 
             if (parent instanceof XmlAttribute) {
               XmlAttribute xmlAttribute = (XmlAttribute) parent;

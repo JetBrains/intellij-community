@@ -187,8 +187,8 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     if (imports.length == 0) return;
 
     final Set<PsiImportStatementBase> redundants = new HashSet<PsiImportStatementBase>(Arrays.asList(imports));
-    final PsiFile[] roots = file.getPsiRoots();
-    for (PsiFile root : roots) {
+    final PsiElement[] roots = file.getPsiRoots();
+    for (PsiElement root : roots) {
       root.accept(new PsiRecursiveElementVisitor() {
         public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           if (!reference.isQualified()) {

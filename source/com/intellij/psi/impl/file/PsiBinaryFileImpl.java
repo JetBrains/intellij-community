@@ -246,7 +246,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return myFileType;
   }
 
-  public PsiFile[] getPsiRoots() {
+  public PsiElement[] getPsiRoots() {
     return new PsiFile[]{this};
   }
 

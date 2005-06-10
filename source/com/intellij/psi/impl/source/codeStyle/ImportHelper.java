@@ -535,9 +535,9 @@ public class ImportHelper{
       packageName = ((PsiJavaFile)file).getPackageName();
     }
 
-    final PsiFile[] roots = file.getPsiRoots();
+    final PsiElement[] roots = file.getPsiRoots();
     for (int i = 0; i < roots.length; i++) {
-      PsiFile root = roots[i];
+      PsiElement root = roots[i];
       addNamesToImport(names, root, packageName, namesToImportStaticly);
     }
     addUnresolvedImportNames(names, file, namesToImportStaticly);

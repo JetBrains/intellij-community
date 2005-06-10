@@ -49,7 +49,7 @@ class FoldingUpdate {
     }
 
     TreeMap elementsToFoldMap = null;
-    final PsiFile[] psiRoots = ((PsiFile)file).getPsiRoots();
+    final PsiElement[] psiRoots = ((PsiFile)file).getPsiRoots();
     for (int i = 0; i < psiRoots.length; i++) {
       TreeMap fileElementsToFoldMap = FoldingPolicy.getElementsToFold(psiRoots[i], document);
       if (elementsToFoldMap == null) elementsToFoldMap = fileElementsToFoldMap;

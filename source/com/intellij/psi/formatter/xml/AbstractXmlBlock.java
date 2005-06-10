@@ -186,7 +186,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.xml.AbstractXmlBlock");
 
   public static Block creareJspRoot(final PsiElement element, final CodeStyleSettings settings) {
-    final PsiFile[] psiRoots = (element.getContainingFile()).getPsiRoots();
+    final PsiElement[] psiRoots = (element.getContainingFile()).getPsiRoots();
     LOG.assertTrue(psiRoots.length == 4);
     final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(psiRoots[1]);
     if (settings.JSPX_USE_HTML_FORMATTER) {

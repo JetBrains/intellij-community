@@ -3,6 +3,7 @@ package com.intellij.psi;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,17 +23,17 @@ public class PsiAnchor {
 
   public PsiAnchor(PsiElement element) {
     LOG.assertTrue(element.isValid());
-    
+
     if (element instanceof PsiCompiledElement || element instanceof PsiMember) {
       myElement = element;
     }
     else {
       myElement = null;
       myFile = element.getContainingFile();
-      final PsiFile[] psiRoots = myFile.getPsiRoots();
+      final PsiElement[] psiRoots = myFile.getPsiRoots();
       for (int i = 0; i < psiRoots.length; i++) {
-        PsiFile root = psiRoots[i];
-        if (PsiUtil.isUnderPsiRoot(root, element)) {
+        PsiElement root = psiRoots[i];
+        if (PsiTreeUtil.isAncestor(root, element, false)) {
           myRootIndex = i;
           break;
         }
@@ -56,8 +57,8 @@ public class PsiAnchor {
     PsiElement element = myFile.getPsiRoots()[myRootIndex].findElementAt(myStartOffset);
 
     while  (!element.getClass().equals(myClass) ||
-           (element.getTextRange().getStartOffset() != myStartOffset) ||
-           (element.getTextRange().getEndOffset() != myEndOffset)) {
+            (element.getTextRange().getStartOffset() != myStartOffset) ||
+            (element.getTextRange().getEndOffset() != myEndOffset)) {
       element = element.getParent();
       if (element == null || element.getTextRange() == null) return null;
     }
@@ -111,7 +112,7 @@ public class PsiAnchor {
     result = 29 * result + myStartOffset;
     result = 29 * result + myEndOffset;
     result = 29 * result + (myFile != null ? myFile.hashCode() : 0);
-    
+
     return result;
   }
 }

@@ -5,11 +5,11 @@
 package com.intellij.psi.jsp;
 
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
+import com.intellij.lang.Language;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 
 public interface JspFile extends PsiFile{
   WebModuleProperties getWebModuleProperties();
@@ -23,6 +23,8 @@ public interface JspFile extends PsiFile{
 
   XmlTag[] getDirectiveTags(JspDirectiveKind directiveKind);
   XmlTag createDirective(XmlTag context, JspDirectiveKind page);
+
+  PsiClass getJavaRoot();
 
   PsiFile getBaseLanguageRoot();
 

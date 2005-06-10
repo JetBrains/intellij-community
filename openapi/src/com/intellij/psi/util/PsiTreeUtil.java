@@ -238,9 +238,9 @@ public class PsiTreeUtil {
 
   @Nullable
   public static <T extends PsiElement> T findElementOfClassAtOffset (@NotNull PsiFile file, int offset, @NotNull Class<T> clazz, boolean strictStart) {
-    final PsiFile[] psiRoots = file.getPsiRoots();
+    final PsiElement[] psiRoots = file.getPsiRoots();
     T result = null;
-    for (PsiFile root : psiRoots) {
+    for (PsiElement root : psiRoots) {
       final PsiElement elementAt = root.findElementAt(offset);
       if (elementAt != null) {
         final T parent = getParentOfType(elementAt, clazz);
@@ -263,9 +263,9 @@ public class PsiTreeUtil {
    */
   @Nullable
   public static <T extends PsiElement> T findElementOfClassAtRange (@NotNull PsiFile file, int startOffset, int endOffset, @NotNull Class<T> clazz) {
-    final PsiFile[] psiRoots = file.getPsiRoots();
+    final PsiElement[] psiRoots = file.getPsiRoots();
     T result = null;
-    for (PsiFile root : psiRoots) {
+    for (PsiElement root : psiRoots) {
       PsiElement elementAt = root.findElementAt(startOffset);
       T run = getParentOfType(elementAt, clazz, false);
       T prev = run;

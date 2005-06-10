@@ -43,7 +43,7 @@ public class ChangeContextUtil {
         if (refElement != null){
           if (refElement instanceof PsiClass){
             if (includeRefClasses){
-              refExpr.putCopyableUserData(REF_CLASS_KEY, ( (PsiClass)refElement));
+              refExpr.putCopyableUserData(REF_CLASS_KEY, (PsiClass)refElement);
             }
           }
           else if (refElement instanceof PsiMember){

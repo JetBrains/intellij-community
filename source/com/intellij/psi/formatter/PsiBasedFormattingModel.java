@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
@@ -128,9 +129,9 @@ public class PsiBasedFormattingModel implements FormattingModel {
   }
 
   private ASTNode findElementAt(final int offset) {
-    final PsiFile[] psiRoots = myASTNode.getPsi().getContainingFile().getPsiRoots();
+    final PsiElement[] psiRoots = myASTNode.getPsi().getContainingFile().getPsiRoots();
     for (int i = 0; i < psiRoots.length; i++) {
-      PsiFile psiRoot = psiRoots[i];
+      PsiElement psiRoot = psiRoots[i];
       final ASTNode found = psiRoot.getNode().findLeafElementAt(offset);
       if (found != null) {
         if (!(found.getPsi()instanceof JspText) && found.getTextRange().getStartOffset() == offset) {

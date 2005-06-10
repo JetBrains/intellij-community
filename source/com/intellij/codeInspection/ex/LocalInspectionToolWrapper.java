@@ -43,8 +43,8 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
 
       @Override
       public void visitJspFile(JspFile file) {
-        final PsiFile[] roots = file.getPsiRoots();
-        for (PsiFile root : roots) {
+        final PsiElement[] roots = file.getPsiRoots();
+        for (PsiElement root : roots) {
           visitElement(root);
         }
       }

@@ -1338,8 +1338,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         ProgressManager.getInstance().checkCanceled();
 
         PsiFile file = files[i];
-        PsiFile[] psiRoots = file.getPsiRoots();
-        for (PsiFile psiRoot : psiRoots) {
+        PsiElement[] psiRoots = file.getPsiRoots();
+        for (PsiElement psiRoot : psiRoots) {
           if (!LowLevelSearchUtil.processElementsContainingWordInElement(processor, psiRoot, searcher, progress, searchContext)) {
             return false;
           }

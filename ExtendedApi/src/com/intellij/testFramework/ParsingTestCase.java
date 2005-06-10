@@ -50,10 +50,10 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
   }
 
   protected void checkResult(String targetDataName, final PsiFile file) throws Exception {
-    final PsiFile[] psiRoots = file.getPsiRoots();
+    final PsiElement[] psiRoots = file.getPsiRoots();
     if(psiRoots.length > 1){
       for (int i = 0; i < psiRoots.length; i++) {
-        final PsiFile psiRoot = psiRoots[i];
+        final PsiElement psiRoot = psiRoots[i];
         checkResult(targetDataName + "." + i, toParseTreeText((PsiElement)psiRoot).trim());
       }
     }

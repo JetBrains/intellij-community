@@ -191,8 +191,8 @@ public class RefManager {
 
     @Override
     public void visitFile(PsiFile file) {
-      final PsiFile[] roots = file.getPsiRoots();
-      for (PsiFile root : roots) {
+      final PsiElement[] roots = file.getPsiRoots();
+      for (PsiElement root : roots) {
         visitElement(root);
       }
     }

@@ -30,7 +30,7 @@ public interface PsiFile extends PsiElement, PsiFileSystemItem {
 
   FileType getFileType();
 
-  PsiFile[] getPsiRoots();
+  PsiElement[] getPsiRoots();
 
   PsiFile createPseudoPhysicalCopy();
 }
