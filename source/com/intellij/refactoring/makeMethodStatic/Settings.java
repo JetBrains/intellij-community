@@ -44,11 +44,10 @@ public final class Settings {
     myFieldToNameList = new ArrayList<FieldParameter>();
     if(myMakeFieldParameters) {
       myFieldToNameMapping = new com.intellij.util.containers.HashMap<PsiField, String>();
-      for (int i = 0; i < variableDatum.length; i++) {
-        ParameterTablePanel.VariableData data = variableDatum[i];
+      for (ParameterTablePanel.VariableData data : variableDatum) {
         if (data.passAsParameter) {
           myFieldToNameMapping.put((PsiField)data.variable, data.name);
-          myFieldToNameList.add(new FieldParameter((PsiField) data.variable, data.name));
+          myFieldToNameList.add(new FieldParameter((PsiField)data.variable, data.name));
         }
       }
     }
