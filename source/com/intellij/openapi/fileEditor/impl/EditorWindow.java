@@ -394,14 +394,21 @@ public class EditorWindow {
           splitter.setFirstComponent(myPanel);
           myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
           splitter.setSecondComponent(res.myPanel);
-            for (int i = 0; i != tabCount; ++i) {
-              final EditorWithProviderComposite eC = getEditorAt(i);
-              final VirtualFile file = eC.getFile();
-              fileEditorManager.openFileImpl3(res, file, false, null);
-              res.setFilePinned (file, isFilePinned (file));
-            }
-            res.setSelectedEditor(selectedEditor);
-            selectedEditor.getComponent().requestFocus();
+          /*
+          for (int i = 0; i != tabCount; ++i) {
+            final EditorWithProviderComposite eC = getEditorAt(i);
+            final VirtualFile file = eC.getFile();
+            fileEditorManager.openFileImpl3(res, file, false, null);
+            res.setFilePinned (file, isFilePinned (file));
+          }
+          */
+          // open only selected file in the new splitter instead of opening all tabs
+          final VirtualFile file = selectedEditor.getFile();
+          fileEditorManager.openFileImpl3(res, file, false, null);
+          res.setFilePinned (file, isFilePinned (file));
+
+          res.setSelectedEditor(selectedEditor);
+          selectedEditor.getComponent().requestFocus();
 
           panel.revalidate();
         }

@@ -4,16 +4,15 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.editor.Document;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.util.EventDispatcher;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.EventListenerList;
 import java.awt.*;
 
 /**
@@ -26,7 +25,7 @@ import java.awt.*;
 public abstract class EditorComposite{
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorComposite");
 
-  private final EventListenerList myListenerList;
+  private final EventDispatcher<FileEditorManagerListener> myEventDispatcher = EventDispatcher.create(FileEditorManagerListener.class);
   /**
    * File for which composite is created
    */
@@ -86,7 +85,6 @@ public abstract class EditorComposite{
     myFile = file;
     myEditors = editors;
     myFileEditorManager = fileEditorManager;
-    myListenerList = new EventListenerList();
     myInitialFileTimeStamp     = myFile.getTimeStamp();
     myInitialFileModificationStamp = myFile.getModificationStamp();
 
@@ -151,26 +149,20 @@ public abstract class EditorComposite{
     if (listener == null) {
       throw new IllegalArgumentException("listener cannot be null");
     }
-    myListenerList.add(FileEditorManagerListener.class, listener);
+    myEventDispatcher.addListener(listener);
   }
 
   public void removeEditorManagerListener(final FileEditorManagerListener listener){
     if (listener == null) {
       throw new IllegalArgumentException("listener cannot be null");
     }
-    myListenerList.remove(FileEditorManagerListener.class, listener);
+    myEventDispatcher.removeListener(listener);
   }
 
-  private void fireSelectedEditorChanged(
-    final FileEditor oldSelectedEditor,
-    final FileEditor newSelectedEditor
-  ){
+  private void fireSelectedEditorChanged(final FileEditor oldSelectedEditor, final FileEditor newSelectedEditor){
     FileEditorManagerEvent event = new FileEditorManagerEvent(myFileEditorManager, myFile, oldSelectedEditor, myFile, newSelectedEditor);
-    FileEditorManagerListener[] listeners = (FileEditorManagerListener[])myListenerList.getListeners(FileEditorManagerListener.class);
-    for(int i=0; i < listeners.length; i++){
-      // source of event is null because the event will be retranslated by the EditorManagerImpl
-      listeners[i].selectionChanged(event);
-    }
+    // source of event is null because the event will be retranslated by the EditorManagerImpl
+    myEventDispatcher.getMulticaster().selectionChanged(event);
   }
 
   /**
@@ -178,13 +170,11 @@ public abstract class EditorComposite{
    * track focus movement inside the myEditor.
    */
   JComponent getPreferredFocusedComponent(){
-    Component component = myFocusWatcher.getFocusedComponent();
+    final Component component = myFocusWatcher.getFocusedComponent();
     if(!(component instanceof JComponent) || !component.isShowing() || !component.isEnabled() || !component.isFocusable()){
       return getSelectedEditor().getPreferredFocusedComponent();
     }
-    else{
-      return (JComponent)component;
-    }
+    return (JComponent)component;
   }
 
   /**
