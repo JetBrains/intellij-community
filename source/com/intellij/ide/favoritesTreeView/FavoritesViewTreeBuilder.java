@@ -24,12 +24,14 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.datatransfer.Transferable;
+import java.util.Comparator;
 
 public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   private ProjectViewPsiTreeChangeListener myPsiTreeChangeListener;
@@ -40,8 +42,8 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
   public FavoritesViewTreeBuilder(Project project, JTree tree, DefaultTreeModel treeModel, ProjectAbstractTreeStructureBase treeStructure) {
     super(project, tree, treeModel, treeStructure, null);
-    setNodeDescriptorComparator(new AlphaComparator(){
-      protected int getWeight(NodeDescriptor descriptor) {
+    setNodeDescriptorComparator(new Comparator<NodeDescriptor>(){
+      private int getWeight(NodeDescriptor descriptor) {
         FavoritesTreeNodeDescriptor favoritesTreeNodeDescriptor = (FavoritesTreeNodeDescriptor)descriptor;
         final Object value = favoritesTreeNodeDescriptor.getElement().getValue();
         if (value instanceof ModuleGroup){
@@ -72,6 +74,33 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
           return 9;
         }
         return 10;
+      }
+
+      public int compare(NodeDescriptor nd1, NodeDescriptor nd2) {
+        if (nd1 instanceof FavoritesTreeNodeDescriptor && nd2 instanceof FavoritesTreeNodeDescriptor){
+          FavoritesTreeNodeDescriptor fd1 = (FavoritesTreeNodeDescriptor)nd1;
+          FavoritesTreeNodeDescriptor fd2 = (FavoritesTreeNodeDescriptor)nd2;
+          int weight1 = getWeight(fd1);
+          int weight2 = getWeight(fd2);
+          if (weight1 != weight2) {
+            return weight1 - weight2;
+          }
+          String s1 = fd1.toString();
+          String s2 = fd2.toString();
+          if (s1 == null) return s2 == null ? 0 : -1;
+          if (s2 == null) return +1;
+          if (!s1.equals(s2)) {
+            return s1.compareToIgnoreCase(s2);
+          }
+          else {
+            s1 = fd1.getLocation();
+            s2 = fd2.getLocation();
+            if (s1 == null) return s2 == null ? 0 : -1;
+            if (s2 == null) return +1;
+            return s1.compareToIgnoreCase(s2);
+          }
+        }
+        return 0;
       }
     });
     myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener() {
