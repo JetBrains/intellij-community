@@ -13,6 +13,7 @@ public class XmlDocumentChangedImpl implements XmlDocumentChanged {
   private XmlDocument myDocument;
 
   public XmlDocumentChangedImpl(XmlDocument document) {
+    assert document != null;
     myDocument = document;
   }
 
