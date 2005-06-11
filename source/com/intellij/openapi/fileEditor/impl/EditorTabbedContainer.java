@@ -6,11 +6,10 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.plaf.beg.BegTabbedPaneUI;
@@ -29,13 +28,11 @@ import java.awt.event.MouseListener;
 final class EditorTabbedContainer extends TabbedPaneWrapper {
   private final EditorWindow myWindow;
   private final Project myProject;
-  private final FileEditorManagerImpl myEditorManager;
 
-  EditorTabbedContainer(final EditorWindow window, Project project, int tabPlacement, FileEditorManagerImpl editorManager) {
+  EditorTabbedContainer(final EditorWindow window, Project project, int tabPlacement) {
     super(tabPlacement);
     myWindow = window;
     myProject = project;
-    myEditorManager = editorManager;
   }
 
   protected TabbedPane createTabbedPane(int tabPlacement) {
@@ -103,7 +100,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
       }
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         public void run() {
-          // IMPORTANT: setSelectedIndex must be invoked inside a Command
+          // [jeka] IMPORTANT: setSelectedIndex must be invoked inside a Command
           //  in order to support back-forward history navigation
           MyTabbedPane.super.setSelectedIndex(index);
           final EditorComposite composite = myWindow.getSelectedEditor();
