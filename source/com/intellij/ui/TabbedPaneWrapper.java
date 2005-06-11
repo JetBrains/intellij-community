@@ -438,7 +438,7 @@ public class TabbedPaneWrapper {
       }
     }
 
-    public final void setSelectedIndex(final int index){
+    public void setSelectedIndex(final int index){
       super.setSelectedIndex(index);
       scrollTabToVisible(index);
       doLayout();

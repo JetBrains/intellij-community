@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.plaf.beg.BegTabbedPaneUI;
@@ -80,9 +82,8 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
           JPanel panel = (JPanel)((JViewport)c).getView();
           panel.setBackground(UIManager.getColor("TabbedPane.background"));
 
-          MouseListener[] listeners = (MouseListener[])panel.getListeners(MouseListener.class);
-          for (int j = 0; j < listeners.length; j++) {
-            panel.removeMouseListener(listeners[j]);
+          for (MouseListener listener : panel.getListeners(MouseListener.class)) {
+            panel.removeMouseListener(listener);
           }
         }
       }
@@ -94,6 +95,23 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
         return null;
       }
       return myWindow.getEditors()[index].getFile();
+    }
+
+    public void setSelectedIndex(final int index) {
+      if (getSelectedIndex() == index) {
+        return;
+      }
+      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+        public void run() {
+          // IMPORTANT: setSelectedIndex must be invoked inside a Command
+          //  in order to support back-forward history navigation
+          MyTabbedPane.super.setSelectedIndex(index);
+          final EditorComposite composite = myWindow.getSelectedEditor();
+          if (composite != null) {
+            myWindow.getManager().openFileImpl3(myWindow, composite.getFile(), true, null);
+          }
+        }
+      }, "", null);
     }
 
     protected void processMouseEvent(MouseEvent e) {

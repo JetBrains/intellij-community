@@ -12,19 +12,14 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Author: msk
@@ -35,7 +30,6 @@ public class EditorWindow {
   protected JPanel myPanel;
   private EditorTabbedContainer myTabbedPane;
   public int myInsideTabChange;
-  private MyTabbedContainerChangeListener myChangeListener;
   protected final EditorsSplitters myOwner;
   private static final Icon MODIFIED_ICON = IconLoader.getIcon("/general/modified.png");
   private static final Icon GAP_ICON = EmptyIcon.create(MODIFIED_ICON.getIconWidth(), MODIFIED_ICON.getIconHeight());
@@ -66,7 +60,6 @@ public class EditorWindow {
   private void createTabs(int tabPlacement) {
     LOG.assertTrue (myTabbedPane == null);
     myTabbedPane = new EditorTabbedContainer(this, getManager().myProject, tabPlacement, getManager());
-    myTabbedPane.addChangeListener(myChangeListener = new MyTabbedContainerChangeListener());
     myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
   }
 
@@ -78,13 +71,11 @@ public class EditorWindow {
 
   private void dispose() {
     disposeTabs();
-    myChangeListener = null;
     getWindows ().remove(this);
   }
 
   private void disposeTabs() {
     if (myTabbedPane != null) {
-      myTabbedPane.removeChangeListener(myChangeListener);
       myTabbedPane = null;
     }
     myPanel.removeAll();
@@ -230,8 +221,8 @@ public class EditorWindow {
         final boolean focusEditor = ToolWindowManager.getInstance(getManager().myProject).isEditorComponentActive();
         final VirtualFile currentFile = getSelectedFile();
         final VirtualFile[] files = getFiles();
-        for (int i = 0; i < files.length; i++) {
-          closeFile(files[i], false);
+        for (VirtualFile file : files) {
+          closeFile(file, false);
         }
         disposeTabs();
         getManager().openFileImpl2(this, currentFile, focusEditor && myOwner.getCurrentWindow() == this, null);
@@ -260,24 +251,6 @@ public class EditorWindow {
         return myEditor.getFile();
       }
       return null;
-    }
-  }
-
-  private final class MyTabbedContainerChangeListener implements ChangeListener {
-    public void stateChanged(ChangeEvent e) {
-      //assertThread();
-      if (myInsideTabChange > 0) { // do not react on own events
-        return;
-      }
-      final EditorComposite composite = getSelectedEditor();
-      if (composite != null) {
-        final Project project = getManager().myProject;
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          public void run() {
-            getManager().openFileImpl2(EditorWindow.this, composite.getFile(), true, null);
-          }
-        }, "", null);
-      }
     }
   }
 
@@ -434,8 +407,7 @@ public class EditorWindow {
     final ArrayList<EditorWindow> res = new ArrayList<EditorWindow>();
     if (myPanel.getParent() instanceof Splitter) {
       final Splitter splitter = (Splitter)myPanel.getParent();
-      for (Iterator<EditorWindow> elem = getWindows().iterator(); elem.hasNext();) {
-        final EditorWindow win = elem.next();
+      for (final EditorWindow win : getWindows()) {
         if (win != this && SwingUtilities.isDescendingFrom(win.myPanel, splitter)) {
           res.add(win);
         }
@@ -712,8 +684,7 @@ public class EditorWindow {
             }
           }
 
-          for (int i = 0; i < histFiles.length; i++) {
-            final VirtualFile file = histFiles[i];
+          for (final VirtualFile file : histFiles) {
             if (!fileCanBeClosed(file, fileToIgnore)) {
               continue;
             }
@@ -770,8 +741,7 @@ public class EditorWindow {
           }
 
 
-          for (int i = 0; i < histFiles.length; i++) {
-            final VirtualFile file = histFiles[i];
+          for (final VirtualFile file : histFiles) {
             if (fileCanBeClosed(file, fileToIgnore)) {
               closeFile(file);
               continue while_label;

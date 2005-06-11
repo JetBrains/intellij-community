@@ -169,9 +169,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
             putLastOrMerge(myBackPlaces, myCommandStartPlace, BACK_QUEUE_LIMIT);
           }
           if (!myForwardInProgress) {
-            for (Iterator<PlaceInfo> iterator = myForwardPlaces.iterator(); iterator.hasNext();) {
-              iterator.next();
-            }
             myForwardPlaces.clear();
           }
         }

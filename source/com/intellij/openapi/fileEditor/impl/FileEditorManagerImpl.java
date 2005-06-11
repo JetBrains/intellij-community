@@ -419,9 +419,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       public void run() {
         resHolder.set(openFileImpl3(window, file, focusEditor, entry));
       }
-    },
-                                                  "",
-                                                  null);
+    }, "", null);
     return resHolder.get();
   }
 
@@ -429,7 +427,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
    * @param file  to be opened. Unlike openFile method, file can be
    *              invalid. For example, all file were invalidate and they are being
    *              removed one by one. If we have removed one invalid file, then another
-   *              invalid file become selected. That's why we are not require that
+   *              invalid file become selected. That's why we do not require that
    *              passed file is valid.
    * @param entry map between FileEditorProvider and FileEditorState. If this parameter
    *              is not <code>null</code> then it's used to restore state for the newly created
