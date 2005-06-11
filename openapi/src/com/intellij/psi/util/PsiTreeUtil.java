@@ -91,7 +91,7 @@ public class PsiTreeUtil {
       element = element.getContext();
     }
 
-    return null;
+    return (ContextType)element;
   }
 
   @Nullable
@@ -105,7 +105,7 @@ public class PsiTreeUtil {
       element = element.getParent();
     }
 
-    return null;
+    return (ParentType)element;
   }
 
   @Nullable public static PsiElement skipSiblingsForward (@Nullable PsiElement element, @NotNull Class[] elementClasses) {
