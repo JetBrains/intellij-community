@@ -138,8 +138,8 @@ public class IdeEventQueue extends EventQueue {
     }, 20000, ModalityState.NON_MMODAL);
   }
 
-  public boolean isWaitingForSecondKeyStroke() {
-    return myKeyEventDispatcher.isWaitingForSecondKeyStroke();
+  public boolean shouldNotTypeInEditor() {
+    return myKeyEventDispatcher.isWaitingForSecondKeyStroke() || mySuspendMode;
   }
 
   private void enterSuspendMode() {

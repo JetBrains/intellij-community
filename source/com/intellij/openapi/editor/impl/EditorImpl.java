@@ -482,7 +482,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx {
     // [vova] This is patch for Mac OS X. Under Mac "input methods"
     // is handled before our EventQueue consume upcoming KeyEvents.
     IdeEventQueue queue = IdeEventQueue.getInstance();
-    if (queue.isWaitingForSecondKeyStroke() || ProgressManager.getInstance().hasModalProgressIndicator()) {
+    if (queue.shouldNotTypeInEditor() || ProgressManager.getInstance().hasModalProgressIndicator()) {
       return;
     }
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
