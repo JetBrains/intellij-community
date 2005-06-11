@@ -11,12 +11,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.InputEvent;
+
 public final class GotoModuleDirectory extends FileChooserDialogImpl.FileChooserAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.actions.GotoProjectDirectory");
   private final Module myModuleToGo;
 
   public GotoModuleDirectory(FileSystemTree fileSystemTree, @Nullable Module moduleToGo) {
-    super("Module", "Go to module directory", IconLoader.getIcon("/nodes/ModuleClosed.png"), fileSystemTree);
+    super("Module", "Go to module directory", IconLoader.getIcon("/nodes/ModuleClosed.png"), fileSystemTree, KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.CTRL_MASK));
     myModuleToGo = moduleToGo;
   }
 

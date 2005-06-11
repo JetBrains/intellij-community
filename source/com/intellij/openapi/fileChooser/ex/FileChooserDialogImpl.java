@@ -2,6 +2,7 @@ package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.actions.SynchronizeAction;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -14,8 +15,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.LabeledIcon;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 
@@ -27,7 +29,9 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,6 +45,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   protected Project myProject;
   /** @fabrique **/
   private VirtualFile[] myChosenFiles = VirtualFile.EMPTY_ARRAY;
+
+  private final java.util.List<Disposable> myDisposables = new ArrayList<Disposable>();
 
   public FileChooserDialogImpl(FileChooserDescriptor chooserDescriptor, Project project) {
     super(project, true);
@@ -72,8 +78,12 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (file == null || !file.isValid()) return;
-        if (select(file)) return;
+        if (file == null || !file.isValid()) {
+          return;
+        }
+        if (select(file)) {
+          return;
+        }
         VirtualFile parent = file.getParent();
         if (parent != null) {
           select(parent);
@@ -86,22 +96,40 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   protected DefaultActionGroup createActionGroup() {
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new GotoHomeAction(myFileSystemTree));
-    group.add(new GotoProjectDirectory(myFileSystemTree));
-    group.add(new GotoModuleDirectory(myFileSystemTree, myChooserDescriptor.getContextModule()));
+    final DefaultActionGroup group = new DefaultActionGroup();
+
+    addToGroup(group, new GotoHomeAction(myFileSystemTree));
+    addToGroup(group, new GotoProjectDirectory(myFileSystemTree));
+    addToGroup(group, new GotoModuleDirectory(myFileSystemTree, myChooserDescriptor.getContextModule()));
+
     group.addSeparator();
-    group.add(new NewFolderAction(myFileSystemTree));
-    group.add(new FileDeleteAction(myFileSystemTree));
+    addToGroup(group, new NewFolderAction(myFileSystemTree));
+    addToGroup(group, new FileDeleteAction(myFileSystemTree));
     group.addSeparator();
-    SynchronizeAction action1 = new SynchronizeAction();
+
+    final SynchronizeAction syncAction = new SynchronizeAction();
     AnAction original = ActionManager.getInstance().getAction(IdeActions.ACTION_SYNCHRONIZE);
-    action1.copyFrom(original);
-    action1.registerCustomShortcutSet(original.getShortcutSet(), myFileSystemTree.getTree());
-    group.add(action1);
+    syncAction.copyFrom(original);
+    final JTree tree = myFileSystemTree.getTree();
+    syncAction.registerCustomShortcutSet(original.getShortcutSet(), tree);
+    group.add(syncAction);
+    myDisposables.add(new Disposable() {
+      public void dispose() {
+        syncAction.unregisterCustomShortcutSet(tree);
+      }
+    });
+
     group.addSeparator();
-    group.add(new MyShowHiddensAction());
+    addToGroup(group, new MyShowHiddensAction());
+
     return group;
+  }
+
+  private void addToGroup(DefaultActionGroup group, AnAction action) {
+    group.add(action);
+    if (action instanceof Disposable) {
+      myDisposables.add(((Disposable)action));
+    }
   }
 
   protected final JComponent createTitlePane() {
@@ -119,7 +147,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     panel.add(toolBar.getComponent(), BorderLayout.NORTH);
 
-
     registerMouseListener(group);
 
     JScrollPane scrollPane = new JScrollPane(myFileSystemTree.getTree());
@@ -135,6 +162,10 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   protected final void dispose() {
+    for (Disposable disposable : myDisposables) {
+      disposable.dispose();
+    }
+    myDisposables.clear();
     myFileSystemTree.dispose();
     LocalFileSystem.getInstance().removeWatchedRoots(myRequests.values());
     super.dispose();
@@ -231,7 +262,9 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
       boolean enabled = true;
       for (TreePath treePath : paths) {
-        if (!e.isAddedPath(treePath)) continue;
+        if (!e.isAddedPath(treePath)) {
+          continue;
+        }
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
         Object userObject = node.getUserObject();
         if (!(userObject instanceof FileNodeDescriptor)) {
@@ -281,11 +314,29 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
   }
 
-  public static abstract class FileChooserAction extends AnAction {
+  public static abstract class FileChooserAction extends AnAction implements Disposable {
     private final FileSystemTree myFileSystemTree;
-    public FileChooserAction(String text, String description, Icon icon, FileSystemTree fileSystemTree) {
-      super(text, description, icon);
+    private Disposable myDisposable;
+
+    public FileChooserAction(String text, String description, Icon icon, FileSystemTree fileSystemTree, KeyStroke shortcut) {
+      super(text, description, (shortcut == null) ? icon : new LabeledIcon(icon, null, KeyEvent.getKeyText(shortcut.getKeyCode()) + ". "));
       myFileSystemTree = fileSystemTree;
+      if (shortcut != null) {
+        final JTree tree = fileSystemTree.getTree();
+        registerCustomShortcutSet(new CustomShortcutSet(shortcut), tree);
+        myDisposable = new Disposable() {
+          public void dispose() {
+            unregisterCustomShortcutSet(tree);
+          }
+        };
+      }
+    }
+
+    public void dispose() {
+      if (myDisposable != null) {
+        myDisposable.dispose();
+        myDisposable = null;
+      }
     }
 
     final public void actionPerformed(AnActionEvent e) {

@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 public class NewFolderAction extends FileChooserDialogImpl.FileChooserAction {
   public NewFolderAction(FileSystemTree fileSystemTree) {
-    super("New Folder...", "Create new folder", IconLoader.getIcon("/actions/newFolder.png"), fileSystemTree);
+    super("New Folder...", "Create new folder", IconLoader.getIcon("/actions/newFolder.png"), fileSystemTree, null);
     registerCustomShortcutSet(
       ActionManager.getInstance().getAction("NewElement").getShortcutSet(),
       fileSystemTree.getTree()

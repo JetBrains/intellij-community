@@ -12,12 +12,13 @@ public class LabeledIcon implements Icon {
   private final Icon myIcon;
   private String myMnemonic;
   private final String[] myStrings;
+  private int myIconTextGap = 0;
 
   /**
    * @param icon     not <code>null</code> icon.
    * @param text     to be painted under the <code>icon<code>. This parameter can
    *                 be <code>null</code> if text isn't specified. In that case <code>LabeledIcon</code>
-   * @param mnemonic 
+   * @param mnemonic
    */
   public LabeledIcon(Icon icon, String text, String mnemonic) {
     myIcon = icon;
@@ -34,8 +35,16 @@ public class LabeledIcon implements Icon {
     }
   }
 
+  public void setIconTextGap(int iconTextGap) {
+    myIconTextGap = iconTextGap;
+  }
+
+  public int getIconTextGap() {
+    return myIconTextGap;
+  }
+
   public int getIconHeight() {
-    return myIcon.getIconHeight() + getTextHeight() + 0/*gap between icon and text*/;
+    return myIcon.getIconHeight() + getTextHeight() + myIconTextGap;
   }
 
   public int getIconWidth() {
@@ -58,12 +67,13 @@ public class LabeledIcon implements Icon {
       int width = 0;
       Font font = UIManager.getFont("Label.font");
       FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
-      for (int i = 0; i < myStrings.length; i++) {
-        String string = myStrings[i];
+      for (String string : myStrings) {
         width = fontMetrics.stringWidth(string);
       }
 
-      if (myMnemonic != null) width += fontMetrics.stringWidth(myMnemonic);
+      if (myMnemonic != null) {
+        width += fontMetrics.stringWidth(myMnemonic);
+      }
       return width;
     }
     else {
@@ -90,9 +100,8 @@ public class LabeledIcon implements Icon {
         width -= fontMetrics.stringWidth(myMnemonic);
       }
       g.setColor(UIManager.getColor("Label.foreground"));
-      y += myIcon.getIconHeight() + fontMetrics.getMaxAscent() + 0/*gap beween icon and text*/;
-      for (int i = 0; i < myStrings.length; i++) {
-        String string = myStrings[i];
+      y += myIcon.getIconHeight() + fontMetrics.getMaxAscent() + myIconTextGap;
+      for (String string : myStrings) {
         g.drawString(string, x + (width - fontMetrics.stringWidth(string)) / 2, y);
         y += fontMetrics.getHeight();
       }
