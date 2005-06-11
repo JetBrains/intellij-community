@@ -34,7 +34,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
   private JLayeredPane myPopupLayeredPane;
   protected final Comp myComponent;
   private final Project myProject;
-  private final ToolWindowManagerListener myWindowManagerListener=new MyToolWindowManagerListener();
+  private final ToolWindowManagerListener myWindowManagerListener = new MyToolWindowManagerListener();
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private String myRecentEnteredPrefix;
   private SpeedSearchComparator myComparator = new SpeedSearchComparator();
@@ -45,7 +45,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
     myComponent = component;
 
     if (ApplicationManager.getApplication() != null) {
-      myProject=(Project)DataManager.getInstance().getDataContext(component).getData(DataConstants.PROJECT);
+      myProject = (Project)DataManager.getInstance().getDataContext(component).getData(DataConstants.PROJECT);
     }
     else {
       myProject = null;
@@ -60,6 +60,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       public void keyTyped(KeyEvent e) {
         processKeyEvent(e);
       }
+
       public void keyPressed(KeyEvent e) {
         processKeyEvent(e);
       }
@@ -74,8 +75,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
   }
 
   protected abstract int getSelectedIndex();
+
   protected abstract Object[] getAllElements();
+
   protected abstract String getElementText(Object element);
+
   protected abstract void selectElement(Object element, String selectedText);
 
   public void addChangeListener(PropertyChangeListener listener) {
@@ -94,7 +98,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
 
   protected boolean isMatchingElement(Object element, String pattern) {
     String str = getElementText(element);
-    return str!=null && compare(str,pattern);
+    return str != null && compare(str, pattern);
   }
 
   protected boolean compare(String text, String pattern) {
@@ -102,7 +106,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
   }
 
   public static class SpeedSearchComparator {
-    private Pattern myRecentSearchPattern;
     private Matcher myRecentSearchMatcher;
     private String myRecentSearchText;
 
@@ -114,26 +117,27 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       //  return text.startsWith( pattern );
       //}
 
-      if (myRecentSearchText!=null &&
-          myRecentSearchText.equals(pattern)
-          ) {
+      if (myRecentSearchText != null &&
+        myRecentSearchText.equals(pattern)
+        ) {
         myRecentSearchMatcher.reset(text);
         return myRecentSearchMatcher.find();
-      } else {
+      }
+      else {
         myRecentSearchText = pattern;
         final StringBuffer buf = new StringBuffer(pattern.length());
         final int len = pattern.length();
         boolean hasCapitals = false;
         buf.append('^');
 
-        for(int i=0;i<len;++i) {
+        for (int i = 0; i < len; ++i) {
           final char ch = pattern.charAt(i);
 
           // bother only * withing text
-          if (ch=='*' && (i!=len-1 || i==0)) {
+          if (ch == '*' && (i != len - 1 || i == 0)) {
             buf.append("\\w");
           }
-          else if ("{}[].+^$*()?".indexOf(ch)!=-1) {
+          else if ("{}[].+^$*()?".indexOf(ch) != -1) {
             // do not bother with other metachars
             buf.append('\\');
           }
@@ -147,9 +151,12 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
         }
 
         try {
-          myRecentSearchPattern = Pattern.compile(buf.toString(), hasCapitals ? 0: Pattern.CASE_INSENSITIVE);
-          return (myRecentSearchMatcher = myRecentSearchPattern.matcher(text)).find();
-        } catch(PatternSyntaxException ex) {
+          final Pattern recentSearchPattern;
+          recentSearchPattern = Pattern.compile(buf.toString(), hasCapitals ? 0 : Pattern.CASE_INSENSITIVE);
+          return (myRecentSearchMatcher = recentSearchPattern.matcher(text)).find();
+        }
+        catch (PatternSyntaxException ex) {
+          // OK.
         }
 
         return false;
@@ -202,8 +209,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
   private Object findFirstElement(String s) {
     String _s = s.trim();
     Object[] elements = getAllElements();
-    for (int i = 0; i < elements.length; i++) {
-      Object element = elements[i];
+    for (Object element : elements) {
       if (isMatchingElement(element, _s)) return element;
     }
     return null;
@@ -242,21 +248,20 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
 
   private class SearchPopup extends JPanel {
     private final SearchField mySearchField;
-    private final JLabel mySearchLabel;
 
     public SearchPopup(String initialString) {
       final Color foregroundColor = UIManager.getColor("ToolTip.foreground");
       Color color1 = UIManager.getColor("ToolTip.background");
       mySearchField = new SearchField();
-      mySearchLabel = new JLabel(" Search for: ");
-      mySearchLabel.setFont(mySearchLabel.getFont().deriveFont(Font.BOLD));
-      mySearchLabel.setForeground(foregroundColor);
+      final JLabel searchLabel = new JLabel(" Search for: ");
+      searchLabel.setFont(searchLabel.getFont().deriveFont(Font.BOLD));
+      searchLabel.setForeground(foregroundColor);
       mySearchField.setBorder(null);
       mySearchField.setBackground(color1.brighter());
       mySearchField.setForeground(foregroundColor);
 
-      mySearchField.setDocument(new PlainDocument(){
-        public void insertString(int offs, String str, AttributeSet a) throws BadLocationException{
+      mySearchField.setDocument(new PlainDocument() {
+        public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
           String oldText;
           try {
             oldText = getText(0, getLength());
@@ -269,7 +274,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
           super.insertString(offs, str, a);
           if (findElement(newText) == null) {
             mySearchField.setForeground(Color.RED);
-          } else mySearchField.setForeground(foregroundColor);
+          }
+          else {
+            mySearchField.setForeground(foregroundColor);
+          }
         }
       });
       mySearchField.setText(initialString);
@@ -277,7 +285,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       setBorder(BorderFactory.createLineBorder(Color.gray, 1));
       setBackground(color1.brighter());
       setLayout(new BorderLayout());
-      add(mySearchLabel, BorderLayout.WEST);
+      add(searchLabel, BorderLayout.WEST);
       add(mySearchField, BorderLayout.EAST);
       Object element = findElement(mySearchField.getText());
       updateSelection(element);
@@ -325,7 +333,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
     }
   }
 
-
   private class SearchField extends JTextField {
     SearchField() {
       setFocusable(false);
@@ -354,7 +361,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
         i == KeyEvent.VK_PAGE_DOWN ||
         i == KeyEvent.VK_LEFT ||
         i == KeyEvent.VK_RIGHT
-      ) {
+        ) {
         manageSearchPopup(null);
         if (i == KeyEvent.VK_ESCAPE) {
           e.consume();
@@ -368,7 +375,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
         i == KeyEvent.VK_END ||
         i == KeyEvent.VK_UP ||
         i == KeyEvent.VK_DOWN
-      ) {
+        ) {
         e.consume();
       }
     }
@@ -381,7 +388,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       myPopupLayeredPane.repaint();
       myPopupLayeredPane = null;
 
-      if(myProject!=null){
+      if (myProject != null) {
         ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).removeToolWindowManagerListener(myWindowManagerListener);
       }
     }
@@ -400,12 +407,16 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
 
     if (mySearchPopup == null || !myComponent.isDisplayable()) return;
 
-    if(myProject!=null){
+    if (myProject != null) {
       ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(myWindowManagerListener);
     }
     JRootPane rootPane = myComponent.getRootPane();
-    if (rootPane != null) myPopupLayeredPane = rootPane.getLayeredPane();
-    else myPopupLayeredPane = null;
+    if (rootPane != null) {
+      myPopupLayeredPane = rootPane.getLayeredPane();
+    }
+    else {
+      myPopupLayeredPane = null;
+    }
     if (myPopupLayeredPane == null) {
       LOG.error(this.toString() + " in " + String.valueOf(myComponent));
       return;
@@ -418,13 +429,13 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
     Dimension prefSize = mySearchPopup.getPreferredSize();
     Window window = (Window)SwingUtilities.getAncestorOfClass(Window.class, myComponent);
     Point windowP;
-    if (window instanceof JDialog){
+    if (window instanceof JDialog) {
       windowP = ((JDialog)window).getContentPane().getLocationOnScreen();
     }
-    else if (window instanceof JFrame){
+    else if (window instanceof JFrame) {
       windowP = ((JFrame)window).getContentPane().getLocationOnScreen();
     }
-    else{
+    else {
       windowP = window.getLocationOnScreen();
     }
     int y = r.y + componentP.y - lPaneP.y - prefSize.height;
@@ -436,7 +447,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
   }
 
   private class MyToolWindowManagerListener extends ToolWindowManagerAdapter {
-    public void stateChanged(){
+    public void stateChanged() {
       manageSearchPopup(null);
     }
   }
