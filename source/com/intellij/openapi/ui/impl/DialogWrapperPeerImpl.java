@@ -17,8 +17,8 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrame;
-import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.FocusTrackback;
+import com.intellij.ui.SpeedSearchBase;
 
 import javax.swing.*;
 import java.awt.*;
@@ -352,6 +352,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
      */
     private Dimension myInitialSize;
     private String myDimensionServiceKey;
+    private boolean myOpened = false;
 
     private FocusTrackback myFocusTrackback;
 
@@ -468,6 +469,17 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       super.dispose();
     }
 
+    @Override
+    public Component getMostRecentFocusOwner() {
+      if (!myOpened) {
+        JComponent toFocus = getDialogWrapper().getPreferredFocusedComponent();
+        if (toFocus != null) {
+          return toFocus;
+        }
+      }
+      return super.getMostRecentFocusOwner();
+    }
+
     private class MyWindowListener extends WindowAdapter {
       public void windowClosing(WindowEvent e) {
         DialogWrapper dialogWrapper = getDialogWrapper();
@@ -486,12 +498,14 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           if (!myInitialSize.equals(size)) {
             DimensionService.getInstance().setSize(myDimensionServiceKey, size);
           }
+          myOpened = false;
         }
       }
 
       public void windowOpened(WindowEvent e) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
+            myOpened = true;
             final DialogWrapper activeWrapper = getActiveWrapper();
             if (activeWrapper == null) {
               return;
@@ -506,7 +520,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
             setupSelectionOnPreferredComponent(toFocus);
 
             if (toFocus != null) {
-              toFocus.requestFocusInWindow();
+              toFocus.requestFocus();
             }
           }
         });

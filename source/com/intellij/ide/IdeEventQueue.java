@@ -272,16 +272,10 @@ public class IdeEventQueue extends EventQueue {
     myEventCount++;
 
     if (!myPopupManager.isPopupActive()) {
-      // Suspend keyboard events (if any)
+      // Enter to suspend mode if necessary. Suspend will cancel processing of actions mapped to the keyboard shortcuts.
       if (e instanceof KeyEvent) {
-        if (mySuspendMode) {
-          return;
-        }
-        else {
-          if (peekEvent(WindowEvent.WINDOW_OPENED) != null) {
-            enterSuspendMode();
-            return;
-          }
+        if (!mySuspendMode && peekEvent(WindowEvent.WINDOW_OPENED) != null) {
+          enterSuspendMode();
         }
       }
     }
@@ -336,7 +330,7 @@ public class IdeEventQueue extends EventQueue {
     }
 
     if (e instanceof KeyEvent) {
-      if (!myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
+      if (mySuspendMode || !myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
         defaultDispatchEvent(e);
       }
       else {
