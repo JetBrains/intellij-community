@@ -113,6 +113,21 @@ public final class Presentation implements Cloneable {
     setText(text, true);
   }
 
+  public void restoreTextWithMnemonic(Presentation presentation) {
+    String text = presentation.getText();
+    final int mnemonic = presentation.getMnemonic();
+    if (text != null) {
+     for (int i = 0; i < text.length(); i++) {
+       if (Character.toUpperCase(text.charAt(i)) == mnemonic) {
+         text = text.replaceFirst(String.valueOf(text.charAt(i)), "_" + text.charAt(i));
+         setText(text);
+         return;
+       }
+     }
+    }
+    setText(text);
+  }
+
   public String getDescription(){
     return myDescription;
   }

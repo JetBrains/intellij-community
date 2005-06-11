@@ -113,7 +113,7 @@ public class VcsGroupsWrapper extends DefaultActionGroup {
       updateFromAction(vcsToActionMap.get(currentVcses.iterator().next()), presentation);
     }
     else {
-      DefaultActionGroup composite = new DefaultActionGroup();
+      DefaultActionGroup composite = new DefaultActionGroup("&Version Control", true);
       for (int i = 0; i < myChildren.length; i++) {
         StandardVcsGroup child = (StandardVcsGroup)myChildren[i];
         AbstractVcs vcs = child.getVcs(project);
@@ -132,7 +132,7 @@ public class VcsGroupsWrapper extends DefaultActionGroup {
   private void updateFromAction(AnAction action, Presentation presentation) {
     Presentation wrappedActionPresentation = myPresentationFactory.getPresentation(action);
     presentation.setDescription(wrappedActionPresentation.getDescription());
-    presentation.setText(wrappedActionPresentation.getText());
+    presentation.restoreTextWithMnemonic(wrappedActionPresentation);
     presentation.setVisible(wrappedActionPresentation.isVisible());
     presentation.setEnabled(wrappedActionPresentation.isEnabled());
     removeAll();
