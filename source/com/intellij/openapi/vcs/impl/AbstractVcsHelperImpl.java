@@ -3,6 +3,8 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -10,12 +12,14 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
+import com.intellij.openapi.diff.impl.FrameWrapper;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.localVcs.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -30,7 +34,9 @@ import com.intellij.openapi.vcs.impl.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.impl.CheckinProjectPanelImpl;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowser;
+import com.intellij.openapi.vcs.versionBrowser.ShowRevisionChangesAction;
 import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
+import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -43,9 +49,11 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.MessageView;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
+import com.intellij.util.ui.treetable.TreeTable;
 
 import javax.swing.*;
 import java.io.File;
@@ -441,6 +449,20 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     new ChangesBrowser(myProject, versionsProvider).show();
   }
 
+  public void showRevisions(List<AbstractRevisions> revisions, final String title) {
+    final TreeTable directoryDiffTree = PeerFactory.getInstance().getUIHelper()
+        .createDirectoryDiffTree(myProject, revisions.toArray(new AbstractRevisions[revisions.size()]));
+    new ShowRevisionChangesAction(myProject).registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, directoryDiffTree);
+
+    FrameWrapper frameWrapper = new FrameWrapper("vcs.showRevisions");
+    frameWrapper.setTitle(title);
+    frameWrapper.setComponent(new JScrollPane(directoryDiffTree));
+    frameWrapper.setData(DataConstants.PROJECT, myProject);
+    frameWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
+    frameWrapper.closeOnEsc();
+    frameWrapper.show();
+  }
+
   private DiffContent getContentForVersion(final VcsFileRevision version, final File file) throws IOException {
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     if (vFile != null && (version instanceof CurrentRevision) && !vFile.getFileType().isBinary()) {
@@ -494,5 +516,20 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     return checkinHandler.checkin((LvcsObject[])objects.toArray(new LvcsObject[objects.size()]),
                                              preparedComment);
 
+  }
+
+  private static class DialogWrapperWithCloseButton extends DialogWrapper {
+    private final JComponent myComponent;
+
+    public DialogWrapperWithCloseButton(JComponent component) {
+      super(true);
+      myComponent = component;
+      setTitle("Revisions");
+      init();
+    }
+
+    protected JComponent createCenterPanel() {
+      return myComponent;
+    }
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.versionBrowser.VersionsProvider;
+import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collection;
@@ -70,4 +71,6 @@ public abstract class AbstractVcsHelper {
                                        final File file);
 
   public abstract void showChangesBrowser(VersionsProvider versionsProvider);
+
+  public abstract void showRevisions(List<AbstractRevisions> revisions, final String title);
 }
