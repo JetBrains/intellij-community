@@ -43,12 +43,12 @@ import com.intellij.openapi.vcs.checkin.VcsOperation;
 import com.intellij.openapi.vcs.fileView.impl.FileViewPanel;
 import com.intellij.openapi.vcs.ui.CheckinDialog;
 import com.intellij.openapi.vcs.ui.CheckinFileDialog;
-import com.intellij.util.ui.OptionsDialog;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.impl.CheckinProjectPanelImpl;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcsUtil.VcsUtil;
 
 import java.util.*;
@@ -84,7 +84,11 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       if (ApplicationManager.getApplication().isDispatchThread()) {
         ApplicationManager.getApplication().saveAll();
       }
-      checkinFiles(project, context, roots, env);
+      final List<VcsException> errors = checkinFiles(project, context, roots, env);
+      
+      if (!errors.isEmpty()) {
+        showErrorConfirmation(errors);
+      }
     }
 
   }
@@ -108,8 +112,9 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     return firstEnv;
   }
 
-  private void checkinFiles(final Project project, final VcsContext context, FilePath[] roots, CheckinEnvironment checkinEnvironment) {
+  private List<VcsException> checkinFiles(final Project project, final VcsContext context, FilePath[] roots, CheckinEnvironment checkinEnvironment) {
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
+    List<VcsException> vcsExceptions = new ArrayList<VcsException>();
     if (configuration.SHOW_CHECKIN_OPTIONS || OptionsDialog.shiftIsPressed(context.getModifiers())) {
 
 
@@ -117,16 +122,16 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
                                                        checkinEnvironment,
                                                        roots);
       dialog.show();
-      if (!dialog.isOK()) return;
-      List<VcsException> vcsExceptions = checkinEnvironment.commit(roots, project, dialog.getPreparedComment(checkinEnvironment));
+      if (!dialog.isOK()) return collectErrors(vcsExceptions);
+      vcsExceptions.addAll(checkinEnvironment.commit(roots, project, dialog.getPreparedComment(checkinEnvironment)));
       if (!vcsExceptions.isEmpty()) {
         AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, getActionName(context));
       }
     }
     else {
-      List<VcsException> vcsExceptions = checkinEnvironment.commit(roots, project,
+      vcsExceptions.addAll(checkinEnvironment.commit(roots, project,
                                                                    checkinEnvironment.prepareCheckinMessage(
-                                                                     CheckinDialog.getInitialMessage(roots, project)));
+                                                                     CheckinDialog.getInitialMessage(roots, project))));
       if (!vcsExceptions.isEmpty()) {
         AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, getActionName(context));
       }
@@ -143,7 +148,9 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
         }
         refreshFileView(project);
       }
-    });    
+    });
+
+    return collectErrors(vcsExceptions);
   }
 
   private void checkinDirectories(final Project project, final VcsContext context, FilePath[] roots) {
@@ -184,7 +191,6 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
                       refreshFileView(project);
                     }
                   });
-
                   AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, getActionName(context));
                 }
               };
@@ -210,6 +216,32 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     catch (VcsException e) {
       Messages.showErrorDialog("Cannot analyze changes: " + e.getLocalizedMessage(), "Analizing Changes");
     }
+
+    List<VcsException> errors = collectErrors(vcsExceptions);
+    if (!errors.isEmpty()) {
+      showErrorConfirmation(errors);
+    }
+
+  }
+
+  private void showErrorConfirmation(final List<VcsException> errors) {
+    if (errors.size() == 1) {
+      Messages.showErrorDialog("Commit failed with one error", "Commit");
+    } else {
+      Messages.showErrorDialog("Commit failed with " + errors.size() + " errors", "Commit");
+    }
+
+  }
+
+  private List<VcsException> collectErrors(final List<VcsException> vcsExceptions) {
+    final ArrayList<VcsException> result = new ArrayList<VcsException>();
+    for (Iterator<VcsException> iterator = vcsExceptions.iterator(); iterator.hasNext();) {
+      VcsException vcsException = iterator.next();
+      if (!vcsException.isWarning()) {
+        result.add(vcsException);
+      }
+    }
+    return result;
   }
 
   protected int getCheckinType(FilePath[] roots) {
