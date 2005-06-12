@@ -13,12 +13,15 @@ import com.intellij.Patches;
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
 import javax.swing.text.Position;
-import javax.swing.tree.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
+import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class Tree extends JTree {
 
@@ -52,7 +55,8 @@ public class Tree extends JTree {
 
   private class MyMouseListener extends MouseAdapter {
     public void mousePressed(MouseEvent mouseevent) {
-      if(SwingUtilities.isRightMouseButton(mouseevent) || SwingUtilities.isMiddleMouseButton(mouseevent)) {
+      if(!SwingUtilities.isLeftMouseButton(mouseevent)
+         && (SwingUtilities.isRightMouseButton(mouseevent) || SwingUtilities.isMiddleMouseButton(mouseevent))) {
         TreePath treepath = getPathForLocation(mouseevent.getX(), mouseevent.getY());
         if (treepath != null) {
           if (getSelectionModel().getSelectionMode() != TreeSelectionModel.SINGLE_TREE_SELECTION) {
