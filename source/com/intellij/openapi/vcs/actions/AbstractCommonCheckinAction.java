@@ -303,28 +303,17 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       return;
     }
 
-    FilePath[] roots = getRoots(vcsContext);
+    FilePath[] roots = filterRoots(getRoots(vcsContext), project);
     if (roots == null || roots.length == 0) {
       presentation.setEnabled(false);
-      presentation.setVisible(false);
       return;
     }
 
     int checkinType = getCheckinType(roots);
     if (checkinType == DIRECTORIES) {
-      for (FilePath root : roots) {
-        AbstractVcs vcs = VcsUtil.getVcsFor(project, root);
-        if (vcs == null) {
-          presentation.setEnabled(false);
-          presentation.setVisible(false);
-          return;
-        }
-        CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
-        if (checkinEnvironment == null) {
-          presentation.setEnabled(false);
-          presentation.setVisible(false);
-          return;
-        }
+      if (roots.length == 0) {
+        presentation.setEnabled(false);
+        return;
       }
     }
     else {
@@ -345,6 +334,22 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
     presentation.setEnabled(true);
     presentation.setVisible(true);
+  }
+
+  private FilePath[] filterRoots(final FilePath[] roots, final Project project) {
+    final ArrayList<FilePath> result = new ArrayList<FilePath>();
+    for (FilePath root : roots) {
+      AbstractVcs vcs = VcsUtil.getVcsFor(project, root);
+      if (vcs != null) {
+        if (vcs.fileExistsInVcs(root)) {
+          CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
+          if (checkinEnvironment != null) {
+            result.add(root);
+          }
+        }
+      }
+    }
+    return result.toArray(new FilePath[result.size()]);
   }
 
   protected abstract boolean shouldShowDialog(VcsContext context);
