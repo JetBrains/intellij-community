@@ -9,6 +9,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.Patches;
+import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
@@ -44,6 +45,22 @@ public class Tree extends JTree {
     if(Patches.SUN_BUG_ID_4893787){
       addFocusListener(new MyFocusListener());
     }
+  }
+
+  /**
+   * Hack to prevent loosing multiple selection on Mac when clicking Ctrl+Left Mouse Button.
+   * See faulty code at BasicTreeUI.selectPathForEvent():2245
+   * @param e
+   */
+  protected void processMouseEvent(MouseEvent e) {    
+    if (SystemInfo.isMac) {
+      if (SwingUtilities.isLeftMouseButton(e) && e.isControlDown() && e.getID() == MouseEvent.MOUSE_PRESSED) {
+        int modifiers = (e.getModifiers() & ~(MouseEvent.CTRL_MASK | MouseEvent.BUTTON1_MASK)) |
+          MouseEvent.BUTTON3_MASK;
+        e = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), modifiers, e.getX(), e.getY(), e.getClickCount(), true, MouseEvent.BUTTON3);
+      }
+    }
+    super.processMouseEvent(e);
   }
 
   /**
