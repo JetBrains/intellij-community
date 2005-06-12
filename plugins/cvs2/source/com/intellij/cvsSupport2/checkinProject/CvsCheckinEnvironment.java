@@ -38,6 +38,9 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
 
   private final Project myProject;
 
+  public boolean showCheckinDialogInAnyCase() {
+    return false;
+  }
 
   public CvsCheckinEnvironment(Project project) {
     myProject = project;

@@ -52,4 +52,9 @@ public interface CheckinEnvironment {
   List<VcsException> commit(FilePath[] roots, Project project, String preparedComment);
 
   String getCheckinOperationName();
+
+  /**
+   * @return true if check in dialog should be shown even if there are no files to check in
+   */
+  boolean showCheckinDialogInAnyCase();
 }
