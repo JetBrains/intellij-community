@@ -85,10 +85,8 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
         ApplicationManager.getApplication().saveAll();
       }
       final List<VcsException> errors = checkinFiles(project, context, roots, env);
-      
-      if (!errors.isEmpty()) {
-        showErrorConfirmation(errors);
-      }
+
+      showErrorConfirmation(errors);
     }
 
   }
@@ -100,8 +98,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     CheckinEnvironment firstEnv = firstVcs.getCheckinEnvironment();
     if (firstEnv == null) return null;
 
-    for (int i = 0; i < roots.length; i++) {
-      FilePath file = roots[i];
+    for (FilePath file : roots) {
       AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
       if (vcs == null) return null;
       CheckinEnvironment env = vcs.getCheckinEnvironment();
@@ -122,7 +119,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
                                                        checkinEnvironment,
                                                        roots);
       dialog.show();
-      if (!dialog.isOK()) return collectErrors(vcsExceptions);
+      if (!dialog.isOK()) return vcsExceptions;
       vcsExceptions.addAll(checkinEnvironment.commit(roots, project, dialog.getPreparedComment(checkinEnvironment)));
       if (!vcsExceptions.isEmpty()) {
         AbstractVcsHelper.getInstance(project).showErrors(vcsExceptions, getActionName(context));
@@ -150,7 +147,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       }
     });
 
-    return collectErrors(vcsExceptions);
+    return vcsExceptions;
   }
 
   private void checkinDirectories(final Project project, final VcsContext context, FilePath[] roots) {
@@ -217,26 +214,30 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       Messages.showErrorDialog("Cannot analyze changes: " + e.getLocalizedMessage(), "Analizing Changes");
     }
 
-    List<VcsException> errors = collectErrors(vcsExceptions);
-    if (!errors.isEmpty()) {
-      showErrorConfirmation(errors);
-    }
+    showErrorConfirmation(vcsExceptions);
 
   }
 
-  private void showErrorConfirmation(final List<VcsException> errors) {
-    if (errors.size() == 1) {
-      Messages.showErrorDialog("Commit failed with one error", "Commit");
-    } else {
-      Messages.showErrorDialog("Commit failed with " + errors.size() + " errors", "Commit");
+  private void showErrorConfirmation(final List<VcsException> allExceptions) {
+    if (allExceptions.isEmpty()) return;
+    int errorsSize = collectErrors(allExceptions).size();
+    int warningsSize = allExceptions.size() - errorsSize;
+
+    if (errorsSize > 0 && warningsSize > 0) {
+      Messages.showErrorDialog("Commit failed with errors and warnings", "Commit");
+    }
+    else if (errorsSize > 0) {
+      Messages.showErrorDialog("Commit failed with errors", "Commit");
+    }
+    else {
+      Messages.showErrorDialog("Commit finished with warnings", "Commit");
     }
 
   }
 
   private List<VcsException> collectErrors(final List<VcsException> vcsExceptions) {
     final ArrayList<VcsException> result = new ArrayList<VcsException>();
-    for (Iterator<VcsException> iterator = vcsExceptions.iterator(); iterator.hasNext();) {
-      VcsException vcsException = iterator.next();
+    for (VcsException vcsException : vcsExceptions) {
       if (!vcsException.isWarning()) {
         result.add(vcsException);
       }
@@ -249,8 +250,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     FilePath file = roots[0];
     int firstType = getCheckinType(file);
 
-    for (int i = 0; i < roots.length; i++) {
-      FilePath root = roots[i];
+    for (FilePath root : roots) {
       int checkinType = getCheckinType(root);
       if (checkinType != firstType) return MIXED;
     }
@@ -264,8 +264,8 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
   private Collection<String> asPathList(FilePath[] roots) {
     ArrayList<String> result = new ArrayList<String>();
-    for (int i = 0; i < roots.length; i++) {
-      result.add(roots[i].getPath());
+    for (FilePath root : roots) {
+      result.add(root.getPath());
     }
     return result;
   }
@@ -312,8 +312,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
 
     int checkinType = getCheckinType(roots);
     if (checkinType == DIRECTORIES) {
-      for (int i = 0; i < roots.length; i++) {
-        FilePath root = roots[i];
+      for (FilePath root : roots) {
         AbstractVcs vcs = VcsUtil.getVcsFor(project, root);
         if (vcs == null) {
           presentation.setEnabled(false);
