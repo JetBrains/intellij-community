@@ -196,7 +196,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
               myLocalVar, expr,
               new NameSuggestionsGenerator() {
                 public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-                  return CodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, propName, expr, initializerType);
+                  return CodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, propName, expr, type);
                 }
 
                 public Pair<LookupItemPreferencePolicy, Set<LookupItem>> completeVariableName(String prefix,

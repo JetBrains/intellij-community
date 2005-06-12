@@ -60,6 +60,9 @@ public class NameSuggestionsField implements Focusable {
     if(suggestions.length > 0 && shouldUpdateTextField) {
       comboBox.setSelectedIndex(0);
     }
+    else {
+      comboBox.getEditor().setItem(oldItemFromTextField);
+    }
   }
 
   public boolean isNameSuggestionsChangeable() {
