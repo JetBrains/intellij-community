@@ -69,6 +69,7 @@ public class ListScrollingUtil {
     }
     list.scrollRectToVisible(cellBounds);
     list.setSelectedIndex(index);
+    list.ensureIndexIsVisible(index);
   }
 
   public static void movePageDown(JList list) {
@@ -93,6 +94,7 @@ public class ListScrollingUtil {
     }
     list.scrollRectToVisible(cellBounds);
     list.setSelectedIndex(index);
+    list.ensureIndexIsVisible(index);
   }
 
   public static void moveHome(JList list) {
