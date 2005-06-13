@@ -6,7 +6,7 @@
  * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
-package com.intellij.refactoring.makeMethodStatic;
+package com.intellij.refactoring.makeStatic;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;

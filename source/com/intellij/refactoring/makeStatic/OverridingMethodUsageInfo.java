@@ -1,4 +1,4 @@
-package com.intellij.refactoring.makeMethodStatic;
+package com.intellij.refactoring.makeStatic;
 
 import com.intellij.psi.PsiMethod;
 import com.intellij.usageView.UsageInfo;

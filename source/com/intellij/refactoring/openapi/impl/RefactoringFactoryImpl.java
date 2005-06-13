@@ -74,12 +74,20 @@ public class RefactoringFactoryImpl extends RefactoringFactory implements Projec
     return new MoveMembersRefactoringImpl(myProject, elements, targetClassQualifiedName, newVisibility);
   }
 
-  public MakeMethodStaticRefactoring createMakeMethodStatic(PsiMethod method,
+  public MakeStaticRefactoring<PsiMethod> createMakeMethodStatic(PsiMethod method,
                                                             boolean replaceUsages,
                                                             String classParameterName,
                                                             PsiField[] fields,
                                                             String[] names) {
     return new MakeMethodStaticRefactoringImpl(myProject, method, replaceUsages, classParameterName, fields, names);
+  }
+
+  public MakeStaticRefactoring<PsiClass> createMakeClassStatic(PsiClass aClass,
+                                                            boolean replaceUsages,
+                                                            String classParameterName,
+                                                            PsiField[] fields,
+                                                            String[] names) {
+    return new MakeClassStaticRefactoringImpl(myProject, aClass, replaceUsages, classParameterName, fields, names);
   }
 
   public ConvertToInstanceMethodRefactoring createConvertToInstanceMethod(PsiMethod method,

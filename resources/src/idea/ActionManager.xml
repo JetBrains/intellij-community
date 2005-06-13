@@ -433,7 +433,7 @@
       <group id="RefactoringMenu" class="com.intellij.refactoring.actions.RefactoringGroup" text="_Refactor" popup="true">
         <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction" text="_Rename..." description="Rename the selected symbol and correct all references"/>
         <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction" text="Change _Signature..." description="Change signature of the selected method or class and correct all references"/>
-        <action id="MakeMethodStatic" class="com.intellij.refactoring.actions.MakeMethodStaticAction" text="Make Method S_tatic..." description="Convert method to static and correct all references"/>
+        <action id="MakeStatic" class="com.intellij.refactoring.actions.MakeStaticAction" text="Make S_tatic..." description="Convert method to static and correct all references"/>
         <action id="ConvertToInstanceMethod" class="com.intellij.refactoring.actions.ConvertToInstanceMethodAction" text="C_onvert To Instance Method..." description="Convert static method to instance method and correct all references"/>
         <separator/>
         <action id="Move" class="com.intellij.refactoring.actions.MoveAction" text="_Move..." description="Move the selected class, package or static member to another package or class and correct all references"/>

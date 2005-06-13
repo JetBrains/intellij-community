@@ -22,7 +22,7 @@ import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
-import com.intellij.refactoring.makeMethodStatic.MakeMethodStaticHandler;
+import com.intellij.refactoring.makeStatic.MakeStaticHandler;
 import com.intellij.refactoring.memberPullUp.PullUpHandler;
 import com.intellij.refactoring.memberPushDown.PushDownHandler;
 import com.intellij.refactoring.move.MoveHandler;
@@ -77,7 +77,7 @@ public class RefactoringActionHandlerFactoryImpl extends RefactoringActionHandle
   }
 
   public RefactoringActionHandler createMakeMethodStaticHandler() {
-    return new MakeMethodStaticHandler();
+    return new MakeStaticHandler();
   }
 
   public RefactoringActionHandler createConvertToInstanceMethodHandler() {

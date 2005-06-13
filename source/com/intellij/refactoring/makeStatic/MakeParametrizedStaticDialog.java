@@ -1,0 +1,297 @@
+/*
+ * Created by IntelliJ IDEA.
+ * User: dsl
+ * Date: 15.04.2002
+ * Time: 15:29:56
+ * To change template for new class use
+ * Code Style | Class Templates options (Tools | IDE Options).
+ */
+package com.intellij.refactoring.makeStatic;
+
+import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.psi.*;
+import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.usageView.UsageViewUtil;
+
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+
+public class MakeParametrizedStaticDialog extends AbstractMakeStaticDialog {
+  private Project myProject;
+  private String[] myNameSuggestions;
+
+  private JCheckBox myMakeClassParameter;
+  private JComponent myClassParameterNameInputField;
+  private JCheckBox myMakeFieldParameters;
+
+  private ParameterTablePanel myParameterPanel;
+  private ParameterTablePanel.VariableData[] myVariableData;
+  private final boolean myAnyNonFieldMembersUsed;
+
+
+  public MakeParametrizedStaticDialog(Project project,
+                                      PsiTypeParameterListOwner member,
+                                      String[] nameSuggestions,
+                                      InternalUsageInfo[] internalUsages) {
+    super(project, member);
+    myProject = project;
+    myNameSuggestions = nameSuggestions;
+
+    String type = UsageViewUtil.getType(myMember);
+    setTitle("Make " + UsageViewUtil.capitalize(type) + " Static");
+    myAnyNonFieldMembersUsed = buildVariableData(internalUsages);
+    init();
+  }
+
+  private boolean buildVariableData(InternalUsageInfo[] internalUsages) {
+    ArrayList<ParameterTablePanel.VariableData> variableDatum = new ArrayList<ParameterTablePanel.VariableData>();
+    boolean nonFieldUsages = MakeStaticUtil.collectVariableData(myMember, internalUsages, variableDatum);
+
+    myVariableData = variableDatum.toArray(new ParameterTablePanel.VariableData[0]);
+    return nonFieldUsages;
+  }
+
+  public boolean isReplaceUsages() {
+    return true;
+  }
+
+  public boolean isMakeClassParameter() {
+    if (myMakeClassParameter != null)
+      return myMakeClassParameter.isSelected();
+    else
+      return false;
+  }
+
+  public String getClassParameterName() {
+    if (isMakeClassParameter()) {
+      if (myClassParameterNameInputField instanceof JTextField) {
+        return ((JTextField)myClassParameterNameInputField).getText();
+      }
+      else if(myClassParameterNameInputField instanceof JComboBox) {
+        return (String)(((JComboBox)myClassParameterNameInputField).getEditor().getItem());
+      }
+      else
+        return null;
+    }
+    else {
+      return null;
+    }
+  }
+
+  /**
+   *
+   * @return null if field parameters are not selected
+   */
+  public ParameterTablePanel.VariableData[] getVariableData() {
+    if(myMakeFieldParameters != null && myMakeFieldParameters.isSelected()) {
+      return myVariableData;
+    }
+    else {
+      return null;
+    }
+  }
+
+  protected void doHelpAction() {
+    HelpManager.getInstance().invokeHelp(HelpID.MAKE_METHOD_STATIC);
+  }
+
+  protected JComponent createNorthPanel() {
+    GridBagConstraints gbConstraints = new GridBagConstraints();
+
+    JPanel panel = new JPanel(new GridBagLayout());
+    panel.setBorder(IdeBorderFactory.createBorder());
+
+    gbConstraints.insets = new Insets(4, 8, 4, 8);
+    gbConstraints.weighty = 1;
+    gbConstraints.weightx = 1;
+    gbConstraints.gridy = 0;
+    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
+    gbConstraints.fill = GridBagConstraints.BOTH;
+    gbConstraints.anchor = GridBagConstraints.WEST;
+    panel.add(createDescriptionLabel(), gbConstraints);
+//    panel.add(new JLabel("Add object as a parameter with the following name:"), gbConstraints);
+
+    gbConstraints.weighty = 1;
+    gbConstraints.weightx = 1;
+    gbConstraints.gridy++;
+    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
+    gbConstraints.fill = GridBagConstraints.NONE;
+    gbConstraints.anchor = GridBagConstraints.WEST;
+    String text = myMember instanceof PsiMethod ? "Add object as a parameter with name:" : "Add object as a parameter to constructors with name:";
+    myMakeClassParameter = new JCheckBox(text);
+    panel.add(myMakeClassParameter, gbConstraints);
+    myMakeClassParameter.setMnemonic('O');
+    myMakeClassParameter.setSelected(myAnyNonFieldMembersUsed);
+
+    gbConstraints.insets = new Insets(0, 8, 4, 8);
+    gbConstraints.weighty = 1;
+    gbConstraints.weightx = 1;
+    gbConstraints.gridy++;
+    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
+    gbConstraints.fill = GridBagConstraints.BOTH;
+    gbConstraints.anchor = GridBagConstraints.EAST;
+    if(myNameSuggestions.length > 1) {
+      myClassParameterNameInputField = createComboBoxForName();
+    }
+    else {
+      JTextField textField = new JTextField();
+      textField.setText(myNameSuggestions[0]);
+      textField.getDocument().addDocumentListener(new DocumentAdapter() {
+        public void textChanged(DocumentEvent event) {
+          updateControls();
+        }
+      });
+      myClassParameterNameInputField = textField;
+    }
+    panel.add(myClassParameterNameInputField, gbConstraints);
+
+    if(myVariableData.length > 0) {
+      gbConstraints.insets = new Insets(4, 8, 4, 8);
+      gbConstraints.weighty = 1;
+      gbConstraints.weightx = 1;
+      gbConstraints.gridy++;
+      gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
+      gbConstraints.gridheight = 1;
+      gbConstraints.fill = GridBagConstraints.NONE;
+      gbConstraints.anchor = GridBagConstraints.WEST;
+      text = myMember instanceof PsiMethod ? "Add parameters for fields:" : "Add parameters for fields to constructors:";
+      myMakeFieldParameters = new JCheckBox(text);
+      panel.add(myMakeFieldParameters, gbConstraints);
+      myMakeFieldParameters.setMnemonic('F');
+      myMakeFieldParameters.setSelected(!myAnyNonFieldMembersUsed);
+
+      myParameterPanel = new ParameterTablePanel(myProject, myVariableData) {
+        protected void updateSignature() {
+        }
+
+        protected void doEnterAction() {
+          clickDefaultButton();
+        }
+
+        protected void doCancelAction() {
+        }
+      };
+      gbConstraints.gridy++;
+      gbConstraints.insets = new Insets(0, 8, 4, 8);
+      panel.add(myParameterPanel, gbConstraints);
+    }
+
+//    myParameterGroup.add(myMakeClassParameter);
+//    myParameterGroup.add(myMakeFieldParameters);
+
+    ActionListener inputFieldValidator = new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        updateControls();
+      }
+    };
+
+    myMakeClassParameter.addActionListener(inputFieldValidator);
+    myMakeFieldParameters.addActionListener(inputFieldValidator);
+
+
+
+    updateControls();
+
+    return panel;
+  }
+
+
+  protected JComponent createCenterPanel() {
+    return null;
+  }
+
+  protected boolean validateData() {
+    int ret = 0;
+    if (isMakeClassParameter()) {
+      final PsiMethod methodWithParameter = checkParameterDoesNotExist();
+      if (methodWithParameter != null) {
+        String who = methodWithParameter == myMember ? "This method" : UsageViewUtil.getDescriptiveName(methodWithParameter);
+        String message = who + " already has parameter named '" + getClassParameterName() + "'.\n" +
+                         "Use this name anyway?";
+        ret = Messages.showYesNoDialog(myProject, message, "Warning", Messages.getWarningIcon());
+        myClassParameterNameInputField.requestFocusInWindow();
+      }
+    }
+    return ret == 0;
+  }
+
+  private PsiMethod checkParameterDoesNotExist() {
+    String parameterName = getClassParameterName();
+    if(parameterName == null) return null;
+    PsiMethod[] methods = myMember instanceof PsiMethod ? new PsiMethod[]{(PsiMethod)myMember} : ((PsiClass)myMember).getConstructors();
+    for (PsiMethod method : methods) {
+      PsiParameterList parameterList = method.getParameterList();
+      if(parameterList == null) continue;
+      PsiParameter[] parameters = parameterList.getParameters();
+      for (PsiParameter parameter : parameters) {
+        if (parameterName.equals(parameter.getName())) return method;
+      }
+    }
+
+    return null;
+  }
+
+  private void updateControls() {
+    if (isMakeClassParameter()) {
+      String classParameterName = getClassParameterName();
+      if (classParameterName == null) {
+        setOKActionEnabled(false);
+      }
+      else {
+        setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(classParameterName.trim()));
+      }
+    }
+    else
+      setOKActionEnabled(true);
+
+    if(myClassParameterNameInputField != null) {
+      myClassParameterNameInputField.setEnabled(isMakeClassParameter());
+    }
+
+    if(myParameterPanel != null) {
+      myParameterPanel.setEnabled(myMakeFieldParameters.isSelected());
+    }
+  }
+
+  private JComboBox createComboBoxForName() {
+    final ComboBox combobox = new ComboBox(myNameSuggestions,-1);
+
+    combobox.setEditable(true);
+    combobox.setSelectedIndex(0);
+    combobox.setMaximumRowCount(8);
+
+    combobox.addItemListener(
+      new ItemListener() {
+        public void itemStateChanged(ItemEvent e) {
+          updateControls();
+        }
+      }
+    );
+    combobox.getEditor().getEditorComponent().addKeyListener(
+      new KeyAdapter() {
+        public void keyPressed(KeyEvent e) {
+          updateControls();
+        }
+
+        public void keyReleased(KeyEvent e) {
+          updateControls();
+        }
+
+        public void keyTyped(KeyEvent e) {
+          updateControls();
+        }
+      }
+    );
+
+    return combobox;
+  }
+}

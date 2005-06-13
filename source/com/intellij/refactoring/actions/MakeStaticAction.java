@@ -12,9 +12,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.makeMethodStatic.MakeMethodStaticHandler;
+import com.intellij.refactoring.makeStatic.MakeStaticHandler;
 
-public class MakeMethodStaticAction extends BaseRefactoringAction {
+public class MakeStaticAction extends BaseRefactoringAction {
     protected boolean isAvailableInEditorOnly() {
         return false;
     }
@@ -25,6 +25,6 @@ public class MakeMethodStaticAction extends BaseRefactoringAction {
     }
 
     protected RefactoringActionHandler getHandler(DataContext dataContext) {
-        return new MakeMethodStaticHandler();
+        return new MakeStaticHandler();
     }
 }

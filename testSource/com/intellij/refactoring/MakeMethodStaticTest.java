@@ -12,10 +12,9 @@ import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.refactoring.makeMethodStatic.MakeMethodStaticProcessor;
-import com.intellij.refactoring.makeMethodStatic.MakeMethodStaticUtil;
-import com.intellij.refactoring.makeMethodStatic.Settings;
+import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
+import com.intellij.refactoring.makeStatic.MakeStaticUtil;
+import com.intellij.refactoring.makeStatic.Settings;
 import com.intellij.refactoring.util.ParameterTablePanel;
 
 import java.util.ArrayList;
@@ -162,13 +161,13 @@ public class MakeMethodStaticTest extends CodeInsightTestCase {
     assertTrue(element instanceof PsiMethod);
     PsiMethod method = (PsiMethod) element;
     final ArrayList<ParameterTablePanel.VariableData> parametersForFields = new ArrayList<ParameterTablePanel.VariableData>();
-    final boolean addClassParameter = MakeMethodStaticUtil.buildVariableData(method, parametersForFields);
+    final boolean addClassParameter = MakeStaticUtil.buildVariableData(method, parametersForFields);
 
     new MakeMethodStaticProcessor(
             myProject,
             method,
             new Settings(true, addClassParameter ? "anObject" : null,
-                                (ParameterTablePanel.VariableData[])parametersForFields.toArray(
-                                  new ParameterTablePanel.VariableData[parametersForFields.size()]))).run();
+                         parametersForFields.toArray(
+                           new ParameterTablePanel.VariableData[parametersForFields.size()]))).run();
   }
 }

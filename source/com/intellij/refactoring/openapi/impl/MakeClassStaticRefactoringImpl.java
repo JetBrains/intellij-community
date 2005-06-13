@@ -5,31 +5,31 @@
 package com.intellij.refactoring.openapi.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.MakeStaticRefactoring;
 import com.intellij.refactoring.RefactoringImpl;
-import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
+import com.intellij.refactoring.makeStatic.MakeClassStaticProcessor;
 import com.intellij.refactoring.makeStatic.Settings;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author dsl
+ * @author ven
  */
-public class MakeMethodStaticRefactoringImpl extends RefactoringImpl<MakeMethodStaticProcessor>
-  implements MakeStaticRefactoring<PsiMethod> {
-  MakeMethodStaticRefactoringImpl(Project project,
-                                  PsiMethod method,
-                                  boolean replaceUsages,
-                                  String classParameterName,
-                                  PsiField[] fields,
-                                  String[] names) {
-    super(new MakeMethodStaticProcessor(project, method, new Settings(replaceUsages, classParameterName, fields, names)));
+public class MakeClassStaticRefactoringImpl extends RefactoringImpl<MakeClassStaticProcessor>
+  implements MakeStaticRefactoring<PsiClass> {
+  MakeClassStaticRefactoringImpl(Project project,
+                                 PsiClass aClass,
+                                 boolean replaceUsages,
+                                 String classParameterName,
+                                 PsiField[] fields,
+                                 String[] names) {
+    super(new MakeClassStaticProcessor(project, aClass, new Settings(replaceUsages, classParameterName, fields, names)));
   }
 
-  public PsiMethod getMember() {
+  public PsiClass getMember() {
     return myProcessor.getMember();
   }
 
@@ -55,6 +55,4 @@ public class MakeMethodStaticRefactoringImpl extends RefactoringImpl<MakeMethodS
   public String getParameterNameForField(PsiField field) {
     return myProcessor.getSettings().getNameForField(field);
   }
-
-
 }

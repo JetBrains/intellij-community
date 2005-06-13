@@ -37,7 +37,13 @@ public abstract class RefactoringFactory {
                                                            String targetClassQualifiedName,
                                                            String newVisibility);
 
-  public abstract MakeMethodStaticRefactoring createMakeMethodStatic(PsiMethod method,
+  public abstract MakeStaticRefactoring<PsiMethod> createMakeMethodStatic(PsiMethod method,
+                                                                     boolean replaceUsages,
+                                                                     String classParameterName,
+                                                                     PsiField[] fields,
+                                                                     String[] names);
+
+  public abstract MakeStaticRefactoring<PsiClass> createMakeClassStatic(PsiClass aClass,
                                                                      boolean replaceUsages,
                                                                      String classParameterName,
                                                                      PsiField[] fields,
