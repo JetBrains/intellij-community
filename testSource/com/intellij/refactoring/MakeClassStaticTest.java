@@ -26,6 +26,8 @@ public class MakeClassStaticTest extends CodeInsightTestCase {
 
   public void testSimpleWithFields() throws Exception { performWithFields(); }
 
+  public void testQualifiedThisInSibling() throws Exception { perform(true); }
+
   private void perform(boolean addClassParameter) throws Exception {
     configureByFile(TEST_ROOT + getTestName(true) + ".java");
     PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
