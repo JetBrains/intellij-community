@@ -73,6 +73,11 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     myShouldRename = new boolean[myRenames.length];
   }
 
+  @Override
+  protected String getDimensionServiceKey() {
+    return "#com.intellij.refactoring.rename.AutomaticRenamingDialog";
+  }
+
   protected JComponent createNorthPanel() {
     final Box box = Box.createHorizontalBox();
     box.add(new JLabel(myRenamer.getDialogDescription()));
