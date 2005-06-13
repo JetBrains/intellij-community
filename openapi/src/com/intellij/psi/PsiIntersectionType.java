@@ -43,8 +43,8 @@ public class PsiIntersectionType extends PsiType {
   }
 
   public boolean isValid() {
-    for (int i = 0; i < myConjuncts.length; i++) {
-      if (!myConjuncts[i].isValid()) return false;
+    for (PsiType conjunct : myConjuncts) {
+      if (!conjunct.isValid()) return false;
     }
     return true;
   }
@@ -65,8 +65,8 @@ public class PsiIntersectionType extends PsiType {
     return myConjuncts;
   }
 
-  public static PsiType createIntersection (PsiType[] conjuncts) {
-    LOG.assertTrue(conjuncts.length >=1);
+  public static PsiType createIntersection (PsiType... conjuncts) {
+    LOG.assertTrue(conjuncts.length >= 1);
     if (conjuncts.length == 1) return conjuncts[0];
     return new PsiIntersectionType(conjuncts);
   }
