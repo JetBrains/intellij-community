@@ -378,7 +378,23 @@ class FormatProcessor {
   }
 
   private boolean isSuitableInTheCurrentPosition(final WrapImpl wrap) {
-    return wrap.isWrapFirstElement() || (wrap.getFirstPosition() < myCurrentBlock.getTextRange().getStartOffset());
+    if (wrap.getFirstPosition() < myCurrentBlock.getTextRange().getStartOffset()) {
+      return true;
+    }
+
+    if (wrap.isWrapFirstElement()) {
+      return true;
+    }
+
+    if (wrap.getType() == WrapImpl.Type.WRAP_AS_NEEDED) {
+      return true;
+    }
+
+    if (wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED) {
+      return lineOver();
+    }
+
+    return false;
   }
 
   private WrapImpl getWrapToBeUsed(final WrapImpl[] wraps) {

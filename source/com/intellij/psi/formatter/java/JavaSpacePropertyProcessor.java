@@ -250,7 +250,11 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
   public void visitWhileStatement(PsiWhileStatement statement) {
     if (myRole2 == ChildRole.LPARENTH) {
       createSpaceInCode(mySettings.SPACE_BEFORE_WHILE_PARENTHESES);
-    } else if (myRole2 == ChildRole.LOOP_BODY) {
+    }
+    else if (myRole1 == ChildRole.LPARENTH || myRole2 == ChildRole.RPARENTH) {
+      createSpaceInCode(mySettings.SPACE_WITHIN_WHILE_PARENTHESES);
+    }    
+    else if (myRole2 == ChildRole.LOOP_BODY) {
       myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_WHILE_LBRACE, mySettings.BRACE_STYLE, new TextRange(myParent.getTextRange().getStartOffset(),
                                                                                                                   myChild2.getTextRange().getStartOffset()),
                                       mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
