@@ -30,7 +30,8 @@ public class MakeMethodOrClassStaticViewDescriptor implements UsageViewDescripto
     myMember = member;
     myUsages = usages;
     myRefreshCommand = refreshCommand;
-    myProcessedElementsHeader = "Method to be made static";
+    String who = UsageViewUtil.capitalize(UsageViewUtil.getType(myMember));
+    myProcessedElementsHeader = who + " to be made static";
   }
 
   public PsiElement[] getElements() {

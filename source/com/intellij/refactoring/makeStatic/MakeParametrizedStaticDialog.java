@@ -29,9 +29,9 @@ public class MakeParametrizedStaticDialog extends AbstractMakeStaticDialog {
   private Project myProject;
   private String[] myNameSuggestions;
 
-  private JCheckBox myMakeClassParameter;
+  private JCheckBox myMakeClassParameter = new JCheckBox();
   private JComponent myClassParameterNameInputField;
-  private JCheckBox myMakeFieldParameters;
+  private JCheckBox myMakeFieldParameters = new JCheckBox();
 
   private ParameterTablePanel myParameterPanel;
   private ParameterTablePanel.VariableData[] myVariableData;
@@ -127,7 +127,7 @@ public class MakeParametrizedStaticDialog extends AbstractMakeStaticDialog {
     gbConstraints.fill = GridBagConstraints.NONE;
     gbConstraints.anchor = GridBagConstraints.WEST;
     String text = myMember instanceof PsiMethod ? "Add object as a parameter with name:" : "Add object as a parameter to constructors with name:";
-    myMakeClassParameter = new JCheckBox(text);
+    myMakeClassParameter.setText(text);
     panel.add(myMakeClassParameter, gbConstraints);
     myMakeClassParameter.setMnemonic('O');
     myMakeClassParameter.setSelected(myAnyNonFieldMembersUsed);
@@ -164,7 +164,7 @@ public class MakeParametrizedStaticDialog extends AbstractMakeStaticDialog {
       gbConstraints.fill = GridBagConstraints.NONE;
       gbConstraints.anchor = GridBagConstraints.WEST;
       text = myMember instanceof PsiMethod ? "Add parameters for fields:" : "Add parameters for fields to constructors:";
-      myMakeFieldParameters = new JCheckBox(text);
+      myMakeFieldParameters.setText(text);
       panel.add(myMakeFieldParameters, gbConstraints);
       myMakeFieldParameters.setMnemonic('F');
       myMakeFieldParameters.setSelected(!myAnyNonFieldMembersUsed);
