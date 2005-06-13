@@ -436,7 +436,7 @@
         <action id="MakeStatic" class="com.intellij.refactoring.actions.MakeStaticAction" text="Make S_tatic..." description="Convert method or inner class to static and correct all references"/>
         <action id="ConvertToInstanceMethod" class="com.intellij.refactoring.actions.ConvertToInstanceMethodAction" text="C_onvert To Instance Method..." description="Convert static method to instance method and correct all references"/>
         <separator/>
-        <action id="Move" class="com.intellij.refactoring.actions.MoveAction" text="_Move..." description="Move the selected class, package or static member to another package or class and correct all references"/>
+        <action id="Move" class="com.intellij.refactoring.actions.MoveAction" text="_Move..." description="Move the selected class, method, package or static member to another package or class and correct all references"/>
         <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction" text="C_opy..." description="Create a copy of the selected class, file(s) or directory(es)"/>
         <action id="CloneElement" class="com.intellij.ide.actions.CloneElementAction" text="Clo_ne..." description="Create a copy of the selected class, file or directory in the same package/directory"/>
         <action id="SafeDelete" class="com.intellij.refactoring.actions.SafeDeleteAction" text="Safe _Delete..." description="Delete the selected class, method or field, checking for usages"/>
