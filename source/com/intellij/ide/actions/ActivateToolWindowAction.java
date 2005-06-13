@@ -38,7 +38,12 @@ public class ActivateToolWindowAction extends AnAction {
   public void actionPerformed(AnActionEvent e){
     Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
-    windowManager.getToolWindow(myToolWindowId).activate(null);
+    if (windowManager.isEditorComponentActive() || !myToolWindowId.equals(windowManager.getActiveToolWindowId())) {
+      windowManager.getToolWindow(myToolWindowId).activate(null);
+    }
+    else {
+      windowManager.getToolWindow(myToolWindowId).hide(null);
+    }
   }
 
   public String getToolWindowId() {
