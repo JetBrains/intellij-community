@@ -308,33 +308,40 @@ public abstract class OptionTableWithPreviewPanel extends JPanel {
   private void replaceText() {
     final Project project = ProjectManagerEx.getInstanceEx().getDefaultProject();
     final PsiManager manager = PsiManager.getInstance(project);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        PsiElementFactory factory = manager.getElementFactory();
-        try {
-          PsiFile psiFile = factory.createFileFromText("a.java", getPreviewText());
-          CodeStyleSettings saved = mySettings;
-          mySettings = (CodeStyleSettings)mySettings.clone();
-          apply();
-          if (getRightMargin() > 0) {
-            mySettings.RIGHT_MARGIN = getRightMargin();
+    final LanguageLevel effectiveLanguageLevel = manager.getEffectiveLanguageLevel();
+    manager.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+    try {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          PsiElementFactory factory = manager.getElementFactory();
+          try {
+            PsiFile psiFile = factory.createFileFromText("a.java", getPreviewText());
+            CodeStyleSettings saved = mySettings;
+            mySettings = (CodeStyleSettings)mySettings.clone();
+            apply();
+            if (getRightMargin() > 0) {
+              mySettings.RIGHT_MARGIN = getRightMargin();
+            }
+
+            CodeStyleSettingsManager.getInstance(project).setTemporarySettings(mySettings);
+            CodeStyleManager.getInstance(project).reformat(psiFile);
+            CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+
+            myEditor.getSettings().setTabSize(mySettings.getTabSize(StdFileTypes.JAVA));
+            mySettings = saved;
+
+            Document document = myEditor.getDocument();
+            document.replaceString(0, document.getTextLength(), psiFile.getText());
           }
-
-          CodeStyleSettingsManager.getInstance(project).setTemporarySettings(mySettings);
-          CodeStyleManager.getInstance(project).reformat(psiFile);
-          CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-
-          myEditor.getSettings().setTabSize(mySettings.getTabSize(StdFileTypes.JAVA));
-          mySettings = saved;
-
-          Document document = myEditor.getDocument();
-          document.replaceString(0, document.getTextLength(), psiFile.getText());
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
-    });
+      });
+    }
+    finally {
+      manager.setEffectiveLanguageLevel(effectiveLanguageLevel);
+    }
   }
 
   protected int getRightMargin() {

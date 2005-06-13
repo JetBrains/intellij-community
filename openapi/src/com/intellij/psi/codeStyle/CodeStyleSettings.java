@@ -656,6 +656,9 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   public boolean WRAP_COMMENTS = false;
 
+  public int ASSERT_STATEMENT_WRAP = DO_NOT_WRAP;
+  public boolean ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false;
+
 // BRACE FORCING
   public static final int DO_NOT_FORCE = 0x00;
   public static final int FORCE_BRACES_IF_MULTILINE = 0x01;

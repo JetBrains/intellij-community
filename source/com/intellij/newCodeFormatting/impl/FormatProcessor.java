@@ -296,7 +296,12 @@ class FormatProcessor {
           }
         }
       }
-      whiteSpace.ensureLineFeed();
+
+      if (!whiteSpace.containsLineFeeds()) {
+        whiteSpace.ensureLineFeed();
+//        releaseAlignments();
+      }
+
       myWrapCandidate = null;
     }
     else {
@@ -320,6 +325,20 @@ class FormatProcessor {
     return false;
   }
 
+  private void releaseAlignments() {
+    AbstractBlockWrapper current = myCurrentBlock;
+    while (true) {
+      final AlignmentImpl alignment = (AlignmentImpl)current.getBlock().getAlignment();
+      if (alignment != null && alignment.getCurrentOffset() >= 0) {
+        alignment.setCurrentOffset(-1);
+      }
+      else {
+        current = current.getParent();
+        if (current.getStartOffset() != myCurrentBlock.getStartOffset()) break;
+      }
+    }
+  }
+
   private boolean canReplaceWrapCandidate(WrapImpl wrap) {
     if (myWrapCandidate == null) return true;
     final WrapImpl currentWrap = myWrapCandidate.getWrap();
@@ -334,6 +353,12 @@ class FormatProcessor {
   }
 
   private void onCurrentLineChanged() {
+    /*
+    for (Iterator<AlignmentImpl> iterator = myAlignedAlignments.iterator(); iterator.hasNext();) {
+      AlignmentImpl alignment = iterator.next();
+      alignment.setCurrentOffset(-1);
+    }
+    */
     myAlignedAlignments.clear();
     myWrapCandidate = null;
   }
@@ -387,14 +412,36 @@ class FormatProcessor {
     }
 
     if (wrap.getType() == WrapImpl.Type.WRAP_AS_NEEDED) {
-      return true;
+      return positionAfterWrappingIsSutable();
     }
 
     if (wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED) {
-      return lineOver();
+      return lineOver() && positionAfterWrappingIsSutable();
     }
 
     return false;
+  }
+
+  private boolean positionAfterWrappingIsSutable() {
+    boolean result = true;
+    final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
+    if (whiteSpace.containsLineFeeds()) return true;
+    final int spaces = whiteSpace.getSpaces();
+    int indentSpaces = whiteSpace.getIndentSpaces();
+    try {
+      final int offsetBefore = getOffsetBefore(myCurrentBlock.getBlock());
+      whiteSpace.ensureLineFeed();
+      adjustLineIndent();
+      final int offsetAfter = getOffsetBefore(myCurrentBlock.getBlock());
+      if (offsetBefore <= offsetAfter) {
+        result = false;
+      }
+    }
+    finally {
+      whiteSpace.removeLineFeeds(myCurrentBlock.getSpaceProperty(), this);
+      whiteSpace.setSpaces(spaces, indentSpaces);
+    }
+    return result;
   }
 
   private WrapImpl getWrapToBeUsed(final WrapImpl[] wraps) {

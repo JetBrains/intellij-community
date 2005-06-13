@@ -187,6 +187,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     else if (myNode.getElementType() == ElementType.CONDITIONAL_EXPRESSION) {
       return Formatter.getInstance().createWrap(getWrapType(mySettings.TERNARY_OPERATION_WRAP), false);
     }
+    else if (myNode.getElementType() == ElementType.ASSERT_STATEMENT) {
+      return Formatter.getInstance().createWrap(getWrapType(mySettings.ASSERT_STATEMENT_WRAP), false);
+    }
     else if (myNode.getElementType() == ElementType.FOR_STATEMENT) {
       return Formatter.getInstance().createWrap(getWrapType(mySettings.FOR_STATEMENT_WRAP), false);
     }
@@ -253,7 +256,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                  final Wrap defaultWrap,
                                  final Indent childIndent) {
     if (child.getElementType() == ElementType.METHOD_CALL_EXPRESSION) {
-      result.add(createMethodCallExpressiobBlock(child));
+      result.add(createMethodCallExpressiobBlock(child,arrangeChildWrap(child, defaultWrap)));
     }
     else if (child.getElementType() == ElementType.ARRAY_INITIALIZER_EXPRESSION) {
       result.addAll(new CodeBlockBlock(child, null, null, null, mySettings).buildChildren());
@@ -317,7 +320,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return child;
   }
 
-  private Block createMethodCallExpressiobBlock(final ASTNode node) {
+  private Block createMethodCallExpressiobBlock(final ASTNode node, final Wrap blockWrap) {
     final ArrayList<ASTNode> nodes = new ArrayList<ASTNode>();
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     collectNodes(nodes, node);
@@ -329,7 +332,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       subBlocks.add(createSynthBlock(subNodes, wrap));
     }
 
-    return new SynteticCodeBlock(subBlocks, null, mySettings, Formatter.getInstance().createContinuationWithoutFirstIndent(), null);
+    return new SynteticCodeBlock(subBlocks, null, mySettings, Formatter.getInstance().createContinuationWithoutFirstIndent(), blockWrap);
   }
 
   private Block createSynthBlock(final ArrayList<ASTNode> subNodes, final Wrap wrap)  {
@@ -539,6 +542,18 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       else {
         return null;
       }
+    }
+    else if (myNode.getElementType() == ElementType.ASSERT_STATEMENT) {
+      if (role == ChildRole.CONDITION) {
+        return defaultWrap;
+      }
+      if (role == ChildRole.ASSERT_DESCRIPTION && !mySettings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE) {
+        return defaultWrap;
+      }
+      if (role == ChildRole.COLON && mySettings.ASSERT_STATEMENT_COLON_ON_NEXT_LINE) {
+        return defaultWrap;
+      }
+      return null;
     }
     else {
       return defaultWrap;

@@ -35,6 +35,7 @@ public class WrappingPanel extends OptionTableWithPreviewPanel {
   private static final String ARRAY_INITIALIZER_WRAPPING = "Array initializer";
   private static final String LABELED_STATEMENT_WRAPPING = "Label declaration";
   private static final String MODIFIER_LIST_WRAPPING = "Modifier list";
+  private static final String ASSERT_STATEMENT_WRAPPING = "Assert statement";
 
   public WrappingPanel(CodeStyleSettings settings) {
     super(settings);
@@ -84,6 +85,9 @@ public class WrappingPanel extends OptionTableWithPreviewPanel {
 
     initBooleanField("MODIFIER_LIST_WRAP", "Wrap after modifier list", MODIFIER_LIST_WRAPPING);
 
+    initRadioGroupField("ASSERT_STATEMENT_WRAP", ASSERT_STATEMENT_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    initBooleanField("ASSERT_STATEMENT_COLON_ON_NEXT_LINE", "':' signs on next line", ASSERT_STATEMENT_WRAPPING);
+
     initRadioGroupField("CLASS_ANNOTATION_WRAP", "Classes annotation", FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
     initRadioGroupField("METHOD_ANNOTATION_WRAP", "Methods annotation", FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
     initRadioGroupField("FIELD_ANNOTATION_WRAP", "Fields annotation", FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
@@ -124,6 +128,7 @@ public class WrappingPanel extends OptionTableWithPreviewPanel {
            "    int x = (3 + 4 + 5 + 6) * (7 + 8 + 9 + 10) * (11 + 12 + 13 + 14 + 0xFFFFFFFF);\n" +
            "    String s1, s2, s3;\n" +
            "    s1 = s2 = s3 = \"012345678901456\";\n" +
+           "    assert i + j + k + l + n+ m <= 2 : \"assert description\";" +
            "    int y = 2 > 3 ? 7 + 8 + 9 : 11 + 12 + 13;\n" +
            "    label: " +
            "    for (int i = 0; i < 0xFFFFFF; i += 2) {\n" +

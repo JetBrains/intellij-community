@@ -992,7 +992,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   public void setEffectiveLanguageLevel(LanguageLevel languageLevel) {
-    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode(), "Use PsiManager.setEffectiveLanguageLevel only from unit tests");
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || myProject.isDefault(), "Use PsiManager.setEffectiveLanguageLevel only from unit tests");
     myLanguageLevel = languageLevel;
   }
 
