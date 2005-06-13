@@ -217,7 +217,15 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     PsiElement newQualifier;
 
     if (instanceRef == null || instanceRef instanceof PsiSuperExpression) {
-      instanceRef = factory.createExpressionFromText("this", null);
+      final PsiClass thisClass = RefactoringUtil.getThisClass(element);
+      String thisText;
+      if (thisClass.getManager().areElementsEquivalent(thisClass, myMember.getContainingClass())) {
+        thisText = "this";
+      }
+      else {
+        thisText = myMember.getContainingClass().getName() + ".this";
+      }
+      instanceRef = factory.createExpressionFromText(thisText, null);
       newQualifier = null;
     }
     else {
