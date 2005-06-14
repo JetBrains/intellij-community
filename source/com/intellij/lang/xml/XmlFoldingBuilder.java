@@ -31,9 +31,15 @@ public class XmlFoldingBuilder implements FoldingBuilder {
 
   public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document) {
     final PsiElement psiElement = node.getPsi();
-    if (!(psiElement instanceof XmlFile)) return FoldingDescriptor.EMPTY;
-    XmlFile file = ((XmlFile)psiElement);
-    final XmlDocument xmlDocument = file.getDocument();
+    XmlDocument xmlDocument = null;
+    
+    if (psiElement instanceof XmlFile) { 
+      XmlFile file = ((XmlFile)psiElement);
+      xmlDocument = file.getDocument();
+    } else if (psiElement instanceof XmlDocument) {
+      xmlDocument = (XmlDocument)psiElement;
+    }
+    
     XmlTag rootTag = xmlDocument == null ? null : xmlDocument.getRootTag();
     List<FoldingDescriptor> foldings = null;
 
