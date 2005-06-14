@@ -242,7 +242,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     if(document != null) synchronizer.startTransaction(document, transaction.getChangeScope());
   }
 
-  private PsiFile getContainingFileByTree(final PsiElement changeScope) { // there could be pseudo phisical trees (JSPX/JSP/etc.) which should not translate any changes to document and should not pass any PSI events
+  private PsiFile getContainingFileByTree(final PsiElement changeScope) {
+    // there could be pseudo phisical trees (JSPX/JSP/etc.) which should not translate
+    // any changes to document and should not pass any PSI events
     final PsiFile containingFile = (PsiFile)TreeUtil.getFileElement((TreeElement)changeScope.getNode()).getPsi();
     return containingFile;
   }
