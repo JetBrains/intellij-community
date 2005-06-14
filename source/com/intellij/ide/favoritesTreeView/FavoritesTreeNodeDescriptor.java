@@ -45,7 +45,10 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
   }
 
   public String getLocation(){
-    final Object nodeElement = myElement.getValue();
+    Object nodeElement = myElement.getValue();
+    if (nodeElement instanceof SmartPsiElementPointer){
+      nodeElement = ((SmartPsiElementPointer)nodeElement).getElement();
+    }
     if (nodeElement instanceof PsiElement){
       if (nodeElement instanceof PsiClass){
         return ClassPresentationUtil.getNameForClass((PsiClass)nodeElement, true);
@@ -59,8 +62,8 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
       }
       if (parent == null) return "";
       final Module module = ModuleUtil.findModuleForPsiElement(parent);
-      final PsiFile containingFile = parent.getContainingFile();
-      return module != null && containingFile != null ? (module.getName() + ":" + containingFile.getName()) : "";
+      final PsiFile containingFile = nodeElement instanceof PsiFile ? (PsiFile)nodeElement : parent.getContainingFile();
+      return module != null && containingFile != null ? (module.getName() + ": " + containingFile.getName()) : "";
     }
     if (nodeElement instanceof PackageElement){
       final PackageElement packageElement = ((PackageElement)nodeElement);
