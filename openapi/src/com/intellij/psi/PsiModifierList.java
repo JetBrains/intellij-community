@@ -5,13 +5,15 @@
 package com.intellij.psi;
 
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface PsiModifierList extends PsiElement {
-  boolean hasModifierProperty(String name);
-  boolean hasExplicitModifier(String name);
-  void setModifierProperty(String name, boolean value) throws IncorrectOperationException;
-  void checkSetModifierProperty(String name, boolean value) throws IncorrectOperationException;
+  boolean hasModifierProperty(@NotNull String name);
+  boolean hasExplicitModifier(@NotNull String name);
+  void setModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException;
+  void checkSetModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException;
 
-  PsiAnnotation[] getAnnotations();
-  PsiAnnotation findAnnotation(String qualifiedName);
+  @NotNull PsiAnnotation[] getAnnotations();
+  @Nullable PsiAnnotation findAnnotation(@NotNull String qualifiedName);
 }

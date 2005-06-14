@@ -18,6 +18,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -150,7 +151,7 @@ public class PsiImplUtil {
   }
 
   public static Object[] getReferenceVariantsByFilter(PsiJavaCodeReferenceElement reference,
-                                                            ElementFilter filter) {
+                                                      ElementFilter filter) {
     FilterScopeProcessor processor = new FilterScopeProcessor(filter, reference);
     PsiScopesUtil.resolveAndWalk(processor, reference, null, true);
     return processor.getResults().toArray();
@@ -219,7 +220,7 @@ public class PsiImplUtil {
     }
   }
 
-  public static PsiAnnotation findAnnotation(PsiModifierList modifierList, String qualifiedName) {
+  public static PsiAnnotation findAnnotation(PsiModifierList modifierList, @NotNull String qualifiedName) {
     PsiAnnotation[] annotations = modifierList.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
       if (qualifiedName.equals(annotation.getQualifiedName())) return annotation;

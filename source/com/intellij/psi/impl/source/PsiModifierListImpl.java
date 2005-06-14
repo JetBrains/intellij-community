@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
@@ -11,8 +12,8 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import com.intellij.lang.ASTNode;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -105,16 +106,14 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
           }
           else if (type == FINAL_KEYWORD) {
             final PsiField[] fields = ((PsiClass)parent).getFields();
-            for (int i = 0; i < fields.length; i++) {
-              PsiField field = fields[i];
+            for (PsiField field : fields) {
               if (field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null) return false;
             }
             return true;
           }
           else if (type == ABSTRACT_KEYWORD) {
             final PsiMethod[] methods = ((PsiClass)parent).getMethods();
-            for (int i = 0; i < methods.length; i++) {
-              PsiMethod method = methods[i];
+            for (PsiMethod method : methods) {
               if (method.hasModifierProperty(PsiModifier.ABSTRACT)) return true;
             }
             return false;
@@ -201,9 +200,9 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
       }
 
       if (type == PUBLIC_KEYWORD
-        || type == PRIVATE_KEYWORD
-        || type == PROTECTED_KEYWORD
-        || type == null /* package local */){
+          || type == PRIVATE_KEYWORD
+          || type == PROTECTED_KEYWORD
+          || type == null /* package local */){
 
         if (type != PUBLIC_KEYWORD){
           setModifierProperty(PsiModifier.PUBLIC, false);
@@ -240,6 +239,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
     CheckUtil.checkWritable(this);
   }
 
+  @NotNull
   public PsiAnnotation[] getAnnotations() {
     if (myCachedAnnotations == null) {
       if (getTreeElement() != null) {
@@ -253,6 +253,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
         for (int i = 0; i < annotationStrings.length; i++) {
           try {
             myCachedAnnotations[i] = getManager().getElementFactory().createAnnotationFromText(annotationStrings[i], this);
+            LOG.assertTrue(myCachedAnnotations[i] != null);
           }
           catch (IncorrectOperationException e) {
             LOG.error("Bad annotation text in repository: " + annotationStrings[i]);
@@ -263,7 +264,7 @@ public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements Ps
     return myCachedAnnotations;
   }
 
-  public PsiAnnotation findAnnotation(String qualifiedName) {
+  public PsiAnnotation findAnnotation(@NotNull String qualifiedName) {
     return PsiImplUtil.findAnnotation(this, qualifiedName);
   }
 

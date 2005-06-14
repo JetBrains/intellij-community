@@ -108,6 +108,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     return (PsiIdentifier)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.NAME);
   }
 
+  @NotNull
   public PsiMethod[] findSuperMethods() {
     return PsiSuperMethodImplUtil.findSuperMethods(this);
   }
@@ -186,7 +187,6 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
 
       int arrayCount = 0;
       ASTNode parameterList = SourceTreeToPsiMap.psiElementToTree(getParameterList());
-      Loop:
       for (ASTNode child = parameterList.getTreeNext(); child != null; child = child.getTreeNext()) {
         IElementType i = child.getElementType();
         if (i == LBRACKET) {
@@ -196,7 +196,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
                  i == END_OF_LINE_COMMENT) {
         }
         else {
-          break Loop;
+          break;
         }
       }
 
