@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
@@ -185,7 +186,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
     ArrayList<PsiClass> classes = new ArrayList<PsiClass>();
     for (int i = 0; i < vFiles.length; i++) {
       PsiFile file = myManager.findFile(vFiles[i]);
-      if (file instanceof PsiJavaFile) {
+      if (file instanceof PsiJavaFile && !(file instanceof JspFile)) {
         PsiClass[] fileClasses = ((PsiJavaFile)file).getClasses();
         for (int j = 0; j < fileClasses.length; j++) {
           classes.add(fileClasses[j]);
