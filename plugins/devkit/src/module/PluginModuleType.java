@@ -77,8 +77,9 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   }
 
   public String getDescription() {
-    //TODO: better description
-    return "Useful for IDEA plugin development";
+    return "<html>This module type is designed to ease <b>development of Plugins</b> for IntelliJ IDEA. It allows you to properly configure" +
+           "target IntelliJ IDEA SDK and all necessary deployment settings. You can also configure running/debugging instance of IntelliJ IDEA" +
+           "with your plugin enabled.</html>";
   }
 
   public Icon getBigIcon() {
