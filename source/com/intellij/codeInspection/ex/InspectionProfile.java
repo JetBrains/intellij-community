@@ -53,9 +53,9 @@ public interface InspectionProfile {
 
     void setName(String name);
 
-    void enableTool(String inspectionTool);
+    void enableTool(String inspectionTool) throws UnableToEditDefaultProfileException;
 
-    void disableTool(String inspectionTool);
+    void disableTool(String inspectionTool) throws UnableToEditDefaultProfileException;
 
     void setErrorLevel(HighlightDisplayKey key, HighlightDisplayLevel level);
 
@@ -73,7 +73,7 @@ public interface InspectionProfile {
 
     boolean isProperSetting(HighlightDisplayKey key);
 
-    void setAdditionalJavadocTags(String tags);
+    void setAdditionalJavadocTags(String tags) throws UnableToEditDefaultProfileException;
 
     void resetToBase();
 
@@ -92,6 +92,12 @@ public interface InspectionProfile {
     void setUnusedSymbolSettings(UnusedSymbolSettings settings);
   }
 
+  static class UnableToEditDefaultProfileException extends Exception {
+    public UnableToEditDefaultProfileException() {
+      super("Unable to edit Default profile");
+    }
+  }
+  
   static class UnusedSymbolSettings implements JDOMExternalizable{
     public boolean LOCAL_VARIABLE = true;
     public boolean FIELD = true;

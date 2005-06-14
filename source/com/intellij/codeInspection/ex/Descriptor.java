@@ -193,9 +193,14 @@ public class Descriptor {
           final Document document = e.getDocument();
           try {
             final String text = document.getText(0, document.getLength());
-            inspectionProfile.setAdditionalJavadocTags(text.trim());
+            if (text != null && text.length() > 0) {
+              inspectionProfile.setAdditionalJavadocTags(text.trim());
+            }
           }
           catch (BadLocationException e1) {
+            LOG.error(e1);
+          }
+          catch (InspectionProfile.UnableToEditDefaultProfileException e1) {
             LOG.error(e1);
           }
         }

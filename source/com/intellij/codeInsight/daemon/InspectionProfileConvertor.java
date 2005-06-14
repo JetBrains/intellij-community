@@ -78,8 +78,13 @@ public class InspectionProfileConvertor {
                                                                             inspectionProfileManager);
 
       final InspectionProfile.ModifiableModel editorProfileModel = editorProfile.getModifiableModel();
-      editorProfileModel.setAdditionalJavadocTags(myAdditionalJavadocTags);
-      fillErrorLevels(editorProfileModel);
+      try {
+        editorProfileModel.setAdditionalJavadocTags(myAdditionalJavadocTags);
+        fillErrorLevels(editorProfileModel);
+      }
+      catch (InspectionProfile.UnableToEditDefaultProfileException e) {
+        LOG.error(e);
+      }       
       editorProfileModel.commit();
     }
   }
@@ -128,7 +133,7 @@ public class InspectionProfileConvertor {
     }
   }
 
-  private void fillErrorLevels(final InspectionProfile.ModifiableModel profile) {
+  private void fillErrorLevels(final InspectionProfile.ModifiableModel profile) throws InspectionProfile.UnableToEditDefaultProfileException {
     InspectionTool[] tools = profile.getInspectionTools();
     LOG.assertTrue(tools != null, "Profile was not correctly init");
     //fill error levels
