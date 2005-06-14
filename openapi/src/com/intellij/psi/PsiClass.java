@@ -79,5 +79,6 @@ public interface PsiClass extends PsiElement, PsiNamedElement, PsiModifierListOw
 
   boolean isInheritor(PsiClass baseClass, boolean checkDeep);
 
+  @Nullable
   PomMemberOwner getPom();
 }

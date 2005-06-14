@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
@@ -28,6 +29,8 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -148,7 +151,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     final ProjectFileIndex idx = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
 
     if (!idx.isInLibrarySource(vFile)) return this;
-    final Set orderEntries = new HashSet(Arrays.asList(idx.getOrderEntriesForFile(vFile)));
+    final Set<OrderEntry> orderEntries = new HashSet<OrderEntry>(Arrays.asList(idx.getOrderEntriesForFile(vFile)));
     PsiClass original = myManager.findClass(getQualifiedName(), new GlobalSearchScope() {
       public int compare(VirtualFile file1, VirtualFile file2) {
         return 0;
@@ -156,7 +159,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
 
       public boolean contains(VirtualFile file) {
         // order for file and vFile has non empty intersection.
-        Set entries = new HashSet(Arrays.asList(idx.getOrderEntriesForFile(file)));
+        Set<OrderEntry> entries = new HashSet<OrderEntry>(Arrays.asList(idx.getOrderEntriesForFile(file)));
         int size = entries.size();
         entries.addAll(orderEntries);
         return size + orderEntries.size() > entries.size();
@@ -283,10 +286,12 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     }
   }
 
+  @NotNull
   public PsiClassType[] getExtendsListTypes() {
     return PsiClassImplUtil.getExtendsListTypes(this);
   }
 
+  @NotNull
   public PsiClassType[] getImplementsListTypes() {
     return PsiClassImplUtil.getImplementsListTypes(this);
   }
@@ -307,6 +312,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     return PsiClassImplUtil.getSuperTypes(this);
   }
 
+  @Nullable
   public PsiClass getContainingClass() {
     PsiElement parent = getDefaultParentByRepository();
     return parent instanceof PsiClass ? ((PsiClass)parent) : null;
@@ -388,6 +394,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     }
   }
 
+  @NotNull
   public PsiTypeParameter[] getTypeParameters() {
     return PsiImplUtil.getTypeParameters(this);
   }
@@ -409,8 +416,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       if(myCachedFieldsMap == null){
         final PsiField[] fields = getFields();
         myCachedFieldsMap = new HashMap<String,PsiField>();
-        for (int i = 0; i < fields.length; i++) {
-          final PsiField field = fields[i];
+        for (final PsiField field : fields) {
           myCachedFieldsMap.put(field.getName(), field);
         }
       }
@@ -423,10 +429,12 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     return PsiClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
+  @NotNull
   public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodsBySignature(this, patternMethod, checkBases);
   }
 
+  @NotNull
   public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
     if(!checkBases){
       if(myCachedMethodsMap == null){
@@ -434,10 +442,9 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
 
         Map<String, List<PsiMethod>> cachedMethodsMap = new HashMap<String,List<PsiMethod>>();
         final PsiMethod[] methods = getMethods();
-        for (int i = 0; i < methods.length; i++) {
-          final PsiMethod method = methods[i];
+        for (final PsiMethod method : methods) {
           List<PsiMethod> list = cachedMethodsMap.get(method.getName());
-          if(list == null){
+          if (list == null) {
             list = new ArrayList<PsiMethod>(1);
             cachedMethodsMap.put(method.getName(), list);
           }
@@ -458,10 +465,12 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     return PsiClassImplUtil.findMethodsByName(this, name, checkBases);
   }
 
+  @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases);
   }
 
+  @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
     return PsiClassImplUtil.getAllWithSubstitutorsByMap(this, PsiMethod.class);
   }
@@ -471,8 +480,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       if(myCachedInnersMap == null){
         final PsiClass[] classes = getInnerClasses();
         myCachedInnersMap = new HashMap<String,PsiClass>();
-        for (int i = 0; i < classes.length; i++) {
-          final PsiClass psiClass = classes[i];
+        for (final PsiClass psiClass : classes) {
           myCachedInnersMap.put(psiClass.getName(), psiClass);
         }
       }
@@ -503,7 +511,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       boolean deprecated;
       if (getTreeElement() != null){
         PsiDocComment docComment = getDocComment();
-        deprecated = docComment != null && getDocComment().findTagByName("deprecated") != null;
+        deprecated = docComment != null && docComment.findTagByName("deprecated") != null;
         if (!deprecated) {
           PsiModifierList modifierList = getModifierList();
           if (modifierList != null) {
@@ -625,7 +633,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
     }
 
-    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet(), lastParent, place, false);
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet<PsiClass>(), lastParent, place, false);
   }
 
   public PsiElement setName(String newName) throws IncorrectOperationException{
@@ -643,8 +651,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
 
     // rename constructors
     PsiMethod[] methods = getMethods();
-    for (int i = 0; i < methods.length; i++) {
-      PsiMethod method = methods[i];
+    for (PsiMethod method : methods) {
       if (method.isConstructor() && method.getName().equals(oldName)) {
         method.setName(newName);
       }
@@ -654,8 +661,9 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   }
 
   private boolean isRenameFileOnRenaming() {
-    if (getParent() instanceof PsiFile) {
-      PsiFile file = (PsiFile)getParent();
+    final PsiElement parent = getParent();
+    if (parent instanceof PsiFile) {
+      PsiFile file = (PsiFile)parent;
       String fileName = file.getName();
       int dotIndex = fileName.lastIndexOf('.');
       String name = dotIndex >= 0 ? fileName.substring(0, dotIndex) : fileName;
@@ -677,10 +685,12 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
 
   // optimization to not load tree when resolving bases of anonymous and locals
   // if there is no local classes with such name in scope it's possible to use outer scope as context
+  @Nullable
   protected PsiElement calcBasesResolveContext(String baseClassName) {
     return calcBasesResolveContext(this, baseClassName, true);
   }
 
+  @Nullable
   private PsiElement calcBasesResolveContext(PsiClass aClass, String className, boolean isInitialClass) {
     boolean isAnonOrLocal = false;
     if (aClass instanceof PsiAnonymousClass){
@@ -710,11 +720,10 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
 
     boolean needPreciseContext = false;
     if (classesInScope.length > 1){
-      for(int i = 0; i < classesInScope.length; i++){
-        long id = classesInScope[i];
+      for (long id : classesInScope) {
         if (id == classId) continue;
         String className1 = repositoryManager.getClassView().getName(id);
-        if (className.equals(className1)){
+        if (className.equals(className1)) {
           needPreciseContext = true;
           break;
         }
@@ -747,6 +756,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 
+  @Nullable
   public PomMemberOwner getPom() {
     //TODO:
     return null;
