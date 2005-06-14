@@ -366,6 +366,7 @@ public class CodeEditUtil {
     if (hasNonEmptyPrev(element) && hasNonEmptyNext(element)) return false;
     if (treeParent.getElementType() == ElementType.XML_PROLOG) return false;
     if (treeParent.getElementType() == ElementType.HTML_DOCUMENT) return false;
+    if (treeParent.getElementType() == ElementType.ERROR_ELEMENT) return false;
     if (treeParent.getElementType() instanceof IChameleonElementType) {
       if (((IChameleonElementType)treeParent.getElementType()).isParsable(treeParent.getText(), element.getPsi().getProject())){
         return false;
