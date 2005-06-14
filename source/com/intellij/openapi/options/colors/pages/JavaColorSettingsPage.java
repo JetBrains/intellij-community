@@ -162,7 +162,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage {
       " * @see <class>Math</class>#<methodCall>sin</methodCall>(double)\n" +
       " */\n" +
       "<annotationName>@Annotation</annotationName> (<annotationAttributeName>name</annotationAttributeName>=value)\n" +
-      "public abstract class <class>SomeClass</class> { // some comment\n" +
+      "public class <class>SomeClass</class> { // some comment\n" +
       "  private <class>String</class> <field>field</field> = \"Hello World\";\n" +
       "  private double <unusedField>unusedField</unusedField> = 12345.67890;\n" +
       "  private <unknownType>UnknownType</unknownType> <field>anotherString</field> = \"Another\\nStrin\\g\";\n" +
