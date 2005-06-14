@@ -488,7 +488,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     if (!codeAnalyzer.isErrorAnalyzingFinished(file)) return false;
     HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
-    if (errors != null && errors.length != 0) return false;
+    if (errors.length != 0) return false;
 
     if (fileHasUnchangedStatus()) return false;
     return true;

@@ -72,8 +72,7 @@ public class IconUtil {
             if (classes.length != 0) {
               // prefer icon of the class named after file
               final String fileName = file.getNameWithoutExtension();
-              for (int i = 0; i < classes.length; i++) {
-                PsiClass aClass = classes[i];
+              for (PsiClass aClass : classes) {
                 icon = aClass.getIcon(flags);
                 if (Comparing.strEqual(aClass.getName(), fileName)) break;
               }

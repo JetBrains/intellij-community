@@ -39,9 +39,9 @@ public class RefreshStatusRenderer implements ErrorStripeRenderer {
     if (myHighlighter.isErrorAnalyzingFinished(myFile)) {
       status.errorAnalyzingFinished = true;
       HighlightInfo[] infos = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.WARNING, myProject);
-      status.warningErrorCount = infos == null ? 0 : infos.length;
+      status.warningErrorCount = infos.length;
       infos = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
-      status.errorCount = infos == null ? 0 : infos.length;
+      status.errorCount = infos.length;
 
       status.inspectionFinished = myHighlighter.isInspectionCompleted(myFile);
     }

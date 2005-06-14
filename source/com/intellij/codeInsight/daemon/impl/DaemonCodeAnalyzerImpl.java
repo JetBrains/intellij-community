@@ -62,6 +62,8 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -339,8 +341,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   public boolean isAutohintsAvailable(PsiFile file) {
     if (!isHighlightingAvailable(file)) return false;
-    if (file instanceof PsiCompiledElement) return false;
-    return true;
+    return !(file instanceof PsiCompiledElement);
   }
 
   public void restart() {
@@ -387,10 +388,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return markup.getUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY);
   }
 
-  public static HighlightInfo[] getHighlights(Document document, HighlightSeverity minSeverity, Project project) {
+  @NotNull public static HighlightInfo[] getHighlights(Document document, HighlightSeverity minSeverity, Project project) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     HighlightInfo[] highlights = getHighlights(document, project);
-    if (highlights == null) return null;
+    if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
     ArrayList<HighlightInfo> array = new ArrayList<HighlightInfo>();
     for (HighlightInfo info : highlights) {
       if (info.getSeverity().compareTo(minSeverity) >= 0) {
@@ -400,7 +401,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     return array.toArray(new HighlightInfo[array.size()]);
   }
 
-  public HighlightInfo findHighlightByOffset(Document document, int offset, boolean includeFixRange) {
+  @Nullable public HighlightInfo findHighlightByOffset(Document document, int offset, boolean includeFixRange) {
     HighlightInfo[] highlights = getHighlights(document, myProject);
     if (highlights == null) return null;
 
@@ -456,7 +457,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     }
   }
 
-  private static HighlightInfo[] stripWarningsCoveredByErrors(HighlightInfo[] highlights, MarkupModel markup) {
+  @NotNull private static HighlightInfo[] stripWarningsCoveredByErrors(HighlightInfo[] highlights, MarkupModel markup) {
     List<HighlightInfo> all = new ArrayList<HighlightInfo>(Arrays.asList(highlights));
     List<HighlightInfo> errors = new ArrayList<HighlightInfo>();
     for (HighlightInfo highlight : highlights) {
