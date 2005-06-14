@@ -162,8 +162,12 @@ public class XmlAspectImpl implements XmlAspect {
         }
 
         public void visitFile(PsiFile file) {
-          xmlChangeSet.clear();
-          xmlChangeSet.add(new XmlDocumentChangedImpl(((XmlFile)file).getDocument()));
+          final XmlDocument document = ((XmlFile)file).getDocument();
+          
+          if (document != null) {
+            xmlChangeSet.clear();
+            xmlChangeSet.add(new XmlDocumentChangedImpl(document));
+          }
         }
       });
     }
