@@ -304,6 +304,9 @@ public class SimpleColoredComponent extends JComponent {
       if(color == null){ // in case if color is not defined we have to get foreground color from Swing hierarchy
         color = getForeground();
       }
+      if (!isEnabled()) {
+        color = UIManager.getColor("textInactiveText");
+      }
       g.setColor(color);
 
       Font font=getFont();

@@ -1,16 +1,25 @@
 package com.intellij.jar;
 
+import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModuleChooserElement;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.GuiUtils;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -18,7 +27,12 @@ import org.jdom.Element;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileView;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.Collections;
 import java.util.Map;
 
@@ -37,6 +51,7 @@ public class BuildJarActionDialog extends DialogWrapper {
   private final Map<Module, SettingsEditor> mySettings = new THashMap<Module, SettingsEditor>();
   private Module myCurrentModule;
   private ElementsChooser<ModuleChooserElement> myElementsChooser;
+  private JPanel myModuleSettingsPanel;
 
   protected BuildJarActionDialog(Project project) {
     super(true);
@@ -71,10 +86,72 @@ public class BuildJarActionDialog extends DialogWrapper {
           BuildJarSettings buildJarSettings = BuildJarSettings.getInstance(module);
           SettingsEditor settingsEditor = new SettingsEditor(module, buildJarSettings);
           mySettings.put(module, settingsEditor);
+          boolean isBuildJar = myElementsChooser.getMarkedElements().contains(selectedElement);
+          GuiUtils.enableChildren(myModuleSettingsPanel, isBuildJar, null);
         }
         myCurrentModule = module;
       }
     });
+    myElementsChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<ModuleChooserElement>() {
+      public void elementMarkChanged(final ModuleChooserElement element, final boolean isMarked) {
+        GuiUtils.enableChildren(myModuleSettingsPanel, isMarked, null);
+        if (isMarked) {
+          setDefaultJarPath();
+        }
+      }
+    });
+    myJarPath.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        String lastFilePath = myJarPath.getText();
+        String path = lastFilePath != null ? lastFilePath : RecentProjectsManager.getInstance().getLastProjectPath();
+        File file = new File(path);
+        if (!file.exists()) {
+          path = file.getParent();
+        }
+        JFileChooser fileChooser = new JFileChooser(path);
+        FileView fileView = new FileView() {
+          public Icon getIcon(File f) {
+            if (f.isDirectory()) return super.getIcon(f);
+            FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(f.getName());
+            return fileType.getIcon();
+          }
+        };
+        fileChooser.setFileView(fileView);
+        fileChooser.setMultiSelectionEnabled(false);
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.setDialogTitle("Save Jar File");
+        fileChooser.addChoosableFileFilter(new TypeFilter(StdFileTypes.ARCHIVE));
+
+        if (fileChooser.showSaveDialog(WindowManager.getInstance().suggestParentWindow(myProject)) != JFileChooser.APPROVE_OPTION) {
+          return;
+        }
+        file = fileChooser.getSelectedFile();
+        if (file == null) return;
+        myJarPath.setText(file.getPath());
+      }
+      class TypeFilter extends FileFilter {
+        private FileType myType;
+
+        public TypeFilter(FileType fileType) {
+          myType = fileType;
+          myDescription = myType.getDescription();
+        }
+
+        public boolean accept(File f) {
+          if (f.isDirectory()) return true;
+          FileType type = FileTypeManager.getInstance().getFileTypeByFileName(f.getName());
+          return myType == type;
+        }
+
+        public String getDescription() {
+          return myDescription;
+        }
+
+        private String myDescription;
+      }
+
+    });
+
     SwingUtilities.invokeLater(new Runnable(){
       public void run() {
         ModuleChooserElement element = myElementsChooser.getElementAt(0);
@@ -82,6 +159,24 @@ public class BuildJarActionDialog extends DialogWrapper {
       }
     });
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return myJarPath;
+  }
+
+  private void setDefaultJarPath() {
+    if (!Comparing.strEqual(myJarPath.getText(), "") || myCurrentModule == null) {
+      return;
+    }
+    VirtualFile[] contentRoots = ModuleRootManager.getInstance(myCurrentModule).getContentRoots();
+    if (contentRoots.length == 0) return;
+    VirtualFile contentRoot = contentRoots[0];
+    if (contentRoot == null) return;
+    VirtualFile moduleFile = myCurrentModule.getModuleFile();
+    if (moduleFile == null) return;
+    String jarPath = FileUtil.toSystemDependentName(contentRoot.getPath() + "/" + moduleFile.getNameWithoutExtension() + ".jar");
+    myJarPath.setText(jarPath);
   }
 
   protected JComponent createCenterPanel() {

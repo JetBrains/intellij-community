@@ -323,6 +323,14 @@ public class FileUtil {
     }
   }
 
+  public static String getNameWithoutExtension(File file) {
+    String name = file.getName();
+    int i = name.lastIndexOf('.');
+    if (i != -1) {
+      name = name.substring(0, i);
+    }
+    return name;
+  }
   public static String createSequentFileName(File aParentFolder, String aFilePrefix, String aExtension) {
     int postfix = 0;
     String ext = 0 == aExtension.length() ? "" : "." + aExtension;

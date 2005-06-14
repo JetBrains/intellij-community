@@ -14,6 +14,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -353,10 +354,7 @@ public class AnalysisScope {
     String name = path;
     if (path != null) {
       File file = new File(path);
-      name = file.getName();
-      int index = name.lastIndexOf('.');
-      if (index < 0) return name;
-      return name.substring(0, index);
+      name = FileUtil.getNameWithoutExtension(file);
     }
     return name;
   }

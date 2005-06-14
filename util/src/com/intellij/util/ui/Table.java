@@ -34,14 +34,11 @@ package com.intellij.util.ui;
 import com.intellij.Patches;
 
 import javax.swing.*;
-import javax.swing.event.TableColumnModelListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
+import javax.swing.event.TableColumnModelListener;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -77,7 +74,30 @@ public class Table extends JTable {
       public void columnMoved(TableColumnModelEvent e) {}
       public void columnRemoved(TableColumnModelEvent e) {}
     });
+    getTableHeader().setDefaultRenderer(new TableHeaderRenderer());
     boolean marker = Patches.SUN_BUG_ID_4503845; // Don't remove. It's a marker for find usages
+  }
+
+  private static class TableHeaderRenderer extends DefaultTableCellRenderer {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      if (table != null) {
+        JTableHeader header = table.getTableHeader();
+        if (header != null) {
+          setForeground(header.getForeground());
+          setBackground(header.getBackground());
+          setFont(header.getFont());
+        }
+        if (!table.isEnabled()) {
+          Color color = UIManager.getColor("textInactiveText");
+          setForeground(color);
+        }
+      }
+      setText(value == null ? "" : value.toString());
+      setBorder(UIManager.getBorder("TableHeader.cellBorder"));
+      setHorizontalAlignment(JLabel.CENTER);
+
+      return this;
+    }
   }
 
   public void removeNotify() {

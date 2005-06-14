@@ -10,11 +10,13 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.io.FileUtil;
 
 import javax.swing.*;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
@@ -278,6 +280,15 @@ public class GuiUtils {
           text = "<html>"+changeColorString+text.substring("<html>".length());
         }
         label.setText(text);
+      }
+    }
+    else if (component instanceof JTable) {
+      TableColumnModel columnModel = ((JTable)component).getColumnModel();
+      for (int i=0; i<columnModel.getColumnCount();i++) {
+        TableCellRenderer cellRenderer = columnModel.getColumn(0).getCellRenderer();
+        if (cellRenderer instanceof Component) {
+          enableComponent((Component)cellRenderer, enabled);
+        }
       }
     }
   }

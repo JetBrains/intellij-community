@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -270,7 +271,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
   private void readTemplateFile(File file) throws JDOMException, InvalidDataException, IOException {
     if (!file.exists()) return;
 
-    String defGroupName = file.getName().substring(0, file.getName().lastIndexOf('.'));
+    String defGroupName = FileUtil.getNameWithoutExtension(file);
     readTemplateFile(JDOMUtil.loadDocument(file), defGroupName, false);
   }
 
