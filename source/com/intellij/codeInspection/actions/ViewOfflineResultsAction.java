@@ -20,14 +20,13 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.application.options.ExpandMacroToPathMap;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Icons;
+import com.intellij.util.io.FileTypeFilter;
 import org.jdom.Document;
 import org.jdom.JDOMException;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileView;
 import java.io.File;
 import java.io.IOException;
@@ -64,29 +63,7 @@ public class ViewOfflineResultsAction extends AnAction {
     fileChooser.setAcceptAllFileFilterUsed(false);
     fileChooser.setDialogTitle("Open File");
 
-    class TypeFilter extends FileFilter {
-      private FileType myType;
-
-      
-      public TypeFilter() {
-        myType = StdFileTypes.XML;
-        myDescription = myType.getDescription();
-      }
-
-      public boolean accept(File f) {
-        if (f.isDirectory()) return true;
-        FileType type = FileTypeManager.getInstance().getFileTypeByFileName(f.getName());
-        return myType == type;
-      }
-
-      public String getDescription() {
-        return myDescription;
-      }
-
-      private String myDescription;
-    }
-
-    fileChooser.addChoosableFileFilter(new TypeFilter());
+    fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.XML));
 
     if (fileChooser.showOpenDialog(WindowManager.getInstance().suggestParentWindow(project)) != JFileChooser.APPROVE_OPTION) return;
     File file = fileChooser.getSelectedFile();

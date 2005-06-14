@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.io.FileTypeFilter;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
@@ -27,11 +28,11 @@ import javax.swing.filechooser.FileView;
 import java.io.File;
 
 public class OpenFileAction extends AnAction {
-  private String getLastFilePath(Project project) {
+  private static String getLastFilePath(Project project) {
     return PropertiesComponent.getInstance(project).getValue("last_opened_file_path");
   }
 
-  private void setLastFilePath(Project project, String path) {
+  private static void setLastFilePath(Project project, String path) {
     PropertiesComponent.getInstance(project).setValue("last_opened_file_path", path);
   }
 
@@ -54,27 +55,6 @@ public class OpenFileAction extends AnAction {
     fileChooser.setAcceptAllFileFilterUsed(false);
     fileChooser.setDialogTitle("Open File");
 
-    class TypeFilter extends FileFilter {
-      private FileType myType;
-
-      public TypeFilter(FileType fileType) {
-        myType = fileType;
-        myDescription = myType.getDescription();
-      }
-
-      public boolean accept(File f) {
-        if (f.isDirectory()) return true;
-        FileType type = FileTypeManager.getInstance().getFileTypeByFileName(f.getName());
-        return myType == type;
-      }
-
-      public String getDescription() {
-        return myDescription;
-      }
-
-      private String myDescription;
-    }
-
     FileFilter allFilesFilter = new FileFilter() {
       public boolean accept(File f) {
         return true;
@@ -85,11 +65,11 @@ public class OpenFileAction extends AnAction {
       }
     };
 
-    fileChooser.addChoosableFileFilter(new TypeFilter(StdFileTypes.JAVA));
-    fileChooser.addChoosableFileFilter(new TypeFilter(StdFileTypes.JSP));
-    fileChooser.addChoosableFileFilter(new TypeFilter(StdFileTypes.XML));
-    fileChooser.addChoosableFileFilter(new TypeFilter(StdFileTypes.HTML));
-    fileChooser.addChoosableFileFilter(new TypeFilter(StdFileTypes.PLAIN_TEXT));
+    fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.JAVA));
+    fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.JSP));
+    fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.XML));
+    fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.HTML));
+    fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.PLAIN_TEXT));
     fileChooser.addChoosableFileFilter(allFilesFilter);
 
     fileChooser.setFileFilter(allFilesFilter);
@@ -101,14 +81,12 @@ public class OpenFileAction extends AnAction {
     File [] files = fileChooser.getSelectedFiles();
     if (files == null) return;
 
-    for (int i = 0; i < files.length; i++) {
-      File file = files[i];
-
+    for (File file : files) {
       setLastFilePath(project, file.getParent());
       if (isProjectFile(file)) {
         int answer = Messages.showYesNoDialog(project,
                                               file.getName() +
-                                              " is an IDEA project file.\nWould you like to open this project?",
+                                                             " is an IDEA project file.\nWould you like to open this project?",
                                               "Open Project",
                                               Messages.getQuestionIcon());
         if (answer == 0) {

@@ -236,10 +236,9 @@ public class GuiUtils {
     }
     else {
       final Component[] components = root.getComponents();
-      for (int i = 0; i < components.length; i++) {
-        Component component = components[i];
+      for (Component component : components) {
         if (component instanceof JComponent) {
-          replaceJSplitPaneWithIDEASplitter((JComponent) component, honorMinimumSize);
+          replaceJSplitPaneWithIDEASplitter((JComponent)component, honorMinimumSize);
         }
       }
     }
@@ -250,8 +249,7 @@ public class GuiUtils {
     enableComponent(container, enabled);
     if (container instanceof Container) {
       final Component[] components = ((Container)container).getComponents();
-      for (int i = 0; i < components.length; i++) {
-        Component child = components[i];
+      for (Component child : components) {
         enableChildren(child, enabled, excludeComponents);
       }
     }

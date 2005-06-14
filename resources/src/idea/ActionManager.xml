@@ -477,6 +477,7 @@
         <action id="GenerateAntBuild" class="com.intellij.compiler.actions.GenerateAntBuildAction" text="_Generate Ant Build" description="Generate Ant Build File from the Project"/>
         <separator/>
         <group id="AntBuildGroup" class="com.intellij.ant.actions.AntBuildGroup"/>
+        <action id="BuildJar" class="com.intellij.jar.BuildJarAction" text="Build _Jars..." description="Archive module output directories into jar files" />
       </group>
 
 
@@ -563,7 +564,6 @@
           <separator/>
           <action id="ShowUserActivities" class="com.intellij.localVcs.actions.ShowActivePeriodsAction" text="Show Activities" internal="true"/>
         </group>
-        <action id="BuildJar" class="com.intellij.jar.BuildJarAction" text="Build Jar..." internal="true" />
       </group>
 
       <reference ref="VcsGroups"/>

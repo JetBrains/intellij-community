@@ -21,13 +21,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.io.FileTypeFilter;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileView;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -120,7 +120,7 @@ public class BuildJarActionDialog extends DialogWrapper {
         fileChooser.setMultiSelectionEnabled(false);
         fileChooser.setAcceptAllFileFilterUsed(false);
         fileChooser.setDialogTitle("Save Jar File");
-        fileChooser.addChoosableFileFilter(new TypeFilter(StdFileTypes.ARCHIVE));
+        fileChooser.addChoosableFileFilter(new FileTypeFilter(StdFileTypes.ARCHIVE));
 
         if (fileChooser.showSaveDialog(WindowManager.getInstance().suggestParentWindow(myProject)) != JFileChooser.APPROVE_OPTION) {
           return;
@@ -128,26 +128,6 @@ public class BuildJarActionDialog extends DialogWrapper {
         file = fileChooser.getSelectedFile();
         if (file == null) return;
         myJarPath.setText(file.getPath());
-      }
-      class TypeFilter extends FileFilter {
-        private FileType myType;
-
-        public TypeFilter(FileType fileType) {
-          myType = fileType;
-          myDescription = myType.getDescription();
-        }
-
-        public boolean accept(File f) {
-          if (f.isDirectory()) return true;
-          FileType type = FileTypeManager.getInstance().getFileTypeByFileName(f.getName());
-          return myType == type;
-        }
-
-        public String getDescription() {
-          return myDescription;
-        }
-
-        private String myDescription;
       }
 
     });
@@ -158,7 +138,7 @@ public class BuildJarActionDialog extends DialogWrapper {
         myElementsChooser.selectElements(Collections.singletonList(element));
       }
     });
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
+    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel,true);
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -256,4 +236,5 @@ public class BuildJarActionDialog extends DialogWrapper {
       LOG.error(e);
     }
   }
+
 }
