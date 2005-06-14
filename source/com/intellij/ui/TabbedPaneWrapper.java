@@ -403,34 +403,34 @@ public class TabbedPaneWrapper {
       final TabbedPaneUI tabbedPaneUI=getUI();
       Rectangle tabBounds=tabbedPaneUI.getTabBounds(this,index);
       final int tabPlacement=getTabPlacement();
-      if(SwingConstants.TOP==tabPlacement || SwingConstants.BOTTOM==tabPlacement){
-        if(tabBounds.x+tabBounds.width>getWidth()-50){ // if tab's right side is out of visible range
+      if(SwingConstants.TOP==tabPlacement || SwingConstants.BOTTOM==tabPlacement){ //tabs are on the top or bottom
+        if(tabBounds.x<50){  //if tab is to the left of visible area
           int leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
-          while(leadingTabIndex<getTabCount()-1 && tabBounds.x+tabBounds.width>getWidth()-50){
-            myScrollableTabSupport.setLeadingTabIndex(leadingTabIndex+1);
+          while(leadingTabIndex != index && leadingTabIndex>0 && tabBounds.x<50){
+            myScrollableTabSupport.setLeadingTabIndex(leadingTabIndex-1);
             leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
             tabBounds=tabbedPaneUI.getTabBounds(this,index);
           }
-        }else if(tabBounds.x<50){
+        }else if(tabBounds.x+tabBounds.width>getWidth()-50){ // if tab's right side is out of visible range
           int leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
-          while(leadingTabIndex>0 && tabBounds.x<50){
-            myScrollableTabSupport.setLeadingTabIndex(leadingTabIndex-1);
+          while(leadingTabIndex != index && leadingTabIndex<getTabCount()-1 && tabBounds.x+tabBounds.width>getWidth()-50){
+            myScrollableTabSupport.setLeadingTabIndex(leadingTabIndex+1);
             leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
             tabBounds=tabbedPaneUI.getTabBounds(this,index);
           }
         }
       }else{ // tabs are on left or right side
-        if(tabBounds.y+tabBounds.height>getHeight()-30){
+        if(tabBounds.y<30){ //tab is above visible area
           int leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
-          while(leadingTabIndex<getTabCount()-1 && tabBounds.y+tabBounds.height>getHeight()-30){
-            myScrollableTabSupport.setLeadingTabIndex(leadingTabIndex+1);
+          while(leadingTabIndex != index && leadingTabIndex>0 && tabBounds.y<30){
+            myScrollableTabSupport.setLeadingTabIndex(leadingTabIndex-1);
             leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
             tabBounds=tabbedPaneUI.getTabBounds(this,index);
           }
-        }else if(tabBounds.y<30){
+        } else if(tabBounds.y+tabBounds.height>getHeight()-30){  //tab is under visible area
           int leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
-          while(leadingTabIndex>0 && tabBounds.y<30){
-            myScrollableTabSupport.setLeadingTabIndex(leadingTabIndex-1);
+          while(leadingTabIndex != index && leadingTabIndex<getTabCount()-1 && tabBounds.y+tabBounds.height>getHeight()-30){
+            myScrollableTabSupport.setLeadingTabIndex(leadingTabIndex+1);
             leadingTabIndex=myScrollableTabSupport.getLeadingTabIndex();
             tabBounds=tabbedPaneUI.getTabBounds(this,index);
           }
