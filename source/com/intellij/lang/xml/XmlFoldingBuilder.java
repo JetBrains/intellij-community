@@ -1,21 +1,22 @@
 package com.intellij.lang.xml;
 
-import com.intellij.lang.folding.FoldingBuilder;
-import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.codeInsight.folding.impl.CodeFoldingSettings;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.xml.*;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
-import com.intellij.codeInsight.folding.impl.CodeFoldingSettings;
+import com.intellij.psi.xml.*;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,6 +27,7 @@ import java.util.ArrayList;
  */
 public class XmlFoldingBuilder implements FoldingBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.xml.XmlFoldingBuilder");
+  private static TokenSet XML_ATTRIBUTE_SET = TokenSet.create(XmlElementType.XML_ATTRIBUTE);
 
   public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document) {
     final PsiElement psiElement = node.getPsi();
@@ -48,21 +50,22 @@ public class XmlFoldingBuilder implements FoldingBuilder {
         tag instanceof JspXmlRootTag // has no name but has content
       ) {
       PsiElement[] children = tag.getChildren();
-      for (int i = 0; i < children.length; i++) {
-        if (children[i] instanceof XmlTag) {
+      for (PsiElement child : children) {
+        if (child instanceof XmlTag) {
           ProgressManager.getInstance().checkCanceled();
-          addElementsToFold(foldings, (XmlTag)children[i], document);
-        } else {
-          final Language language = children[i].getLanguage();
+          addElementsToFold(foldings, (XmlTag)child, document);
+        }
+        else {
+          final Language language = child.getLanguage();
           if (!(language instanceof XMLLanguage) && language != Language.ANY) {
             final FoldingBuilder foldingBuilder = language.getFoldingBuilder();
 
-            if (foldingBuilder!=null) {
-              final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(children[i].getNode(), document);
+            if (foldingBuilder != null) {
+              final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(child.getNode(), document);
 
-              if (foldingDescriptors!=null) {
-                for (int j = 0; j < foldingDescriptors.length; j++) {
-                  foldings.add(foldingDescriptors[j]);
+              if (foldingDescriptors != null) {
+                for (FoldingDescriptor descriptor : foldingDescriptors) {
+                  foldings.add(descriptor);
                 }
               }
             }
@@ -74,22 +77,22 @@ public class XmlFoldingBuilder implements FoldingBuilder {
 
   public static TextRange getRangeToFold(PsiElement element) {
     if (element instanceof XmlTag) {
-      XmlTag tag = (XmlTag) element;
-      ASTNode tagNameElement = XmlChildRole.START_TAG_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(tag));
+      final ASTNode tagNode = element.getNode();
+      ASTNode tagNameElement = XmlChildRole.START_TAG_NAME_FINDER.findChild(tagNode);
       if (tagNameElement == null) return null;
 
       int nameEnd = tagNameElement.getTextRange().getEndOffset();
-      int end = tag.getLastChild().getTextRange().getStartOffset();
-      XmlAttribute[] attributes = tag.getAttributes();
+      int end = tagNode.getLastChildNode().getTextRange().getStartOffset();
+      ASTNode[] attributes = tagNode.findChildrenByFilter(XML_ATTRIBUTE_SET);
 
       if (attributes.length > 0) {
-        XmlAttribute lastAttribute = attributes[attributes.length - 1];
-        XmlAttribute lastAttributeBeforeCR = null;
+        ASTNode lastAttribute = attributes[attributes.length - 1];
+        ASTNode lastAttributeBeforeCR = null;
 
-        for (PsiElement child = tag.getFirstChild(); child != lastAttribute.getNextSibling(); child = child.getNextSibling()) {
-          if (child instanceof XmlAttribute) {
-            lastAttributeBeforeCR = (XmlAttribute) child;
-          } else if (child instanceof PsiWhiteSpace) {
+        for (ASTNode child = tagNode.getFirstChildNode(); child != lastAttribute.getTreeNext(); child = child.getTreeNext()) {
+          if (child.getElementType() == XmlElementType.XML_ATTRIBUTE) {
+            lastAttributeBeforeCR = child;
+          } else if (child.getPsi() instanceof PsiWhiteSpace) {
             if (child.textContains('\n')) break;
           }
         }
