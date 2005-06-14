@@ -312,7 +312,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     repaintLayeredPane();
 
     // Collect errors
-    ErrorAnalizer.analyzeErrors(this, myRootContainer);
+    ErrorAnalyzer.analyzeErrors(this, myRootContainer);
   }
 
   public void refreshAndSave(final boolean forceSync) {
@@ -330,7 +330,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
    */
   public void refreshErrors() {
     // Collect errors
-    ErrorAnalizer.analyzeErrors(GuiEditor.this, myRootContainer);
+    ErrorAnalyzer.analyzeErrors(GuiEditor.this, myRootContainer);
     if (isShowing()) {
       //  ComponentTree
       myComponentTree.hideIntentionHint();

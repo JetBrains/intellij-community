@@ -1,7 +1,7 @@
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.uiDesigner.ErrorAnalizer;
+import com.intellij.uiDesigner.ErrorAnalyzer;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.RadComponent;
 import com.intellij.uiDesigner.GuiEditor;
@@ -29,7 +29,7 @@ public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
     if(component == null){
       return null;
     }
-    return ErrorAnalizer.getErrorForComponent(component);
+    return ErrorAnalyzer.getErrorForComponent(component);
   }
 
   public Rectangle getErrorBounds() {

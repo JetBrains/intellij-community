@@ -584,10 +584,10 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     final Property property = myProperties.get(row);
     ErrorInfo errorInfo = null;
     if(myClassToBindProperty.equals(property)){
-      errorInfo = (ErrorInfo)myComponent.getClientProperty(ErrorAnalizer.CLIENT_PROP_CLASS_TO_BIND_ERROR);
+      errorInfo = (ErrorInfo)myComponent.getClientProperty(ErrorAnalyzer.CLIENT_PROP_CLASS_TO_BIND_ERROR);
     }
     else if(myBindingProperty.equals(property)){
-      errorInfo = (ErrorInfo)myComponent.getClientProperty(ErrorAnalizer.CLIENT_PROP_BINDING_ERROR);
+      errorInfo = (ErrorInfo)myComponent.getClientProperty(ErrorAnalyzer.CLIENT_PROP_BINDING_ERROR);
     }
     return errorInfo;
   }

@@ -108,7 +108,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         if (ptr.isValid()) {
           final RadComponent component = ptr.getComponent();
           LOG.assertTrue(component != null);
-          final ErrorInfo errorInfo = ErrorAnalizer.getErrorForComponent(component);
+          final ErrorInfo errorInfo = ErrorAnalyzer.getErrorForComponent(component);
           if (errorInfo != null) {
             text = errorInfo.myDescription;
           }
@@ -246,7 +246,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         final RadComponent component = ptr.getComponent();
         LOG.assertTrue(component != null);
 
-        final boolean error = ErrorAnalizer.getErrorForComponent(component) != null;
+        final boolean error = ErrorAnalyzer.getErrorForComponent(component) != null;
 
         // Text
         final String binding = component.getBinding();

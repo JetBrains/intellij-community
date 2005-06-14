@@ -11,7 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.uiDesigner.ErrorAnalizer;
+import com.intellij.uiDesigner.ErrorAnalyzer;
 import com.intellij.uiDesigner.ErrorInfo;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.PsiPropertiesProvider;
@@ -78,12 +78,12 @@ public final class FormSourceCodeGenerator {
       return;
     }
       
-    ErrorAnalizer.analyzeErrors(module, formFile, null, rootContainer);
+    ErrorAnalyzer.analyzeErrors(module, formFile, null, rootContainer);
     FormEditingUtil.iterate(
       rootContainer,
       new FormEditingUtil.ComponentVisitor<LwComponent>() {
         public boolean visit(final LwComponent iComponent) {
-          final ErrorInfo errorInfo = ErrorAnalizer.getErrorForComponent(iComponent);
+          final ErrorInfo errorInfo = ErrorAnalyzer.getErrorForComponent(iComponent);
           if (errorInfo != null){
             myErrors.add(errorInfo.myDescription);
           }

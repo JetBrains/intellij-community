@@ -10,6 +10,7 @@ import com.intellij.uiDesigner.lw.IRootContainer;
 import com.intellij.uiDesigner.quickFixes.CreateClassToBindFix;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
+import com.intellij.uiDesigner.quickFixes.ChangeFieldTypeFix;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ import java.util.HashMap;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class ErrorAnalizer {
+public final class ErrorAnalyzer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.ErrorAnalyzer");
 
   /**
@@ -135,12 +136,14 @@ public final class ErrorAnalizer {
               }
               final PsiType fieldType = field.getType();
               if(fieldType != null && componentType != null && !fieldType.isAssignableFrom(componentType)){
-                // TODO[vova] implement
+                final QuickFix[] fixes = editor != null ? new QuickFix[]{
+                  new ChangeFieldTypeFix(editor, field, componentType)
+                } : QuickFix.EMPTY_ARRAY;
                 component.putClientProperty(
                   CLIENT_PROP_BINDING_ERROR,
                   new ErrorInfo(
                     "Incompatible types. Found \"" + fieldType.getPresentableText() + "\", required \"" + className + "\"",
-                    QuickFix.EMPTY_ARRAY
+                    fixes
                   )
                 );
               }
