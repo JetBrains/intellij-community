@@ -54,6 +54,10 @@
     <component>
       <implementation-class>com.intellij.ide.ui.customization.CustomizableActionsSchemas</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.util.projectImport.JBuilderLibraryImportHelper</interface-class>
+      <implementation-class>com.intellij.openapi.project.impl.importProject.jbuilder.JBuilderLibraryImporter</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

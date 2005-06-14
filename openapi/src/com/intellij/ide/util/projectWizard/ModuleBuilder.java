@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +20,7 @@ public abstract class ModuleBuilder  {
   private String myName;
   private String myModuleFilePath;
 
-  protected final String acceptParameter(String param) {
+  @Nullable protected final String acceptParameter(String param) {
     return param != null && param.length() > 0? param : null;
   }
 
