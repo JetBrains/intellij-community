@@ -290,7 +290,7 @@ public class UnscrambleDialog extends DialogWrapper{
       text = text.replaceAll("(\\S)[\\s&&[^\\n]]*at ", "$1\n at ");
       text = text.replaceAll("(\\S)\\nat ", "$1\n at ");
       // merge (inadvertently) splitted lines
-      text = text.replaceAll("\\n\\s*(([\\S&&[^a]])([\\S&&[^t]])?)", "$1");
+      text = text.replaceAll("\\s*\\n\\s*(([\\S&&[^a]])([\\S&&[^t]])?)", "$1");
 
       final String newText = text;
       CommandProcessor.getInstance().executeCommand(
