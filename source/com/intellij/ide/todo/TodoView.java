@@ -269,7 +269,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
               );
               thread.start();
             }
-          });
+          }, ModalityState.NON_MMODAL);
     }
   }
 }
