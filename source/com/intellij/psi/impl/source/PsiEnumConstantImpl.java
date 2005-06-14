@@ -1,32 +1,32 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.PomField;
 import com.intellij.psi.*;
-import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.cache.FieldView;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.navigation.ItemPresentation;
 
 /**
  * @author dsl
  */
 public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements PsiEnumConstant {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiEnumConstantImpl");
+  private MyReference myReference = new MyReference();
+  private PsiModifierListImpl myRepositoryModifierList = null;
   private String myCachedName = null;
   private Boolean myCachedIsDeprecated;
-  private MyReference myReference = new MyReference();
   private Ref<PsiEnumConstantInitializer> myCachedInitializingClass = null;
-  private PsiModifierListImpl myRepositoryModifierList = null;
 
   public PsiEnumConstantImpl(PsiManagerImpl manager, long repositoryId) {
     super(manager, repositoryId);
@@ -95,6 +95,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   protected Object clone() {
     PsiEnumConstantImpl clone = (PsiEnumConstantImpl)super.clone();
     clone.myRepositoryModifierList = null;
+    clone.dropCached();
     return clone;
   }
 
@@ -110,6 +111,8 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
     else {
       myRepositoryModifierList = (PsiModifierListImpl)bindSlave(ChildRole.MODIFIER_LIST);
     }
+
+    dropCached();
   }
 
   public PsiType getType() {
@@ -166,10 +169,14 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   }
 
   public void subtreeChanged() {
+    super.subtreeChanged();
+    dropCached();
+  }
+
+  private void dropCached() {
     myCachedName = null;
     myCachedIsDeprecated = null;
     myCachedInitializingClass = null;
-    super.subtreeChanged();
   }
 
   public PsiElement setName(String name) throws IncorrectOperationException {

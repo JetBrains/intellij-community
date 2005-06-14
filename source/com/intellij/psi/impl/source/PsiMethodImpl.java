@@ -20,10 +20,9 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMethod {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiMethodImpl");
@@ -49,6 +48,10 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
 
   public void subtreeChanged() {
     super.subtreeChanged();
+    dropCached();
+  }
+
+  private void dropCached() {
     myCachedType = null;
     myCachedName = null;
     myCachedIsDeprecated = null;
@@ -62,6 +65,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     clone.myRepositoryParameterList = null;
     clone.myRepositoryTypeParameterList = null;
     clone.myRepositoryThrowsList = null;
+    clone.dropCached();
     return clone;
   }
 
@@ -92,6 +96,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
       myRepositoryTypeParameterList = (PsiTypeParameterListImpl) bindSlave(ChildRole.TYPE_PARAMETER_LIST);
       myRepositoryThrowsList = (PsiReferenceListImpl)bindSlave(ChildRole.THROWS_LIST);
     }
+    dropCached();
   }
 
   public PsiClass getContainingClass() {

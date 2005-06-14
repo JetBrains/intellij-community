@@ -566,8 +566,9 @@ public abstract class AbstractTreeBuilder {
 
       int newIndex = 0;
       for (int i = 0; i < parentNode.getChildCount(); i++) {
-        TreeNode node1 = parentNode.getChildAt(i);
+        DefaultMutableTreeNode node1 = (DefaultMutableTreeNode)parentNode.getChildAt(i);
         if (node == node1) continue;
+        if (((NodeDescriptor)node1.getUserObject()).getElement() == null) continue;
         if (myNodeComparator.compare(node, node1) > 0) newIndex++;
       }
 

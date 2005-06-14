@@ -8,6 +8,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,7 +42,7 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
     }
 
      boolean updated = !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, myLocationString, myColor, myAttributesKey},
-                                             new Object[]{openIcon, closedIcon, name, locationString, color, attributesKey});
+                                        new Object[]{openIcon, closedIcon, name, locationString, color, attributesKey});
 
     myOpenIcon = openIcon;
     myClosedIcon = closedIcon;
@@ -79,8 +80,9 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
     return false;
   }
 
+  @Nullable
   public final Object getElement() {
-    return this;
+    return getValue() != null ? this : null;
   }
 
   public final boolean equals(Object object) {
@@ -158,7 +160,7 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
   protected final Object getParentValue() {
     return getParent() == null ? null : getParent().getValue();
   }
-  
+
   protected String getToolTip() {
     return null;
   }

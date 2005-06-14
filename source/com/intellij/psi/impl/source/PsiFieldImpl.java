@@ -43,16 +43,22 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
 
   public void subtreeChanged() {
     super.subtreeChanged();
+    dropCached();
+  }
+
+  private void dropCached() {
     myCachedName = null;
     myCachedInitializerText = null;
     myCachedIsDeprecated = null;
     myCachedInitializerValue = null;
+    myCachedType = null;
+    myCachedFirstFieldInDeclId = -1;
   }
 
   protected Object clone() {
     PsiFieldImpl clone = (PsiFieldImpl)super.clone();
     clone.myRepositoryModifierList = null;
-    clone.myCachedType = null;
+    clone.dropCached();
     return clone;
   }
 
@@ -69,8 +75,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
       myRepositoryModifierList = (PsiModifierListImpl)bindSlave(ChildRole.MODIFIER_LIST);
     }
 
-    myCachedType = null;
-    myCachedFirstFieldInDeclId = -1;
+    dropCached();
   }
 
   public PsiClass getContainingClass() {

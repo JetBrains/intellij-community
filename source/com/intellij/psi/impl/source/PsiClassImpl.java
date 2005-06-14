@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -10,12 +11,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.cache.ClassView;
 import com.intellij.psi.impl.cache.RepositoryElementType;
 import com.intellij.psi.impl.cache.RepositoryManager;
-import com.intellij.psi.impl.cache.ClassView;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.impl.meta.MetaRegistry;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -25,7 +28,6 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
 
 import java.util.*;
 
@@ -65,6 +67,12 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   }
 
   public void subtreeChanged() {
+    dropCached();
+
+    super.subtreeChanged();
+  }
+
+  private void dropCached() {
     myCachedName = null;
     myCachedFields = null;
     myCachedMethods = null;
@@ -79,7 +87,8 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     myCachedIsInterface = null;
     myCachedIsAnnotationType = null;
     myCachedIsEnum = null;
-    super.subtreeChanged();
+    myCachedQName = null;
+    myCachedForLongName = null;
   }
 
   protected Object clone() {
@@ -88,14 +97,8 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     clone.myRepositoryExtendsList = null;
     clone.myRepositoryImplementsList = null;
     clone.myRepositoryParameterList = null;
-    clone.myCachedFields = null;
-    clone.myCachedMethods = null;
-    clone.myCachedConstructors = null;
-    clone.myCachedInners = null;
 
-    clone.myCachedFieldsMap = null;
-    clone.myCachedMethodsMap = null;
-    clone.myCachedInnersMap = null;
+    clone.dropCached();
 
     return clone;
   }
@@ -128,7 +131,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       myRepositoryParameterList = (PsiTypeParameterListImpl)bindSlave(ChildRole.TYPE_PARAMETER_LIST);
     }
 
-    myCachedQName = null;
+    dropCached();
   }
 
   public PsiElement getParent() {

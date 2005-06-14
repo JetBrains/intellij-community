@@ -48,14 +48,17 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   public void subtreeChanged() {
     super.subtreeChanged();
+    dropCached();
+  }
+
+  private void dropCached() {
     myCachedPackageName = null;
     myCachedClasses = null;
   }
 
   protected PsiJavaFileBaseImpl clone() {
     PsiJavaFileBaseImpl clone = (PsiJavaFileBaseImpl)super.clone();
-    clone.myRepositoryImportList = null;
-    clone.myCachedClasses = null;
+    clone.dropCached();
     return clone;
   }
 
@@ -71,6 +74,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     else{
       myRepositoryImportList = (PsiImportListImpl)bindSlave(ChildRole.IMPORT_LIST);
     }
+    dropCached();
   }
 
   public PsiClass[] getClasses() {

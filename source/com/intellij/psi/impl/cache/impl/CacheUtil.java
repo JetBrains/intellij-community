@@ -22,9 +22,10 @@ public class CacheUtil {
   }
 
   public static PsiFile createFileCopy(FileContent content, PsiFile psiFile) {
-    PsiFile fileCopy;
-
     VirtualFile vFile = psiFile.getVirtualFile();
+    if (vFile == null) return psiFile; // It's already a copy created via PsiManager.getFile(FileContent). Usually happens on initial startup.
+
+    PsiFile fileCopy;
     if (psiFile instanceof ClsFileImpl) {
       ClsFileImpl implFile = (ClsFileImpl)psiFile;
       if (implFile.isContentsLoaded()) {

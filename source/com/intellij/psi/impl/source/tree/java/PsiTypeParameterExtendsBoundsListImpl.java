@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.Constants;
@@ -9,7 +10,6 @@ import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
-import com.intellij.lang.ASTNode;
 
 /**
  * @author max
@@ -27,12 +27,16 @@ public class PsiTypeParameterExtendsBoundsListImpl extends SlaveRepositoryPsiEle
 
   protected Object clone() {
     PsiTypeParameterExtendsBoundsListImpl clone = (PsiTypeParameterExtendsBoundsListImpl) super.clone();
-    clone.myCachedTypes = null;
+    clone.dropCached();
     return clone;
   }
 
   public void setOwner(SrcRepositoryPsiElement owner) {
     super.setOwner(owner);
+    dropCached();
+  }
+
+  private void dropCached() {
     myCachedTypes = null;
   }
 
@@ -86,6 +90,6 @@ public class PsiTypeParameterExtendsBoundsListImpl extends SlaveRepositoryPsiEle
 
   public void treeElementSubTreeChanged() {
     super.treeElementSubTreeChanged();
-    myCachedTypes = null;
+    dropCached();
   }
 }
