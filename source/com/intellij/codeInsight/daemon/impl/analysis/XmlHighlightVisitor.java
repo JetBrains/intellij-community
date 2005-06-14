@@ -260,16 +260,16 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   private void checkTagByDescriptor(final XmlTag tag) {
     String name = tag.getName();
 
-    XmlElementDescriptor elementDescriptor;
+    XmlElementDescriptor elementDescriptor = null;
 
     final PsiElement parent = tag.getParent();
     if (parent instanceof XmlTag) {
       XmlTag parentTag = (XmlTag)parent;
-      elementDescriptor = parentTag.getDescriptor();
+      final XmlElementDescriptor parentDescriptor = parentTag.getDescriptor();
       boolean nullParentDescriptor = false;
 
-      if (elementDescriptor != null) {
-        elementDescriptor = elementDescriptor.getElementDescriptor(tag);
+      if (parentDescriptor != null) {
+        elementDescriptor = parentDescriptor.getElementDescriptor(tag);
       } else {
         nullParentDescriptor = true;
       }
