@@ -59,7 +59,7 @@ public class BuildJarActionDialog extends DialogWrapper {
 
     setupControls();
 
-    setTitle("Buld Jar");
+    setTitle("Buld Jars");
     init();
   }
 
