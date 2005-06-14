@@ -12,6 +12,8 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
@@ -277,8 +279,7 @@ public abstract class GlobalSearchScope extends SearchScope {
     }
 
     public boolean contains(VirtualFile file) {
-      for (int i = 0; i < myDirs.length; i++) {
-        VirtualFile scopeDir = myDirs[i];
+      for (VirtualFile scopeDir : myDirs) {
         boolean inDir = myIncludeSubpackages
                         ? VfsUtil.isAncestor(scopeDir, file, false)
                         : file.getParent().equals(scopeDir);
@@ -404,5 +405,41 @@ public abstract class GlobalSearchScope extends SearchScope {
     }
   }
 
+  public static GlobalSearchScope getScopeRestrictedByFileTypes (final GlobalSearchScope scope, final FileType... fileTypes) {
+    LOG.assertTrue(fileTypes.length > 0);
+    return new FileTypeRestrictionScope(scope, fileTypes);
+  }
 
+  private static class FileTypeRestrictionScope extends GlobalSearchScope {
+    private GlobalSearchScope myScope;
+    private FileType[] myFileTypes;
+
+    public FileTypeRestrictionScope(final GlobalSearchScope scope, final FileType[] fileTypes) {
+      myFileTypes = fileTypes;
+      myScope = scope;
+    }
+
+    public int compare(VirtualFile file1, VirtualFile file2) {
+      return myScope.compare(file1, file2);
+    }
+
+    public boolean contains(VirtualFile file) {
+      if (!myScope.contains(file)) return false;
+
+      final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
+      for (FileType otherFileType : myFileTypes) {
+        if (fileType.equals(otherFileType)) return true;
+      }
+
+      return false;
+    }
+
+    public boolean isSearchInLibraries() {
+      return myScope.isSearchInLibraries();
+    }
+
+    public boolean isSearchInModuleContent(Module aModule) {
+      return myScope.isSearchInModuleContent(aModule);
+    }
+  }
 }

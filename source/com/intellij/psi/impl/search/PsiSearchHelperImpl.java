@@ -30,11 +30,10 @@ import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspImplicitVariable;
+import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.*;
@@ -72,7 +71,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
       PsiFile file = element.getContainingFile();
       if (file instanceof JspFile) {
-        return new LocalSearchScope(file);
+        return new LocalSearchScope(JspUtil.getReferencingFiles((JspFile)file));
       }
       PsiClass aClass = (PsiClass)element;
       if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
@@ -110,7 +109,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     else if (element instanceof PsiMethod) {
       PsiFile file = element.getContainingFile();
       if (file instanceof JspFile) {
-        return new LocalSearchScope(file);
+        return new LocalSearchScope(JspUtil.getReferencingFiles((JspFile)file));
       }
 
       PsiMethod method = (PsiMethod)element;
@@ -147,7 +146,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     else if (element instanceof PsiField) {
       PsiFile file = element.getContainingFile();
       if (file instanceof JspFile) {
-        return new LocalSearchScope(file);
+        return new LocalSearchScope(JspUtil.getReferencingFiles((JspFile)file));
       }
       PsiField field = (PsiField)element;
       if (field.hasModifierProperty(PsiModifier.PUBLIC)) {
@@ -337,6 +336,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       if (PropertyUtil.isSimplePropertyAccessor(method)) {
         final String propertyName = PropertyUtil.getPropertyName(method);
         if (myManager.getNameHelper().isIdentifier(propertyName)) {
+          if (searchScope instanceof GlobalSearchScope) {
+            searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes(((GlobalSearchScope)searchScope), StdFileTypes.JSP, StdFileTypes.JSPX);
+          }
           if (!processElementsWithWord(processor1,
                                        searchScope,
                                        propertyName,
@@ -344,35 +346,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                        false)) {
             return false;
           }
-        }
-      }
-    }
-
-    if (refElement.getContainingFile() instanceof JspFile) {
-      boolean canBeAccessedByIncludes;
-      if (refElement instanceof PsiField || refElement instanceof PsiMethod) {
-        canBeAccessedByIncludes = refElement.getParent() instanceof JspClass;
-      }
-      else if (refElement instanceof JspImplicitVariable) {
-        canBeAccessedByIncludes = true;
-      }
-      else if (refElement instanceof PsiLocalVariable) {
-        canBeAccessedByIncludes = refElement.getParent().getParent() instanceof JspFile;
-      }
-      else {
-        canBeAccessedByIncludes = false;
-      }
-      if (canBeAccessedByIncludes) {
-        PsiElementProcessor processor2 = new PsiElementProcessor() {
-          public boolean execute(PsiElement element) {
-            return processor1.execute(element, 0);
-          }
-        };
-
-        PsiReference[] refs = findReferences(refElement.getContainingFile(), searchScope, false);
-        for (PsiReference ref : refs) {
-          final PsiFile file = ref.getElement().getContainingFile();
-          if (!processIdentifiers(processor2, text, new LocalSearchScope(file), UsageSearchContext.IN_CODE)) return false;
         }
       }
     }

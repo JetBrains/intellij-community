@@ -138,28 +138,28 @@ public class IdTableBuilding {
                       TodoPattern[] todoPatterns,
                       int[] todoCounts,
                       final PsiManager manager, final PsiFile psiFile) {
-      XmlFilterLexer filterLexer = createLexer(wordsTable, todoCounts);
+      BaseFilterLexer filterLexer = createLexer(wordsTable, todoCounts);
       filterLexer.start(chars);
       while (filterLexer.getTokenType() != null) {
         filterLexer.advance();
       }
     }
 
-    protected XmlFilterLexer createLexer(TIntIntHashMap wordsTable, int[] todoCounts) {
+    protected BaseFilterLexer createLexer(TIntIntHashMap wordsTable, int[] todoCounts) {
       Lexer lexer = new XmlLexer();
       return new XmlFilterLexer(lexer, wordsTable, todoCounts);
     }
   }
 
   static class HtmlIdCacheBuilder extends XmlIdCacheBuilder {
-    protected XmlFilterLexer createLexer(TIntIntHashMap wordsTable, int[] todoCounts) {
-      return new XmlFilterLexer(new HtmlLexer(), wordsTable, todoCounts);
+    protected BaseFilterLexer createLexer(TIntIntHashMap wordsTable, int[] todoCounts) {
+      return new XHtmlFilterLexer(new HtmlLexer(), wordsTable, todoCounts);
     }
   }
 
   static class XHtmlIdCacheBuilder extends XmlIdCacheBuilder {
-    protected XmlFilterLexer createLexer(TIntIntHashMap wordsTable, int[] todoCounts) {
-      return new XmlFilterLexer(new XHtmlLexer(), wordsTable, todoCounts);
+    protected BaseFilterLexer createLexer(TIntIntHashMap wordsTable, int[] todoCounts) {
+      return new XHtmlFilterLexer(new XHtmlLexer(), wordsTable, todoCounts);
     }
   }
 
