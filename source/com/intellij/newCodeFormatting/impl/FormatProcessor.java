@@ -564,7 +564,12 @@ class FormatProcessor {
 
   private int getAlignOffsetBefore(final Alignment alignment, final LeafBlockWrapper blockAfter) {
     if (alignment == null) return -1;
-    return getOffsetBefore(((AlignmentImpl)alignment).getOffsetRespBlockBefore(blockAfter).getBlock());
+    final LeafBlockWrapper alignRespBlock = ((AlignmentImpl)alignment).getOffsetRespBlockBefore(blockAfter);
+    if (alignRespBlock != null) {
+      return getOffsetBefore(alignRespBlock.getBlock());
+    } else {
+      return -1;
+    }
   }
 
   private int getNewChildPosition(final AbstractBlockWrapper parent, final int offset) {
