@@ -207,7 +207,6 @@ class FormatProcessor {
       }
     }
 
-    final Block block = myCurrentBlock.getBlock();
     if (whiteSpace.containsLineFeeds()) {
       adjustLineIndent();
     }
@@ -215,7 +214,7 @@ class FormatProcessor {
       whiteSpace.arrangeSpaces(spaceProperty);
     }
 
-    setAlignOffset(getOffsetBefore(block));
+    setAlignOffset(myCurrentBlock);
 
     if (myCurrentBlock.containsLineFeeds()) {
       onCurrentLineChanged();
@@ -325,20 +324,6 @@ class FormatProcessor {
     return false;
   }
 
-  private void releaseAlignments() {
-    AbstractBlockWrapper current = myCurrentBlock;
-    while (true) {
-      final AlignmentImpl alignment = (AlignmentImpl)current.getBlock().getAlignment();
-      if (alignment != null && alignment.getCurrentOffset() >= 0) {
-        alignment.setCurrentOffset(-1);
-      }
-      else {
-        current = current.getParent();
-        if (current.getStartOffset() != myCurrentBlock.getStartOffset()) break;
-      }
-    }
-  }
-
   private boolean canReplaceWrapCandidate(WrapImpl wrap) {
     if (myWrapCandidate == null) return true;
     final WrapImpl currentWrap = myWrapCandidate.getWrap();
@@ -356,7 +341,7 @@ class FormatProcessor {
     /*
     for (Iterator<AlignmentImpl> iterator = myAlignedAlignments.iterator(); iterator.hasNext();) {
       AlignmentImpl alignment = iterator.next();
-      alignment.setCurrentOffset(-1);
+      alignment.setOffsetRespBlock(-1);
     }
     */
     myAlignedAlignments.clear();
@@ -484,12 +469,12 @@ class FormatProcessor {
     }
   }
 
-  private void setAlignOffset(final int currentIndent) {
+  private void setAlignOffset(final LeafBlockWrapper block) {
     AbstractBlockWrapper current = myCurrentBlock;
     while (true) {
       final AlignmentImpl alignment = (AlignmentImpl)current.getBlock().getAlignment();
       if (alignment != null && !myAlignedAlignments.contains(alignment)) {
-        alignment.setCurrentOffset(currentIndent);
+        alignment.setOffsetRespBlock(block);
         myAlignedAlignments.add(alignment);
       }
       current = current.getParent();
@@ -503,8 +488,8 @@ class FormatProcessor {
     AbstractBlockWrapper current = myCurrentBlock;
     while (true) {
       final AlignmentImpl alignment = (AlignmentImpl)current.getBlock().getAlignment();
-      if (alignment != null && alignment.getCurrentOffset() >= 0) {
-        return alignment.getCurrentOffset();
+      if (alignment != null && alignment.getOffsetRespBlockBefore(myCurrentBlock) != null) {
+        return getOffsetBefore(alignment.getOffsetRespBlockBefore(myCurrentBlock).getBlock());
       }
       else {
         current = current.getParent();
@@ -556,7 +541,7 @@ class FormatProcessor {
   }
 
   private IndentInfo adjustLineIndent(final AbstractBlockWrapper parent, final ChildAttributes childAttributes, final int index) {
-    int alignOffset = getAlignOffset(childAttributes.getAlignment());
+    int alignOffset = getAlignOffsetBefore(childAttributes.getAlignment(), null);
     if (alignOffset == -1) {
       return parent.calculateChildOffset(myIndentOption, childAttributes, index).createIndentInfo();
     }
@@ -577,9 +562,9 @@ class FormatProcessor {
     }
   }
 
-  private int getAlignOffset(final Alignment alignment) {
+  private int getAlignOffsetBefore(final Alignment alignment, final LeafBlockWrapper blockAfter) {
     if (alignment == null) return -1;
-    return ((AlignmentImpl)alignment).getCurrentOffset();
+    return getOffsetBefore(((AlignmentImpl)alignment).getOffsetRespBlockBefore(blockAfter).getBlock());
   }
 
   private int getNewChildPosition(final AbstractBlockWrapper parent, final int offset) {

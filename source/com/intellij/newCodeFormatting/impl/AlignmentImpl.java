@@ -2,8 +2,12 @@ package com.intellij.newCodeFormatting.impl;
 
 import com.intellij.newCodeFormatting.Alignment;
 
+import java.util.List;
+import java.util.ArrayList;
+import java.util.ListIterator;
+
 class AlignmentImpl implements Alignment {
-  private int myCurrentOffset = -1;
+  private List<LeafBlockWrapper> myOffsetRespBlocks = new ArrayList<LeafBlockWrapper>();
   private final long myId;
   private static long ourId = 0;
 
@@ -12,7 +16,7 @@ class AlignmentImpl implements Alignment {
   }
 
   public void reset() {
-    myCurrentOffset = -1;
+    myOffsetRespBlocks.clear();
   }
 
   static class Type{
@@ -31,12 +35,19 @@ class AlignmentImpl implements Alignment {
     return myType;
   }
 
-  int getCurrentOffset() {
-    return myCurrentOffset;
+  LeafBlockWrapper getOffsetRespBlockBefore(final LeafBlockWrapper blockAfter) {
+    if (blockAfter != null) {
+      for (ListIterator<LeafBlockWrapper> each = myOffsetRespBlocks.listIterator(myOffsetRespBlocks.size()); each.hasPrevious();) {
+        final LeafBlockWrapper current = each.previous();
+        if (current.getStartOffset() < blockAfter.getStartOffset()) break;
+        each.remove();
+      }
+    }
+    return myOffsetRespBlocks.isEmpty() ? null : myOffsetRespBlocks.get(myOffsetRespBlocks.size() - 1);
   }
 
-  void setCurrentOffset(final int currentIndent) {
-    myCurrentOffset = currentIndent;
+  void setOffsetRespBlock(final LeafBlockWrapper block) {
+    myOffsetRespBlocks.add(block);
   }
 
 }
