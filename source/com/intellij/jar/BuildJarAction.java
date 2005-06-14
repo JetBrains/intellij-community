@@ -22,8 +22,10 @@ import gnu.trove.THashSet;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.FileFilter;
 import java.util.Set;
 import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 
 /**
  * @author cdr
@@ -71,12 +73,15 @@ public class BuildJarAction extends AnAction {
     jarFile.delete();
 
     FileUtil.createParentDirs(jarFile);
+    final FileFilter allFilesFilter = new FileFilter() {
+      public boolean accept(File f) {
+        return true;
+      }
 
-    // write temp file and rename it to the jar to avoid deployment of incomplete jar. SCR #30303
-    final File tempFile = File.createTempFile("___"+ FileUtil.getNameWithoutExtension(jarFile), ".jar", jarFile.getParentFile());
-
-    final JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(tempFile));
-
+      public String getDescription() {
+        return "All file types";
+      }
+    };
     BuildRecipeImpl buildRecipe = new BuildRecipeImpl();
     LibraryLink[] libraries = moduleContainer.getContainingLibraries();
     final DummyCompileContext compileContext = DummyCompileContext.getInstance();
@@ -85,6 +90,13 @@ public class BuildJarAction extends AnAction {
     }
     ModuleLink[] modules = moduleContainer.getContainingModules();
     MakeUtil.getInstance().addJavaModuleOutputs(module, modules, buildRecipe, compileContext, null);
+    Manifest manifest = MakeUtil.getInstance().createManifest(buildRecipe);
+
+    // write temp file and rename it to the jar to avoid deployment of incomplete jar. SCR #30303
+    final File tempFile = File.createTempFile("_"+ FileUtil.getNameWithoutExtension(jarFile), ".jar", jarFile.getParentFile());
+    final JarOutputStream jarOutputStream = manifest == null ?
+                                            new JarOutputStream(new FileOutputStream(tempFile)) :
+                                            new JarOutputStream(new FileOutputStream(tempFile), manifest);
 
     final Set<String> tempWrittenRelativePaths = new THashSet<String>();
     final BuildRecipeImpl dependencies = new BuildRecipeImpl();
@@ -92,7 +104,7 @@ public class BuildJarAction extends AnAction {
       buildRecipe.visitInstructionsWithExceptions(new BuildInstructionVisitor() {
         public boolean visitInstruction(BuildInstruction instruction) throws IOException {
           ProgressManager.getInstance().checkCanceled();
-          instruction.addFilesToJar(compileContext, tempFile, jarOutputStream, dependencies, tempWrittenRelativePaths, null);
+          instruction.addFilesToJar(compileContext, tempFile, jarOutputStream, dependencies, tempWrittenRelativePaths, allFilesFilter);
           if (instruction instanceof FileCopyInstruction) {
             FileCopyInstruction fileCopyInstruction = (FileCopyInstruction)instruction;
             File file = fileCopyInstruction.getFile();
