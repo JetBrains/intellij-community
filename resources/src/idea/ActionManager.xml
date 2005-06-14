@@ -185,7 +185,7 @@
     <group id ="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsActionGroup" text="Version _Control" popup="true">
       <reference ref="LocalVcsGroup"/>
       <separator/>
-      <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup" test="Version Control" text="Version Control">
+      <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup" test="Version Control" text="Version Control Group">
         <action id="Vcs.FileView" class="com.intellij.openapi.vcs.actions.FileViewAction" text="Show File _View" description="Show version control related information for all local files"/>
         <reference ref="CheckinProject"/>
         <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction" text="Update Project">
@@ -201,7 +201,7 @@
     <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup" test="Version Control" text="Version Control"/>
 
     <group class="com.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="VcsFileGroupPopup" test="Version Control"
-      text="Version Control" popup="true">
+      text="Version Control Group" popup="true">
     </group>
 
     <group id="VersionControlsGroup">
