@@ -1,9 +1,10 @@
 <idea-plugin version="2">
-  <name>CVS</name>
-  <description>CVS integration</description>
+  <name>CVS Integration</name>
+  <id>CVS</id>
+  <description>Allows using CVS from within IntelliJ IDEA, making even refactoring consequences transparent for the user.</description>
   <version>0.1</version>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
-  <idea-version min="4.0" max="4.0"/>
+  <idea-version min="5.0" max="5.0"/>
 
   <extensions xmlns="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
