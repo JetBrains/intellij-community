@@ -729,7 +729,7 @@ public class CustomizableActionsPanel {
 
     protected EditIconDialog(DefaultMutableTreeNode node) {
       super(false);
-      setTitle("Edit Action Icon");
+      setTitle("Choose Action Icon Path");
       init();
       myNode = node;
       final String actionId = getActionId(node);
@@ -741,7 +741,7 @@ public class CustomizableActionsPanel {
     protected JComponent createCenterPanel() {
       JPanel northPanel = new JPanel(new BorderLayout());
       myTextField = createBrowseField();
-      northPanel.add(myTextField, BorderLayout.CENTER);
+      northPanel.add(myTextField, BorderLayout.NORTH);
       return northPanel;
     }
 
@@ -819,7 +819,7 @@ public class CustomizableActionsPanel {
       });
       JPanel northPanel = new JPanel(new BorderLayout());
       northPanel.add(myTextField, BorderLayout.CENTER);
-      northPanel.add(new JLabel("Icon:"), BorderLayout.WEST);
+      northPanel.add(new JLabel("Icon Path:"), BorderLayout.WEST);
       northPanel.add(mySetIconButton, BorderLayout.EAST);
       northPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
       panel.add(northPanel, BorderLayout.NORTH);
