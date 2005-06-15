@@ -9,7 +9,7 @@ import java.util.Arrays;
 public class Comparing {
   private Comparing() { }
 
-  public static boolean equal(Object arg1, Object arg2){
+  public static <T> boolean  equal(T arg1, T arg2){
     if (arg1 == null || arg2 == null){
       return arg1 == arg2;
     }

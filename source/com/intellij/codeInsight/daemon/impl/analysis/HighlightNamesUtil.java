@@ -15,8 +15,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import org.jetbrains.annotations.Nullable;
 
 public class HighlightNamesUtil {
+  private HighlightNamesUtil() {}
+
+  @Nullable
   public static HighlightInfo highlightMethodName(PsiMethod method, PsiElement elementToHighlight, boolean isDeclaration) {
     HighlightInfoType type = getMethodNameHighlightType(method, isDeclaration);
     if (type != null && elementToHighlight != null) {
@@ -34,6 +38,7 @@ public class HighlightNamesUtil {
     return attributes;
   }
 
+  @Nullable
   public static HighlightInfo highlightClassName(PsiClass aClass, PsiElement elementToHighlight) {
     HighlightInfoType type = getClassNameHighlightType(aClass);
     if (type != null && elementToHighlight != null) {
@@ -43,11 +48,20 @@ public class HighlightNamesUtil {
         final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)elementToHighlight;
         range = new TextRange(range.getStartOffset(), referenceElement.getParameterList().getTextRange().getStartOffset());
       }
+
+      // This will highlight @ sign in annotation as well.
+      final PsiElement parent = elementToHighlight.getParent();
+      if (parent instanceof PsiAnnotation) {
+        final PsiAnnotation psiAnnotation = (PsiAnnotation)parent;
+        range = new TextRange(psiAnnotation.getTextRange().getStartOffset(), range.getEndOffset());
+      }
+
       return HighlightInfo.createHighlightInfo(type, range, null, attributes);
     }
     return null;
   }
 
+  @Nullable
   public static HighlightInfo highlightVariable(PsiVariable variable, PsiElement elementToHighlight) {
     HighlightInfoType varType = getVariableNameHighlightType(variable);
     if (varType != null) {
@@ -60,6 +74,7 @@ public class HighlightNamesUtil {
     return null;
   }
 
+  @Nullable
   public static HighlightInfo highlightClassNameInQualifier(PsiJavaCodeReferenceElement element) {
     PsiExpression qualifierExpression = null;
     if (element instanceof PsiReferenceExpression) {
@@ -85,6 +100,7 @@ public class HighlightNamesUtil {
     return HighlightInfoType.METHOD_CALL;
   }
 
+  @Nullable
   private static HighlightInfoType getVariableNameHighlightType(PsiVariable var) {
     if (var instanceof PsiLocalVariable
         || var instanceof PsiParameter && ((PsiParameter)var).getDeclarationScope() instanceof PsiForeachStatement) {
@@ -105,6 +121,7 @@ public class HighlightNamesUtil {
 
   private static HighlightInfoType getClassNameHighlightType(PsiClass aClass) {
     if (aClass != null) {
+      if (aClass.isAnnotationType()) return HighlightInfoType.ANNOTATION_NAME;
       if (aClass.isInterface()) return HighlightInfoType.INTERFACE_NAME;
       final PsiModifierList modList = aClass.getModifierList();
       if (modList != null && modList.hasModifierProperty(PsiModifier.ABSTRACT)) return HighlightInfoType.ABSTRACT_CLASS_NAME;
@@ -113,16 +130,7 @@ public class HighlightNamesUtil {
     return HighlightInfoType.CLASS_NAME;
   }
 
-  public static HighlightInfo highlightAnnotationName(PsiAnnotation annotation) {
-    PsiJavaCodeReferenceElement nameRefElement = annotation.getNameReferenceElement();
-    if (nameRefElement != null) {
-      HighlightInfoType type = HighlightInfoType.ANNOTATION_NAME;
-      TextAttributes attributes = mergeWithScopeAttributes(annotation, type);
-      return HighlightInfo.createHighlightInfo(type, nameRefElement.getTextRange(), null, attributes);
-    }
-    return null;
-  }
-
+  @Nullable
   public static HighlightInfo highlightReassignedVariable(PsiVariable variable, PsiElement elementToHighlight) {
     if (variable instanceof PsiLocalVariable) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.REASSIGNED_LOCAL_VARIABLE, elementToHighlight, null);
