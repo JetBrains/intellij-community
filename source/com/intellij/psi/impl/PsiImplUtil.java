@@ -18,6 +18,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -202,6 +203,11 @@ public class PsiImplUtil {
       return new PsiClassReferenceType(new LightClassReference(manager, "Class", "java.lang.Class", resolveScope));
     }
     else {
+      if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+        //Raw java.lang.Class
+        return manager.getElementFactory().createType(classClass);
+      }
+
       PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
       PsiType operandType = classAccessExpression.getOperand().getType();
       if (operandType instanceof PsiPrimitiveType && !PsiType.NULL.equals(operandType)) {
