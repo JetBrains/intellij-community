@@ -9,6 +9,16 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTagChild;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.xml.util.XmlUtil;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,6 +28,13 @@ import com.intellij.psi.xml.XmlElementType;
  * To change this template use File | Settings | File Templates.
  */
 public class HtmlFileImpl extends XmlFileImpl {
+  private XmlTag[] myCachedScriptTags = null;
+
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myCachedScriptTags = null;
+  }
+
   public HtmlFileImpl(Project project, VirtualFile file) {
     super(project, file, XmlElementType.HTML_FILE, XmlElementType.HTML_FILE);
   }
@@ -34,5 +51,31 @@ public class HtmlFileImpl extends XmlFileImpl {
     CompositeElement treeElement = calcTreeElement();
     ChameleonTransforming.transformChildren(treeElement);
     return (XmlDocument)treeElement.findChildByRoleAsPsiElement(ChildRole.HTML_DOCUMENT);
+  }
+
+  public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+    if (!super.processDeclarations(processor, substitutor, lastParent, place)) return false;
+    if (myCachedScriptTags == null) {
+      final List<XmlTag> scriptTags = new ArrayList<XmlTag>();
+      XmlUtil.processXmlElements(getDocument(), new PsiElementProcessor() {
+        public boolean execute(final PsiElement element) {
+          if (element instanceof XmlTag && "script".equals(((XmlTag)element).getDescriptor().getName())) {
+            scriptTags.add((XmlTag)element);
+            return false;
+          }
+          return true;
+        }
+      }, true);
+      myCachedScriptTags = scriptTags.toArray(new XmlTag[scriptTags.size()]);
+    }
+
+    for (XmlTag tag : myCachedScriptTags) {
+      final XmlTagChild[] children = tag.getValue().getChildren();
+      for (XmlTagChild child : children) {
+        if (!child.processDeclarations(processor, substitutor, null, place)) return false;
+      }
+    }
+
+    return true;
   }
 }

@@ -500,7 +500,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       final ASTNode treeElement = element.getNode();
       if(insideBody){
         if(treeElement.getElementType() == XmlTokenType.XML_END_TAG_START) break;
-        if(!(treeElement instanceof XmlTagChild)) continue;
+        if(!(element instanceof XmlTagChild)) continue;
         bodyElements.add(element);
       }
       else if(treeElement.getElementType() == XmlTokenType.XML_TAG_END) insideBody = true;
