@@ -418,7 +418,7 @@ public abstract class VirtualFile implements UserDataHolder, ModificationTracker
 
   private void skipUTF8BOM(final Reader reader) throws IOException {
     if (Patches.SUN_BUG_ID_4508058) {
-      if (myCharset != null && "UTF-8".equals(myCharset.name())) {
+      if (myCharset != null && myCharset.name().contains("UTF-8")) {
         reader.mark(1);
         char c = (char)reader.read();
         if (c == '\uFEFF') {
