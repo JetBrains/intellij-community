@@ -23,6 +23,6 @@ class CStyleCommentPredicate implements PsiElementPredicate{
         {
             return false;
         }
-        return sibling.getText().indexOf('\n') >=0;
+        return (sibling.getText()).indexOf('\n') >=0;
     }
 }

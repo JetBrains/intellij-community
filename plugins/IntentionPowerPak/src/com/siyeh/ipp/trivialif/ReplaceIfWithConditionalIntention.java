@@ -45,7 +45,7 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             final PsiExpression thenRhs = thenAssign.getRExpression();
             assert thenRhs != null;
             if(ParenthesesUtils.getPrecendence(thenRhs)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE){
                 thenValue = thenRhs.getText();
             } else{
                 thenValue = '(' + thenRhs.getText() + ')';
@@ -54,14 +54,14 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             final PsiExpression elseRhs = elseAssign.getRExpression();
             assert elseRhs != null;
             if(ParenthesesUtils.getPrecendence(elseRhs)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE){
                 elseValue = elseRhs.getText();
             } else{
                 elseValue = '(' + elseRhs.getText() + ')';
             }
             final String conditionText;
             if(ParenthesesUtils.getPrecendence(condition)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE){
                 conditionText = condition.getText();
             } else{
                 conditionText = '(' + condition.getText() + ')';
@@ -83,7 +83,7 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             final String thenValue;
             final PsiExpression thenReturnValue = thenReturn.getReturnValue();
             if(ParenthesesUtils.getPrecendence(thenReturnValue)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE){
                 thenValue = thenReturnValue.getText();
             } else{
                 thenValue = '(' + thenReturnValue.getText() + ')';
@@ -91,14 +91,14 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             final String elseValue;
             final PsiExpression elseReturnValue = elseReturn.getReturnValue();
             if(ParenthesesUtils.getPrecendence(elseReturnValue)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE){
                 elseValue = elseReturnValue.getText();
             } else{
                 elseValue = '(' + elseReturnValue.getText() + ')';
             }
             final String conditionText;
             if(ParenthesesUtils.getPrecendence(condition)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE){
                 conditionText = condition.getText();
             } else{
                 conditionText = '(' + condition.getText() + ')';
@@ -119,7 +119,7 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             final String thenValue;
             final PsiExpression thenReturnValue = thenBranch.getReturnValue();
             if(ParenthesesUtils.getPrecendence(thenReturnValue)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE){
                 thenValue = thenReturnValue.getText();
             } else{
                 thenValue = '(' + thenReturnValue.getText() + ')';
@@ -128,14 +128,14 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             assert elseBranch != null;
             final PsiExpression elseReturnValue = elseBranch.getReturnValue();
             if(ParenthesesUtils.getPrecendence(elseReturnValue)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE){
                 elseValue = elseReturnValue.getText();
             } else{
                 elseValue = '(' + elseReturnValue.getText() + ')';
             }
             final String conditionText;
             if(ParenthesesUtils.getPrecendence(condition)
-                    <= ParenthesesUtils.CONDITIONAL_EXPRESSION_EXPRESSION){
+                    <= ParenthesesUtils.CONDITIONAL_PRECEDENCE){
                 conditionText = condition.getText();
             } else{
                 conditionText = '(' + condition.getText() + ')';
