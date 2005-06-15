@@ -233,7 +233,10 @@ public class PsiClassImplUtil {
     if (cachedValue == null) {
       final CachedValueProvider<Map> provider = new MyCachedValueProvider(psiClass);
       cachedValue = psiClass.getManager().getCachedValuesManager().createCachedValue(provider, false);
-      psiClass.putUserData(MAP_IN_CLASS_KEY, cachedValue);
+      //Do not cache for nonphysical elements
+      if (psiClass.isPhysical()) {
+        psiClass.putUserData(MAP_IN_CLASS_KEY, cachedValue);
+      }
     }
     return ((Map<String, List<Pair<T, PsiSubstitutor>>>)cachedValue.getValue().get(memberClazz));
   }
