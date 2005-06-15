@@ -87,11 +87,11 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         out.println(classes.length + " Inspections");
         out.println(numQuickFixes + " Quick Fixes");
 
-        for(final Class aClass : classes){
+        for(final Class<LocalInspectionTool> aClass : classes){
             final String className = aClass.getName();
             try{
                 final LocalInspectionTool inspection =
-                        (LocalInspectionTool) aClass.newInstance();
+                         aClass.newInstance();
                 final String groupDisplayName =
                         inspection.getGroupDisplayName();
                 if(!groupDisplayName.equals(currentGroupName)){
@@ -115,7 +115,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
 
         out.println();
         out.println("Inspections enabled by default:");
-        for(final Class aClass : classes){
+        for(final Class<LocalInspectionTool> aClass : classes){
             final String className = aClass.getName();
             try{
                 final LocalInspectionTool inspection =
@@ -142,7 +142,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
                 descriptionFilesSet.add(descriptionFile1);
             }
         }
-        for(final Class aClass : classes){
+        for(final Class<LocalInspectionTool> aClass : classes){
             final String className = aClass.getName();
             final String simpleClassName =
                     className.substring(className.lastIndexOf('.') + 1,
@@ -179,13 +179,13 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         out.println();
     }
 
-    private static int countQuickFixes(Class[] classes, PrintStream out){
+    private static int countQuickFixes(Class<LocalInspectionTool>[] classes, PrintStream out){
         int numQuickFixes = 0;
-        for(final Class aClass : classes){
+        for(final Class<LocalInspectionTool> aClass : classes){
             final String className = aClass.getName();
             try{
                 final LocalInspectionTool inspection =
-                        (LocalInspectionTool) aClass.newInstance();
+                        aClass.newInstance();
                 if(((BaseInspection) inspection).hasQuickFix()){
                     numQuickFixes++;
                 }

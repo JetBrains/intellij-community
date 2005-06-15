@@ -25,8 +25,6 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
     }
 
     private static class RawUseOfParameterizedTypeVisitor extends BaseInspectionVisitor {
-
-
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final PsiTypeElement typeElement = variable.getTypeElement();
