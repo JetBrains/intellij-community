@@ -2,9 +2,7 @@ package com.intellij.openapi.diff.impl.mergeTool;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.MergeRequest;
-import com.intellij.openapi.diff.SimpleContent;
+import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeCounter;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
 import com.intellij.openapi.editor.Document;
@@ -15,6 +13,8 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.ide.DataManager;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -26,11 +26,15 @@ public class MergeRequestImpl extends MergeRequest {
   private String[] myVersionTitles = null;
   private int myResult;
   private String myHelpId;
-  private final boolean myCanCloseMergeDialog;
+  private final ActionButtonPresentation myActionButtonPresenation;
 
-  public MergeRequestImpl(String left, MergeVersion base, String right, Project project, final boolean canCloseMergeDialog) {
+  public MergeRequestImpl(String left,
+                          MergeVersion base,
+                          String right,
+                          Project project,
+                          final ActionButtonPresentation actionButtonPresentation) {
     super(project);
-    myCanCloseMergeDialog = canCloseMergeDialog;
+    myActionButtonPresenation = actionButtonPresentation;
     myDiffContents[0] = new SimpleContent(left);
     myDiffContents[1] = new MergeContent(base);
     myDiffContents[2] = new SimpleContent(right);
@@ -63,9 +67,31 @@ public class MergeRequestImpl extends MergeRequest {
       builder.addCancelAction();
     }
     
-    (builder.getOkAction()).setText("Apply");
+    (builder.getOkAction()).setText(myActionButtonPresenation.getName());
 
-    builder.setOkActionEnabled(myCanCloseMergeDialog);
+    builder.setOkActionEnabled(myActionButtonPresenation.isEnabled());
+    final Action action = ((DialogBuilder.ActionDescriptor)builder.getOkAction()).getAction(builder.getDialogWrapper());
+    String actionName = myActionButtonPresenation.getName();
+    final int index = actionName.indexOf("&");
+    final char mnemonic;
+    if (index >= index && index < actionName.length() - 1) {
+      mnemonic = actionName.charAt(index + 1);
+      actionName = actionName.substring(0, index) + actionName.substring(index + 1);
+    } else {
+      mnemonic = 0;
+    }
+    action.putValue(Action.NAME, actionName);
+    if (mnemonic > 0) {
+      action.putValue(Action.MNEMONIC_KEY, new Integer(mnemonic));
+    }
+    builder.setOkOperation(new Runnable() {
+      public void run() {
+        myActionButtonPresenation.run((DiffViewer)DataManager.getInstance().getDataContext(builder.getCenterPanel()).getData(DataConstants.DIFF_VIEWER));
+        if (myActionButtonPresenation.closeDialog()) {
+          builder.getDialogWrapper().close(DialogWrapper.CANCEL_EXIT_CODE);
+        }
+      }
+    });
     builder.setCancelOperation(new Runnable() {
       public void run() {
         if (Messages.showYesNoDialog(getProject(),
@@ -134,7 +160,7 @@ public class MergeRequestImpl extends MergeRequest {
     }
 
     public void run() {
-      if (!myCanCloseMergeDialog) return;
+      if (!myActionButtonPresenation.isEnabled()) return;
       if (myWasInvoked) return;
       if (!getWholePanel().isDisplayable()) return;
       myWasInvoked = true;

@@ -513,6 +513,7 @@ public class CvsUtil {
   }
 
   public static boolean fileExistsInCvs(FilePath file) {
+    if (file.isDirectory() && new File(file.getIOFile(), "CVS").isDirectory()) return true;
     Entry entry = CvsEntriesManager.getInstance().getEntryFor(file.getVirtualFileParent(), file.getName());
     if (entry == null) return false;
     return !entry.isAddedFile();

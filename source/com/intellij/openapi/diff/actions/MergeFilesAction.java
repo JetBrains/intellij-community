@@ -38,6 +38,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
+import com.intellij.openapi.diff.ActionButtonPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -76,7 +77,8 @@ public class MergeFilesAction extends AnAction{
       String rightText = new String(files[2].contentsToCharArray());
 
       Project project = (Project)context.getData(DataConstants.PROJECT);
-      final MergeRequest diffData = diffRequestFactory.createMergeRequest(leftText, rightText, originalText, file, project,true);
+      final MergeRequest diffData = diffRequestFactory.createMergeRequest(leftText, rightText, originalText, file, project,
+                                                                          ActionButtonPresentation.createApplyButton());
       diffData.setVersionTitles(new String[]{files[0].getPresentableUrl(),
                                              files[1].getPresentableUrl(),
                                              files[2].getPresentableUrl()});

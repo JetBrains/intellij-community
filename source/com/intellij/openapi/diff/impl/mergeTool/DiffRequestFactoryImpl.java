@@ -36,6 +36,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
+import com.intellij.openapi.diff.ActionButtonPresentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -56,9 +57,9 @@ public class DiffRequestFactoryImpl implements DiffRequestFactory {
                                          String originalContent,
                                          VirtualFile file,
                                          Project project,
-                                         final boolean canCloseMergeDialog) {
+                                         final ActionButtonPresentation actionButtonPresentation) {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
-    return new MergeRequestImpl(leftText, createMergeVersion(file, document, originalContent), rightText, project,canCloseMergeDialog);
+    return new MergeRequestImpl(leftText, createMergeVersion(file, document, originalContent), rightText, project, actionButtonPresentation);
   }
 
   private MergeVersion createMergeVersion(VirtualFile file,

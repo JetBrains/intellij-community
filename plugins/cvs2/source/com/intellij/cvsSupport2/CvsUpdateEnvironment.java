@@ -43,8 +43,8 @@ import com.intellij.cvsSupport2.cvshandlers.DirectoryPruner;
 import com.intellij.cvsSupport2.cvshandlers.UpdateHandler;
 import com.intellij.cvsSupport2.updateinfo.UpdatedFilesProcessor;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -57,7 +57,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 public class CvsUpdateEnvironment implements UpdateEnvironment {
   private final Project myProject;
@@ -113,12 +112,12 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
   private void invokeManualMerging(FileGroup mergedWithConflict, Project project) {
     Collection<String> paths = mergedWithConflict.getFiles();
     ArrayList<VirtualFile> mergedFiles = new ArrayList<VirtualFile>();
-    for (Iterator iterator = paths.iterator(); iterator.hasNext();) {
-      VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(new File((String)iterator.next()));
+    for (final String path : paths) {
+      VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(new File((String)path));
       if (virtualFile != null) mergedFiles.add(virtualFile);
     }
 
-    new CvsMergeAction(mergedFiles.get(0), project, mergedFiles,new AbstractMergeAction.FileValueHolder()).actionPerformed(null);
+    new CvsMergeAction(mergedFiles.get(0), project, mergedFiles,new AbstractMergeAction.FileValueHolder()).execute(null);
 
   }
 

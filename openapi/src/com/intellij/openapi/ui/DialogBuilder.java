@@ -28,6 +28,7 @@ public class DialogBuilder {
   private final MyDialogWrapper myDialogWrapper;
   private final ArrayList<Disposable> myDisposables = new ArrayList<Disposable>();
   private Runnable myCancelOperation = null;
+  private Runnable myOkOperation = null;
 
   public int show() {
     return showImpl(true).getExitCode();
@@ -132,6 +133,10 @@ public class DialogBuilder {
     myCancelOperation = runnable;
   }
 
+  public void setOkOperation(Runnable runnable) {
+    myOkOperation = runnable;
+  }
+
   public void setOkActionEnabled(final boolean isEnabled) {
     myDialogWrapper.setOKActionEnabled(isEnabled);
   }
@@ -152,8 +157,12 @@ public class DialogBuilder {
     return get(getActionDescriptors(), CancelActionDescriptor.class);
   }
 
+  public Component getCenterPanel() {
+    return myCenterPanel;
+  }
+
   public interface ActionDescriptor {
-    Action getAction(MyDialogWrapper dialogWrapper);
+    Action getAction(DialogWrapper dialogWrapper);
   }
 
   public static abstract class DialogActionDescriptor implements ActionDescriptor {
@@ -166,7 +175,7 @@ public class DialogBuilder {
       myMnemonicChar = mnemonicChar != -1 ? new Integer(mnemonicChar) : null;
     }
 
-    public Action getAction(MyDialogWrapper dialogWrapper) {
+    public Action getAction(DialogWrapper dialogWrapper) {
       Action action = createAction(dialogWrapper);
       action.putValue(Action.NAME, myName);
       if (myMnemonicChar != null) action.putValue(Action.MNEMONIC_KEY, myMnemonicChar);
@@ -215,7 +224,7 @@ public class DialogBuilder {
       myAction = action;
     }
 
-    public Action getAction(MyDialogWrapper dialogWrapper) {
+    public Action getAction(DialogWrapper dialogWrapper) {
       return myAction;
     }
   }
@@ -227,8 +236,8 @@ public class DialogBuilder {
       myText = text;
     }
 
-    public Action getAction(MyDialogWrapper dialogWrapper) {
-      Action builtinAction = getBuiltinAction(dialogWrapper);
+    public Action getAction(DialogWrapper dialogWrapper) {
+      Action builtinAction = getBuiltinAction((MyDialogWrapper)dialogWrapper);
       if (myText != null) builtinAction.putValue(Action.NAME, myText);
       return builtinAction;
     }
@@ -309,6 +318,15 @@ public class DialogBuilder {
       }
       else {
         super.doCancelAction();
+      }
+    }
+
+    protected void doOKAction() {
+      if (myOkOperation != null) {
+        myOkOperation.run();
+      }
+      else {
+        super.doOKAction();
       }
     }
 
