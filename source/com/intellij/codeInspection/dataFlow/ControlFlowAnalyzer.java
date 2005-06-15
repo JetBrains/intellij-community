@@ -321,14 +321,29 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     final PsiExpression iteratedValue = statement.getIteratedValue();
 
     if (iteratedValue != null) {
-      initializeVariable(parameter, iteratedValue);
-      addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), true, iteratedValue));
+      iteratedValue.accept(this);
+      addInstruction(new PopInstruction());
     }
+
+    if (parameter != null) {
+      DfaVariableValue dfaVariable = myFactory.getVarFactory().create(parameter, false);
+      addInstruction(new PushInstruction(dfaVariable));
+      pushUnknown();
+      addInstruction(new AssignInstruction(null));
+      addInstruction(new PopInstruction());
+    }
+
+    int offset = myCurrentFlow.getInstructionCount();
+
+    pushUnknown();
+    addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), true, null));
 
     final PsiStatement body = statement.getBody();
     if (body != null) {
       body.accept(this);
     }
+
+    addInstruction(new GotoInstruction(offset));
 
     finishElement(statement);
     myCurrentFlow.removeVariable(parameter);
