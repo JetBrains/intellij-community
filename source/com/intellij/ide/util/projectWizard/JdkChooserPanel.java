@@ -13,6 +13,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class JdkChooserPanel extends JPanel {
   private JList myList = null;
@@ -87,6 +89,11 @@ public class JdkChooserPanel extends JPanel {
   private void fillList() {
     myListModel.clear();
     final ProjectJdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
+    Arrays.sort(jdks, new Comparator<ProjectJdk>() {
+      public int compare(final ProjectJdk o1, final ProjectJdk o2) {
+        return o1.getName().compareToIgnoreCase(o2.getName());
+      }
+    });
     for (int i = 0; i < jdks.length; i++) {
       myListModel.addElement(jdks[i]);
     }
