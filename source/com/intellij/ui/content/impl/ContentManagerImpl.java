@@ -186,6 +186,14 @@ public class ContentManagerImpl implements ContentManager {
     return myContents.indexOf(content);
   }
 
+  public String getCloseActionName() {
+    return "Close Tab";
+  }
+
+  public boolean canCloseAllContents() {
+    return getContentCount() > 0 && canCloseContents();
+  }
+
   public Content getSelectedContent() {
     return mySelectedContent;
   }

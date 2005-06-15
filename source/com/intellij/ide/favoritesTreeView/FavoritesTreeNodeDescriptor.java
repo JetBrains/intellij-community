@@ -7,16 +7,9 @@ import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
-
-import javax.swing.*;
 
 /**
  * User: anna
@@ -61,9 +54,8 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
         return ClassPresentationUtil.getNameForClass((PsiClass)parent, true);
       }
       if (parent == null) return "";
-      final Module module = ModuleUtil.findModuleForPsiElement(parent);
       final PsiFile containingFile = nodeElement instanceof PsiFile ? (PsiFile)nodeElement : parent.getContainingFile();
-      return module != null && containingFile != null ? (module.getName() + ": " + containingFile.getName()) : "";
+      return containingFile != null ? containingFile.getVirtualFile().getPresentableUrl() : "";
     }
     if (nodeElement instanceof PackageElement){
       final PackageElement packageElement = ((PackageElement)nodeElement);

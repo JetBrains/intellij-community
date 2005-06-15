@@ -30,7 +30,9 @@ public interface ContentManager {
 
   int getIndexOfContent(Content content);
 
+  String getCloseActionName();
 
+  boolean canCloseAllContents();
 
   void selectPreviousContent();
 

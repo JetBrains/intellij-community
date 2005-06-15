@@ -14,11 +14,10 @@ import com.intellij.util.ArrayUtil;
  * User: anna
  * Date: Feb 24, 2005
  */
-public class AddNewFavoritesListAction extends AnAction{
-
+public class AddNewFavoritesListAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
-    if (project != null){
+    if (project != null) {
       final FavoritesTreeViewPanel favoritesTreeViewPanel = doAddNewFavoritesList(project);
       if (favoritesTreeViewPanel != null) {
         final ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
@@ -33,15 +32,19 @@ public class AddNewFavoritesListAction extends AnAction{
     final String s =
       Messages.showInputDialog(project, "Input new favorites list name", "Add New Favorites List", Messages.getInformationIcon(), "new",
                                new InputValidator() {
-                                     public boolean checkInput(String inputString) {
-                                       return inputString != null && inputString.trim().length() > 0;
-                      }
+                                 public boolean checkInput(String inputString) {
+                                   return inputString != null && inputString.trim().length() > 0;
+                                 }
 
-                                     public boolean canClose(String inputString) {
-                                       final boolean alreadyContains = ArrayUtil.find(FavoritesViewImpl.getInstance(project).getAvailableFavoritesLists(), inputString.trim()) == -1;
-                                       return inputString.trim().length() > 0 && alreadyContains;
-                      }
-                    });
+                                 public boolean canClose(String inputString) {
+                                   final boolean isNew = ArrayUtil.find(FavoritesViewImpl.getInstance(project).getAvailableFavoritesLists(), inputString.trim()) == -1;
+                                   if (!isNew) {
+                                     Messages.showErrorDialog(project, "Favorites list with name \'" + inputString.trim() + "\' already exists", "Unable To Add Favorites List");
+                                     return false;
+                                   }
+                                   return inputString.trim().length() > 0;
+                                 }
+                               });
     if (s == null || s.length() == 0) return null;
     final FavoritesViewImpl favoritesView = FavoritesViewImpl.getInstance(project);
     return favoritesView.addNewFavoritesList(s);

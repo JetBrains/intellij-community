@@ -106,7 +106,6 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
     public CloseAction(Content content) {
       myContent = content;
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
-      getTemplatePresentation().setText("Close Tab");
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -117,6 +116,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(myContent != null && myManager.canCloseContents());
       presentation.setVisible(myManager.canCloseContents());
+      presentation.setText(myManager.getCloseActionName());
     }
   }
 
@@ -134,8 +134,8 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
 
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myManager.getContentCount() > 0 && myManager.canCloseContents());
-      presentation.setVisible(myManager.canCloseContents());
+      presentation.setEnabled(myManager.canCloseAllContents());
+      presentation.setVisible(myManager.canCloseAllContents());
     }
   }
 
@@ -163,6 +163,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
 
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
+      presentation.setText(myManager.getCloseActionName().replaceFirst(" ", " All ") + "s But This");
       presentation.setEnabled(myContent != null && myManager.canCloseContents() && myManager.getContentCount() > 1);
       presentation.setVisible(myManager.canCloseContents());
     }

@@ -29,8 +29,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.Icons;
+import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -501,7 +501,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     //group.add(new ShowStructureAction());
     group.add(ActionManager.getInstance().getAction(IdeActions.REMOVE_FROM_FAVORITES));
 
-    group.add(ActionManager.getInstance().getAction(IdeActions.REMOVE_FAVORITES_LIST));
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.FAVORITES_VIEW_TOOLBAR, group, true).getComponent();
   }
 

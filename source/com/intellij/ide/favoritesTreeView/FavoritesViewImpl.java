@@ -3,7 +3,6 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -79,7 +78,6 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
         toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowFavorites.png"));
         new ContentManagerWatcher(toolWindow, FavoritesViewImpl.this);
         final ContentFactory contentFactory = PeerFactory.getInstance().getContentFactory();
-        final ActionGroup favoritesActionsGroup = ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.ADD_TO_FAVORITES));
         if (myName2FavoritesListSet.isEmpty()){
           final FavoritesTreeViewPanel panel = new FavoritesTreeViewPanel(myCurrentProject, null, myCurrentProject.getName());
           final Content favoritesContent = contentFactory.createContent(panel, myCurrentProject.getName(), false);
@@ -132,10 +130,11 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
     return panel;
   }
 
-  public void removeCurrentFavoritesList(){
-    ((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.ADD_TO_FAVORITES)).remove(myActions.remove(myCurrentFavoritesList));
-    final Content content = myName2FavoritesListSet.remove(myCurrentFavoritesList);
-    removeContent(content);
+  public boolean removeContent(Content content){
+    final String name = content.getComponent().getName();
+    ((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.ADD_TO_FAVORITES)).remove(myActions.remove(name));
+    myName2FavoritesListSet.remove(name);
+    return super.removeContent(content);
   }
 
   public String [] getAllAddActionNamesButThis(){
@@ -189,4 +188,17 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
     }
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
+
+  public boolean canCloseContents() {
+    return getContentCount() > 1;
+  }
+
+  public String getCloseActionName() {
+    return "Delete Favorites List";
+  }
+
+  public boolean canCloseAllContents() {
+    return false;
+  }
+
 }

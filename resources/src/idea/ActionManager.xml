@@ -1224,6 +1224,8 @@
       <action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction" text="Exclude" description="Exlude this usage(s) from processing"/>
       <!--todo: include/exclude-->
       <separator/>
+      <reference ref="AddToFavorites"/>
+      <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
       <reference ref="ExternalToolsGroup"/>
