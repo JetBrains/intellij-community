@@ -1,0 +1,6 @@
+public class X {
+  void f() {
+    <spot>/* comment
+       more of the same comment*/</spot>
+  }
+}

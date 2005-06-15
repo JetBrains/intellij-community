@@ -8,8 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveDeclarationPredicate implements PsiElementPredicate{
-    private static final Class[] TYPES = new Class[]{PsiCodeBlock.class, PsiForStatement.class};
-
     public boolean satisfiedBy(PsiElement element){
         if(!(element instanceof PsiLocalVariable)){
             return false;
@@ -32,12 +30,11 @@ public class MoveDeclarationPredicate implements PsiElementPredicate{
         if(references.length == 0){
             return false;
         }
-        final PsiElement commonParent = getCommonParent(references);
-        if(commonParent == null
-                || commonParent instanceof PsiExpressionListStatement){
+        final PsiElement tightestBlock = getTightestBlock(references);
+        if(tightestBlock == null){
             return false;
         }
-        if(!variableBlock.equals(commonParent)){
+        if(!variableBlock.equals(tightestBlock)){
             return true;
         }
 
@@ -62,7 +59,7 @@ public class MoveDeclarationPredicate implements PsiElementPredicate{
     }
 
     @Nullable
-    public static PsiElement getChildWhichContainsElement(@NotNull PsiElement ancestor,
+    public static PsiElement getChildWhichContainsElement(@NotNull PsiCodeBlock ancestor,
                                                           @NotNull PsiElement descendant)
     {
         PsiElement element = descendant;
@@ -77,59 +74,28 @@ public class MoveDeclarationPredicate implements PsiElementPredicate{
     }
 
     @Nullable
-    public static PsiElement getCommonParent(@NotNull PsiReference[] references)
+    public static PsiCodeBlock getTightestBlock(@NotNull PsiReference[] references)
     {
-        PsiElement commonParent = null;
+        PsiCodeBlock commonParentBlock = null;
         for(PsiReference reference : references){
             final PsiElement referenceElement = reference.getElement();
-            final PsiElement parent = getParentOfTypes(referenceElement, TYPES);
-            if(commonParent != null && !commonParent.equals(parent)){
-                commonParent =
-                        PsiTreeUtil.findCommonParent(commonParent, parent);
-                commonParent =
-                        PsiTreeUtil.getParentOfType(commonParent,
-                                                    PsiCodeBlock.class, false);
-            } else{
-                commonParent = parent;
-            }
-        }
-        if(commonParent instanceof PsiForStatement){
-            final PsiForStatement forStatement = (PsiForStatement) commonParent;
-            final PsiElement referenceElement = references[0].getElement();
-            if(PsiTreeUtil.isAncestor(forStatement.getInitialization(),
-                                      referenceElement, true)){
-                commonParent = forStatement.getInitialization();
-            } else{
-                commonParent = PsiTreeUtil.getParentOfType(commonParent,
-                                                           PsiCodeBlock.class);
-            }
-        }
-
-        // common parent may not be a switch() statement to avoid narrowing scope to inside switch
-        if(commonParent != null){
-            final PsiElement parent = commonParent.getParent();
-            if(parent instanceof PsiSwitchStatement && references.length > 1){
-                commonParent = PsiTreeUtil.getParentOfType(parent,
-                                                           PsiCodeBlock.class,
-                                                           false);
-            }
-        }
-        return commonParent;
-    }
-
-    @Nullable
-    private static PsiElement getParentOfTypes(@Nullable PsiElement element,
-                                               @NotNull Class[] classes){
-        if(element == null) return null;
-
-        while(element != null){
-            for(Class clazz : classes){
-                if(clazz.isInstance(element)){
-                    return element;
+            final PsiCodeBlock block =
+                    PsiTreeUtil.getParentOfType(referenceElement,
+                                                PsiCodeBlock.class);
+            if(commonParentBlock != null && !commonParentBlock.equals(block)){
+                final PsiElement commonParent =
+                        PsiTreeUtil.findCommonParent(commonParentBlock, block);
+                if(commonParent instanceof PsiCodeBlock){
+                    commonParentBlock = (PsiCodeBlock) commonParent;
+                } else{
+                    commonParentBlock =
+                            PsiTreeUtil.getParentOfType(commonParent,
+                                                        PsiCodeBlock.class);
                 }
+            } else{
+                commonParentBlock = block;
             }
-            element = element.getParent();
         }
-        return null;
+        return commonParentBlock;
     }
 }

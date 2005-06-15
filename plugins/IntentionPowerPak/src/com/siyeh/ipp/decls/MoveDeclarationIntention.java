@@ -17,7 +17,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class MoveDeclarationIntention extends Intention{
     protected PsiElementPredicate getElementPredicate(){
@@ -25,7 +24,7 @@ public class MoveDeclarationIntention extends Intention{
     }
 
     public String getText(){
-        return "Narrow scope of local variable";
+        return "Narrow scope of variable";
     }
 
     public String getFamilyName(){
@@ -40,34 +39,29 @@ public class MoveDeclarationIntention extends Intention{
         final PsiReference[] references =
                 searchHelper.findReferences(variable, variable.getUseScope(),
                                             false);
-        final PsiElement commonParent = MoveDeclarationPredicate.getCommonParent(references);
-        assert commonParent != null;
+        final PsiCodeBlock tightestBlock = MoveDeclarationPredicate.getTightestBlock(references);
+        assert tightestBlock != null;
         final PsiDeclarationStatement declaration = (PsiDeclarationStatement) variable.getParent();
 
         final PsiReference firstReference = references[0];
         final PsiElement referenceElement = firstReference.getElement();
-        final PsiElement containingBlock;
-        if(commonParent instanceof PsiExpressionStatement){
-            containingBlock = commonParent;
-        } else{
-            containingBlock = PsiTreeUtil.getParentOfType(referenceElement,
-                                                          PsiCodeBlock.class);
-            assert containingBlock != null;
-        }
-
         PsiDeclarationStatement newDeclaration;
-        if(containingBlock.equals(commonParent)){
+        if(tightestBlock.equals(PsiTreeUtil.getParentOfType(referenceElement,
+                                                            PsiCodeBlock.class)))
+        {
             // containing block of first reference is the same as the common block of all.
             newDeclaration = moveDeclarationToReference(referenceElement,
-                                                        variable);
+                                                        variable,
+                                                        tightestBlock);
         } else{
             // declaration must be moved to common block (first reference block is too deep)
             final PsiElement child =
-                    MoveDeclarationPredicate.getChildWhichContainsElement(commonParent,
+                    MoveDeclarationPredicate.getChildWhichContainsElement(tightestBlock,
                                                                           referenceElement);
+
             newDeclaration = createNewDeclaration(variable, null);
-            newDeclaration = (PsiDeclarationStatement) commonParent.addBefore(newDeclaration,
-                                                                              child);
+            newDeclaration = (PsiDeclarationStatement) tightestBlock.addBefore(newDeclaration,
+                                                                               child);
         }
 
         if(declaration.getDeclaredElements().length == 1){
@@ -98,68 +92,48 @@ public class MoveDeclarationIntention extends Intention{
     }
 
     private PsiDeclarationStatement moveDeclarationToReference(@NotNull PsiElement referenceElement,
-                                                               @NotNull PsiLocalVariable variable
-    )
+                                                               @NotNull PsiLocalVariable variable,
+                                                               @NotNull PsiCodeBlock block)
             throws IncorrectOperationException{
         PsiStatement statement =
                 PsiTreeUtil.getParentOfType(referenceElement,
                                             PsiStatement.class);
         assert statement != null;
-        PsiElement statementParent = statement.getParent();
-        while(statementParent instanceof PsiStatement &&
-                !(statementParent instanceof PsiForStatement)){
-            statement = (PsiStatement) statementParent;
-            statementParent = statement.getParent();
+        if(statement.getParent() instanceof PsiForStatement){
+            statement = (PsiStatement) statement.getParent();
         }
-
         final PsiElement referenceParent = referenceElement.getParent();
-        final PsiElement referenceGrandParent = referenceParent.getParent();
-        if(referenceParent instanceof PsiAssignmentExpression &&
-                referenceGrandParent instanceof PsiExpressionStatement){
+        if(referenceParent instanceof PsiAssignmentExpression){
             final PsiAssignmentExpression assignmentExpression =
                     (PsiAssignmentExpression) referenceParent;
             if(referenceElement.equals(assignmentExpression.getLExpression())){
                 PsiDeclarationStatement newDeclaration;
                 newDeclaration = createNewDeclaration(variable,
                                                       assignmentExpression.getRExpression());
-                newDeclaration = (PsiDeclarationStatement) statementParent.addBefore(newDeclaration,
-                                                                                     statement);
+                newDeclaration = (PsiDeclarationStatement) block.addBefore(newDeclaration,
+                                                                           statement);
                 final PsiElement parent = assignmentExpression.getParent();
                 parent.delete();
                 return newDeclaration;
             }
         }
-        final PsiDeclarationStatement newDeclaration = createNewDeclaration(variable,
-                                                                            null);
-        return (PsiDeclarationStatement) statementParent.addBefore(newDeclaration,
-                                                                   statement);
+        return createNewDeclaration(variable, null);
     }
 
     private static PsiDeclarationStatement createNewDeclaration(@NotNull PsiLocalVariable variable,
-                                                                @Nullable PsiExpression initializer)
+                                                                PsiExpression initializer)
             throws IncorrectOperationException{
-
         final PsiManager manager = variable.getManager();
         final PsiElementFactory factory = manager.getElementFactory();
         final PsiDeclarationStatement newDeclaration =
                 factory.createVariableDeclarationStatement(
                         variable.getName(), variable.getType(), initializer,
-                        false);
-        final PsiLocalVariable newVariable =
-                (PsiLocalVariable) newDeclaration.getDeclaredElements()[0];
-        final PsiModifierList newModifierList = newVariable.getModifierList();
-
-        final PsiModifierList modifierList = variable.getModifierList();
-        if(modifierList.hasExplicitModifier(PsiModifier.FINAL)){
-            newModifierList.setModifierProperty(PsiModifier.FINAL, true);
-        } else{
-            // remove final when PsiDeclarationFactory adds one by mistake
-            newModifierList.setModifierProperty(PsiModifier.FINAL, false);
-        }
-
-        final PsiAnnotation[] annotations = modifierList.getAnnotations();
-        for(PsiAnnotation annotation : annotations){
-            newModifierList.add(annotation);
+                        true);
+        if(variable.hasModifierProperty(PsiModifier.FINAL)){
+            final PsiLocalVariable newVariable =
+                    (PsiLocalVariable) newDeclaration.getDeclaredElements()[0];
+            newVariable.getModifierList().setModifierProperty(PsiModifier.FINAL,
+                                                              true);
         }
         return newDeclaration;
     }
