@@ -7,19 +7,20 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
 
-public class NoExplicitFinalizeCallsInspection extends ExpressionInspection {
+public class NoExplicitFinalizeCallsInspection extends ExpressionInspection{
     public String getID(){
         return "FinalizeCalledExplicitly";
     }
-    public String getDisplayName() {
+
+    public String getDisplayName(){
         return "'finalize()' called explicitly";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.FINALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "#ref() called explicitly #loc";
     }
 
@@ -27,42 +28,44 @@ public class NoExplicitFinalizeCallsInspection extends ExpressionInspection {
         return true;
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+    public BaseInspectionVisitor buildVisitor(){
         return new NoExplicitFinalizeCallsVisitor();
     }
 
-    private static class NoExplicitFinalizeCallsVisitor extends BaseInspectionVisitor {
-
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+    private static class NoExplicitFinalizeCallsVisitor
+            extends BaseInspectionVisitor{
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if (methodExpression == null) {
+            final PsiReferenceExpression methodExpression = expression
+                    .getMethodExpression();
+            if(methodExpression == null){
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if (!"finalize".equals(methodName)) {
+            if(!"finalize".equals(methodName)){
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
-            if(argumentList == null)
-            {
+            if(argumentList == null){
                 return;
             }
-            if (argumentList.getExpressions().length != 0) {
+            if(argumentList.getExpressions().length != 0){
                 return;
             }
             final PsiMethod containingMethod =
-                    PsiTreeUtil.getParentOfType(expression,
-                                                            PsiMethod.class);
-            assert containingMethod != null;
+                    PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+            if(containingMethod == null){
+                return;
+            }
             final String containingMethodName = containingMethod.getName();
-            final PsiParameterList parameterList = containingMethod.getParameterList();
-            if ("finalize".equals(containingMethodName)
-                    && parameterList.getParameters().length == 0) {
+            final PsiParameterList parameterList = containingMethod
+                    .getParameterList();
+            if("finalize".equals(containingMethodName)
+                    && parameterList.getParameters().length == 0){
                 return;
             }
             registerMethodCallError(expression);
         }
     }
-
 }
