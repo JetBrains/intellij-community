@@ -130,6 +130,10 @@ public abstract class Language {
     return myMimeType;
   }
 
+  public String getID() {
+    return myID;
+  }
+
   private static class EmptyFindUsagesProvider implements FindUsagesProvider {
     public boolean mayHaveReferences(IElementType token, final short searchContext) {
       return false;

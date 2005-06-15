@@ -4,10 +4,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.util.ArrayUtil;
+import com.intellij.lang.Language;
+
 import java.util.Set;
 
 /**
@@ -90,16 +90,9 @@ public class HtmlCompletionData extends XmlCompletionData {
   }
 
   private boolean isScriptContext(PsiElement element) {
-    final XmlAttribute attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class, false);
-    if(attribute != null ||
-       ((element instanceof XmlToken) && ((XmlToken)element).getTokenType() == XmlTokenType.XML_NAME)) {
-      return false; // we could recognize
-    }
-
-    XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
-
-    return isScriptTag(tag);
-
+    final Language language = element.getLanguage();
+    
+    return language != null && language.getID().equals("JavaScript");
   }
 
   private boolean isScriptTag(XmlTag tag) {
