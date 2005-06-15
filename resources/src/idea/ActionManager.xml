@@ -19,7 +19,6 @@
     <group id="AddToFavorites" class="com.intellij.ide.favoritesTreeView.AddToFavoritesActionGroup" popup="true" text="Add To _Favorites"/>
     <group id="AddAllToFavorites" class="com.intellij.ide.favoritesTreeView.AddAllToFavoritesActionGroup" popup="true" text="Add _All To Favorites"/>
     <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.AddNewFavoritesListAction" text="Add New Favorites List" description="Add New Favorites List"/>
-    <action id="RemoveFavoritesList" class="com.intellij.ide.favoritesTreeView.RemoveFavoritesListAction" text="Remove Favorites List" description="REmove Favorites List"/>
     <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.SendToFavoritesGroup" popup="true" text="_Send To Favorites"/>
     <group id="RunContextGroup" popup="false">
       <action id="CreateRunConfiguration" text="Create Run Configuration" description="Create run configuration from context" class="com.intellij.execution.actions.CreateAction"/>
