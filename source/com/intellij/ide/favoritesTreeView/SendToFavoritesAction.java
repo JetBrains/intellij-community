@@ -29,7 +29,7 @@ public class SendToFavoritesAction extends AnAction{
       nodesToAdd.add(selectedNodeDescriptor.getElement());
     }
     favoritesView.getAddToFavoritesAction(myName).addNodes(project, nodesToAdd.toArray(new AbstractTreeNode[nodesToAdd.size()]));
-    ((DeleteFromFavoritesAction)ActionManager.getInstance().getAction(IdeActions.REMOVE_FROM_FAVORITES)).removeNodes(selectedNodeDescriptors, project, currentTreeViewPanel.getName());
+    DeleteFromFavoritesAction.removeNodes(selectedNodeDescriptors, project, currentTreeViewPanel.getName());
   }
 
   public void update(AnActionEvent e) {
