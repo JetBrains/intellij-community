@@ -158,7 +158,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           return true;
         }
 
-        public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+        public void invoke(Project project, Editor editor, PsiFile file) {
           final int textOffset = element.getTextOffset();
           editor.getDocument().replaceString(textOffset,textOffset + 1,"&amp;");
         }
@@ -321,7 +321,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               tag,
               "Element " + name + " doesn't have required attribute " + attrName,
               myResult,
-              HighlightInfoType.WRONG_REF,
+              getTagProblemInfoType(tag),
               new IntentionAction() {
                 public String getText() {
                   return "Insert Required Attribute";
@@ -488,6 +488,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
     else {
       checkDuplicateAttribute(tag, attribute);
+      
       if (tag instanceof HtmlTag &&
           attribute.getValueElement() == null &&
           !HtmlUtil.isSingleHtmlAttribute(attribute.getName())
@@ -508,7 +509,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       if (attribute != tagAttribute && Comparing.strEqual(attribute.getName(), tagAttribute.getName())) {
         String localName = attribute.getLocalName();
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
-          HighlightInfoType.WRONG_REF,
+          getTagProblemInfoType(tag),
           XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(attribute)),
           "Duplicate attribute " + localName);
         myResult.add(highlightInfo);
