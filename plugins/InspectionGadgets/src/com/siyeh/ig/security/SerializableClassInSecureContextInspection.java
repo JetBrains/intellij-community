@@ -29,10 +29,10 @@ public class SerializableClassInSecureContextInspection extends ClassInspection 
     }
 
     private static class SerializableClassInSecureContextVisitor extends BaseInspectionVisitor {
-     
+
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
-            if (aClass.isInterface() || aClass.isAnnotationType()) {
+            if (aClass.isInterface() || aClass.isAnnotationType()|| aClass.isEnum()) {
                 return;
             }
             if (!SerializationUtils.isSerializable(aClass)) {
