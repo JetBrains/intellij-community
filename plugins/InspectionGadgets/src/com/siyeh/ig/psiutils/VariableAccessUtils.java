@@ -1,8 +1,6 @@
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class VariableAccessUtils{
@@ -60,5 +58,34 @@ public class VariableAccessUtils{
                 new VariableUsedInInnerClassVisitor(variable);
         context.accept(visitor);
         return visitor.isUsedInInnerClass();
+    }
+
+    public static boolean mayEvaluateToVariable(PsiExpression expression,
+                                                PsiVariable variable){
+        if(expression == null)
+        {
+            return false;
+        }
+        if(expression instanceof PsiParenthesizedExpression)
+        {
+            final PsiExpression containedExpression =
+                    ((PsiParenthesizedExpression) expression) .getExpression();
+            return mayEvaluateToVariable(containedExpression, variable);
+        }
+        if(expression instanceof PsiConditionalExpression)
+        {
+            final PsiConditionalExpression conditional = (PsiConditionalExpression) expression;
+            final PsiExpression thenExpression = conditional.getThenExpression();
+            final PsiExpression elseExpression = conditional.getElseExpression();
+            return mayEvaluateToVariable(thenExpression, variable) || mayEvaluateToVariable(elseExpression, variable);
+        }
+        if(!(expression instanceof PsiReferenceExpression)){
+            return false;
+        }
+        final PsiElement referent = ((PsiReference) expression).resolve();
+        if(referent == null){
+            return false;
+        }
+        return referent.equals(variable);
     }
 }

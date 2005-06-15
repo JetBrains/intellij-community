@@ -33,11 +33,9 @@ public class VariablePassedAsArgumentVisitor extends PsiRecursiveElementVisitor{
             return;
         }
         for(final PsiExpression arg : args){
-            if(arg instanceof PsiReferenceExpression){
-                final PsiElement referent = ((PsiReference) arg).resolve();
-                if(referent != null && referent.equals(variable)){
-                    passed = true;
-                }
+
+            if(VariableAccessUtils.mayEvaluateToVariable(arg, variable)){
+                passed = true;
             }
         }
     }
@@ -56,11 +54,8 @@ public class VariablePassedAsArgumentVisitor extends PsiRecursiveElementVisitor{
             return;
         }
         for(final PsiExpression arg : args){
-            if(arg != null && arg instanceof PsiReferenceExpression){
-                final PsiElement referent = ((PsiReference) arg).resolve();
-                if(referent != null && referent.equals(variable)){
-                    passed = true;
-                }
+            if(VariableAccessUtils.mayEvaluateToVariable(arg, variable)){
+                passed = true;
             }
         }
     }

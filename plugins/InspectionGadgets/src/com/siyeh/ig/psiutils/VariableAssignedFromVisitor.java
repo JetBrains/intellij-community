@@ -24,14 +24,7 @@ public class VariableAssignedFromVisitor extends PsiRecursiveElementVisitor{
         }
         super.visitAssignmentExpression(assignment);
         final PsiExpression arg = assignment.getRExpression();
-        if(!(arg instanceof PsiReferenceExpression)){
-            return;
-        }
-        final PsiElement referent = ((PsiReference) arg).resolve();
-        if(referent == null){
-            return;
-        }
-        if(referent.equals(variable)){
+        if(VariableAccessUtils.mayEvaluateToVariable(arg, variable)){
             assignedFrom = true;
         }
     }
@@ -42,14 +35,7 @@ public class VariableAssignedFromVisitor extends PsiRecursiveElementVisitor{
         }
         super.visitVariable(var);
         final PsiExpression arg = var.getInitializer();
-        if(!(arg instanceof PsiReferenceExpression)){
-            return;
-        }
-        final PsiElement referent = ((PsiReference) arg).resolve();
-        if(referent == null){
-            return;
-        }
-        if(referent.equals(variable)){
+        if(VariableAccessUtils.mayEvaluateToVariable(arg, variable)){
             assignedFrom = true;
         }
     }
