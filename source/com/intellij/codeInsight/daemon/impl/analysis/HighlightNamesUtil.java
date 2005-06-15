@@ -20,13 +20,13 @@ public class HighlightNamesUtil {
   public static HighlightInfo highlightMethodName(PsiMethod method, PsiElement elementToHighlight, boolean isDeclaration) {
     HighlightInfoType type = getMethodNameHighlightType(method, isDeclaration);
     if (type != null && elementToHighlight != null) {
-      TextAttributes attributes = getMergedAttributes(method, type);
+      TextAttributes attributes = mergeWithScopeAttributes(method, type);
       return HighlightInfo.createHighlightInfo(type, elementToHighlight.getTextRange(), null, attributes);
     }
     return null;
   }
 
-  private static TextAttributes getMergedAttributes(final PsiElement element, final HighlightInfoType type) {
+  private static TextAttributes mergeWithScopeAttributes(final PsiElement element, final HighlightInfoType type) {
     TextAttributes regularAttributes = HighlightInfo.getAttributesByType(type);
     if (element == null) return regularAttributes;
     TextAttributes scopeAttributes = getScopeAttributes(element);
@@ -37,7 +37,7 @@ public class HighlightNamesUtil {
   public static HighlightInfo highlightClassName(PsiClass aClass, PsiElement elementToHighlight) {
     HighlightInfoType type = getClassNameHighlightType(aClass);
     if (type != null && elementToHighlight != null) {
-      TextAttributes attributes = getMergedAttributes(aClass, type);
+      TextAttributes attributes = mergeWithScopeAttributes(aClass, type);
       TextRange range = elementToHighlight.getTextRange();
       if (elementToHighlight instanceof PsiJavaCodeReferenceElement) {
         final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)elementToHighlight;
@@ -52,7 +52,7 @@ public class HighlightNamesUtil {
     HighlightInfoType varType = getVariableNameHighlightType(variable);
     if (varType != null) {
       if (variable instanceof PsiField) {
-        TextAttributes attributes = getMergedAttributes(variable, varType);
+        TextAttributes attributes = mergeWithScopeAttributes(variable, varType);
         return HighlightInfo.createHighlightInfo(varType, elementToHighlight.getTextRange(), null, attributes);
       }
       return HighlightInfo.createHighlightInfo(varType, elementToHighlight, null);
@@ -117,7 +117,7 @@ public class HighlightNamesUtil {
     PsiJavaCodeReferenceElement nameRefElement = annotation.getNameReferenceElement();
     if (nameRefElement != null) {
       HighlightInfoType type = HighlightInfoType.ANNOTATION_NAME;
-      TextAttributes attributes = getMergedAttributes(annotation, type);
+      TextAttributes attributes = mergeWithScopeAttributes(annotation, type);
       return HighlightInfo.createHighlightInfo(type, nameRefElement.getTextRange(), null, attributes);
     }
     return null;
