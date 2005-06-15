@@ -61,7 +61,6 @@ public class HtmlFileImpl extends XmlFileImpl {
         public boolean execute(final PsiElement element) {
           if (element instanceof XmlTag && "script".equals(((XmlTag)element).getDescriptor().getName())) {
             scriptTags.add((XmlTag)element);
-            return false;
           }
           return true;
         }
