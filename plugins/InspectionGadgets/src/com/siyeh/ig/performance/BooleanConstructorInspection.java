@@ -11,6 +11,7 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class BooleanConstructorInspection extends ExpressionInspection{
@@ -91,6 +92,11 @@ public class BooleanConstructorInspection extends ExpressionInspection{
             super.visitNewExpression(expression);
             final PsiType type = expression.getType();
             if(!TypeUtils.typeEquals("java.lang.Boolean", type)){
+                return;
+            }
+            final PsiClass aClass = ClassUtils.getContainingClass(expression);
+            if(aClass!=null && "java.lang.Boolean".equals(aClass.getQualifiedName()))
+            {
                 return;
             }
             registerError(expression);
