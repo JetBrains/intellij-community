@@ -31,11 +31,12 @@ public class XmlAttributeValueGetter implements ContextGetter {
       XmlAttributeDescriptor jspTagAttribute = ((XmlAttribute)context).getDescriptor();
 
       if(jspTagAttribute != null){
-        final String[] values = jspTagAttribute.getEnumeratedValues();
+        String[] values = jspTagAttribute.getEnumeratedValues();
         
         if((values == null || values.length==0)) {
           final PsiReference[] references = ((XmlAttribute)context).getValueElement().getReferences();
           if (references.length == 0) return getAllWordsFromDocument(context,completionContext);
+          values = new String[0];
         }
         return values;
       }
