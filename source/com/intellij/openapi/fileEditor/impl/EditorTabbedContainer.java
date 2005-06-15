@@ -105,7 +105,7 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
           MyTabbedPane.super.setSelectedIndex(index);
           final EditorComposite composite = myWindow.getSelectedEditor();
           if (composite != null) {
-            myWindow.getManager().openFileImpl3(myWindow, composite.getFile(), true, null);
+            myWindow.getManager().openFileImpl3(myWindow, composite.getFile(), false, null);
           }
         }
       }, "", null);
