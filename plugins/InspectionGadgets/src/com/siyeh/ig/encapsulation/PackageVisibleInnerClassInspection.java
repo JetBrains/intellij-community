@@ -39,7 +39,6 @@ public class PackageVisibleInnerClassInspection extends ClassInspection {
     }
 
     private static class PackageVisibleInnerClassVisitor extends BaseInspectionVisitor {
-
         public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.hasModifierProperty(PsiModifier.PUBLIC) ||
                     aClass.hasModifierProperty(PsiModifier.PROTECTED) ||
@@ -47,6 +46,10 @@ public class PackageVisibleInnerClassInspection extends ClassInspection {
                 return;
             }
             if (!ClassUtils.isInnerClass(aClass)) {
+                return;
+            }
+            if(!(aClass.getParent() instanceof PsiClass))
+            {
                 return;
             }
             registerClassError(aClass);
