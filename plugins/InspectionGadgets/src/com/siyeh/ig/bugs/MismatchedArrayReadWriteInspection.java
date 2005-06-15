@@ -86,6 +86,9 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection{
             if(written && read){
                 return;
             }
+            if(!read && !written){
+                return;
+            }
             registerVariableError(variable);
         }
     }
@@ -142,3 +145,4 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection{
                                                                     context);
     }
 }
+
