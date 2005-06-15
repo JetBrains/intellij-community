@@ -5,6 +5,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention{
     protected String getTextForElement(PsiElement element){
@@ -12,13 +13,20 @@ public class FlipCommutativeMethodCallIntention extends MutablyNamedIntention{
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
         final String methodName = methodExpression.getReferenceName();
-        return "Flip ." + methodName + "()";
+        assert methodName != null;
+        if("equals".equals(methodName) || "equalsIgnoreCase".equals(methodName))
+        {
+            return "Flip ." + methodName + "()";
+        } else{
+            return "Unsafe flip ." + methodName + "()";
+        }
     }
 
     public String getFamilyName(){
         return "Flip Commutative Method Call";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new FlipCommutativeMethodCallPredicate();
     }
