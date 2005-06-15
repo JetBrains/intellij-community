@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
@@ -37,7 +38,12 @@ public class HighlightNamesUtil {
     HighlightInfoType type = getClassNameHighlightType(aClass);
     if (type != null && elementToHighlight != null) {
       TextAttributes attributes = getMergedAttributes(aClass, type);
-      return HighlightInfo.createHighlightInfo(type, elementToHighlight.getTextRange(), null, attributes);
+      TextRange range = elementToHighlight.getTextRange();
+      if (elementToHighlight instanceof PsiJavaCodeReferenceElement) {
+        final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)elementToHighlight;
+        range = new TextRange(range.getStartOffset(), referenceElement.getParameterList().getTextRange().getStartOffset());
+      }
+      return HighlightInfo.createHighlightInfo(type, range, null, attributes);
     }
     return null;
   }
