@@ -232,6 +232,44 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       XmlAttributeValue.class, 
       pathReferenceProvider
     );
+    
+    registerReferenceProvider(
+      new ScopeFilter(
+        new AndFilter(
+          new ParentElementFilter(new TextFilter("value")),
+          new ParentElementFilter(
+            new AndFilter(
+              new NamespaceFilter(XmlUtil.JSTL_CORE_URI),
+              new AndFilter(
+                new ClassFilter(XmlTag.class),
+                new TextFilter("url")
+              )
+            ), 2
+          )
+        )
+      ),
+      XmlAttributeValue.class, 
+      pathReferenceProvider
+    );
+    
+    registerReferenceProvider(
+      new ScopeFilter(
+        new AndFilter(
+          new ParentElementFilter(new TextFilter("url")),
+          new ParentElementFilter(
+            new AndFilter(
+              new NamespaceFilter(XmlUtil.JSTL_CORE_URI),
+              new AndFilter(
+                new ClassFilter(XmlTag.class),
+                new TextFilter("import")
+              )
+            ), 2
+          )
+        )
+      ),
+      XmlAttributeValue.class, 
+      pathReferenceProvider
+    );
 
     registerReferenceProvider(
       new ScopeFilter(

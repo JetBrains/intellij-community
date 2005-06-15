@@ -57,6 +57,8 @@ public class XmlUtil {
   public static final Key<String> TEST_PATH = Key.create("TEST PATH");
   public static final String JSP_URI = "http://java.sun.com/JSP/Page";
   public static final String ANY_URI = "http://www.intellij.net/ns/any";
+  
+  public static final String JSTL_CORE_URI = "http://java.sun.com/jsp/jstl/core";
 
   public static String getSchemaLocation(XmlTag tag, String namespace) {
     final String uri = ExternalResourceManagerEx.getInstanceEx().getResourceLocation(namespace);
