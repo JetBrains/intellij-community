@@ -160,13 +160,13 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         if (expression instanceof PsiArrayAccessExpression) {
           LocalQuickFix fix = createAssertNotNullFix(((PsiArrayAccessExpression)expression).getArrayExpression());
           descriptions.add(manager.createProblemDescriptor(expression,
-                                                           "Array access <code>#ref</code> #loc may produce <code>java.lang.NullPointerException<./code>.",
+                                                           "Array access <code>#ref</code> #loc may produce <code>java.lang.NullPointerException</code>.",
                                                            fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
         else {
           LocalQuickFix fix = createAssertNotNullFix(((PsiReferenceExpression)expression).getQualifierExpression());
           descriptions.add(manager.createProblemDescriptor(expression,
-                                                           "Member variable access <code>#ref</code> #loc may produce <code>java.lang.NullPointerException<./code>.",
+                                                           "Member variable access <code>#ref</code> #loc may produce <code>java.lang.NullPointerException</code>.",
                                                            fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
       }
