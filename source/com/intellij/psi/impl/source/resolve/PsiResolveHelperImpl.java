@@ -96,7 +96,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
 
   public PsiType inferTypeForMethodTypeParameter(final PsiTypeParameter typeParameter,
                                                  final PsiParameter[] parameters,
-                                                 PsiExpression[] arguments, PsiSubstitutor partialSubstitutor, PsiElement parent) {
+                                                 PsiExpression[] arguments,
+                                                 PsiSubstitutor partialSubstitutor,
+                                                 PsiElement parent,
+                                                 final boolean forCompletion) {
     PsiType substitution = PsiType.NULL;
     if (parameters.length > 0) {
       for (int j = 0; j < arguments.length; j++) {
@@ -105,6 +108,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
         if (j >= parameters.length && !parameter.isVarArgs()) break;
         PsiType parameterType = parameter.getType();
         PsiType argumentType = argument.getType();
+        if (forCompletion && argumentType == null) continue;
 
         if (parameterType instanceof PsiEllipsisType) {
           parameterType = ((PsiEllipsisType)parameterType).getComponentType();
@@ -140,7 +144,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
     }
 
     if (substitution == PsiType.NULL) {
-      substitution = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent);
+      substitution = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, forCompletion);
     }
     return substitution;
   }
@@ -159,14 +163,16 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
   }
 
   private PsiType inferMethodTypeParameterFromParent(final PsiTypeParameter typeParameter,
-                                                            PsiSubstitutor substitutor,
-                                                            PsiElement parent) {
+                                                     PsiSubstitutor substitutor,
+                                                     PsiElement parent,
+                                                     final boolean forCompletion) {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();
     PsiType substitution = PsiType.NULL;
     if (owner instanceof PsiMethod) {
       if (parent instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression methodCall = (PsiMethodCallExpression)parent;
-        substitution = inferMethodTypeParameterFromParent(methodCall.getParent(), methodCall, typeParameter, substitutor);
+        substitution = inferMethodTypeParameterFromParent(methodCall.getParent(), methodCall, typeParameter, substitutor,
+                                                          forCompletion);
       }
     }
     return substitution;
@@ -332,7 +338,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
   private PsiType inferMethodTypeParameterFromParent(PsiElement parent,
                                                      PsiMethodCallExpression methodCall,
                                                      final PsiTypeParameter typeParameter,
-                                                     PsiSubstitutor substitutor) {
+                                                     PsiSubstitutor substitutor,
+                                                     final boolean forCompletion) {
     PsiType type = null;
 
     if (parent instanceof PsiVariable && methodCall.equals(((PsiVariable)parent).getInitializer())) {
@@ -351,8 +358,11 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
       }
     }
 
+    final PsiManager manager = methodCall.getManager();
     if (type == null) {
-      type = PsiType.getJavaLangObject(methodCall.getManager(), methodCall.getResolveScope());
+      type = forCompletion ?
+             PsiType.NULL :
+             PsiType.getJavaLangObject(methodCall.getManager(), methodCall.getResolveScope());
     }
 
     PsiType returnType = ((PsiMethod)typeParameter.getOwner()).getReturnType();
@@ -360,15 +370,21 @@ public class PsiResolveHelperImpl implements PsiResolveHelper, Constants {
 
     if (guess == PsiType.NULL) {
       PsiType superType = substitutor.substitute(typeParameter.getSuperTypes()[0]);
-      return superType == null ? PsiType.getJavaLangObject(methodCall.getManager(), methodCall.getResolveScope()) : superType;
+      if (superType == null) superType = PsiType.getJavaLangObject(manager, methodCall.getResolveScope());
+      if (forCompletion) {
+        return PsiWildcardType.createExtends(manager, superType);
+      }
+      else {
+        return superType;
+      }
     }
 
     //The following code is the result of deep thought, do not shit it out before discussing with [ven]
     if (returnType instanceof PsiClassType && typeParameter.equals(((PsiClassType)returnType).resolve())) {
       PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
       PsiSubstitutor newSubstitutor = substitutor.put(typeParameter, guess);
-      for (int i = 0; i < extendsTypes.length; i++) {
-        PsiType extendsType = newSubstitutor.substitute(extendsTypes[i]);
+      for (PsiClassType extendsType1 : extendsTypes) {
+        PsiType extendsType = newSubstitutor.substitute(extendsType1);
         if (!extendsType.isAssignableFrom(guess)) {
           if (guess.isAssignableFrom(extendsType)) {
             guess = extendsType;

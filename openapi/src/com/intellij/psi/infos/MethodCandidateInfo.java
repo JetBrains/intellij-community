@@ -49,7 +49,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
       PsiMethod method = getElement();
       if (myTypeArguments == null) {
-        myCalcedSubstitutor = inferTypeArguments(method, incompleteSubstitutor);
+        myCalcedSubstitutor = inferTypeArguments(false);
       } else {
         PsiTypeParameter[] typeParams = method.getTypeParameters();
         for (int i = 0; i < myTypeArguments.length && i < typeParams.length; i++) {
@@ -78,13 +78,14 @@ public class MethodCandidateInfo extends CandidateInfo{
     return (PsiMethod)super.getElement();
   }
 
-  private PsiSubstitutor inferTypeArguments(final PsiMethod method, PsiSubstitutor substitutor) {
-
+  public PsiSubstitutor inferTypeArguments(final boolean forCompletion) {
+    PsiMethod method = getElement();
+    PsiSubstitutor partialSubstitutor = mySubstitutor;
     PsiExpression[] arguments = myArgumentList == null ? PsiExpression.EMPTY_ARRAY : myArgumentList.getExpressions();
     PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
-    if (method.getSignature(substitutor).isRaw()) {
-      return createRawSubstitutor(substitutor, typeParameters);
+    if (method.getSignature(partialSubstitutor).isRaw()) {
+      return createRawSubstitutor(partialSubstitutor, typeParameters);
     }
 
     PsiResolveHelper helper = method.getManager().getResolveHelper();
@@ -92,20 +93,20 @@ public class MethodCandidateInfo extends CandidateInfo{
       final PsiParameter[] parameters = method.getParameterList().getParameters();
 
       PsiType substitution = helper.inferTypeForMethodTypeParameter(typeParameter, parameters, arguments,
-                                                                    substitutor, myArgumentList.getParent());
+                                                                    partialSubstitutor, myArgumentList.getParent(), forCompletion);
 
-      if (substitution == null) return createRawSubstitutor(substitutor, typeParameters);
+      if (substitution == null) return createRawSubstitutor(partialSubstitutor, typeParameters);
       if (substitution == PsiType.NULL) continue;
 
       if (substitution == PsiType.NULL || substitution == PsiType.VOID) substitution = null;
-      substitutor = substitutor.put(typeParameter, substitution);
+      partialSubstitutor = partialSubstitutor.put(typeParameter, substitution);
     }
-    return substitutor;
+    return partialSubstitutor;
   }
 
   private PsiSubstitutor createRawSubstitutor(PsiSubstitutor substitutor, PsiTypeParameter[] typeParameters) {
-    for (int i = 0; i < typeParameters.length; i++) {
-      substitutor = substitutor.put(typeParameters[i], null);
+    for (PsiTypeParameter typeParameter : typeParameters) {
+      substitutor = substitutor.put(typeParameter, null);
     }
 
     return substitutor;

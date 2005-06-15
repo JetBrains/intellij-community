@@ -83,7 +83,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
               PsiTypeParameter typeParameter = typeParameters[i];
               final PsiType inferedType = resolveHelper.inferTypeForMethodTypeParameter(typeParameter, parameters,
                                                                                         expression.getArgumentList().getExpressions(),
-                                                                                        resolveResult.getSubstitutor(), expression);
+                                                                                        resolveResult.getSubstitutor(), expression, false);
               if (!typeArguments[i].equals(inferedType)) return;
             }
 

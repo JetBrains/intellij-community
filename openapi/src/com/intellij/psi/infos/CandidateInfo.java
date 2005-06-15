@@ -15,7 +15,7 @@ public class CandidateInfo implements JavaResolveResult {
   private PsiElement myCandidate = null;
   private Boolean myAccessProblem = null;
   private boolean myStaticsProblem = false;
-  private PsiSubstitutor mySubstitutor = null;
+  protected PsiSubstitutor mySubstitutor = null;
   private PsiElement myCurrentFileResolveContext = null;
   public static CandidateInfo[] EMPTY_ARRAY = new CandidateInfo[0];
   private boolean myPackagePrefixPackageReference;

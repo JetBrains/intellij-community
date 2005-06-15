@@ -35,8 +35,12 @@ public interface PsiResolveHelper {
    *         null         iff the type inferred is raw
    *         inferred type otherwise
    */
-  PsiType inferTypeForMethodTypeParameter(final PsiTypeParameter typeParameter, final PsiParameter[] parameters,
-                                                 PsiExpression[] arguments, PsiSubstitutor partialSubstitutor, PsiElement parent);
+  PsiType inferTypeForMethodTypeParameter(final PsiTypeParameter typeParameter,
+                                          final PsiParameter[] parameters,
+                                          PsiExpression[] arguments,
+                                          PsiSubstitutor partialSubstitutor,
+                                          PsiElement parent,
+                                          final boolean forCompletion);
 
   PsiType getSubstitutionForTypeParameter(PsiTypeParameter typeParam,
                                                         PsiType param,
