@@ -48,6 +48,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -363,7 +364,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return true;
   }
 
-  private static String getBestWordToSearch(final String text,
+  @NotNull
+  private static String getBestWordToSearch(@NotNull final String text,
                                             final short searchContext,
                                             final SearchScope searchScope,
                                             PsiManagerImpl manager) {
@@ -386,13 +388,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         bestFilesCount = filesCount;
       }
     }
-    return bestWord;
+    return bestWord == null ? text : bestWord;
   }
 
   private static boolean processAntElementScopeRoot(final PsiElement scope,
-                                             final PsiElement refElement,
-                                             final PsiAntElement antElement,
-                                             final PsiReferenceProcessor processor) {
+                                                    final PsiElement refElement,
+                                                    final PsiAntElement antElement,
+                                                    final PsiReferenceProcessor processor) {
     final PsiReference[] references = findReferencesInNonJavaFile(scope.getContainingFile(), refElement, antElement.getName());
     for (PsiReference reference : references) {
       if (!processor.execute(reference)) return false;
@@ -569,8 +571,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         PsiMethod method1 = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature);
         if (method1 == null ||
             method1.hasModifierProperty(PsiModifier.STATIC) ||
-            (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
-             !method1.getManager().arePackagesTheSame(parentClass, inheritor))) {
+                                                            (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
+                                                                                                                   !method1.getManager().arePackagesTheSame(parentClass, inheritor))) {
           return true;
         }
         return processor.execute(method1);
@@ -641,9 +643,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   public boolean processReferencesIncludingOverriding(final PsiReferenceProcessor processor,
-                                                       final PsiMethod method,
-                                                       SearchScope searchScope,
-                                                       final boolean isStrictSignatureSearch) {
+                                                      final PsiMethod method,
+                                                      SearchScope searchScope,
+                                                      final boolean isStrictSignatureSearch) {
     LOG.assertTrue(searchScope != null);
 
     PsiClass parentClass = method.getContainingClass();
@@ -1192,8 +1194,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   public static boolean processReferencesToElementsInLocalScope(final PsiReferenceProcessor processor,
-                                                         final SearchDescriptor bundleSearchDescriptor,
-                                                         LocalSearchScope scope) {
+                                                                final SearchDescriptor bundleSearchDescriptor,
+                                                                LocalSearchScope scope) {
     PsiElement[] scopeElements = scope.getScope();
     for (final PsiElement scopeElement : scopeElements) {
       if (!processReferencesToElementInScopeElement(scopeElement, bundleSearchDescriptor, processor)) {
@@ -1205,8 +1207,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static boolean processReferencesToElementInScopeElement(PsiElement scopeElement,
-                                                           final SearchDescriptor bundleSearchDescriptor,
-                                                           final PsiReferenceProcessor processor) {
+                                                                  final SearchDescriptor bundleSearchDescriptor,
+                                                                  final PsiReferenceProcessor processor) {
     if (scopeElement == null) return true;
     if (!bundleSearchDescriptor.myFiles.contains(scopeElement.getContainingFile())) return true;
 

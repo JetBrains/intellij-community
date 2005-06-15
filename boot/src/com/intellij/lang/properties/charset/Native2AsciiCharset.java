@@ -9,11 +9,14 @@ import java.nio.charset.CharsetEncoder;
  */
 
 public class Native2AsciiCharset extends Charset {
-  public static final Charset INSTANCE = new Native2AsciiCharset("NATIVE_TO_ASCII", null);
-  static final Charset DEFAULT_CHARSET = forName("ISO-8859-1");
+  private final Charset myBaseCharset;
+  private static final String NAME_PREFIX = "NATIVE_TO_ASCII_";
 
-  public Native2AsciiCharset(String canonicalName, String[] aliases) {
-    super(canonicalName, aliases);
+  public Native2AsciiCharset(String canonicalName) {
+    super(canonicalName, null);
+    String baseCharsetName = canonicalName.substring(NAME_PREFIX.length());
+    Charset baseCharset = Charset.forName(baseCharsetName);
+    myBaseCharset = baseCharset == null ? Charset.forName("ISO-8859-1") : baseCharset;
   }
 
   public boolean contains(Charset cs) {
@@ -21,10 +24,24 @@ public class Native2AsciiCharset extends Charset {
   }
 
   public CharsetDecoder newDecoder() {
-    return new Native2AsciiCharsetDecoder();
+    return new Native2AsciiCharsetDecoder(this);
   }
 
   public CharsetEncoder newEncoder() {
-    return new Native2AsciiCharsetEncoder();
+    return new Native2AsciiCharsetEncoder(this);
+  }
+
+  public Charset getBaseCharset() {
+    return myBaseCharset;
+  }
+  public static String makeNative2AsciiEncodingName(String baseCharsetName) {
+    if (baseCharsetName == null) baseCharsetName = "ISO-8859-1";
+    return NAME_PREFIX + baseCharsetName;
+  }
+  public static Charset forName(String charsetName) {
+    if (charsetName.startsWith(Native2AsciiCharset.NAME_PREFIX)) {
+      return new Native2AsciiCharset(charsetName);
+    }
+    return null;
   }
 }

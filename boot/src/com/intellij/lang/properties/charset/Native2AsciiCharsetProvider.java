@@ -10,17 +10,14 @@ import java.util.Collections;
  */
 
 public class Native2AsciiCharsetProvider extends CharsetProvider {
-    public Native2AsciiCharsetProvider() {
-    }
+  public Native2AsciiCharsetProvider() {
+  }
 
-    public Charset charsetForName(String charsetName) {
-        if (Native2AsciiCharset.INSTANCE.name().equals(charsetName)) {
-            return Native2AsciiCharset.INSTANCE;
-        }
-        return null;
-    }
+  public Charset charsetForName(String charsetName) {
+    return Native2AsciiCharset.forName(charsetName);
+  }
 
-    public Iterator charsets() {
-        return Collections.singleton(Native2AsciiCharset.INSTANCE).iterator();
-    }
+  public Iterator charsets() {
+    return Collections.EMPTY_LIST.iterator();
+  }
 }

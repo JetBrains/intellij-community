@@ -63,12 +63,12 @@ public class PropertiesFileType extends LanguageFileType {
 
   public String getCharset(VirtualFile file) {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+    String defaultCharsetName = editorSettings.getDefaultPropertiesCharsetName();
+    if ("System Default".equals(defaultCharsetName)) defaultCharsetName = null;
     if (editorSettings.isNative2AsciiForPropertiesFiles()) {
-      return Native2AsciiCharset.INSTANCE.name();
+      return Native2AsciiCharset.makeNative2AsciiEncodingName(defaultCharsetName);
     }
     else {
-      String defaultCharsetName = editorSettings.getDefaultPropertiesCharsetName();
-      if ("System Default".equals(defaultCharsetName)) defaultCharsetName = null;
       return defaultCharsetName;
       //return "ISO-8859-1";
     }

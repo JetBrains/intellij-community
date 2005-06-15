@@ -67,12 +67,9 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
   private static URL[] retrieveURLs(URL descriptionDirectory, String prefix, String suffix) throws MalformedURLException {
     List<URL> urls = new ArrayList<URL>();
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
-    for (int f = 0; f < fileTypes.length; f++) {
-      FileType fileType = fileTypes[f];
+    for (FileType fileType : fileTypes) {
       final String[] extensions = FileTypeManager.getInstance().getAssociatedExtensions(fileType);
-      for (int e = 0; e < extensions.length; e++) {
-        String extension = extensions[e];
-
+      for (String extension : extensions) {
         for (int i = 0; ; i++) {
           URL url = new URL(descriptionDirectory.toExternalForm() + "/" +
                             prefix + "." + extension + (i == 0 ? "" : Integer.toString(i)) +
@@ -121,15 +118,14 @@ public class IntentionManagerSettings implements ApplicationComponent, NamedJDOM
   public void readExternal(Element element) throws InvalidDataException {
     myIgnoredActions.clear();
     List children = element.getChildren("ignoreAction");
-    for (Iterator i = children.iterator(); i.hasNext();) {
-      Element e = (Element)i.next();
+    for (final Object aChildren : children) {
+      Element e = (Element)aChildren;
       myIgnoredActions.add(e.getAttributeValue("name"));
     }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (Iterator<String> i = myIgnoredActions.iterator(); i.hasNext();) {
-      String name = i.next();
+    for (String name : myIgnoredActions) {
       element.addContent(new Element("ignoreAction").setAttribute("name", name));
     }
   }

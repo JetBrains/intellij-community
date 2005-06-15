@@ -7,13 +7,16 @@ package com.intellij.lang.properties.charset;
 import java.nio.*;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
+import java.nio.charset.Charset;
 
 class Native2AsciiCharsetDecoder extends CharsetDecoder {
   private static final char INVALID_CHAR = (char)-1;
   private final StringBuffer myOutBuffer = new StringBuffer();
+  private final Charset myBaseCharset;
 
-  public Native2AsciiCharsetDecoder() {
-    super(Native2AsciiCharset.INSTANCE, 1, 6);
+  public Native2AsciiCharsetDecoder(final Native2AsciiCharset charset) {
+    super(charset, 1, 6);
+    myBaseCharset = charset.getBaseCharset();
   }
 
   protected void implReset() {
@@ -42,10 +45,12 @@ class Native2AsciiCharsetDecoder extends CharsetDecoder {
       CoderResult coderResult = doFlush(out);
       if (coderResult == CoderResult.OVERFLOW) return CoderResult.OVERFLOW;
 
+      int start = in.position();
       while (in.position() < in.limit()) {
         in.mark();
         final byte b = in.get();
         if (b == '\\') {
+          decodeArray(in.array(), start, in.position()-1);
           byte next = in.get();
           if (next == 'u') {
             buf[0] = in.get();
@@ -68,19 +73,22 @@ class Native2AsciiCharsetDecoder extends CharsetDecoder {
             myOutBuffer.append("\\");
             myOutBuffer.append((char)next);
           }
-        }
-        else {
-          buf[0] = b;
-          ByteBuffer byteBuffer = ByteBuffer.wrap(buf, 0, 1);
-          CharBuffer charBuffer = Native2AsciiCharset.DEFAULT_CHARSET.decode(byteBuffer);
-          myOutBuffer.append(charBuffer);
+          start = in.position();
         }
       }
+      decodeArray(in.array(), start, in.position());
     }
     catch (BufferUnderflowException e) {
       in.reset();
     }
     return doFlush(out);
+  }
+
+  private void decodeArray(final byte[] buf, int start, int end) {
+    if (end <= start) return;
+    ByteBuffer byteBuffer = ByteBuffer.wrap(buf, start, end-start);
+    CharBuffer charBuffer = myBaseCharset.decode(byteBuffer);
+    myOutBuffer.append(charBuffer);
   }
 
   private static char unicode(byte[] ord) {

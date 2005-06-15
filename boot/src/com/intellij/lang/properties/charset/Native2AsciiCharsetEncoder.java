@@ -6,14 +6,18 @@ package com.intellij.lang.properties.charset;
 
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
+import java.nio.charset.Charset;
 import java.nio.CharBuffer;
 import java.nio.ByteBuffer;
 import java.nio.BufferUnderflowException;
 import java.nio.BufferOverflowException;
 
 class Native2AsciiCharsetEncoder extends CharsetEncoder {
-  public Native2AsciiCharsetEncoder() {
-    super(Native2AsciiCharset.INSTANCE, 1, 6);
+  private final Charset myBaseCharset;
+
+  public Native2AsciiCharsetEncoder(Native2AsciiCharset charset) {
+    super(charset, 1, 6);
+    myBaseCharset = charset.getBaseCharset();
   }
 
   protected CoderResult encodeLoop(CharBuffer in, ByteBuffer out) {
@@ -22,7 +26,7 @@ class Native2AsciiCharsetEncoder extends CharsetEncoder {
       try {
         char c = in.get();
         if (c < 255) {
-          ByteBuffer byteBuffer = Native2AsciiCharset.DEFAULT_CHARSET.encode(Character.toString(c));
+          ByteBuffer byteBuffer = myBaseCharset.encode(Character.toString(c));
           out.put(byteBuffer);
         }
         else {
