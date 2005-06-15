@@ -6,12 +6,14 @@ import com.intellij.psi.xml.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
@@ -198,41 +200,47 @@ public class HtmlUtil {
         if (text.equals(originalText)) return refs;
       }
 
-      String text = originalText;
-      int offset = 0;
-      if (text.length() > 0 &&
-          (text.charAt(0) == '"' || text.charAt(0) == '\'')
-         ) {
-        ++offset;
-      }
-
-      text = text.substring(offset,text.length() - offset);
-      int ind = text.lastIndexOf('#');
-      String anchor = null;
-      if (ind != -1) {
-        anchor = text.substring(ind+1);
-        text = text.substring(0,ind);
-      }
-
-      ind = text.lastIndexOf('?');
-      if (ind!=-1) text = text.substring(0,ind);
-
-      if (text.length() > 0 && !text.startsWith("http://") && !text.startsWith("mailto:") &&
-          !text.startsWith("javascript:")
-         ) {
-        refs = new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this, false).getAllReferences();
+      if(PsiTreeUtil.getChildOfType(element, JspText.class) == null) {
+        String text = originalText;
+        int offset = 0;
+        if (text.length() > 0 &&
+            (text.charAt(0) == '"' || text.charAt(0) == '\'')
+           ) {
+          ++offset;
+        }
+  
+        text = text.substring(offset,text.length() - offset);
+        int ind = text.lastIndexOf('#');
+        String anchor = null;
+        if (ind != -1) {
+          anchor = text.substring(ind+1);
+          text = text.substring(0,ind);
+        }
+  
+        ind = text.lastIndexOf('?');
+        if (ind!=-1) text = text.substring(0,ind);
+  
+        if (text.length() > 0 && !text.startsWith("http://") && !text.startsWith("mailto:") &&
+            !text.startsWith("javascript:")
+           ) {
+          refs = new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this, false).getAllReferences();
+        } else {
+          refs = PsiReference.EMPTY_ARRAY;
+        }
+  
+        if (anchor != null &&
+            (refs.length > 0 || originalText.regionMatches(1+offset,anchor,0,anchor.length()))
+            ) {
+          PsiReference[] newrefs = new PsiReference[refs.length+1];
+          System.arraycopy(refs,0,newrefs,0,refs.length);
+          newrefs[refs.length] = new AnchorReference(anchor, refs.length > 0 ? refs[refs.length-1]:null,element);
+          refs = newrefs;
+        }
       } else {
+        // nothing when href is dynamically generated
         refs = PsiReference.EMPTY_ARRAY;
       }
-
-      if (anchor != null &&
-          (refs.length > 0 || originalText.regionMatches(1+offset,anchor,0,anchor.length()))
-          ) {
-        PsiReference[] newrefs = new PsiReference[refs.length+1];
-        System.arraycopy(refs,0,newrefs,0,refs.length);
-        newrefs[refs.length] = new AnchorReference(anchor, refs.length > 0 ? refs[refs.length-1]:null,element);
-        refs = newrefs;
-      }
+      
       element.putUserData(cachedReferencesKey,refs);
       element.putUserData(cachedRefsTextKey,originalText);
 
