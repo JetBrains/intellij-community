@@ -18,7 +18,7 @@ public class SwitchStatementDensityInspection extends StatementInspection {
     public int m_limit = DEFAULT_DENSITY_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
 
     public String getDisplayName() {
-        return "'switch' statement with too low of branch density";
+        return "'switch' statement with too low of a branch density";
     }
 
     public String getGroupDisplayName() {
@@ -38,7 +38,7 @@ public class SwitchStatementDensityInspection extends StatementInspection {
         final PsiSwitchStatement statement = (PsiSwitchStatement) location.getParent();
         final double density = calculateDensity(statement);
         final int intDensity = (int) (density * 100.0);
-        return "'#ref' has too low of branch density (" + intDensity + "%) #loc";
+        return "'#ref' has too low of a branch density (" + intDensity + "%) #loc";
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -46,7 +46,6 @@ public class SwitchStatementDensityInspection extends StatementInspection {
     }
 
     private class SwitchStatementWithTooFewBranchesVisitor extends StatementInspectionVisitor {
-
 
         public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             final PsiCodeBlock body = statement.getBody();
