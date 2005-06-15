@@ -18,6 +18,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -283,6 +284,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   }
 
   private final class MyGotoFileModel implements ChooseByNameModel {
+    private int myMaxSize = WindowManagerEx.getInstanceEx().getFrame(myProject).getSize().width;
     public Object[] getElementsByName(final String name, final boolean checkBoxState) {
       final PsiFile[] psiFiles = PsiManager.getInstance(myProject).getShortNamesCache().getFilesByName(name);
       return filterFiles(psiFiles);
@@ -316,7 +318,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }
 
     public PsiElementListCellRenderer getListCellRenderer() {
-      return new GotoFileCellRenderer();
+      return new GotoFileCellRenderer(myMaxSize);
     }
 
     public String[] getNames(final boolean checkBoxState) {

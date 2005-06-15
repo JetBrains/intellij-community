@@ -135,8 +135,8 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       String text2 = myRenderer.getElementText(element2);
       if (!text1.equals(text2)) return text1.compareTo(text2);
 
-      String containerText1 = myRenderer.getContainerText(element1);
-      String containerText2 = myRenderer.getContainerText(element2);
+      String containerText1 = myRenderer.getContainerText(element1, text1);
+      String containerText2 = myRenderer.getContainerText(element2, text2);
       if (containerText1 == null) containerText1 = "";
       if (containerText2 == null) containerText2 = "";
       return containerText1.compareTo(containerText2);

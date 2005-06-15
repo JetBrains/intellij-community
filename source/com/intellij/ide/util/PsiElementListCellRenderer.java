@@ -21,6 +21,12 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   private class LeftRenderer extends ColoredListCellRenderer {
+    private String myModuleName;
+
+    public LeftRenderer(final String moduleName) {
+      myModuleName = moduleName;
+    }
+
     protected void customizeCellRenderer(
       JList list,
       Object value,
@@ -43,7 +49,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         append(name, new SimpleTextAttributes(Font.PLAIN, color));
         setIcon(element.getIcon(getIconFlags()));
 
-        String containerText = getContainerText(element);
+        String containerText = getContainerText(element, name + (myModuleName != null ? myModuleName + "        " : ""));
         if (containerText != null) {
           append(" " + containerText, new SimpleTextAttributes(Font.PLAIN, Color.GRAY));
         }
@@ -63,26 +69,28 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
                                                 boolean isSelected,
                                                 boolean cellHasFocus) {
     removeAll();
-    final Component leftCellRendererComponent =
-      new LeftRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    add(leftCellRendererComponent, BorderLayout.WEST);
+    String moduleName = null;
     if (UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION) {
+      final PsiElementModuleRenderer psiElementModuleRenderer = new PsiElementModuleRenderer();
       final Component rightCellRendererComponent =
-        new PsiElementModuleRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        psiElementModuleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       add(rightCellRendererComponent, BorderLayout.EAST);
+      moduleName = psiElementModuleRenderer.getText();
       final JPanel spacer = new JPanel();
-      final Dimension size = rightCellRendererComponent.getSize();
-      spacer.setSize(new Dimension((int)(size.width * 0.015 + leftCellRendererComponent.getSize().width * 0.015), size.height));
+      spacer.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
       spacer.setBackground(UIManager.getColor(isSelected ? "List.selectionBackground" : "List.background"));
       add(spacer, BorderLayout.CENTER);
     }
+    final Component leftCellRendererComponent =
+      new LeftRenderer(moduleName).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    add(leftCellRendererComponent, BorderLayout.WEST);
     setBackground(UIManager.getColor(isSelected ? "List.selectionBackground" : "List.background"));
     return this;
   }
 
   public abstract String getElementText(T element);
 
-  protected abstract String getContainerText(PsiElement element);
+  protected abstract String getContainerText(PsiElement element, final String name);
 
   protected abstract int getIconFlags();
 
@@ -98,7 +106,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
       private String getText(T element) {
         String elementText = getElementText(element);
-        String containerText = getContainerText(element);
+        String containerText = getContainerText(element, elementText);
         return containerText != null ? elementText + " " + containerText : elementText;
       }
     };

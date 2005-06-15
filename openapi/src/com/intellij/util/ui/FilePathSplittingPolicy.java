@@ -32,8 +32,8 @@
 package com.intellij.util.ui;
 
 import javax.swing.*;
-import java.io.File;
 import java.awt.*;
+import java.io.File;
 
 
 public abstract class FilePathSplittingPolicy {
@@ -42,13 +42,13 @@ public abstract class FilePathSplittingPolicy {
 
   public abstract String getPresentableName(File file, int length);
 
-  public String getOptimalTextForComponent(File file, JComponent component, int width) {
+  public String getOptimalTextForComponent(String staticPrefix, File file, JComponent component, int width){
     FontMetrics fontMetrics = component.getFontMetrics(component.getFont());
     String path = file.getPath();
 
     for (int i = 1; i <= path.length(); i++) {
       String text = getPresentableName(file, i);
-      if (fontMetrics.stringWidth(text) > width) {
+      if (fontMetrics.stringWidth(staticPrefix + text) > width) {
         if (i == 1) {
           return text;
         }
@@ -58,6 +58,10 @@ public abstract class FilePathSplittingPolicy {
       }
     }
     return path;
+  }
+
+  public String getOptimalTextForComponent(File file, JComponent component, int width) {
+    return getOptimalTextForComponent("", file, component, width);
   }
 
   public String getOptimalTextForComponent(File file, JComponent component) {

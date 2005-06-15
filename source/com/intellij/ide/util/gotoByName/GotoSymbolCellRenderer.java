@@ -14,7 +14,7 @@ public class GotoSymbolCellRenderer extends PsiElementListCellRenderer {
     return SymbolPresentationUtil.getSymbolPresentableText(element);
   }
 
-  public String getContainerText(PsiElement element){
+  public String getContainerText(PsiElement element, final String name){
     return SymbolPresentationUtil.getSymbolContainerText(element);
   }
 

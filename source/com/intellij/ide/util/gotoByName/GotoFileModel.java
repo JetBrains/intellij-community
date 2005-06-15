@@ -5,6 +5,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 
@@ -12,9 +13,10 @@ import java.util.ArrayList;
 
 public class GotoFileModel implements ChooseByNameModel {
   private final Project myProject;
-
+  private final int myMaxSize;
   public GotoFileModel(Project project) {
     myProject = project;
+    myMaxSize = WindowManagerEx.getInstanceEx().getFrame(myProject).getSize().width;
   }
 
   public String getPromptText() {
@@ -48,7 +50,7 @@ public class GotoFileModel implements ChooseByNameModel {
   }
 
   public PsiElementListCellRenderer getListCellRenderer() {
-    return new GotoFileCellRenderer();
+    return new GotoFileCellRenderer(myMaxSize);
   }
 
   public String[] getNames(boolean checkBoxState) {
