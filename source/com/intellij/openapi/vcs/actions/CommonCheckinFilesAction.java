@@ -86,4 +86,8 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
       return VcsConfiguration.getInstance(project).SHOW_CHECKIN_OPTIONS;
     }
   }
+
+  protected boolean filterRootsBeforeAction() {
+    return true;
+  }
 }

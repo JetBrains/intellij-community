@@ -36,4 +36,8 @@ public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
   protected boolean shouldShowDialog(VcsContext context) {
     return true;
   }
+
+  protected boolean filterRootsBeforeAction() {
+    return true;
+  }
 }
