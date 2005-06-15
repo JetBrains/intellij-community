@@ -46,7 +46,10 @@ public class HighlightNamesUtil {
       TextRange range = elementToHighlight.getTextRange();
       if (elementToHighlight instanceof PsiJavaCodeReferenceElement) {
         final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)elementToHighlight;
-        range = new TextRange(range.getStartOffset(), referenceElement.getParameterList().getTextRange().getStartOffset());
+        final TextRange paramListRange = referenceElement.getParameterList().getTextRange();
+        if (paramListRange.getEndOffset() > paramListRange.getStartOffset()) {
+          range = new TextRange(range.getStartOffset(), paramListRange.getStartOffset());
+        }
       }
 
       // This will highlight @ sign in annotation as well.
