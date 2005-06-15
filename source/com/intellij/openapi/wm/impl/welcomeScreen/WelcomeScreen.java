@@ -77,7 +77,7 @@ public class WelcomeScreen {
   private static final Icon KEYMAP_ICON = IconLoader.getIcon("/general/defaultKeymap.png");
   private static final Icon DEFAULT_ICON = IconLoader.getIcon("/general/configurableDefault.png");
 
-  private static final String KEYMAP_URL         = PathManager.getHomePath() + "/help/4.5_ReferenceCard.pdf";
+  private static final String KEYMAP_URL = PathManager.getHomePath() + "/help/4.5_ReferenceCard.pdf";
 
   private static final Font TEXT_FONT = new Font("Tahoma", Font.PLAIN, 11);
   private static final Font LINK_FONT = new Font("Tahoma", Font.BOLD, 12);
@@ -218,7 +218,6 @@ public class WelcomeScreen {
         PluginDescriptor plugin = myInstalledPlugins[i];
         addListItemToPlugins(pluginsListPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(),
                              plugin.getPluginClassLoader(), plugin.getUrl());
-        // TODO[pti]: check whether plugin has a welcome-action, and if yes, add it to 'ourPluginsWithActions' ArrayList
       }
     }
 
@@ -291,7 +290,9 @@ public class WelcomeScreen {
       }
     };
     quickStarts.addButton(newProject, "Create New Project", "Start the \"New Project\" Wizard that will guide you through " +
-                                                            "the steps that are necessary to create a new project.");
+                                                            "the steps necessary for creating a new project.");
+
+    // TODO[pti]: add button "Open Project" to the Quickstart list    
 
     final ActionManager actionManager = ActionManager.getInstance();
     MyActionButton openRecentProject = new ButtonWithExtension(REOPEN_RECENT_ICON, null) {
@@ -309,7 +310,7 @@ public class WelcomeScreen {
     };
     quickStarts.addButton(openRecentProject, "Reopen Recent Project...", "You can open one of the most recent " +
                                                                          "projects you were working with. Click the icon " +
-                                                                         "or link to select a project from the list.");
+                                                                         "or link to select project from the list.");
 
     MyActionButton getFromVCS = new ButtonWithExtension(FROM_VCS_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
@@ -318,13 +319,16 @@ public class WelcomeScreen {
       }
     };
 
-    quickStarts.addButton(getFromVCS, "Get Project From Version Control...", "You can check out an entire project from " +
-                                                                               "a Version Control System. Click the icon to " +
-                                                                               "select CVS or Subversion.");
+    quickStarts.addButton(getFromVCS, "Get Project From Version Control...", "You can check out entire project from " +
+                                                                             "Version Control System. Click the icon or link to " +
+                                                                             "select the VCS.");
 
+    // TODO[pti]: add button "Check for Updates" to the Quickstart list
+
+    // Append plug-in actions to the end of the QuickStart list
     quickStarts.appendActionsFromGroup((DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART));
 
-     ActionGroupDescriptor docsGroup = new ActionGroupDescriptor("Documentation", 1);
+    ActionGroupDescriptor docsGroup = new ActionGroupDescriptor("Documentation", 1);
 
     MyActionButton readHelp = new MyActionButton(READ_HELP_ICON, null) {
       protected void onPress(InputEvent e) {
@@ -345,9 +349,8 @@ public class WelcomeScreen {
     };
     docsGroup.addButton(defaultKeymap, "Default Keymap", "Open PDF file with the default keymap reference card.");
 
+    // Append plug-in actions to the end of the QuickStart list
     docsGroup.appendActionsFromGroup((DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_DOC));
-
-// TODO[pti]: before adding Quick Start and Documentation panes to the main panel, check for plugins with welcome actions and add them to the appropriate panes
 
     JPanel emptyPanel_2 = new JPanel();
     emptyPanel_2.setBackground(MAIN_PANEL_COLOR);
