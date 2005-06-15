@@ -17,7 +17,7 @@ import java.awt.*;
 
 public class ParameterHidingMemberVariableInspection extends MethodInspection{
     /** @noinspection PublicField*/
-    public boolean m_ignoreInvisibleFields = false;
+    public boolean m_ignoreInvisibleFields = true;
     /** @noinspection PublicField*/
     public boolean m_ignoreStaticMethodParametersHidingInstanceFields = false;
     /** @noinspection PublicField*/
