@@ -196,11 +196,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     else if (myNode.getElementType() == ElementType.METHOD) {
       return Formatter.getInstance().createWrap(getWrapType(mySettings.THROWS_LIST_WRAP), true);
     }
-    /*
     else if (myNode.getElementType() == ElementType.CODE_BLOCK) {
       return Formatter.getInstance().createWrap(Wrap.NORMAL, true);
     }
-    */
     else {
       return null;
     }
@@ -556,6 +554,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         return defaultWrap;
       }
       return null;
+    }
+    else if (myNode.getElementType() == ElementType.CODE_BLOCK) {
+      if (role == ChildRole.STATEMENT_IN_BLOCK) {
+        return defaultWrap;
+      } else {
+        return null;
+      }
     }
     else {
       return defaultWrap;
