@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.ui.Messages;
 import gnu.trove.THashSet;
 
 import java.io.File;
@@ -24,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.FileFilter;
 import java.util.Set;
+import java.util.Collection;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
@@ -35,6 +37,11 @@ public class BuildJarAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = (Project)e.getDataContext().getData(DataConstants.PROJECT);
+    Collection<Module> modulesToJar = BuildJarActionDialog.getModulesToJar(project);
+    if (modulesToJar.size() == 0) {
+      Messages.showErrorDialog(project, "There are no Java modules found in the project.\nOnly Java modules can be jarred.", "No Modules To Jar Found");
+      return;
+    }
     BuildJarActionDialog dialog = new BuildJarActionDialog(project);
     dialog.show();
     if (dialog.isOK()) {

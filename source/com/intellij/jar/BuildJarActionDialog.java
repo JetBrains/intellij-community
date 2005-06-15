@@ -35,6 +35,8 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * @author cdr
@@ -63,12 +65,23 @@ public class BuildJarActionDialog extends DialogWrapper {
     init();
   }
 
+  public static Collection<Module> getModulesToJar(Project project) {
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    ArrayList<Module> result = new ArrayList<Module>();
+    for (Module module : modules) {
+      if (module.getModuleType().isJ2EE()) continue;
+      result.add(module);
+    }
+    return result;
+
+  }
+
   private void setupControls() {
     myElementsChooser = new ElementsChooser<ModuleChooserElement>();
     myModulesPanel.setLayout(new BorderLayout());
     myModulesPanel.add(myElementsChooser, BorderLayout.CENTER);
 
-    final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    final Collection<Module> modules = getModulesToJar(myProject);
     for (Module module : modules) {
       if (module.getModuleType().isJ2EE()) continue;
       ModuleChooserElement moduleChooserElement = new ModuleChooserElement(module, null);
