@@ -25,11 +25,11 @@ public class MoveDeclarationIntention extends Intention{
     }
 
     public String getText(){
-        return "Narrow scope of variable";
+        return "Narrow scope of local variable";
     }
 
     public String getFamilyName(){
-        return "Narrow Scope of Variable";
+        return "Narrow Scope of Local Variable";
     }
 
     public void processIntention(@NotNull PsiElement element)
