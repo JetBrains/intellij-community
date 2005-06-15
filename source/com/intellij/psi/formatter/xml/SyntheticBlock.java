@@ -52,14 +52,25 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
     } else if (type2 == getTagType() && (type1 == ElementType.XML_DATA_CHARACTERS || type1== getTagType())
                && ((AbstractXmlBlock)child2).insertLineBreakBeforeTag()) {
       //<tag/>text <tag/></tag>
-      return getFormatter().createSpaceProperty(0, Integer.MAX_VALUE, 2, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
-                                                myXmlFormattingPolicy.getKeepBlankLines());
+      if (myXmlFormattingPolicy.getShouldKeepWhiteSpaces() || myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag())) {
+        return getFormatter().getReadOnlySpace();
+
+      } else {
+        return getFormatter().createSpaceProperty(0, Integer.MAX_VALUE, 2, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+                                                  myXmlFormattingPolicy.getKeepBlankLines());
+      }
     }
     else if (type2 == getTagType() && (type1 == ElementType.XML_DATA_CHARACTERS || type1== getTagType())
              && ((AbstractXmlBlock)child2).removeLineBreakBeforeTag()) {
       //<tag/></tag> text</tag>
-      return getFormatter().createSpaceProperty(0, Integer.MAX_VALUE, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
-                                                myXmlFormattingPolicy.getKeepBlankLines());
+      if (myXmlFormattingPolicy.getShouldKeepWhiteSpaces() || myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag())) {
+        return getFormatter().getReadOnlySpace();
+
+      } else {
+        return getFormatter().createSpaceProperty(0, Integer.MAX_VALUE, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+                                                  myXmlFormattingPolicy.getKeepBlankLines());
+      }
+
     }
 
     if (type1 == getTagType() && type2 == ElementType.XML_DATA_CHARACTERS) {     //<tag/>-text
