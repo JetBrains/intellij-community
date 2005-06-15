@@ -18,7 +18,7 @@ import java.util.Set;
 
 public class FieldHidesSuperclassFieldInspection extends FieldInspection {
     /** @noinspection PublicField*/
-    public boolean m_ignoreInvisibleFields = false;
+    public boolean m_ignoreInvisibleFields = true;
     private final RenameFix fix = new RenameFix();
 
     public String getID(){
