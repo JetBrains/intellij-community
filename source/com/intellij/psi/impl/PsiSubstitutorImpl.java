@@ -269,8 +269,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     final PsiSubstitutorImpl anotherImpl = (PsiSubstitutorImpl) another;
     final PsiTypeParameter[] params = anotherImpl.mySubstitutionMap.keySet().toArray(PsiTypeParameter.EMPTY_ARRAY);
     PsiSubstitutorImpl substitutor = new PsiSubstitutorImpl(new HashMap<PsiTypeParameter, PsiType>(mySubstitutionMap));
-    for(int i = 0; i < params.length; i++){
-      final PsiTypeParameter param = params[i];
+    for (final PsiTypeParameter param : params) {
       substitutor.mySubstitutionMap.put(param, another.substitute(param));
     }
 
@@ -289,8 +288,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
   public String toString() {
     StringBuffer buffer = new StringBuffer();
     final Set<Map.Entry<PsiTypeParameter,PsiType>> set = mySubstitutionMap.entrySet();
-    for (Iterator<Map.Entry<PsiTypeParameter,PsiType>> iterator = set.iterator(); iterator.hasNext();) {
-      Map.Entry<PsiTypeParameter,PsiType> entry = iterator.next();
+    for (Map.Entry<PsiTypeParameter, PsiType> entry : set) {
       final PsiTypeParameter typeParameter = entry.getKey();
       buffer.append(typeParameter.getName());
       final PsiElement owner = typeParameter.getOwner();
@@ -319,8 +317,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
 
   public boolean isValid() {
     Collection<PsiType> substitutorValues = mySubstitutionMap.values();
-    for (Iterator<PsiType > it = substitutorValues.iterator(); it.hasNext ();) {
-      PsiType type = it.next();
+    for (PsiType type : substitutorValues) {
       if (type != null && !type.isValid()) return false;
     }
     return true;
