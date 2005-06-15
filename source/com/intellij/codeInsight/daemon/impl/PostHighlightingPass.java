@@ -42,6 +42,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.uiDesigner.ReferenceUtil;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -65,6 +66,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private static final String TYPE_PARAMETER_IS_NOT_USED = "Type parameter ''{0}'' is never used";
   private static final String LOCAL_CLASS_IS_NOT_USED = "Local class ''{0}'' is never used";
   private static final String FIELD_IS_OVERWRITTEN = "Field ''{0}'' is overwritten by generated code";
+  private static final String BOUND_FIELD_TYPE_MISMATCH = "Types of GUI component (''{0}'') and bound field (''{1}'') do not match";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.PostHighlightingPass");
   private final Project myProject;
@@ -278,12 +280,38 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private HighlightInfo processField(PsiField field, final List<IntentionAction> options) {
-    if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
-      PsiIdentifier identifier = field.getNameIdentifier();
+    final PsiIdentifier identifier = field.getNameIdentifier();
+    final PsiFile boundForm = getFormFile(field);
+    final boolean isBoundToForm = boundForm != null;
 
-      int count = myRefCountHolder.getRefCount(field);
-      if (count == 0) {
-        if (isSerializationImplicitlyUsedField(field)) return null;
+    if (isBoundToForm) { // bound to form
+      LOG.assertTrue(boundForm instanceof PsiPlainTextFile);
+      final PsiType guiComponentType = ReferenceUtil.getGUIComponentType((PsiPlainTextFile)boundForm, field.getName());
+      if (guiComponentType != null) {
+        final PsiType fieldType = field.getType();
+        if (!fieldType.isAssignableFrom(guiComponentType)) {
+          String message = MessageFormat.format(BOUND_FIELD_TYPE_MISMATCH, new Object[]{guiComponentType.getCanonicalText(), fieldType.getCanonicalText()});
+          final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, field.getTypeElement(), message);
+          QuickFixAction.registerQuickFixAction(highlightInfo, new ChangeFormComponentTypeFix((PsiPlainTextFile)boundForm, field.getName(), field.getType()), options);
+          QuickFixAction.registerQuickFixAction(highlightInfo, new ChangeBoundFieldTypeFix(field, guiComponentType), options);
+          return highlightInfo;
+        }
+      }
+
+      if (field.hasInitializer()) {
+        String message = MessageFormat.format(FIELD_IS_OVERWRITTEN, new Object[]{identifier.getText()});
+        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, field.getInitializer(), message);
+        QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNUSED_SYMBOL), options), options);
+        return highlightInfo;
+      }
+    }
+
+    if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
+      final int refCount = myRefCountHolder.getRefCount(field);
+      if (refCount == 0) {
+        if (isSerializationImplicitlyUsedField(field)) {
+          return null;
+        }
         String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_USED, new Object[]{identifier.getText()});
         HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field), options);
@@ -293,8 +321,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         return highlightInfo;
       }
 
-      count = myRefCountHolder.getReadRefCount(field);
-      if (count == 0) {
+      final int readRefCount = myRefCountHolder.getReadRefCount(field);
+      if (readRefCount == 0) {
         String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_USED_FOR_READING, new Object[]{identifier.getText()});
         HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message);
         QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(field), options);
@@ -303,22 +331,12 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
 
       if (!field.hasInitializer()) {
-        count = myRefCountHolder.getWriteRefCount(field);
-        if (count == 0) {
-          if (!assignedByUIForm(field)) {
-            String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_ASSIGNED, new Object[]{identifier.getText()});
-            HighlightInfo info = createUnusedSymbolInfo(identifier, message);
-            QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterAction(false, true, field), options);
-            return info;
-          }
-        }
-      }
-      else {
-        if (assignedByUIForm(field)) {
-          String message = MessageFormat.format(FIELD_IS_OVERWRITTEN, new Object[]{identifier.getText()});
-          final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, field.getInitializer(), message);
-          QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.UNUSED_SYMBOL), options), options);
-          return highlightInfo;
+        final int writeRefCount = myRefCountHolder.getWriteRefCount(field);
+        if (writeRefCount == 0 && !isBoundToForm) {
+          String message = MessageFormat.format(PRIVATE_FIELD_IS_NOT_ASSIGNED, new Object[]{identifier.getText()});
+          HighlightInfo info = createUnusedSymbolInfo(identifier, message);
+          QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterAction(false, true, field), options);
+          return info;
         }
       }
     }
@@ -326,20 +344,21 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return null;
   }
 
-  private static boolean assignedByUIForm(PsiField field) {
-    PsiSearchHelper searchHelper = field.getManager().getSearchHelper();
-    PsiClass containingClass = field.getContainingClass();
-    if (containingClass == null || containingClass.getQualifiedName() == null) return false;
-    PsiFile[] forms = searchHelper.findFormsBoundToClass(containingClass.getQualifiedName());
-
-    for (PsiFile formFile : forms) {
-      PsiReference[] refs = formFile.getReferences();
-      for (final PsiReference ref : refs) {
-        if (ref.isReferenceTo(field)) return true;
+  private static PsiFile getFormFile(PsiField field) {
+    final PsiSearchHelper searchHelper = field.getManager().getSearchHelper();
+    final PsiClass containingClass = field.getContainingClass();
+    if (containingClass != null && containingClass.getQualifiedName() != null) {
+      final PsiFile[] forms = searchHelper.findFormsBoundToClass(containingClass.getQualifiedName());
+      for (PsiFile formFile : forms) {
+        final PsiReference[] refs = formFile.getReferences();
+        for (final PsiReference ref : refs) {
+          if (ref.isReferenceTo(field)) {
+            return formFile;
+          }
+        }
       }
     }
-
-    return false;
+    return null;
   }
 
   private HighlightInfo processParameter(PsiParameter parameter, final List<IntentionAction> options) {
