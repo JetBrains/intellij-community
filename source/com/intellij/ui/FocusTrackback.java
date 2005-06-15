@@ -29,7 +29,7 @@ public class FocusTrackback {
     myRequestor = requestor;
     myParentWindow = parent;
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode() || !SystemInfo.isMac) return;
 
     register(parent);
 
