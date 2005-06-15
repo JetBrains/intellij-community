@@ -81,7 +81,7 @@ public class XmlFoldingBuilder implements FoldingBuilder {
     }
   }
 
-  public static TextRange getRangeToFold(PsiElement element) {
+  protected TextRange getRangeToFold(PsiElement element) {
     if (element instanceof XmlTag) {
       final ASTNode tagNode = element.getNode();
       ASTNode tagNameElement = XmlChildRole.START_TAG_NAME_FINDER.findChild(tagNode);
