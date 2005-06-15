@@ -469,9 +469,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
       attribute.setValue(value);
       return attribute;
     }
-    PsiElement xmlAttribute = add(getManager().getElementFactory().createXmlAttribute(qname, value));
-    while(!(xmlAttribute instanceof XmlAttribute)) xmlAttribute = xmlAttribute.getNextSibling();
-    return (XmlAttribute)xmlAttribute;
+    else if (value == null) {
+      return null;
+    }
+    else {
+      PsiElement xmlAttribute = add(getManager().getElementFactory().createXmlAttribute(qname, value));
+      while(!(xmlAttribute instanceof XmlAttribute)) xmlAttribute = xmlAttribute.getNextSibling();
+      return (XmlAttribute)xmlAttribute;
+    }
   }
 
   public XmlAttribute setAttribute(String name, String namespace, String value) throws IncorrectOperationException {
