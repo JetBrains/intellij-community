@@ -16,6 +16,8 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
   private static final Icon TEST_ICON = IconLoader.getIcon("/nodes/testSourceFolder.png");
   private static final Icon LIB_ICON = IconLoader.getIcon("/nodes/ppLibClosed.png");
 
+  private String myText;
+
   public Component getListCellRendererComponent(
     JList list,
     Object value,
@@ -26,6 +28,10 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
                                                                                    cellHasFocus);
     customizeCellRenderer(list, value, index, isSelected, cellHasFocus);
     return listCellRendererComponent;
+  }
+
+  public String getText() {
+    return myText;
   }
 
   protected void customizeCellRenderer(
@@ -48,7 +54,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
             inTestSource = fileIndex.isInTestSourceContent(vFile);
           }
         }
-        setText(module.getName());
+        myText = module.getName();
         if (inTestSource) {
           setIcon(TEST_ICON);
         }
@@ -66,7 +72,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
               for (int i = 0; i < orders.length; i++) {
                 OrderEntry order = orders[i];
                 if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry){
-                  setText(order.getPresentableName());
+                  myText = order.getPresentableName();
                   break;
                 }
               }
@@ -82,6 +88,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
       setIcon(IconUtilEx.getEmptyIcon(false));
       setText(value == null ? "" : value.toString());
     }*/
+    setText(myText);
     setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
     setHorizontalTextPosition(SwingConstants.LEFT);
     setBackground(UIManager.getColor(selected ? "List.selectionBackground" : "List.background"));
