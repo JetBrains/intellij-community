@@ -32,6 +32,10 @@ public class NestedAssignmentInspection extends ExpressionInspection {
         public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             final PsiElement parent = expression.getParent();
+            if(parent == null)
+            {
+                return;
+            }
             final PsiElement grandparent = parent.getParent();
             if (parent instanceof PsiExpressionStatement ||
                             grandparent instanceof PsiExpressionListStatement) {

@@ -39,9 +39,10 @@ public class SimplifiableJUnitAssertionInspection extends ExpressionInspection{
         public void doFix(Project project, ProblemDescriptor descriptor)
                                                                          throws IncorrectOperationException{
             final PsiElement methodNameIdentifier = descriptor.getPsiElement();
+            final PsiElement parent = methodNameIdentifier.getParent();
+            assert parent != null;
             final PsiMethodCallExpression callExpression =
-                    (PsiMethodCallExpression) methodNameIdentifier.getParent()
-                            .getParent();
+                    (PsiMethodCallExpression) parent .getParent();
             if(isAssertTrueThatCouldBeAssertEquality(callExpression)){
                 replaceAssertTrueWithAssertEquals(callExpression, project);
             }

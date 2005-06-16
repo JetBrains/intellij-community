@@ -52,6 +52,10 @@ public class SystemGCInspection extends ExpressionInspection {
                 return;
             }
             final PsiClass aClass = method.getContainingClass();
+            if(aClass == null)
+            {
+                return;
+            }
             final String className = aClass.getQualifiedName();
             if (!"java.lang.System".equals(className) &&
                     !"java.lang.Runtime".equals(className)) {

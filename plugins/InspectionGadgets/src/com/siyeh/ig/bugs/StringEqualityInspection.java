@@ -52,6 +52,7 @@ public class StringEqualityInspection extends ExpressionInspection {
             boolean negated = false;
             final PsiBinaryExpression expression =
                     (PsiBinaryExpression) comparisonToken.getParent();
+            assert expression != null;
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (tokenType.equals(JavaTokenType.NE)) {

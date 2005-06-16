@@ -44,6 +44,7 @@ public class UnusedLabelInspection extends StatementInspection{
             final PsiElement label = descriptor.getPsiElement();
             final PsiLabeledStatement statement =
                     (PsiLabeledStatement) label.getParent();
+            assert statement != null;
             final PsiStatement labeledStatement = statement.getStatement();
             final String statementText = labeledStatement.getText();
             replaceStatement(statement, statementText);

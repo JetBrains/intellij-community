@@ -22,6 +22,7 @@ public class ExternalizableWithSerializationMethodsInspection extends ClassInspe
 
     public String buildErrorString(PsiElement location) {
         final PsiClass aClass = (PsiClass) location.getParent();
+        assert aClass!=null;
         final boolean hasReadObject = SerializationUtils.hasReadObject(aClass);
         final boolean hasWriteObject = SerializationUtils.hasWriteObject(aClass);
         if (hasReadObject && hasWriteObject) {

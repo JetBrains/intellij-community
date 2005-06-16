@@ -45,6 +45,7 @@ public class UnnecessaryContinueInspection extends StatementInspection{
             final PsiElement returnKeywordElement = descriptor.getPsiElement();
             final PsiElement continueStatement =
                     returnKeywordElement.getParent();
+            assert continueStatement!=null;
             deleteElement(continueStatement);
         }
     }

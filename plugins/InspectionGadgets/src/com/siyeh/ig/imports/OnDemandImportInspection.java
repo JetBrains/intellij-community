@@ -1,8 +1,6 @@
 package com.siyeh.ig.imports;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
@@ -35,6 +33,10 @@ public class OnDemandImportInspection extends ClassInspection {
                 return;
             }
             final PsiJavaFile file = (PsiJavaFile) aClass.getParent();
+            if(file == null)
+            {
+                return;
+            }
             if (!file.getClasses()[0].equals(aClass)) {
                 return;
             }

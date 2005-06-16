@@ -33,6 +33,7 @@ public class StaticVariableNamingConventionInspection extends ConventionInspecti
 
     public String buildErrorString(PsiElement location) {
         final PsiField field = (PsiField) location.getParent();
+        assert field != null;
         final String fieldName = field.getName();
         if (fieldName.length() < getMinLength()) {
             return "Static variable name '#ref' is too short #loc";

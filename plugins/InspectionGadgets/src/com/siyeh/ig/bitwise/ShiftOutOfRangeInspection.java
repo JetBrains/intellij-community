@@ -24,6 +24,7 @@ public class ShiftOutOfRangeInspection extends ExpressionInspection{
 
     public String buildErrorString(PsiElement location){
         final PsiBinaryExpression binaryExp = (PsiBinaryExpression) location.getParent();
+        assert binaryExp != null;
         final PsiExpression rhs = binaryExp.getROperand();
         final Integer value = (Integer) ConstantExpressionUtil.computeCastTo(rhs,
                                                                   PsiType.INT);
@@ -58,6 +59,10 @@ public class ShiftOutOfRangeInspection extends ExpressionInspection{
                 return;
             }
             final PsiExpression rhs = expression.getROperand();
+            if(rhs == null)
+            {
+                return;
+            }
             if(!PsiUtil.isConstantExpression(rhs)){
                 return;
             }

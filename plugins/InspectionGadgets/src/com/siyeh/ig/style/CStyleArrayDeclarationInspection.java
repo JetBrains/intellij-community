@@ -10,48 +10,50 @@ import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
-public class CStyleArrayDeclarationInspection extends ClassInspection {
+public class CStyleArrayDeclarationInspection extends ClassInspection{
     private final CStyleArrayDeclarationFix fix = new CStyleArrayDeclarationFix();
 
-    public String getDisplayName() {
+    public String getDisplayName(){
         return "C-style array declaration";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.STYLE_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "C-style array declaration #ref #loc";
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
 
-    private static class CStyleArrayDeclarationFix extends InspectionGadgetsFix {
-        public String getName() {
+    private static class CStyleArrayDeclarationFix extends InspectionGadgetsFix{
+        public String getName(){
             return "Replace with Java-style array declaration";
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
             final PsiElement nameElement = descriptor.getPsiElement();
             final PsiVariable var = (PsiVariable) nameElement.getParent();
-                var.normalizeDeclaration();
+            assert var != null;
+            var.normalizeDeclaration();
         }
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+    public BaseInspectionVisitor buildVisitor(){
         return new CStyleArrayDeclarationVisitor();
     }
 
-    private static class CStyleArrayDeclarationVisitor extends BaseInspectionVisitor {
+    private static class CStyleArrayDeclarationVisitor
+            extends BaseInspectionVisitor{
         private boolean m_inClass = false;
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        public void visitClass(@NotNull PsiClass aClass){
             final boolean wasInClass = m_inClass;
-            if (!m_inClass) {
+            if(!m_inClass){
 
                 m_inClass = true;
                 super.visitClass(aClass);
@@ -59,23 +61,21 @@ public class CStyleArrayDeclarationInspection extends ClassInspection {
             m_inClass = wasInClass;
         }
 
-        public void visitVariable(@NotNull PsiVariable var) {
+        public void visitVariable(@NotNull PsiVariable var){
             super.visitVariable(var);
             final PsiType declaredType = var.getType();
-            if(declaredType.getArrayDimensions()==0)
-            {
+            if(declaredType.getArrayDimensions() == 0){
                 return;
             }
             final PsiTypeElement typeElement = var.getTypeElement();
-            if (typeElement == null) {
+            if(typeElement == null){
                 return; // Could be true for enum constants.
             }
             final PsiType elementType = typeElement.getType();
-            if (elementType.equals(declaredType)) {
+            if(elementType.equals(declaredType)){
                 return;
             }
             registerVariableError(var);
         }
     }
-
 }

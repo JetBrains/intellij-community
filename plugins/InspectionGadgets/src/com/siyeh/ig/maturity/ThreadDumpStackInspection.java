@@ -54,6 +54,10 @@ public class ThreadDumpStackInspection extends ExpressionInspection {
             }
             final PsiMethod method = (PsiMethod) element;
             final PsiClass aClass = method.getContainingClass();
+            if(aClass == null)
+            {
+                return false;
+            }
             final String qualifiedName = aClass.getQualifiedName();
             if (!"java.lang.Thread".equals(qualifiedName)) {
                 return;

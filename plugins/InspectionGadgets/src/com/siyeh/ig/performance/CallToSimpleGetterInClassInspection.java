@@ -40,6 +40,10 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
+            if(methodName == null)
+            {
+                return;
+            }
             if(!methodName.startsWith("get")&& !methodName.startsWith("is"))
             {
                 return;

@@ -29,6 +29,7 @@ public class MismatchedCollectionQueryUpdateInspection
 
     public String buildErrorString(PsiElement location){
         final PsiVariable variable = (PsiVariable) location.getParent();
+        assert variable != null;
         final PsiElement context;
         if(variable instanceof PsiField){
             context = ((PsiMember) variable).getContainingClass();

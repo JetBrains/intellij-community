@@ -81,6 +81,10 @@ public class StringToStringInspection extends ExpressionInspection {
                 return;
             }
             final PsiClass aClass = method.getContainingClass();
+            if(aClass == null)
+            {
+                return;
+            }
             final String className = aClass.getQualifiedName();
             if (!"java.lang.String".equals(className)) {
                 return;

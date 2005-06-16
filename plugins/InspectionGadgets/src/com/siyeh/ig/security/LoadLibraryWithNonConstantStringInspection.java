@@ -44,6 +44,10 @@ public class LoadLibraryWithNonConstantStringInspection extends ExpressionInspec
                 return;
             }
             final PsiClass aClass = method.getContainingClass();
+            if(aClass == null)
+            {
+                return;
+            }
             if(!ClassUtils.isSubclass(aClass, "java.lang.System")) {
                 return;
             }

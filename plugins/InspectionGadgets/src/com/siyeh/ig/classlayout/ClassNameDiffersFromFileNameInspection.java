@@ -26,7 +26,9 @@ public class ClassNameDiffersFromFileNameInspection extends ClassInspection {
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
         final PsiClass aClass = (PsiClass) location.getParent();
+        assert aClass != null;
         final PsiJavaFile file = (PsiJavaFile) aClass.getParent();
+        assert file != null;
         final String fileName = file.getName();
         final int prefixIndex = fileName.indexOf((int) '.');
         final String filenameWithoutPrefix = fileName.substring(0, prefixIndex);
@@ -42,12 +44,10 @@ public class ClassNameDiffersFromFileNameInspection extends ClassInspection {
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new classNameDiffersFromFileName();
+        return new ClassNameDiffersFromFileNameVisitor();
     }
 
-    private static class classNameDiffersFromFileName extends BaseInspectionVisitor {
-
-
+    private static class ClassNameDiffersFromFileNameVisitor extends BaseInspectionVisitor {
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes
             if (!(aClass.getParent() instanceof PsiJavaFile)) {
@@ -56,6 +56,10 @@ public class ClassNameDiffersFromFileNameInspection extends ClassInspection {
             final PsiJavaFile file = (PsiJavaFile) aClass.getParent();
             final String className = aClass.getName();
             if (className == null) {
+                return;
+            }
+            if(file == null)
+            {
                 return;
             }
             final String fileName = file.getName();

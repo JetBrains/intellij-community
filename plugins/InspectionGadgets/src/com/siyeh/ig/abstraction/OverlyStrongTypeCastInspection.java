@@ -45,6 +45,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
                     (PsiTypeCastExpression) castTypeElement.getParent();
             final PsiType expectedType =
                     ExpectedTypeUtils.findExpectedType(expression);
+            assert expression != null;
             final PsiExpression operand = expression.getOperand();
             final String newExpression =
                     '(' + expectedType.getPresentableText() + ')' +

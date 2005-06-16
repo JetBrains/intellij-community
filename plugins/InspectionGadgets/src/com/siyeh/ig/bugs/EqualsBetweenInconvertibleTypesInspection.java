@@ -19,8 +19,10 @@ public class EqualsBetweenInconvertibleTypesInspection extends ExpressionInspect
 
     public String buildErrorString(PsiElement location) {
         final PsiReferenceExpression methodExpression = (PsiReferenceExpression) location.getParent();
+        assert methodExpression != null;
         final PsiMethodCallExpression expression =
                 (PsiMethodCallExpression) methodExpression.getParent();
+        assert expression != null;
         final PsiExpressionList argumentList = expression.getArgumentList();
 
         assert argumentList != null;

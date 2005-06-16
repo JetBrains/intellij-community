@@ -20,8 +20,10 @@ public class SystemPropertiesInspection extends ExpressionInspection {
 
     public String buildErrorString(PsiElement location) {
 
+        final PsiElement parent = location.getParent();
+        assert parent != null;
         final PsiMethodCallExpression call =
-                (PsiMethodCallExpression) location.getParent().getParent();
+                (PsiMethodCallExpression) parent.getParent();
         if(isGetSystemProperty(call)){
             return "Call to System.#ref() may pose security concerns #loc";
         } else if(isIntegerGetInteger(call)){

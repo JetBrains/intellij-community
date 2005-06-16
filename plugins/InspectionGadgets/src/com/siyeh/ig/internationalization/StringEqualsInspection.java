@@ -28,7 +28,7 @@ public class StringEqualsInspection extends ExpressionInspection {
     }
 
     private static class StringEqualsVisitor extends BaseInspectionVisitor {
-     
+
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression = expression.getMethodExpression();
@@ -56,6 +56,10 @@ public class StringEqualsInspection extends ExpressionInspection {
                 return;
             }
             final PsiClass aClass = method.getContainingClass();
+            if(aClass == null)
+            {
+                return;
+            }
             final String className = aClass.getQualifiedName();
             if (!"java.lang.String".equals(className)) {
                 return;

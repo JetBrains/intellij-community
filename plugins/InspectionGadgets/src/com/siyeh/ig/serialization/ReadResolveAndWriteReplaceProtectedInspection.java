@@ -41,6 +41,10 @@ public class ReadResolveAndWriteReplaceProtectedInspection extends MethodInspect
         public void visitMethod(@NotNull PsiMethod method) {
             // no call to super, so it doesn't drill down
             final PsiClass aClass = method.getContainingClass();
+            if(aClass == null)
+            {
+                return;
+            }
             if (aClass.isInterface() || aClass.isAnnotationType()) {
                 return;
             }

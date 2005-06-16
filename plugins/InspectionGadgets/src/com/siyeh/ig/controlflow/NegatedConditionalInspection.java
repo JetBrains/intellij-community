@@ -60,6 +60,7 @@ public class NegatedConditionalInspection extends ExpressionInspection{
             final PsiConditionalExpression exp =
                     (PsiConditionalExpression) descriptor.getPsiElement()
                             .getParent();
+            assert exp != null;
             final PsiExpression elseBranch = exp.getElseExpression();
             final PsiExpression thenBranch = exp.getThenExpression();
             final PsiExpression condition = exp.getCondition();

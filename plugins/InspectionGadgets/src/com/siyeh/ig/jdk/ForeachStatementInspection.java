@@ -41,6 +41,7 @@ public class ForeachStatementInspection extends StatementInspection{
             final StringBuffer newStatement = new StringBuffer();
             final CodeStyleManager codeStyleManager =
                     CodeStyleManager.getInstance(project);
+            assert statement != null;
             final PsiExpression iteratedValue = statement.getIteratedValue();
             if(iteratedValue.getType() instanceof PsiArrayType){
                 final String index = codeStyleManager.suggestUniqueVariableName("i",

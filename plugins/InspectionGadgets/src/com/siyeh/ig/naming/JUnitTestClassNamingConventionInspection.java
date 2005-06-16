@@ -33,6 +33,7 @@ public class JUnitTestClassNamingConventionInspection extends ConventionInspecti
 
     public String buildErrorString(PsiElement location) {
         final PsiClass aClass = (PsiClass) location.getParent();
+        assert aClass != null;
         final String className = aClass.getName();
         if (className.length() < getMinLength()) {
             return "JUnit test class name '#ref' is too short #loc";

@@ -7,76 +7,76 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
 
-public class RuntimeExecWithNonConstantStringInspection extends ExpressionInspection {
+public class RuntimeExecWithNonConstantStringInspection
+        extends ExpressionInspection{
     public String getID(){
         return "CallToRuntimeExecWithNonConstantString";
     }
-    public String getDisplayName() {
+
+    public String getDisplayName(){
         return "Call to 'Runtime.exec()' with non-constant string";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.SECURITY_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "Call to Runtime.#ref() is non-constant argument #loc";
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+    public BaseInspectionVisitor buildVisitor(){
         return new RuntimeExecVisitor();
     }
 
-    private static class RuntimeExecVisitor extends BaseInspectionVisitor {
-
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+    private static class RuntimeExecVisitor extends BaseInspectionVisitor{
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-            if (methodExpression == null) {
+            final PsiReferenceExpression methodExpression = expression
+                    .getMethodExpression();
+            if(methodExpression == null){
                 return;
             }
             final String methodName = methodExpression.getReferenceName();
-            if (!"exec".equals(methodName)) {
+            if(!"exec".equals(methodName)){
                 return;
             }
             final PsiMethod method = expression.resolveMethod();
-            if (method == null) {
+            if(method == null){
                 return;
             }
             final PsiClass aClass = method.getContainingClass();
+            if(aClass == null){
+                return;
+            }
             final String className = aClass.getQualifiedName();
-            if (!"java.lang.Runtime".equals(className)) {
+            if(!"java.lang.Runtime".equals(className)){
                 return;
             }
             final PsiExpressionList argumentList = expression.getArgumentList();
-            if(argumentList == null)
-            {
+            if(argumentList == null){
                 return;
             }
             final PsiExpression[] args = argumentList.getExpressions();
-            if(args == null || args.length==0)
-            {
+            if(args == null || args.length == 0){
                 return;
             }
             final PsiExpression arg = args[0];
             final PsiType type = arg.getType();
-            if(type == null)
-            {
+            if(type == null){
                 return;
             }
             final String typeText = type.getCanonicalText();
-            if(!"java.lang.String".equals(typeText))
-            {
+            if(!"java.lang.String".equals(typeText)){
                 return;
             }
             final String stringValue =
                     (String) ConstantExpressionUtil.computeCastTo(arg, type);
-            if(stringValue!=null)
-            {
+            if(stringValue != null){
                 return;
             }
             registerMethodCallError(expression);
         }
     }
-
 }

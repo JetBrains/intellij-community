@@ -24,6 +24,7 @@ public class SerializableWithUnconstructableAncestorInspection extends ClassInsp
 
     public String buildErrorString(PsiElement location) {
         final PsiClass aClass = (PsiClass) location.getParent();
+        assert aClass != null;
         PsiClass ancestor = aClass.getSuperClass();
         while (SerializationUtils.isSerializable(ancestor)) {
             assert ancestor != null;

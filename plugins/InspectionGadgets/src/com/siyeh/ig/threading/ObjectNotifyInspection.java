@@ -47,6 +47,7 @@ public class ObjectNotifyInspection extends ExpressionInspection{
             final PsiElement methodNameElement = descriptor.getPsiElement();
             final PsiReferenceExpression methodExpression =
                     (PsiReferenceExpression) methodNameElement.getParent();
+            assert methodExpression != null;
             final PsiExpression qualifier = methodExpression.getQualifierExpression();
             if(qualifier == null){
                 replaceExpression(methodExpression, "notifyAll");

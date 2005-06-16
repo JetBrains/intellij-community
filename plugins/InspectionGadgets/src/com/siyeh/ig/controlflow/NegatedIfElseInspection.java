@@ -58,6 +58,7 @@ public class NegatedIfElseInspection extends StatementInspection {
                                                            throws IncorrectOperationException{
             final PsiElement ifToken = descriptor.getPsiElement();
             final PsiIfStatement ifStatement = (PsiIfStatement) ifToken.getParent();
+            assert ifStatement != null;
             final PsiStatement elseBranch = ifStatement.getElseBranch();
             final PsiStatement thenBranch = ifStatement.getThenBranch();
             final PsiExpression condition = ifStatement.getCondition();

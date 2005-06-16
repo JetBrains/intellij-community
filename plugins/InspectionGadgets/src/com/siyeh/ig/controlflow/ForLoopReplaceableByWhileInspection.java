@@ -49,6 +49,7 @@ public class ForLoopReplaceableByWhileInspection extends StatementInspection {
             final PsiElement forKeywordElement = descriptor.getPsiElement();
             final PsiForStatement forStatement =
                     (PsiForStatement) forKeywordElement.getParent();
+            assert forStatement != null;
             final PsiExpression condition = forStatement.getCondition();
             final PsiStatement body = forStatement.getBody();
             final String whileStatement;

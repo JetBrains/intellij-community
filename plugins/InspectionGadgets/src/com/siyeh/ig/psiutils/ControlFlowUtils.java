@@ -415,7 +415,7 @@ public class ControlFlowUtils{
             super();
             if(target.getParent() instanceof PsiLabeledStatement){
                 final PsiLabeledStatement labeledStatement =
-                        (PsiLabeledStatement) target.getParent();
+                        (PsiLabeledStatement) target.getParent();                        
                 final PsiIdentifier identifier =
                         labeledStatement.getLabelIdentifier();
                 m_label = identifier.getText();

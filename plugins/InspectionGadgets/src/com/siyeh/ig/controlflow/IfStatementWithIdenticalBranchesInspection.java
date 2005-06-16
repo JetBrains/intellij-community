@@ -42,6 +42,7 @@ public class IfStatementWithIdenticalBranchesInspection extends StatementInspect
             final PsiElement identifier = descriptor.getPsiElement();
             final PsiIfStatement statement =
                     (PsiIfStatement) identifier.getParent();
+            assert statement != null;
             final String bodyText = statement.getThenBranch().getText();
             replaceStatement(statement, bodyText);
         }

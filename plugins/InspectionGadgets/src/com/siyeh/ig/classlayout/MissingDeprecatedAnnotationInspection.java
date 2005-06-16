@@ -39,23 +39,24 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
 
             final PsiElement identifier = descriptor.getPsiElement();
             final PsiModifierListOwner parent =
                     (PsiModifierListOwner) identifier.getParent();
-                final PsiManager psiManager = parent.getManager();
-                final PsiElementFactory factory = psiManager
-                                .getElementFactory();
-                final PsiAnnotation annotation = factory
-                        .createAnnotationFromText("@java.lang.Deprecated",
-                                                  parent);
+            assert parent != null;
+            final PsiManager psiManager = parent.getManager();
+            final PsiElementFactory factory = psiManager
+                    .getElementFactory();
+            final PsiAnnotation annotation = factory
+                    .createAnnotationFromText("@java.lang.Deprecated",
+                                              parent);
 
-                final PsiModifierList modifierList = parent.getModifierList();
-                modifierList.addAfter(annotation, null);
-
+            final PsiModifierList modifierList = parent.getModifierList();
+            modifierList.addAfter(annotation, null);
         }
     }
+
     public BaseInspectionVisitor buildVisitor(){
         return new MissingDeprecatedAnnotationVisitor();
     }
@@ -73,7 +74,7 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
                 final LanguageLevel languageLevel =
                         manager.getEffectiveLanguageLevel();
                 if(languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                           languageLevel.equals(LanguageLevel.JDK_1_4)){
+                        languageLevel.equals(LanguageLevel.JDK_1_4)){
                     return;
                 }
                 if(!hasDeprecatedCommend(aClass)){
@@ -92,7 +93,7 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
             final LanguageLevel languageLevel =
                     manager.getEffectiveLanguageLevel();
             if(languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                       languageLevel.equals(LanguageLevel.JDK_1_4)){
+                    languageLevel.equals(LanguageLevel.JDK_1_4)){
                 return;
             }
             if(!hasDeprecatedCommend(method)){
@@ -109,7 +110,7 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
             final LanguageLevel languageLevel =
                     manager.getEffectiveLanguageLevel();
             if(languageLevel.equals(LanguageLevel.JDK_1_3) ||
-                       languageLevel.equals(LanguageLevel.JDK_1_4)){
+                    languageLevel.equals(LanguageLevel.JDK_1_4)){
                 return;
             }
             if(!hasDeprecatedCommend(field)){
@@ -122,7 +123,8 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
         }
     }
 
-    private static boolean hasDeprecatedAnnotation(PsiModifierListOwner element){
+    private static boolean hasDeprecatedAnnotation(PsiModifierListOwner element)
+    {
         final PsiModifierList modifierList = element.getModifierList();
         if(modifierList == null){
             return false;
@@ -132,7 +134,8 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
             return false;
         }
         for(final PsiAnnotation annotation : annotations){
-            final PsiJavaCodeReferenceElement reference = annotation.getNameReferenceElement();
+            final PsiJavaCodeReferenceElement reference = annotation
+                    .getNameReferenceElement();
             final PsiClass annotationClass =
                     (PsiClass) reference.resolve();
             if(annotationClass == null){
@@ -147,7 +150,7 @@ public class MissingDeprecatedAnnotationInspection extends ClassInspection{
         return false;
     }
 
-    private  static boolean hasDeprecatedCommend(PsiDocCommentOwner element){
+    private static boolean hasDeprecatedCommend(PsiDocCommentOwner element){
         final PsiDocComment comment = element.getDocComment();
         if(comment == null){
             return false;

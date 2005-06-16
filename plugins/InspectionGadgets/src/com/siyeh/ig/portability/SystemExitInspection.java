@@ -21,9 +21,11 @@ public class SystemExitInspection extends ExpressionInspection {
     public String buildErrorString(PsiElement location) {
         final PsiIdentifier methodNameIdentifier = (PsiIdentifier) location;
         final PsiReference methodExpression = (PsiReference) methodNameIdentifier.getParent();
+        assert methodExpression != null;
         final PsiMethod method = (PsiMethod) methodExpression.resolve();
         assert method != null;
         final PsiClass containingClass = method.getContainingClass();
+        assert containingClass != null;
         return "Call to " + containingClass.getName() + ".#ref() is non-portable #loc";
     }
 
@@ -32,7 +34,7 @@ public class SystemExitInspection extends ExpressionInspection {
     }
 
     private static class SystemExitVisitor extends BaseInspectionVisitor {
-        
+
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
 

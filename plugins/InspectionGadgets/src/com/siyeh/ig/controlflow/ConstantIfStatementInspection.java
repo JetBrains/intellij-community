@@ -48,6 +48,7 @@ public class ConstantIfStatementInspection
             final PsiElement ifKeyword = descriptor.getPsiElement();
             final PsiIfStatement statement =
                     (PsiIfStatement) ifKeyword.getParent();
+            assert statement != null;
             final PsiStatement thenBranch = statement.getThenBranch();
             final PsiStatement elseBranch = statement.getElseBranch();
             final PsiExpression condition = statement.getCondition();

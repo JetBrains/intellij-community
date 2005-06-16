@@ -33,6 +33,7 @@ public class EnumeratedClassNamingConventionInspection extends ConventionInspect
 
     public String buildErrorString(PsiElement location) {
         final PsiClass aClass = (PsiClass) location.getParent();
+        assert aClass != null;
         final String className = aClass.getName();
         if (className.length() < getMinLength()) {
             return "Enumerated class name '#ref' is too short #loc";

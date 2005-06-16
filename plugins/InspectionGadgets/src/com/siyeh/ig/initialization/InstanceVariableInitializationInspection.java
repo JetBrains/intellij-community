@@ -14,69 +14,72 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class InstanceVariableInitializationInspection extends FieldInspection {
-    /** @noinspection PublicField*/
+public class InstanceVariableInitializationInspection extends FieldInspection{
+    /**
+     * @noinspection PublicField
+     */
     public boolean m_ignorePrimitives = false;
     private final MakeInitializerExplicitFix fix = new MakeInitializerExplicitFix();
 
     public String getID(){
         return "InstanceVariableMayNotBeInitialized";
     }
-    public String getDisplayName() {
+
+    public String getDisplayName(){
         return "Instance variable may not be initialized";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.INITIALIZATION_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "Instance variable #ref may not be initialized during object construction #loc";
     }
 
-    public JComponent createOptionsPanel() {
+    public JComponent createOptionsPanel(){
         return new SingleCheckboxOptionsPanel("Ignore primitive fields",
-                this, "m_ignorePrimitives");
+                                              this, "m_ignorePrimitives");
     }
 
     public InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+    public BaseInspectionVisitor buildVisitor(){
         return new InstanceVariableInitializationVisitor();
     }
 
-    private class InstanceVariableInitializationVisitor extends BaseInspectionVisitor {
-
-        public void visitField(@NotNull PsiField field) {
-            if (field.hasModifierProperty(PsiModifier.STATIC)) {
+    private class InstanceVariableInitializationVisitor
+            extends BaseInspectionVisitor{
+        public void visitField(@NotNull PsiField field){
+            if(field.hasModifierProperty(PsiModifier.STATIC)){
                 return;
             }
-            if (field.getInitializer() != null) {
+            if(field.getInitializer() != null){
                 return;
             }
-            if (m_ignorePrimitives) {
+            if(m_ignorePrimitives){
                 final PsiType fieldType = field.getType();
-                if (ClassUtils.isPrimitive(fieldType)) {
+                if(ClassUtils.isPrimitive(fieldType)){
                     return;
                 }
             }
             final PsiClass aClass = field.getContainingClass();
-            if (aClass == null) {
+            if(aClass == null){
                 return;
             }
             final PsiManager manager = field.getManager();
             final PsiSearchHelper searchHelper = manager.getSearchHelper();
-            if (searchHelper.isFieldBoundToForm(field)) {
+            if(searchHelper.isFieldBoundToForm(field)){
                 return;
             }
-            if (isInitializedInInitializer(field)) {
+            if(isInitializedInInitializer(field)){
                 return;
             }
 
             final PsiMethod[] constructors = aClass.getConstructors();
-            if (constructors == null || constructors.length == 0) {
+            if(constructors == null || constructors.length == 0){
                 registerFieldError(field);
                 return;
             }
@@ -89,11 +92,13 @@ public class InstanceVariableInitializationInspection extends FieldInspection {
                     return;
                 }
             }
-
         }
 
-        private boolean isInitializedInInitializer(PsiField field) {
+        private boolean isInitializedInInitializer(PsiField field){
             final PsiClass aClass = field.getContainingClass();
+            if(aClass == null){
+                return false;
+            }
             final PsiClassInitializer[] initializers = aClass.getInitializers();
             for(final PsiClassInitializer initializer : initializers){
                 if(!initializer.hasModifierProperty(PsiModifier.STATIC)){
@@ -106,6 +111,5 @@ public class InstanceVariableInitializationInspection extends FieldInspection {
             }
             return false;
         }
-
     }
 }

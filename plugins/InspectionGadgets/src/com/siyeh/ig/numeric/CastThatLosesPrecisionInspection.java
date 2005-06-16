@@ -37,6 +37,7 @@ public class CastThatLosesPrecisionInspection extends ExpressionInspection {
 
     public String buildErrorString(PsiElement location) {
         final PsiTypeCastExpression expression = (PsiTypeCastExpression) location.getParent();
+        assert expression != null;
         final PsiExpression operand = expression.getOperand();
         final PsiType operandType = operand.getType();
         return "Cast to #ref from " + operandType.getPresentableText() + " may result in loss of precision #loc";

@@ -16,6 +16,7 @@ public class AddSerialVersionUIDFix extends InspectionGadgetsFix{
             throws IncorrectOperationException{
         final PsiElement classIdentifier = descriptor.getPsiElement();
         final PsiClass aClass = (PsiClass) classIdentifier.getParent();
+        assert aClass != null;
         final PsiManager psiManager = aClass.getManager();
         final PsiElementFactory elementFactory =
                 psiManager.getElementFactory();

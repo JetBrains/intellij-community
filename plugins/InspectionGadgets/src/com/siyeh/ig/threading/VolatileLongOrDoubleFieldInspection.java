@@ -20,6 +20,7 @@ public class VolatileLongOrDoubleFieldInspection extends FieldInspection{
 
     public String buildErrorString(PsiElement location){
         final PsiField field = (PsiField) location.getParent();
+        assert field != null;
         final PsiType type = field.getType();
         final String typeString = type.getPresentableText();
         return "Volatile field #ref of type " + typeString + " #loc";

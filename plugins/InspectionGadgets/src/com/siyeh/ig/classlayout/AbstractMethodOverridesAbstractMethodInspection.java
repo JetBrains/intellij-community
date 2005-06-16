@@ -42,6 +42,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspe
                                                                          throws IncorrectOperationException{
             final PsiElement methodNameIdentifier = descriptor.getPsiElement();
             final PsiElement method = methodNameIdentifier.getParent();
+            assert method!=null;
             deleteElement(method);
         }
     }

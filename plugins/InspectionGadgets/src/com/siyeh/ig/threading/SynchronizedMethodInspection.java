@@ -3,6 +3,7 @@ package com.siyeh.ig.threading;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
@@ -29,13 +30,19 @@ public class SynchronizedMethodInspection extends MethodInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        final PsiModifierList modifierList = (PsiModifierList) location.getParent();
+        final PsiModifierList modifierList = (PsiModifierList) location
+                .getParent();
+        assert modifierList != null;
         final PsiMethod method = (PsiMethod) modifierList.getParent();
+        assert method != null;
         return "Method " + method.getName() + "() declared '#ref' #loc";
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        final PsiMethod method = (PsiMethod) location.getParent().getParent();
+        final PsiElement modifierList = location.getParent();
+        assert modifierList != null;
+        final PsiMethod method = (PsiMethod) modifierList.getParent();
+        assert method != null;
         if(method.getBody() == null){
             return null;
         }
@@ -62,15 +69,19 @@ public class SynchronizedMethodInspection extends MethodInspection{
                 throws IncorrectOperationException{
             final PsiElement nameElement =
                     descriptor.getPsiElement();
-            final PsiModifierList modiferList = (PsiModifierList) nameElement.getParent();
+            final PsiModifierList modiferList = (PsiModifierList) nameElement
+                    .getParent();
+            assert modiferList != null;
             final PsiMethod method =
                     (PsiMethod) modiferList.getParent();
             modiferList.setModifierProperty(PsiModifier.SYNCHRONIZED, false);
+            assert method != null;
             final PsiCodeBlock body = method.getBody();
             final String text = body.getText();
             final String replacementText;
             if(method.hasModifierProperty(PsiModifier.STATIC)){
                 final PsiClass containingClass = method.getContainingClass();
+                assert containingClass != null;
                 final String className = containingClass.getName();
                 replacementText = "{ synchronized(" + className + ".class){" +
                         text.substring(1) + '}';
@@ -85,7 +96,9 @@ public class SynchronizedMethodInspection extends MethodInspection{
                     elementFactory.createCodeBlockFromText(replacementText,
                                                            null);
             body.replace(block);
-            psiManager.getCodeStyleManager().reformat(method);
+            final CodeStyleManager codeStyleManager = psiManager
+                    .getCodeStyleManager();
+            codeStyleManager.reformat(method);
         }
     }
 

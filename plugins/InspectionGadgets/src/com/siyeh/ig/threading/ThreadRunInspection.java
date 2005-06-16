@@ -43,6 +43,7 @@ public class ThreadRunInspection extends ExpressionInspection {
             final PsiElement methodNameIdentifier = descriptor.getPsiElement();
             final PsiReferenceExpression methodExpression =
                     (PsiReferenceExpression) methodNameIdentifier.getParent();
+            assert methodExpression != null;
             final PsiExpression qualifier = methodExpression.getQualifierExpression();
             if (qualifier == null) {
                 replaceExpression(methodExpression, "start");
@@ -83,6 +84,10 @@ public class ThreadRunInspection extends ExpressionInspection {
                 return;
             }
             final PsiClass methodClass = method.getContainingClass();
+            if(methodClass == null)
+            {
+                return;
+            }
             if (!ClassUtils.isSubclass(methodClass, "java.lang.Thread")) {
                 return;
             }

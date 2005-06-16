@@ -1,8 +1,6 @@
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
@@ -27,13 +25,17 @@ public class NoopMethodInAbstractClassInspection extends MethodInspection {
     }
 
     private static class NoopMethodInAbstractClassVisitor extends BaseInspectionVisitor {
-     
+
         public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes
             if (method.isConstructor()) {
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
+            if(containingClass == null)
+            {
+                return;
+            }
             if (containingClass.isInterface() || containingClass.isAnnotationType()) {
                 return;
             }

@@ -44,6 +44,7 @@ class NestingDepthVisitor extends PsiRecursiveElementVisitor {
         boolean isAlreadyCounted = false;
         if (statement.getParent() instanceof PsiIfStatement) {
             final PsiIfStatement parent = (PsiIfStatement) statement.getParent();
+            assert parent != null;
             final PsiStatement elseBranch = parent.getElseBranch();
             if (statement.equals(elseBranch)) {
                 isAlreadyCounted = true;

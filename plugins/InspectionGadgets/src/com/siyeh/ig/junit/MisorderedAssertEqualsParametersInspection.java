@@ -40,7 +40,10 @@ public class MisorderedAssertEqualsParametersInspection extends ExpressionInspec
         public void doFix(Project project, ProblemDescriptor descriptor)
                                                                          throws IncorrectOperationException{
             final PsiElement methodNameIdentifier = descriptor.getPsiElement();
-            final PsiMethodCallExpression callExpression = (PsiMethodCallExpression) methodNameIdentifier.getParent().getParent();
+            final PsiElement parent = methodNameIdentifier.getParent();
+            assert parent != null;
+            final PsiMethodCallExpression callExpression = (PsiMethodCallExpression) parent.getParent();
+            assert callExpression != null;
             final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
 
             final PsiMethod method = (PsiMethod) methodExpression.resolve();

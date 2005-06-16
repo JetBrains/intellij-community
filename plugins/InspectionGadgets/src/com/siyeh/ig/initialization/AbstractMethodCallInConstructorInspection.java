@@ -52,6 +52,10 @@ public class AbstractMethodCallInConstructorInspection extends MethodInspection{
                 return;
             }
             final PsiClass calledMethodClass = calledMethod.getContainingClass();
+            if(calledMethodClass == null)
+            {
+                return;
+            }
             final PsiClass methodClass = method.getContainingClass();
             if(!calledMethodClass.equals(methodClass)){
                 return;

@@ -113,6 +113,10 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
             return;
         }
         final PsiClass containingClass = m_method.getContainingClass();
+        if(containingClass == null)
+        {
+            return;
+        }
         final String qualifiedName = containingClass.getQualifiedName();
         if(qualifiedName == null)
         {

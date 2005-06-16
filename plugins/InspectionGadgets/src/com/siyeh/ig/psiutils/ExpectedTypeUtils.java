@@ -12,16 +12,20 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ExpectedTypeUtils{
-    /** @noinspection StaticCollection*/
-    private static final Set<IElementType> arithmeticOps = new HashSet<IElementType>(5);
-    static
-    {
+    /**
+     * @noinspection StaticCollection
+     */
+    private static final Set<IElementType> arithmeticOps = new HashSet<IElementType>(
+            5);
+
+    static {
         arithmeticOps.add(JavaTokenType.PLUS);
         arithmeticOps.add(JavaTokenType.MINUS);
         arithmeticOps.add(JavaTokenType.ASTERISK);
         arithmeticOps.add(JavaTokenType.DIV);
         arithmeticOps.add(JavaTokenType.PERC);
     }
+
     private ExpectedTypeUtils(){
         super();
     }
@@ -29,9 +33,12 @@ public class ExpectedTypeUtils{
     public static PsiType findExpectedType(PsiExpression exp){
         PsiElement context = exp.getParent();
         PsiExpression wrappedExp = exp;
-        while(context instanceof PsiParenthesizedExpression){
+        while(context != null && context instanceof PsiParenthesizedExpression){
             wrappedExp = (PsiExpression) context;
             context = context.getParent();
+        }
+        if(context == null){
+            return null;
         }
         final ExpectedTypeVisitor visitor = new ExpectedTypeVisitor(wrappedExp);
         context.accept(visitor);
@@ -44,7 +51,7 @@ public class ExpectedTypeUtils{
 
     private static boolean isEqualityOperation(IElementType sign){
         return sign.equals(JavaTokenType.EQEQ)
-                       || sign.equals(JavaTokenType.NE);
+                || sign.equals(JavaTokenType.NE);
     }
 
     private static int getParameterPosition(PsiExpressionList expressionList,
@@ -58,8 +65,10 @@ public class ExpectedTypeUtils{
         return -1;
     }
 
-    private static @Nullable PsiType getTypeOfParemeter(PsiMethod psiMethod,
-                                              int parameterPosition){
+    private static
+    @Nullable
+    PsiType getTypeOfParemeter(PsiMethod psiMethod,
+                               int parameterPosition){
         final PsiParameterList paramList = psiMethod.getParameterList();
         final PsiParameter[] parameters = paramList.getParameters();
         if(parameterPosition < 0){
@@ -72,7 +81,8 @@ public class ExpectedTypeUtils{
             }
             final PsiParameter lastParameter = parameters[lastParamPosition];
             if(lastParameter.isVarArgs()){
-                return ((PsiArrayType) lastParameter.getType()).getComponentType();
+                return ((PsiArrayType) lastParameter.getType())
+                        .getComponentType();
             }
             return null;
         }
@@ -84,7 +94,9 @@ public class ExpectedTypeUtils{
         return param.getType();
     }
 
-    private static @Nullable PsiMethod findCalledMethod(PsiExpressionList expList){
+    private static
+    @Nullable
+    PsiMethod findCalledMethod(PsiExpressionList expList){
         final PsiElement parent = expList.getParent();
         if(parent instanceof PsiMethodCallExpression){
             final PsiMethodCallExpression methodCall =
@@ -121,21 +133,25 @@ public class ExpectedTypeUtils{
             expectedType = variable.getType();
         }
 
-        public void visitArrayInitializerExpression(PsiArrayInitializerExpression initializer){
+        public void visitArrayInitializerExpression(
+                PsiArrayInitializerExpression initializer){
             final PsiArrayType arrayType = (PsiArrayType) initializer.getType();
             if(arrayType != null){
                 expectedType = arrayType.getComponentType();
             }
         }
 
-        public void visitArrayAccessExpression(PsiArrayAccessExpression accessExpression){
-            final PsiExpression indexExpression = accessExpression.getIndexExpression();
+        public void visitArrayAccessExpression(
+                PsiArrayAccessExpression accessExpression){
+            final PsiExpression indexExpression = accessExpression
+                    .getIndexExpression();
             if(wrappedExp.equals(indexExpression)){
                 expectedType = PsiType.INT;
             }
         }
 
-        public void visitBinaryExpression(@NotNull PsiBinaryExpression binaryExp){
+        public void visitBinaryExpression(
+                @NotNull PsiBinaryExpression binaryExp){
             final PsiJavaToken sign = binaryExp.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             final PsiType type = binaryExp.getType();
@@ -166,15 +182,18 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitPrefixExpression(@NotNull PsiPrefixExpression expression){
+        public void visitPrefixExpression(
+                @NotNull PsiPrefixExpression expression){
             expectedType = expression.getType();
         }
 
-        public void visitPostfixExpression(@NotNull PsiPostfixExpression expression){
+        public void visitPostfixExpression(
+                @NotNull PsiPostfixExpression expression){
             expectedType = expression.getType();
         }
 
-        public void visitWhileStatement(@NotNull PsiWhileStatement whileStatement){
+        public void visitWhileStatement(
+                @NotNull PsiWhileStatement whileStatement){
             expectedType = PsiType.BOOLEAN;
         }
 
@@ -186,18 +205,21 @@ public class ExpectedTypeUtils{
             expectedType = PsiType.BOOLEAN;
         }
 
-        public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement){
+        public void visitDoWhileStatement(
+                @NotNull PsiDoWhileStatement statement){
             expectedType = PsiType.BOOLEAN;
         }
 
-        public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement){
+        public void visitSynchronizedStatement(
+                @NotNull PsiSynchronizedStatement statement){
             final PsiManager manager = statement.getManager();
             final Project project = manager.getProject();
             final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
             expectedType = PsiType.getJavaLangObject(manager, scope);
         }
 
-        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment){
+        public void visitAssignmentExpression(
+                @NotNull PsiAssignmentExpression assignment){
             final PsiExpression rExpression = assignment.getRExpression();
             if(rExpression != null){
                 if(rExpression.equals(wrappedExp)){
@@ -207,9 +229,9 @@ public class ExpectedTypeUtils{
                     if(lType == null){
                         expectedType = null;
                     } else if(TypeUtils.isJavaLangString(lType) &&
-                                      JavaTokenType.PLUSEQ.equals(
-                                              assignment.getOperationSign()
-                                                      .getTokenType())){
+                            JavaTokenType.PLUSEQ.equals(
+                                    assignment.getOperationSign()
+                                            .getTokenType())){
                         // e.g. String += any type
                         expectedType = rExpression.getType();
                     } else{
@@ -219,7 +241,8 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitConditionalExpression(PsiConditionalExpression conditional){
+        public void visitConditionalExpression(
+                PsiConditionalExpression conditional){
             final PsiExpression condition = conditional.getCondition();
             if(condition.equals(wrappedExp)){
                 expectedType = PsiType.BOOLEAN;
@@ -228,10 +251,11 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement){
+        public void visitReturnStatement(
+                @NotNull PsiReturnStatement returnStatement){
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(returnStatement,
-                                                            PsiMethod.class);
+                                                PsiMethod.class);
             if(method == null){
                 expectedType = null;
             } else{
@@ -239,7 +263,8 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitDeclarationStatement(PsiDeclarationStatement declaration){
+        public void visitDeclarationStatement(
+                PsiDeclarationStatement declaration){
             final PsiElement[] declaredElements =
                     declaration.getDeclaredElements();
             for(PsiElement declaredElement1 : declaredElements){
@@ -270,7 +295,8 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
+        public void visitReferenceExpression(
+                @NotNull PsiReferenceExpression ref){
             final PsiManager manager = ref.getManager();
             final PsiElement parent = ref.getParent();
             if(parent instanceof PsiMethodCallExpression){
@@ -282,7 +308,7 @@ public class ExpectedTypeUtils{
                 }
                 final PsiClass aClass = psiMethod.getContainingClass();
                 final PsiElementFactory factory = manager.getElementFactory();
-                expectedType =  factory.createType(aClass);
+                expectedType = factory.createType(aClass);
             } else if(parent instanceof PsiReferenceExpression){
                 final PsiElement elt =
                         ((PsiReference) parent).resolve();
@@ -291,9 +317,9 @@ public class ExpectedTypeUtils{
                             ((PsiMember) elt).getContainingClass();
                     final PsiElementFactory factory =
                             manager.getElementFactory();
-                    expectedType =  factory.createType(aClass);
+                    expectedType = factory.createType(aClass);
                 } else{
-                    expectedType =  null;
+                    expectedType = null;
                 }
             }
         }

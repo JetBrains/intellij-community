@@ -88,6 +88,10 @@ public class InstanceVariableUninitializedUseInspection
 
         private boolean isInitializedInInitializer(PsiField field) {
             final PsiClass aClass = field.getContainingClass();
+            if(aClass == null)
+            {
+                return false;
+            }
             final PsiClassInitializer[] initializers = aClass.getInitializers();
             for(final PsiClassInitializer initializer : initializers){
                 if(!initializer.hasModifierProperty(PsiModifier.STATIC)){

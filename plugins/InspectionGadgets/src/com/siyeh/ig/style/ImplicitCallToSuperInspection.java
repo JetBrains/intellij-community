@@ -50,6 +50,7 @@ public class ImplicitCallToSuperInspection extends MethodInspection{
                 throws IncorrectOperationException{
             final PsiElement methodName = descriptor.getPsiElement();
             final PsiMethod method = (PsiMethod) methodName.getParent();
+            assert method != null;
             final PsiCodeBlock body = method.getBody();
             final PsiManager psiManager = PsiManager.getInstance(project);
             final PsiElementFactory factory = psiManager.getElementFactory();

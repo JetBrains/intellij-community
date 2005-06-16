@@ -1,9 +1,7 @@
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +31,7 @@ public class NonCommentSourceStatementsInspection extends MethodMetricInspection
     public String buildErrorString(PsiElement location) {
         final PsiMethod method = (PsiMethod) location.getParent();
         final NCSSVisitor visitor = new NCSSVisitor();
+        assert method != null;
         method.accept(visitor);
         final int statementCount = visitor.getStatementCount();
         return "#ref is too long (# Non-comment source statements = " + statementCount + ") #loc";

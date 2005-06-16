@@ -24,7 +24,9 @@ public class TransientFieldInNonSerializableClassInspection extends ClassInspect
 
     public String buildErrorString(PsiElement location) {
         final PsiModifierList fieldModifierList = (PsiModifierList) location.getParent();
+        assert fieldModifierList != null;
         final PsiField field = (PsiField) fieldModifierList.getParent();
+        assert field != null;
         return "Field " + field.getName() + " is marked '#ref', in non-Serializable class #loc ";
     }
 

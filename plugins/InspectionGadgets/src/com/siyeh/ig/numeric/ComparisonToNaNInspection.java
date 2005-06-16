@@ -26,6 +26,7 @@ public class ComparisonToNaNInspection extends ExpressionInspection{
     public String buildErrorString(PsiElement location){
         final PsiBinaryExpression comparison =
                 (PsiBinaryExpression) location.getParent();
+        assert comparison != null;
         final PsiJavaToken sign = comparison.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
         if(tokenType.equals(JavaTokenType.EQEQ)){

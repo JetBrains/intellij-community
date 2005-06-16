@@ -50,6 +50,7 @@ public class ExtendsObjectInspection extends ClassInspection{
             final PsiElement extendClassIdentifier = descriptor.getPsiElement();
             final PsiClass element =
                     (PsiClass) extendClassIdentifier.getParent();
+            assert element != null;
             final PsiReferenceList extendsList = element.getExtendsList();
             assert extendsList != null;
             final PsiJavaCodeReferenceElement[] elements =

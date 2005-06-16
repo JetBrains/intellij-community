@@ -78,6 +78,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection{
         } else{
             modifierList = (PsiModifierList) location.getParent();
         }
+        assert modifierList != null;
         final PsiElement parent = modifierList.getParent();
         if(parent instanceof PsiClass){
             return "Modifier '#ref' is redundant for interfaces #loc";
@@ -126,6 +127,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection{
             } else{
                 modifierList = (PsiModifierList) element.getParent();
             }
+            assert modifierList != null;
             modifierList.setModifierProperty(PsiModifier.STATIC, false);
             modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
             modifierList.setModifierProperty(PsiModifier.FINAL, false);

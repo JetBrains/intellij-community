@@ -27,7 +27,8 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection{
         if(!aClass.isPhysical()){
             return super.doCheckClass(aClass, manager, isOnTheFly);
         }
-        final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
+        final BaseInspectionVisitor visitor = createVisitor(manager,
+                                                            isOnTheFly);
         aClass.accept(visitor);
 
         return visitor.getErrors();
@@ -39,7 +40,8 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection{
         if(!method.isPhysical()){
             return super.doCheckMethod(method, manager, isOnTheFly);
         }
-        final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
+        final BaseInspectionVisitor visitor = createVisitor(manager,
+                                                            isOnTheFly);
         method.accept(visitor);
         return visitor.getErrors();
     }
@@ -51,6 +53,7 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection{
         } else{
             modifierList = (PsiModifierList) location.getParent();
         }
+        assert modifierList != null;
         final PsiElement parent = modifierList.getParent();
         if(parent instanceof PsiMethod){
             return "Modifier '#ref' is redundant for enum constructors #loc";
@@ -81,28 +84,27 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection{
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
 
-                final PsiElement element = descriptor.getPsiElement();
-                final PsiModifierList modifierList;
-                if(element instanceof PsiModifierList){
-                    modifierList = (PsiModifierList) element;
-                } else{
-                    modifierList = (PsiModifierList) element.getParent();
-                }
-                if(modifierList.getParent() instanceof PsiClass){
-                    modifierList.setModifierProperty(PsiModifier.STATIC, false);
-                } else{
-                    modifierList.setModifierProperty(PsiModifier.PRIVATE,
-                                                     false);
-                }
-
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiModifierList modifierList;
+            if(element instanceof PsiModifierList){
+                modifierList = (PsiModifierList) element;
+            } else{
+                modifierList = (PsiModifierList) element.getParent();
+            }
+            assert modifierList != null;
+            if(modifierList.getParent() instanceof PsiClass){
+                modifierList.setModifierProperty(PsiModifier.STATIC, false);
+            } else{
+                modifierList.setModifierProperty(PsiModifier.PRIVATE,
+                                                 false);
+            }
         }
     }
 
     private static class UnnecessaryInterfaceModifierVisitor
             extends BaseInspectionVisitor{
-
         public void visitClass(@NotNull PsiClass aClass){
             if(!aClass.isEnum()){
                 return;

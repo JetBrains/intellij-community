@@ -48,6 +48,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends Expression
             final PsiElement variableIdentifier =
                     descriptor.getPsiElement();
             final PsiLocalVariable variable = (PsiLocalVariable) variableIdentifier.getParent();
+            assert variable != null;
             final PsiDeclarationStatement declarationStatement =
                     (PsiDeclarationStatement) variable.getParent();
             final String text = declarationStatement.getText();

@@ -21,6 +21,7 @@ public class ParametersPerMethodInspection extends MethodMetricInspection {
 
     public String buildErrorString(PsiElement location) {
         final PsiMethod method = (PsiMethod) location.getParent();
+        assert method != null;
         final PsiParameterList parameterList = method.getParameterList();
         final int numParams = parameterList.getParameters().length;
         return "#ref has too many parameters (num parameters = " + numParams + ") #loc";
@@ -39,7 +40,7 @@ public class ParametersPerMethodInspection extends MethodMetricInspection {
     }
 
     private class ParametersPerMethodVisitor extends BaseInspectionVisitor {
-       
+
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             final PsiParameterList parameterList = method.getParameterList();

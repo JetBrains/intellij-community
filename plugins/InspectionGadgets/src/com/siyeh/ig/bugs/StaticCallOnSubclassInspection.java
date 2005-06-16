@@ -28,12 +28,16 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
 
     public String buildErrorString(PsiElement location) {
         final PsiReferenceExpression methodExpression = (PsiReferenceExpression) location.getParent();
+        assert methodExpression != null;
         final PsiMethodCallExpression methodCall = (PsiMethodCallExpression) methodExpression.getParent();
+        assert methodCall != null;
         final PsiMethod method = methodCall.resolveMethod();
         assert method != null;
         final PsiClass containingClass = method.getContainingClass();
+        assert containingClass != null;
         final String declaringClass = containingClass.getName();
         final PsiElement qualifier = methodExpression.getQualifier();
+        assert qualifier != null;
         final String referencedClass = qualifier.getText();
         return "Static method '#ref' declared on class " + declaringClass + " but referenced via class " + referencedClass + "    #loc";
     }
@@ -51,12 +55,15 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
                                                                          throws IncorrectOperationException{
             final PsiIdentifier name = (PsiIdentifier) descriptor.getPsiElement();
             final PsiReferenceExpression expression = (PsiReferenceExpression) name.getParent();
+            assert expression != null;
             final PsiMethodCallExpression call = (PsiMethodCallExpression) expression.getParent();
             final String methodName = expression.getReferenceName();
+            assert call != null;
             final PsiMethod method = call.resolveMethod();
             assert method != null;
             final PsiClass containingClass = method.getContainingClass();
             final PsiExpressionList argumentList = call.getArgumentList();
+            assert containingClass != null;
             final String containingClassName = containingClass.getName();
             assert argumentList != null;
             final String argText = argumentList.getText();
@@ -97,6 +104,10 @@ public class StaticCallOnSubclassInspection extends ExpressionInspection {
 
 
             final PsiClass declaringClass = method.getContainingClass();
+            if(declaringClass == null)
+            {
+                return;
+            }
             if (declaringClass.equals(referencedClass)) {
                 return;
             }

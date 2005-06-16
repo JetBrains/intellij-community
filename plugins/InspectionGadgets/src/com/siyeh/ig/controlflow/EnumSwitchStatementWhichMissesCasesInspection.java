@@ -19,6 +19,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends StatementInsp
 
     public String buildErrorString(PsiElement location) {
         final PsiSwitchStatement switchStatement = (PsiSwitchStatement) location.getParent();
+        assert switchStatement != null;
         final PsiExpression switchStatementExpression = switchStatement.getExpression();
         final PsiType switchStatementType = switchStatementExpression.getType();
         final String switchStatementTypeText = switchStatementType.getPresentableText();

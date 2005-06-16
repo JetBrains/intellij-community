@@ -42,6 +42,7 @@ public class ConfusingElseInspection extends StatementInspection {
                                                                          throws IncorrectOperationException{
             final PsiElement ifKeyword = descriptor.getPsiElement();
             final PsiIfStatement ifStatement = (PsiIfStatement) ifKeyword.getParent();
+            assert ifStatement != null;
             final PsiExpression condition = ifStatement.getCondition();
             final PsiStatement thenBranch = ifStatement.getThenBranch();
             final String text = "if(" + condition.getText() + ')' + thenBranch.getText();
@@ -53,12 +54,13 @@ public class ConfusingElseInspection extends StatementInspection {
                 final PsiElement[] children = block.getChildren();
                 if(children.length > 2){
                     final PsiElement containingElement = ifStatement.getParent();
+                    assert containingElement != null;
                     final PsiElement added =
                             containingElement.addRangeAfter(children[1],
-                                                             children[children
-                                                                     .length -
-                                                                     2],
-                                                             ifStatement);
+                                                            children[children
+                                                                    .length -
+                                                                    2],
+                                                            ifStatement);
                     final CodeStyleManager codeStyleManager =
                             CodeStyleManager.getInstance(project);
                     codeStyleManager.reformat(added);
@@ -68,9 +70,9 @@ public class ConfusingElseInspection extends StatementInspection {
             {
                 final PsiElement containingElement = ifStatement.getParent();
 
+                assert containingElement != null;
                 final PsiElement added =
-                        containingElement.addAfter(elseBranch,
-                                                        ifStatement);
+                        containingElement.addAfter(elseBranch, ifStatement);
                 final CodeStyleManager codeStyleManager =
                         CodeStyleManager.getInstance(project);
                 codeStyleManager.reformat(added);

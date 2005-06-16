@@ -36,6 +36,10 @@ public class AbstractMethodOverridesConcreteMethodInspection extends MethodInspe
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
+            if(containingClass == null)
+            {
+                return;
+            }
             if (containingClass.isInterface() || containingClass.isAnnotationType()) {
                 return;
             }

@@ -20,6 +20,7 @@ public class StringBufferFieldInspection extends FieldInspection {
 
     public String buildErrorString(PsiElement location) {
         final PsiField field = (PsiField) location.getParent();
+        assert field != null;
         final PsiType type = field.getType();
         final String typeName = type.getPresentableText();
         return typeName+ " field '#ref' #loc";

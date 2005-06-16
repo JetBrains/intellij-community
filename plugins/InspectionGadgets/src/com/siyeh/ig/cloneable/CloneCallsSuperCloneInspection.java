@@ -47,6 +47,10 @@ public class CloneCallsSuperCloneInspection extends MethodInspection {
                 return;
             }
             final PsiClass containingClass = method.getContainingClass();
+            if(containingClass == null)
+            {
+                return;
+            }
             if (containingClass.isInterface() || containingClass.isAnnotationType()) {
                 return;
             }

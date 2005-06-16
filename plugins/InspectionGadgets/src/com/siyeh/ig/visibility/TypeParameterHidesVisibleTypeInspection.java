@@ -32,6 +32,7 @@ public class TypeParameterHidesVisibleTypeInspection extends ClassInspection{
 
     public String buildErrorString(PsiElement location){
         final PsiTypeParameter parameter = (PsiTypeParameter) location.getParent();
+        assert parameter != null;
         final PsiManager manager = parameter.getManager();
         final PsiFile containingFile = parameter.getContainingFile();
         final PsiResolveHelper resolveHelper = manager.getResolveHelper();
@@ -49,7 +50,7 @@ public class TypeParameterHidesVisibleTypeInspection extends ClassInspection{
 
     private static class TypeParameterHidesVisibleTypeVisitor
             extends BaseInspectionVisitor{
-     
+
         public void visitTypeParameter(PsiTypeParameter parameter){
             super.visitTypeParameter(parameter);
             final String unqualifiedClassName = parameter.getName();

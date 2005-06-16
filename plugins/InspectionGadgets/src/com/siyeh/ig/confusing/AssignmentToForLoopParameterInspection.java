@@ -2,7 +2,7 @@ package com.siyeh.ig.confusing;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;                    
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -86,10 +86,15 @@ public class AssignmentToForLoopParameterInspection extends ExpressionInspection
             }
             final PsiLocalVariable variable = (PsiLocalVariable) element;
             final PsiDeclarationStatement decl = (PsiDeclarationStatement) variable.getParent();
+            if(decl == null)
+            {
+                return;
+            }
             if (!(decl.getParent() instanceof PsiForStatement)) {
                 return;
             }
             final PsiForStatement forStatement = (PsiForStatement) decl.getParent();
+            assert forStatement != null;
             final PsiStatement initialization = forStatement.getInitialization();
             if (initialization == null) {
                 return;

@@ -47,6 +47,7 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection{
             final PsiElement extendClassIdentifier = descriptor.getPsiElement();
             final PsiTypeParameter element =
                     (PsiTypeParameter) extendClassIdentifier.getParent();
+            assert element != null;
             final PsiReferenceList extendsList = element.getExtendsList();
             final PsiJavaCodeReferenceElement[] elements =
                     extendsList.getReferenceElements();

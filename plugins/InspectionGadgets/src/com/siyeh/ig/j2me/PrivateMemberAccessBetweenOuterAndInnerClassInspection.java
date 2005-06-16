@@ -40,6 +40,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
             assert member != null;
             final String memberName = member.getName();
             final PsiClass containingClass = member.getContainingClass();
+            assert containingClass != null;
             final String containingClassName = containingClass.getName();
             elementName = containingClassName + '.' + memberName;
         }

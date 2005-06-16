@@ -35,6 +35,7 @@ public class EnumeratedConstantNamingConventionInspection
 
     public String buildErrorString(PsiElement location){
         final PsiField field = (PsiField) location.getParent();
+        assert field != null;
         final String fieldName = field.getName();
         if(fieldName.length() < getMinLength()){
             return "Enumerated constant name '#ref' is too short #loc";

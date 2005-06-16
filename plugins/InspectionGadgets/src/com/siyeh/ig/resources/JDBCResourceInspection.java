@@ -13,35 +13,35 @@ import java.util.Set;
 public class JDBCResourceInspection extends ExpressionInspection{
     private static final String[] creationMethodClassName =
             new String[]{
-                            "java.sql.Driver",
-                            "java.sql.DriverManager",
-                            "java.sql.DataSource",
-                            "java.sql.Connection",
-                            "java.sql.Connection",
-                            "java.sql.Connection",
-                            "java.sql.Statement",
-                            "java.sql.Statement",
-                    };
+                "java.sql.Driver",
+                "java.sql.DriverManager",
+                "java.sql.DataSource",
+                "java.sql.Connection",
+                "java.sql.Connection",
+                "java.sql.Connection",
+                "java.sql.Statement",
+                "java.sql.Statement",
+            };
     private static final String[] creationMethodName =
             new String[]{
-                            "connect",
-                            "getConnection",
-                            "getConnection",
-                            "createStatement",
-                            "prepareStatement",
-                            "prepareCall",
-                            "executeQuery",
-                            "getResultSet",
-                    };
+                "connect",
+                "getConnection",
+                "getConnection",
+                "createStatement",
+                "prepareStatement",
+                "prepareCall",
+                "executeQuery",
+                "getResultSet",
+            };
 
     /**
-         * @noinspection StaticCollection
-         */
-    private static final Set<String> creationMethodNameSet = new HashSet<String>(8);
+     * @noinspection StaticCollection
+     */
+    private static final Set<String> creationMethodNameSet = new HashSet<String>(
+            8);
 
-    static
-    {
-        for(String aCreationMethodName : creationMethodName   ){
+    static {
+        for(String aCreationMethodName : creationMethodName){
             creationMethodNameSet.add(aCreationMethodName);
         }
     }
@@ -63,7 +63,7 @@ public class JDBCResourceInspection extends ExpressionInspection{
         final PsiType type = expression.getType();
         final String text = type.getPresentableText();
         return "JDBC " + text +
-                       " should be opened in a try block, and closed in a finally block #loc";
+                " should be opened in a try block, and closed in a finally block #loc";
     }
 
     public BaseInspectionVisitor buildVisitor(){
@@ -71,8 +71,8 @@ public class JDBCResourceInspection extends ExpressionInspection{
     }
 
     private static class JDBCResourceVisitor extends BaseInspectionVisitor{
-
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             if(!isJDBCResourceCreation(expression)){
                 return;
@@ -98,7 +98,7 @@ public class JDBCResourceInspection extends ExpressionInspection{
             while(true){
                 final PsiTryStatement tryStatement =
                         PsiTreeUtil.getParentOfType(currentContext,
-                                                                      PsiTryStatement.class);
+                                                    PsiTryStatement.class);
                 if(tryStatement == null){
                     registerError(expression);
                     return;
@@ -112,9 +112,10 @@ public class JDBCResourceInspection extends ExpressionInspection{
             }
         }
 
-        private static boolean resourceIsOpenedInTryAndClosedInFinally(PsiTryStatement tryStatement,
-                                                                       PsiExpression lhs,
-                                                                       PsiVariable boundVariable){
+        private static boolean resourceIsOpenedInTryAndClosedInFinally(
+                PsiTryStatement tryStatement,
+                PsiExpression lhs,
+                PsiVariable boundVariable){
             final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
             if(finallyBlock == null){
                 return false;
@@ -154,7 +155,8 @@ public class JDBCResourceInspection extends ExpressionInspection{
             }
         }
 
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call){
             if(containsResourceClose){
                 return;
             }
@@ -188,14 +190,17 @@ public class JDBCResourceInspection extends ExpressionInspection{
         }
     }
 
-    private static boolean isJDBCResourceCreation(PsiMethodCallExpression expression){
+    private static boolean isJDBCResourceCreation(
+            PsiMethodCallExpression expression){
         final PsiReferenceExpression methodExpression =
                 expression.getMethodExpression();
         if(methodExpression == null){
             return false;
         }
         final String name = methodExpression.getReferenceName();
-
+        if(name == null){
+            return false;
+        }
         if(!creationMethodNameSet.contains(name)){
             return false;
         }
@@ -210,8 +215,7 @@ public class JDBCResourceInspection extends ExpressionInspection{
                     return false;
                 }
                 final String className = containingClass.getQualifiedName();
-                if(className == null)
-                {
+                if(className == null){
                     return false;
                 }
                 if(className.equals(creationMethodClassName[i])){

@@ -39,6 +39,9 @@ public class UnusedImportInspection extends ClassInspection {
                 return;
             }
             final PsiJavaFile file = (PsiJavaFile) aClass.getParent();
+            if(file == null){
+                return;
+            }
             if (!file.getClasses()[0].equals(aClass)) {
                 return;
             }

@@ -19,6 +19,7 @@ public class InlineCallFix extends InspectionGadgetsFix {
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiReferenceExpression methodExpression =
                 (PsiReferenceExpression) nameElement.getParent();
+        assert methodExpression != null;
         final PsiMethodCallExpression methodCallExpression =
                 (PsiMethodCallExpression) methodExpression.getParent();
         final RefactoringActionHandlerFactory factory =

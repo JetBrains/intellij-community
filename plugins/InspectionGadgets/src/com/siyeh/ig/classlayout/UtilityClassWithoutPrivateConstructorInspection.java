@@ -12,71 +12,74 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class UtilityClassWithoutPrivateConstructorInspection extends ClassInspection {
+public class UtilityClassWithoutPrivateConstructorInspection
+        extends ClassInspection{
     private final UtilityClassWithoutPrivateConstructorFix fix = new UtilityClassWithoutPrivateConstructorFix();
 
-    public String getDisplayName() {
+    public String getDisplayName(){
         return "Utility class without private constructor";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.CLASSLAYOUT_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "Class #ref has only 'static' members, and lacks a 'private' constructor #loc";
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
 
-    private static class UtilityClassWithoutPrivateConstructorFix extends InspectionGadgetsFix {
-        public String getName() {
+    private static class UtilityClassWithoutPrivateConstructorFix
+            extends InspectionGadgetsFix{
+        public String getName(){
             return "Create empty private constructor";
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
 
-                final PsiElement classNameIdentifier = descriptor.getPsiElement();
-                final PsiClass psiClass = (PsiClass) classNameIdentifier.getParent();
-                final PsiManager psiManager = PsiManager.getInstance(project);
-                final PsiElementFactory factory = psiManager.getElementFactory();
-                final PsiMethod constructor = factory.createConstructor();
-                final PsiModifierList modifierList = constructor.getModifierList();
-                modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
-                psiClass.add(constructor);
-                final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
-                styleManager.reformat(constructor);
-
+            final PsiElement classNameIdentifier = descriptor.getPsiElement();
+            final PsiClass psiClass = (PsiClass) classNameIdentifier
+                    .getParent();
+            final PsiManager psiManager = PsiManager.getInstance(project);
+            final PsiElementFactory factory = psiManager.getElementFactory();
+            final PsiMethod constructor = factory.createConstructor();
+            final PsiModifierList modifierList = constructor.getModifierList();
+            modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+            assert psiClass != null;
+            psiClass.add(constructor);
+            final CodeStyleManager styleManager = psiManager
+                    .getCodeStyleManager();
+            styleManager.reformat(constructor);
         }
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+    public BaseInspectionVisitor buildVisitor(){
         return new StaticClassWithoutPrivateConstructorVisitor();
     }
 
-    private static class StaticClassWithoutPrivateConstructorVisitor extends BaseInspectionVisitor {
-
-        public void visitClass(@NotNull PsiClass aClass) {
+    private static class StaticClassWithoutPrivateConstructorVisitor
+            extends BaseInspectionVisitor{
+        public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so that it doesn't drill down to inner classes
-            if (!UtilityClassUtil.isUtilityClass(aClass)) {
+            if(!UtilityClassUtil.isUtilityClass(aClass)){
                 return;
             }
 
-            if(aClass.hasModifierProperty(PsiModifier.ABSTRACT))
-            {
+            if(aClass.hasModifierProperty(PsiModifier.ABSTRACT)){
                 return;
             }
-            if (hasPrivateConstructor(aClass)) {
+            if(hasPrivateConstructor(aClass)){
                 return;
             }
             registerClassError(aClass);
         }
     }
 
-    private static boolean hasPrivateConstructor(PsiClass aClass) {
+    private static boolean hasPrivateConstructor(PsiClass aClass){
         final PsiMethod[] methods = aClass.getMethods();
         for(final PsiMethod method : methods){
             if(method.isConstructor() && method
@@ -86,5 +89,4 @@ public class UtilityClassWithoutPrivateConstructorInspection extends ClassInspec
         }
         return false;
     }
-
 }

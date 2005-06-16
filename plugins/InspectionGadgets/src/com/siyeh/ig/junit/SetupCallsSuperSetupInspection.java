@@ -37,20 +37,21 @@ public class SetupCallsSuperSetupInspection extends MethodInspection{
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
-                final PsiElement methodName = descriptor.getPsiElement();
-                final PsiMethod method = (PsiMethod) methodName.getParent();
-                final PsiCodeBlock body = method.getBody();
-                final PsiManager psiManager = PsiManager.getInstance(project);
-                final PsiElementFactory factory =
-                        psiManager.getElementFactory();
-                final PsiStatement newStatement =
-                        factory.createStatementFromText("super.setUp();", null);
-                final CodeStyleManager styleManager =
-                        psiManager.getCodeStyleManager();
-                final PsiJavaToken brace = body.getLBrace();
-                body.addAfter(newStatement, brace);
-                styleManager.reformat(body);
+                throws IncorrectOperationException{
+            final PsiElement methodName = descriptor.getPsiElement();
+            final PsiMethod method = (PsiMethod) methodName.getParent();
+            assert method != null;
+            final PsiCodeBlock body = method.getBody();
+            final PsiManager psiManager = PsiManager.getInstance(project);
+            final PsiElementFactory factory =
+                    psiManager.getElementFactory();
+            final PsiStatement newStatement =
+                    factory.createStatementFromText("super.setUp();", null);
+            final CodeStyleManager styleManager =
+                    psiManager.getCodeStyleManager();
+            final PsiJavaToken brace = body.getLBrace();
+            body.addAfter(newStatement, brace);
+            styleManager.reformat(body);
         }
     }
 
@@ -64,19 +65,16 @@ public class SetupCallsSuperSetupInspection extends MethodInspection{
 
     private static class SetupCallsSuperSetupVisitor
             extends BaseInspectionVisitor{
-
         public void visitMethod(@NotNull PsiMethod method){
             //note: no call to super;
             final String methodName = method.getName();
             if(!"setUp".equals(methodName)){
                 return;
             }
-            if(method.hasModifierProperty(PsiModifier.ABSTRACT))
-            {
+            if(method.hasModifierProperty(PsiModifier.ABSTRACT)){
                 return;
             }
-            if(method.getBody()==null)
-            {
+            if(method.getBody() == null){
                 return;
             }
             final PsiParameterList parameterList = method.getParameterList();

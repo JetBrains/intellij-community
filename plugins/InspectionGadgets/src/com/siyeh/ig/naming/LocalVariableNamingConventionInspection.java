@@ -38,6 +38,7 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
 
     public String buildErrorString(PsiElement location) {
         final PsiVariable var = (PsiVariable) location.getParent();
+        assert var != null;
         final String varName = var.getName();
         if (varName.length() < getMinLength()) {
             return "Local variable name '#ref' is too short #loc";
@@ -72,15 +73,15 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
         return new NamingConventionsVisitor();
     }
 
-    public ProblemDescriptor[] doCheckMethod(PsiMethod method, InspectionManager mgr, boolean isOnTheFly) {
+    public ProblemDescriptor[] doCheckMethod(PsiMethod method, InspectionManager manager, boolean isOnTheFly) {
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass == null) {
-            return super.doCheckMethod(method, mgr, isOnTheFly);
+            return super.doCheckMethod(method, manager, isOnTheFly);
         }
         if (!containingClass.isPhysical()) {
-            return super.doCheckMethod(method, mgr, isOnTheFly);
+            return super.doCheckMethod(method, manager, isOnTheFly);
         }
-        final BaseInspectionVisitor visitor = createVisitor(mgr, isOnTheFly);
+        final BaseInspectionVisitor visitor = createVisitor(manager, isOnTheFly);
         method.accept(visitor);
         return visitor.getErrors();
     }
@@ -92,8 +93,9 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
             super.visitLocalVariable(variable);
             if (m_ignoreForLoopParameters) {
                 final PsiElement declStatement = variable.getParent();
-                if (declStatement.getParent() instanceof PsiForStatement) {
+                if (declStatement!=null && declStatement.getParent() instanceof PsiForStatement) {
                     final PsiForStatement forLoop = (PsiForStatement) declStatement.getParent();
+                    assert forLoop != null;
                     final PsiStatement initialization = forLoop.getInitialization();
                     if (declStatement.equals(initialization)) {
                         return;

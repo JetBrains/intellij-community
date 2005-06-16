@@ -26,6 +26,10 @@ class ContainsAssertionVisitor extends PsiRecursiveElementVisitor{
             return;
         }
         final String methodName = methodExpression.getReferenceName();
+        if(methodName == null)
+        {
+            return;
+        }
         if(methodName.startsWith("assert") || methodName.startsWith("fail")){
             containsAssertion = true;
         }

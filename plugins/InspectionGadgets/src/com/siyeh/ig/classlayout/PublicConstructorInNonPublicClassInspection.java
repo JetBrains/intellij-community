@@ -1,8 +1,10 @@
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.GroupNames;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +19,9 @@ public class PublicConstructorInNonPublicClassInspection extends MethodInspectio
 
     public String buildErrorString(PsiElement location) {
         final PsiModifierList modifiers = (PsiModifierList) location.getParent();
+        assert modifiers != null;
         final PsiMethod meth = (PsiMethod) modifiers.getParent();
+        assert meth != null;
         return "Constructor is declared '#ref' in non-'public' class " + meth.getName() + " #loc";
     }
 

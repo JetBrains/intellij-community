@@ -71,7 +71,10 @@ public class ClassEscapesItsScopeInspection extends MemberInspection {
                 return;
             }
             final PsiClass containingClass = field.getContainingClass();
-
+            if(containingClass == null)
+            {
+                return;
+            }
             if(containingClass.hasModifierProperty(PsiModifier.PRIVATE)){
                 return;
             }

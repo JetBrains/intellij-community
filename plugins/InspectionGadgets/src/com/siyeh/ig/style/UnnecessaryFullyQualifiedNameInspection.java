@@ -118,9 +118,7 @@ public  class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             }
             final PsiReferenceParameterList typeParameters =
                     element.getParameterList();
-            if(typeParameters != null){
-                typeParameters.accept(this);
-            }
+            typeParameters.accept(this);
             final PsiClass aClass = (PsiClass) psiElement;
             final PsiClass outerClass =
                     ClassUtils.getOutermostContainingClass(aClass);

@@ -126,7 +126,10 @@ public class ClassUtils {
 
     public static boolean isFieldVisible(PsiField field, PsiClass fromClass) {
         final PsiClass fieldClass = field.getContainingClass();
-
+        if(fieldClass == null)
+        {
+            return false;
+        }
         if (fieldClass.equals(fromClass)) {
             return true;
         }

@@ -40,9 +40,11 @@ public class BigDecimalEqualsInspection extends ExpressionInspection {
                                                                          throws IncorrectOperationException{
             final PsiIdentifier name = (PsiIdentifier) descriptor.getPsiElement();
             final PsiReferenceExpression expression = (PsiReferenceExpression) name.getParent();
+            assert expression != null;
             final PsiMethodCallExpression call = (PsiMethodCallExpression) expression.getParent();
             final PsiExpression qualifier = expression.getQualifierExpression();
             final String qualifierText = qualifier.getText();
+            assert call != null;
             final PsiExpressionList argumentList = call.getArgumentList();
             assert argumentList != null;
             final PsiExpression[] args = argumentList.getExpressions();

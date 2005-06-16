@@ -42,6 +42,7 @@ public class StringBufferToStringInConcatenationInspection extends ExpressionIns
                                                                          throws IncorrectOperationException{
             final PsiElement methodNameToken = descriptor.getPsiElement();
             final PsiElement methodCallExpression = methodNameToken.getParent();
+            assert methodCallExpression != null;
             final PsiMethodCallExpression methodCall =
                     (PsiMethodCallExpression) methodCallExpression.getParent();
             final PsiReferenceExpression expression = methodCall.getMethodExpression();
@@ -61,7 +62,7 @@ public class StringBufferToStringInConcatenationInspection extends ExpressionIns
             }
             final PsiBinaryExpression parentBinary = (PsiBinaryExpression) parent;
             final PsiJavaToken sign = parentBinary.getOperationSign();
-            if (!(sign.getTokenType().equals(JavaTokenType.PLUS))) {
+            if (!sign.getTokenType().equals(JavaTokenType.PLUS)) {
                 return;
             }
             final PsiExpression rhs = parentBinary.getROperand();
@@ -102,6 +103,10 @@ public class StringBufferToStringInConcatenationInspection extends ExpressionIns
                 return false;
             }
             final PsiClass aClass = method.getContainingClass();
+            if(aClass == null)
+            {
+                return false;
+            }
             final String className = aClass.getQualifiedName();
             return "java.lang.StringBuffer".equals(className);
         }

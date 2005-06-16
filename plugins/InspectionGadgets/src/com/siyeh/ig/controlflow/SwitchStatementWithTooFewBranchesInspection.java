@@ -38,6 +38,7 @@ public class SwitchStatementWithTooFewBranchesInspection extends StatementInspec
 
     protected String buildErrorString(PsiElement location) {
         final PsiSwitchStatement statement = (PsiSwitchStatement) location.getParent();
+        assert statement!=null;
         final int numBranches = SwitchUtils.calculateBranchCount(statement);
         return "'#ref' has too few branches (" + numBranches + "), and should probably be replaced by an 'if' statement #loc";
     }

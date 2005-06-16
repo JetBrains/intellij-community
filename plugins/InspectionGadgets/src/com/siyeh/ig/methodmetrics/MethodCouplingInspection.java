@@ -118,6 +118,7 @@ public class MethodCouplingInspection
     public String buildErrorString(PsiElement location) {
         final PsiMethod method = (PsiMethod) location.getParent();
         final CouplingVisitor visitor = new CouplingVisitor(method, m_includeJavaClasses, m_includeLibraryClasses);
+        assert method != null;
         method.accept(visitor);
         final int coupling = visitor.getNumDependencies();
         return "#ref is overly coupled (# referenced classes = " + coupling + ") #loc";

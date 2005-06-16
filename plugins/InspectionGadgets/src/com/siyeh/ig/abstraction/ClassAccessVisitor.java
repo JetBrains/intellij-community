@@ -27,6 +27,10 @@ class ClassAccessVisitor extends PsiRecursiveElementVisitor {
             return;
         }
         final PsiClass calledClass = method.getContainingClass();
+        if(calledClass == null)
+        {
+            return;
+        }
         if (currentClass.equals(calledClass)) {
             return;
         }

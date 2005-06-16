@@ -46,6 +46,7 @@ public class UnnecessarySuperConstructorInspection extends ExpressionInspection 
                                                                          throws IncorrectOperationException{
             final PsiElement superCall = descriptor.getPsiElement();
             final PsiElement callStatement = superCall.getParent();
+            assert callStatement !=null;
             deleteElement(callStatement);
         }
 

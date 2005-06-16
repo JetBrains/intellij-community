@@ -21,6 +21,7 @@ public class AssignmentToDateFieldFromParameterInspection extends ExpressionInsp
 
     public String buildErrorString(PsiElement location) {
         final PsiAssignmentExpression assignment = (PsiAssignmentExpression) location.getParent();
+        assert assignment != null;
         final PsiExpression lhs = assignment.getLExpression();
         final PsiExpression rhs = assignment.getRExpression();
         final PsiElement element = ((PsiReference) lhs).resolve();

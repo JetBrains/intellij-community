@@ -60,6 +60,7 @@ public class NestedMethodCallInspection extends ExpressionInspection {
                     factory.createIntroduceVariableHandler();
             final PsiElement methodNameElement = descriptor.getPsiElement();
             final PsiElement methodExpression = methodNameElement.getParent();
+            assert methodExpression != null;
             final PsiElement methodCallExpression = methodExpression.getParent();
             introduceHandler.invoke(project, new PsiElement[]{methodCallExpression}, null);
         }
@@ -70,8 +71,12 @@ public class NestedMethodCallInspection extends ExpressionInspection {
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             PsiExpression outerExpression = expression;
-            while(outerExpression.getParent() instanceof PsiExpression){
+            while(outerExpression!=null && outerExpression.getParent() instanceof PsiExpression){
                 outerExpression = (PsiExpression) outerExpression.getParent();
+            }
+            if(outerExpression == null)
+            {
+                return;
             }
             final PsiElement parent = outerExpression.getParent();
             if(!(parent instanceof PsiExpressionList)){

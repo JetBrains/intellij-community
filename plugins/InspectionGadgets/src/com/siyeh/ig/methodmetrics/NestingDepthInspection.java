@@ -29,6 +29,7 @@ public class NestingDepthInspection extends MethodMetricInspection {
     public String buildErrorString(PsiElement location) {
         final PsiMethod method = (PsiMethod) location.getParent();
         final NestingDepthVisitor visitor = new NestingDepthVisitor();
+        assert method != null;
         method.accept(visitor);
         final int nestingDepth = visitor.getMaximumDepth();
         return "#ref is overly nested (maximum nesting depth = " + nestingDepth + ") #loc";
@@ -39,7 +40,7 @@ public class NestingDepthInspection extends MethodMetricInspection {
     }
 
     private class NestingDepthMethodVisitor extends BaseInspectionVisitor {
-     
+
         public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             final NestingDepthVisitor visitor = new NestingDepthVisitor();

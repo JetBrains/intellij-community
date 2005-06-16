@@ -7,15 +7,16 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
 
-public class NormalizeDeclarationFix extends InspectionGadgetsFix {
-    public String getName() {
+public class NormalizeDeclarationFix extends InspectionGadgetsFix{
+    public String getName(){
         return "Split into multiple declarations";
     }
 
     public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                     throws IncorrectOperationException{
+            throws IncorrectOperationException{
         final PsiElement variableNameElement = descriptor.getPsiElement();
         final PsiVariable var = (PsiVariable) variableNameElement.getParent();
-            var.normalizeDeclaration();
+        assert var != null;
+        var.normalizeDeclaration();
     }
 }

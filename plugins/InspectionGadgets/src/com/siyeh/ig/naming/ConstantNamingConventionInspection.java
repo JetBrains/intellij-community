@@ -33,6 +33,7 @@ public class ConstantNamingConventionInspection extends ConventionInspection {
 
     public String buildErrorString(PsiElement location) {
         final PsiField field = (PsiField) location.getParent();
+        assert field != null;
         final String fieldName = field.getName();
         if (fieldName.length() < getMinLength()) {
             return "Constant name '#ref' is too short #loc";

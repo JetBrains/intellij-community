@@ -43,6 +43,10 @@ public class RuntimeExecInspection extends ExpressionInspection {
                 return;
             }
             final PsiClass aClass = method.getContainingClass();
+            if(aClass == null)
+            {
+                return;
+            }
             final String className = aClass.getQualifiedName();
             if (!"java.lang.Runtime".equals(className)) {
                 return;

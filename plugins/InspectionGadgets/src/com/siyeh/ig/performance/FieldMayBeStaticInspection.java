@@ -46,7 +46,8 @@ public class FieldMayBeStaticInspection extends FieldInspection{
             final PsiJavaToken m_fieldNameToken =
                     (PsiJavaToken) descriptor.getPsiElement();
                 final PsiField field = (PsiField) m_fieldNameToken.getParent();
-                final PsiModifierList modifiers = field.getModifierList();
+            assert field != null;
+            final PsiModifierList modifiers = field.getModifierList();
                 modifiers.setModifierProperty(PsiModifier.STATIC, true);
         }
     }

@@ -35,6 +35,7 @@ public class ParameterNamingConventionInspection extends ConventionInspection {
 
     public String buildErrorString(PsiElement location) {
         final PsiParameter param = (PsiParameter) location.getParent();
+        assert param != null;
         final String paramName = param.getName();
         if (paramName.length() < getMinLength()) {
             return "Parameter name '#ref' is too short #loc";

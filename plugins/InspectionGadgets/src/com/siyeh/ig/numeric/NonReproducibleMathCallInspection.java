@@ -67,6 +67,7 @@ public class NonReproducibleMathCallInspection extends ExpressionInspection {
                     (PsiIdentifier) descriptor.getPsiElement();
             final PsiReferenceExpression reference =
                     (PsiReferenceExpression) nameIdentifier.getParent();
+            assert reference != null;
             final String name = reference.getReferenceName();
             replaceExpression(reference, "StrictMath."+name);
         }

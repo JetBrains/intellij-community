@@ -88,6 +88,7 @@ public class BadExceptionThrownInspection extends ExpressionInspection {
 
     public String buildErrorString(PsiElement location) {
         final PsiThrowStatement throwStatement = (PsiThrowStatement) location.getParent();
+        assert throwStatement != null;
         final PsiExpression exception = throwStatement.getException();
         final PsiType type = exception.getType();
         final String exceptionName = type.getPresentableText();

@@ -21,7 +21,9 @@ public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection 
 
     public String buildErrorString(PsiElement location) {
         final PsiModifierList modifierList = (PsiModifierList) location.getParent();
+        assert modifierList != null;
         final PsiVariable parameter = (PsiVariable) modifierList.getParent();
+        assert parameter != null;
         final String parameterName = parameter.getName();
         return "Unnecessary #ref for variable " + parameterName + " #loc";
     }

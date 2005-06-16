@@ -19,58 +19,68 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 
-public class MethodMayBeStaticInspection extends MethodInspection {
-    /** @noinspection PublicField*/
+public class MethodMayBeStaticInspection extends MethodInspection{
+    /**
+     * @noinspection PublicField
+     */
     public boolean m_onlyPrivateOrFinal = false;
-    /** @noinspection PublicField*/
+    /**
+     * @noinspection PublicField
+     */
     public boolean m_ignoreEmptyMethods = true;
     private final MethodMayBeStaticFix fix = new MethodMayBeStaticFix();
 
-    public String getDisplayName() {
+    public String getDisplayName(){
         return "Method may be 'static'";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
 
-    protected String buildErrorString(PsiElement location) {
+    protected String buildErrorString(PsiElement location){
         return "Method #ref may be 'static' #loc";
     }
 
-    protected InspectionGadgetsFix buildFix(PsiElement location) {
+    protected InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
 
-    private static class MethodMayBeStaticFix extends InspectionGadgetsFix {
-        public String getName() {
+    private static class MethodMayBeStaticFix extends InspectionGadgetsFix{
+        public String getName(){
             return "Make static";
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
-            final PsiJavaToken classNameToken = (PsiJavaToken) descriptor.getPsiElement();
-                final PsiMethod innerClass = (PsiMethod) classNameToken.getParent();
-                final PsiModifierList modifiers = innerClass.getModifierList();
-                modifiers.setModifierProperty(PsiModifier.STATIC, true);
+                throws IncorrectOperationException{
+            final PsiJavaToken classNameToken = (PsiJavaToken) descriptor
+                    .getPsiElement();
+            final PsiMethod innerClass = (PsiMethod) classNameToken.getParent();
+            assert innerClass != null;
+            final PsiModifierList modifiers = innerClass.getModifierList();
+            modifiers.setModifierProperty(PsiModifier.STATIC, true);
         }
     }
 
-    public JComponent createOptionsPanel() {
+    public JComponent createOptionsPanel(){
         final JPanel panel = new JPanel(new GridBagLayout());
-        final JCheckBox ignoreFieldAccessesCheckBox = new JCheckBox("Only check private or final methods",
+        final JCheckBox ignoreFieldAccessesCheckBox = new JCheckBox(
+                "Only check private or final methods",
                 m_onlyPrivateOrFinal);
-        final ButtonModel ignoreFieldAccessesModel = ignoreFieldAccessesCheckBox.getModel();
-        ignoreFieldAccessesModel.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
+        final ButtonModel ignoreFieldAccessesModel = ignoreFieldAccessesCheckBox
+                .getModel();
+        ignoreFieldAccessesModel.addChangeListener(new ChangeListener(){
+            public void stateChanged(ChangeEvent e){
                 m_onlyPrivateOrFinal = ignoreFieldAccessesModel.isSelected();
             }
         });
-        final JCheckBox ignoreEmptyMethodsCheckBox = new JCheckBox("Ignore empty methods",
+        final JCheckBox ignoreEmptyMethodsCheckBox = new JCheckBox(
+                "Ignore empty methods",
                 m_ignoreEmptyMethods);
-        final ButtonModel ignoreEmptyMethodsModel = ignoreEmptyMethodsCheckBox.getModel();
-        ignoreEmptyMethodsModel.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
+        final ButtonModel ignoreEmptyMethodsModel = ignoreEmptyMethodsCheckBox
+                .getModel();
+        ignoreEmptyMethodsModel.addChangeListener(new ChangeListener(){
+            public void stateChanged(ChangeEvent e){
                 m_ignoreEmptyMethods = ignoreEmptyMethodsModel.isSelected();
             }
         });
@@ -86,56 +96,56 @@ public class MethodMayBeStaticInspection extends MethodInspection {
         return panel;
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+    public BaseInspectionVisitor buildVisitor(){
         return new MethodCanBeStaticVisitor();
     }
 
-    private class MethodCanBeStaticVisitor extends BaseInspectionVisitor {
-
-        public void visitMethod(@NotNull PsiMethod method) {
+    private class MethodCanBeStaticVisitor extends BaseInspectionVisitor{
+        public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
-            if (method.hasModifierProperty(PsiModifier.STATIC)) {
+            if(method.hasModifierProperty(PsiModifier.STATIC)){
                 return;
             }
-            if (method.isConstructor()) {
+            if(method.isConstructor()){
                 return;
             }
-            if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            if(method.hasModifierProperty(PsiModifier.ABSTRACT)){
                 return;
             }
-            if (m_ignoreEmptyMethods) {
+            if(m_ignoreEmptyMethods){
                 final PsiCodeBlock methodBody = method.getBody();
-                if (methodBody == null) {
+                if(methodBody == null){
                     return;
                 }
-                final PsiStatement[] methodStatements = methodBody.getStatements();
-                if (methodStatements.length == 0) {
+                final PsiStatement[] methodStatements = methodBody
+                        .getStatements();
+                if(methodStatements.length == 0){
                     return;
                 }
             }
-            final PsiClass containingClass = ClassUtils.getContainingClass(method);
-            if(containingClass == null)
-            {
+            final PsiClass containingClass = ClassUtils
+                    .getContainingClass(method);
+            if(containingClass == null){
                 return;
             }
             final PsiElement scope = containingClass.getScope();
-            if (!(scope instanceof PsiJavaFile) &&
-                    !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+            if(!(scope instanceof PsiJavaFile) &&
+                    !containingClass.hasModifierProperty(PsiModifier.STATIC)){
                 return;
             }
-            if (m_onlyPrivateOrFinal &&
+            if(m_onlyPrivateOrFinal &&
                     !method.hasModifierProperty(PsiModifier.FINAL) &&
-                    !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+                    !method.hasModifierProperty(PsiModifier.PRIVATE)){
                 return;
             }
             final String methodName = method.getName();
-            if(methodName!=null && methodName.startsWith("test") &&
+            if(methodName != null && methodName.startsWith("test") &&
                     ClassUtils.isSubclass(containingClass,
                                           "junit.framework.TestCase")){
                 return;
             }
             final PsiMethod[] superMethods = method.findSuperMethods();
-            if (superMethods.length > 0) {
+            if(superMethods.length > 0){
                 return;
             }
             // ignore overridden methods
@@ -143,19 +153,23 @@ public class MethodMayBeStaticInspection extends MethodInspection {
                     new PsiElementProcessor.FindElement<PsiMethod>();
             final PsiManager manager = method.getManager();
             final PsiSearchHelper helper = manager.getSearchHelper();
+            final Project project = manager.getProject();
+            final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
             helper.processOverridingMethods(processor, method,
-                                            GlobalSearchScope.projectScope(manager.getProject()),
+                                            projectScope,
                                             true);
-            if(processor.isFound()) return;
+            if(processor.isFound()){
+                return;
+            }
 
-            final MethodReferenceVisitor visitor = new MethodReferenceVisitor(method);
+            final MethodReferenceVisitor visitor = new MethodReferenceVisitor(
+                    method);
             method.accept(visitor);
-            if (!visitor.areReferencesStaticallyAccessible()) {
+            if(!visitor.areReferencesStaticallyAccessible()){
                 return;
             }
 
             registerMethodError(method);
         }
     }
-
 }

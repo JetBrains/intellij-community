@@ -35,6 +35,7 @@ public class StaticMethodNamingConventionInspection extends ConventionInspection
 
     public String buildErrorString(PsiElement location) {
         final PsiMethod method = (PsiMethod) location.getParent();
+        assert method != null;
         final String methodName = method.getName();
         if (methodName.length() < getMinLength()) {
             return "Static method name '#ref' is too short #loc";

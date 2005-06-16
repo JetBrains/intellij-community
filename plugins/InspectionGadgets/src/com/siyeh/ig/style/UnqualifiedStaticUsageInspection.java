@@ -102,6 +102,7 @@ public class UnqualifiedStaticUsageInspection extends ExpressionInspection {
             final PsiMember member = (PsiMember) expression.resolve();
             assert member != null;
             final PsiClass containingClass = member.getContainingClass();
+            assert containingClass != null;
             final String className = containingClass.getName();
             final String text = expression.getText();
             replaceExpression(expression, className + '.' + text);

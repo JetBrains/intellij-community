@@ -37,6 +37,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
         final PsiParameter parameter = (PsiParameter) location.getParent();
+        assert parameter != null;
         final String parameterName = parameter.getName();
         final PsiMethod method =
                 PsiTreeUtil.getParentOfType(parameter, PsiMethod.class);
@@ -65,6 +66,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
 
     public String buildErrorString(PsiElement location){
         final PsiParameter parameter = (PsiParameter) location.getParent();
+        assert parameter != null;
         final String parameterName = parameter.getName();
         final PsiMethod method =
                 PsiTreeUtil.getParentOfType(parameter,

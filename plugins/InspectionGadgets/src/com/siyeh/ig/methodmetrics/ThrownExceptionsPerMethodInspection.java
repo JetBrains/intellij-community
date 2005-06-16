@@ -1,11 +1,9 @@
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReferenceList;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +22,7 @@ public class ThrownExceptionsPerMethodInspection extends MethodMetricInspection 
 
     public String buildErrorString(PsiElement location) {
         final PsiMethod method = (PsiMethod) location.getParent();
+        assert method != null;
         final PsiReferenceList throwsList = method.getThrowsList();
         final int numThrows = throwsList.getReferenceElements().length;
         return "#ref has too many exceptions declared (num exceptions = " + numThrows + ") #loc";

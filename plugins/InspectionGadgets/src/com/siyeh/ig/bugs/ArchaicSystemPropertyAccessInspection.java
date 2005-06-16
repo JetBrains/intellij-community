@@ -20,10 +20,11 @@ public class ArchaicSystemPropertyAccessInspection extends ExpressionInspection 
 
     public String buildErrorString(PsiElement location) {
 
+        final PsiElement parent = location.getParent();
+        assert parent != null;
         final PsiMethodCallExpression call =
-                (PsiMethodCallExpression) location.getParent().getParent()
-                ;
-         if(isIntegerGetInteger(call)){
+                (PsiMethodCallExpression) parent.getParent();
+        if(isIntegerGetInteger(call)){
             return "Call to Integer.#ref() accesses system properties, perhaps confusingly #loc";
         } else{
             return "Call to Boolean.#ref()accesses system properties, perhaps confusingly #loc";

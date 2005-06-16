@@ -40,7 +40,9 @@ public class EmptyInitializerInspection extends StatementInspection{
                                                                          throws IncorrectOperationException{
             final PsiElement element = descriptor.getPsiElement();
             final PsiElement codeBlock = element.getParent();
+            assert codeBlock != null;
             final PsiElement classInitializer = codeBlock.getParent();
+            assert classInitializer!=null;
             deleteElement(classInitializer);
         }
     }

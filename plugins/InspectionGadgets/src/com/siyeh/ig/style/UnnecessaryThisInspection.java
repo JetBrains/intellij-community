@@ -43,6 +43,7 @@ public class UnnecessaryThisInspection extends ExpressionInspection {
                                                                          throws IncorrectOperationException{
             final PsiElement thisToken = descriptor.getPsiElement();
             final PsiReferenceExpression thisExpression = (PsiReferenceExpression) thisToken.getParent();
+            assert thisExpression != null;
             final String newExpression = thisExpression.getReferenceName();
             replaceExpression(thisExpression, newExpression);
         }
@@ -55,8 +56,7 @@ public class UnnecessaryThisInspection extends ExpressionInspection {
             super.visitReferenceExpression(expression);
             final PsiReferenceParameterList parameterList =
                     expression.getParameterList();
-            if(parameterList != null &&
-                       parameterList.getTypeArguments().length > 0){
+            if(parameterList.getTypeArguments().length > 0){
                 return;
             }
 

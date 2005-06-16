@@ -44,31 +44,33 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
             final PsiElement leftBrace = descriptor.getPsiElement();
             final PsiCodeBlock block = (PsiCodeBlock) leftBrace.getParent();
+            assert block != null;
             final PsiBlockStatement blockStatement =
                     (PsiBlockStatement) block.getParent();
+            assert blockStatement != null;
             final PsiElement containingElement = blockStatement.getParent();
-                final PsiElement[] children = block.getChildren();
-                if(children.length > 2){
-                    final PsiElement added =
-                            containingElement.addRangeBefore(children[1],
-                                                             children[children.length -
-                            2],
-                                                             blockStatement);
-                    final CodeStyleManager codeStyleManager =
-                            CodeStyleManager.getInstance(project);
-                    codeStyleManager.reformat(added);
-                }
-                blockStatement.delete();
-
+            final PsiElement[] children = block.getChildren();
+            if(children.length > 2){
+                assert containingElement != null;
+                final PsiElement added =
+                        containingElement.addRangeBefore(children[1],
+                                                         children[children
+                                                                 .length -
+                                                                 2],
+                                                         blockStatement);
+                final CodeStyleManager codeStyleManager =
+                        CodeStyleManager.getInstance(project);
+                codeStyleManager.reformat(added);
+            }
+            blockStatement.delete();
         }
     }
 
     private static class UnnecessaryBlockStatementVisitor
             extends StatementInspectionVisitor{
-
         public void visitBlockStatement(PsiBlockStatement blockStatement){
             super.visitBlockStatement(blockStatement);
             final PsiElement parent = blockStatement.getParent();
@@ -82,7 +84,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
             }
             final PsiCodeBlock parentBlock = (PsiCodeBlock) parent;
             if(parentBlock.getStatements().length > 1 &&
-                       containsConflictingDeclarations(codeBlock, parentBlock)){
+                    containsConflictingDeclarations(codeBlock, parentBlock)){
                 return;
             }
             registerError(brace);
@@ -92,8 +94,9 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
             }
         }
 
-        private static boolean containsConflictingDeclarations(PsiCodeBlock block,
-                                                               PsiCodeBlock parentBlock){
+        private static boolean containsConflictingDeclarations(
+                PsiCodeBlock block,
+                PsiCodeBlock parentBlock){
             final PsiStatement[] statements = block.getStatements();
             if(statements == null){
                 return false;
@@ -126,7 +129,8 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
 
         private static boolean conflictingDeclarationExists(String name,
                                                             PsiCodeBlock parentBlock,
-                                                            PsiCodeBlock exceptBlock){
+                                                            PsiCodeBlock exceptBlock)
+        {
             final ConflictingDeclarationVisitor visitor =
                     new ConflictingDeclarationVisitor(name, exceptBlock);
             parentBlock.accept(visitor);
@@ -135,8 +139,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
     }
 
     private static class ConflictingDeclarationVisitor
-            extends PsiRecursiveElementVisitor
-    {
+            extends PsiRecursiveElementVisitor{
         private final String variableName;
         private final PsiCodeBlock exceptBlock;
         private boolean hasConflictingDeclaration = false;
@@ -149,12 +152,13 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
         }
 
         public void visitElement(@NotNull PsiElement element){
-            if(!hasConflictingDeclaration)
+            if(!hasConflictingDeclaration){
                 super.visitElement(element);
+            }
         }
+
         public void visitCodeBlock(PsiCodeBlock block){
-            if(hasConflictingDeclaration)
-            {
+            if(hasConflictingDeclaration){
                 return;
             }
             if(block.equals(exceptBlock)){

@@ -41,20 +41,21 @@ public class MissingOverrideAnnotationInspection extends MethodInspection{
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
 
             final PsiElement identifier = descriptor.getPsiElement();
             final PsiModifierListOwner parent =
                     (PsiModifierListOwner) identifier.getParent();
-                final PsiManager psiManager = parent.getManager();
-                final PsiElementFactory factory = psiManager
-                        .getElementFactory();
-                final PsiAnnotation annotation = factory
-                        .createAnnotationFromText("@java.lang.Override",
-                                                  parent);
-                final PsiModifierList modifierList =
-                        parent.getModifierList();
-                modifierList.addAfter(annotation, null);
+            assert parent != null;
+            final PsiManager psiManager = parent.getManager();
+            final PsiElementFactory factory = psiManager
+                    .getElementFactory();
+            final PsiAnnotation annotation = factory
+                    .createAnnotationFromText("@java.lang.Override",
+                                              parent);
+            final PsiModifierList modifierList =
+                    parent.getModifierList();
+            modifierList.addAfter(annotation, null);
         }
     }
 
@@ -64,8 +65,6 @@ public class MissingOverrideAnnotationInspection extends MethodInspection{
 
     private static class MissingOverrideAnnotationVisitor
             extends BaseInspectionVisitor{
-
-
         public void visitMethod(@NotNull PsiMethod method){
             if(method.isConstructor()){
                 return;
@@ -117,7 +116,7 @@ public class MissingOverrideAnnotationInspection extends MethodInspection{
         return false;
     }
 
-    private  static boolean isOverridden(PsiMethod method){
+    private static boolean isOverridden(PsiMethod method){
         final PsiMethod[] superMethods = method.findSuperMethods();
         for(PsiMethod superMethod : superMethods){
             final PsiClass containingClass = superMethod.getContainingClass();

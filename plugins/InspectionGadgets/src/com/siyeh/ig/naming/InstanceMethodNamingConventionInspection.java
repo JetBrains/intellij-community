@@ -37,6 +37,7 @@ public class InstanceMethodNamingConventionInspection extends ConventionInspecti
 
     public String buildErrorString(PsiElement location) {
         final PsiMethod method = (PsiMethod) location.getParent();
+        assert method != null;
         final String methodName = method.getName();
         if (methodName.length() < getMinLength()) {
             return "Instance method name '#ref' is too short #loc";

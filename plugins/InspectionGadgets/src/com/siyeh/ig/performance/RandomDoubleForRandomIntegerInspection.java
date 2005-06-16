@@ -45,6 +45,7 @@ public class RandomDoubleForRandomIntegerInspection extends ExpressionInspection
 
             final PsiIdentifier name = (PsiIdentifier) descriptor.getPsiElement();
             final PsiReferenceExpression expression = (PsiReferenceExpression) name.getParent();
+            assert expression != null;
             final PsiExpression call = (PsiExpression) expression.getParent();
             final PsiExpression qualifier = expression.getQualifierExpression();
             final String qualifierText = qualifier.getText();

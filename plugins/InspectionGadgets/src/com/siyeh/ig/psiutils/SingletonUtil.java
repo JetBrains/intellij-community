@@ -15,7 +15,7 @@ public class SingletonUtil {
         if(aClass instanceof PsiTypeParameter ||
                 aClass instanceof PsiAnonymousClass){
             return false;
-        }
+        }                         
         if (!hasConstructor(aClass)) {
             return false;
         }
