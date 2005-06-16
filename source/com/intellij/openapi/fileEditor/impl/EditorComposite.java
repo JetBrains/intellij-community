@@ -15,6 +15,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * This class hides internal structure of UI component which represent
  * set of opened editors. For example, one myEditor is represented by its
@@ -212,7 +214,7 @@ public abstract class EditorComposite{
   /**
    * @return currently selected myEditor. The method never returns <code>null</code>.
    */
-  FileEditor getSelectedEditor(){
+  @NotNull FileEditor getSelectedEditor(){
     return getSelectedEditorWithProvider ().getFirst ();
   }
 
@@ -265,7 +267,7 @@ public abstract class EditorComposite{
       fireSelectedEditorChanged(oldSelectedEditor, mySelectedEditor);
     }
   }
-  
+
   private abstract class MyComponent extends JPanel implements DataProvider{
     public MyComponent(JComponent realComponent){
       super(new BorderLayout());

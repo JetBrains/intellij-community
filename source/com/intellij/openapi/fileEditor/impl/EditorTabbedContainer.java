@@ -102,6 +102,10 @@ final class EditorTabbedContainer extends TabbedPaneWrapper {
         public void run() {
           // [jeka] IMPORTANT: setSelectedIndex must be invoked inside a Command
           //  in order to support back-forward history navigation
+          final EditorComposite oldComposite = myWindow.getSelectedEditor();
+          if (oldComposite != null) {
+            oldComposite.getSelectedEditor().deselectNotify();
+          }
           MyTabbedPane.super.setSelectedIndex(index);
           final EditorComposite composite = myWindow.getSelectedEditor();
           if (composite != null) {

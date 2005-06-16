@@ -875,15 +875,10 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     final FileEditor newSelectedEditor = newSelectedComposite != null ? newSelectedComposite.getSelectedEditor() : null;
     final boolean filesEqual = oldSelectedFile == null ? newSelectedFile == null : oldSelectedFile.equals(newSelectedFile);
     final boolean editorsEqual = oldSelectedEditor == null ? newSelectedEditor == null : oldSelectedEditor.equals(newSelectedEditor);
-    if (filesEqual && editorsEqual) {
-      // no need to notify: files are the same
-      return;
+    if (!filesEqual || !editorsEqual) {
+      final FileEditorManagerEvent event = new FileEditorManagerEvent(this, oldSelectedFile, oldSelectedEditor, newSelectedFile, newSelectedEditor);
+      myDispatcher.getMulticaster().selectionChanged(event);
     }
-    if (oldSelectedComposite != null) {
-      oldSelectedComposite.getSelectedEditor().deselectNotify();
-    }
-    final FileEditorManagerEvent event = new FileEditorManagerEvent(this, oldSelectedFile, oldSelectedEditor, newSelectedFile, newSelectedEditor);
-    myDispatcher.getMulticaster().selectionChanged(event);
   }
 
   public boolean isChanged (final EditorComposite editor) {
