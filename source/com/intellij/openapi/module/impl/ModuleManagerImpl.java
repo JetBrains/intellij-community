@@ -156,10 +156,10 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
               fireError("Cannot load module: " + e.getMessage(), modulePath);
             }
             catch (JDOMException e) {
-              fireError("Corruped module file: " + modulePath, modulePath);
+              fireError("Corrupted module file: " + modulePath.getPath(), modulePath);
             }
             catch (InvalidDataException e) {
-              fireError("Corruped module data at: " + modulePath, modulePath);
+              fireError("Corrupted module data at: " + modulePath.getPath(), modulePath);
             }
             catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
               fireError(moduleWithNameAlreadyExists.getMessage(), modulePath);
