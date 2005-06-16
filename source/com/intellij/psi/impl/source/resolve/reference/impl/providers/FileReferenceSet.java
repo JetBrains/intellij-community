@@ -2,19 +2,19 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
 import com.intellij.j2ee.module.view.web.WebUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.jsp.JspManager;
-import com.intellij.psi.impl.source.resolve.reference.*;
-import com.intellij.psi.jsp.JspUtil;
-import com.intellij.psi.jsp.WebDirectoryElement;
+import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,11 +30,10 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class FileReferenceSet {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet.Reference");
   private static final char SEPARATOR = '/';
   private static final String SEPARATOR_STRING = "/";
 
-  private Reference[] myReferences;
+  private FileReference[] myReferences;
   private PsiElement myElement;
   private final int myStartInElement;
   private final ReferenceType myType;
@@ -58,230 +57,66 @@ public class FileReferenceSet {
     reparse(str);
   }
 
+  PsiElement getElement() {
+    return myElement;
+  }
+
+  void setElement(final PsiElement element) {
+    myElement = element;
+  }
+
+  FileReference[] getReferences() {
+    return myReferences;
+  }
+
+  boolean isCaseSensitive() {
+    return myCaseSensitive;
+  }
+
+  int getStartInElement() {
+    return myStartInElement;
+  }
+
+  PsiReferenceProvider getProvider() {
+    return myProvider;
+  }
+
   private void reparse(String str){
-    final List<Reference> referencesList = new ArrayList<Reference>();
+    final List<FileReference> referencesList = new ArrayList<FileReference>();
     int currentSlash = -1;
     while(currentSlash + 1 < str.length() && str.charAt(currentSlash + 1) == ' ') currentSlash++;
     if (currentSlash + 1 < str.length() && str.charAt(currentSlash + 1) == SEPARATOR) currentSlash++;
     int index = 0;
-    Reference currentContextRef;
+    FileReference currentContextRef;
 
     while(true){
       final int nextSlash = str.indexOf(SEPARATOR, currentSlash + 1);
       final String subreferenceText = nextSlash > 0 ? str.substring(currentSlash + 1, nextSlash) : str.substring(currentSlash + 1);
-      currentContextRef = new Reference(new TextRange(myStartInElement + currentSlash + 1,
-                                                      myStartInElement + (nextSlash > 0 ? nextSlash : str.length())),
-                                        index++, subreferenceText);
+      currentContextRef = new FileReference(this, new TextRange(myStartInElement + currentSlash + 1,
+                                                                myStartInElement + (nextSlash > 0 ? nextSlash : str.length())),
+                                            index++, subreferenceText);
       referencesList.add(currentContextRef);
       if ((currentSlash = nextSlash) < 0) {
         break;
       }
     }
 
-    myReferences = referencesList.toArray(new Reference[referencesList.size()]);
+    myReferences = referencesList.toArray(new FileReference[referencesList.size()]);
   }
 
-  private Reference getReference(int index){
+  FileReference getReference(int index){
     return myReferences[index];
   }
 
-  public Reference[] getAllReferences(){
+  public FileReference[] getAllReferences(){
     return myReferences;
   }
 
-  private ReferenceType getType(int index){
+  ReferenceType getType(int index){
     if(index != myReferences.length - 1){
       return new ReferenceType(new int[] {myType.getPrimitives()[0], ReferenceType.WEB_DIRECTORY_ELEMENT, ReferenceType.DIRECTORY});
     }
     return myType;
-  }
-
-  public class Reference implements PsiPolyVariantReference {
-    private final int myIndex;
-    private TextRange myRange;
-    private final String myText;
-
-    public Reference(TextRange range, int index, String text){
-      myIndex = index;
-      myRange = range;
-      myText = text;
-    }
-
-    private Collection<PsiElement> getContexts(){
-      final Reference contextRef = getContextReference();
-      if (contextRef == null) {
-        return getDefaultContexts(myElement);
-      }
-      else {
-        ResolveResult[] resolveResults = contextRef.multiResolve(false);
-        ArrayList<PsiElement> result = new ArrayList<PsiElement>();
-        for (ResolveResult resolveResult : resolveResults) {
-          result.add(resolveResult.getElement());
-        }
-        return result;
-      }
-    }
-
-    @NotNull
-    public ResolveResult[] multiResolve(final boolean incompleteCode) {
-      final Collection<PsiElement> contexts = getContexts();
-      Collection<ResolveResult> result = new ArrayList<ResolveResult>();
-      for (PsiElement context : contexts) {
-        PsiElement resolved = null;
-        if (context instanceof WebDirectoryElement) {
-          if (".".equals(myText)) {
-            resolved = context;
-          }
-          else if ("..".equals(myText)) {
-            resolved = ((WebDirectoryElement)context).getParentDirectory();
-          }
-          else {
-            WebDirectoryElement[] children = ((WebDirectoryElement)context).getChildren();
-
-            for (WebDirectoryElement child : children) {
-              if (equalsTo(child)) {
-                resolved = child.isDirectory() ? (PsiFileSystemItem)child : child.getOriginalFile();
-                break;
-              }
-            }
-          }
-        }
-        else if (context instanceof PsiDirectory) {
-          if (".".equals(myText)) {
-            resolved = context;
-          }
-          else if ("..".equals(myText)) {
-            resolved = ((PsiDirectory)context).getParentDirectory();
-          }
-          else {
-            PsiElement[] children = context.getChildren();
-
-            for (PsiElement element : children) {
-              PsiFileSystemItem child = (PsiFileSystemItem)element;
-
-              if (equalsTo(child)) {
-                resolved = child;
-                break;
-              }
-            }
-          }
-        }
-        if (resolved != null) {
-          result.add(new PsiElementResolveResult(resolved));
-        }
-      }
-      return result.toArray(new ResolveResult[result.size()]);
-    }
-
-    public Object[] getVariants(){
-      try{
-        final List ret = new ArrayList();
-        final PsiScopeProcessor proc = createProcessor(ret, getSoftenType());
-        processVariants(proc);
-        return ret.toArray();
-      }
-      catch(ProcessorRegistry.IncompatibleReferenceTypeException e){
-        LOG.error(e);
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
-      }
-    }
-
-    public void processVariants(final PsiScopeProcessor processor) {
-      final Collection<PsiElement> contexts = getContexts();
-      for (PsiElement context : contexts) {
-        if (context instanceof WebDirectoryElement) {
-          WebDirectoryElement[] children = ((WebDirectoryElement)context).getChildren();
-          for (WebDirectoryElement child : children) {
-            PsiFileSystemItem item = child.isDirectory() ? (PsiFileSystemItem)child : child.getOriginalFile();
-            if (!processor.execute(item, PsiSubstitutor.EMPTY)) return;
-          }
-        } else if (context instanceof PsiDirectory) {
-          final PsiElement[] children = context.getChildren();
-
-          for (PsiElement child : children) {
-            PsiFileSystemItem item = (PsiFileSystemItem)child;
-            if (!processor.execute(item, PsiSubstitutor.EMPTY)) return;
-          }
-        }
-        else if(getContextReference() == null){
-          myProvider.handleEmptyContext(processor, getElement());
-        }
-      }
-
-    }
-
-    public Reference getContextReference(){
-      return myIndex > 0 ? getReference(myIndex - 1) : null;
-    }
-
-    public ReferenceType getType(){
-      return FileReferenceSet.this.getType(myIndex);
-    }
-
-    public ReferenceType getSoftenType(){
-      return new ReferenceType(new int[] {ReferenceType.WEB_DIRECTORY_ELEMENT, ReferenceType.FILE, ReferenceType.DIRECTORY});
-    }
-
-    public PsiElement getElement(){
-      return myElement;
-    }
-
-    public PsiElement resolve() {
-      ResolveResult[] resolveResults = multiResolve(false);
-      return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
-    }
-
-    private boolean equalsTo(final PsiFileSystemItem child) {
-      return myCaseSensitive ? myText.equals(child.getName()) :
-             myText.compareToIgnoreCase(child.getName()) == 0;
-    }
-
-    public boolean isReferenceTo(PsiElement element) {
-      if (element instanceof WebDirectoryElement || element instanceof PsiFile || element instanceof PsiDirectory) {
-        return element.getManager().areElementsEquivalent(element, resolve());
-      }
-      return false;
-    }
-
-    public TextRange getRangeInElement(){
-      return myRange;
-    }
-
-    public String getCanonicalText(){
-      return myText;
-    }
-
-    public boolean isSoft(){
-      return FileReferenceSet.this.isSoft();
-    }
-
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException{
-      final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
-      if (manipulator != null) {
-        myElement = manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName);
-        //Correct ranges
-        int delta = newElementName.length() - myRange.getLength();
-        myRange = new TextRange(getRangeInElement().getStartOffset(), getRangeInElement().getStartOffset() + newElementName.length());
-        for (int idx  = myIndex + 1; idx < myReferences.length; idx++) {
-          myReferences[idx].myRange = myReferences[idx].myRange.shiftRight(delta);
-        }
-        return myElement;
-      }
-      throw new IncorrectOperationException("Manipulator for this element is not defined");
-    }
-
-    public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException{
-      if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element");
-
-      final String newName = JspUtil.getDeploymentPath((PsiFileSystemItem)element);
-      final TextRange range = new TextRange(myStartInElement, getRangeInElement().getEndOffset());
-      final PsiElement finalElement = getManipulator(getElement()).handleContentChange(getElement(), range, newName);
-      return finalElement;
-    }
-    private ElementManipulator<PsiElement> getManipulator(PsiElement currentElement){
-      return ReferenceProvidersRegistry.getInstance(currentElement.getProject()).getManipulator(currentElement);
-    }
-
   }
 
   protected boolean isSoft(){
