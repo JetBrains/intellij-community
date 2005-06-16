@@ -53,7 +53,7 @@ public abstract class GenericReference implements PsiReference{
       processor = ProcessorRegistry.getInstance().getProcessorByType(getType(), resultSet, needToCheckAccessibility() ? getElement() : null);
       processor.setName(getCanonicalText());
     }
-    catch(ProcessorRegistry.IncompartibleReferenceTypeException e){
+    catch(ProcessorRegistry.IncompatibleReferenceTypeException e){
       LOG.error(e);
       return null;
     }
@@ -74,7 +74,7 @@ public abstract class GenericReference implements PsiReference{
     try{
       proc = ProcessorRegistry.getInstance().getProcessorByType(getSoftenType(), ret, needToCheckAccessibility() ? getElement() : null);
     }
-    catch(ProcessorRegistry.IncompartibleReferenceTypeException e){
+    catch(ProcessorRegistry.IncompatibleReferenceTypeException e){
       LOG.error(e);
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }

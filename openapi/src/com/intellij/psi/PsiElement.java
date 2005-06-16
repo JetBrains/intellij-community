@@ -61,25 +61,25 @@ public interface PsiElement extends UserDataHolder, Iconable {
   PsiElement getOriginalElement();
 
   //Q: get rid of these methods?
-  boolean textMatches(CharSequence text);
+  boolean textMatches(@NotNull CharSequence text);
 
-  boolean textMatches(PsiElement element);
+  boolean textMatches(@NotNull PsiElement element);
 
   boolean textContains(char c);
 
-  void accept(PsiElementVisitor visitor);
+  void accept(@NotNull PsiElementVisitor visitor);
 
-  void acceptChildren(PsiElementVisitor visitor);
+  void acceptChildren(@NotNull PsiElementVisitor visitor);
 
   PsiElement copy();
 
-  PsiElement add(PsiElement element) throws IncorrectOperationException;
+  PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException;
 
-  PsiElement addBefore(PsiElement element, PsiElement anchor) throws IncorrectOperationException;
+  PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException;
 
-  PsiElement addAfter(PsiElement element, PsiElement anchor) throws IncorrectOperationException;
+  PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException;
 
-  void checkAdd(PsiElement element) throws IncorrectOperationException;
+  void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException;
 
   PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException;
 
@@ -93,7 +93,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   void deleteChildRange(PsiElement first, PsiElement last) throws IncorrectOperationException;
 
-  PsiElement replace(PsiElement newElement) throws IncorrectOperationException;
+  PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException;
 
   boolean isValid();
 

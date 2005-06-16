@@ -132,14 +132,16 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         }
         String path = vDir.getPath() + vFile.getPath().substring(projectRoot.getPath().length());
         newVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-        newVFile.delete(this);
+        Writer writer = newVFile.getWriter(this);
+        writer.write(newFileText);
+        writer.close();
       }
-      //else {
+      else {
         newVFile = vDir.createChildData(this, vFile.getName());
         Writer writer = newVFile.getWriter(this);
         writer.write(newFileText);
         writer.close();
-      //}
+      }
 
       newVFiles[i]=newVFile;
       newFileTexts[i]=newFileText;

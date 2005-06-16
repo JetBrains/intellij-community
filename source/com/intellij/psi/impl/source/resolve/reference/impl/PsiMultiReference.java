@@ -24,6 +24,9 @@ public class PsiMultiReference implements PsiReference{
     myElement = element;
   }
 
+  public PsiReference[] getReferences() {
+    return myReferences;
+  }
 
   private PsiReference chooseReference(){
     if(myChoosenOne != -1){

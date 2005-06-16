@@ -2,22 +2,24 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.j2ee.j2eeDom.web.WebModuleProperties;
 import com.intellij.j2ee.module.view.web.WebUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspManager;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.impl.source.resolve.reference.ElementManipulator;
-import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.impl.source.resolve.reference.*;
 import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.jsp.WebDirectoryElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -28,6 +30,7 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 public class FileReferenceSet {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet.Reference");
   private static final char SEPARATOR = '/';
   private static final String SEPARATOR_STRING = "/";
 
@@ -67,8 +70,8 @@ public class FileReferenceSet {
       final int nextSlash = str.indexOf(SEPARATOR, currentSlash + 1);
       final String subreferenceText = nextSlash > 0 ? str.substring(currentSlash + 1, nextSlash) : str.substring(currentSlash + 1);
       currentContextRef = new Reference(new TextRange(myStartInElement + currentSlash + 1,
-                                                          myStartInElement + (nextSlash > 0 ? nextSlash : str.length())),
-                                            index++, subreferenceText);
+                                                      myStartInElement + (nextSlash > 0 ? nextSlash : str.length())),
+                                        index++, subreferenceText);
       referencesList.add(currentContextRef);
       if ((currentSlash = nextSlash) < 0) {
         break;
@@ -93,24 +96,130 @@ public class FileReferenceSet {
     return myType;
   }
 
-  public class Reference extends GenericReference{
+  public class Reference implements PsiPolyVariantReference {
     private final int myIndex;
     private TextRange myRange;
     private final String myText;
 
     public Reference(TextRange range, int index, String text){
-      super(myProvider);
       myIndex = index;
       myRange = range;
       myText = text;
     }
 
-    public PsiElement getContext(){
-      final PsiReference contextRef = getContextReference();
-      return contextRef != null ? contextRef.resolve() : getDefaultContext(myElement);
+    private Collection<PsiElement> getContexts(){
+      final Reference contextRef = getContextReference();
+      if (contextRef == null) {
+        return getDefaultContexts(myElement);
+      }
+      else {
+        ResolveResult[] resolveResults = contextRef.multiResolve(false);
+        ArrayList<PsiElement> result = new ArrayList<PsiElement>();
+        for (ResolveResult resolveResult : resolveResults) {
+          result.add(resolveResult.getElement());
+        }
+        return result;
+      }
     }
 
-    public PsiReference getContextReference(){
+    @NotNull
+    public ResolveResult[] multiResolve(final boolean incompleteCode) {
+      final Collection<PsiElement> contexts = getContexts();
+      Collection<ResolveResult> result = new ArrayList<ResolveResult>();
+      for (PsiElement context : contexts) {
+        PsiElement resolved = null;
+        if (context instanceof WebDirectoryElement) {
+          if (".".equals(myText)) {
+            resolved = context;
+          }
+          else if ("..".equals(myText)) {
+            resolved = ((WebDirectoryElement)context).getParentDirectory();
+          }
+          else {
+            WebDirectoryElement[] children = ((WebDirectoryElement)context).getChildren();
+
+            for (WebDirectoryElement child : children) {
+              if (equalsTo(child)) {
+                resolved = child.isDirectory() ? (PsiFileSystemItem)child : child.getOriginalFile();
+                break;
+              }
+            }
+          }
+        }
+        else if (context instanceof PsiDirectory) {
+          if (".".equals(myText)) {
+            resolved = context;
+          }
+          else if ("..".equals(myText)) {
+            resolved = ((PsiDirectory)context).getParentDirectory();
+          }
+          else {
+            PsiElement[] children = context.getChildren();
+
+            for (PsiElement element : children) {
+              PsiFileSystemItem child = (PsiFileSystemItem)element;
+
+              if (equalsTo(child)) {
+                resolved = child;
+                break;
+              }
+            }
+          }
+        }
+        if (resolved != null) {
+          final PsiElement element = resolved;
+          result.add(new ResolveResult() {
+            public PsiElement getElement() {
+              return element;
+            }
+
+            public boolean isValidResult() {
+              return element.isValid();
+            }
+          });
+        }
+      }
+      return result.toArray(new ResolveResult[result.size()]);
+    }
+
+    public Object[] getVariants(){
+      try{
+        final List ret = new ArrayList();
+        final PsiScopeProcessor proc = createProcessor(ret, getSoftenType());
+        processVariants(proc);
+        return ret.toArray();
+      }
+      catch(ProcessorRegistry.IncompatibleReferenceTypeException e){
+        LOG.error(e);
+        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      }
+    }
+
+    public void processVariants(final PsiScopeProcessor processor) {
+      final Collection<PsiElement> contexts = getContexts();
+      for (PsiElement context : contexts) {
+        if (context instanceof WebDirectoryElement) {
+          WebDirectoryElement[] children = ((WebDirectoryElement)context).getChildren();
+          for (WebDirectoryElement child : children) {
+            PsiFileSystemItem item = child.isDirectory() ? (PsiFileSystemItem)child : child.getOriginalFile();
+            if (!processor.execute(item, PsiSubstitutor.EMPTY)) return;
+          }
+        } else if (context instanceof PsiDirectory) {
+          final PsiElement[] children = context.getChildren();
+
+          for (PsiElement child : children) {
+            PsiFileSystemItem item = (PsiFileSystemItem)child;
+            if (!processor.execute(item, PsiSubstitutor.EMPTY)) return;
+          }
+        }
+        else if(getContextReference() == null){
+          myProvider.handleEmptyContext(processor, getElement());
+        }
+      }
+
+    }
+
+    public Reference getContextReference(){
       return myIndex > 0 ? getReference(myIndex - 1) : null;
     }
 
@@ -122,71 +231,23 @@ public class FileReferenceSet {
       return new ReferenceType(new int[] {ReferenceType.WEB_DIRECTORY_ELEMENT, ReferenceType.FILE, ReferenceType.DIRECTORY});
     }
 
-    public boolean needToCheckAccessibility() {
-      return false;
-    }
-
     public PsiElement getElement(){
       return myElement;
     }
 
-    public void processVariants(final PsiScopeProcessor processor) {
-      final PsiElement context = getContext();
-
-      if (context instanceof WebDirectoryElement) {
-        WebDirectoryElement[] children = ((WebDirectoryElement)context).getChildren();
-        for (WebDirectoryElement child : children) {
-          PsiFileSystemItem item = child.isDirectory() ? (PsiFileSystemItem)child : child.getOriginalFile();
-          if (!processor.execute(item, PsiSubstitutor.EMPTY)) return;
-        }
-      } else if (context instanceof PsiDirectory) {
-        final PsiElement[] children = context.getChildren();
-
-        for (PsiElement child : children) {
-          PsiFileSystemItem item = (PsiFileSystemItem)child;
-          if (!processor.execute(item, PsiSubstitutor.EMPTY)) return;
-        }
-      }
-    }
-
     public PsiElement resolve() {
-      final PsiElement context = getContext();
-
-      if (context instanceof WebDirectoryElement) {
-        if (".".equals(myText)) return context;
-        if ("..".equals(myText)) return ((WebDirectoryElement)context).getParentDirectory();
-        WebDirectoryElement[] children = ((WebDirectoryElement)context).getChildren();
-
-        for (WebDirectoryElement child : children) {
-          if (equalsTo(child)) {
-            return child.isDirectory() ? (PsiFileSystemItem)child : child.getOriginalFile();
-          }
-        }
-      } else if (context instanceof PsiDirectory) {
-        if (".".equals(myText)) return context;
-        if ("..".equals(myText)) return ((PsiDirectory)context).getParentDirectory();
-        PsiElement[] children = context.getChildren();
-
-        for (PsiElement element : children) {
-          PsiFileSystemItem child = (PsiFileSystemItem)element;
-
-          if (equalsTo(child)) {
-            return child;
-          }
-        }
-      }
-
-      return null;
+      ResolveResult[] resolveResults = multiResolve(false);
+      return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
     }
 
     private boolean equalsTo(final PsiFileSystemItem child) {
       return myCaseSensitive ? myText.equals(child.getName()) :
-        myText.compareToIgnoreCase(child.getName()) == 0;
+             myText.compareToIgnoreCase(child.getName()) == 0;
     }
 
     public boolean isReferenceTo(PsiElement element) {
       if (element instanceof WebDirectoryElement || element instanceof PsiFile || element instanceof PsiDirectory) {
-        return super.isReferenceTo(element);
+        return element.getManager().areElementsEquivalent(element, resolve());
       }
       return false;
     }
@@ -226,27 +287,35 @@ public class FileReferenceSet {
       final PsiElement finalElement = getManipulator(getElement()).handleContentChange(getElement(), range, newName);
       return finalElement;
     }
+    private ElementManipulator<PsiElement> getManipulator(PsiElement currentElement){
+      return ReferenceProvidersRegistry.getInstance(currentElement.getProject()).getManipulator(currentElement);
+    }
+
   }
 
   protected boolean isSoft(){
     return false;
   }
 
-  public PsiElement getDefaultContext (PsiElement element) {
+  @NotNull
+  public Collection<PsiElement> getDefaultContexts(PsiElement element) {
     Project project = element.getProject();
     PsiFile file = element.getContainingFile();
 
     if (!file.isPhysical()) file = file.getOriginalFile();
-    if (file == null) return null;
+    if (file == null) return Collections.EMPTY_LIST;
     final WebModuleProperties properties = (WebModuleProperties)WebUtil.getWebModuleProperties(file);
 
+    PsiElement result = null;
     if (myPathString.startsWith(SEPARATOR_STRING)) {
       if (properties != null) {
-        return JspManager.getInstance(project).findWebDirectoryElementByPath("/", properties);
-      } else {
-        final VirtualFile contentRootForFile = ProjectRootManager.getInstance(project).getFileIndex().getContentRootForFile(file.getVirtualFile());
-        if (contentRootForFile!=null) {
-          return PsiManager.getInstance(project).findDirectory(contentRootForFile);
+        result = JspManager.getInstance(project).findWebDirectoryElementByPath("/", properties);
+      }
+      else {
+        final VirtualFile contentRootForFile = ProjectRootManager.getInstance(project).getFileIndex()
+          .getContentRootForFile(file.getVirtualFile());
+        if (contentRootForFile != null) {
+          result = PsiManager.getInstance(project).findDirectory(contentRootForFile);
         }
       }
     }
@@ -254,13 +323,18 @@ public class FileReferenceSet {
       final PsiDirectory dir = file.getContainingDirectory();
       if (dir != null) {
         if (properties != null) {
-          return JspManager.getInstance(project).findWebDirectoryByFile(dir.getVirtualFile(), properties);
-        } else {
-          return dir;
+          result = JspManager.getInstance(project).findWebDirectoryByFile(dir.getVirtualFile(), properties);
+        }
+        else {
+          result = dir;
         }
       }
     }
 
-    return null;
+    return result == null ? Collections.EMPTY_LIST : Collections.singleton(result);
+  }
+
+  protected PsiScopeProcessor createProcessor(final List result, ReferenceType type) throws ProcessorRegistry.IncompatibleReferenceTypeException {
+    return ProcessorRegistry.getInstance().getProcessorByType(type, result, null);
   }
 }

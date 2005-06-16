@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
@@ -16,10 +17,7 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PlainFileManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTokenManipulator;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassListReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspxIncludePathReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JspImportListReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
@@ -29,7 +27,6 @@ import com.intellij.xml.util.XmlUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -232,7 +229,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       XmlAttributeValue.class, 
       pathReferenceProvider
     );
-    
+
     registerReferenceProvider(
       new ScopeFilter(
         new AndFilter(
@@ -248,10 +245,10 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           )
         )
       ),
-      XmlAttributeValue.class, 
+      XmlAttributeValue.class,
       pathReferenceProvider
     );
-    
+
     registerReferenceProvider(
       new ScopeFilter(
         new AndFilter(
@@ -267,7 +264,7 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
           )
         )
       ),
-      XmlAttributeValue.class, 
+      XmlAttributeValue.class,
       pathReferenceProvider
     );
 
@@ -323,6 +320,9 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
 
     HtmlUtil.HtmlReferenceProvider provider = new HtmlUtil.HtmlReferenceProvider();
     registerReferenceProvider(provider.getFilter(), XmlAttributeValue.class, provider);
+
+    final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider();
+    registerReferenceProvider(PsiLiteralExpression.class, filePathReferenceProvider);
   }
 
   public void registerReferenceProvider(ElementFilter elementFilter, Class scope, PsiReferenceProvider provider) {
@@ -342,10 +342,8 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     PsiElement current;
     do {
       current = element;
-      final Iterator<ProviderBinding> iter = myBindings.iterator();
 
-      while (iter.hasNext()) {
-        final ProviderBinding binding = iter.next();
+      for (final ProviderBinding binding : myBindings) {
         if (binding.isAcceptable(current)) {
           ret.addAll(Arrays.asList(binding.getProviders()));
         }
@@ -359,10 +357,8 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
 
   public <T extends PsiElement> ElementManipulator<T> getManipulator(T element) {
     if(element == null) return null;
-    final Iterator<Pair<Class,ElementManipulator>> iter = myManipulators.iterator();
 
-    while (iter.hasNext()) {
-      final Pair<Class,ElementManipulator> pair = iter.next();
+    for (final Pair<Class, ElementManipulator> pair : myManipulators) {
       if (pair.getFirst().isAssignableFrom(element.getClass())) {
         return (ElementManipulator<T>)pair.getSecond();
       }
@@ -376,11 +372,9 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   }
 
   private boolean isScopeFinal(Class scopeClass) {
-    final Iterator iter = myTempScopes.iterator();
 
-    while (iter.hasNext()) {
-      final Class currentClass = (Class)iter.next();
-      if (currentClass.isAssignableFrom(scopeClass)) {
+    for (final Class aClass : myTempScopes) {
+      if (aClass.isAssignableFrom(scopeClass)) {
         return false;
       }
     }

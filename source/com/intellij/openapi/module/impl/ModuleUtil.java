@@ -101,17 +101,13 @@ public class ModuleUtil {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (element instanceof PsiPackage) {
       final PsiDirectory[] directories = ((PsiPackage)element).getDirectories();
-      for (int idx = 0; idx < directories.length; idx++) {
-        final Module module = fileIndex.getModuleForFile(directories[idx].getVirtualFile());
+      for (PsiDirectory directory : directories) {
+        final Module module = fileIndex.getModuleForFile(directory.getVirtualFile());
         if (module != null) {
           return module;
         }
       }
       return null;
-    }
-    if (element instanceof PsiFile) {
-      VirtualFile vFile = ((PsiFile)element).getVirtualFile();
-      return vFile != null ? fileIndex.getModuleForFile(vFile) : null;
     }
 
     if (element instanceof PsiDirectory) {
@@ -122,8 +118,8 @@ public class ModuleUtil {
           return null;
         }
         Set<Module> modules = new HashSet<Module>();
-        for (int j = 0; j < orderEntries.length; j++) {
-          modules.add(orderEntries[j].getOwnerModule());
+        for (OrderEntry orderEntry : orderEntries) {
+          modules.add(orderEntry.getOwnerModule());
         }
         final Module[] candidates = modules.toArray(new Module[modules.size()]);
         Arrays.sort(candidates, ModuleManager.getInstance(project).moduleDependencyComparator());
@@ -133,7 +129,13 @@ public class ModuleUtil {
     }
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile != null) {
-      final VirtualFile virtualFile = containingFile.getVirtualFile();
+      VirtualFile virtualFile = containingFile.getVirtualFile();
+      if (virtualFile == null) {
+        PsiFile originalFile = containingFile.getOriginalFile();
+        if (originalFile != null) {
+          virtualFile = originalFile.getVirtualFile();
+        }
+      }
       if (virtualFile != null) {
         return fileIndex.getModuleForFile(virtualFile);
       }

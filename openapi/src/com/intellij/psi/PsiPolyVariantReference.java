@@ -4,6 +4,8 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Inherit this interface if you want the reference to resolve to more than one element,
  * or if you want to provide resolve result(s) for a superset of valid resolve cases.
@@ -12,5 +14,5 @@ package com.intellij.psi;
  * for later analysis by highlighting pass.
  */
 public interface PsiPolyVariantReference extends PsiReference {
-  ResolveResult[] multiResolve(final boolean incompleteCode);
+  @NotNull ResolveResult[] multiResolve(final boolean incompleteCode);
 }

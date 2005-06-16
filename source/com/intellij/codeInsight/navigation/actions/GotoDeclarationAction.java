@@ -13,15 +13,17 @@ import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.ListPopup;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 
 public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
@@ -74,16 +76,17 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   private static void chooseAmbiguousTarget(final Project project, final Editor editor, int offset) {
-    final PsiElement[] candidates = suggestCandidates(project, editor, offset);
-    if (candidates.length == 1) {
-      Navigatable navigatable = EditSourceUtil.getDescriptor(candidates[0]);
+    final Collection<PsiElement> candidates = suggestCandidates(project, editor, offset);
+    if (candidates.size() == 1) {
+      Navigatable navigatable = EditSourceUtil.getDescriptor(candidates.iterator().next());
       if (navigatable != null && navigatable.canNavigate()) {
         navigatable.navigate(true);
       }
     }
-    else if (candidates.length > 1) {
-      String title = " Go To Declaration Of " + ((PsiNamedElement)candidates[0]).getName();
-      ListPopup listPopup = NavigationUtil.getPsiElementPopup(candidates, title, project);
+    else if (candidates.size() > 1) {
+      PsiElement[] elements = candidates.toArray(new PsiElement[candidates.size()]);
+      String title = " Go To Declaration Of " + ((PsiNamedElement)elements[0]).getName();
+      ListPopup listPopup = NavigationUtil.getPsiElementPopup(elements, title, project);
       LogicalPosition caretPosition = editor.getCaretModel().getLogicalPosition();
       Point caretLocation = editor.logicalPositionToXY(caretPosition);
       int x = caretLocation.x;
@@ -95,42 +98,59 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
-  private static PsiElement[] suggestCandidates(Project project, Editor editor, int offset) {
+  private static Collection<PsiElement> suggestCandidates(Project project, Editor editor, int offset) {
     PsiReference reference = TargetElementUtil.findReference(editor, offset);
-    if (reference != null) {
-      PsiElement parent = reference.getElement().getParent();
-      if (parent instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression callExpr = (PsiMethodCallExpression) parent;
-        boolean allowStatics = false;
-        PsiExpression qualifier = callExpr.getMethodExpression().getQualifierExpression();
-        if (qualifier == null) {
-          allowStatics = true;
-        } else if (qualifier instanceof PsiJavaCodeReferenceElement) {
-          PsiElement referee = ((PsiJavaCodeReferenceElement) qualifier).advancedResolve(true).getElement();
-          if (referee instanceof PsiClass) allowStatics = true;
-        }
-        PsiManager manager = PsiManager.getInstance(project);
-        PsiResolveHelper helper = manager.getResolveHelper();
-        PsiElement[] candidates = PsiUtil.mapElements(helper.getReferencedMethodCandidates(callExpr, false));
-        ArrayList<PsiElement> methods = new ArrayList<PsiElement>();
-        for (PsiElement candidate1 : candidates) {
-          PsiMethod candidate = (PsiMethod)candidate1;
-          if (candidate.hasModifierProperty(PsiModifier.STATIC) && !allowStatics) continue;
-          List<PsiMethod> supers = Arrays.asList(PsiSuperMethodUtil.findSuperMethods(candidate));
-          if (supers.isEmpty()) {
-            methods.add(candidate);
-          }
-          else {
-            methods.addAll(supers);
-          }
-        }
-        return methods.toArray(new PsiElement[methods.size()]);
-      }
-      if (reference instanceof PsiPolyVariantReference) {
-        return PsiUtil.mapElements(((PsiPolyVariantReference)reference).multiResolve(false));
-      }
+    if (reference == null) {
+      return Collections.EMPTY_LIST;
     }
-    return PsiElement.EMPTY_ARRAY;
+    return resolveElements(reference, project);
+  }
+
+  @NotNull private static Collection<PsiElement> resolveElements(final PsiReference reference, final Project project) {
+    PsiElement parent = reference.getElement().getParent();
+    if (parent instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression callExpr = (PsiMethodCallExpression) parent;
+      boolean allowStatics = false;
+      PsiExpression qualifier = callExpr.getMethodExpression().getQualifierExpression();
+      if (qualifier == null) {
+        allowStatics = true;
+      } else if (qualifier instanceof PsiJavaCodeReferenceElement) {
+        PsiElement referee = ((PsiJavaCodeReferenceElement) qualifier).advancedResolve(true).getElement();
+        if (referee instanceof PsiClass) allowStatics = true;
+      }
+      PsiManager manager = PsiManager.getInstance(project);
+      PsiResolveHelper helper = manager.getResolveHelper();
+      PsiElement[] candidates = PsiUtil.mapElements(helper.getReferencedMethodCandidates(callExpr, false));
+      ArrayList<PsiElement> methods = new ArrayList<PsiElement>();
+      for (PsiElement candidate1 : candidates) {
+        PsiMethod candidate = (PsiMethod)candidate1;
+        if (candidate.hasModifierProperty(PsiModifier.STATIC) && !allowStatics) continue;
+        List<PsiMethod> supers = Arrays.asList(PsiSuperMethodUtil.findSuperMethods(candidate));
+        if (supers.isEmpty()) {
+          methods.add(candidate);
+        }
+        else {
+          methods.addAll(supers);
+        }
+      }
+      return methods;
+    }
+    if (reference instanceof PsiPolyVariantReference) {
+      return Arrays.asList(PsiUtil.mapElements(((PsiPolyVariantReference)reference).multiResolve(false)));
+    }
+    if (reference instanceof PsiMultiReference) {
+      PsiReference[] references = ((PsiMultiReference)reference).getReferences();
+      Set<PsiElement> result = new THashSet<PsiElement>();
+      for (PsiReference psiReference : references) {
+        result.addAll(resolveElements(psiReference, project));
+      }
+      return result;
+    }
+    PsiElement resolved = reference.resolve();
+    if (resolved != null) {
+      return Collections.singleton(resolved);
+    }
+    return Collections.EMPTY_LIST;
   }
 
   public boolean startInWriteAction() {
@@ -143,10 +163,10 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   public static PsiElement findTargetElement(Project project, Editor editor, int offset) {
     int flags = TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
-            | TargetElementUtil.NEW_AS_CONSTRUCTOR
-            | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
-            | TargetElementUtil.THIS_ACCEPTED
-            | TargetElementUtil.SUPER_ACCEPTED;
+                | TargetElementUtil.NEW_AS_CONSTRUCTOR
+                | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
+                | TargetElementUtil.THIS_ACCEPTED
+                | TargetElementUtil.SUPER_ACCEPTED;
     PsiElement element = TargetElementUtil.findTargetElement(editor, flags, offset);
 
     if (element != null) return element;
