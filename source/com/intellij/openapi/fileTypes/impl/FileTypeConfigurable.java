@@ -84,11 +84,10 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
     return IconLoader.getIcon("/general/configurableFileTypes.png");
   }
 
-  private FileType[] getModifiableFileTypes() {
+  private static FileType[] getModifiableFileTypes() {
     FileType[] registeredFileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     ArrayList<FileType> result = new ArrayList<FileType>();
-    for (int i = 0; i < registeredFileTypes.length; i++) {
-      FileType fileType = registeredFileTypes[i];
+    for (FileType fileType : registeredFileTypes) {
       if (!fileType.isReadOnly()) result.add(fileType);
     }
     return result.toArray(new FileType[result.size()]);
@@ -96,8 +95,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
 
   public void apply() throws ConfigurationException {
     Set<UserFileType> modifiedUserTypes = myOriginalToEditedMap.keySet();
-    for (Iterator<UserFileType> iterator = modifiedUserTypes.iterator(); iterator.hasNext();) {
-      UserFileType oldType = iterator.next();
+    for (UserFileType oldType : modifiedUserTypes) {
       UserFileType newType = myOriginalToEditedMap.get(oldType);
       oldType.copyFrom(newType);
     }
@@ -120,8 +118,9 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
   }
 
   public boolean isModified() {
+    HashSet types = new HashSet(Arrays.asList(getModifiableFileTypes()));
     return !myTempExtension2TypeMap.equals(myManager.getExtensionMap()) ||
-           !myTempFileTypes.equals(new HashSet(Arrays.asList(myManager.getRegisteredFileTypes()))) ||
+           !myTempFileTypes.equals(types) ||
            !myOriginalToEditedMap.isEmpty();
   }
 
@@ -148,9 +147,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
     myExtensions.clearList();
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
-    Iterator it = myTempExtension2TypeMap.keySet().iterator();
-    while (it.hasNext()) {
-      String extension = (String)it.next();
+    for (final String extension : myTempExtension2TypeMap.keySet()) {
       if (type.equals(myTempExtension2TypeMap.get(extension))) {
         myExtensions.addExtension(extension);
       }
@@ -167,8 +164,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
     TypeEditor editor = new TypeEditor(myRecognizedFileType.myEditButton, ftToEdit);
     editor.show();
     if (editor.isOK()) {
-      UserFileType newFileType = ftToEdit;
-      myOriginalToEditedMap.put((UserFileType)fileType, newFileType);
+      myOriginalToEditedMap.put((UserFileType)fileType, ftToEdit);
     }
   }
 
@@ -191,7 +187,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
     updateExtensionList();
   }
 
-  private boolean canBeModified(FileType fileType) {
+  private static boolean canBeModified(FileType fileType) {
     return fileType instanceof UserFileType && ((UserFileType)fileType).getEditor() != null;
   }
 
@@ -290,7 +286,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
       myFileTypesList.addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
           FileType fileType = getSelectedFileType();
-          boolean b = controller.canBeModified(fileType);
+          boolean b = canBeModified(fileType);
           myEditButton.setEnabled(b);
           myRemoveButton.setEnabled(b);
         }
@@ -318,8 +314,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
     public void setFileTypes(FileType[] types) {
       DefaultListModel listModel = (DefaultListModel)myFileTypesList.getModel();
       listModel.clear();
-      for (int i = 0; i < types.length; i++) {
-        FileType type = types[i];
+      for (FileType type : types) {
         if (type != StdFileTypes.UNKNOWN) {
           listModel.addElement(type);
         }
