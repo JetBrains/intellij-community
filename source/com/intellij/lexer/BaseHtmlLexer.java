@@ -153,28 +153,55 @@ abstract class BaseHtmlLexer extends LexerBase {
       int lastStart = 0;
 
       FoundEnd:
-      while(baseLexer.getTokenType() != XmlTokenType.XML_END_TAG_START) {
-        if (baseLexer.getTokenType() == XmlTokenType.XML_COMMENT_CHARACTERS) {
-          // we should terminate on first occurence of </
-          final char[] buf = baseLexer.getBuffer();
-          final int end = baseLexer.getTokenEnd();
-
-          for(int i = baseLexer.getTokenStart(); i < end; ++i) {
-            if (buf[i] == '<' && i + 1 < end && buf[i+1] == '/') {
-              myTokenEnd = i;
-              lastStart = i - 1;
-              lastState = 0;
-
-              break FoundEnd;
+      while(true) {
+        FoundEndOfTag:
+        while(baseLexer.getTokenType() != XmlTokenType.XML_END_TAG_START) {
+          if (baseLexer.getTokenType() == XmlTokenType.XML_COMMENT_CHARACTERS) {
+            // we should terminate on first occurence of </
+            final char[] buf = baseLexer.getBuffer();
+            final int end = baseLexer.getTokenEnd();
+  
+            for(int i = baseLexer.getTokenStart(); i < end; ++i) {
+              if (buf[i] == '<' && i + 1 < end && buf[i+1] == '/') {
+                myTokenEnd = i;
+                lastStart = i - 1;
+                lastState = 0;
+  
+                break FoundEndOfTag;
+              }
             }
           }
+  
+          lastState = baseLexer.getState();
+          myTokenEnd = baseLexer.getTokenEnd();
+          lastStart = baseLexer.getTokenStart();
+          if (myTokenEnd == getBufferEnd()) break FoundEnd;
+          baseLexer.advance();
         }
-
-        lastState = baseLexer.getState();
-        myTokenEnd = baseLexer.getTokenEnd();
-        lastStart = baseLexer.getTokenStart();
-        if (myTokenEnd == getBufferEnd()) break;
-        baseLexer.advance();
+        
+        // check if next is script
+        if (baseLexer.getTokenType() != XmlTokenType.XML_END_TAG_START) { // we are inside comment
+          baseLexer.start(getBuffer(),lastStart+1,getBufferEnd(),lastState);
+          baseLexer.getTokenType();
+          baseLexer.advance();
+        } else {
+          baseLexer.advance();
+        }
+        
+        while(XmlTokenType.WHITESPACES.isInSet(baseLexer.getTokenType())) {
+          baseLexer.advance();
+        }
+        
+        if (baseLexer.getTokenType() == XmlTokenType.XML_NAME) {
+          String name = ParseUtil.getTokenText(baseLexer);
+          if (caseInsensitive) name = name.toLowerCase();
+          
+          if((hasSeenScript() && "script".equals(name)) ||
+             (hasSeenStyle() && "style".equals(name))
+             ) {
+            break; // really found end
+          }
+        }
       }
 
       baseLexer.start(getBuffer(),lastStart,getBufferEnd(),lastState);
