@@ -225,10 +225,13 @@ public class TargetElementUtil {
     LookupItem item = activeLookup.getCurrentItem();
     if (item == null) return null;
     Object o = item.getObject();
+    
     if (o instanceof PsiClass
         || o instanceof PsiPackage
         || o instanceof PsiMethod
-        || o instanceof PsiVariable) {
+        || o instanceof PsiVariable
+        || o instanceof PsiFile
+      ) {
       PsiElement element = (PsiElement) o;
       if (!(element instanceof PsiPackage)) {
         PsiFile file = element.getContainingFile();
