@@ -360,7 +360,7 @@ public class EditorTextField extends JPanel implements DocumentListener, TextCom
 
 
   protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-    if (!myEditor.processKeyTyped(e)) {
+    if (e.isConsumed() || !myEditor.processKeyTyped(e)) {
       return super.processKeyBinding(ks, e, condition, pressed);
     }
     return true;

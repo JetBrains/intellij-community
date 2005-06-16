@@ -58,7 +58,7 @@ public final class IdeKeyEventDispatcher {
   }
 
   public boolean isWaitingForSecondKeyStroke(){
-    return myState == STATE_WAIT_FOR_SECOND_KEYSTROKE;
+    return myState == STATE_WAIT_FOR_SECOND_KEYSTROKE || myPressedWasProcessed;
   }
 
   /**
@@ -299,6 +299,7 @@ public final class IdeKeyEventDispatcher {
       if (component != null && !component.isShowing()) {
         return true;
       }
+      e.consume();
       action.actionPerformed(actionEvent);
       return true;
     }
