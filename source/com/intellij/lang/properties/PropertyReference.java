@@ -43,15 +43,7 @@ public class PropertyReference implements PsiPolyVariantReference {
     final ResolveResult[] result = new ResolveResult[properties.size()];
     for (int i = 0; i < properties.size(); i++) {
       final Property property = properties.get(i);
-      result[i] = new ResolveResult() {
-        public PsiElement getElement() {
-          return property;
-        }
-
-        public boolean isValidResult() {
-          return property.isValid();
-        }
-      };
+      result[i] = new PsiElementResolveResult(property);
     }
     return result;
   }

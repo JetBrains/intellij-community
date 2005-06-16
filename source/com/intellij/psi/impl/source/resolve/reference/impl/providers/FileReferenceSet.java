@@ -167,16 +167,7 @@ public class FileReferenceSet {
           }
         }
         if (resolved != null) {
-          final PsiElement element = resolved;
-          result.add(new ResolveResult() {
-            public PsiElement getElement() {
-              return element;
-            }
-
-            public boolean isValidResult() {
-              return element.isValid();
-            }
-          });
+          result.add(new PsiElementResolveResult(resolved));
         }
       }
       return result.toArray(new ResolveResult[result.size()]);
