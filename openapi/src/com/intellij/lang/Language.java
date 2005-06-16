@@ -17,6 +17,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -38,7 +39,7 @@ public abstract class Language {
   private static SurroundDescriptor[] EMPTY_SURROUND_DESCRIPTORS_ARRAY = new SurroundDescriptor[0];
   private static Map<Class<? extends Language>, Language> ourRegisteredLanguages = new HashMap<Class<? extends Language>, Language>();
   private String myID;
-  private String[] myMimeType;
+  private String[] myMimeTypes;
   public static final Language ANY = new Language("", "") {};
   private static final EmptyFindUsagesProvider EMPTY_FIND_USAGES_PROVIDER = new EmptyFindUsagesProvider();
 
@@ -48,7 +49,7 @@ public abstract class Language {
 
   protected Language(final String ID, final String... mime) {
     myID = ID;
-    myMimeType = mime;
+    myMimeTypes = mime;
     Class<? extends Language> langClass = getClass();
 
     if (ourRegisteredLanguages.containsKey(langClass)) {
@@ -70,7 +71,7 @@ public abstract class Language {
       LOG.error(e);
     }
   }
-  
+
   public static Collection<Language> getRegisteredLanguages() {
     return Collections.unmodifiableCollection(ourRegisteredLanguages.values());
   }
@@ -83,22 +84,27 @@ public abstract class Language {
     return new PlainSyntaxHighlighter();
   }
 
+  @Nullable
   public FormattingModelBuilder getFormattingModelBuilder(){
     return null;
   }
-  
+
+  @Nullable
   public ParserDefinition getParserDefinition() {
     return null;
   }
 
+  @Nullable
   public FoldingBuilder getFoldingBuilder() {
     return null;
   }
 
+  @Nullable
   public PairedBraceMatcher getPairedBraceMatcher() {
     return null;
   }
 
+  @Nullable
   public Commenter getCommenter() {
     return null;
   }
@@ -109,6 +115,7 @@ public abstract class Language {
     return TokenSet.EMPTY;
   }
 
+  @Nullable
   public Annotator getAnnotator() {
     return null;
   }
@@ -117,10 +124,12 @@ public abstract class Language {
     return EMPTY_FIND_USAGES_PROVIDER;
   }
 
+  @Nullable
   public StructureViewBuilder getStructureViewBuilder(PsiElement psiElement) {
     return null;
   }
 
+  @Nullable
   public RefactoringSupportProvider getRefactoringSupportProvider() {
     return null;
   }
@@ -133,8 +142,8 @@ public abstract class Language {
     return "Language: " + myID;
   }
 
-  public String[] getMimeType(){
-    return myMimeType;
+  public String[] getMimeTypes(){
+    return myMimeTypes;
   }
 
   public String getID() {
@@ -146,6 +155,7 @@ public abstract class Language {
       return false;
     }
 
+    @Nullable
     public WordsScanner getWordsScanner() {
       return null;
     }
@@ -154,6 +164,7 @@ public abstract class Language {
       return false;
     }
 
+    @Nullable
     public String getHelpId(PsiElement psiElement) {
       return null;
     }

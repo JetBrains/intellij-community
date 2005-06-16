@@ -1,8 +1,9 @@
 package com.intellij.lang.findUsages;
 
+import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.cacheBuilder.WordsScanner;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,6 +23,7 @@ public interface FindUsagesProvider {
   /**
    * @return word scanner for building caches in this language's files
    */
+  @Nullable
   WordsScanner getWordsScanner();
 
   /**
@@ -30,6 +32,7 @@ public interface FindUsagesProvider {
    */
   boolean canFindUsagesFor(PsiElement psiElement);
 
+  @Nullable
   String getHelpId(PsiElement psiElement);
 
   String getType(PsiElement element);
