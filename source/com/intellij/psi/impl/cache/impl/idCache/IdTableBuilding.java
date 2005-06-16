@@ -1,7 +1,6 @@
 package com.intellij.psi.impl.cache.impl.idCache;
 
 import com.intellij.aspects.lexer.AspectjLexer;
-import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.Language;
@@ -11,26 +10,34 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.jsp.NewJspLanguage;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLock;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.parsing.jsp.JspHighlightLexer;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntIntHashMap;
 
 import java.util.HashMap;
@@ -229,40 +236,20 @@ public class IdTableBuilding {
     registerCacheBuilder(StdFileTypes.GUI_DESIGNER_FORM,new FormFileIdCacheBuilder());
   }
 
-  public static IdCacheBuilder getCacheBuilder(PsiFile psiFile) {
-    final FileType fileType = psiFile.getFileType();
-
+  public static IdCacheBuilder getCacheBuilder(FileType fileType) {
     final IdCacheBuilder idCacheBuilder = cacheBuilders.get(fileType);
 
     if (idCacheBuilder != null) return idCacheBuilder;
 
-    if (psiFile instanceof JspFile) {
-      return cacheBuilders.get(StdFileTypes.JSP);
-    }
-
-    if(psiFile instanceof PsiPlainTextFile) {
-      return cacheBuilders.get(StdFileTypes.PLAIN_TEXT);
-    }
-
-    if (psiFile instanceof PsiAspectFile) {
-      return cacheBuilders.get(StdFileTypes.ASPECT);
-    }
-
-    if (psiFile instanceof PsiJavaFile) {
-      return cacheBuilders.get(StdFileTypes.JAVA);
-    }
-
-    if (psiFile instanceof XmlFile) {
-      return cacheBuilders.get(StdFileTypes.XML);
-    }
-
-    final Language lang = psiFile.getLanguage();
-    if (lang != null) {
-      final FindUsagesProvider findUsagesProvider = lang.getFindUsagesProvider();
-      if (findUsagesProvider != null) {
-        final WordsScanner scanner = findUsagesProvider.getWordsScanner();
-        if (scanner != null) {
-          return new WordsScannerIdCacheBuilderAdapter(scanner);
+    if (fileType instanceof LanguageFileType) {
+      final Language lang = ((LanguageFileType)fileType).getLanguage();
+      if (lang != null) {
+        final FindUsagesProvider findUsagesProvider = lang.getFindUsagesProvider();
+        if (findUsagesProvider != null) {
+          final WordsScanner scanner = findUsagesProvider.getWordsScanner();
+          if (scanner != null) {
+            return new WordsScannerIdCacheBuilderAdapter(scanner);
+          }
         }
       }
     }
@@ -324,11 +311,12 @@ public class IdTableBuilding {
       //LOG.debug(new Throwable());
     }
 
-    if (fileContent.getVirtualFile().getLength() > FILE_SIZE_LIMIT) return null;
-    final PsiFile psiFile = manager.getFile(fileContent);
-    if (psiFile == null) return null;
-    if (psiFile instanceof PsiBinaryFile) return null;
-    if (psiFile instanceof PsiCompiledElement) return null;
+    final VirtualFile virtualFile = fileContent.getVirtualFile();
+    LOG.assertTrue(virtualFile.isValid());
+    if (virtualFile.getLength() > FILE_SIZE_LIMIT) return null;
+    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
+    if (fileType.isBinary()) return null;
+    if (StdFileTypes.CLASS.equals(fileType)) return null;
 
     final TIntIntHashMap wordsTable = new TIntIntHashMap();
 
@@ -342,9 +330,16 @@ public class IdTableBuilding {
       todoCounts = null;
     }
 
-    final char[] chars = psiFile.textToCharArray();
-    final int textLength = psiFile.getTextLength();
-    final IdCacheBuilder cacheBuilder = getCacheBuilder(psiFile);
+    final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    final Document document = fileDocumentManager.getDocument(virtualFile);
+
+    final PsiFile psiFile = PsiDocumentManager.getInstance(manager.getProject()).getPsiFile(document);
+    if (psiFile == null) return null;
+
+    final char[] chars = CharArrayUtil.fromSequence(document.getCharsSequence());
+    final int textLength = document.getTextLength();
+
+    final IdCacheBuilder cacheBuilder = getCacheBuilder(fileType);
 
     if (cacheBuilder==null) return null;
 
