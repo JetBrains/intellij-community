@@ -1,8 +1,6 @@
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.GroupNames;
@@ -56,7 +54,7 @@ public class ThreadDumpStackInspection extends ExpressionInspection {
             final PsiClass aClass = method.getContainingClass();
             if(aClass == null)
             {
-                return false;
+                return;
             }
             final String qualifiedName = aClass.getQualifiedName();
             if (!"java.lang.Thread".equals(qualifiedName)) {

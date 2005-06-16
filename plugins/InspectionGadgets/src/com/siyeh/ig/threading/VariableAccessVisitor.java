@@ -1,83 +1,119 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
-class VariableAccessVisitor extends PsiRecursiveElementVisitor {
-    private final Set<PsiElement> m_synchronizedAccesses = new HashSet<PsiElement>(2);
-    private final Set<PsiElement> m_unsynchronizedAccesses = new HashSet<PsiElement>(2);
+
+class VariableAccessVisitor extends PsiRecursiveElementVisitor{
+    private final Set<PsiElement> m_synchronizedAccesses = new HashSet<PsiElement>(
+            2);
+    private final Set<PsiElement> m_unsynchronizedAccesses = new HashSet<PsiElement>(
+            2);
     private boolean m_inInitializer = false;
     private boolean m_inSynchronizedContext = false;
 
-    VariableAccessVisitor() {
+    VariableAccessVisitor(){
         super();
     }
 
-    public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
         super.visitReferenceExpression(ref);
         final PsiExpression qualifier = ref.getQualifierExpression();
 
-        if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
+        if(qualifier != null && !(qualifier instanceof PsiThisExpression)){
             return;
         }
         final PsiElement element = ref.resolve();
-        if (!(element instanceof PsiField)) {
+        if(!(element instanceof PsiField)){
             return;
         }
-        if (m_inInitializer) {
-        } else if (m_inSynchronizedContext) {
+        if(m_inInitializer){
+        } else if(m_inSynchronizedContext){
             m_synchronizedAccesses.add(element);
-        } else {
+        } else{
             m_unsynchronizedAccesses.add(element);
         }
     }
 
-    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(
+            @NotNull PsiSynchronizedStatement statement){
         final boolean wasInSync = m_inSynchronizedContext;
         m_inSynchronizedContext = true;
         super.visitSynchronizedStatement(statement);
         m_inSynchronizedContext = wasInSync;
     }
 
-    public void visitMethod(@NotNull PsiMethod method) {
-        final boolean methodIsSynchonized = method.hasModifierProperty(PsiModifier.SYNCHRONIZED);
+    public void visitMethod(@NotNull PsiMethod method){
+        final boolean methodIsSynchonized =
+                method.hasModifierProperty(PsiModifier.SYNCHRONIZED)
+                        || methodIsAlwaysUsedSynchronized(method);
         boolean wasInSync = false;
-        if (methodIsSynchonized) {
+        if(methodIsSynchonized){
             wasInSync = m_inSynchronizedContext;
             m_inSynchronizedContext = true;
         }
         final boolean isConstructor = method.isConstructor();
-        if (isConstructor) {
+        if(isConstructor){
             m_inInitializer = true;
         }
         super.visitMethod(method);
-        if (methodIsSynchonized) {
+        if(methodIsSynchonized){
             m_inSynchronizedContext = wasInSync;
         }
-        if (isConstructor) {
+        if(isConstructor){
             m_inInitializer = false;
         }
     }
 
-    public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
+    private boolean methodIsAlwaysUsedSynchronized(PsiMethod method){
+        if(!method.hasModifierProperty(PsiModifier.PRIVATE)){
+            return false;
+        }
+        final PsiSearchHelper searchHelper = method.getManager().getSearchHelper();
+        final SearchScope scope = method.getUseScope();
+        final PsiReference[] references = searchHelper
+                .findReferences(method, scope, true);
+        for(PsiReference reference : references){
+            if(!isInSynchronizedContext(reference))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isInSynchronizedContext(PsiReference reference){
+        if(PsiTreeUtil.getParentOfType(reference.getElement(),
+                                       PsiSynchronizedStatement.class)!=null)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    public void visitClassInitializer(@NotNull PsiClassInitializer initializer){
         m_inInitializer = true;
         super.visitClassInitializer(initializer);
         m_inInitializer = false;
     }
 
-    public void visitField(@NotNull PsiField field) {
+    public void visitField(@NotNull PsiField field){
         m_inInitializer = true;
-        super.visitField(field);    //To change body of overriden methods use Options | File Templates.
+        super.visitField(
+                field);    //To change body of overriden methods use Options | File Templates.
         m_inInitializer = false;
     }
 
-    public Set<PsiElement> getInappropriatelyAccessedFields() {
-        final Set<PsiElement> out = new HashSet<PsiElement>(m_synchronizedAccesses);
+    public Set<PsiElement> getInappropriatelyAccessedFields(){
+        final Set<PsiElement> out = new HashSet<PsiElement>(
+                m_synchronizedAccesses);
         out.retainAll(m_unsynchronizedAccesses);
         return out;
     }
-
 }
