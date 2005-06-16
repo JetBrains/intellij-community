@@ -19,7 +19,7 @@ import java.util.Set;
  * Time: 4:28:39 PM
  * To change this template use File | Settings | File Templates.
  */
-public class SyntaxTableCompletionData extends WordCompletionData {
+public class SyntaxTableCompletionData{
   private SyntaxTable mySyntaxTable;
 
   public SyntaxTableCompletionData(SyntaxTable _syntaxTable) {

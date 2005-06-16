@@ -233,43 +233,26 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
     public void fileTypesChanged(FileTypeEvent e){
       // this invokeLater guaranties that this code will be invoked after
       // PSI gets the same event.
-      ApplicationManager.getApplication().invokeLater(new Runnable(){
-            public void run(){
-              // [vova] It's very important to pass null as project. Each TODO view shows own progress
-              // window. It causes frame switching.
-              final ProgressWindow progressWindow=new ProgressWindow(false,null);
-              progressWindow.setTitle("Looking for TODOs...");
-              progressWindow.setText("Please wait...");
-              final Runnable process=new Runnable(){
-                public void run(){
-                  if (myAllTodos == null) return;
+      ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable(){
+        public void run(){
+          if (myAllTodos == null) return;
 
-                  ApplicationManager.getApplication().runReadAction(
-                    new Runnable(){
-                      public void run(){
-                        myAllTodos.rebuildCache();
-                        myCurrentFileTodos.rebuildCache();
-                      }
-                    }
-                  );
-                  ApplicationManager.getApplication().invokeLater(new Runnable(){
-                                    public void run(){
-                                      myAllTodos.updateTree();
-                                      myCurrentFileTodos.updateTree();
-                                    }
-                                  }, ModalityState.NON_MMODAL);
-                }
-              };
-              Thread thread=new Thread(
-                new Runnable(){
-                  public void run(){
-                    ProgressManager.getInstance().runProcess(process,progressWindow);
-                  }
-                }, "Todo finder"
-              );
-              thread.start();
+          ApplicationManager.getApplication().runReadAction(
+            new Runnable(){
+              public void run(){
+                myAllTodos.rebuildCache();
+                myCurrentFileTodos.rebuildCache();
+              }
+            }
+          );
+          ApplicationManager.getApplication().invokeLater(new Runnable(){
+            public void run(){
+              myAllTodos.updateTree();
+              myCurrentFileTodos.updateTree();
             }
           }, ModalityState.NON_MMODAL);
+        }
+      }, "Looking for TODOs...", false, myProject);
     }
   }
 }

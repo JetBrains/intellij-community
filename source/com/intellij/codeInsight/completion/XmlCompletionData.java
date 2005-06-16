@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.getters.AllWordsGetter;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.html.HtmlTag;
@@ -93,14 +92,6 @@ public class XmlCompletionData extends CompletionData {
       variant.includeScopeClass(XmlToken.class, true);
       variant.addCompletion(new EntityRefGetter());
       variant.setInsertHandler(new EntityRefInsertHandler());
-      registerVariant(variant);
-    }
-
-    {
-      final CompletionVariant variant = new CompletionVariant(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS));
-      variant.includeScopeClass(XmlToken.class, true);
-      variant.addCompletion(new AllWordsGetter());
-      variant.setInsertHandler(WordCompletionData.ourWordInsertHandler);
       registerVariant(variant);
     }
   }
