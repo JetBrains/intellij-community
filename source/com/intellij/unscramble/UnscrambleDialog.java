@@ -286,11 +286,7 @@ public class UnscrambleDialog extends DialogWrapper{
 
     public void actionPerformed(ActionEvent e){
       String text = myEditor.getDocument().getText();
-      // move 'at' to the line start
-      text = text.replaceAll("(\\S)[\\s&&[^\\n]]*at ", "$1\n at ");
-      text = text.replaceAll("(\\S)\\nat ", "$1\n at ");
-      // merge (inadvertently) splitted lines
-      text = text.replaceAll("\\s*\\n\\s*(([\\S&&[^a]])([\\S&&[^t]])?)", "$1");
+      text = normalizeText(text);
 
       final String newText = text;
       CommandProcessor.getInstance().executeCommand(
@@ -306,6 +302,18 @@ public class UnscrambleDialog extends DialogWrapper{
         "",
         null
       );
+    }
+
+    private String normalizeText(String text) {
+      // move 'at' to the line start
+      text = text.replaceAll("(\\S)[\\s&&[^\\n]]*at ", "$1\n at ");
+      text = text.replaceAll("(\\S)\\nat ", "$1\n at ");
+      // merge (inadvertently) splitted lines (unless next line begins with 'at')
+      text = text.replaceAll("\\s*\\n\\s*+([^a]|(a[^t]))", "$1");
+
+      // remove empty lines
+      text = text.replaceAll("(\\n\\s*)+\\n", "\n");
+      return text;
     }
   }
 
