@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.*;
+import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.html.HtmlTag;
@@ -66,7 +67,7 @@ public class XmlCompletionData extends CompletionData {
     {
       final CompletionVariant variant = new CompletionVariant(createAttributeValueCompletionFilter());
       variant.includeScopeClass(XmlAttributeValue.class, true);
-      variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
+      variant.addCompletion(new XmlAttributeValueGetter());
       variant.setInsertHandler(new XmlAttributeValueInsertHandler());
       registerVariant(variant);
     }

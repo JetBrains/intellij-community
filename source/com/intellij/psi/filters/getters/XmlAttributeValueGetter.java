@@ -1,13 +1,12 @@
 package com.intellij.psi.filters.getters;
 
+import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.completion.WordCompletionData;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,12 +30,11 @@ public class XmlAttributeValueGetter implements ContextGetter {
       XmlAttributeDescriptor jspTagAttribute = ((XmlAttribute)context).getDescriptor();
 
       if(jspTagAttribute != null){
-        String[] values = jspTagAttribute.getEnumeratedValues();
+        final String[] values = jspTagAttribute.getEnumeratedValues();
         
         if((values == null || values.length==0)) {
           final PsiReference[] references = ((XmlAttribute)context).getValueElement().getReferences();
           if (references.length == 0) return getAllWordsFromDocument(context,completionContext);
-          values = new String[0];
         }
         return values;
       }
@@ -45,7 +43,7 @@ public class XmlAttributeValueGetter implements ContextGetter {
   }
 
   private static Object[] getAllWordsFromDocument(PsiElement context, CompletionContext completionContext) {
-    WordCompletionData.AllWordsGetter getter = new WordCompletionData.AllWordsGetter();
+    AllWordsGetter getter = new AllWordsGetter();
     return getter.get(context, completionContext);
   }
 }

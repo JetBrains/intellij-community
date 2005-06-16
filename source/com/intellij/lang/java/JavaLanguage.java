@@ -76,8 +76,7 @@ public class JavaLanguage extends Language {
 
   public TokenSet getReadableTextContainerElements() {
     return TokenSet.create(JavaTokenType.C_STYLE_COMMENT, JavaTokenType.END_OF_LINE_COMMENT,
-                           JavaDocTokenType.DOC_COMMENT_DATA, JavaDocTokenType.DOC_TAG_VALUE_TOKEN,
-                           JavaTokenType.STRING_LITERAL);
+                           JavaDocTokenType.DOC_COMMENT_DATA, JavaTokenType.STRING_LITERAL);
   }
 
   public SurroundDescriptor[] getSurroundDescriptors() {

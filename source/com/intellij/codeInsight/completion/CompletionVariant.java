@@ -15,13 +15,12 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
-import org.jdom.Element;
 import org.apache.oro.text.regex.Pattern;
-import org.apache.oro.text.regex.Perl5Matcher;
 import org.apache.oro.text.regex.PatternMatcher;
+import org.apache.oro.text.regex.Perl5Matcher;
+import org.jdom.Element;
 
 import java.util.*;
-import java.util.regex.Matcher;
 
 /**
  * Created by IntelliJ IDEA.
@@ -296,6 +295,17 @@ implements JDOMExternalizable{
     final Iterator iter = myCompletionsList.iterator();
     while(iter.hasNext()){
       if(((CompletionVariantItem)iter.next()).myCompletion instanceof ElementFilter){
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean hasKeywordCompletions(){
+    final Iterator iter = myCompletionsList.iterator();
+    while(iter.hasNext()){
+      final Object completion = ((CompletionVariantItem)iter.next()).myCompletion;
+      if(!(completion instanceof ElementFilter)){
         return true;
       }
     }

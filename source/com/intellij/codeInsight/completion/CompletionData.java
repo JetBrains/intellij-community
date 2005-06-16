@@ -44,7 +44,7 @@ public class CompletionData
   private final List<CompletionVariant> myCompletionVariants = new ArrayList<CompletionVariant>();
 
 
-  public CompletionData(final String fileName){
+  protected CompletionData(final String fileName){
     try{
       final Document document = JDOMUtil.loadDocument(CompletionData.class.getResourceAsStream(File.separator + fileName));
       readExternal(document.getRootElement());
@@ -54,9 +54,9 @@ public class CompletionData
     }
   }
 
-  public CompletionData(){ }
+  protected CompletionData(){ }
 
-  public final void declareFinalScope(Class scopeClass){
+  protected final void declareFinalScope(Class scopeClass){
     myFinalScopes.add(scopeClass);
   }
 
@@ -73,7 +73,7 @@ public class CompletionData
     return false;
   }
 
-  public boolean isScopeAcceptable(PsiElement scope){
+  private boolean isScopeAcceptable(PsiElement scope){
     final Iterator<CompletionVariant> iter = myCompletionVariants.iterator();
 
     while(iter.hasNext()){
@@ -85,7 +85,7 @@ public class CompletionData
     return false;
   }
 
-  public void defineScopeEquivalence(Class scopeClass, Class equivClass){
+  protected void defineScopeEquivalence(Class scopeClass, Class equivClass){
     final Iterator<CompletionVariant> iter = myCompletionVariants.iterator();
     if(isScopeFinal(scopeClass)){
       declareFinalScope(equivClass);
@@ -100,7 +100,7 @@ public class CompletionData
     return;
   }
 
-  public void registerVariant(CompletionVariant variant){
+  protected void registerVariant(CompletionVariant variant){
     myCompletionVariants.add(variant);
   }
 
@@ -220,7 +220,7 @@ public class CompletionData
     return findPrefixStatic(insertedElement, offset);
   }
 
-  public CompletionVariant[] findVariants(final PsiElement position, final CompletionContext context){
+  protected CompletionVariant[] findVariants(final PsiElement position, final CompletionContext context){
     final List<CompletionVariant> variants = new ArrayList<CompletionVariant>();
     PsiElement scope = position;
     if(scope == null){

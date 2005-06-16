@@ -2,6 +2,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.aspects.psi.PsiAspectFile;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
@@ -24,6 +25,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.position.SuperParentFilter;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -50,7 +52,13 @@ public class CompletionUtil {
   private static final CompletionData ourJava15CompletionData = new Java15CompletionData();
   private static final CompletionData ourJSPCompletionData = new JSPCompletionData();
   private static final CompletionData ourXmlCompletionData = new XmlCompletionData();
-  private static final CompletionData ourGenericCompletionData = new WordCompletionData();
+  private static final CompletionData ourGenericCompletionData = new CompletionData(){
+    {
+      final CompletionVariant variant = new CompletionVariant(PsiElement.class, TrueFilter.INSTANCE);
+      variant.addCompletionFilter(TrueFilter.INSTANCE, TailType.NONE);
+      registerVariant(variant);
+    }
+  };
   private static final CompletionData ourWordCompletionData = new WordCompletionData();
   private static final CompletionData ourJavaDocCompletionData = new JavaDocCompletionData();
 
@@ -135,16 +143,21 @@ public class CompletionUtil {
       }
     }
   }
-
   public static final CompletionData getCompletionDataByElement(PsiElement element, CompletionContext context){
-    final PsiFile file = context.file;
-    ASTNode textContainer = element.getNode();
+    CompletionData wordCompletionData = null;
+    ASTNode textContainer = element != null ? element.getNode() : null;
     while(textContainer != null){
       final IElementType elementType = textContainer.getElementType();
       final TokenSet readableTextContainerElements = elementType.getLanguage().getReadableTextContainerElements();
-      if(readableTextContainerElements.isInSet(elementType) || elementType == ElementType.PLAIN_TEXT) return ourWordCompletionData;
+      if(readableTextContainerElements.isInSet(elementType) || elementType == ElementType.PLAIN_TEXT) wordCompletionData = ourWordCompletionData;
       textContainer = textContainer.getTreeParent();
     }
+    final CompletionData completionDataByElementInner = getCompletionDataByElementInner(element, context);
+    if(wordCompletionData != null) return new CompositeCompletionData(completionDataByElementInner, wordCompletionData);
+    return completionDataByElementInner;
+  }
+  public static final CompletionData getCompletionDataByElementInner(PsiElement element, CompletionContext context){
+    final PsiFile file = context.file;
 
     final CompletionData completionDataByFileType = getCompletionDataByFileType(file.getFileType());
     if (completionDataByFileType != null) return completionDataByFileType;
