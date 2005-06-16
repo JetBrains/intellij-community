@@ -6,6 +6,7 @@ import com.intellij.psi.PsiPlainText;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.codeInsight.TailType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,10 +29,10 @@ public class SyntaxTableCompletionData extends CompletionData{
     variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
     final String[] empty = {};
 
-    variant.addCompletion((String[])mySyntaxTable.getKeywords1().toArray(empty));
-    variant.addCompletion((String[])mySyntaxTable.getKeywords2().toArray(empty));
-    variant.addCompletion((String[])mySyntaxTable.getKeywords3().toArray(empty));
-    variant.addCompletion((String[])mySyntaxTable.getKeywords4().toArray(empty));
+    variant.addCompletion((String[])mySyntaxTable.getKeywords1().toArray(empty), TailType.NONE);
+    variant.addCompletion((String[])mySyntaxTable.getKeywords2().toArray(empty), TailType.NONE);
+    variant.addCompletion((String[])mySyntaxTable.getKeywords3().toArray(empty), TailType.NONE);
+    variant.addCompletion((String[])mySyntaxTable.getKeywords4().toArray(empty), TailType.NONE);
 
     registerVariant(variant);
   }
