@@ -89,11 +89,12 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
     }
 
     private boolean isInSynchronizedContext(PsiReference reference){
-        if(PsiTreeUtil.getParentOfType(reference.getElement(),
+        final PsiElement element = reference.getElement();
+        if(PsiTreeUtil.getParentOfType(element,
                                        PsiSynchronizedStatement.class)!=null)
         {
             return true;
-        }
+        }     
         return false;
     }
 
