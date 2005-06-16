@@ -1,16 +1,11 @@
 package com.intellij.codeInsight.completion;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPlainTextFile;
-import com.intellij.psi.PsiPlainText;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.filters.TrueFilter;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
-
-import java.util.Set;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPlainText;
+import com.intellij.psi.filters.TrueFilter;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.xml.XmlToken;
 
 /**
  * Created by IntelliJ IDEA.
@@ -19,7 +14,7 @@ import java.util.Set;
  * Time: 4:28:39 PM
  * To change this template use File | Settings | File Templates.
  */
-public class SyntaxTableCompletionData{
+public class SyntaxTableCompletionData extends CompletionData{
   private SyntaxTable mySyntaxTable;
 
   public SyntaxTableCompletionData(SyntaxTable _syntaxTable) {
@@ -37,7 +32,6 @@ public class SyntaxTableCompletionData{
     variant.addCompletion((String[])mySyntaxTable.getKeywords2().toArray(empty));
     variant.addCompletion((String[])mySyntaxTable.getKeywords3().toArray(empty));
     variant.addCompletion((String[])mySyntaxTable.getKeywords4().toArray(empty));
-    variant.setInsertHandler(ourWordInsertHandler);
 
     registerVariant(variant);
   }
