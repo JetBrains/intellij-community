@@ -13,6 +13,9 @@ import com.intellij.newCodeFormatting.FormattingModelBuilder;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.xml.XmlBlock;
@@ -72,6 +75,11 @@ public class XMLLanguage extends Language {
 
   public Commenter getCommenter() {
     return new XmlCommenter();
+  }
+
+  public TokenSet getReadableTextContainerElements() {
+    return TokenSet.orSet(super.getReadableTextContainerElements(),
+                          TokenSet.create(XmlElementType.XML_CDATA, XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, XmlTokenType.XML_DATA_CHARACTERS));
   }
 
   public FoldingBuilder getFoldingBuilder() {

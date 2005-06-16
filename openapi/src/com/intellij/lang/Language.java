@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
@@ -100,6 +101,12 @@ public abstract class Language {
 
   public Commenter getCommenter() {
     return null;
+  }
+
+  public TokenSet getReadableTextContainerElements(){
+    final ParserDefinition parserDefinition = getParserDefinition();
+    if(parserDefinition != null) return parserDefinition.getCommentTokens();
+    return TokenSet.EMPTY;
   }
 
   public Annotator getAnnotator() {

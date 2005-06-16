@@ -16,26 +16,26 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.filters.*;
+import com.intellij.psi.filters.getters.AllWordsGetter;
+import com.intellij.psi.filters.position.LeftNeighbour;
+import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.position.TokenTypeFilter;
-import com.intellij.psi.filters.position.LeftNeighbour;
-import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
+import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -68,7 +68,6 @@ public class XmlCompletionData extends CompletionData {
       final CompletionVariant variant = new CompletionVariant(createAttributeValueCompletionFilter());
       variant.includeScopeClass(XmlAttributeValue.class, true);
       variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
-      variant.addCompletion(new XmlAttributeValueGetter());
       variant.setInsertHandler(new XmlAttributeValueInsertHandler());
       registerVariant(variant);
     }
@@ -100,7 +99,7 @@ public class XmlCompletionData extends CompletionData {
     {
       final CompletionVariant variant = new CompletionVariant(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS));
       variant.includeScopeClass(XmlToken.class, true);
-      variant.addCompletion(new WordCompletionData.AllWordsGetter());
+      variant.addCompletion(new AllWordsGetter());
       variant.setInsertHandler(WordCompletionData.ourWordInsertHandler);
       registerVariant(variant);
     }

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.Language;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.jsp.NewJspLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -16,27 +17,28 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.position.SuperParentFilter;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashMap;
-
-import java.util.*;
-
-import org.apache.oro.text.regex.PatternMatcher;
+import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
-import org.apache.oro.text.regex.MalformedPatternException;
+
+import java.util.*;
 
 public class CompletionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionUtil");
@@ -53,7 +55,7 @@ public class CompletionUtil {
   private static final CompletionData ourJavaDocCompletionData = new JavaDocCompletionData();
 
   static {
-    registerCompletionData(StdFileTypes.JSPX,new JspxCompletionData());
+    registerCompletionData(StdFileTypes.JSPX, new JspxCompletionData());
   }
 
   private static HashMap<FileType,CompletionData> completionDatas;
@@ -136,14 +138,12 @@ public class CompletionUtil {
 
   public static final CompletionData getCompletionDataByElement(PsiElement element, CompletionContext context){
     final PsiFile file = context.file;
-    if(element instanceof PsiComment) {
-      return ourWordCompletionData;
-    }
-    if(element instanceof PsiJavaToken) {
-      final PsiJavaToken token = (PsiJavaToken) element;
-      if (token.getTokenType() == JavaTokenType.STRING_LITERAL) {
-        return ourWordCompletionData;
-      }
+    ASTNode textContainer = element.getNode();
+    while(textContainer != null){
+      final IElementType elementType = textContainer.getElementType();
+      final TokenSet readableTextContainerElements = elementType.getLanguage().getReadableTextContainerElements();
+      if(readableTextContainerElements.isInSet(elementType) || elementType == ElementType.PLAIN_TEXT) return ourWordCompletionData;
+      textContainer = textContainer.getTreeParent();
     }
 
     final CompletionData completionDataByFileType = getCompletionDataByFileType(file.getFileType());

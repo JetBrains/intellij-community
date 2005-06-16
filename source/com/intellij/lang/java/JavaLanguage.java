@@ -12,6 +12,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.java.AbstractJavaBlock;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -69,6 +72,12 @@ public class JavaLanguage extends Language {
 
   public FormattingModelBuilder getFormattingModelBuilder() {
     return myFormattingModelBuilder;
+  }
+
+  public TokenSet getReadableTextContainerElements() {
+    return TokenSet.create(JavaTokenType.C_STYLE_COMMENT, JavaTokenType.END_OF_LINE_COMMENT,
+                           JavaDocTokenType.DOC_COMMENT_DATA, JavaDocTokenType.DOC_TAG_VALUE_TOKEN,
+                           JavaTokenType.STRING_LITERAL);
   }
 
   public SurroundDescriptor[] getSurroundDescriptors() {
