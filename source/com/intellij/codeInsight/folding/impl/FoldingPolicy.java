@@ -7,12 +7,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.uiDesigner.compiler.CodeGenerator;
+import com.intellij.xml.util.HtmlUtil;
 
 import java.util.*;
 
@@ -488,6 +490,7 @@ class FoldingPolicy {
   public static PsiElement restoreBySignature(PsiFile file, String signature) {
     int semicolonIndex = signature.indexOf(";");
     PsiElement parent;
+    
     if (semicolonIndex >= 0) {
       String parentSignature = signature.substring(semicolonIndex + 1);
       parent = restoreBySignature(file, parentSignature);
@@ -499,6 +502,7 @@ class FoldingPolicy {
 
     StringTokenizer tokenizer = new StringTokenizer(signature, "#");
     String type = tokenizer.nextToken();
+    
     if (type.equals("imports")) {
       if (!(file instanceof PsiJavaFile)) return null;
       return ((PsiJavaFile) file).getImportList();
@@ -596,7 +600,10 @@ class FoldingPolicy {
 
       if (parent instanceof XmlFile) {
         parent = ((XmlFile) parent).getDocument();
-      }
+        if(file.getFileType() == StdFileTypes.JSP) { //TODO: FoldingBuilder API, psi roots, etc?
+          parent = HtmlUtil.getRealXmlDocument((XmlDocument)parent);
+        }
+      } 
 
       try {
         int index = Integer.parseInt(tokenizer.nextToken());
