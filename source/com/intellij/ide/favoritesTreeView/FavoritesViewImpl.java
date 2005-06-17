@@ -66,9 +66,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
   public void initComponent() {
   }
 
-  public void disposeComponent() {
-    dispose();
-  }
+  public void disposeComponent() {}
 
   public void projectOpened() {
     StartupManager.getInstance(myCurrentProject).registerPostStartupActivity(new Runnable() {
@@ -148,6 +146,7 @@ public class FavoritesViewImpl extends ContentManagerImpl implements ProjectComp
   }
 
   public void projectClosed() {
+    dispose();
     ToolWindowManager.getInstance(myCurrentProject).unregisterToolWindow(ToolWindowId.FAVORITES_VIEW);
   }
 
