@@ -1,5 +1,5 @@
 <idea-plugin version="2">
-  <name>ComparingRerencesInspection</name>
+  <name>Comparing References Inspection</name>
   <description>Inspection for (probably) inapporpriate use of equality relation operation</description>
   <version>1.0</version>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
