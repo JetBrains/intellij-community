@@ -40,6 +40,7 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
@@ -90,7 +91,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
               final String file = new File(sandboxHome).getCanonicalPath() + File.separator + "system" + File.separator + "log" + File.separator +
                                   "idea.log";
               if (new File(file).exists()){
-                prc.addLogFile(file, myShowLogs.isSelected());
+                prc.addLogFile(file, "", myShowLogs.isSelected());
               }
             }
             catch (IOException e1) {
@@ -103,10 +104,10 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   }
 
   private void setShow(PluginRunConfiguration prc, Boolean show){
-    final Map<String, Boolean> logFiles = prc.getLogFiles();
-    for (Iterator<String> iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
-      String s = iterator.next();
-      logFiles.put(s, show);
+    final Map<Pair<String, String>, Boolean> logFiles = prc.getLogFiles();
+    for (Iterator<Pair<String, String >> iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
+      final Pair<String, String> pair = iterator.next();
+      logFiles.put(pair, show);
     }
   }
 
