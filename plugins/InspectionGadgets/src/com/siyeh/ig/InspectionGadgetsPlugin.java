@@ -45,7 +45,9 @@ import com.siyeh.ig.serialization.*;
 import com.siyeh.ig.style.*;
 import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
 import com.siyeh.ig.threading.*;
-import com.siyeh.ig.verbose.*;
+import com.siyeh.ig.verbose.ReplaceAssignmentWithOperatorAssignmentInspection;
+import com.siyeh.ig.verbose.UnnecessaryBlockStatementInspection;
+import com.siyeh.ig.verbose.UnnecessaryLocalVariableInspection;
 import com.siyeh.ig.visibility.*;
 
 import java.io.*;
@@ -79,7 +81,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void createDocumentation(PrintStream out){
-        final Class[] classes = getInspectionClasses();
+        final Class<? extends LocalInspectionTool>[] classes = getInspectionClasses();
         Arrays.sort(classes, new InspectionComparator());
         String currentGroupName = "";
 
@@ -87,7 +89,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         out.println(classes.length + " Inspections");
         out.println(numQuickFixes + " Quick Fixes");
 
-        for(final Class<LocalInspectionTool> aClass : classes){
+        for(final Class<? extends LocalInspectionTool> aClass : classes){
             final String className = aClass.getName();
             try{
                 final LocalInspectionTool inspection =
@@ -115,7 +117,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
 
         out.println();
         out.println("Inspections enabled by default:");
-        for(final Class<LocalInspectionTool> aClass : classes){
+        for(final Class<? extends LocalInspectionTool> aClass : classes){
             final String className = aClass.getName();
             try{
                 final LocalInspectionTool inspection =
@@ -142,7 +144,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
                 descriptionFilesSet.add(descriptionFile1);
             }
         }
-        for(final Class<LocalInspectionTool> aClass : classes){
+        for(final Class<? extends LocalInspectionTool> aClass : classes){
             final String className = aClass.getName();
             final String simpleClassName =
                     className.substring(className.lastIndexOf('.') + 1,
@@ -179,9 +181,9 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         out.println();
     }
 
-    private static int countQuickFixes(Class<LocalInspectionTool>[] classes, PrintStream out){
+    private static int countQuickFixes(Class<? extends LocalInspectionTool>[] classes, PrintStream out){
         int numQuickFixes = 0;
-        for(final Class<LocalInspectionTool> aClass : classes){
+        for(final Class<? extends LocalInspectionTool> aClass : classes){
             final String className = aClass.getName();
             try{
                 final LocalInspectionTool inspection =
@@ -562,8 +564,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(UnnecessaryLocalVariableInspection.class);
         m_inspectionClasses.add(UnnecessaryThisInspection.class);
         m_inspectionClasses.add(UnnecessaryBlockStatementInspection.class);
-        m_inspectionClasses.add(UnnecessaryInterfaceModifierInspection.class);
-        m_inspectionClasses.add(UnnecessaryEnumModifierInspection.class);
+        m_inspectionClasses.add(com.siyeh.ig.verbose.UnnecessaryInterfaceModifierInspection.class);
+        m_inspectionClasses.add(com.siyeh.ig.verbose.UnnecessaryEnumModifierInspection.class);
         m_inspectionClasses.add(UnnecessaryReturnInspection.class);
         m_inspectionClasses.add(UnnecessaryContinueInspection.class);
         m_inspectionClasses.add(UnnecessarySemicolonInspection.class);
@@ -571,7 +573,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(UnnecessaryQualifierForThisInspection.class);
         m_inspectionClasses.add(UnusedLabelInspection.class);
         m_inspectionClasses.add(RedundantFieldInitializationInspection.class);
-        m_inspectionClasses.add(RedundantImplementsInspection.class);
+        m_inspectionClasses.add(com.siyeh.ig.verbose.RedundantImplementsInspection.class);
         m_inspectionClasses.add(ExtendsObjectInspection.class);
         m_inspectionClasses.add(TypeParameterExtendsObjectInspection.class);
         m_inspectionClasses.add(PointlessArithmeticExpressionInspection.class);
@@ -582,8 +584,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(UnnecessaryDefaultInspection.class);
         m_inspectionClasses.add(UnnecessaryBoxingInspection.class);
         m_inspectionClasses.add(UnnecessaryUnboxingInspection.class);
-        m_inspectionClasses.add(UnnecessaryFinalOnParameterInspection.class);
-        m_inspectionClasses.add(UnnecessaryFinalOnLocalVariableInspection.class);
+        m_inspectionClasses.add(com.siyeh.ig.verbose.UnnecessaryFinalOnParameterInspection.class);
+        m_inspectionClasses.add(com.siyeh.ig.verbose.UnnecessaryFinalOnLocalVariableInspection.class);
         m_inspectionClasses.add(ForCanBeForeachInspection.class);
         m_inspectionClasses.add(WhileCanBeForeachInspection.class);
     }
