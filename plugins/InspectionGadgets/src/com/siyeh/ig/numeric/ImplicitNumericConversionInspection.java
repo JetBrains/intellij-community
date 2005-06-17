@@ -41,7 +41,7 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
     }
 
     public String getGroupDisplayName() {
-        return GroupNames.CONFUSING_GROUP_NAME;
+        return GroupNames.NUMERIC_GROUP_NAME;
     }
 
     public JComponent createOptionsPanel() {

@@ -1,14 +1,13 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
-
 
 class VariableAccessVisitor extends PsiRecursiveElementVisitor{
     private final Set<PsiElement> m_synchronizedAccesses = new HashSet<PsiElement>(
@@ -72,30 +71,60 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
     }
 
     private boolean methodIsAlwaysUsedSynchronized(PsiMethod method){
+        return methodIsAlwaysUsedSynchronized(method,
+                                              new HashSet<PsiMethod>(),
+                                              new HashSet<PsiMethod>());
+    }
+
+    private boolean methodIsAlwaysUsedSynchronized(PsiMethod method,
+                                                   Set<PsiMethod> methodsAlwaysSynchronized,
+                                                   Set<PsiMethod> methodsNotAlwaysSynchronized)
+    {
+        if(methodsAlwaysSynchronized.contains(method)){
+            return true;
+        }
+        if(methodsNotAlwaysSynchronized.contains(method)){
+            return false;
+        }
         if(!method.hasModifierProperty(PsiModifier.PRIVATE)){
             return false;
         }
-        final PsiSearchHelper searchHelper = method.getManager().getSearchHelper();
+        final PsiManager manager = method.getManager();
+        final PsiSearchHelper searchHelper = manager.getSearchHelper();
         final SearchScope scope = method.getUseScope();
         final PsiReference[] references = searchHelper
                 .findReferences(method, scope, true);
         for(PsiReference reference : references){
-            if(!isInSynchronizedContext(reference))
-            {
+            if(!isInSynchronizedContext(reference,
+                                        methodsAlwaysSynchronized,
+                                        methodsNotAlwaysSynchronized)){
+                methodsNotAlwaysSynchronized.add(method);
                 return false;
             }
         }
+        methodsAlwaysSynchronized.add(method);
         return true;
     }
 
-    private boolean isInSynchronizedContext(PsiReference reference){
+    private boolean isInSynchronizedContext(PsiReference reference,
+                                            Set<PsiMethod> methodsAlwaysSynchronized,
+                                            Set<PsiMethod> methodsNotAlwaysSynchronized)
+    {
         final PsiElement element = reference.getElement();
         if(PsiTreeUtil.getParentOfType(element,
-                                       PsiSynchronizedStatement.class)!=null)
-        {
+                                       PsiSynchronizedStatement.class) != null){
             return true;
-        }     
-        return false;
+        }
+        final PsiMethod method = PsiTreeUtil
+                .getParentOfType(element, PsiMethod.class);
+        if(method == null){
+            return false;
+        }
+        if(method.hasModifierProperty(PsiModifier.SYNCHRONIZED)){
+            return true;
+        }
+        return methodIsAlwaysUsedSynchronized(method, methodsAlwaysSynchronized,
+                                              methodsNotAlwaysSynchronized);
     }
 
     public void visitClassInitializer(@NotNull PsiClassInitializer initializer){
@@ -106,8 +135,7 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
 
     public void visitField(@NotNull PsiField field){
         m_inInitializer = true;
-        super.visitField(
-                field);    //To change body of overriden methods use Options | File Templates.
+        super.visitField(field);  
         m_inInitializer = false;
     }
 

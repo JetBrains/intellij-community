@@ -79,8 +79,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void createDocumentation(PrintStream out){
-        Arrays.sort(getInspectionClasses(), new InspectionComparator());
         final Class[] classes = getInspectionClasses();
+        Arrays.sort(classes, new InspectionComparator());
         String currentGroupName = "";
 
         final int numQuickFixes = countQuickFixes(classes, out);
@@ -360,7 +360,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         {
             m_inspectionClasses.add(MalformedXPathInspection.class);
         }
-        m_inspectionClasses.add(MalformedXPathInspection.class);
         m_inspectionClasses.add(MismatchedArrayReadWriteInspection.class);
         m_inspectionClasses.add(MismatchedCollectionQueryUpdateInspection.class);
         m_inspectionClasses.add(TextLabelInSwitchStatementInspection.class);

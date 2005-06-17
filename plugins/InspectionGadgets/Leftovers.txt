@@ -13,10 +13,10 @@
     Static initializer which creates an instance before all static variables are initialized
     lock not acquired in try block and freed in finally block
     Read or write on non-buffered stream
+    Duplicate switch branches
 
     Move and restructure categories
     Static import quickfix
-    Fix the "variable accessed in synchronized and unsynchronized contexts"
-       to deal with unsynchronized private methods called only from synchronized contexts
     Telemetry sorting
     Fix the list boxes
+    Fix the inspection sorting
