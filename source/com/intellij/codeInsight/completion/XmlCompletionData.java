@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.MacroFactory;
+import com.intellij.codeInsight.TailType;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -68,6 +69,7 @@ public class XmlCompletionData extends CompletionData {
       final CompletionVariant variant = new CompletionVariant(createAttributeValueCompletionFilter());
       variant.includeScopeClass(XmlAttributeValue.class, true);
       variant.addCompletion(new XmlAttributeValueGetter());
+      variant.addCompletionFilter(TrueFilter.INSTANCE, TailType.NONE);
       variant.setInsertHandler(new XmlAttributeValueInsertHandler());
       registerVariant(variant);
     }
