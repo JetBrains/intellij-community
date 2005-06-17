@@ -18,6 +18,8 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -76,20 +78,26 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     myRemoveButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         TableUtil.stopEditing(myFilesTable);
-        int index = myFilesTable.getSelectedRow();
-        if (0 <= index && index < myModel.getRowCount()) {
-          myModel.removeRow(index);
-          if (index < myModel.getRowCount()) {
-            myFilesTable.setRowSelectionInterval(index, index);
-          }
-          else {
-            if (index > 0) {
-              myFilesTable.setRowSelectionInterval(index - 1, index - 1);
-            }
-          }
+        final int[] selected = myFilesTable.getSelectedRows();
+        if (selected == null || selected.length == 0) return;
+        for (int i = selected.length - 1; i >= 0; i--) {
+          myModel.removeRow(selected[i]);
         }
 
+        int selection = selected[0];
+        if (selection >= myModel.getRowCount()) {
+          selection = myModel.getRowCount() - 1;
+        }
+        if (selection >= 0) {
+          myFilesTable.setRowSelectionInterval(selection, selection);
+        }
         myFilesTable.requestFocus();
+      }
+    });
+    myRemoveButton.setEnabled(false);
+    myFilesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+         myRemoveButton.setEnabled(myFilesTable.getSelectedRows() != null);
       }
     });
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myFilesTable);
@@ -261,11 +269,14 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
           if (dialog.isOK()) {
             final EditLocationDialog.Pair pair = dialog.getPair();
             if (pair != null) {
-              final String name = pair.getName();
+              String name = pair.getName();
               final String location = pair.getLocation();
+              if (name == null || name.length() ==0){
+                name = location;
+              }
               mySelectedPair = Pair.create(location, name);
               JTextField textField = getChildComponent();
-              textField.setText(name != null && name.length() != 0 ? name : location);
+              textField.setText(name);
               textField.requestFocus();
             }
           }
