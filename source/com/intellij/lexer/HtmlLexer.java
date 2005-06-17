@@ -4,6 +4,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.jsp.JspElementType;
+import com.intellij.psi.jsp.el.ELTokenType;
 
 /**
  * Created by IntelliJ IDEA.
@@ -97,6 +98,11 @@ public class HtmlLexer extends BaseHtmlLexer {
         }
       }
     }
+  }
+
+  protected boolean isValidAttributeValueTokenType(final IElementType tokenType) {
+    return super.isValidAttributeValueTokenType(tokenType) ||
+           tokenType == ELTokenType.JSP_EL_CONTENT;
   }
 
   protected HtmlLexer(Lexer _baseLexer, boolean _caseInsensitive) {

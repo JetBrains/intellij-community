@@ -147,11 +147,10 @@ abstract class BaseHtmlLexer extends LexerBase {
 
   protected int skipToTheEndOfTheEmbeddment() {
     int myTokenEnd = baseLexer.getTokenEnd();
+    int lastState = 0;
+    int lastStart = 0;
 
     if (seenTag) {
-      int lastState = 0;
-      int lastStart = 0;
-
       FoundEnd:
       while(true) {
         FoundEndOfTag:
@@ -171,7 +170,7 @@ abstract class BaseHtmlLexer extends LexerBase {
               }
             }
           }
-  
+
           lastState = baseLexer.getState();
           myTokenEnd = baseLexer.getTokenEnd();
           lastStart = baseLexer.getTokenStart();
@@ -206,8 +205,26 @@ abstract class BaseHtmlLexer extends LexerBase {
 
       baseLexer.start(getBuffer(),lastStart,getBufferEnd(),lastState);
       baseLexer.getTokenType();
+    } else if (seenAttribute) {
+      while(true) {
+        if (!isValidAttributeValueTokenType(baseLexer.getTokenType())) break;
+
+        myTokenEnd = baseLexer.getTokenEnd();
+        lastState = baseLexer.getState();
+        lastStart = baseLexer.getTokenStart();
+
+        if (myTokenEnd == getBufferEnd()) break;
+        baseLexer.advance();
+      }
+
+      baseLexer.start(getBuffer(),lastStart,getBufferEnd(),lastState);
+      baseLexer.getTokenType();
     }
     return myTokenEnd;
+  }
+
+  protected boolean isValidAttributeValueTokenType(final IElementType tokenType) {
+    return tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;
   }
 
   public void advance() {
