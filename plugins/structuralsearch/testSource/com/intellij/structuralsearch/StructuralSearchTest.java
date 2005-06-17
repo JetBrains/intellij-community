@@ -542,6 +542,28 @@ public class StructuralSearchTest extends IdeaTestCase {
       2,
       findMatchesCount(s7,s8,true)
     );
+
+    String s9 = "int a[] = new int[] { 1,2,3,4};\n" +
+                "int b[] = { 2,3,4,5 };\n" +
+                "Object[] c = new Object[] { \"\", null};";
+    String s10 = "new '_ []{ '_* }";
+
+    assertEquals(
+      "Find array instatiation",
+      2,
+      findMatchesCount(s9,s10)
+    );
+    
+    String s11 = "class A {\n" +
+                 "  void main(String[] argv);" +
+                 "}";
+    String s12 = "'t:[regex( *Object\\[\\] ) ] 't2";
+
+    assertEquals(
+      "Find array covariant types",
+      1,
+      findMatchesCount(s11,s12)
+    );
   }
 
   private int findMatchesCount(String in, String pattern, boolean filePattern, FileType fileType) {
@@ -2073,6 +2095,16 @@ public class StructuralSearchTest extends IdeaTestCase {
 
     assertEquals("Find annotation members of annotated field class",4,findMatchesCount(s3,s4,false));
     assertEquals("Find annotation fields",3,findMatchesCount(s3,s4_2,false));
+
+    String s5 = "class A {" +
+                "  @NotNull private static Collection<PsiElement> resolveElements(final PsiReference reference, final Project project) {}\n" +
+                "  @NotNull private static Collection resolveElements2(final PsiReference reference, final Project project) {}\n" +
+                "}";
+    String s6 = "class '_c {@NotNull '_rt 'method* ('_pt* '_p*){ '_inst*; } }";
+    String s6_2 = "class '_c {@'_:NotNull '_rt 'method* ('_pt* '_p*){ '_inst*; } }";
+
+    assertEquals("Find annotated methods",2,findMatchesCount(s5,s6));
+    assertEquals("Find annotated methods, 2",2,findMatchesCount(s5,s6_2));
   }
 
   public void testBoxingAndUnboxing() {
