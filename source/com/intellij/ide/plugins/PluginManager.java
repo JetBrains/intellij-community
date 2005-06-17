@@ -23,6 +23,7 @@ import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 import sun.reflect.Reflection;
 
 import javax.swing.*;
@@ -60,7 +61,7 @@ public class PluginManager {
   static String ourMethodName;
 
   private static PluginDescriptor[] ourPlugins;
-  private static Map<String, String> ourPluginClasses;
+  private static Map<String, PluginId> ourPluginClasses;
   private static final String TOOLS_JAR = "tools.jar";
   private static final String EXTENSIONS_DIR = "ext";
 
@@ -69,10 +70,10 @@ public class PluginManager {
   }
 
   public static void main(final String[] args, final String mainClass, final String methodName) {
-    main(args, mainClass, methodName, new ArrayList());
+    main(args, mainClass, methodName, new ArrayList<URL>());
   }
 
-  public static void main(final String[] args, final String mainClass, final String methodName, List classpathElements) {
+  public static void main(final String[] args, final String mainClass, final String methodName, List<URL> classpathElements) {
     ourArguments = args;
     ourMainClass = mainClass;
     ourMethodName = methodName;
@@ -102,22 +103,24 @@ public class PluginManager {
 
     final PluginDescriptor[] pluginDescriptors = loadDescriptors();
 
-    final Map<String, PluginDescriptor> idToDescriptorMap = new HashMap<String, PluginDescriptor>();
-    for (int idx = 0; idx < pluginDescriptors.length; idx++) {
-      final PluginDescriptor descriptor = pluginDescriptors[idx];
-      idToDescriptorMap.put(descriptor.getId(), descriptor);
+    final Map<PluginId, PluginDescriptor> idToDescriptorMap = new HashMap<PluginId, PluginDescriptor>();
+    for (final PluginDescriptor descriptor : pluginDescriptors) {
+      idToDescriptorMap.put(descriptor.getPluginId(), descriptor);
     }
     // sort descriptors according to plugin dependencies
     Arrays.sort(pluginDescriptors, getPluginDescriptorComparator(idToDescriptorMap));
 
     final Class callerClass = Reflection.getCallerClass(1);
     final ClassLoader parentLoader = callerClass.getClassLoader();
-    for (int idx = 0; idx < pluginDescriptors.length; idx++) {
-      final PluginDescriptor pluginDescriptor = pluginDescriptors[idx];
-      final List classPath = pluginDescriptor.getClassPath();
-      final String[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
-      final ClassLoader[] parentLoaders = dependentPluginIds.length > 0? getParentLoaders(idToDescriptorMap, dependentPluginIds): new ClassLoader[] {parentLoader};
-      final IdeaClassLoader pluginClassLoader = createPluginClassLoader((File[])classPath.toArray(new File[classPath.size()]), pluginDescriptor.getName(), parentLoaders, pluginDescriptor.getPath());
+    for (final PluginDescriptor pluginDescriptor : pluginDescriptors) {
+      final List<File> classPath = pluginDescriptor.getClassPath();
+      final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
+      final ClassLoader[] parentLoaders = dependentPluginIds.length > 0
+                                          ? getParentLoaders(idToDescriptorMap, dependentPluginIds)
+                                          : new ClassLoader[]{parentLoader};
+      final IdeaClassLoader pluginClassLoader = createPluginClassLoader(classPath.toArray(new File[classPath.size()]),
+                                                                        pluginDescriptor.getPluginId(), parentLoaders,
+                                                                        pluginDescriptor.getPath());
       pluginDescriptor.setLoader(pluginClassLoader);
       pluginDescriptor.registerExtensions();
     }
@@ -168,42 +171,41 @@ public class PluginManager {
   }
 
 
-  private static Comparator<PluginDescriptor> getPluginDescriptorComparator(Map<String, PluginDescriptor> idToDescriptorMap) {
-    final Graph<String> graph = createPluginIdGraph(idToDescriptorMap);
-    final DFSTBuilder<String> builder = new DFSTBuilder<String>(graph);
+  private static Comparator<PluginDescriptor> getPluginDescriptorComparator(Map<PluginId,PluginDescriptor> idToDescriptorMap) {
+    final Graph<PluginId> graph = createPluginIdGraph(idToDescriptorMap);
+    final DFSTBuilder<PluginId> builder = new DFSTBuilder<PluginId>(graph);
     /*
     if (!builder.isAcyclic()) {
       final Pair<String,String> circularDependency = builder.getCircularDependency();
       throw new Exception("Cyclic dependencies between plugins are not allowed: \"" + circularDependency.getFirst() + "\" and \"" + circularDependency.getSecond() + "");
     }
     */
-    final Comparator<String> idComparator = builder.comparator();
+    final Comparator<PluginId> idComparator = builder.comparator();
     return new Comparator<PluginDescriptor>() {
       public int compare(PluginDescriptor o1, PluginDescriptor o2) {
-        return idComparator.compare(o1.getId(), o2.getId());
+        return idComparator.compare(o1.getPluginId(), o2.getPluginId());
       }
     };
   }
 
-  private static Graph<String> createPluginIdGraph(final Map<String, PluginDescriptor> idToDescriptorMap) {
-    final String[] ids = idToDescriptorMap.keySet().toArray(new String[idToDescriptorMap.size()]);
-    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<String>() {
-      public Collection<String> getNodes() {
+  private static Graph<PluginId> createPluginIdGraph(final Map<PluginId,PluginDescriptor> idToDescriptorMap) {
+    final PluginId[] ids = idToDescriptorMap.keySet().toArray(new PluginId[idToDescriptorMap.size()]);
+    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<PluginId>() {
+      public Collection<PluginId> getNodes() {
         return Arrays.asList(ids);
       }
 
-      public Iterator<String> getIn(String pluginId) {
+      public Iterator<PluginId> getIn(PluginId pluginId) {
         final PluginDescriptor descriptor = idToDescriptorMap.get(pluginId);
         return Arrays.asList(descriptor.getDependentPluginIds()).iterator();
       }
     }));
   }
 
-  private static ClassLoader[] getParentLoaders(Map<String, PluginDescriptor> idToDescriptorMap, String[] pluginIds) {
+  private static ClassLoader[] getParentLoaders(Map<PluginId,PluginDescriptor> idToDescriptorMap, PluginId[] pluginIds) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return new ClassLoader[0];
     final List<ClassLoader> classLoaders = new ArrayList<ClassLoader>();
-    for (int idx = 0; idx < pluginIds.length; idx++) {
-      final String id = pluginIds[idx];
+    for (final PluginId id : pluginIds) {
       PluginDescriptor pluginDescriptor = idToDescriptorMap.get(id);
       if (pluginDescriptor == null) {
         getLogger().assertTrue(false, "Plugin not found: " + id);
@@ -278,17 +280,13 @@ public class PluginManager {
   }
 
   private static String filterBadPlugins(List<PluginDescriptor> result) {
-    final Map<String, PluginDescriptor> idToDescriptorMap = new HashMap<String, PluginDescriptor>();
+    final Map<PluginId, PluginDescriptor> idToDescriptorMap = new HashMap<PluginId, PluginDescriptor>();
     final StringBuffer message = new StringBuffer();
     boolean pluginsWithoutIdFound = false;
-    for (Iterator it = result.iterator(); it.hasNext();) {
-      final PluginDescriptor descriptor = (PluginDescriptor)it.next();
-      String id = descriptor.getId();
-      if (id == null || id.length() == 0) {
-        pluginsWithoutIdFound = true;
-        it.remove();
-      }
-      else if (idToDescriptorMap.containsKey(id)) {
+    for (Iterator<PluginDescriptor> it = result.iterator(); it.hasNext();) {
+      final PluginDescriptor descriptor = it.next();
+      final PluginId id = descriptor.getPluginId();
+      if (idToDescriptorMap.containsKey(id)) {
         if (message.length() > 0) {
           message.append("\n");
         }
@@ -300,17 +298,16 @@ public class PluginManager {
         idToDescriptorMap.put(id, descriptor);
       }
     }
-    for (Iterator it = result.iterator(); it.hasNext();) {
-      final PluginDescriptor pluginDescriptor = (PluginDescriptor)it.next();
-      final String[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
-      for (int idx = 0; idx < dependentPluginIds.length; idx++) {
-        final String dependentPluginId = dependentPluginIds[idx];
+    for (Iterator<PluginDescriptor> it = result.iterator(); it.hasNext();) {
+      final PluginDescriptor pluginDescriptor = it.next();
+      final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
+      for (final PluginId dependentPluginId : dependentPluginIds) {
         if (!idToDescriptorMap.containsKey(dependentPluginId)) {
           if (message.length() > 0) {
             message.append("\n");
           }
           message.append("Plugin \"");
-          message.append(pluginDescriptor.getId());
+          message.append(pluginDescriptor.getPluginId());
           message.append("\" was not loaded: required plugin \"");
           message.append(dependentPluginId);
           message.append("\" not found.");
@@ -341,9 +338,9 @@ public class PluginManager {
   private static void loadDescriptors(String pluginsPath, List<PluginDescriptor> result) {
     final File pluginsHome = new File(pluginsPath);
     final File[] files = pluginsHome.listFiles();
-    if (files!= null && files.length > 0) {
-      for (int i = 0; i < files.length; i++) {
-        final PluginDescriptor descriptor = loadDescriptor(files[i]);
+    if (files!= null) {
+      for (File file : files) {
+        final PluginDescriptor descriptor = loadDescriptor(file);
         if (descriptor != null && !result.contains(descriptor)) {
           result.add(descriptor);
         }
@@ -376,8 +373,7 @@ public class PluginManager {
         if (files == null || files.length == 0) {
           return null;
         }
-        for (int i = 0; i < files.length; i++) {
-          final File f = files[i];
+        for (final File f : files) {
           if (!f.isFile()) {
             continue;
           }
@@ -429,7 +425,7 @@ public class PluginManager {
     return descriptor;
   }
 
-  protected void bootstrap(List classpathElements) {
+  protected void bootstrap(List<URL> classpathElements) {
     IdeaClassLoader newClassLoader = initClassloader(classpathElements);
     try {
       final Class mainClass = Class.forName(getClass().getName(), true, newClassLoader);
@@ -460,7 +456,7 @@ public class PluginManager {
     }
   }
 
-  public IdeaClassLoader initClassloader(final List classpathElements) {
+  public IdeaClassLoader initClassloader(final List<URL> classpathElements) {
     PathManager.loadProperties();
 
     try {
@@ -502,15 +498,15 @@ public class PluginManager {
     return newClassLoader;
   }
 
-  private static IdeaClassLoader createPluginClassLoader(final File[] classPath, final String pluginName, final ClassLoader[] parentLoaders, File pluginRoot) {
+  private static IdeaClassLoader createPluginClassLoader(final File[] classPath, final PluginId pluginId, final ClassLoader[] parentLoaders, File pluginRoot) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     try {
-      final List urls = new ArrayList(classPath.length);
-      for (int idx = 0; idx < classPath.length; idx++) {
-        final File file = classPath[idx].getCanonicalFile(); // it is critical not to have "." and ".." in classpath elements
+      final List<URL> urls = new ArrayList<URL>(classPath.length);
+      for (File aClassPath : classPath) {
+        final File file = aClassPath.getCanonicalFile(); // it is critical not to have "." and ".." in classpath elements
         urls.add(file.toURL());
       }
-      return new PluginClassLoader(urls, parentLoaders, pluginName, pluginRoot);
+      return new PluginClassLoader(urls, parentLoaders, pluginId, pluginRoot);
     }
     catch (MalformedURLException e) {
       e.printStackTrace();
@@ -522,7 +518,7 @@ public class PluginManager {
   }
 
 
-  private void addParentClasspath(List aClasspathElements) throws MalformedURLException {
+  private void addParentClasspath(List<URL> aClasspathElements) throws MalformedURLException {
     final ClassLoader loader = getClass().getClassLoader();
     if (loader instanceof URLClassLoader) {
       URLClassLoader urlClassLoader = (URLClassLoader)loader;
@@ -561,12 +557,12 @@ public class PluginManager {
     }
   }
 
-  private void addIDEALibraries(List classpathElements) {
+  private void addIDEALibraries(List<URL> classpathElements) {
     final String ideaHomePath = PathManager.getHomePath();
     addAllFromLibFolder(ideaHomePath, classpathElements);
   }
 
-  private static void addJreLibraries(final String aIdeaHomePath, List classPath) {
+  private static void addJreLibraries(final String aIdeaHomePath, List<URL> classPath) {
     try {
       final String libPath = aIdeaHomePath + File.separator + "jre" + File.separator + "lib" + File.separator;
       File toolsFile = new File(libPath + TOOLS_JAR);
@@ -592,9 +588,9 @@ public class PluginManager {
     }
   }
 
-  public static void addAllFromLibFolder(final String aFolderPath, List classPath) {
+  public static void addAllFromLibFolder(final String aFolderPath, List<URL> classPath) {
     try {
-      final Class aClass = PluginManager.class;
+      final Class<PluginManager> aClass = PluginManager.class;
       final String selfRoot = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
 
       final URL selfRootUrl = new File(selfRoot).getAbsoluteFile().toURL();
@@ -611,11 +607,10 @@ public class PluginManager {
     }
   }
 
-  private static void addLibraries(List classPath, File fromDir, final URL selfRootUrl) throws MalformedURLException {
+  private static void addLibraries(List<URL> classPath, File fromDir, final URL selfRootUrl) throws MalformedURLException {
     final File[] files = fromDir.listFiles();
     if (files != null) {
-      for (int idx = 0; idx < files.length; idx++) {
-        final File file = files[idx];
+      for (final File file : files) {
         if (!isJarOrZip(file)) {
           continue;
         }
@@ -636,7 +631,7 @@ public class PluginManager {
     return name.endsWith(".jar") || name.endsWith(".zip");
   }
 
-  private void addAdditionalClassPath(List classPath) {
+  private void addAdditionalClassPath(List<URL> classPath) {
     try {
       final StringTokenizer tokenizer = new StringTokenizer(System.getProperty("idea.additional.classpath", ""), File.pathSeparator, false);
       while (tokenizer.hasMoreTokens()) {
@@ -653,33 +648,33 @@ public class PluginManager {
     return !"true".equalsIgnoreCase(System.getProperty("idea.plugins.load", "true"));
   }
 
-  public static boolean isPluginInstalled (String name) {
-    return (getPlugin(name) != null);
+  public static boolean isPluginInstalled (PluginId id) {
+    return (getPlugin(id) != null);
   }
 
-  public static PluginDescriptor getPlugin (String name) {
+  public static PluginDescriptor getPlugin (PluginId id) {
     final PluginDescriptor[] plugins = getPlugins();
-    for (int i = 0; i < plugins.length; i++) {
-      final PluginDescriptor plugin = plugins[i];
-      if (Comparing.equal(name, plugin.getName())) {
+    for (final PluginDescriptor plugin : plugins) {
+      if (Comparing.equal(id, plugin.getPluginId())) {
         return plugin;
       }
     }
     return null;
   }
 
-  public static void addPluginClass (String className, String pluginName) {
+  public static void addPluginClass (String className, PluginId pluginId) {
     if (ourPluginClasses == null) {
-      ourPluginClasses = new HashMap<String, String> ();
+      ourPluginClasses = new HashMap<String, PluginId> ();
     }
-    ourPluginClasses.put(className, pluginName);
+    ourPluginClasses.put(className, pluginId);
   }
 
   public static boolean isPluginClass (String className) {
     return getPluginByClassName(className) != null;
   }
 
-  public static String getPluginByClassName (String className) {
+  @Nullable
+  public static PluginId getPluginByClassName (String className) {
     return ourPluginClasses != null? ourPluginClasses.get(className) : null;
   }
 

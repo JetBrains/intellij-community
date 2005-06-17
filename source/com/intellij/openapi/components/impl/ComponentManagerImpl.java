@@ -14,6 +14,7 @@ import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
@@ -384,7 +385,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       ComponentDescriptor descriptor = componentDescriptors[i];
       final Map<String, String> options = descriptor.getOptionsMap();
       if (isComponentSuitable(options)) {
-        ClassLoader loader = findLoader(descriptor.getPluginName());
+        ClassLoader loader = findLoader(descriptor.getPluginId());
         try {
           final String implementation = headless ? descriptor.getHeadlessImplementation() : descriptor.getImplementation();
           if (!StringUtil.isEmpty(implementation)) {
@@ -396,18 +397,18 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
           }
         }
         catch (Exception e) {
-          LOG.error(new PluginException(e, PluginManager.getPlugin(descriptor.getPluginName())));
+          LOG.error(new PluginException(e, PluginManager.getPlugin(descriptor.getPluginId())));
         }
         catch (Error e) {
-          LOG.error(new PluginException(e, PluginManager.getPlugin(descriptor.getPluginName())));
+          LOG.error(new PluginException(e, PluginManager.getPlugin(descriptor.getPluginId())));
         }
       }
     }
 
   }
 
-  private ClassLoader findLoader(final String pluginName) {
-    ClassLoader loader = PluginManager.getPlugin(pluginName).getLoader();
+  private ClassLoader findLoader(final PluginId id) {
+    ClassLoader loader = PluginManager.getPlugin(id).getLoader();
     if (loader == null) {
       loader = getClass().getClassLoader();
     }

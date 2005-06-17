@@ -8,28 +8,32 @@ package com.intellij.openapi.extensions;
  * @author Alexander Kireyev
  */
 public class DefaultPluginDescriptor implements PluginDescriptor {
-  private String myPluginName;
+  private PluginId myPluginId;
   private ClassLoader myPluginClassLoader;
 
-  public DefaultPluginDescriptor(final String pluginName) {
-    myPluginName = pluginName;
+  public DefaultPluginDescriptor(String pluginId) {
+    myPluginId = PluginId.getId(pluginId);
   }
 
-  public DefaultPluginDescriptor(final String pluginName, final ClassLoader pluginClassLoader) {
-    myPluginName = pluginName;
+  public DefaultPluginDescriptor(final PluginId pluginId) {
+    myPluginId = pluginId;
+  }
+
+  public DefaultPluginDescriptor(final PluginId pluginId, final ClassLoader pluginClassLoader) {
+    myPluginId = pluginId;
     myPluginClassLoader = pluginClassLoader;
   }
 
-  public String getPluginName() {
-    return myPluginName;
+  public PluginId getPluginId() {
+    return myPluginId;
   }
 
   public ClassLoader getPluginClassLoader() {
     return myPluginClassLoader;
   }
 
-  public void setPluginName(final String pluginName) {
-    myPluginName = pluginName;
+  public void setPluginId(final PluginId pluginId) {
+    myPluginId = pluginId;
   }
 
   public void setPluginClassLoader(final ClassLoader pluginClassLoader) {

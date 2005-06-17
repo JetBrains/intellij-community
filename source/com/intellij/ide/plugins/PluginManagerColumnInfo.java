@@ -1,8 +1,7 @@
 package com.intellij.ide.plugins;
 
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.SortableColumnModel;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
 
 import javax.swing.*;
@@ -57,7 +56,7 @@ class PluginManagerColumnInfo extends ColumnInfo {
         case COLUMN_NAME:
           return plugin.getName();
         case COLUMN_INSTALLED_VERSION:
-          PluginDescriptor existing = PluginManager.getPlugin(plugin.getName());
+          PluginDescriptor existing = PluginManager.getPlugin(plugin.getId());
           if (existing == null)
             return "n/a";
           else
@@ -162,8 +161,8 @@ class PluginManagerColumnInfo extends ColumnInfo {
               PluginNode p1 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o1 : o2);
               PluginNode p2 = (PluginNode)(mySortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING ? (PluginNode)o2 : o1);
 
-              PluginDescriptor pd1 = PluginManager.getPlugin(p1.getName());
-              PluginDescriptor pd2 = PluginManager.getPlugin(p2.getName());
+              PluginDescriptor pd1 = PluginManager.getPlugin(p1.getId());
+              PluginDescriptor pd2 = PluginManager.getPlugin(p2.getId());
 
               if (pd1 == null && pd2 == null)
                 return 0;
@@ -300,7 +299,7 @@ class PluginManagerColumnInfo extends ColumnInfo {
     else if (node.getStatus() == PluginNode.STATUS_CART)
       return PluginNode.STATUS_CART;
 
-    PluginDescriptor existing = PluginManager.getPlugin(node.getName());
+    PluginDescriptor existing = PluginManager.getPlugin(node.getId());
 
     if (existing == null)
       return PluginNode.STATUS_MISSING;

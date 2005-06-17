@@ -1,10 +1,12 @@
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.extensions.PluginId;
+
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -36,6 +38,7 @@ public class PluginNode implements TreeNode {
 
   private CategoryNode parent;
 
+  private PluginId id;
   private String name;
   private String version;
   private String vendor;
@@ -48,7 +51,7 @@ public class PluginNode implements TreeNode {
   private String vendorUrl;
   private String url;
   private String date;
-  private List<String> depends;
+  private List<PluginId> depends;
 
   private int status = STATUS_UNKNOWN;
   private boolean loaded = false;
@@ -56,8 +59,8 @@ public class PluginNode implements TreeNode {
   public PluginNode() {
   }
 
-  public PluginNode(String name) {
-    this.name = name;
+  public PluginNode(PluginId id) {
+    this.id = id;
   }
 
   public String getChangeNotes() { return changeNotes; }
@@ -122,7 +125,14 @@ public class PluginNode implements TreeNode {
   }
 
   public void setName(String name) {
+    if (id == null) {
+      id = PluginId.getId(name);
+    }
     this.name = name;
+  }
+
+  public void setId(String id) {
+    this.id = PluginId.getId(id);
   }
 
   /**
@@ -260,22 +270,29 @@ public class PluginNode implements TreeNode {
   public boolean equals(Object object) {
     if (object instanceof PluginNode) {
       return name.equals(((PluginNode)object).getName());
-    } else
+    }
+    else {
       return false;
+    }
   }
 
-  public List<String> getDepends() {
+  public List<PluginId> getDepends() {
     return depends;
   }
 
-  public void setDepends(List<String> depends) {
+  public void setDepends(List<PluginId> depends) {
     this.depends = depends;
   }
 
-  public void addDepends (String depends) {
-    if (this.depends == null)
-      this.depends = new ArrayList<String> ();
+  public void addDepends (PluginId depends) {
+    if (this.depends == null) {
+      this.depends = new ArrayList<PluginId>();
+    }
 
     this.depends.add(depends);
+  }
+
+  public PluginId getId() {
+    return id;
   }
 }

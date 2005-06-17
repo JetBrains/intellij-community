@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.extensions.PluginId;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -25,7 +26,7 @@ public abstract class ActionManagerEx extends ActionManager{
    * @param element XML element for <code>actions</code> tag.
    * @param loader
    */
-  public abstract void processActionsElement(Element element, ClassLoader loader, String pluginName);
+  public abstract void processActionsElement(Element element, ClassLoader loader, PluginId pluginId);
 
   public abstract void addAnActionListener(AnActionListener listener);
   public abstract void removeAnActionListener(AnActionListener listener);
@@ -68,5 +69,5 @@ public abstract class ActionManagerEx extends ActionManager{
     return result;
   }
 
-  public abstract String [] getPluginActions(String pluginName);
+  public abstract String [] getPluginActions(PluginId pluginId);
 }

@@ -20,10 +20,12 @@ import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -143,8 +145,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private void updateBlameLabel() {
     final AbstractMessage message = getMessageAt(myIndex);
     if (message != null) {
-      final String pluginName = findPluginName(message.getThrowable());
-      myBlameLabel.setText("Blame " + (pluginName == null ? "IDEA core" : pluginName));
+      final PluginId pluginId = findPluginId(message.getThrowable());
+      myBlameLabel.setText("Blame " + (pluginId == null ? "IDEA core" : PluginManager.getPlugin(pluginId).getName()));
     }
     else {
       myBlameLabel.setText("");
@@ -316,10 +318,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myDetailsPane.setText("");
   }
 
-  public static String findPluginName(Throwable t) {
+  @Nullable
+  public static PluginId findPluginId(Throwable t) {
     StackTraceElement[] elements = t.getStackTrace();
-    for (int i = 0; i < elements.length; i++) {
-      StackTraceElement element = elements[i];
+    for (StackTraceElement element : elements) {
       String className = element.getClassName();
       if (PluginManager.isPluginClass(className)) {
         return PluginManager.getPluginByClassName(className);
@@ -354,7 +356,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     }
     else if (t instanceof PluginException) {
-      return ((PluginException)t).getDescriptor().getName();
+      return ((PluginException)t).getDescriptor().getPluginId();
     }
 
     return null;
@@ -469,14 +471,13 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private ErrorReportSubmitter getSubmitter(final AbstractMessage logMessage) {
-    final String pluginName = findPluginName(logMessage.getThrowable());
-    final Object[] reporters = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.ERROR_HANDLER)
-        .getExtensions();
+    final PluginId pluginId = findPluginId(logMessage.getThrowable());
+    final Object[] reporters = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.ERROR_HANDLER).getExtensions();
     ErrorReportSubmitter submitter = null;
-    for (int i = 0; i < reporters.length; i++) {
-      ErrorReportSubmitter reporter = (ErrorReportSubmitter)reporters[i];
+    for (Object reporter1 : reporters) {
+      ErrorReportSubmitter reporter = (ErrorReportSubmitter)reporter1;
       final PluginDescriptor descriptor = reporter.getPluginDescriptor();
-      if (pluginName == null && descriptor == null || descriptor != null && Comparing.equal(pluginName, descriptor.getPluginName())) {
+      if (pluginId == null && descriptor == null || descriptor != null && Comparing.equal(pluginId, descriptor.getPluginId())) {
         submitter = reporter;
       }
     }

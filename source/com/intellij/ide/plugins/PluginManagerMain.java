@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -752,7 +753,7 @@ public class PluginManagerMain {
         }
 
         public void actionPerformed(AnActionEvent e) {
-          String pluginName = null;
+          PluginId pluginId = null;
 
           if (tabs.getSelectedIndex() == INSTALLED_TAB) {
             PluginDescriptor pluginDescriptor = installedPluginTable.getSelectedObject();
@@ -760,15 +761,15 @@ public class PluginManagerMain {
               if (Messages.showYesNoDialog(main, "Do you really want to uninstall plugin \"" +
                                                       pluginDescriptor.getName() + "\"?", "Plugin Uninstall",
                                                 Messages.getQuestionIcon()) == 0) {
-                pluginName = pluginDescriptor.getName();
+                pluginId = pluginDescriptor.getPluginId();
                 pluginDescriptor.setDeleted(true);
               }
             }
           }
 
-          if (pluginName != null) {
+          if (pluginId != null) {
             try {
-              PluginInstaller.prepareToUninstall(pluginName);
+              PluginInstaller.prepareToUninstall(pluginId);
 
               requireShutdown = true;
 
@@ -776,7 +777,7 @@ public class PluginManagerMain {
 
               /*
               Messages.showMessageDialog(main,
-                                            "Plugin \'" + pluginName +
+                                            "Plugin \'" + pluginId +
                                             "\' is uninstalled but still running. You will " +
                                             "need to restart IDEA to deactivate it.",
                                             "Plugin Uninstalled",

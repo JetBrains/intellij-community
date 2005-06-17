@@ -5,12 +5,13 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 
 /**
  * @author Alexander Kireyev
  */
 class UndefinedPluginDescriptor implements PluginDescriptor {
-  public String getPluginName() {
+  public PluginId getPluginId() {
     throw new UnsupportedOperationException("This method should not be called on this object");
   }
 

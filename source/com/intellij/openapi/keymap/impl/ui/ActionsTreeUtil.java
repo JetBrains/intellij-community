@@ -73,7 +73,7 @@ public class ActionsTreeUtil {
     for (int i = 0; i < plugins.length; i++) {
       PluginDescriptor plugin = plugins[i];
       Group pluginGroup = new Group(plugin.getName(), null, null);
-      final String[] pluginActions = managerEx.getPluginActions(plugin.getId());
+      final String[] pluginActions = managerEx.getPluginActions(plugin.getPluginId());
       if (pluginActions == null || pluginActions.length == 0){
         continue;
       }

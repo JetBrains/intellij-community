@@ -8,6 +8,6 @@ package com.intellij.openapi.extensions;
  * @author Alexander Kireyev
  */
 public interface PluginDescriptor {
-  String getPluginName();
+  PluginId getPluginId();
   ClassLoader getPluginClassLoader();
 }

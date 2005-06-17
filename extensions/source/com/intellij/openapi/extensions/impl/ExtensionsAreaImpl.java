@@ -9,8 +9,8 @@ import org.apache.commons.collections.MultiHashMap;
 import org.apache.commons.collections.MultiMap;
 import org.jdom.Element;
 import org.jdom.Namespace;
-import org.jdom.output.XMLOutputter;
 import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
@@ -76,12 +76,12 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   public void registerExtensionPoint(String pluginName, Element extensionPointElement) {
-    registerExtensionPoint(new DefaultPluginDescriptor(pluginName), extensionPointElement);
+    registerExtensionPoint(new DefaultPluginDescriptor(PluginId.getId(pluginName)), extensionPointElement);
   }
 
   public void registerExtensionPoint(PluginDescriptor pluginDescriptor, Element extensionPointElement) {
-    assert pluginDescriptor.getPluginName() != null;
-    String epName = pluginDescriptor.getPluginName() + '.' + extensionPointElement.getAttributeValue("name");
+    assert pluginDescriptor.getPluginId() != null;
+    String epName = pluginDescriptor.getPluginId().getIdString() + '.' + extensionPointElement.getAttributeValue("name");
     String className = extensionPointElement.getAttributeValue("beanClass");
     if (className == null) {
       className = extensionPointElement.getAttributeValue("interface");
@@ -93,11 +93,11 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   public void registerExtension(final String pluginName, final Element extensionElement) {
-    registerExtension(new DefaultPluginDescriptor(pluginName), extensionElement);
+    registerExtension(new DefaultPluginDescriptor(PluginId.getId(pluginName)), extensionElement);
   }
 
   public void registerExtension(final PluginDescriptor pluginDescriptor, final Element extensionElement) {
-    final String pluginName = pluginDescriptor.getPluginName();
+    final PluginId pluginId = pluginDescriptor.getPluginId();
 
     String epName = extractEPName(extensionElement);
     ExtensionComponentAdapter adapter;
@@ -118,7 +118,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
         else {
           implementationClass = Class.forName(implClass, true, pluginDescriptor.getPluginClassLoader());
         }
-        adapter = new ExtensionComponentAdapter(implementationClass, extensionElement, getPluginContainer(pluginName), pluginDescriptor);
+        adapter = new ExtensionComponentAdapter(implementationClass, extensionElement, getPluginContainer(pluginId.getIdString()), pluginDescriptor);
       }
       catch (ClassNotFoundException e) {
         myLogger.warn("Extension implementation class not found: " + implClass);
@@ -128,10 +128,10 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
     else {
       final ExtensionPoint extensionPoint = getExtensionPoint(epName);
-      adapter = new ExtensionComponentAdapter(extensionPoint.getExtensionClass(), extensionElement, getPluginContainer(pluginName), pluginDescriptor);
+      adapter = new ExtensionComponentAdapter(extensionPoint.getExtensionClass(), extensionElement, getPluginContainer(pluginId.getIdString()), pluginDescriptor);
     }
     myExtensionElement2extension.put(extensionElement, adapter);
-    internalGetPluginContainer(pluginName).registerComponent(adapter);
+    internalGetPluginContainer(pluginId.getIdString()).registerComponent(adapter);
     getExtensionPointImpl(epName).registerExtensionAdapter(adapter);
   }
 
@@ -375,8 +375,8 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   public void removeAllComponents(final Set extensionAdapters) {
     for (Iterator iterator = extensionAdapters.iterator(); iterator.hasNext();) {
       ExtensionComponentAdapter componentAdapter = (ExtensionComponentAdapter)iterator.next();
-      final String pluginName = componentAdapter.getPluginName();
-      internalGetPluginContainer(pluginName).unregisterComponent(componentAdapter.getComponentKey());
+      final String pluginId = componentAdapter.getPluginName().getIdString();
+      internalGetPluginContainer(pluginId).unregisterComponent(componentAdapter.getComponentKey());
     }
   }
 

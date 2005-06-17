@@ -139,7 +139,7 @@ public class IdeaApplication {
 
       final Element e = plugin.getActionsDescriptionElement();
       if (e != null) {
-        ActionManagerEx.getInstanceEx().processActionsElement(e, plugin.getLoader(), plugin.getId());
+        ActionManagerEx.getInstanceEx().processActionsElement(e, plugin.getLoader(), plugin.getPluginId());
       }
     }
   }

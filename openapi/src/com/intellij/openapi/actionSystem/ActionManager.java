@@ -5,6 +5,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.PluginId;
 
 /**
  * A manager for actions. Used to register and unregister actions, also
@@ -80,11 +81,10 @@ public abstract class ActionManager {
      * Registers the specified action with the specified id.
      *
      * @param actionId Id to associate with the action
-     * @param action Action to register
-     * @param pluginName to provide parent's plugin name
+   * @param action Action to register
    */
 
-  public abstract void registerAction(String actionId, AnAction action, String pluginName);
+  public abstract void registerAction(String actionId, AnAction action, PluginId pluginId);
 
 
   /**

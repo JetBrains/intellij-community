@@ -4,14 +4,11 @@
  */
 package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.extensions.LoadingOrder;
-import com.intellij.openapi.extensions.PluginAware;
-import com.intellij.openapi.extensions.ReaderConfigurator;
-import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.*;
 import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.io.xml.XppDriver;
 import com.thoughtworks.xstream.core.DefaultClassMapper;
 import com.thoughtworks.xstream.core.util.CompositeClassLoader;
+import com.thoughtworks.xstream.io.xml.XppDriver;
 import org.jdom.Element;
 import org.picocontainer.PicoContainer;
 import org.picocontainer.PicoInitializationException;
@@ -88,7 +85,7 @@ public class ExtensionComponentAdapter extends ConstructorInjectionComponentAdap
     return getExtensionElement();
   }
 
-  public String getPluginName() {
-    return myPluginDescriptor.getPluginName();
+  public PluginId getPluginName() {
+    return myPluginDescriptor.getPluginId();
   }
 }

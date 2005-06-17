@@ -1,11 +1,9 @@
 package com.intellij.ide.plugins;
 
-import org.xml.sax.SAXException;
+import com.intellij.openapi.extensions.PluginId;
 import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-
-import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -18,6 +16,7 @@ class RepositoryContentHandler extends DefaultHandler {
   public static final String CATEGORY = "category";
   public static final String IDEA_PLUGIN = "idea-plugin";
   public static final String NAME = "name";
+  public static final String ID = "id";
   public static final String DESCRIPTION = "description";
   public static final String VERSION = "version";
   public static final String VENDOR = "vendor";
@@ -69,20 +68,30 @@ class RepositoryContentHandler extends DefaultHandler {
   public void endElement(String namespaceURI, String localName,
                          String qName)
     throws SAXException {
-    if (qName.equals(NAME))
+    if (qName.equals(ID)) {
+      currentPlugin.setId(currentValue);
+    }
+    else if (qName.equals(NAME)) {
       currentPlugin.setName(currentValue);
-    else if (qName.equals(DESCRIPTION))
+    }
+    else if (qName.equals(DESCRIPTION)) {
       currentPlugin.setDescription(currentValue);
-    else if (qName.equals(VERSION))
+    }
+    else if (qName.equals(VERSION)) {
       currentPlugin.setVersion(currentValue);
+    }
     else if (qName.equals(VENDOR)) {
       currentPlugin.setVendor(currentValue);
-    } else if (qName.equals(DEPENDS)) {
-      currentPlugin.addDepends(currentValue);
-    } else if (qName.equals(CHNAGE_NOTES))
+    }
+    else if (qName.equals(DEPENDS)) {
+      currentPlugin.addDepends(PluginId.getId(currentValue));
+    }
+    else if (qName.equals(CHNAGE_NOTES)) {
       currentPlugin.setChangeNotes(currentValue);
-    else if (qName.equals(CATEGORY))
-      currentCategory = (CategoryNode) currentCategory.getParent();
+    }
+    else if (qName.equals(CATEGORY)) {
+      currentCategory = (CategoryNode)currentCategory.getParent();
+    }
     currentValue = "";
   }
 

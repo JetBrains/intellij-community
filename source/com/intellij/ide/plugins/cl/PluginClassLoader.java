@@ -6,6 +6,7 @@
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.extensions.PluginId;
 import sun.misc.CompoundEnumeration;
 
 import java.io.File;
@@ -17,13 +18,13 @@ import java.util.List;
 
 public class PluginClassLoader extends IdeaClassLoader{
   private final ClassLoader[] myParents;
-  private final String myPluginName;
+  private final PluginId myPluginId;
   private final File myLibDirectory;
 
-  public PluginClassLoader(List urls, ClassLoader[] parents, String pluginName, File pluginRoot) {
+  public PluginClassLoader(List urls, ClassLoader[] parents, PluginId pluginId, File pluginRoot) {
     super(urls, null);
     myParents = parents;
-    myPluginName = pluginName;
+    myPluginId = pluginId;
 
     final File file = new File(pluginRoot, "lib");
     myLibDirectory = file.exists()? file : null;
@@ -36,7 +37,7 @@ public class PluginClassLoader extends IdeaClassLoader{
     if (c == null) {
       try {
         c = findClass(name);
-        PluginManager.addPluginClass(c.getName(), myPluginName);
+        PluginManager.addPluginClass(c.getName(), myPluginId);
       }
       catch (ClassNotFoundException e) {
         for (int idx = 0; idx < myParents.length; idx++) {

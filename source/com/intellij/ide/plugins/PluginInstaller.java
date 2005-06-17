@@ -3,16 +3,17 @@ package com.intellij.ide.plugins;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.io.ZipUtil;
 
 import javax.swing.*;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -57,14 +58,14 @@ public class PluginInstaller {
 
       List <PluginNode> depends = new ArrayList <PluginNode> ();
       for (int i = 0; i < pluginNode.getDepends().size(); i++) {
-        String depPluginName = pluginNode.getDepends().get(i);
+        PluginId depPluginId = pluginNode.getDepends().get(i);
 
-        if (PluginManager.isPluginInstalled(depPluginName)) {
+        if (PluginManager.isPluginInstalled(depPluginId)) {
         //  ignore installed plugins
           continue;
         }
 
-        PluginNode depPlugin = new PluginNode(depPluginName);
+        PluginNode depPlugin = new PluginNode(depPluginId);
         depPlugin.setSize("-1");
 
         depends.add(depPlugin);
@@ -80,9 +81,9 @@ public class PluginInstaller {
     }
 
     synchronized (lock) {
-      if (PluginManager.isPluginInstalled(pluginNode.getName())) {
+      if (PluginManager.isPluginInstalled(pluginNode.getId())) {
         // add command to delete the 'action script' file
-        PluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginNode.getName());
+        PluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginNode.getId());
 
         StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath());
         StartupActionScriptManager.addActionCommand(deleteOld);
@@ -131,11 +132,11 @@ public class PluginInstaller {
     return prepareToInstall(pluginNode, false, 0, 0);
   }
 
-  public static void prepareToUninstall (String pluginName) throws IOException {
+  public static void prepareToUninstall (PluginId pluginId) throws IOException {
     synchronized (lock) {
-      if (PluginManager.isPluginInstalled(pluginName)) {
+      if (PluginManager.isPluginInstalled(pluginId)) {
         // add command to delete the 'action script' file
-        PluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginName);
+        PluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
 
         StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath());
         StartupActionScriptManager.addActionCommand(deleteOld);
