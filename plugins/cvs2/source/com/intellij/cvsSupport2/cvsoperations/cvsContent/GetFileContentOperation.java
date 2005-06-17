@@ -151,7 +151,19 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
   public void messageSent(String message, boolean error, boolean tagged) {
     if (!error) {
       if (myContent == null) myContent = new StringBuffer();
-      myContent.append(message + "\n");
+      if (tagged) {
+        final int separatorIndex = message.indexOf(" ");
+        if (separatorIndex >= 0) {
+          String tagType = message.substring(0, separatorIndex);
+          if ("text".equals(tagType)) {
+            message = message.substring(separatorIndex + 1);
+            myContent.append(message + "\n");
+          }
+        }
+      } else {
+        myContent.append(message + "\n");
+      }
+
     } else if (message.startsWith("VERS:")) {
       final String version = message.substring(5).trim();
       myRevision = version;
