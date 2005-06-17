@@ -45,7 +45,7 @@ public class ConstantConditionalExpressionInspection
         assert thenExpression != null;
         assert elseExpression != null;
 
-        if (isFalse(condition) && isTrue(elseExpression)) {
+        if (isTrue(condition)) {
             return thenExpression.getText();
         } else {
             return elseExpression.getText();
