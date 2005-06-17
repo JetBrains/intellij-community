@@ -54,7 +54,7 @@ public final class CvsRootParser {
       skipTrailingRepositorySlash(result);
     }
     else {
-      if (suffix.contains("@") || suffix.contains(":")){
+      if (suffix.indexOf("@") >= 0 || suffix.indexOf(":") >= 0){
         Matcher matcher = ourPattern.matcher(suffix);
 
         if (matcher.matches()) {
