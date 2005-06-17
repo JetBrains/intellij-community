@@ -1058,7 +1058,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final ArrayList<PsiLiteralExpression> results = new ArrayList<PsiLiteralExpression>();
     PsiElementProcessorEx processor = new PsiElementProcessorEx() {
       public boolean execute(PsiElement element, int offsetInElement) {
-        if (element instanceof PsiLiteralExpression && element.findReferenceAt(offsetInElement) == null) {
+        if (element instanceof PsiLiteralExpression) {
           results.add((PsiLiteralExpression)element);
         }
         return true;
