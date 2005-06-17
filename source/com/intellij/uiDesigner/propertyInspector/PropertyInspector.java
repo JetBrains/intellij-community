@@ -70,7 +70,7 @@ public final class PropertyInspector extends JPanel{
     editor.addComponentSelectionListener(new MyComponentSelectionListener());
     synchWithTree(false);
 
-    // Install light buld
+    // Install light bulb
     myQuickFixManager = new QuickFixManagerImpl(editor, myInspectorTable);
   }
 

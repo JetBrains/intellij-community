@@ -67,7 +67,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     // Install advanced tooltips
     TreeToolTipHandler.install(this);
 
-    // Install light buld
+    // Install light bulb
     myQuickFixManager = new QuickFixManagerImpl(editor, this);
 
     // Popup menu

@@ -33,10 +33,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Collection;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * @author cdr
@@ -61,7 +58,7 @@ public class BuildJarActionDialog extends DialogWrapper {
 
     setupControls();
 
-    setTitle("Buld Jars");
+    setTitle("Build Jars");
     init();
   }
 
@@ -72,6 +69,11 @@ public class BuildJarActionDialog extends DialogWrapper {
       if (module.getModuleType().isJ2EE()) continue;
       result.add(module);
     }
+    Collections.sort(result, new Comparator<Module>() {
+      public int compare(final Module o1, final Module o2) {
+        return o1.getName().compareToIgnoreCase(o2.getName());
+      }
+    });
     return result;
 
   }
