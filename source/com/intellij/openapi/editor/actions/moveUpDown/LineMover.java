@@ -66,12 +66,13 @@ class LineMover implements Mover {
       return Pair.create(parent, parent);
     }
     // find nearset children that are parents of elements
-    while (element1.getParent() != parent) {
+    while (element1 != null && element1.getParent() != parent) {
       element1 = element1.getParent();
     }
-    while (element2.getParent() != parent) {
+    while (element2 != null && element2.getParent() != parent) {
       element2 = element2.getParent();
     }
+    if (element1 == null || element2 == null) return null;
     return Pair.create(element1, element2);
   }
 }

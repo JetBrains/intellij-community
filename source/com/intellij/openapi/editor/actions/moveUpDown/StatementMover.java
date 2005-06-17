@@ -161,6 +161,7 @@ class StatementMover extends LineMover {
     if (psiRange == null) return null;
     final PsiElement parent = PsiTreeUtil.findCommonParent(psiRange.getFirst(), psiRange.getSecond());
     Pair<PsiElement, PsiElement> elementRange = getElementRange(parent, psiRange.getFirst(), psiRange.getSecond());
+    if (elementRange == null) return null;
     return new LineRange(editor.offsetToLogicalPosition(elementRange.getFirst().getTextOffset()).line,
                      editor.offsetToLogicalPosition(elementRange.getSecond().getTextRange().getEndOffset()).line);
   }
