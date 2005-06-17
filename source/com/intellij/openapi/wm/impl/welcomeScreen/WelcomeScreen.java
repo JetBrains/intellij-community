@@ -223,8 +223,8 @@ public class WelcomeScreen {
     //Create the list of installed plugins
     PluginDescriptor[] myInstalledPlugins = PluginManager.getPlugins();
     if (myInstalledPlugins == null || myInstalledPlugins.length == 0) {
-      addListItemToPlugins(installedPluginsPanel, "<html><i>No plugins currently installed.</i></html>", null, null, null, null);
-      addListItemToPlugins(embeddedPluginsPanel, "<html><i>All bundled plugins are uninstalled.</i></html>", null, null, null, null);
+      addListItemToPlugins(installedPluginsPanel, "<i>No plugins currently installed.</i>", null, null, null, null);
+      addListItemToPlugins(embeddedPluginsPanel, "<i>All bundled plugins were uninstalled.</i>", null, null, null, null);
     }
     else {
       final Comparator<PluginDescriptor> pluginsComparator = new Comparator<PluginDescriptor>() {
@@ -233,16 +233,28 @@ public class WelcomeScreen {
         }
       };
       Arrays.sort(myInstalledPlugins, pluginsComparator);
+
+      int embeddedPlugins = 0;
+      int installedPlugins = 0;
+
       for (int i = 0; i < myInstalledPlugins.length; i++) {
         PluginDescriptor plugin = myInstalledPlugins[i];
         if (JET_BRAINS.equalsIgnoreCase(plugin.getVendor()) || INTELLIJ.equalsIgnoreCase(plugin.getVendor()) ) {
+          embeddedPlugins++;
           addListItemToPlugins(embeddedPluginsPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(),
                                plugin.getPluginClassLoader(), plugin.getUrl());
         }
         else {
+          installedPlugins++;
           addListItemToPlugins(installedPluginsPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(),
                                plugin.getPluginClassLoader(), plugin.getUrl());
         }
+      }
+      if (embeddedPlugins == 0) {
+        addListItemToPlugins(embeddedPluginsPanel, "<i>All bundled plugins were uninstalled.</i>", null, null, null, null);
+      }
+      if (installedPlugins == 0) {
+        addListItemToPlugins(installedPluginsPanel, "<i>No plugins currently installed.</i>", null, null, null, null);
       }
     }
 
@@ -571,7 +583,7 @@ public class WelcomeScreen {
 
     String modifiedString = string.trim();
     if (StringUtil.isEmpty(modifiedString)) {
-      return "<html>Not specified.</html>";
+      return "<html>Not specified</html>";
     }
     Rectangle2D r = font.getStringBounds(string, new FontRenderContext(new AffineTransform(), isAntiAliased, false));
 
