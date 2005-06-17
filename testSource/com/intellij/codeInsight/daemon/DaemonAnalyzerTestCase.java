@@ -12,6 +12,9 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.impl.cache.CacheManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,6 +43,8 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     myFile.getText(); //to load text
+    //to initialize caches
+    myPsiManager.getCacheManager().getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(myProject));
     VirtualFileFilter javaFilesFilter = new VirtualFileFilter() {
       public boolean accept(VirtualFile file) {
         FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
