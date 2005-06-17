@@ -26,7 +26,7 @@ public class AssignmentToCatchBlockParameterInspection
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.CONFUSING_GROUP_NAME;
+        return GroupNames.ASSIGNMENT_GROUP_NAME;
     }
 
     public String buildErrorString(PsiElement location){
