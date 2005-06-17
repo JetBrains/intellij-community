@@ -118,7 +118,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   private void cleanupUI() {
-    JLayeredPane layeredPane;
+    JLayeredPane layeredPane = null;
     try {
       // Return focus back to the previous focused component if we need to do it and
       // previous focused componen is showing.
@@ -133,15 +133,21 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
         myPreviouslyFocusedComponent.requestFocus();
       }
 
-      layeredPane = myTextFieldPanel.getRootPane().getLayeredPane();
-      layeredPane.remove(myListScrollPane);
-      layeredPane.remove(myTextFieldPanel);
+      final JRootPane rootPane = myTextFieldPanel.getRootPane();
+      if (rootPane != null) {
+        layeredPane = rootPane.getLayeredPane();
+        layeredPane.remove(myListScrollPane);
+        layeredPane.remove(myTextFieldPanel);
+      }
     }
     finally {
       LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
     }
-    layeredPane.validate();
-    layeredPane.repaint();
+    
+    if (layeredPane != null) {
+      layeredPane.validate();
+      layeredPane.repaint();
+    }
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model) {
