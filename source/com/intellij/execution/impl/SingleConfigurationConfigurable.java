@@ -1,8 +1,8 @@
 package com.intellij.execution.impl;
 
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -197,8 +197,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
       myWarningLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
 
-      myComponentPlace.setLayout(new BorderLayout(0, 0));
-      myComponentPlace.add(getEditorComponent(), BorderLayout.CENTER);
+      myComponentPlace.setLayout(new GridBagLayout());
+      myComponentPlace.add(getEditorComponent(), new GridBagConstraints(0,0,1,1,1.0,1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
+      myComponentPlace.doLayout();
       myFixButton.setIcon(IconLoader.getIcon("/actions/quickfixBulb.png"));
       updateWarning();
       myFixButton.addActionListener(new ActionListener() {

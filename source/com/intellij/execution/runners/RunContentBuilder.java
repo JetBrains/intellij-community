@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 
 import javax.swing.*;
 import java.awt.*;
@@ -95,13 +96,13 @@ public class RunContentBuilder {
             ((JTabbedPane)myComponent).addTab("Console", console.getComponent());
             if (myRunProfile instanceof RunConfigurationBase){
               RunConfigurationBase base = (RunConfigurationBase)myRunProfile;
-              final Map<String, Boolean> logFiles = base.getLogFiles();
-              for (Iterator<String > iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
-                String  file = iterator.next();
-                if (logFiles.get(file).booleanValue()){
-                  final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(file));
+              final Map<Pair<String,String>,Boolean> logFiles = base.getLogFiles();
+              for (Iterator<Pair<String,String>> iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
+                Pair<String,String>  pair = iterator.next();
+                if (logFiles.get(pair).booleanValue()){
+                  final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(pair.first));
                   myDisposeables.add(logTab);
-                  ((JTabbedPane)myComponent).addTab("Log: " + file, logTab); //todo
+                  ((JTabbedPane)myComponent).addTab("Log: " + pair.second, logTab); //todo
                 }
               }
             }

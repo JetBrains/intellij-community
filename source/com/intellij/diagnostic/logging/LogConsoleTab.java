@@ -23,7 +23,7 @@ public class LogConsoleTab extends JPanel implements Disposable{
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
   private ReaderThread myReaderThread;
 
-  private static final long PROCESS_IDLE_TIMEOUT = 10;
+  private static final long PROCESS_IDLE_TIMEOUT = 200;
   public LogConsoleTab(Project project, File file) {
     super(new BorderLayout());
     myProject = project;
@@ -50,8 +50,8 @@ public class LogConsoleTab extends JPanel implements Disposable{
     return this;
   }
 
-  private void addMessage(int text){
-    myProcessHandler.notifyTextAvailable(String.valueOf ((char)text), ProcessOutputTypes.STDOUT);
+  private void addMessage(String text){
+    myProcessHandler.notifyTextAvailable(text + "\n", ProcessOutputTypes.STDOUT);
   }
 
   private static class LightProcessHandler extends ProcessHandler {
@@ -75,11 +75,11 @@ public class LogConsoleTab extends JPanel implements Disposable{
   private static final Logger LOG = Logger.getInstance("com.intellij.diagnostic.logging.LogConsoleTab");
 
   private class ReaderThread extends Thread{
-    private FileInputStream myFileStream;
+    private BufferedReader myFileStream;
     private boolean myRunning = true;
     public ReaderThread(File file) throws FileNotFoundException {
       super("Reader Thread");
-      myFileStream = new FileInputStream(file);
+      myFileStream = new BufferedReader(new FileReader(file));
       try {
         myFileStream.skip(file.length());
       }
@@ -91,9 +91,8 @@ public class LogConsoleTab extends JPanel implements Disposable{
     public void run() {
       while (myRunning){
         try {
-          final int length = myFileStream.available();
-          for (int i = 0; i < length; i++) {
-            addMessage(myFileStream.read());
+          if (myFileStream.ready()){
+            addMessage(myFileStream.readLine());
           }
           synchronized (this) {
             wait(PROCESS_IDLE_TIMEOUT);

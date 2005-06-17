@@ -34,6 +34,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ActionToolbarEx;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
@@ -49,7 +50,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.HashMap;
 
 /*
  * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
@@ -237,13 +237,13 @@ public class DebuggerSessionTab {
     if (myConfiguration instanceof RunConfigurationBase && !(myConfiguration instanceof JUnitConfiguration)){
       clearLogContents();
       RunConfigurationBase base = (RunConfigurationBase)myConfiguration;
-      final Map<String, Boolean> logFiles = base.getLogFiles();
-      for (Iterator<String > iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
-        String  file = iterator.next();
-        if (logFiles.get(file).booleanValue()){
-          final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(file));
+      final Map<Pair<String,String>,Boolean> logFiles = base.getLogFiles();
+      for (Iterator<Pair<String,String>> iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
+        Pair<String,String>  pair = iterator.next();
+        if (logFiles.get(pair).booleanValue()){
+          final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(pair.first));
           myLogTabs.add(logTab);
-          Content logContent = PeerFactory.getInstance().getContentFactory().createContent(logTab.getComponent(), "Log: " + file, false);
+          Content logContent = PeerFactory.getInstance().getContentFactory().createContent(logTab.getComponent(), "Log: " + pair.second, false);
           //todo icons
           logContent.putUserData(CONTENT_KIND, LOG_CONTENTS);
           logContents.add(logContent);

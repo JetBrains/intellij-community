@@ -109,8 +109,8 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
 
     manager.clearAllResources();
     for (int i = 0; i < myPairs.size(); i++) {
-      Pair pair = (Pair)myPairs.get(i);
-      manager.addResource(pair.myString1, pair.myString2.replace('\\', '/'));
+      EditLocationDialog.Pair pair = (EditLocationDialog.Pair)myPairs.get(i);
+      manager.addResource(pair.myName, pair.myLocation.replace('\\', '/'));
     }
 
     for (int i = 0; i < myIgnoredUrls.size(); i++) {
@@ -126,7 +126,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
     String[] urls = manager.getAvailableUrls();
     for (String url : urls) {
       String loc = manager.getResourceLocation(url);
-      myPairs.add(new Pair(url, loc));
+      myPairs.add(new EditLocationDialog.Pair(url, loc));
     }
 
     Collections.sort(myPairs);
@@ -163,7 +163,8 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
 
   private Object editExtLocation(Object o) {
     EditLocationDialog dialog = new EditLocationDialog(null, true);
-    dialog.init((Pair)o);
+    final EditLocationDialog.Pair pair = (EditLocationDialog.Pair)o;
+    dialog.init(pair.myName, pair.myLocation);
     dialog.show();
     if (!dialog.isOK()) return null;
     setModified(true);
@@ -175,16 +176,16 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
     dialog.show();
     if (!dialog.isOK()) return null;
     setModified(true);
-    return dialog.getPair().myString1;
+    return dialog.getPair().myName;
   }
 
   private Object editIgnoreLocation(Object o) {
     EditLocationDialog dialog = new EditLocationDialog(null, false);
-    dialog.init(new Pair(o.toString(), o.toString()));
+    dialog.init(o.toString(), o.toString());
     dialog.show();
     if (!dialog.isOK()) return null;
     setModified(true);
-    return dialog.getPair().myString1;
+    return dialog.getPair().myName;
   }
 
 
@@ -198,20 +199,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
       final String loc = value.toString().replace('\\', '/');
       setForeground(LocalFileSystem.getInstance().findFileByPath(loc) != null ? Color.black : new Color(210, 0, 0));
       return this;
-    }
-  }
-
-  public static class Pair implements Comparable {
-    String myString1;
-    String myString2;
-
-    public Pair(String string1, String string2) {
-      myString1 = string1;
-      myString2 = string2;
-    }
-
-    public int compareTo(Object o) {
-      return myString1.compareTo(((Pair)o).myString1);
     }
   }
 
@@ -239,12 +226,12 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
     }
 
     public Object getField(Object o, int columnIndex) {
-      final Pair pair = (Pair)o;
+      final EditLocationDialog.Pair pair = (EditLocationDialog.Pair)o;
       switch (columnIndex) {
         case 0:
-          return pair.myString1;
+          return pair.myName;
         case 1:
-          return pair.myString2;
+          return pair.myLocation;
       }
 
       return "";

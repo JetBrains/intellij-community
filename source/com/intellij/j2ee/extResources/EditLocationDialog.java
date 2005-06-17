@@ -22,10 +22,27 @@ public class EditLocationDialog extends DialogWrapper {
   private Project myProject;
   private boolean myShowPath;
 
+  private String myTitle;
+  private String myName;
+  private String myLocation;
+
   public EditLocationDialog(Project project, boolean showPath) {
     super(project, true);
     myProject = project;
     myShowPath = showPath;
+    myTitle = "External Resource";
+    myName = "URI:";
+    myLocation = "Path:";
+    init();
+  }
+
+  public EditLocationDialog(Project project, boolean showPath, String title, String name, String location) {
+    super(project, true);
+    myProject = project;
+    myShowPath = showPath;
+    myTitle = title;
+    myName = name;
+    myLocation = location;
     init();
   }
 
@@ -33,7 +50,7 @@ public class EditLocationDialog extends DialogWrapper {
     JPanel panel = new JPanel(new GridBagLayout());
 
     panel.add(
-        new JLabel("URI:"),
+        new JLabel(myName),
         new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 3, 5), 0, 0)
     );
     panel.add(
@@ -45,7 +62,7 @@ public class EditLocationDialog extends DialogWrapper {
 
   if (myShowPath) {
       panel.add(
-          new JLabel("Path:"),
+          new JLabel(myLocation),
           new GridBagConstraints(0, 2, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 3, 5), 0, 0)
       );
       panel.add(
@@ -62,7 +79,7 @@ public class EditLocationDialog extends DialogWrapper {
     myBtnBrowseLocalPath.addActionListener(
           new ActionListener() {
             public void actionPerformed(ActionEvent ignored) {
-              FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false);
+              FileChooserDescriptor descriptor = getChooserDescriptor();
               VirtualFile[] files = FileChooser.chooseFiles(myProject, descriptor);
               if (files.length != 0) {
                 myTfPath.setText(files[0].getPath().replace('/', File.separatorChar));
@@ -81,14 +98,18 @@ public class EditLocationDialog extends DialogWrapper {
     return myTfUrl;
   }
 
-  public ExternalResourceConfigurable.Pair getPair() {
+  public Pair getPair() {
     String path = myTfPath.getText().trim();
     String url = myTfUrl.getText().trim();
-    return new ExternalResourceConfigurable.Pair(url, path);
+    return new Pair(url, path);
+  }
+
+  protected FileChooserDescriptor getChooserDescriptor(){
+    return new FileChooserDescriptor(true, true, false, false, false, false);
   }
 
   protected void init() {
-    setTitle("External Resource");
+    setTitle(myTitle);
     myTfUrl = new JTextField();
     myTfPath = new JTextField();
     myBtnBrowseLocalPath = new FixedSizeButton(myTfPath);
@@ -98,8 +119,30 @@ public class EditLocationDialog extends DialogWrapper {
   /**
    * Initializes editor with the passed data.
    */
-  public void init(ExternalResourceConfigurable.Pair pair) {
-    myTfUrl.setText(pair.myString1);
-    myTfPath.setText(pair.myString2);
+  public void init(String name, String location) {
+    myTfUrl.setText(name);
+    myTfPath.setText(location);
+  }
+
+  public static class Pair implements Comparable {
+    String myName;
+    String myLocation;
+
+    public Pair(String name, String location) {
+      myName = name;
+      myLocation = location;
+    }
+
+    public int compareTo(Object o) {
+      return myName.compareTo(((Pair)o).myName);
+    }
+
+    public String getName() {
+      return myName;
+    }
+
+    public String getLocation(){
+      return myLocation;
+    }
   }
 }

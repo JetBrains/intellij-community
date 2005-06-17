@@ -25,7 +25,7 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
 
   public ApplicationConfigurable2(final Project project) {
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
-    myLogConfigurations = new LogConfigurationPanel(project);
+    myLogConfigurations = new LogConfigurationPanel();
     myLogsPanel.setLayout(new BorderLayout());
     myLogsPanel.add(myLogConfigurations.getLoggerComponent(), BorderLayout.CENTER);
     ClassBrowser.createApplicationClassBrowser(project, myModuleSelector).setField(getMainClassField());
@@ -34,14 +34,14 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
   public void applyEditorTo(final ApplicationConfiguration configuration) throws ConfigurationException {
     myCommonJavaParameters.applyTo(configuration);
     myModuleSelector.applyTo(configuration);
-    myLogConfigurations.saveTo(configuration);
+    myLogConfigurations.applyTo(configuration);
     configuration.MAIN_CLASS_NAME = getMainClassField().getText();
   }
 
   public void resetEditorFrom(final ApplicationConfiguration configuration) {
     myCommonJavaParameters.reset(configuration);
     myModuleSelector.reset(configuration);
-    myLogConfigurations.restoreFrom(configuration);
+    myLogConfigurations.resetFrom(configuration);
     getMainClassField().setText(configuration.MAIN_CLASS_NAME);
   }
 
