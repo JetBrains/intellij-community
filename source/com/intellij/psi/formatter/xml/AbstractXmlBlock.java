@@ -135,7 +135,12 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
         if (!containsWhiteSpacesOnly(element)) {
           subBlocks.add(createChildBlock(element, null, null, Formatter.getInstance().getNoneIndent()));
         }
+        int nextOffset = element.getTextRange().getEndOffset();
         element = element.getTreeNext();
+        if (element == null) {
+          element = child.getPsi().getContainingFile()
+            .getPsiRoots()[0].getNode().findLeafElementAt(nextOffset);          
+        }
       }
       return new SyntheticBlock(subBlocks, this, indent, myXmlFormattingPolicy, getFormatter().createNormalIndent());
     } else {

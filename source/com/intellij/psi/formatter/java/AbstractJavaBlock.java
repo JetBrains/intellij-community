@@ -710,7 +710,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   protected abstract void setReservedWrap(final Wrap reservedWrap);
 
   protected static ASTNode getTreeNode(final Block child2) {
-    if (child2 instanceof AbstractBlock) {
+    if (child2 instanceof JavaBlock) {
       return ((JavaBlock)child2).getFirstTreeNode();
     } else if (child2 instanceof LeafBlock) {
       return ((LeafBlock)child2).getTreeNode();

@@ -49,6 +49,19 @@ public class CodeEditUtil {
 
     ASTNode lastChild = last != null ? last.getTreeNext() : null;
 
+
+    if (Formatter.getInstance().isActive()) {
+      parent.addChildren(first, lastChild, anchorBefore);
+      return (TreeElement)first;
+    } else {
+      return addChildrenAndAdjustWhiteSpaces(first, lastChild, anchorBefore, parent);
+    }
+  }
+
+  private static TreeElement addChildrenAndAdjustWhiteSpaces(ASTNode first,
+                                                             final ASTNode lastChild,
+                                                             final ASTNode anchorBefore,
+                                                             final CompositeElement parent) {
     final ArrayList<PsiElement> dirtyElements = new ArrayList<PsiElement>();
     final List<ASTNode> treePrev;
     try {
@@ -196,11 +209,21 @@ public class CodeEditUtil {
 
   public static void removeChildren(CompositeElement parent, ASTNode first, ASTNode last) {
     checkAllWhiteSpaces(parent);
-    ASTNode lastChild = last == null ? null : last.getTreeNext();
+    if (Formatter.getInstance().isActive()) {
+      parent.removeRange(first, findLastChild(last));
+    } else {
+      removeChildrenAndAdjustWhiteSpaces(first, last, parent);
+    }
+
+    checkAllWhiteSpaces(parent);
+  }
+
+  private static void removeChildrenAndAdjustWhiteSpaces(final ASTNode first, final ASTNode last, final CompositeElement parent) {
+    ASTNode lastChild = findLastChild(last);
     final ASTNode prevElement = TreeUtil.prevLeaf(first);
     final ASTNode nextElement = findElementAfter(last == null ? parent : last, false);
     final ArrayList<PsiElement> dirtyElements = new ArrayList<PsiElement>();
-    if (nextElement != null) {      
+    if (nextElement != null) {
       saveIndents(nextElement, dirtyElements);
     }
 
@@ -244,8 +267,10 @@ public class CodeEditUtil {
     finally {
       clearIndentInfo(dirtyElements);
     }
+  }
 
-    checkAllWhiteSpaces(parent);
+  private static ASTNode findLastChild(final ASTNode last) {
+    return last == null ? null : last.getTreeNext();
   }
 
   private static void adjustSpacePositions(final ASTNode nextElement,
@@ -572,6 +597,16 @@ public class CodeEditUtil {
 
   public static ASTNode replaceChild(CompositeElement parent, ASTNode oldChild, ASTNode newChild) {
     checkAllWhiteSpaces(parent);
+
+    if (Formatter.getInstance().isActive()) {
+      parent.replaceChild(oldChild, newChild);
+      return newChild;
+    } else {
+      return replaceAndAdjustWhiteSpaces(oldChild, newChild, parent);
+    }
+  }
+
+  private static ASTNode replaceAndAdjustWhiteSpaces(final ASTNode oldChild, final ASTNode newChild, final CompositeElement parent) {
     final ASTNode elementAfter = findElementAfter(oldChild, true);
 
     boolean changeFirstWS = newChild.textContains('\n') || oldChild.textContains('\n');
@@ -583,7 +618,7 @@ public class CodeEditUtil {
     }
 
     Collection<PsiElement> dirtyElements = new ArrayList<PsiElement>();
-    
+
     if (changeFirstWS) {
       saveIndents(newChild, dirtyElements);
     }

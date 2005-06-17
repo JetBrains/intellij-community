@@ -54,6 +54,7 @@ import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -245,8 +246,12 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   private PsiFile getContainingFileByTree(final PsiElement changeScope) {
     // there could be pseudo phisical trees (JSPX/JSP/etc.) which should not translate
     // any changes to document and should not pass any PSI events
-    final PsiFile containingFile = (PsiFile)TreeUtil.getFileElement((TreeElement)changeScope.getNode()).getPsi();
-    return containingFile;
+    LOG.assertTrue(changeScope != null);
+    final FileElement fileElement = TreeUtil.getFileElement((TreeElement)changeScope.getNode());
+    if (fileElement == null) {
+      LOG.assertTrue(false);
+    }
+    return (PsiFile)fileElement.getPsi();
   }
 
   private void sendPsiBeforeEvent(final PsiElement scope) {

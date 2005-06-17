@@ -47,11 +47,12 @@ public class PsiBasedFormattingModel implements FormattingModel {
     return replaceWithPSI(textRange, blockLength, whiteSpace);
   }
 
-  private int replaceWithPSI(final TextRange textRange, int blockLength, final String whiteSpace)
-    {
+  private int replaceWithPSI(final TextRange textRange, int blockLength, final String whiteSpace) {
     final int offset = textRange.getEndOffset();
     final ASTNode leafElement = findElementAt(offset);
+
       if (leafElement != null) {
+        LOG.assertTrue(leafElement.getPsi().isValid());
         final int oldElementLength = leafElement.getTextRange().getLength();
         if (leafElement.getTextRange().getStartOffset() < textRange.getStartOffset()) {
           final int newElementLength = new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, getSpaceCount(whiteSpace))
@@ -130,7 +131,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
   private ASTNode findElementAt(final int offset) {
     final PsiElement[] psiRoots = myASTNode.getPsi().getContainingFile().getPsiRoots();
-    for (int i = 0; i < psiRoots.length; i++) {
+    for (int i = psiRoots.length -1; i >= 0; i--) {
       PsiElement psiRoot = psiRoots[i];
       final ASTNode found = psiRoot.getNode().findLeafElementAt(offset);
       if (found != null) {

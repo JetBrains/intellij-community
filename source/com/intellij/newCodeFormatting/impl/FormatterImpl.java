@@ -13,6 +13,8 @@ import com.intellij.util.text.CharArrayUtil;
 public class FormatterImpl extends Formatter implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.newCodeFormatting.impl.FormatterImpl");
 
+  private int myIsActive = 0;
+
   public Alignment createAlignment() {
     return new AlignmentImpl(AlignmentImpl.Type.NORMAL);
   }
@@ -61,7 +63,13 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
   public void format(FormattingModel model, CodeStyleSettings settings,
                      CodeStyleSettings.IndentOptions indentOptions,
                      TextRange affectedRange) throws IncorrectOperationException {
-    new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRange).format(model);
+    myIsActive++;
+    try {
+      new FormatProcessor(model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRange).format(model);
+    } finally {
+      myIsActive--;
+    }
+
   }
 
   public void formatWithoutModifications(FormattingDocumentModel model,
@@ -69,7 +77,13 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
                                          CodeStyleSettings settings,
                                          CodeStyleSettings.IndentOptions indentOptions,
                                          TextRange affectedRange) throws IncorrectOperationException {
-    new FormatProcessor(model, rootBlock, settings, indentOptions, affectedRange).formatWithoutRealModifications();
+    myIsActive++;
+    try {
+      new FormatProcessor(model, rootBlock, settings, indentOptions, affectedRange).formatWithoutRealModifications();
+    } finally {
+      myIsActive--;
+    }
+
   }
 
   public IndentInfo getWhiteSpaceBefore(final FormattingDocumentModel model,
@@ -77,18 +91,24 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
                                         final CodeStyleSettings settings,
                                         final CodeStyleSettings.IndentOptions indentOptions,
                                         final TextRange affectedRange, final boolean mayChangeLineFeeds) {
-    final FormatProcessor processor = new FormatProcessor(model, block, settings, indentOptions, affectedRange);
-    final LeafBlockWrapper blockBefore = processor.getBlockBefore(affectedRange.getStartOffset());
-    LOG.assertTrue(blockBefore != null);
-    WhiteSpace whiteSpace = blockBefore.getWhiteSpace();
-    LOG.assertTrue(whiteSpace != null);
-    if (!mayChangeLineFeeds) {
-      whiteSpace.setLineFeedsAreReadOnly();
+    myIsActive++;
+    try {
+      final FormatProcessor processor = new FormatProcessor(model, block, settings, indentOptions, affectedRange);
+      final LeafBlockWrapper blockBefore = processor.getBlockBefore(affectedRange.getStartOffset());
+      LOG.assertTrue(blockBefore != null);
+      WhiteSpace whiteSpace = blockBefore.getWhiteSpace();
+      LOG.assertTrue(whiteSpace != null);
+      if (!mayChangeLineFeeds) {
+        whiteSpace.setLineFeedsAreReadOnly();
+      }
+      processor.setAllWhiteSpacesAreReadOnly();
+      whiteSpace.setReadOnly(false);
+      processor.formatWithoutRealModifications();
+      return new IndentInfo(whiteSpace.getLineFeeds(), whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
+    } finally {
+      myIsActive--;
     }
-    processor.setAllWhiteSpacesAreReadOnly();
-    whiteSpace.setReadOnly(false);
-    processor.formatWithoutRealModifications();
-    return new IndentInfo(whiteSpace.getLineFeeds(), whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
+
   }
 
   public int adjustLineIndent(final FormattingModel model,
@@ -96,51 +116,61 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
                               final CodeStyleSettings.IndentOptions indentOptions,
                               final int offset,
                               final TextRange affectedRange) throws IncorrectOperationException {
-    final FormattingDocumentModel documentModel = model.getDocumentModel();
-    final Block block = model.getRootBlock();
-    final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions, affectedRange);
+    myIsActive++;
+    try {
+      myIsActive++;
+      try {
+        final FormattingDocumentModel documentModel = model.getDocumentModel();
+        final Block block = model.getRootBlock();
+        final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions, affectedRange);
 
-    final LeafBlockWrapper blockAfterOffset = processor.getBlockBefore(offset);
+        final LeafBlockWrapper blockAfterOffset = processor.getBlockBefore(offset);
 
-    if (blockAfterOffset != null) {
-      final WhiteSpace whiteSpace = blockAfterOffset.getWhiteSpace();
-      boolean wsContainsCaret = whiteSpace.getTextRange().getStartOffset() <= offset && whiteSpace.getTextRange().getEndOffset() > offset;
+        if (blockAfterOffset != null) {
+          final WhiteSpace whiteSpace = blockAfterOffset.getWhiteSpace();
+          boolean wsContainsCaret = whiteSpace.getTextRange().getStartOffset() <= offset && whiteSpace.getTextRange().getEndOffset() > offset;
 
-      final CharSequence text = getCharSequence(documentModel);
-      int lineStartOffset = getLineStartOffset(offset, whiteSpace, text);
+          final CharSequence text = getCharSequence(documentModel);
+          int lineStartOffset = getLineStartOffset(offset, whiteSpace, text);
 
-      processor.setAllWhiteSpacesAreReadOnly();
-      whiteSpace.setLineFeedsAreReadOnly(true);
-      final IndentInfo indent;
-      if (documentModel.getLineNumber(offset) == documentModel.getLineNumber(whiteSpace.getTextRange().getEndOffset())) {
-        whiteSpace.setReadOnly(false);
-        processor.formatWithoutRealModifications();
-        indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
+          processor.setAllWhiteSpacesAreReadOnly();
+          whiteSpace.setLineFeedsAreReadOnly(true);
+          final IndentInfo indent;
+          if (documentModel.getLineNumber(offset) == documentModel.getLineNumber(whiteSpace.getTextRange().getEndOffset())) {
+            whiteSpace.setReadOnly(false);
+            processor.formatWithoutRealModifications();
+            indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
+          }
+          else {
+            indent = processor.getIndentAt(offset);
+          }
+
+          final String newWS = whiteSpace.generateWhiteSpace(indentOptions, lineStartOffset, indent);
+          model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS, blockAfterOffset.getTextRange().getLength());
+
+
+          if (wsContainsCaret) {
+            return whiteSpace.getTextRange().getStartOffset()
+                   + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - whiteSpace.getTextRange().getStartOffset(), " \t");
+          } else {
+            return offset - whiteSpace.getTextRange().getLength() + newWS.length();
+          }
+        } else {
+          WhiteSpace lastWS = processor.getLastWhiteSpace();
+          int lineStartOffset = getLineStartOffset(offset, lastWS, getText(documentModel));
+
+          final IndentInfo indent = new IndentInfo(0, 0, 0);
+          final String newWS = lastWS.generateWhiteSpace(indentOptions, lineStartOffset, indent);
+          model.replaceWhiteSpace(lastWS.getTextRange(), newWS, 0);
+
+          return lastWS.getTextRange().getStartOffset()
+                 + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - lastWS.getTextRange().getStartOffset(), " \t");
+        }
+      } finally {
+        myIsActive--;
       }
-      else {
-        indent = processor.getIndentAt(offset);
-      }
-
-      final String newWS = whiteSpace.generateWhiteSpace(indentOptions, lineStartOffset, indent);
-      model.replaceWhiteSpace(whiteSpace.getTextRange(), newWS, blockAfterOffset.getTextRange().getLength());
-
-
-      if (wsContainsCaret) {
-        return whiteSpace.getTextRange().getStartOffset()
-               + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - whiteSpace.getTextRange().getStartOffset(), " \t");
-      } else {
-        return offset - whiteSpace.getTextRange().getLength() + newWS.length();
-      }
-    } else {
-      WhiteSpace lastWS = processor.getLastWhiteSpace();
-      int lineStartOffset = getLineStartOffset(offset, lastWS, getText(documentModel));
-      
-      final IndentInfo indent = new IndentInfo(0, 0, 0);
-      final String newWS = lastWS.generateWhiteSpace(indentOptions, lineStartOffset, indent);
-      model.replaceWhiteSpace(lastWS.getTextRange(), newWS, 0);
-
-      return lastWS.getTextRange().getStartOffset()
-             + CharArrayUtil.shiftForward(newWS.toCharArray(), lineStartOffset - lastWS.getTextRange().getStartOffset(), " \t");
+    } finally {
+      myIsActive--;
     }
   }
 
@@ -175,42 +205,48 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
                               final boolean keepLineBreaks,
                               final boolean changeWSBeforeFirstElement,
                               final boolean changeLineFeedsBeforeFirstElement, final IndentInfoStorage indentInfoStorage) {
-    Block block = model.getRootBlock();
-    final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), block, settings, indentOptions, affectedRange);
-    LeafBlockWrapper current = processor.getFirstTokenBlock();
-    while (current != null) {
-      WhiteSpace whiteSpace = current.getWhiteSpace();
+    myIsActive++;
+    try {
+      Block block = model.getRootBlock();
+      final FormatProcessor processor = new FormatProcessor(model.getDocumentModel(), block, settings, indentOptions, affectedRange);
+      LeafBlockWrapper current = processor.getFirstTokenBlock();
+      while (current != null) {
+        WhiteSpace whiteSpace = current.getWhiteSpace();
 
-      if (!whiteSpace.isReadOnly()) {
-        if (whiteSpace.getTextRange().getStartOffset() > affectedRange.getStartOffset()) {
-          if (whiteSpace.containsLineFeeds()) {
-            whiteSpace.setLineFeedsAreReadOnly(true);
-            current.setIndentFromParent(indentInfoStorage.getIndentInfo(current.getStartOffset()));
-          } else {
-            whiteSpace.setReadOnly(true);
-          }
-        } else {
-          if (!changeWSBeforeFirstElement) {
-            whiteSpace.setReadOnly(true);
-          } else {
-            if (!changeLineFeedsBeforeFirstElement) {
+        if (!whiteSpace.isReadOnly()) {
+          if (whiteSpace.getTextRange().getStartOffset() > affectedRange.getStartOffset()) {
+            if (whiteSpace.containsLineFeeds()) {
               whiteSpace.setLineFeedsAreReadOnly(true);
+              current.setIndentFromParent(indentInfoStorage.getIndentInfo(current.getStartOffset()));
+            } else {
+              whiteSpace.setReadOnly(true);
             }
-            final SpacePropertyImpl spaceProperty = current.getSpaceProperty();
-            if (spaceProperty != null) {
-              if (!keepLineBreaks) {
-                spaceProperty.setKeepLineBreaks(false);
+          } else {
+            if (!changeWSBeforeFirstElement) {
+              whiteSpace.setReadOnly(true);
+            } else {
+              if (!changeLineFeedsBeforeFirstElement) {
+                whiteSpace.setLineFeedsAreReadOnly(true);
               }
-              if (!keepBlankLines) {
-                spaceProperty.setKeepLineBreaks(0);
+              final SpacePropertyImpl spaceProperty = current.getSpaceProperty();
+              if (spaceProperty != null) {
+                if (!keepLineBreaks) {
+                  spaceProperty.setKeepLineBreaks(false);
+                }
+                if (!keepBlankLines) {
+                  spaceProperty.setKeepLineBreaks(0);
+                }
               }
             }
           }
         }
+        current = current.getNextBlock();
       }
-      current = current.getNextBlock();
+      processor.format(model);
+    } finally {
+      myIsActive--;
     }
-    processor.format(model);
+
   }
 
   public void saveIndents(final FormattingModel model, final TextRange affectedRange,
@@ -236,6 +272,10 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
                                                          final Block rootBlock,
                                                          final CodeStyleSettings settings) {
     return new PsiBasedFormattingModel(file, settings, rootBlock);
+  }
+
+  public boolean isActive() {
+    return myIsActive > 0;
   }
 
 
