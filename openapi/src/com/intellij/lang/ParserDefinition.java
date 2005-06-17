@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -21,7 +22,9 @@ public interface ParserDefinition {
 
   IFileElementType getFileNodeType();
 
+  @NotNull
   TokenSet getWhitespaceTokens();
+  @NotNull
   TokenSet getCommentTokens();
 
   PsiElement createElement(ASTNode node);

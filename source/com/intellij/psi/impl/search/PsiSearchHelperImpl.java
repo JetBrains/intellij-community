@@ -30,6 +30,7 @@ import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.parsing.jsp.JspHighlightLexer;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
@@ -43,13 +44,12 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.uiDesigner.compiler.Utils;
-import com.intellij.util.Processor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -898,11 +898,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       // collect comment offsets to prevent long locks by PsiManagerImpl.LOCK
       synchronized (PsiLock.LOCK) {
         final Language lang = file.getLanguage();
-        if (lang == null) return EMPTY_TODO_ITEMS;
         Lexer lexer = lang.getSyntaxHighlighter(file.getProject()).getHighlightingLexer();;
         TokenSet commentTokens = null;
-        if (file instanceof PsiJavaFile || file instanceof JspFile) {
-          commentTokens = ElementType.COMMENT_BIT_SET;
+        if (file instanceof PsiJavaFile) {
+          commentTokens = TokenSet.orSet(ElementType.COMMENT_BIT_SET, XML_COMMENT_BIT_SET);
+        }
+        else if (file instanceof JspFile) {
+          final JspFile jspFile = (JspFile)file;
+          commentTokens = TokenSet.orSet(XML_COMMENT_BIT_SET, ElementType.COMMENT_BIT_SET);
+          final ParserDefinition parserDefinition = jspFile.getBaseLanguage().getParserDefinition();
+          if (parserDefinition != null) {
+            commentTokens = TokenSet.orSet(commentTokens, parserDefinition.getCommentTokens());
+          }
         }
         else if (file instanceof XmlFile) {
           commentTokens = XML_COMMENT_BIT_SET;
@@ -918,6 +925,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
         for (lexer.start(chars); ; lexer.advance()) {
           IElementType tokenType = lexer.getTokenType();
+          if (tokenType instanceof JspHighlightLexer.ScriptletJavaElementTypeToken) {
+            tokenType = ((JspHighlightLexer.ScriptletJavaElementTypeToken)tokenType).getBase();
+          }
           if (tokenType == null) break;
 
           if (range != null) {
@@ -925,7 +935,17 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
             if (lexer.getTokenStart() >= range.getEndOffset()) break;
           }
 
-          if (commentTokens.isInSet(tokenType)) {
+          boolean isComment = commentTokens.isInSet(tokenType);
+          if (!isComment) {
+            final Language commentLang = tokenType.getLanguage();
+            final ParserDefinition parserDefinition = commentLang.getParserDefinition();
+            if (parserDefinition != null) {
+              final TokenSet langCommentTokens = parserDefinition.getCommentTokens();
+              isComment = langCommentTokens.isInSet(tokenType);
+            }
+          }
+
+          if (isComment) {
             commentStarts.add(lexer.getTokenStart());
             commentEnds.add(lexer.getTokenEnd());
           }

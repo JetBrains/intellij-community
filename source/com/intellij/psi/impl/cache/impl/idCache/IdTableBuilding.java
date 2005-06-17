@@ -253,7 +253,7 @@ public class IdTableBuilding {
         public boolean process(final WordOccurence t) {
           IdCacheUtil.addOccurrence(wordsTable, t.getText(), convertToMask(t.getKind()));
 
-          if (t.getKind() == WordOccurence.Kind.COMMENTS) {
+          if (t.getKind() == WordOccurence.Kind.COMMENTS || t.getKind() == null) {
             if (todoCounts != null) {
               for (int index = 0; index < todoPatterns.length; index++) {
                 Pattern pattern = todoPatterns[index].getPattern();
