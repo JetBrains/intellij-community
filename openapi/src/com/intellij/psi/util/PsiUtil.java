@@ -754,6 +754,18 @@ public final class PsiUtil {
     return null;
   }
 
+  public static ResolveResult elementToResolveResult(final PsiElement element) {
+    return new ResolveResult() {
+      public PsiElement getElement() {
+        return element;
+      }
+
+      public boolean isValidResult() {
+        return true;
+      }
+    };
+  }
+
   private static class TypeParameterIterator implements Iterator<PsiTypeParameter> {
     private int myIndex;
     private PsiTypeParameterListOwner myCurrentOwner;

@@ -2,8 +2,16 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,7 +21,7 @@ import com.intellij.util.IncorrectOperationException;
  * To change this template use Options | File Templates.
  */
 
-public class PsiMultiReference implements PsiReference{
+public class PsiMultiReference implements PsiPolyVariantReference {
   private final PsiReference[] myReferences;
   private final PsiElement myElement;
 
@@ -102,4 +110,21 @@ public class PsiMultiReference implements PsiReference{
     return false;
   }
 
+  @NotNull
+  public ResolveResult[] multiResolve(final boolean incompleteCode) {
+    final PsiReference[] refs = getReferences();
+    List<ResolveResult> result = new ArrayList<ResolveResult>();
+    for (PsiReference reference : refs) {
+      if (reference instanceof PsiPolyVariantReference) {
+        result.addAll(Arrays.asList(((PsiPolyVariantReference)reference).multiResolve(incompleteCode)));
+      } else {
+        final PsiElement resolved = reference.resolve();
+        if (resolved != null) {
+          result.add(PsiUtil.elementToResolveResult(resolved));
+        }
+      }
+    }
+
+    return result.toArray(new ResolveResult[result.size()]);
+  }
 }

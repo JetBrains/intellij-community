@@ -138,14 +138,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     if (reference instanceof PsiPolyVariantReference) {
       return Arrays.asList(PsiUtil.mapElements(((PsiPolyVariantReference)reference).multiResolve(false)));
     }
-    if (reference instanceof PsiMultiReference) {
-      PsiReference[] references = ((PsiMultiReference)reference).getReferences();
-      Set<PsiElement> result = new THashSet<PsiElement>();
-      for (PsiReference psiReference : references) {
-        result.addAll(resolveElements(psiReference, project));
-      }
-      return result;
-    }
     PsiElement resolved = reference.resolve();
     if (resolved != null) {
       return Collections.singleton(resolved);

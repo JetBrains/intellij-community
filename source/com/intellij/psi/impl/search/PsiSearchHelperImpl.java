@@ -44,6 +44,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.Processor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
@@ -320,11 +321,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                       UsageSearchContext.IN_COMMENTS;
     }
 
-    String bestWord = getBestWordToSearch(text, searchContext, searchScope, myManager);
     if (!processElementsWithWord(
       processor1,
       searchScope,
-      bestWord,
+      text,
       searchContext,
       false
     )) {
@@ -362,33 +362,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     return true;
-  }
-
-  @NotNull
-  private static String getBestWordToSearch(@NotNull final String text,
-                                            final short searchContext,
-                                            final SearchScope searchScope,
-                                            PsiManagerImpl manager) {
-    List<String> words = StringUtil.getWordsIn(text);
-    String bestWord = null;
-    int bestFilesCount = Integer.MAX_VALUE;
-    for (String word : words) {
-      boolean isBetter;
-      int filesCount = bestFilesCount;
-      if (searchScope instanceof GlobalSearchScope) {
-        PsiFile[] files = manager.getCacheManager().getFilesWithWord(word, searchContext, (GlobalSearchScope)searchScope);
-        filesCount = files.length;
-        isBetter = filesCount < bestFilesCount;
-      }
-      else {
-        isBetter = bestWord == null || word.length() > bestWord.length();
-      }
-      if (isBetter) {
-        bestWord = word;
-        bestFilesCount = filesCount;
-      }
-    }
-    return bestWord == null ? text : bestWord;
   }
 
   private static boolean processAntElementScopeRoot(final PsiElement scope,
@@ -1249,16 +1222,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private boolean processElementsWithWord(PsiElementProcessorEx processor,
                                           SearchScope searchScope,
-                                          String word,
+                                          String text,
                                           short searchContext,
                                           boolean caseSensitive) {
     LOG.assertTrue(searchScope != null);
 
     if (searchScope instanceof GlobalSearchScope) {
-      StringSearcher searcher = new StringSearcher(word);
+      StringSearcher searcher = new StringSearcher(text);
       searcher.setCaseSensitive(caseSensitive);
 
-      return processElementsWithWordInGlobalScope(processor,
+      return processElementsWithTextInGlobalScope(processor,
                                                   (GlobalSearchScope)searchScope,
                                                   searcher,
                                                   searchContext);
@@ -1268,7 +1241,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       PsiElement[] scopeElements = _scope.getScope();
 
       for (final PsiElement scopeElement : scopeElements) {
-        if (!processElementsWithWordInScopeElement(scopeElement, processor, word, caseSensitive, searchContext)) return false;
+        if (!processElementsWithWordInScopeElement(scopeElement, processor, text, caseSensitive, searchContext)) return false;
       }
       return true;
     }
@@ -1293,7 +1266,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
-  private boolean processElementsWithWordInGlobalScope(PsiElementProcessorEx processor,
+  private boolean processElementsWithTextInGlobalScope(PsiElementProcessorEx processor,
                                                        GlobalSearchScope scope,
                                                        StringSearcher searcher,
                                                        short searchContext) {
@@ -1306,7 +1279,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     myManager.startBatchFilesProcessingMode();
 
     try {
-      PsiFile[] files = myManager.getCacheManager().getFilesWithWord(searcher.getPattern(), searchContext, scope);
+      String[] words = StringUtil.getWordsIn(searcher.getPattern()).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+      LOG.assertTrue(words.length > 0);
+      Set<PsiFile> fileSet = new HashSet<PsiFile>();
+      fileSet.addAll(Arrays.asList(myManager.getCacheManager().getFilesWithWord(words[0], searchContext, scope)));
+      for (int i = 1; i < words.length; i++) {
+        fileSet.retainAll(Arrays.asList(myManager.getCacheManager().getFilesWithWord(words[i], searchContext, scope)));
+      }
+      PsiFile[] files = fileSet.toArray(new PsiFile[fileSet.size()]);
 
       if (progress != null) {
         progress.setText("Searching for " + searcher.getPattern() + "...");
