@@ -73,6 +73,9 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
         ArrayList<MyFilesTableRowElement> newList = new ArrayList<MyFilesTableRowElement>(myModel.getItems());
         newList.add(new MyFilesTableRowElement("", "", false));
         myModel.setItems(newList);
+        int index = myModel.getRowCount() - 1;
+        myModel.fireTableRowsInserted(index, index);
+        myFilesTable.setRowSelectionInterval(index, index);
       }
     });
     myRemoveButton.addActionListener(new ActionListener() {
@@ -83,7 +86,10 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
         for (int i = selected.length - 1; i >= 0; i--) {
           myModel.removeRow(selected[i]);
         }
-
+        for (int i = selected.length - 1; i >= 0; i--) {
+          int idx = selected[i];
+          myModel.fireTableRowsDeleted(idx, idx);
+        }
         int selection = selected[0];
         if (selection >= myModel.getRowCount()) {
           selection = myModel.getRowCount() - 1;
@@ -97,7 +103,7 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     myRemoveButton.setEnabled(false);
     myFilesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
-         myRemoveButton.setEnabled(myFilesTable.getSelectedRows() != null);
+         myRemoveButton.setEnabled(myFilesTable.getSelectedRowCount() >=1);
       }
     });
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myFilesTable);
