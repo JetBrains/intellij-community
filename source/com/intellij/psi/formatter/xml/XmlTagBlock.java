@@ -103,9 +103,6 @@ public class XmlTagBlock extends AbstractXmlBlock{
   }
 
   private void createXmlTextBlocks(final ArrayList<Block> list, final ASTNode textNode, final Wrap wrap, final Alignment alignment) {
-    if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(getTag()) || myXmlFormattingPolicy.getShouldKeepWhiteSpaces()) {
-      list.add(new ReadOnlyBlock(textNode));
-    } else {
     ChameleonTransforming.transformChildren(myNode);
     ASTNode child = textNode.getFirstChildNode();
     while (child != null) {
@@ -116,7 +113,6 @@ public class XmlTagBlock extends AbstractXmlBlock{
         list.add(createChildBlock(child,  wrap, alignment, indent));
       }
       child = child.getTreeNext();
-    }
     }
   }
 
