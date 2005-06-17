@@ -27,4 +27,9 @@ public class PluginId {
   public String getIdString() {
     return myIdString;
   }
+
+  @Override
+  public String toString() {
+    return getIdString();
+  }
 }

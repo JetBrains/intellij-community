@@ -124,7 +124,7 @@ public class ExtensionsComplexTest extends TestCase {
     assertTrue(Extensions.getRootArea().hasExtensionPoint(TEST_EP_NAME));
     assertEquals(1, Extensions.getExtensions(TEST_EP_NAME).length);
     assertEquals(321, ((XMLTestBean)Extensions.getRootArea().getExtensionPoint(TEST_EP_NAME).getExtension()).getProp1());
-    assertEquals("the.test.plugin", ((XMLTestBean)Extensions.getRootArea().getExtensionPoint(TEST_EP_NAME).getExtension()).getPluginId());
+    assertEquals("the.test.plugin", ((XMLTestBean)Extensions.getRootArea().getExtensionPoint(TEST_EP_NAME).getExtension()).getPluginId().getIdString());
 
     DependentObjectOne dependentObjectOne = (DependentObjectOne)Extensions.getRootArea().getExtensionPoint(TEST_DEPENDENT1_NAME).getExtension();
     assertEquals(1, dependentObjectOne.getTestBeans().length);
