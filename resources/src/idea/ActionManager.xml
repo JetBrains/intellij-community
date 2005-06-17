@@ -291,8 +291,8 @@
         <group id="CodeEditorViewGroup" class="com.intellij.ide.actions.CodeEditorActionGroup">
           <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction" text="_File Structure Popup" description="Popup structure of the current file for quick navigation"/>
           <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction" text="Se_lect In..." description="Select the current class or method in any view"/>
-          <action id="QuickJavaDoc" class="com.intellij.codeInsight.javadoc.actions.ShowJavaDocInfoAction" text="_Quick JavaDoc" description="Show a popup window with JavaDoc for the symbol at caret"/>
-          <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction" text="Quick _Implementations" description="Show a popup window with the symbol (and its implementations) code"/>
+          <action id="QuickJavaDoc" class="com.intellij.codeInsight.javadoc.actions.ShowJavaDocInfoAction" text="Quick _Documentation Lookup" description="Show a popup window with JavaDoc for the symbol at caret"/>
+          <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction" text="_Quick Definition Lookup" description="Show a popup window with the symbol (and its implementations) content"/>
           <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction" text="_Parameter Info" description="Show parameters of the method call at caret"/>
           <action id="EditorContextInfo" class="com.intellij.codeInsight.hint.actions.ShowContainerInfoAction" text="_Context Info" description="Show the current method or class declaration when it is not visible"/>
           <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction" text="E_rror Description" description="Show description of error or warning at caret"/>
@@ -315,7 +315,7 @@
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction" text="Sho_w Source" description="Open editor for the selected item"/>
         <action id="OpenInBrowser" class="com.intellij.ide.actions.OpenFileInBrowserAction" text="Open in _Browser"/>
         <separator/>
-        <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction" text="External Java_Doc" description="Open browser with JavaDoc for the selected item"/>
+        <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction" text="_External JavaDoc" description="Open browser with JavaDoc for the selected item"/>
         <action id="RecentFiles" class="com.intellij.ide.actions.ShowRecentFilesAction" text="Rece_nt Files..." description="Show list of recently edited files"/>
 
         <action id="QuickChangeScheme" class="com.intellij.ide.actions.QuickChangeSchemesAction" text="_Quick Switch Scheme..." description="Change current code style scheme, color&amp;fonts scheme, keymap or Look&amp;Feel"/>
