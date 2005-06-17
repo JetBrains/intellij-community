@@ -30,9 +30,7 @@ public class SimpleWordsScanner implements WordsScanner {
       if (index - index1 > 100) continue; // Strange limit but we should have some!
 
       final CharSequence text = fileText.subSequence(index1, index);
-      processor.process(new WordOccurence(text, WordOccurence.Kind.CODE));
-      processor.process(new WordOccurence(text, WordOccurence.Kind.COMMENTS));
-      processor.process(new WordOccurence(text, WordOccurence.Kind.LITERALS));
+      processor.process(new WordOccurence(text, null));
     }
   }
 }

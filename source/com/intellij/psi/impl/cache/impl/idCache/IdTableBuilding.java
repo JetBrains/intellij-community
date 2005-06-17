@@ -273,6 +273,7 @@ public class IdTableBuilding {
         }
 
         private int convertToMask(final WordOccurence.Kind kind) {
+          if (kind == null) return UsageSearchContext.ANY;
           if (kind == WordOccurence.Kind.CODE) return UsageSearchContext.IN_CODE;
           if (kind == WordOccurence.Kind.COMMENTS) return UsageSearchContext.IN_COMMENTS;
           if (kind == WordOccurence.Kind.LITERALS) return UsageSearchContext.IN_STRINGS;
