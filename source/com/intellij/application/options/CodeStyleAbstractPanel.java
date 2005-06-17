@@ -54,6 +54,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Alarm;
+import com.intellij.pom.java.LanguageLevel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,18 +64,22 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 
+import org.jetbrains.annotations.NotNull;
+
 public abstract class CodeStyleAbstractPanel {
   private static Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleXmlPanel");
   private final Editor myEditor;
-  protected final CodeStyleSettings mySettings;
+  private final CodeStyleSettings mySettings;
   private boolean myShouldUpdatePreview;
-  protected final static int[] ourWrappings = new int[] {CodeStyleSettings.DO_NOT_WRAP,
-                                                       CodeStyleSettings.WRAP_AS_NEEDED,
-                                                       CodeStyleSettings.WRAP_ON_EVERY_ITEM,
-                                                       CodeStyleSettings.WRAP_ALWAYS};
+  protected final static int[] ourWrappings = new int[]{CodeStyleSettings.DO_NOT_WRAP,
+    CodeStyleSettings.WRAP_AS_NEEDED,
+    CodeStyleSettings.WRAP_ON_EVERY_ITEM,
+    CodeStyleSettings.WRAP_ALWAYS};
   private long myLastDocumentModificationStamp;
   private String myTextToReformat = null;
   private UserActivityWatcher myUserActivityWatcher = new UserActivityWatcher();
+
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public CodeStyleAbstractPanel(CodeStyleSettings settings) {
     mySettings = settings;
@@ -81,13 +87,19 @@ public abstract class CodeStyleAbstractPanel {
     myUserActivityWatcher.addUserActivityListener(new UserActivityListener() {
       public void stateChanged() {
         somethingChanged();
-        updatePreview();
+        myUpdateAlarm.addRequest(new Runnable() {
+          public void run() {
+            myUpdateAlarm.cancelAllRequests();
+            updatePreview();
+          }
+        }, 300);
+
       }
     });
   }
-  
-  protected void somethingChanged(){
-    
+
+  protected void somethingChanged() {
+
   }
 
   protected void addPanelToWatch(Component component) {
@@ -122,7 +134,10 @@ public abstract class CodeStyleAbstractPanel {
     editorSettings.setFoldingOutlineShown(false);
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(1);
-    editorSettings.setRightMargin(getRightMargin());
+    final int rightMargin = getRightMargin();
+    if (rightMargin > 0) {
+      editorSettings.setRightMargin(rightMargin);
+    }
   }
 
   protected abstract int getRightMargin();
@@ -137,11 +152,11 @@ public abstract class CodeStyleAbstractPanel {
     }
 
     CommandProcessor.getInstance().executeCommand(ProjectManager.getInstance().getDefaultProject(),
-      new Runnable() {
-        public void run() {
-          replaceText();
-        }
-      }, null, null);
+                                                  new Runnable() {
+                                                    public void run() {
+                                                      replaceText();
+                                                    }
+                                                  }, null, null);
     myEditor.getSettings().setRightMargin(getRightMargin());
     myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
   }
@@ -149,42 +164,53 @@ public abstract class CodeStyleAbstractPanel {
   private void replaceText() {
     final Project project = ProjectManager.getInstance().getDefaultProject();
     final PsiManager manager = PsiManager.getInstance(project);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        PsiElementFactory factory = manager.getElementFactory();
-        try {
-          PsiFile psiFile = factory.createFileFromText("a." + getFileType().getDefaultExtension(), myTextToReformat);
+    final LanguageLevel effectiveLanguageLevel = manager.getEffectiveLanguageLevel();
+    manager.setEffectiveLanguageLevel(LanguageLevel.HIGHEST);
+    try {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          PsiElementFactory factory = manager.getElementFactory();
+          try {
+            PsiFile psiFile = factory.createFileFromText("a." + getFileType().getDefaultExtension(), myTextToReformat);
 
-          CodeStyleSettings clone = (CodeStyleSettings)mySettings.clone();
-          clone.RIGHT_MARGIN = getRightMargin();
-          apply(clone);
+            apply(mySettings);
+            CodeStyleSettings clone = (CodeStyleSettings)mySettings.clone();
+            if (getRightMargin() > 0) {
+              clone.RIGHT_MARGIN = getRightMargin();
+            }
 
-          CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
-          CodeStyleManager.getInstance(project).reformat(psiFile);
-          CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
 
-          myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
-          Document document = myEditor.getDocument();
-          document.replaceString(0, document.getTextLength(), psiFile.getText());
+            CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
+            CodeStyleManager.getInstance(project).reformat(psiFile);
+            CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+
+            myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
+            Document document = myEditor.getDocument();
+            document.replaceString(0, document.getTextLength(), psiFile.getText());
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
 
-    });
+      });
+    }
+    finally {
+      manager.setEffectiveLanguageLevel(effectiveLanguageLevel);
+    }
   }
 
+  @NotNull
   protected abstract FileType getFileType();
 
   protected abstract String getPreviewText();
 
   public abstract void apply(CodeStyleSettings settings);
 
-  public final void reset() {
+  public final void reset(final CodeStyleSettings settings) {
     myShouldUpdatePreview = false;
     try {
-      resetImpl();
+      resetImpl(settings);
     }
     finally {
       myShouldUpdatePreview = true;
@@ -206,10 +232,11 @@ public abstract class CodeStyleAbstractPanel {
   public abstract JComponent getPanel();
 
   public final void dispose() {
+    myUpdateAlarm.cancelAllRequests();
     EditorFactory.getInstance().releaseEditor(myEditor);
   }
 
-  protected abstract void resetImpl();
+  protected abstract void resetImpl(final CodeStyleSettings settings);
 
   protected void fillWrappingCombo(final JComboBox wrapCombo) {
     wrapCombo.addItem("Do not wrap");
@@ -225,7 +252,7 @@ public abstract class CodeStyleAbstractPanel {
       final LineNumberReader lineNumberReader = new LineNumberReader(reader);
       final StringBuffer result;
       try {
-        String line ;
+        String line;
         result = new StringBuffer();
         while ((line = lineNumberReader.readLine()) != null) {
           result.append(line);

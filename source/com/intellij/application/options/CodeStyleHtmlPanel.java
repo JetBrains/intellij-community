@@ -79,53 +79,53 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     fillWrappingCombo(myTextWrapping);
 
 
-    customizeField("Insert New Line Before Tags", myInsertNewLineTagNames, new ValueHolder<String>() {
-      public String getValue() {
-        return mySettings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE;
+    customizeField("Insert New Line Before Tags", myInsertNewLineTagNames, new ValueHolder<String, CodeStyleSettings>() {
+      public String getValue(final CodeStyleSettings dataHolder) {
+        return dataHolder.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE;
       }
 
-      public void setValue(final String value) {
-        mySettings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = value;
-      }
-    });
-
-    customizeField("Remove Line Breaks Before Tags", myRemoveNewLineTagNames, new ValueHolder<String>() {
-      public String getValue() {
-        return mySettings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE;
-      }
-
-      public void setValue(final String value) {
-        mySettings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = value;
+      public void setValue(final String value, final CodeStyleSettings dataHolder) {
+        dataHolder.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = value;
       }
     });
 
-    customizeField("Do not Indent Children Of", myDoNotAlignChildrenTagNames, new ValueHolder<String>() {
-      public String getValue() {
-        return mySettings.HTML_DO_NOT_INDENT_CHILDREN_OF;
+    customizeField("Remove Line Breaks Before Tags", myRemoveNewLineTagNames, new ValueHolder<String, CodeStyleSettings>() {
+      public String getValue(final CodeStyleSettings dataHolder) {
+        return dataHolder.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE;
       }
 
-      public void setValue(final String value) {
-        mySettings.HTML_DO_NOT_INDENT_CHILDREN_OF = value;
-      }
-    });
-
-    customizeField("Text Elements", myTextElementsTagNames, new ValueHolder<String>() {
-      public String getValue() {
-        return mySettings.HTML_TEXT_ELEMENTS;
-      }
-
-      public void setValue(final String value) {
-        mySettings.HTML_TEXT_ELEMENTS = value;
+      public void setValue(final String value,final CodeStyleSettings dataHolder) {
+        dataHolder.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = value;
       }
     });
 
-    customizeField("Keep Whitespaces Inside", myKeepWhiteSpacesTagNames, new ValueHolder<String>() {
-      public String getValue() {
-        return mySettings.HTML_KEEP_WHITESPACES_INSIDE;
+    customizeField("Do not Indent Children Of", myDoNotAlignChildrenTagNames, new ValueHolder<String, CodeStyleSettings>() {
+      public String getValue(final CodeStyleSettings dataHolder) {
+        return dataHolder.HTML_DO_NOT_INDENT_CHILDREN_OF;
       }
 
-      public void setValue(final String value) {
-        mySettings.HTML_KEEP_WHITESPACES_INSIDE = value;
+      public void setValue(final String value,final CodeStyleSettings dataHolder) {
+        dataHolder.HTML_DO_NOT_INDENT_CHILDREN_OF = value;
+      }
+    });
+
+    customizeField("Text Elements", myTextElementsTagNames, new ValueHolder<String, CodeStyleSettings>() {
+      public String getValue(final CodeStyleSettings dataHolder) {
+        return dataHolder.HTML_TEXT_ELEMENTS;
+      }
+
+      public void setValue(final String value,final CodeStyleSettings dataHolder) {
+        dataHolder.HTML_TEXT_ELEMENTS = value;
+      }
+    });
+
+    customizeField("Keep Whitespaces Inside", myKeepWhiteSpacesTagNames, new ValueHolder<String, CodeStyleSettings>() {
+      public String getValue(final CodeStyleSettings dataHolder) {
+        return dataHolder.HTML_KEEP_WHITESPACES_INSIDE;
+      }
+
+      public void setValue(final String value,final CodeStyleSettings dataHolder) {
+        dataHolder.HTML_KEEP_WHITESPACES_INSIDE = value;
       }
     });
 
@@ -137,17 +137,16 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     return HighlighterFactory.createXMLHighlighter(scheme);
   }
 
-  private void customizeField(final String title, final TextFieldWithBrowseButton uiField, final ValueHolder<String> valueHolder) {
+  private void customizeField(final String title, final TextFieldWithBrowseButton uiField, final ValueHolder<String, CodeStyleSettings> valueHolder) {
     uiField.getTextField().setEditable(false);
     uiField.setButtonIcon(Icons.OPEN_EDIT_DIALOG_ICON);
     uiField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final TagListDialog tagListDialog = new TagListDialog(title);
-        tagListDialog.setData(createCollectionOn(valueHolder.getValue()));
+        tagListDialog.setData(createCollectionOn(uiField.getText()));
         tagListDialog.show();
         if (tagListDialog.isOK()) {
-          valueHolder.setValue(createStringOn(tagListDialog.getData()));
-          uiField.setText(valueHolder.getValue());
+          uiField.setText(createStringOn(tagListDialog.getData()));
         }
       }
 
@@ -197,23 +196,23 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     }
   }
 
-  protected void resetImpl() {
-    myKeepBlankLines.setText(String.valueOf(mySettings.HTML_KEEP_BLANK_LINES));
-    myWrapAttributes.setSelectedIndex(getIndexForWrapping(mySettings.HTML_ATTRIBUTE_WRAP));
-    myTextWrapping.setSelectedIndex(getIndexForWrapping(mySettings.HTML_TEXT_WRAP));
-    myAlignAttributes.setSelected(mySettings.HTML_ALIGN_ATTRIBUTES);
-    myAlignText.setSelected(mySettings.HTML_ALIGN_TEXT);
-    myKeepWhiteSpaces.setSelected(mySettings.HTML_KEEP_WHITESPACES);
-    mySpacesAroundTagName.setSelected(mySettings.HTML_SPACE_AROUND_TAG_NAME);
-    mySpacesAroundEquality.setSelected(mySettings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE);
-    myShouldKeepBlankLines.setSelected(mySettings.HTML_KEEP_LINE_BREAKS);
+  protected void resetImpl(final CodeStyleSettings settings) {
+    myKeepBlankLines.setText(String.valueOf(settings.HTML_KEEP_BLANK_LINES));
+    myWrapAttributes.setSelectedIndex(getIndexForWrapping(settings.HTML_ATTRIBUTE_WRAP));
+    myTextWrapping.setSelectedIndex(getIndexForWrapping(settings.HTML_TEXT_WRAP));
+    myAlignAttributes.setSelected(settings.HTML_ALIGN_ATTRIBUTES);
+    myAlignText.setSelected(settings.HTML_ALIGN_TEXT);
+    myKeepWhiteSpaces.setSelected(settings.HTML_KEEP_WHITESPACES);
+    mySpacesAroundTagName.setSelected(settings.HTML_SPACE_AROUND_TAG_NAME);
+    mySpacesAroundEquality.setSelected(settings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE);
+    myShouldKeepBlankLines.setSelected(settings.HTML_KEEP_LINE_BREAKS);
 
-    myInsertNewLineTagNames.setText(mySettings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE);
-    myRemoveNewLineTagNames.setText(mySettings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE);
-    myDoNotAlignChildrenTagNames.setText(mySettings.HTML_DO_NOT_INDENT_CHILDREN_OF);
-    myDoNotAlignChildrenMinSize.setText(String.valueOf(mySettings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES));
-    myTextElementsTagNames.setText(mySettings.HTML_TEXT_ELEMENTS);
-    myKeepWhiteSpacesTagNames.setText(mySettings.HTML_KEEP_WHITESPACES_INSIDE);
+    myInsertNewLineTagNames.setText(settings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE);
+    myRemoveNewLineTagNames.setText(settings.HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE);
+    myDoNotAlignChildrenTagNames.setText(settings.HTML_DO_NOT_INDENT_CHILDREN_OF);
+    myDoNotAlignChildrenMinSize.setText(String.valueOf(settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES));
+    myTextElementsTagNames.setText(settings.HTML_TEXT_ELEMENTS);
+    myKeepWhiteSpacesTagNames.setText(settings.HTML_KEEP_WHITESPACES_INSIDE);
 
     myKeepBlankLines.setEnabled(myShouldKeepBlankLines.isSelected());
   }
@@ -274,7 +273,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    if (myShouldKeepBlankLines.isSelected() != mySettings.HTML_KEEP_LINE_BREAKS) {
+    if (myShouldKeepBlankLines.isSelected() != settings.HTML_KEEP_LINE_BREAKS) {
       return true;
     }
 

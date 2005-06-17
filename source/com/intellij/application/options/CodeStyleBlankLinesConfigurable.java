@@ -1,49 +1,21 @@
 package com.intellij.application.options;
 
-import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 import javax.swing.*;
 
-public class CodeStyleBlankLinesConfigurable extends BaseConfigurable {
-  private CodeStyleBlankLinesPanel myPanel;
-  private CodeStyleSettings mySettings;
-
-  public CodeStyleBlankLinesConfigurable(CodeStyleSettings settings) {
-    mySettings = settings;
+public class CodeStyleBlankLinesConfigurable extends CodeStyleAbstractConfigurable {
+  public CodeStyleBlankLinesConfigurable(CodeStyleSettings settings, CodeStyleSettings cloneSettings) {
+    super(settings, cloneSettings,"Blank Lines");
   }
 
-  public boolean isModified() {
-    return myPanel.isModified();
-  }
-
-  public JComponent createComponent() {
-    myPanel = new CodeStyleBlankLinesPanel(mySettings);
-    return myPanel;
-  }
-
-  public String getDisplayName() {
-    return "Blank Lines";
+  protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+    return new CodeStyleBlankLinesPanel(settings);
   }
 
   public Icon getIcon() {
     return StdFileTypes.JAVA.getIcon();
-  }
-
-  public void reset() {
-    myPanel.reset();
-  }
-
-  public void apply() {
-    myPanel.apply();
-  }
-
-  public void disposeUIResources() {
-    if(myPanel != null) {
-      myPanel.dispose();
-    }
-    myPanel = null;
   }
 
   public String getHelpTopic() {

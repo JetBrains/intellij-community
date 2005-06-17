@@ -1,28 +1,14 @@
 package com.intellij.application.options;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -41,36 +27,38 @@ import java.util.Arrays;
 /**
  * @author max
  */
-public abstract class OptionTreeWithPreviewPanel extends JPanel {
+public abstract class OptionTreeWithPreviewPanel extends CodeStyleAbstractPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSpacesPanel");
   private JTree myOptionsTree;
-  private Editor myEditor;
-  private boolean toUpdatePreview = true;
   private HashMap myKeyToFieldMap = new HashMap();
   private ArrayList myKeys = new ArrayList();
-  private CodeStyleSettings mySettings;
+  private final JPanel myPanel = new JPanel(new GridBagLayout());
 
   public OptionTreeWithPreviewPanel(CodeStyleSettings settings) {
-    mySettings = settings;
-    setLayout(new GridBagLayout());
+    super(settings);
 
     initTables();
 
     myOptionsTree = createOptionsTree();
     myOptionsTree.setCellRenderer(new MyTreeCellRenderer());
-    add(new JScrollPane(myOptionsTree),
+    myPanel.add(new JScrollPane(myOptionsTree),
         new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                new Insets(7, 7, 3, 4), 0, 0));
 
-    add(createPreviewPanel(),
-        new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                               new Insets(0, 0, 0, 4), 0, 0));
+    JPanel previewPanel = new JPanel(new BorderLayout()) {
+      public Dimension getPreferredSize() {
+        return new Dimension(200, 0);
+      }
+    };
+    previewPanel.setBorder(IdeBorderFactory.createTitledBorder("Preview"));
 
-    reset();
-  }
+    myPanel.add(previewPanel,
+                new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
+                                       new Insets(0, 0, 0, 4), 0, 0));
 
-  public void dispose() {
-    EditorFactory.getInstance().releaseEditor(myEditor);
+    installPreviewPanel(previewPanel);
+    addPanelToWatch(myPanel);
+
   }
 
   protected JTree createOptionsTree() {
@@ -98,7 +86,7 @@ public abstract class OptionTreeWithPreviewPanel extends JPanel {
         }
         MyToggleTreeNode[] nodes = new MyToggleTreeNode[key.rbNames.length];
         for (int j = 0; j < nodes.length; j++) {
-          nodes[j] = new MyToggleTreeNode(key, key.rbNames[j], key.values[j]);
+          nodes[j] = new MyToggleTreeNode(key, key.rbNames[j]);
           groupNode.add(nodes[j]);
         }
         key.setCreatedNodes(nodes);
@@ -168,81 +156,11 @@ public abstract class OptionTreeWithPreviewPanel extends JPanel {
     }
   }
 
-  protected JPanel createPreviewPanel() {
-    JPanel p = new JPanel(new BorderLayout()) {
-      public Dimension getPreferredSize() {
-        return new Dimension(200, 0);
-      }
-    };
-
-    p.setBorder(IdeBorderFactory.createTitledBorder("Preview"));
-    myEditor = createEditor();
-    p.add(myEditor.getComponent(), BorderLayout.CENTER);
-    return p;
-  }
-
-  private Editor createEditor() {
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    Document doc = editorFactory.createDocument("");
-    EditorEx editor = (EditorEx)editorFactory.createEditor(doc);
-
-    setupEditorSettings(editor);
-
-    EditorColorsScheme scheme = editor.getColorsScheme();
-    scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
-
-    editor.setHighlighter(HighlighterFactory.createJavaHighlighter(scheme, LanguageLevel.HIGHEST));
-    return editor;
+  protected LexerEditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
+    return HighlighterFactory.createJavaHighlighter(scheme, LanguageLevel.HIGHEST);
   }
 
   protected abstract void initTables();
-
-  protected abstract void setupEditorSettings(Editor editor);
-
-  public void updatePreview() {
-    if (!toUpdatePreview) {
-      return;
-    }
-
-    CommandProcessor.getInstance().executeCommand(ProjectManager.getInstance().getDefaultProject(),
-      new Runnable() {
-        public void run() {
-          replaceText();
-        }
-      }, null, null);
-  }
-
-  private void replaceText() {
-    final Project project = ProjectManagerEx.getInstanceEx().getDefaultProject();
-    final PsiManager manager = PsiManager.getInstance(project);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        PsiElementFactory factory = manager.getElementFactory();
-        try {
-          PsiFile psiFile = factory.createFileFromText("a.java", getPreviewText());
-          CodeStyleSettings saved = mySettings;
-          mySettings = (CodeStyleSettings)mySettings.clone();
-          apply();
-          if (getRightMargin() > 0) {
-            mySettings.RIGHT_MARGIN = getRightMargin();
-          }
-
-          CodeStyleSettingsManager.getInstance(project).setTemporarySettings(mySettings);
-          CodeStyleManager.getInstance(project).reformat(psiFile);
-          CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-
-          myEditor.getSettings().setTabSize(mySettings.getTabSize(StdFileTypes.JAVA));
-          mySettings = saved;
-
-          Document document = myEditor.getDocument();
-          document.replaceString(0, document.getTextLength(), psiFile.getText());
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
-    });
-  }
 
   protected int getRightMargin() {
     return -1;
@@ -250,37 +168,34 @@ public abstract class OptionTreeWithPreviewPanel extends JPanel {
 
   protected abstract String getPreviewText();
 
-  public void reset() {
-    toUpdatePreview = false;
+  protected void resetImpl(final CodeStyleSettings settings) {
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
-    resetNode(root);
-    toUpdatePreview = true;
-    updatePreview();
+    resetNode(root, settings);
   }
 
-  private void resetNode(TreeNode node) {
+  private void resetNode(TreeNode node, final CodeStyleSettings settings) {
     if (node instanceof MyToggleTreeNode) {
-      resetMyTreeNode((MyToggleTreeNode)node);
+      resetMyTreeNode((MyToggleTreeNode)node, settings);
       return;
     }
     for (int j = 0; j < node.getChildCount(); j++) {
       TreeNode child = node.getChildAt(j);
-      resetNode(child);
+      resetNode(child, settings);
     }
   }
 
-  private void resetMyTreeNode(MyToggleTreeNode childNode) {
+  private void resetMyTreeNode(MyToggleTreeNode childNode, final CodeStyleSettings settings) {
     try {
       if (childNode.getKey() instanceof BooleanOptionKey) {
         BooleanOptionKey key = (BooleanOptionKey)childNode.getKey();
         Field field = (Field)myKeyToFieldMap.get(key);
-        childNode.setSelected(field.getBoolean(mySettings));
+        childNode.setSelected(field.getBoolean(settings));
       }
       else if (childNode.getKey() instanceof IntSelectionOptionKey) {
         IntSelectionOptionKey key = (IntSelectionOptionKey)childNode.getKey();
         Field field = (Field)myKeyToFieldMap.get(key);
-        int fieldValue = field.getInt(mySettings);
+        int fieldValue = field.getInt(settings);
         for (int i = 0; i < key.rbNames.length; i++) {
           if (childNode.getText().equals(key.rbNames[i])) {
             childNode.setSelected(fieldValue == key.values[i]);
@@ -296,30 +211,29 @@ public abstract class OptionTreeWithPreviewPanel extends JPanel {
     }
   }
 
-  public void apply() {
+  public void apply(CodeStyleSettings settings) {
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
-    applyNode(root);
+    applyNode(root, settings);
   }
 
-  private void applyNode(TreeNode node) {
+  private void applyNode(TreeNode node, final CodeStyleSettings settings) {
     if (node instanceof MyToggleTreeNode) {
-      applyToggleNode((MyToggleTreeNode)node);
+      applyToggleNode((MyToggleTreeNode)node, settings);
       return;
     }
     for (int j = 0; j < node.getChildCount(); j++) {
       TreeNode child = node.getChildAt(j);
-      applyNode(child);
+      applyNode(child, settings);
     }
   }
 
-  private void applyToggleNode(MyToggleTreeNode childNode) {
-    CodeStyleSettings codeStyleSettings = mySettings;
+  private void applyToggleNode(MyToggleTreeNode childNode, final CodeStyleSettings settings) {
     try {
       if (childNode.getKey() instanceof BooleanOptionKey) {
         BooleanOptionKey key = (BooleanOptionKey)childNode.getKey();
         Field field = (Field)myKeyToFieldMap.get(key);
-        field.set(codeStyleSettings, childNode.isSelected() ? Boolean.TRUE : Boolean.FALSE);
+        field.set(settings, childNode.isSelected() ? Boolean.TRUE : Boolean.FALSE);
       }
       else if (childNode.getKey() instanceof IntSelectionOptionKey) {
         if (!childNode.isSelected()) return;
@@ -327,7 +241,7 @@ public abstract class OptionTreeWithPreviewPanel extends JPanel {
         Field field = (Field)myKeyToFieldMap.get(key);
         for (int i = 0; i < key.rbNames.length; i++) {
           if (childNode.getText().equals(key.rbNames[i])) {
-            field.set(codeStyleSettings, new Integer(key.values[i]));
+            field.set(settings, new Integer(key.values[i]));
             break;
           }
         }
@@ -341,37 +255,37 @@ public abstract class OptionTreeWithPreviewPanel extends JPanel {
     }
   }
 
-  public boolean isModified() {
+  public boolean isModified(CodeStyleSettings settings) {
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
-    if (isModified(root)) {
+    if (isModified(root, settings)) {
       return true;
     }
     return false;
+
   }
 
-  private boolean isModified(TreeNode node) {
+  private boolean isModified(TreeNode node, final CodeStyleSettings settings) {
     if (node instanceof MyToggleTreeNode) {
-      if (isToggleNodeModified((MyToggleTreeNode)node)) {
+      if (isToggleNodeModified((MyToggleTreeNode)node, settings)) {
         return true;
       }
     }
     for (int j = 0; j < node.getChildCount(); j++) {
       TreeNode child = node.getChildAt(j);
-      if (isModified(child)) {
+      if (isModified(child, settings)) {
         return true;
       }
     }
     return false;
   }
 
-  private boolean isToggleNodeModified(MyToggleTreeNode childNode) {
-    CodeStyleSettings codeStyleSettings = mySettings;
+  private boolean isToggleNodeModified(MyToggleTreeNode childNode, final CodeStyleSettings settings) {
     try {
       if (childNode.getKey() instanceof BooleanOptionKey) {
         BooleanOptionKey key = (BooleanOptionKey)childNode.getKey();
         Field field = (Field)myKeyToFieldMap.get(key);
-        return childNode.isSelected() != field.getBoolean(codeStyleSettings);
+        return childNode.isSelected() != field.getBoolean(settings);
       }
       else if (childNode.getKey() instanceof IntSelectionOptionKey) {
         if (!childNode.isSelected()) return false;
@@ -379,7 +293,7 @@ public abstract class OptionTreeWithPreviewPanel extends JPanel {
         Field field = (Field)myKeyToFieldMap.get(key);
         for (int i = 0; i < key.rbNames.length; i++) {
           if (childNode.getText().equals(key.rbNames[i])) {
-            return field.getInt(codeStyleSettings) != key.values[i];
+            return field.getInt(settings) != key.values[i];
           }
         }
       }
@@ -587,12 +501,6 @@ public abstract class OptionTreeWithPreviewPanel extends JPanel {
       isCheckbox = true;
     }
 
-    public MyToggleTreeNode(Object key, String text, int value) {
-      myKey = key;
-      myText = text;
-      isCheckbox = false;
-    }
-
     public Object getKey() { return myKey; }
 
     public String getText() { return myText; }
@@ -606,5 +514,13 @@ public abstract class OptionTreeWithPreviewPanel extends JPanel {
     public MyToggleTreeNode[] getGroup() {
       return ((IntSelectionOptionKey)myKey).getNodes();
     }
+  }
+
+  protected FileType getFileType() {
+    return StdFileTypes.JAVA;
+  }
+
+  public JComponent getInternalPanel() {
+    return myPanel;
   }
 }

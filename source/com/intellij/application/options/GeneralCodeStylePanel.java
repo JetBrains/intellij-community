@@ -12,9 +12,9 @@ import com.intellij.ui.OptionGroup;
 import com.intellij.ui.TabbedPaneWrapper;
 
 import javax.swing.*;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final String SYSTEM_DEPENDANT_STRING = "System Dependent";
@@ -36,6 +36,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JTextField myRightMarginField;
   private JComboBox myLineSeparatorCombo;
   private JPanel myPanel;
+  private int myRightMargin;
 
 
   public GeneralCodeStylePanel(CodeStyleSettings settings) {
@@ -48,6 +49,31 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myLineSeparatorCombo.addItem(WINDOWS_STRING);
     myLineSeparatorCombo.addItem(MACINTOSH_STRING);
     addPanelToWatch(myPanel);
+
+    myRightMargin = settings.RIGHT_MARGIN;
+
+    myRightMarginField.getDocument().addDocumentListener(new DocumentListener() {
+      public void insertUpdate(DocumentEvent e) {
+        int valueFromControl = getRightMarginImpl();
+        if (valueFromControl > 0) {
+          myRightMargin = valueFromControl;
+        }
+      }
+
+      public void removeUpdate(DocumentEvent e) {
+        int valueFromControl = getRightMarginImpl();
+        if (valueFromControl > 0) {
+          myRightMargin = valueFromControl;
+        }
+      }
+
+      public void changedUpdate(DocumentEvent e) {
+        int valueFromControl = getRightMarginImpl();
+        if (valueFromControl > 0) {
+          myRightMargin = valueFromControl;
+        }
+      }
+    });
   }
 
   protected void somethingChanged() {
@@ -90,7 +116,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   protected int getRightMargin() {
-    return getRightMarginImpl();
+    return myRightMargin;
   }
 
   protected FileType getFileType() {
@@ -98,61 +124,61 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   protected String getPreviewText() {
-    return       "public class Foo {\n" +
-                 "  public int[] X = new int[] { 1, 3, 5\n" +
-                 "  7, 9, 11};\n" +
-                 "  public void foo(boolean a, int x,\n" +
-                 "    int y, int z) {\n" +
-                 "    label1: do {\n" +
-                 "      try {\n" +
-                 "        if(x > 0) {\n" +
-                 "          int someVariable = a ? \n" +
-                 "             x : \n" +
-                 "             y;\n" +
-                 "        } else if (x < 0) {\n" +
-                 "          int someVariable = (y +\n" +
-                 "          z\n" +
-                 "          );\n" +
-                 "          someVariable = x = \n" +
-                 "          x +\n" +
-                 "          y;\n" +
-                 "        } else {\n" +
-                 "          label2:\n" +
-                 "          for (int i = 0;\n" +
-                 "               i < 5;\n" +
-                 "               i++) doSomething(i);\n" +
-                 "        }\n" +
-                 "        switch(a) {\n" +
-                 "          case 0: \n" +
-                 "           doCase0();\n" +
-                 "           break;\n" +
-                 "          default: \n" +
-                 "           doDefault();\n" +
-                 "        }\n" +
-                 "      }\n" +
-                 "      catch(Exception e) {\n" +
-                 "        processException(e.getMessage(),\n" +
-                 "          x + y, z, a);\n" +
-                 "      }\n" +
-                 "      finally {\n" +
-                 "        processFinally();\n" +
-                 "      }\n" +
-                 "    }while(true);\n" +
-                 "\n" +
-                 "    if (2 < 3) return;\n" +
-                 "    if (3 < 4)\n" +
-                 "       return;\n" +
-                 "    do x++ while (x < 10000);\n" +
-                 "    while (x < 50000) x++;\n" +
-                 "    for (int i = 0; i < 5; i++) System.out.println(i);\n" +
-                 "  }\n" +
-                 "  private class InnerClass implements I1,\n" +
-                 "  I2 {\n" +
-                 "    public void bar() throws E1,\n" +
-                 "     E2 {\n" +
-                 "    }\n" +
-                 "  }\n" +
-                 "}";
+    return "public class Foo {\n" +
+           "  public int[] X = new int[] { 1, 3, 5\n" +
+           "  7, 9, 11};\n" +
+           "  public void foo(boolean a, int x,\n" +
+           "    int y, int z) {\n" +
+           "    label1: do {\n" +
+           "      try {\n" +
+           "        if(x > 0) {\n" +
+           "          int someVariable = a ? \n" +
+           "             x : \n" +
+           "             y;\n" +
+           "        } else if (x < 0) {\n" +
+           "          int someVariable = (y +\n" +
+           "          z\n" +
+           "          );\n" +
+           "          someVariable = x = \n" +
+           "          x +\n" +
+           "          y;\n" +
+           "        } else {\n" +
+           "          label2:\n" +
+           "          for (int i = 0;\n" +
+           "               i < 5;\n" +
+           "               i++) doSomething(i);\n" +
+           "        }\n" +
+           "        switch(a) {\n" +
+           "          case 0: \n" +
+           "           doCase0();\n" +
+           "           break;\n" +
+           "          default: \n" +
+           "           doDefault();\n" +
+           "        }\n" +
+           "      }\n" +
+           "      catch(Exception e) {\n" +
+           "        processException(e.getMessage(),\n" +
+           "          x + y, z, a);\n" +
+           "      }\n" +
+           "      finally {\n" +
+           "        processFinally();\n" +
+           "      }\n" +
+           "    }while(true);\n" +
+           "\n" +
+           "    if (2 < 3) return;\n" +
+           "    if (3 < 4)\n" +
+           "       return;\n" +
+           "    do x++ while (x < 10000);\n" +
+           "    while (x < 50000) x++;\n" +
+           "    for (int i = 0; i < 5; i++) System.out.println(i);\n" +
+           "  }\n" +
+           "  private class InnerClass implements I1,\n" +
+           "  I2 {\n" +
+           "    public void bar() throws E1,\n" +
+           "     E2 {\n" +
+           "    }\n" +
+           "  }\n" +
+           "}";
   }
 
   public void apply(CodeStyleSettings settings) {
@@ -165,21 +191,20 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = myCbDontIndentTopLevelMembers.isSelected();
 
-    try {
-      settings.RIGHT_MARGIN = getRightMarginImpl();
-    }
-    catch (NumberFormatException e) {
+    int rightMarginImpl = getRightMarginImpl();
+    if (rightMarginImpl > 0) {
+      settings.RIGHT_MARGIN = rightMarginImpl;
     }
 
   }
 
   private int getRightMarginImpl() {
-    if (myRightMarginField == null) return mySettings.RIGHT_MARGIN;
+    if (myRightMarginField == null) return -1;
     try {
       return Integer.parseInt(myRightMarginField.getText());
     }
     catch (NumberFormatException e) {
-      return mySettings.RIGHT_MARGIN;
+      return -1;
     }
   }
 
@@ -198,7 +223,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
 
   public boolean isModified(CodeStyleSettings settings) {
-    if (!Comparing.equal(getSelectedLineSeparator(), mySettings.LINE_SEPARATOR)) {
+    if (!Comparing.equal(getSelectedLineSeparator(), settings.LINE_SEPARATOR)) {
       return true;
     }
     if (myCbUseSameIndents.isSelected() != settings.USE_SAME_INDENTS) {
@@ -220,7 +245,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     if (myCbDontIndentTopLevelMembers.isSelected() != settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS) {
       return true;
     }
-    if (!myRightMarginField.getText().equals(String.valueOf(mySettings.RIGHT_MARGIN))) {
+    if (!myRightMarginField.getText().equals(String.valueOf(settings.RIGHT_MARGIN))) {
       return true;
     }
 
@@ -231,17 +256,17 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     return myPanel;
   }
 
-  protected void resetImpl() {
-    myCbUseSameIndents.setSelected(mySettings.USE_SAME_INDENTS);
+  protected void resetImpl(final CodeStyleSettings settings) {
+    myCbUseSameIndents.setSelected(settings.USE_SAME_INDENTS);
 
-    myJavaIndentOptions.reset(mySettings.JAVA_INDENT_OPTIONS);
-    myJspIndentOptions.reset(mySettings.JSP_INDENT_OPTIONS);
-    myXMLIndentOptions.reset(mySettings.XML_INDENT_OPTIONS);
-    myOtherIndentOptions.reset(mySettings.OTHER_INDENT_OPTIONS);
+    myJavaIndentOptions.reset(settings.JAVA_INDENT_OPTIONS);
+    myJspIndentOptions.reset(settings.JSP_INDENT_OPTIONS);
+    myXMLIndentOptions.reset(settings.XML_INDENT_OPTIONS);
+    myOtherIndentOptions.reset(settings.OTHER_INDENT_OPTIONS);
 
-    myCbDontIndentTopLevelMembers.setSelected(mySettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS);
+    myCbDontIndentTopLevelMembers.setSelected(settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS);
 
-    String lineSeparator = mySettings.LINE_SEPARATOR;
+    String lineSeparator = settings.LINE_SEPARATOR;
     if ("\n".equals(lineSeparator)) {
       myLineSeparatorCombo.setSelectedItem(UNIX_STRING);
     }
@@ -255,7 +280,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       myLineSeparatorCombo.setSelectedItem(SYSTEM_DEPENDANT_STRING);
     }
 
-    myRightMarginField.setText("" + mySettings.RIGHT_MARGIN);
+    myRightMarginField.setText("" + settings.RIGHT_MARGIN);
     update();
   }
 

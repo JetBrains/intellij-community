@@ -95,6 +95,7 @@ public class UserActivityWatcher {
   }
 
   private boolean shouldBeIgnored(Object object) {
+    if (object instanceof CellRendererPane) return true;
     if (object == null) {
       return true;
     }

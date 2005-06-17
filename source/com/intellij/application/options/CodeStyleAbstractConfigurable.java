@@ -40,10 +40,13 @@ import javax.swing.*;
 public abstract class CodeStyleAbstractConfigurable implements Configurable {
   private CodeStyleAbstractPanel myPanel;
   private final CodeStyleSettings mySettings;
+  private final CodeStyleSettings myCloneSettings;
   private final String myDisplayName;
 
-  public CodeStyleAbstractConfigurable(CodeStyleSettings settings, final String displayName) {
+  public CodeStyleAbstractConfigurable(CodeStyleSettings settings, CodeStyleSettings cloneSettings,
+                                       final String displayName) {
     mySettings = settings;
+    myCloneSettings = cloneSettings;
     myDisplayName = displayName;
   }
 
@@ -60,11 +63,11 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable {
   }
 
   public JComponent createComponent() {
-    myPanel = createPanel();
+    myPanel = createPanel(myCloneSettings);
     return myPanel.getPanel();
   }
 
-  protected abstract CodeStyleAbstractPanel createPanel();
+  protected abstract CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings);
 
   public void apply() throws ConfigurationException {
     if (myPanel != null) {
@@ -74,7 +77,7 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable {
 
   public void reset() {
     if (myPanel != null) {
-      myPanel.reset();
+      myPanel.reset(mySettings);
     }
   }
 
@@ -94,4 +97,7 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable {
     }
   }
 
+  public CodeStyleAbstractPanel getPanel() {
+    return myPanel;
+  }
 }

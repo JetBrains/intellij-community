@@ -1,29 +1,15 @@
 package com.intellij.application.options;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
@@ -47,7 +33,7 @@ import java.util.Arrays;
 /**
  * @author max
  */
-public abstract class OptionTableWithPreviewPanel extends JPanel {
+public abstract class OptionTableWithPreviewPanel extends CodeStyleAbstractPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSpacesPanel");
 
   public final ColumnInfo TITLE = new ColumnInfo("TITLE") {
@@ -127,37 +113,35 @@ public abstract class OptionTableWithPreviewPanel extends JPanel {
     }
   };
 
-  private Editor myEditor;
   private TreeTable myTreeTable;
-  private boolean toUpdatePreview = true;
   private HashMap myKeyToFieldMap = new HashMap();
   private ArrayList myKeys = new ArrayList();
-  private CodeStyleSettings mySettings;
+
+  private final JPanel myPanel = new JPanel();
 
   public OptionTableWithPreviewPanel(CodeStyleSettings settings) {
-    mySettings = settings;
-    setLayout(new GridBagLayout());
+    super(settings);
+    myPanel.setLayout(new GridBagLayout());
 
     initTables();
 
-    myTreeTable = createOptionsTree();
-    add(ScrollPaneFactory.createScrollPane(myTreeTable),
+    myTreeTable = createOptionsTree(settings);
+    myPanel.add(ScrollPaneFactory.createScrollPane(myTreeTable),
         new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
                                new Insets(7, 7, 3, 4), 0, 0));
 
-    add(createPreviewPanel(),
-        new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                               new Insets(0, 0, 0, 4), 0, 0));
+    final JPanel previewPanel = createPreviewPanel();
+    myPanel.add(previewPanel,
+                new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
+                                       new Insets(0, 0, 0, 4), 0, 0));
 
-    reset();
+    installPreviewPanel(previewPanel);
+    addPanelToWatch(myPanel);
+
   }
 
 
-  public void dispose() {
-    EditorFactory.getInstance().releaseEditor(myEditor);
-  }
-
-  protected TreeTable createOptionsTree() {
+  protected TreeTable createOptionsTree(CodeStyleSettings settings) {
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
     String groupName = "";
     DefaultMutableTreeNode groupNode = null;
@@ -170,14 +154,14 @@ public abstract class OptionTableWithPreviewPanel extends JPanel {
           groupNode = new DefaultMutableTreeNode(newGroupName);
           rootNode.add(groupNode);
         }
-        groupNode.add(new MyTreeNode(key, key.cbName));
+        groupNode.add(new MyTreeNode(key, key.cbName, settings));
       }
       else if (myKeys.get(i) instanceof IntSelectionOptionKey) {
         IntSelectionOptionKey key = (IntSelectionOptionKey)myKeys.get(i);
         String newGroupName = key.groupName;
         if (!newGroupName.equals(groupName) || groupNode == null) {
           groupName = newGroupName;
-          groupNode = new MyTreeNode(key, key.groupName);
+          groupNode = new MyTreeNode(key, key.groupName, settings);
           rootNode.add(groupNode);
         }
         else {
@@ -269,138 +253,38 @@ public abstract class OptionTableWithPreviewPanel extends JPanel {
       }
     };
     p.setBorder(IdeBorderFactory.createTitledBorder("Preview"));
-    myEditor = createEditor();
-    p.add(myEditor.getComponent(), BorderLayout.CENTER);
     return p;
-  }
-
-  private Editor createEditor() {
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    Document doc = editorFactory.createDocument("");
-    EditorEx editor = (EditorEx)editorFactory.createEditor(doc);
-
-    setupEditorSettings(editor);
-
-    EditorColorsScheme scheme = editor.getColorsScheme();
-    scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
-
-    editor.setHighlighter(HighlighterFactory.createJavaHighlighter(scheme, LanguageLevel.HIGHEST));
-    return editor;
   }
 
   protected abstract void initTables();
 
-  protected abstract void setupEditorSettings(Editor editor);
-
-  private void updatePreview() {
-    if (!toUpdatePreview) {
-      return;
-    }
-
-    CommandProcessor.getInstance().executeCommand(ProjectManager.getInstance().getDefaultProject(),
-      new Runnable() {
-        public void run() {
-          replaceText();
-        }
-      }, null, null);
-  }
-
-  private void replaceText() {
-    final Project project = ProjectManagerEx.getInstanceEx().getDefaultProject();
-    final PsiManager manager = PsiManager.getInstance(project);
-    final LanguageLevel effectiveLanguageLevel = manager.getEffectiveLanguageLevel();
-    manager.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
-    try {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          PsiElementFactory factory = manager.getElementFactory();
-          try {
-            PsiFile psiFile = factory.createFileFromText("a.java", getPreviewText());
-            CodeStyleSettings saved = mySettings;
-            mySettings = (CodeStyleSettings)mySettings.clone();
-            apply();
-            if (getRightMargin() > 0) {
-              mySettings.RIGHT_MARGIN = getRightMargin();
-            }
-
-            CodeStyleSettingsManager.getInstance(project).setTemporarySettings(mySettings);
-            CodeStyleManager.getInstance(project).reformat(psiFile);
-            CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-
-            myEditor.getSettings().setTabSize(mySettings.getTabSize(StdFileTypes.JAVA));
-            mySettings = saved;
-
-            Document document = myEditor.getDocument();
-            document.replaceString(0, document.getTextLength(), psiFile.getText());
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        }
-      });
-    }
-    finally {
-      manager.setEffectiveLanguageLevel(effectiveLanguageLevel);
-    }
-  }
-
-  protected int getRightMargin() {
-    return -1;
-  }
-
-  protected abstract String getPreviewText();
-
-  public void reset() {
-    toUpdatePreview = false;
-    TreeModel treeModel = myTreeTable.getTree().getModel();
-    TreeNode root = (TreeNode)treeModel.getRoot();
-    resetNode(root);
-    toUpdatePreview = true;
-    updatePreview();
-  }
-
-  private void resetNode(TreeNode node) {
+  private void resetNode(TreeNode node, CodeStyleSettings settings) {
     if (node instanceof MyTreeNode) {
-      ((MyTreeNode)node).reset();
+      ((MyTreeNode)node).reset(settings);
     }
     for (int j = 0; j < node.getChildCount(); j++) {
       TreeNode child = node.getChildAt(j);
-      resetNode(child);
+      resetNode(child, settings);
     }
   }
 
-  public void apply() {
-    TreeModel treeModel = myTreeTable.getTree().getModel();
-    TreeNode root = (TreeNode)treeModel.getRoot();
-    applyNode(root);
-  }
-
-  private void applyNode(TreeNode node) {
+  private void applyNode(TreeNode node, final CodeStyleSettings settings) {
     if (node instanceof MyTreeNode) {
-      ((MyTreeNode)node).apply();
+      ((MyTreeNode)node).apply(settings);
     }
     for (int j = 0; j < node.getChildCount(); j++) {
       TreeNode child = node.getChildAt(j);
-      applyNode(child);
+      applyNode(child, settings);
     }
   }
 
-  public boolean isModified() {
-    TreeModel treeModel = myTreeTable.getTree().getModel();
-    TreeNode root = (TreeNode)treeModel.getRoot();
-    if (isModified(root)) {
-      return true;
-    }
-    return false;
-  }
-
-  private boolean isModified(TreeNode node) {
+  private boolean isModified(TreeNode node, final CodeStyleSettings settings) {
     if (node instanceof MyTreeNode) {
-      if (((MyTreeNode)node).isModified()) return true;
+      if (((MyTreeNode)node).isModified(settings)) return true;
     }
     for (int j = 0; j < node.getChildCount(); j++) {
       TreeNode child = node.getChildAt(j);
-      if (isModified(child)) {
+      if (isModified(child, settings)) {
         return true;
       }
     }
@@ -483,17 +367,17 @@ public abstract class OptionTableWithPreviewPanel extends JPanel {
     }
   }
 
-  private Object getSettingsValue(Object key) {
+  private Object getSettingsValue(Object key, final CodeStyleSettings settings) {
     try {
       if (key instanceof BooleanOptionKey) {
         Field field = (Field)myKeyToFieldMap.get(key);
-        return field.getBoolean(mySettings) ? Boolean.TRUE : Boolean.FALSE;
+        return field.getBoolean(settings) ? Boolean.TRUE : Boolean.FALSE;
       }
       else if (key instanceof IntSelectionOptionKey) {
         Field field = (Field)myKeyToFieldMap.get(key);
         IntSelectionOptionKey intKey = (IntSelectionOptionKey)key;
         int[] values = intKey.values;
-        int value = field.getInt(mySettings);
+        int value = field.getInt(settings);
         for (int i = 0; i < values.length; i++) {
           if (values[i] == value) return intKey.rbNames[i];
         }
@@ -505,11 +389,11 @@ public abstract class OptionTableWithPreviewPanel extends JPanel {
     return null;
   }
 
-  public void setSettingsValue(Object key, Object value) {
+  public void setSettingsValue(Object key, Object value, final CodeStyleSettings settings) {
     try {
       if (key instanceof BooleanOptionKey) {
         Field field = (Field)myKeyToFieldMap.get(key);
-        field.setBoolean(mySettings, ((Boolean)value).booleanValue());
+        field.setBoolean(settings, ((Boolean)value).booleanValue());
       }
       else if (key instanceof IntSelectionOptionKey) {
         Field field = (Field)myKeyToFieldMap.get(key);
@@ -517,7 +401,7 @@ public abstract class OptionTableWithPreviewPanel extends JPanel {
         int[] values = intKey.values;
         for (int i = 0; i < values.length; i++) {
           if (intKey.rbNames[i].equals(value)) {
-            field.setInt(mySettings, values[i]);
+            field.setInt(settings, values[i]);
             return;
           }
         }
@@ -532,10 +416,10 @@ public abstract class OptionTableWithPreviewPanel extends JPanel {
     private String myText;
     private Object myValue;
 
-    public MyTreeNode(Object key, String text) {
+    public MyTreeNode(Object key, String text, CodeStyleSettings settings) {
       myKey = key;
       myText = text;
-      myValue = getSettingsValue(key);
+      myValue = getSettingsValue(key, settings);
     }
 
     public Object getKey() { return myKey; }
@@ -546,19 +430,18 @@ public abstract class OptionTableWithPreviewPanel extends JPanel {
 
     public void setValue(Object value) {
       myValue = value;
-      updatePreview();
     }
 
-    public void reset() {
-      setValue(getSettingsValue(myKey));
+    public void reset(CodeStyleSettings settings) {
+      setValue(getSettingsValue(myKey, settings));
     }
 
-    public boolean isModified() {
-      return !myValue.equals(getSettingsValue(myKey));
+    public boolean isModified(final CodeStyleSettings settings) {
+      return !myValue.equals(getSettingsValue(myKey, settings));
     }
 
-    public void apply() {
-      setSettingsValue(myKey, myValue);
+    public void apply(final CodeStyleSettings settings) {
+      setSettingsValue(myKey, myValue, settings);
     }
   }
 
@@ -652,4 +535,38 @@ public abstract class OptionTableWithPreviewPanel extends JPanel {
       return myCurrentEditor;
     }
   }
+
+  protected LexerEditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
+    return HighlighterFactory.createJavaHighlighter(scheme, LanguageLevel.HIGHEST);
+  }
+
+  protected FileType getFileType() {
+    return StdFileTypes.JAVA;
+  }
+
+  public void apply(CodeStyleSettings settings) {
+    TreeModel treeModel = myTreeTable.getTree().getModel();
+    TreeNode root = (TreeNode)treeModel.getRoot();
+    applyNode(root, settings);
+  }
+
+  public boolean isModified(CodeStyleSettings settings) {
+    TreeModel treeModel = myTreeTable.getTree().getModel();
+    TreeNode root = (TreeNode)treeModel.getRoot();
+    if (isModified(root, settings)) {
+      return true;
+    }
+    return false;
+  }
+
+  public JComponent getPanel() {
+    return myPanel;
+  }
+
+  protected void resetImpl(final CodeStyleSettings settings) {
+    TreeModel treeModel = myTreeTable.getTree().getModel();
+    TreeNode root = (TreeNode)treeModel.getRoot();
+    resetNode(root, settings);
+  }
+
 }

@@ -97,18 +97,6 @@ public class WrappingPanel extends OptionTableWithPreviewPanel {
     
   }
 
-  protected void setupEditorSettings(Editor editor) {
-    EditorSettings editorSettings = editor.getSettings();
-    editorSettings.setWhitespacesShown(true);
-    editorSettings.setLineMarkerAreaShown(false);
-    editorSettings.setLineNumbersShown(false);
-    editorSettings.setFoldingOutlineShown(false);
-    editorSettings.setAdditionalColumnsCount(0);
-    editorSettings.setAdditionalLinesCount(1);
-    editorSettings.setRightMargin(getRightMargin());
-    editorSettings.setRightMarginShown(true);
-  }
-
   protected int getRightMargin() {
     return 37;
   }

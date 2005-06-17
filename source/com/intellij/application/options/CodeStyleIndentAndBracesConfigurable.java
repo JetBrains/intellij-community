@@ -1,49 +1,21 @@
 package com.intellij.application.options;
 
-import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 import javax.swing.*;
 
-public class CodeStyleIndentAndBracesConfigurable extends BaseConfigurable {
-  private CodeStyleIndentAndBracesPanel myPanel;
-  private CodeStyleSettings mySettings;
-
-  public CodeStyleIndentAndBracesConfigurable(CodeStyleSettings settings) {
-    mySettings = settings;
-  }
-
-  public boolean isModified() {
-    return myPanel.isModified();
-  }
-
-  public JComponent createComponent(){
-    myPanel = new CodeStyleIndentAndBracesPanel(mySettings);
-    return myPanel;
-  }
-
-  public String getDisplayName() {
-    return "Alignment and Braces";
+public class CodeStyleIndentAndBracesConfigurable extends CodeStyleAbstractConfigurable {
+  public CodeStyleIndentAndBracesConfigurable(CodeStyleSettings settings, CodeStyleSettings cloneSettings) {
+    super(settings, cloneSettings,"Alignment and Braces");
   }
 
   public Icon getIcon() {
     return StdFileTypes.JAVA.getIcon();
   }
 
-  public void reset() {
-    myPanel.reset();
-  }
-
-  public void apply() {
-    myPanel.apply();
-  }
-
-  public void disposeUIResources() {
-    if(myPanel != null) {
-      myPanel.dispose();
-    }
-    myPanel = null;
+  protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+    return new CodeStyleIndentAndBracesPanel(settings);
   }
 
   public String getHelpTopic() {

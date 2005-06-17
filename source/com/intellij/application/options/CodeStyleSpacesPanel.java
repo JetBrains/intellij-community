@@ -4,6 +4,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
+import javax.swing.*;
+
 public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
   public CodeStyleSpacesPanel(CodeStyleSettings settings) {
     super(settings);
@@ -89,33 +91,37 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
 
   protected String getPreviewText() {
     return "@Annotation(param1=\"value1\", param2=\"value2\") public class Foo {\n" +
-            "  int[] X = new int[]{1,3,5,6,7,87,1213,2};\n\n" +
-            "  public void foo(int x, int y) {\n" +
-            "    for(int i = 0; i < x; i++){\n" +
-            "      y += (y ^ 0x123) << 2;\n" +
-            "    }\n" +
-            "    do {\n" +
-            "      try {\n" +
-            "        if(0 < x && x < 10) {\n" +
-            "          while(x != y){\n" +
-            "            x = f(x * 3 + 5);\n" +
-            "          }\n" +
-            "        } else {\n" +
-            "          synchronized(this){\n" +
-            "            switch(e.getCode()){\n" +
-            "              //...\n" +
-            "            }\n" +
-            "          }\n" +
-            "        }\n" +
-            "      }\n" +
-            "      catch(MyException e) {\n" +
-            "      }\n" +
-            "      finally {\n" +
-            "        int[] arr = (int[])g(y);\n" +
-            "        x = y >= 0 ? arr[y] : -1;\n" +
-            "      }\n" +
-            "    }while(true);\n" +
-            "  }\n" +
-            "}";
+           "  int[] X = new int[]{1,3,5,6,7,87,1213,2};\n\n" +
+           "  public void foo(int x, int y) {\n" +
+           "    for(int i = 0; i < x; i++){\n" +
+           "      y += (y ^ 0x123) << 2;\n" +
+           "    }\n" +
+           "    do {\n" +
+           "      try {\n" +
+           "        if(0 < x && x < 10) {\n" +
+           "          while(x != y){\n" +
+           "            x = f(x * 3 + 5);\n" +
+           "          }\n" +
+           "        } else {\n" +
+           "          synchronized(this){\n" +
+           "            switch(e.getCode()){\n" +
+           "              //...\n" +
+           "            }\n" +
+           "          }\n" +
+           "        }\n" +
+           "      }\n" +
+           "      catch(MyException e) {\n" +
+           "      }\n" +
+           "      finally {\n" +
+           "        int[] arr = (int[])g(y);\n" +
+           "        x = y >= 0 ? arr[y] : -1;\n" +
+           "      }\n" +
+           "    }while(true);\n" +
+           "  }\n" +
+           "}";
+  }
+
+  public JComponent getPanel() {
+    return getInternalPanel();
   }
 }

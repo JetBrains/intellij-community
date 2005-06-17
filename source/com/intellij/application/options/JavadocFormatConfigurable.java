@@ -1,49 +1,21 @@
 package com.intellij.application.options;
 
-import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 import javax.swing.*;
 
-public class JavadocFormatConfigurable extends BaseConfigurable {
-  private JavaDocFormattingPanel myPanel;
-  private CodeStyleSettings mySettings;
-
-  public JavadocFormatConfigurable(CodeStyleSettings settings) {
-    mySettings = settings;
+public class JavadocFormatConfigurable extends CodeStyleAbstractConfigurable {
+  public JavadocFormatConfigurable(CodeStyleSettings settings, CodeStyleSettings cloneSettings) {
+    super(settings, cloneSettings,"JavaDoc");
   }
 
-  public boolean isModified() {
-    return myPanel.isModified();
-  }
-
-  public JComponent createComponent() {
-    myPanel = new JavaDocFormattingPanel(mySettings);
-    return myPanel;
-  }
-
-  public String getDisplayName() {
-    return "JavaDoc";
+  protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+    return new JavaDocFormattingPanel(settings);
   }
 
   public Icon getIcon() {
     return StdFileTypes.JAVA.getIcon();
-  }
-
-  public void reset() {
-    myPanel.reset();
-  }
-
-  public void apply() {
-    myPanel.apply();
-  }
-
-  public void disposeUIResources() {
-    if(myPanel != null) {
-      myPanel.dispose();
-    }
-    myPanel = null;
   }
 
   public String getHelpTopic() {

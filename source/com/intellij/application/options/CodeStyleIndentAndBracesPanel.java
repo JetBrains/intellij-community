@@ -1,39 +1,19 @@
 package com.intellij.application.options;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OptionGroup;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
-public class CodeStyleIndentAndBracesPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleIndentAndBracesPanel");
-
+public class CodeStyleIndentAndBracesPanel extends CodeStyleAbstractPanel {
   private static final String[] BRACE_PLACEMENT_OPTIONS = new String[]{
     "End of line",
     "Next line if wrapped",
@@ -90,51 +70,49 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
   private JCheckBox myAlignTernaryExpression;
   private JCheckBox myAlignAssignment;
   private JCheckBox myAlignArrayInitializerExpression;
-
-  private Editor myEditor;
-  private boolean toUpdatePreview = true;
-
-  private CodeStyleSettings mySettings;
-
   private JCheckBox myKeepLineBreaks;
   private JCheckBox myKeepCommentAtFirstColumn;
   private JCheckBox myKeepMethodsInOneLine;
   private JCheckBox myKeepSimpleBlocksInOneLine;
   private JCheckBox myKeepControlStatementInOneLine;
 
-  public CodeStyleIndentAndBracesPanel(CodeStyleSettings settings) {
-    super(new GridBagLayout());
-    mySettings = settings;
+  private final JPanel myPanel = new JPanel(new GridBagLayout());
 
-    add(createKeepWhenReformatingPanel(),
+  public CodeStyleIndentAndBracesPanel(CodeStyleSettings settings) {
+    super(settings);
+
+    myPanel.add(createKeepWhenReformatingPanel(),
         new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
                                new Insets(0, 4, 0, 4), 0, 0));
 
-    add(createBracesPanel(),
+    myPanel.add(createBracesPanel(),
         new GridBagConstraints(0, 1, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
                                new Insets(0, 4, 0, 4), 0, 0));
 
-    add(createAlignmentsPanel(),
+    myPanel.add(createAlignmentsPanel(),
         new GridBagConstraints(1, 0, 1, 2, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                                new Insets(0, 4, 0, 4), 0, 0));
 
-    add(createPlaceOnNewLinePanel(),
+    myPanel.add(createPlaceOnNewLinePanel(),
         new GridBagConstraints(1, 2, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
                                new Insets(0, 4, 0, 4), 0, 0));
-    add(createForceBracesPanel(),
+    myPanel.add(createForceBracesPanel(),
         new GridBagConstraints(0, 2, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
                                new Insets(0, 4, 0, 4), 0, 0));
 
-    add(new JPanel() {
+    myPanel.add(new JPanel() {
       public Dimension getPreferredSize() {
         return new Dimension(1, 1);
       }
     }, new GridBagConstraints(0, 3, 2, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.NONE,
                               new Insets(0, 0, 0, 0), 0, 0));
 
-    add(createPreviewPanel(),
-        new GridBagConstraints(2, 0, 1, 4, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
-                               new Insets(0, 0, 0, 4), 0, 0));
+    final JPanel previewPanel = createPreviewPanel();
+    myPanel.add(previewPanel,
+                new GridBagConstraints(2, 0, 1, 4, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
+                                       new Insets(0, 0, 0, 4), 0, 0));
+    installPreviewPanel(previewPanel);
+    addPanelToWatch(myPanel);
   }
 
   private Component createKeepWhenReformatingPanel() {
@@ -158,10 +136,6 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
 
     return optionGroup.createPanel();
 
-  }
-
-  public void dispose() {
-    EditorFactory.getInstance().releaseEditor(myEditor);
   }
 
   private JPanel createBracesPanel() {
@@ -258,23 +232,11 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
   }
 
   private JCheckBox createCheckBox(String text) {
-    JCheckBox checkBox = new JCheckBox(text);
-    checkBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        update();
-      }
-    });
-    return checkBox;
+    return new JCheckBox(text);
   }
 
   private JComboBox createForceBracesCombo() {
-    JComboBox comboBox = new JComboBox(BRACE_FORCE_OPTIONS);
-    comboBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        update();
-      }
-    });
-    return comboBox;
+    return new JComboBox(BRACE_FORCE_OPTIONS);
   }
 
   private static void setForceBracesComboValue(JComboBox comboBox, int value) {
@@ -298,70 +260,36 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
   }
 
   private JComboBox createBraceStyleCombo() {
-    JComboBox comboBox = new JComboBox(BRACE_PLACEMENT_OPTIONS);
-    comboBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        update();
-      }
-    });
-    return comboBox;
+    return new JComboBox(BRACE_PLACEMENT_OPTIONS);
   }
 
   private static void setBraceStyleComboValue(JComboBox comboBox, int value) {
-    for( int i = 0; i < BRACE_PLACEMENT_OPTIONS.length; i++ )
-      if( BRACE_PLACEMENT_VALUES[i] == value ) {
+    for (int i = 0; i < BRACE_PLACEMENT_OPTIONS.length; i++) {
+      if (BRACE_PLACEMENT_VALUES[i] == value) {
         comboBox.setSelectedItem(BRACE_PLACEMENT_OPTIONS[i]);
         return;
       }
+    }
   }
 
   private static int getBraceComboValue(JComboBox comboBox) {
     Object item = comboBox.getSelectedItem();
-    for( int i = 1; i < BRACE_PLACEMENT_OPTIONS.length; i++ )
-      if( BRACE_PLACEMENT_OPTIONS[i].equals(item) )
+    for (int i = 1; i < BRACE_PLACEMENT_OPTIONS.length; i++) {
+      if (BRACE_PLACEMENT_OPTIONS[i].equals(item)) {
         return BRACE_PLACEMENT_VALUES[i];
+      }
+    }
     return BRACE_PLACEMENT_VALUES[0];
   }
 
   private JPanel createPreviewPanel() {
-    myEditor = createEditor();
-    JPanel panel = new JPanel(new BorderLayout()) {
-      public Dimension getPreferredSize() {
-        return new Dimension(350, 0);
-      }
-    };
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Preview"));
-    panel.setLayout(new BorderLayout());
-    panel.add(myEditor.getComponent(), BorderLayout.CENTER);
-    panel.setMinimumSize(new Dimension(350, 0));
-    return panel;
+    JPanel p = new JPanel(new BorderLayout());
+    p.setBorder(IdeBorderFactory.createTitledBorder("Preview"));
+    return p;
   }
 
-  private static Editor createEditor() {
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    Document editorDocument = editorFactory.createDocument("");
-    EditorEx editor = (EditorEx)editorFactory.createEditor(editorDocument);
-
-    EditorSettings editorSettings = editor.getSettings();
-    editorSettings.setWhitespacesShown(true);
-    editorSettings.setLineMarkerAreaShown(false);
-    editorSettings.setLineNumbersShown(false);
-    editorSettings.setFoldingOutlineShown(false);
-    editorSettings.setAdditionalColumnsCount(0);
-    editorSettings.setAdditionalLinesCount(1);
-
-    EditorColorsScheme scheme = editor.getColorsScheme();
-    scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
-
-    editor.setHighlighter(HighlighterFactory.createJavaHighlighter(scheme, LanguageLevel.HIGHEST));
-    return editor;
-  }
-
-  private void update() {
-    if (!toUpdatePreview) {
-      return;
-    }
-    final String text =
+  protected String getPreviewText() {
+    return
       "public class Foo {\n" +
       "  public int[] X = new int[] { 1, 3, 5\n" +
       "  7, 9, 11};\n" +
@@ -417,170 +345,144 @@ public class CodeStyleIndentAndBracesPanel extends JPanel {
       "    }\n" +
       "  }\n" +
       "}";
-
-    CommandProcessor.getInstance().executeCommand(ProjectManager.getInstance().getDefaultProject(),
-      new Runnable() {
-        public void run() {
-          replaceText(text);
-        }
-      }, null, null);
   }
 
-  private void replaceText(final String text) {
-    final Project project = ProjectManagerEx.getInstanceEx().getDefaultProject();
-    final PsiManager manager = PsiManager.getInstance(project);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        PsiElementFactory factory = manager.getElementFactory();
-        try {
-          PsiFile psiFile = factory.createFileFromText("a.java", text);
-
-          CodeStyleSettings savedCodeStyleSettings = mySettings;
-          mySettings = (CodeStyleSettings)mySettings.clone();
-          apply();
-          mySettings.KEEP_LINE_BREAKS = true;
-
-          CodeStyleSettingsManager.getInstance(project).setTemporarySettings(mySettings);
-          CodeStyleManager.getInstance(project).reformat(psiFile);
-          CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-
-          myEditor.getSettings().setTabSize(mySettings.getTabSize(StdFileTypes.JAVA));
-          mySettings = savedCodeStyleSettings;
-
-          Document document = myEditor.getDocument();
-          document.replaceString(0, document.getTextLength(), psiFile.getText());
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
-    });
-  }
-
-  public void reset() {
-    toUpdatePreview = false;
-    myCbElseOnNewline.setSelected(mySettings.ELSE_ON_NEW_LINE);
-    myCbWhileOnNewline.setSelected(mySettings.WHILE_ON_NEW_LINE);
-    myCbCatchOnNewline.setSelected(mySettings.CATCH_ON_NEW_LINE);
-    myCbFinallyOnNewline.setSelected(mySettings.FINALLY_ON_NEW_LINE);
-
-    myCbSpecialElseIfTreatment.setSelected(mySettings.SPECIAL_ELSE_IF_TREATMENT);
-    myCbIndentCaseFromSwitch.setSelected(mySettings.INDENT_CASE_FROM_SWITCH);
-
-    setBraceStyleComboValue(myOtherCombo, mySettings.BRACE_STYLE);
-    setBraceStyleComboValue(myClassDeclarationCombo, mySettings.CLASS_BRACE_STYLE);
-    setBraceStyleComboValue(myMethodDeclarationCombo, mySettings.METHOD_BRACE_STYLE);
-
-    myAlignAssignment.setSelected(mySettings.ALIGN_MULTILINE_ASSIGNMENT);
-    myAlignBinaryExpression.setSelected(mySettings.ALIGN_MULTILINE_BINARY_OPERATION);
-    myAlignCallParameters.setSelected(mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
-    myAlignDeclarationParameters.setSelected(mySettings.ALIGN_MULTILINE_PARAMETERS);
-    myAlignExtendsList.setSelected(mySettings.ALIGN_MULTILINE_EXTENDS_LIST);
-    myAlignForStatement.setSelected(mySettings.ALIGN_MULTILINE_FOR);
-    myAlignParenthesizedExpression.setSelected(mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION);
-    myAlignTernaryExpression.setSelected(mySettings.ALIGN_MULTILINE_TERNARY_OPERATION);
-    myAlignThrowsList.setSelected(mySettings.ALIGN_MULTILINE_THROWS_LIST);
-    myAlignArrayInitializerExpression.setSelected(mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
-
-    setForceBracesComboValue(myForForceCombo, mySettings.FOR_BRACE_FORCE);
-    setForceBracesComboValue(myIfForceCombo, mySettings.IF_BRACE_FORCE);
-    setForceBracesComboValue(myWhileForceCombo, mySettings.WHILE_BRACE_FORCE);
-    setForceBracesComboValue(myDoWhileForceCombo, mySettings.DOWHILE_BRACE_FORCE);
-
-    toUpdatePreview = true;
-
-    myKeepLineBreaks.setSelected(mySettings.KEEP_LINE_BREAKS);
-    myKeepCommentAtFirstColumn.setSelected(mySettings.KEEP_FIRST_COLUMN_COMMENT);
-    myKeepControlStatementInOneLine.setSelected(mySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE);
-    myKeepSimpleBlocksInOneLine.setSelected(mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
-    myKeepMethodsInOneLine.setSelected(mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE);
-
-
-    update();
-  }
-
-  public void apply() {
-    mySettings.ELSE_ON_NEW_LINE = myCbElseOnNewline.isSelected();
-    mySettings.WHILE_ON_NEW_LINE = myCbWhileOnNewline.isSelected();
-    mySettings.CATCH_ON_NEW_LINE = myCbCatchOnNewline.isSelected();
-    mySettings.FINALLY_ON_NEW_LINE = myCbFinallyOnNewline.isSelected();
-
-
-    mySettings.SPECIAL_ELSE_IF_TREATMENT = myCbSpecialElseIfTreatment.isSelected();
-    mySettings.INDENT_CASE_FROM_SWITCH = myCbIndentCaseFromSwitch.isSelected();
-
-    mySettings.BRACE_STYLE = getBraceComboValue(myOtherCombo);
-    mySettings.CLASS_BRACE_STYLE = getBraceComboValue(myClassDeclarationCombo);
-    mySettings.METHOD_BRACE_STYLE = getBraceComboValue(myMethodDeclarationCombo);
-
-    mySettings.ALIGN_MULTILINE_ASSIGNMENT = myAlignAssignment.isSelected();
-    mySettings.ALIGN_MULTILINE_BINARY_OPERATION = myAlignBinaryExpression.isSelected();
-    mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = myAlignCallParameters.isSelected();
-    mySettings.ALIGN_MULTILINE_PARAMETERS = myAlignDeclarationParameters.isSelected();
-    mySettings.ALIGN_MULTILINE_EXTENDS_LIST = myAlignExtendsList.isSelected();
-    mySettings.ALIGN_MULTILINE_FOR = myAlignForStatement.isSelected();
-    mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = myAlignParenthesizedExpression.isSelected();
-    mySettings.ALIGN_MULTILINE_TERNARY_OPERATION = myAlignTernaryExpression.isSelected();
-    mySettings.ALIGN_MULTILINE_THROWS_LIST = myAlignThrowsList.isSelected();
-    mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = myAlignArrayInitializerExpression.isSelected();
-//    mySettings.LABEL_INDENT =
-
-    mySettings.FOR_BRACE_FORCE = getForceBracesValue(myForForceCombo);
-    mySettings.IF_BRACE_FORCE = getForceBracesValue(myIfForceCombo);
-    mySettings.WHILE_BRACE_FORCE = getForceBracesValue(myWhileForceCombo);
-    mySettings.DOWHILE_BRACE_FORCE = getForceBracesValue(myDoWhileForceCombo);
-
-    mySettings.KEEP_LINE_BREAKS = myKeepLineBreaks.isSelected();
-    mySettings.KEEP_FIRST_COLUMN_COMMENT = myKeepCommentAtFirstColumn.isSelected();
-    mySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = myKeepControlStatementInOneLine.isSelected();
-    mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = myKeepSimpleBlocksInOneLine.isSelected();
-    mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = myKeepSimpleBlocksInOneLine.isSelected();
-
-  }
-
-  public boolean isModified() {
+  public boolean isModified(CodeStyleSettings settings) {
     boolean isModified;
-    isModified = isModified(myCbElseOnNewline, mySettings.ELSE_ON_NEW_LINE);
-    isModified |= isModified(myCbWhileOnNewline, mySettings.WHILE_ON_NEW_LINE);
-    isModified |= isModified(myCbCatchOnNewline, mySettings.CATCH_ON_NEW_LINE);
-    isModified |= isModified(myCbFinallyOnNewline, mySettings.FINALLY_ON_NEW_LINE);
+    isModified = isModified(myCbElseOnNewline, settings.ELSE_ON_NEW_LINE);
+    isModified |= isModified(myCbWhileOnNewline, settings.WHILE_ON_NEW_LINE);
+    isModified |= isModified(myCbCatchOnNewline, settings.CATCH_ON_NEW_LINE);
+    isModified |= isModified(myCbFinallyOnNewline, settings.FINALLY_ON_NEW_LINE);
 
 
-    isModified |= isModified(myCbSpecialElseIfTreatment, mySettings.SPECIAL_ELSE_IF_TREATMENT);
-    isModified |= isModified(myCbIndentCaseFromSwitch, mySettings.INDENT_CASE_FROM_SWITCH);
+    isModified |= isModified(myCbSpecialElseIfTreatment, settings.SPECIAL_ELSE_IF_TREATMENT);
+    isModified |= isModified(myCbIndentCaseFromSwitch, settings.INDENT_CASE_FROM_SWITCH);
 
 
-    isModified |= mySettings.BRACE_STYLE != getBraceComboValue(myOtherCombo);
-    isModified |= mySettings.CLASS_BRACE_STYLE != getBraceComboValue(myClassDeclarationCombo);
-    isModified |= mySettings.METHOD_BRACE_STYLE != getBraceComboValue(myMethodDeclarationCombo);
+    isModified |= settings.BRACE_STYLE != getBraceComboValue(myOtherCombo);
+    isModified |= settings.CLASS_BRACE_STYLE != getBraceComboValue(myClassDeclarationCombo);
+    isModified |= settings.METHOD_BRACE_STYLE != getBraceComboValue(myMethodDeclarationCombo);
 
-    isModified |= isModified(myAlignAssignment, mySettings.ALIGN_MULTILINE_ASSIGNMENT);
-    isModified |= isModified(myAlignBinaryExpression, mySettings.ALIGN_MULTILINE_BINARY_OPERATION);
-    isModified |= isModified(myAlignCallParameters, mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
-    isModified |= isModified(myAlignDeclarationParameters, mySettings.ALIGN_MULTILINE_PARAMETERS);
-    isModified |= isModified(myAlignExtendsList, mySettings.ALIGN_MULTILINE_EXTENDS_LIST);
-    isModified |= isModified(myAlignForStatement, mySettings.ALIGN_MULTILINE_FOR);
-    isModified |= isModified(myAlignParenthesizedExpression, mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION);
-    isModified |= isModified(myAlignTernaryExpression, mySettings.ALIGN_MULTILINE_TERNARY_OPERATION);
-    isModified |= isModified(myAlignThrowsList, mySettings.ALIGN_MULTILINE_THROWS_LIST);
-    isModified |= isModified(myAlignArrayInitializerExpression, mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
+    isModified |= isModified(myAlignAssignment, settings.ALIGN_MULTILINE_ASSIGNMENT);
+    isModified |= isModified(myAlignBinaryExpression, settings.ALIGN_MULTILINE_BINARY_OPERATION);
+    isModified |= isModified(myAlignCallParameters, settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
+    isModified |= isModified(myAlignDeclarationParameters, settings.ALIGN_MULTILINE_PARAMETERS);
+    isModified |= isModified(myAlignExtendsList, settings.ALIGN_MULTILINE_EXTENDS_LIST);
+    isModified |= isModified(myAlignForStatement, settings.ALIGN_MULTILINE_FOR);
+    isModified |= isModified(myAlignParenthesizedExpression, settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION);
+    isModified |= isModified(myAlignTernaryExpression, settings.ALIGN_MULTILINE_TERNARY_OPERATION);
+    isModified |= isModified(myAlignThrowsList, settings.ALIGN_MULTILINE_THROWS_LIST);
+    isModified |= isModified(myAlignArrayInitializerExpression, settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
 
-    isModified |= mySettings.FOR_BRACE_FORCE != getForceBracesValue(myForForceCombo);
-    isModified |= mySettings.IF_BRACE_FORCE != getForceBracesValue(myIfForceCombo);
-    isModified |= mySettings.WHILE_BRACE_FORCE != getForceBracesValue(myWhileForceCombo);
-    isModified |= mySettings.DOWHILE_BRACE_FORCE != getForceBracesValue(myDoWhileForceCombo);
+    isModified |= settings.FOR_BRACE_FORCE != getForceBracesValue(myForForceCombo);
+    isModified |= settings.IF_BRACE_FORCE != getForceBracesValue(myIfForceCombo);
+    isModified |= settings.WHILE_BRACE_FORCE != getForceBracesValue(myWhileForceCombo);
+    isModified |= settings.DOWHILE_BRACE_FORCE != getForceBracesValue(myDoWhileForceCombo);
 
-    isModified |= isModified(myKeepLineBreaks, mySettings.KEEP_LINE_BREAKS);
-    isModified |= isModified(myKeepCommentAtFirstColumn, mySettings.KEEP_FIRST_COLUMN_COMMENT);
-    isModified |= isModified(myKeepControlStatementInOneLine, mySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE);
-    isModified |= isModified(myKeepSimpleBlocksInOneLine, mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
-    isModified |= isModified(myKeepMethodsInOneLine, mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE);
+    isModified |= isModified(myKeepLineBreaks, settings.KEEP_LINE_BREAKS);
+    isModified |= isModified(myKeepCommentAtFirstColumn, settings.KEEP_FIRST_COLUMN_COMMENT);
+    isModified |= isModified(myKeepControlStatementInOneLine, settings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE);
+    isModified |= isModified(myKeepSimpleBlocksInOneLine, settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
+    isModified |= isModified(myKeepMethodsInOneLine, settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE);
 
 
     return isModified;
+
   }
 
   private static boolean isModified(JCheckBox checkBox, boolean value) {
     return checkBox.isSelected() != value;
+  }
+
+  protected void resetImpl(final CodeStyleSettings settings) {
+    myCbElseOnNewline.setSelected(settings.ELSE_ON_NEW_LINE);
+    myCbWhileOnNewline.setSelected(settings.WHILE_ON_NEW_LINE);
+    myCbCatchOnNewline.setSelected(settings.CATCH_ON_NEW_LINE);
+    myCbFinallyOnNewline.setSelected(settings.FINALLY_ON_NEW_LINE);
+
+    myCbSpecialElseIfTreatment.setSelected(settings.SPECIAL_ELSE_IF_TREATMENT);
+    myCbIndentCaseFromSwitch.setSelected(settings.INDENT_CASE_FROM_SWITCH);
+
+    setBraceStyleComboValue(myOtherCombo, settings.BRACE_STYLE);
+    setBraceStyleComboValue(myClassDeclarationCombo, settings.CLASS_BRACE_STYLE);
+    setBraceStyleComboValue(myMethodDeclarationCombo, settings.METHOD_BRACE_STYLE);
+
+    myAlignAssignment.setSelected(settings.ALIGN_MULTILINE_ASSIGNMENT);
+    myAlignBinaryExpression.setSelected(settings.ALIGN_MULTILINE_BINARY_OPERATION);
+    myAlignCallParameters.setSelected(settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
+    myAlignDeclarationParameters.setSelected(settings.ALIGN_MULTILINE_PARAMETERS);
+    myAlignExtendsList.setSelected(settings.ALIGN_MULTILINE_EXTENDS_LIST);
+    myAlignForStatement.setSelected(settings.ALIGN_MULTILINE_FOR);
+    myAlignParenthesizedExpression.setSelected(settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION);
+    myAlignTernaryExpression.setSelected(settings.ALIGN_MULTILINE_TERNARY_OPERATION);
+    myAlignThrowsList.setSelected(settings.ALIGN_MULTILINE_THROWS_LIST);
+    myAlignArrayInitializerExpression.setSelected(settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
+
+    setForceBracesComboValue(myForForceCombo, settings.FOR_BRACE_FORCE);
+    setForceBracesComboValue(myIfForceCombo, settings.IF_BRACE_FORCE);
+    setForceBracesComboValue(myWhileForceCombo, settings.WHILE_BRACE_FORCE);
+    setForceBracesComboValue(myDoWhileForceCombo, settings.DOWHILE_BRACE_FORCE);
+
+    myKeepLineBreaks.setSelected(settings.KEEP_LINE_BREAKS);
+    myKeepCommentAtFirstColumn.setSelected(settings.KEEP_FIRST_COLUMN_COMMENT);
+    myKeepControlStatementInOneLine.setSelected(settings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE);
+    myKeepSimpleBlocksInOneLine.setSelected(settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
+    myKeepMethodsInOneLine.setSelected(settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE);
+
+  }
+
+  protected LexerEditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
+    return HighlighterFactory.createJavaHighlighter(scheme, LanguageLevel.HIGHEST);
+  }
+
+  public void apply(CodeStyleSettings settings) {
+    settings.ELSE_ON_NEW_LINE = myCbElseOnNewline.isSelected();
+    settings.WHILE_ON_NEW_LINE = myCbWhileOnNewline.isSelected();
+    settings.CATCH_ON_NEW_LINE = myCbCatchOnNewline.isSelected();
+    settings.FINALLY_ON_NEW_LINE = myCbFinallyOnNewline.isSelected();
+
+
+    settings.SPECIAL_ELSE_IF_TREATMENT = myCbSpecialElseIfTreatment.isSelected();
+    settings.INDENT_CASE_FROM_SWITCH = myCbIndentCaseFromSwitch.isSelected();
+
+    settings.BRACE_STYLE = getBraceComboValue(myOtherCombo);
+    settings.CLASS_BRACE_STYLE = getBraceComboValue(myClassDeclarationCombo);
+    settings.METHOD_BRACE_STYLE = getBraceComboValue(myMethodDeclarationCombo);
+
+    settings.ALIGN_MULTILINE_ASSIGNMENT = myAlignAssignment.isSelected();
+    settings.ALIGN_MULTILINE_BINARY_OPERATION = myAlignBinaryExpression.isSelected();
+    settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = myAlignCallParameters.isSelected();
+    settings.ALIGN_MULTILINE_PARAMETERS = myAlignDeclarationParameters.isSelected();
+    settings.ALIGN_MULTILINE_EXTENDS_LIST = myAlignExtendsList.isSelected();
+    settings.ALIGN_MULTILINE_FOR = myAlignForStatement.isSelected();
+    settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = myAlignParenthesizedExpression.isSelected();
+    settings.ALIGN_MULTILINE_TERNARY_OPERATION = myAlignTernaryExpression.isSelected();
+    settings.ALIGN_MULTILINE_THROWS_LIST = myAlignThrowsList.isSelected();
+    settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = myAlignArrayInitializerExpression.isSelected();
+//    mySettings.LABEL_INDENT =
+
+    settings.FOR_BRACE_FORCE = getForceBracesValue(myForForceCombo);
+    settings.IF_BRACE_FORCE = getForceBracesValue(myIfForceCombo);
+    settings.WHILE_BRACE_FORCE = getForceBracesValue(myWhileForceCombo);
+    settings.DOWHILE_BRACE_FORCE = getForceBracesValue(myDoWhileForceCombo);
+
+    settings.KEEP_LINE_BREAKS = myKeepLineBreaks.isSelected();
+    settings.KEEP_FIRST_COLUMN_COMMENT = myKeepCommentAtFirstColumn.isSelected();
+    settings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = myKeepControlStatementInOneLine.isSelected();
+    settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = myKeepSimpleBlocksInOneLine.isSelected();
+    settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = myKeepSimpleBlocksInOneLine.isSelected();
+
+  }
+
+  protected FileType getFileType() {
+    return StdFileTypes.JAVA;
+  }
+
+  protected int getRightMargin() {
+    return -1;
+  }
+
+  public JComponent getPanel() {
+    return myPanel;
   }
 }
