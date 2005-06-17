@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -42,6 +43,7 @@ public class SelectWordUtil {
     new JavaTokenSelectioner(),
     new WordSelectioner(),
     new StatementGroupSelectioner(),
+    new CaseStatementsSelectioner(),
     new HtmlSelectioner(),
     new XmlTagSelectioner(),
     new XmlElementSelectioner(),
@@ -912,7 +914,44 @@ public class SelectWordUtil {
       return result;
     }
   }
+  
+  static class CaseStatementsSelectioner extends BasicSelectioner {
+      public boolean canSelect(PsiElement e) {
+        return e instanceof PsiStatement && 
+               e.getParent() instanceof PsiCodeBlock && 
+               e.getParent().getParent() instanceof PsiSwitchStatement;
+      }
 
+      public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+        List<TextRange> result = new ArrayList<TextRange>();
+        final PsiStatement statement = (PsiStatement)e;
+        PsiElement caseStart = statement;
+        PsiElement caseEnd = statement;
+        
+        if (statement instanceof PsiSwitchLabelStatement ||
+            statement instanceof PsiSwitchStatement) {
+          return result;
+        }
+        
+        PsiElement sibling;
+        
+        sibling = statement.getPrevSibling();
+        while(sibling != null && !(sibling instanceof PsiSwitchLabelStatement)) {
+          if (!(sibling instanceof PsiWhiteSpace)) caseStart = sibling;
+          sibling = sibling.getPrevSibling();
+        }
+        
+        sibling = statement.getNextSibling();
+        while(sibling != null && !(sibling instanceof PsiSwitchLabelStatement)) {
+          if (!(sibling instanceof PsiWhiteSpace)) caseEnd = sibling;
+          sibling = sibling.getNextSibling();
+        }
+        
+        result.add(new TextRange(caseStart.getTextOffset(),caseEnd.getTextOffset() + caseEnd.getTextLength()));
+        return result;
+      }
+    }
+  
   static class XmlElementSelectioner extends BasicSelectioner {
     public boolean canSelect(PsiElement e) {
       return e instanceof XmlAttribute || e instanceof XmlAttributeValue;
