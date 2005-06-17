@@ -7,7 +7,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.cacheBuilder.WordOccurence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
-import com.intellij.lang.jsp.NewJspLanguage;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -24,9 +23,7 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
-import com.intellij.psi.impl.source.parsing.jsp.JspHighlightLexer;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
@@ -118,23 +115,6 @@ public class IdTableBuilding {
   static class AspectJIdCacheBuilder extends JavaIdCacheBuilder {
     protected Lexer createLexer() {
       return new AspectjLexer(false, false);
-    }
-  }
-
-  static class JspIdCacheBuilder implements IdCacheBuilder {
-    public void build(char[] chars,
-                      int length,
-                      TIntIntHashMap wordsTable,
-                      TodoPattern[] todoPatterns,
-                      int[] todoCounts,
-                      final PsiManager manager, final PsiFile psiFile) {
-      final NewJspLanguage jspLanguage = Language.findInstance(NewJspLanguage.class);
-      Lexer lexer = jspLanguage.createCacheBuilderLexer(manager.getProject());
-      ((JspHighlightLexer)lexer).setBaseFile((JspFile)psiFile);
-      JspxFilterLexer filterLexer = new JspxFilterLexer(lexer, wordsTable, todoCounts);
-      lexer = new FilterLexer(filterLexer, TOKEN_FILTER);
-      lexer.start(chars);
-      while (lexer.getTokenType() != null) lexer.advance();
     }
   }
 
@@ -231,7 +211,6 @@ public class IdTableBuilding {
     registerCacheBuilder(StdFileTypes.HTML,new HtmlIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.XHTML,new XHtmlIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.JSPX,new JspxIdCacheBuilder());
-    registerCacheBuilder(StdFileTypes.JSP,new JspIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.PLAIN_TEXT,new TextIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.GUI_DESIGNER_FORM,new FormFileIdCacheBuilder());
   }

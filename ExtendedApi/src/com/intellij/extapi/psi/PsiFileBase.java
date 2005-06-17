@@ -23,7 +23,8 @@ import com.intellij.psi.tree.IElementType;
 public abstract class PsiFileBase extends PsiFileImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileBase");
 
-  private final static IElementType FILE_TEXT_CHAMELEON = new IElementType("FILE_TEXT_CHAMELEON", null); // Shouldn't happen to be used.
+  private final static IElementType FILE_TEXT_CHAMELEON = new IElementType("FILE_TEXT_CHAMELEON",
+                                                                           Language.ANY); // Shouldn't happen to be used.
   private final Language myLanguage;
 
   protected PsiFileBase(Project project,

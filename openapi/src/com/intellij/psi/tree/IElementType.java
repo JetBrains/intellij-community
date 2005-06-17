@@ -34,11 +34,10 @@ package com.intellij.psi.tree;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class IElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.tree.IElementType");
@@ -68,7 +67,7 @@ public class IElementType {
     return (IElementType[])matches.toArray(new IElementType[matches.size()]);
   }
 
-  public IElementType(String debugName, Language language) {
+  public IElementType(@NotNull String debugName, @NotNull Language language) {
     this(debugName, language, true);
   }
 

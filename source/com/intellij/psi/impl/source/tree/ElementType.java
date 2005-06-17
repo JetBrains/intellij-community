@@ -1,12 +1,13 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.Language;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.TokenTypeEx;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.xml.dtd.DTDElementType;
+import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
@@ -19,19 +20,19 @@ public interface ElementType extends
                              JspElementType,
                              XmlElementType,
                              AspectElementType {
-  IElementType PLAIN_TEXT_FILE = new IElementType("PLAIN_TEXT_FILE", null);
-  IElementType PLAIN_TEXT = new IElementType("PLAIN_TEXT", null);
-  IElementType CODE_FRAGMENT = new IElementType("CODE_FRAGMENT", null);
-  IElementType DUMMY_HOLDER = new IElementType("DUMMY_HOLDER", null);
+  IElementType PLAIN_TEXT_FILE = new IElementType("PLAIN_TEXT_FILE", Language.ANY);
+  IElementType PLAIN_TEXT = new IElementType("PLAIN_TEXT", Language.ANY);
+  IElementType CODE_FRAGMENT = new IElementType("CODE_FRAGMENT", Language.ANY);
+  IElementType DUMMY_HOLDER = new IElementType("DUMMY_HOLDER", Language.ANY);
 
   TokenSet WHITE_SPACE_BIT_SET = TokenSet.create(new IElementType[]{WHITE_SPACE, JspElementType.JSP_TEMPLATE_EXPRESSION});
 
-  TokenSet COMMENT_BIT_SET = TokenSet.create(new IElementType[]{END_OF_LINE_COMMENT, 
-    C_STYLE_COMMENT, 
-    JavaTokenType.DOC_COMMENT, 
-    JavaDocElementType.DOC_COMMENT, 
+  TokenSet COMMENT_BIT_SET = TokenSet.create(new IElementType[]{END_OF_LINE_COMMENT,
+    C_STYLE_COMMENT,
+    JavaTokenType.DOC_COMMENT,
+    JavaDocElementType.DOC_COMMENT,
     JSP_COMMENT,
-                                                                XML_COMMENT});
+    XML_COMMENT});
 
   TokenSet WHITE_SPACE_OR_COMMENT_BIT_SET = TokenSet.orSet(WHITE_SPACE_BIT_SET, COMMENT_BIT_SET);
 
