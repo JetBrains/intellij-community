@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.xml.XmlFoldingBuilder;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -186,9 +187,19 @@ class FoldingPolicy {
       return new TextRange(startOffset, endOffset);
     } else if (element instanceof PsiDocComment) {
       return element.getTextRange();
-    } else {
-      return null;
+    } else if (element instanceof XmlTag) {
+      final Language language = element.getLanguage();
+      
+      if (language != null) {
+        final FoldingBuilder foldingBuilder = language.getFoldingBuilder();
+
+        if (foldingBuilder instanceof XmlFoldingBuilder) {
+          return ((XmlFoldingBuilder)foldingBuilder).getRangeToFold(element);
+        } 
+      }
     }
+    
+    return null;
   }
 
   private static TextRange getFileHeader(PsiJavaFile file) {
@@ -315,11 +326,15 @@ class FoldingPolicy {
   private static <T extends PsiNamedElement> int getChildIndex (T element, PsiElement parent, String name, Class<T> hisClass) {
     PsiElement[] children = parent.getChildren();
     int index = 0;
+    
     for (int i = 0; i < children.length; i++) {
       PsiElement child = children[i];
+      
       if (hisClass.isAssignableFrom(child.getClass())) {
         T namedChild = (T)child;
-        if (name.equals(namedChild.getName())) {
+        final String childName = namedChild.getName();
+        
+        if ((name != null && name.equals(childName)) || name == childName) {
           if (namedChild.equals(element)) {
             return index;
           }
@@ -471,11 +486,15 @@ class FoldingPolicy {
 
   private static <T extends PsiNamedElement> T restoreElementInternal (PsiElement parent, String name, int index, Class<T> hisClass) {
     PsiElement[] children = parent.getChildren();
+    
     for (int i = 0; i < children.length; i++) {
       PsiElement child = children[i];
+      
       if (hisClass.isAssignableFrom(child.getClass())) {
         T namedChild = (T)child;
-        if (name.equals(namedChild.getName())) {
+        final String childName = namedChild.getName();
+        
+        if ((name != null && name.equals(childName)) || name == childName) {
           if (index == 0) {
             return namedChild;
           }
@@ -600,14 +619,25 @@ class FoldingPolicy {
 
       if (parent instanceof XmlFile) {
         parent = ((XmlFile) parent).getDocument();
-        if(file.getFileType() == StdFileTypes.JSP) { //TODO: FoldingBuilder API, psi roots, etc?
-          parent = HtmlUtil.getRealXmlDocument((XmlDocument)parent);
-        }
       } 
 
       try {
         int index = Integer.parseInt(tokenizer.nextToken());
-        return restoreElementInternal(parent, name, index, XmlTag.class);
+        PsiElement result = restoreElementInternal(parent, name, index, XmlTag.class);
+        
+        if (result == null && 
+            file.getFileType() == StdFileTypes.JSP) {
+          //TODO: FoldingBuilder API, psi roots, etc?
+          if(parent instanceof XmlDocument) {
+            // html tag, not found in jsp tree 
+            result = restoreElementInternal(HtmlUtil.getRealXmlDocument((XmlDocument)parent), name, index, XmlTag.class);
+          } else if (name.equals("null")) {
+            // scriplet/declaration missed because null name
+            result = restoreElementInternal(parent,null,index,XmlTag.class);
+          }
+        }
+        
+        return result;
       } catch (NumberFormatException e) {
         LOG.error(e);
         return null;
