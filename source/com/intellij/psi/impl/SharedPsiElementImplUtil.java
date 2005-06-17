@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +60,7 @@ public class SharedPsiElementImplUtil {
     return referencesList.toArray(new PsiReference[referencesList.size()]);
   }
 
-  public static PsiReference[] getReferences(PsiElement thisElement) {
+  @NotNull public static PsiReference[] getReferences(PsiElement thisElement) {
     PsiReference ref = thisElement.getReference();
     if (ref == null) return PsiReference.EMPTY_ARRAY;
     return new PsiReference[] {ref};

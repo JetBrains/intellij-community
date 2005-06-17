@@ -27,7 +27,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   PsiManager getManager();
 
-  PsiElement[] getChildren();
+  @NotNull PsiElement[] getChildren();
 
   @Nullable PsiElement getParent();
 
@@ -55,7 +55,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   String getText();
 
-  char[] textToCharArray();
+  @Nullable char[] textToCharArray();
 
   PsiElement getNavigationElement();
   PsiElement getOriginalElement();
@@ -101,7 +101,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   PsiReference getReference();
 
-  PsiReference[] getReferences();
+  @NotNull PsiReference[] getReferences();
 
   <T> T getCopyableUserData(Key<T> key);
 
