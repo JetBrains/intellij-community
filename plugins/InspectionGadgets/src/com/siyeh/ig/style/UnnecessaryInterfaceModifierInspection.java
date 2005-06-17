@@ -1,4 +1,4 @@
-package com.siyeh.ig.verbose;
+package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -34,7 +34,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection{
     }
 
     public String getGroupDisplayName(){
-        return GroupNames.VERBOSE_GROUP_NAME;
+        return GroupNames.STYLE_GROUP_NAME;
     }
 
     public ProblemDescriptor[] doCheckClass(PsiClass aClass,
