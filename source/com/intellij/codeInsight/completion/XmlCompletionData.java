@@ -368,26 +368,24 @@ public class XmlCompletionData extends CompletionData {
         if (descriptor != null) {
           final XmlFile descriptorFile = descriptor.getNSDescriptor().getDescriptorFile();
 
-          if (!parentOfType.getContainingFile().equals(descriptorFile)) {
-            // skip content of embedded dtd, its content will be inserted by word completion
-            final PsiElementProcessor processor = new PsiElementProcessor() {
-              public boolean execute(final PsiElement element) {
-                if (element instanceof XmlEntityDecl) {
-                  final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
-                  if (xmlEntityDecl.isInternalReference()) results.add(xmlEntityDecl.getName());
-                }
-                return true;
+          // skip content of embedded dtd, its content will be inserted by word completion
+          final PsiElementProcessor processor = new PsiElementProcessor() {
+            public boolean execute(final PsiElement element) {
+              if (element instanceof XmlEntityDecl) {
+                final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
+                if (xmlEntityDecl.isInternalReference()) results.add(xmlEntityDecl.getName());
               }
-            };
+              return true;
+            }
+          };
 
-            XmlUtil.processXmlElements(
-              descriptorFile,
-              processor,
-              true
-            );
+          XmlUtil.processXmlElements(
+            descriptorFile,
+            processor,
+            true
+          );
 
-            return results.toArray(new Object[results.size()]);
-          }
+          return results.toArray(new Object[results.size()]);
         }
       }
       return new Object[0];
