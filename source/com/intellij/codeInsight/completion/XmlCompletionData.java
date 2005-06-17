@@ -19,6 +19,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
+import com.intellij.psi.filters.getters.AllWordsGetter;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.html.HtmlTag;
@@ -322,7 +323,7 @@ public class XmlCompletionData extends CompletionData {
   private static class SimpleTagContentEnumerationValuesGetter implements ContextGetter {
     public Object[] get(final PsiElement context, CompletionContext completionContext) {
       XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class, false);
-      XmlElementDescriptor descriptor = tag!=null ? tag.getDescriptor() : null;
+      XmlElementDescriptor descriptor = tag != null ? tag.getDescriptor() : null;
 
       if (descriptor instanceof XmlElementDescriptorImpl) {
         final TypeDescriptor type = ((XmlElementDescriptorImpl)descriptor).getType();
@@ -333,18 +334,16 @@ public class XmlCompletionData extends CompletionData {
           XmlUtil.processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(),new PsiElementProcessor() {
             public boolean execute(final PsiElement element) {
               if (element instanceof XmlTag &&
-                  ((XmlTag)element).getLocalName().equals("simpleContent") &&
-                  ((XmlTag)element).getNamespace().equals(XmlUtil.XML_SCHEMA_URI)
-                 ) {
+                ((XmlTag)element).getLocalName().equals("simpleContent") &&
+                ((XmlTag)element).getNamespace().equals(XmlUtil.XML_SCHEMA_URI)
+                ) {
                 simpleContent[0] = (XmlTag)element;
                 return false;
               }
 
               return true;
             }
-
-          },
-                                     true);
+          }, true);
 
           if (simpleContent[0]!=null) {
             final HashSet<String> variants = new HashSet<String>();
@@ -354,7 +353,7 @@ public class XmlCompletionData extends CompletionData {
         }
       }
 
-      return new Object[0];
+      return new AllWordsGetter().get(context, completionContext);
     }
   }
 
