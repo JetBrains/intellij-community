@@ -19,6 +19,7 @@ import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
+import javax.swing.border.EtchedBorder;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
@@ -28,6 +29,8 @@ import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Arrays;
 
 /**
  * Created by IntelliJ IDEA.
@@ -78,6 +81,8 @@ public class WelcomeScreen {
   private static final Icon DEFAULT_ICON = IconLoader.getIcon("/general/configurableDefault.png");
 
   private static final String KEYMAP_URL = PathManager.getHomePath() + "/help/4.5_ReferenceCard.pdf";
+  private static final String JET_BRAINS = "JetBrains";
+  private static final String INTELLIJ = "IntelliJ";
 
   private static final Font TEXT_FONT = new Font("Tahoma", Font.PLAIN, 11);
   private static final Font LINK_FONT = new Font("Tahoma", Font.BOLD, 12);
@@ -198,12 +203,19 @@ public class WelcomeScreen {
     pluginsCaption.setFont(CAPTION_FONT);
     pluginsCaption.setForeground(CAPTION_COLOR);
 
-    JLabel installedPluginsCaption = new JLabel("Installed Plugins");
+    JLabel installedPluginsCaption = new JLabel("Installed Plugins:");
     installedPluginsCaption.setFont(LINK_FONT);
     installedPluginsCaption.setForeground(CAPTION_COLOR);
 
-    JPanel pluginsListPanel = new JPanel(new GridBagLayout());
-    pluginsListPanel.setBackground(PLUGINS_PANEL_COLOR);
+    JPanel installedPluginsPanel = new JPanel(new GridBagLayout());
+    installedPluginsPanel.setBackground(PLUGINS_PANEL_COLOR);
+
+    JLabel embeddedPluginsCaption = new JLabel("Bundled Plugins:");
+    embeddedPluginsCaption.setFont(LINK_FONT);
+    embeddedPluginsCaption.setForeground(CAPTION_COLOR);
+
+    JPanel embeddedPluginsPanel = new JPanel(new GridBagLayout());
+    embeddedPluginsPanel.setBackground(PLUGINS_PANEL_COLOR);
 
     JPanel topPluginsPanel = new JPanel(new GridBagLayout());
     topPluginsPanel.setBackground(PLUGINS_PANEL_COLOR);
@@ -211,13 +223,26 @@ public class WelcomeScreen {
     //Create the list of installed plugins
     PluginDescriptor[] myInstalledPlugins = PluginManager.getPlugins();
     if (myInstalledPlugins == null || myInstalledPlugins.length == 0) {
-      addListItemToPlugins(pluginsListPanel, "<html><i>No plugins currently installed.</i></html>", null, null, null, null);
+      addListItemToPlugins(installedPluginsPanel, "<html><i>No plugins currently installed.</i></html>", null, null, null, null);
+      addListItemToPlugins(embeddedPluginsPanel, "<html><i>All bundled plugins are uninstalled.</i></html>", null, null, null, null);
     }
     else {
+      final Comparator<PluginDescriptor> pluginsComparator = new Comparator<PluginDescriptor>() {
+        public int compare(final PluginDescriptor o1, final PluginDescriptor o2) {
+          return o1.getName().compareTo(o2.getName());
+        }
+      };
+      Arrays.sort(myInstalledPlugins, pluginsComparator);
       for (int i = 0; i < myInstalledPlugins.length; i++) {
         PluginDescriptor plugin = myInstalledPlugins[i];
-        addListItemToPlugins(pluginsListPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(),
-                             plugin.getPluginClassLoader(), plugin.getUrl());
+        if (JET_BRAINS.equalsIgnoreCase(plugin.getVendor()) || INTELLIJ.equalsIgnoreCase(plugin.getVendor()) ) {
+          addListItemToPlugins(embeddedPluginsPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(),
+                               plugin.getPluginClassLoader(), plugin.getUrl());
+        }
+        else {
+          addListItemToPlugins(installedPluginsPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(),
+                               plugin.getPluginClassLoader(), plugin.getUrl());
+        }
       }
     }
 
@@ -264,12 +289,18 @@ public class WelcomeScreen {
     myPluginsPanel.add(topPluginsPanel, gBC);
 
     gBC = new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 5, 0, 0), 0, 0);
-    myPluginsPanel.add(pluginsListPanel, gBC);
+    myPluginsPanel.add(installedPluginsPanel, gBC);
 
     JPanel emptyPanel_1 = new JPanel();
     emptyPanel_1.setBackground(PLUGINS_PANEL_COLOR);
 
-    gBC = new GridBagConstraints(0, 2, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
+    gBC = new GridBagConstraints(0, 2, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(25, 25, 0, 0), 0, 0);
+    myPluginsPanel.add(embeddedPluginsCaption, gBC);
+
+    gBC = new GridBagConstraints(0, 3, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(5, 5, 0, 0), 0, 0);
+    myPluginsPanel.add(embeddedPluginsPanel, gBC);
+
+    gBC = new GridBagConstraints(0, 4, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
     myPluginsPanel.add(emptyPanel_1, gBC);
 
     JScrollPane myPluginsScrollPane = ScrollPaneFactory.createScrollPane(myPluginsPanel);
@@ -278,7 +309,7 @@ public class WelcomeScreen {
     myPluginsScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
 
-    // Create Main Manel for Quick Start and Documentation
+    // Create Main Panel for Quick Start and Documentation
     myMainPanel = new JPanel(new GridBagLayout());
     myMainPanel.setBackground(MAIN_PANEL_COLOR);
 
@@ -292,7 +323,7 @@ public class WelcomeScreen {
     quickStarts.addButton(newProject, "Create New Project", "Start the \"New Project\" Wizard that will guide you through " +
                                                             "the steps necessary for creating a new project.");
 
-    // TODO[pti]: add button "Open Project" to the Quickstart list    
+    // TODO[pti]: add button "Open Project" to the Quickstart list
 
     final ActionManager actionManager = ActionManager.getInstance();
     MyActionButton openRecentProject = new ButtonWithExtension(REOPEN_RECENT_ICON, null) {
@@ -310,7 +341,7 @@ public class WelcomeScreen {
     };
     quickStarts.addButton(openRecentProject, "Reopen Recent Project...", "You can open one of the most recent " +
                                                                          "projects you were working with. Click the icon " +
-                                                                         "or link to select project from the list.");
+                                                                         "or link to select a project from the list.");
 
     MyActionButton getFromVCS = new ButtonWithExtension(FROM_VCS_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
@@ -319,9 +350,9 @@ public class WelcomeScreen {
       }
     };
 
-    quickStarts.addButton(getFromVCS, "Get Project From Version Control...", "You can check out entire project from " +
-                                                                             "Version Control System. Click the icon or link to " +
-                                                                             "select the VCS.");
+    quickStarts.addButton(getFromVCS, "Get Project From Version Control...", "You can check out an entire project from " +
+                                                                             "a Version Control System. Click the icon or link to " +
+                                                                             "select your VCS.");
 
     // TODO[pti]: add button "Check for Updates" to the Quickstart list
 
@@ -364,7 +395,7 @@ public class WelcomeScreen {
 
     final JPanel docsPanel = docsGroup.getPanel();
     docsPanel.add(emptyPanel_3,
-              new GridBagConstraints(0, docsGroup.getIdx() + 2, 2, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+                  new GridBagConstraints(0, docsGroup.getIdx() + 2, 2, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 
     // Fill Main Panel with Quick Start and Documentation lists
     gBC = new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 30, 0, 0), 0, 0);
@@ -396,9 +427,9 @@ public class WelcomeScreen {
     transparentTopPanel.setOpaque(false);
 
     topPanel.add(transparentTopPanel,
-                            new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+                 new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     topPanel.add(new JLabel(DEVELOP_SLOGAN),
-                            new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+                 new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
 
     // Create the base welcome panel
     myWelcomePanel = new JPanel(new GridBagLayout());
@@ -452,7 +483,7 @@ public class WelcomeScreen {
     }
 
     gBC = new GridBagConstraints(1, y, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                    new Insets(15, 7, 0, 0), 0, 0);
+                                 new Insets(15, 7, 0, 0), 0, 0);
     panel.add(logoName, gBC);
 
     if (!StringUtil.isEmpty(description)) {
@@ -687,7 +718,7 @@ public class WelcomeScreen {
       g.drawLine(rectangle.x, rectangle.y, rectangle.x, (rectangle.y + rectangle.height) - 1);
       g.drawLine(rectangle.x, rectangle.y, (rectangle.x + rectangle.width) - 1, rectangle.y);
       g.drawLine((rectangle.x + rectangle.width) - 1, rectangle.y, (rectangle.x + rectangle.width) - 1,
-                                                      (rectangle.y + rectangle.height) - 1);
+                 (rectangle.y + rectangle.height) - 1);
       g.drawLine(rectangle.x, (rectangle.y + rectangle.height) - 1, (rectangle.x + rectangle.width) - 1,
                  (rectangle.y + rectangle.height) - 1);
     }
@@ -788,9 +819,9 @@ public class WelcomeScreen {
       color = GRAY_BORDER_COLOR;
       g.setColor(color);
       g.drawLine((rectangle.x + rectangle.width) - 1, rectangle.y + 1, (rectangle.x + rectangle.width) - 1,
-        (rectangle.y + rectangle.height) - 1);
+                 (rectangle.y + rectangle.height) - 1);
       g.drawLine(rectangle.x + 1, (rectangle.y + rectangle.height) - 1, (rectangle.x + rectangle.width) - 1,
-        (rectangle.y + rectangle.height) - 1);
+                 (rectangle.y + rectangle.height) - 1);
     }
   }
 }
