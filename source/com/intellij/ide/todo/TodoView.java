@@ -6,8 +6,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.IconLoader;
@@ -185,10 +183,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
           public void run() {
             // [vova] It's very important to pass null as project. Each TODO view shows own progress
             // window. It causes frame switching.
-            final ProgressWindow progressWindow = new ProgressWindow(false, null);
-            progressWindow.setTitle("Looking for TODOs...");
-            progressWindow.setText("Please wait...");
-            final Runnable process = new Runnable() {
+            ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable() {
               public void run() {
                 ApplicationManager.getApplication().runReadAction(new Runnable() {
                   public void run() {
@@ -203,15 +198,8 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
                   }
                 }, ModalityState.NON_MMODAL);
               }
-            };
-            Thread thread = new Thread(new Runnable() {
-              public void run() {
-                ProgressManager.getInstance().runProcess(process, progressWindow);
-              }
-            }, "Todo finder");
-            thread.start();
-          }
-        });
+            }, "Looking for TODOs...", false, myProject);
+        }}, ModalityState.NON_MMODAL);
       }
       else if (TodoConfiguration.PROP_TODO_FILTERS.equals(e.getPropertyName())) {
         if (!myRebuildInProgress) {
@@ -233,26 +221,30 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
     public void fileTypesChanged(FileTypeEvent e){
       // this invokeLater guaranties that this code will be invoked after
       // PSI gets the same event.
-      ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable(){
-        public void run(){
-          if (myAllTodos == null) return;
-
-          ApplicationManager.getApplication().runReadAction(
-            new Runnable(){
-              public void run(){
-                myAllTodos.rebuildCache();
-                myCurrentFileTodos.rebuildCache();
-              }
-            }
-          );
-          ApplicationManager.getApplication().invokeLater(new Runnable(){
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runProcessWithProgressSynchronously(new Runnable(){
             public void run(){
-              myAllTodos.updateTree();
-              myCurrentFileTodos.updateTree();
+              if (myAllTodos == null) return;
+
+              ApplicationManager.getApplication().runReadAction(
+                new Runnable(){
+                  public void run(){
+                    myAllTodos.rebuildCache();
+                    myCurrentFileTodos.rebuildCache();
+                  }
+                }
+              );
+              ApplicationManager.getApplication().invokeLater(new Runnable(){
+                public void run(){
+                  myAllTodos.updateTree();
+                  myCurrentFileTodos.updateTree();
+                }
+              }, ModalityState.NON_MMODAL);
             }
-          }, ModalityState.NON_MMODAL);
+          }, "Looking for TODOs...", false, myProject);
         }
-      }, "Looking for TODOs...", false, myProject);
+      });
     }
   }
 }
