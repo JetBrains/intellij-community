@@ -211,6 +211,9 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       LocalInspectionTool tool = myTools.get(i);
       //TODO
       PsiElement psiElement = descriptor.getPsiElement();
+
+      if (psiElement == null) continue; // How that might be? See http://www.intellij.net/tracker/idea/viewSCR?publicId=49161
+
       String message = renderDescriptionMessage(descriptor);
       final HighlightInfoType level = myLevels.get(i);
 
