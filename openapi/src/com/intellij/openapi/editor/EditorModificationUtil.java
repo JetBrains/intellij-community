@@ -57,14 +57,9 @@ public class EditorModificationUtil {
 
     int oldOffset = editor.getCaretModel().getOffset();
 
-    int afterLineEnd = calcAfterLineEnd(editor);
-    if (afterLineEnd > 0) {
-      StringBuffer buf = new StringBuffer();
-      for (int i = 0; i < afterLineEnd; i++) {
-        buf.append(' ');
-      }
-      buf.append(s);
-      s = buf.toString();
+    String filler = calcStringToFillVitualSpace(editor);
+    if (filler.length() > 0) {
+      s = filler + s;
     }
 
     if (editor.isInsertMode() || !toProcessOverwriteMode) {
@@ -177,5 +172,18 @@ public class EditorModificationUtil {
     int lineEndOffset = document.getLineEndOffset(lineNumber);
     int lineEndColumnNumber = editor.offsetToLogicalPosition(lineEndOffset).column;
     return columnNumber - lineEndColumnNumber;
+  }
+
+  public static String calcStringToFillVitualSpace(Editor editor) {
+    int afterLineEnd = calcAfterLineEnd(editor);
+    if (afterLineEnd > 0) {
+      StringBuffer buf = new StringBuffer();
+      for (int i = 0; i < afterLineEnd; i++) {
+        buf.append(' ');
+      }
+      return buf.toString();
+    }
+
+    return "";
   }
 }

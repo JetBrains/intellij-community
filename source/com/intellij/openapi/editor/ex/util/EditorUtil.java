@@ -53,13 +53,9 @@ public class EditorUtil {
 
   public static void fillVirtualSpaceUntil(Editor editor, int columnNumber, int lineNumber) {
     int offset = editor.logicalPositionToOffset(new LogicalPosition(lineNumber, columnNumber));
-    int afterLineEnd = EditorModificationUtil.calcAfterLineEnd(editor);
-    if (afterLineEnd > 0) {
-      StringBuffer buf = new StringBuffer();
-      for (int i = 0; i < afterLineEnd; i++) {
-        buf.append(' ');
-      }
-      editor.getDocument().insertString(offset, buf.toString());
+    String filler = EditorModificationUtil.calcStringToFillVitualSpace(editor);
+    if (filler.length() > 0) {
+      editor.getDocument().insertString(offset, filler);
     }
   }
 

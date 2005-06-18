@@ -250,7 +250,7 @@ public class ColorPanel extends JPanel {
 
     private void selectColor() {
       if (isSelectable){
-        Color color = JColorChooser.showDialog(ColorPanel.this, "Select a color", myColor);
+        Color color = ColorChooser.chooseColor(ColorPanel.this, "Select a color", myColor);
         if (color != null){
           setColor(color);
           if (mySelectColorAction != null){
