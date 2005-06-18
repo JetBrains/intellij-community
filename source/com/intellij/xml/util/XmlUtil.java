@@ -646,10 +646,14 @@ public class XmlUtil {
     final XmlTag[] subtags = element.getSubTags();
 
     for (int i = 0; i < subtags.length; i++) {
-      XmlTag tag = subtags[i];
-
-      if (tag.getLocalName().equals("enumeration")) {
+      final XmlTag tag = subtags[i];
+      final String localName = tag.getLocalName();
+      
+      if (localName.equals("enumeration")) {
         variants.add(tag.getAttributeValue("value"));
+      } else if (localName.equals("union")) {
+        variants.clear();
+        return;
       } else {
         collectEnumerationValues(tag,variants);
       }
