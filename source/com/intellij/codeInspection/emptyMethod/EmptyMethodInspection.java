@@ -215,6 +215,10 @@ public class EmptyMethodInspection extends DescriptorProviderInspection {
       }
     }
 
+    public String getFamilyName() {
+      return getName();
+    }
+
     private void deleteHierarchy(RefMethod refMethod, List<PsiElement> result, List<RefElement> refElements) {
       Collection<RefMethod> derivedMethods = refMethod.getDerivedMethods();
       RefMethod[] refMethods = derivedMethods.toArray(new RefMethod[derivedMethods.size()]);

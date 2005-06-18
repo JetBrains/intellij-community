@@ -105,4 +105,9 @@ public interface DataConstantsEx extends DataConstants {
    * returns array of com.intellij.lang.properties.ResourceBundle
    */
   String RESOURCE_BUNDLE_ARRAY = "resource.bundle.array";
+
+  /**
+   * returns last focused JComponent
+   */
+  String PREV_FOCUSED_COMPONENT = "";
 }

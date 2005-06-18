@@ -508,7 +508,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     });
   }
 
-  public QuickFixAction[] getQuickFixes() {
+  public QuickFixAction[] getQuickFixes(final RefElement[] refElements) {
     return myQuickFixActions;
   }
 

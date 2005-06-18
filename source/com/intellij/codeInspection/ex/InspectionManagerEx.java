@@ -166,7 +166,14 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
                                                    String descriptionTemplate,
                                                    LocalQuickFix fix,
                                                    ProblemHighlightType highlightType) {
-    return new ProblemDescriptorImpl(psiElement, descriptionTemplate, fix, highlightType);
+    return new ProblemDescriptorImpl(psiElement, descriptionTemplate, fix != null ? new LocalQuickFix[]{fix} : null, highlightType);
+  }
+
+  public ProblemDescriptor createProblemDescriptor(PsiElement psiElement,
+                                                   String descriptionTemplate,
+                                                   LocalQuickFix[] fixes,
+                                                   ProblemHighlightType highlightType) {
+    return new ProblemDescriptorImpl(psiElement, descriptionTemplate, fixes, highlightType);
   }
 
   public void projectClosed() {
@@ -187,7 +194,7 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   private static boolean isInspectionToolIdMentioned(String inspectionsList, String inspectionToolID) {
-    String[] ids = inspectionsList.split("[{}, \t]");
+    String[] ids = inspectionsList.split("[,]");
     for (String id : ids) {
       if (id.equals(inspectionToolID) || id.equals("ALL")) return true;
     }

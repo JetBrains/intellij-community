@@ -1,18 +1,21 @@
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.*;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author ven
@@ -124,7 +127,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends GenericsInspecti
               }
               if (message != null) {
                 problems.add(manager.createProblemDescriptor(args[0], message,
-                                                             null,
+                                                             (LocalQuickFix [])null,
                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
               }
             }

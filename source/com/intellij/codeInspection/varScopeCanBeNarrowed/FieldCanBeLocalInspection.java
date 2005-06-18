@@ -20,8 +20,8 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 
 import java.util.Iterator;
@@ -186,6 +186,10 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         LOG.error(e);
       }
 
+    }
+
+    public String getFamilyName() {
+      return getName();
     }
 
     private static PsiElement getAnchorElement(final PsiCodeBlock anchorBlock, final PsiReference[] refs) {

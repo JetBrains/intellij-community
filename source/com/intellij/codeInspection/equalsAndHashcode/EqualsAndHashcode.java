@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.equalsAndHashcode;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
@@ -71,7 +72,7 @@ public class EqualsAndHashcode extends DescriptorProviderInspection {
                                                                                          ? "Class has <code>equals()</code> defined but " +
                                                                                            "does not define <code>hashCode()</code>."
                                                                                          : "Class has <code>hashCode()</code> defined but " +
-                                                                                           "does not define <code>equals()</code>.", null,ProblemHighlightType.GENERIC_ERROR_OR_WARNING)});
+                                                                                           "does not define <code>equals()</code>.", (LocalQuickFix [])null,ProblemHighlightType.GENERIC_ERROR_OR_WARNING)});
         }
       }
     });

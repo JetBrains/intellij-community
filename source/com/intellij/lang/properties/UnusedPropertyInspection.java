@@ -1,20 +1,20 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInspection.*;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.PsiReferenceProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.lang.ASTNode;
-import com.intellij.util.SmartList;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiReferenceProcessor;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 
 import java.util.List;
 
@@ -71,6 +71,10 @@ public class UnusedPropertyInspection extends LocalInspectionTool {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
+    }
+
+    public String getFamilyName() {
+      return getName();
     }
   }
 }

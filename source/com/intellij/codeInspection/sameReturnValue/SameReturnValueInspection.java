@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.sameReturnValue;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
@@ -52,7 +53,7 @@ public class SameReturnValueInspection extends DescriptorProviderInspection {
         messagePrefix = "All implementations of this method always return <code>";
       }
 
-      return new ProblemDescriptor[] {getManager().createProblemDescriptor(refMethod.getElement(), messagePrefix + returnValue + "</code>.", null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+      return new ProblemDescriptor[] {getManager().createProblemDescriptor(refMethod.getElement(), messagePrefix + returnValue + "</code>.", (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
     }
 
     return null;

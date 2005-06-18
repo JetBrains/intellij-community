@@ -53,7 +53,7 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
     return myOwner.getManager();
   }
 
-  public QuickFixAction[] getQuickFixes() {
+  public QuickFixAction[] getQuickFixes(final RefElement[] refElements) {
     if (myQuickFixActions == null) {
       myQuickFixActions = new QuickFixAction[]{new MoveEntriesToSuspicious()};
     }

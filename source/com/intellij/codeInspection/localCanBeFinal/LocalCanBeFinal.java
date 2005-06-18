@@ -222,6 +222,10 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
         LOG.error(e);
       }
     }
+
+    public String getFamilyName() {
+      return getName();
+    }
   }
 
   public JComponent createOptionsPanel() {

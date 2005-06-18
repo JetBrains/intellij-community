@@ -116,5 +116,9 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
         LOG.error(e);
       }
     }
+
+    public String getFamilyName() {
+      return getName();
+    }
   }
 }

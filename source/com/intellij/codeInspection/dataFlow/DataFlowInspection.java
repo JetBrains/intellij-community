@@ -176,7 +176,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         descriptions.add(manager.createProblemDescriptor(typeCast.getCastType(),
                                                          "Casting <code>" + typeCast.getOperand().getText() +
                                                          "</code> to <code>#ref</code> #loc may produce <code>java.lang.ClassCastException</code>.",
-                                                         null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                                         (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
       else if (instruction instanceof BranchingInstruction) {
         PsiElement psiAnchor = ((BranchingInstruction)instruction).getPsiAnchor();
@@ -198,7 +198,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         }
         else if (psiAnchor instanceof PsiSwitchLabelStatement) {
           if (falseSet.contains(instruction)) {
-            descriptions.add(manager.createProblemDescriptor(psiAnchor, "Switch label<code>#ref</code> #loc is unreachable.", null,
+            descriptions.add(manager.createProblemDescriptor(psiAnchor, "Switch label<code>#ref</code> #loc is unreachable.", (LocalQuickFix [])null,
                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
         }
@@ -217,7 +217,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
     Set<PsiExpression> exprs = runner.getNullableArguments();
     for (PsiExpression expr : exprs) {
-      descriptions.add(manager.createProblemDescriptor(expr, "Argument <code>#ref</code> #loc is probably null", null,
+      descriptions.add(manager.createProblemDescriptor(expr, "Argument <code>#ref</code> #loc is probably null", (LocalQuickFix [])null,
                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
     }
 
@@ -226,7 +226,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       descriptions.add(manager.createProblemDescriptor(expr,
                                                        "Expression <code>#ref</code> probably evaluates to null and is being assigned " +
                                                        "to a variable that is annotated with @NotNull",
-                                                       null,
+                                                       (LocalQuickFix [])null,
                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
     }
 
@@ -236,7 +236,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         descriptions.add(manager.createProblemDescriptor(statement.getReturnValue(),
                                                          "Expression <code>#ref</code> probably evaluates to null and is being " +
                                                          "returned by the method declared as @NotNull",
-                                                         null,
+                                                         (LocalQuickFix [])null,
                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
       else if (AnnotationUtil.isAnnotatingApplicable(statement)) {
@@ -276,6 +276,10 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
           LOG.error(e);
         }
       }
+
+      public String getFamilyName() {
+        return "Simplify Boolean Expression";
+      }
     };
   }
 
@@ -298,6 +302,10 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         }
       }
     }
+
+    public String getFamilyName() {
+      return getName();
+    }
   }
 
   private static class AnnotateAsNullableFix implements LocalQuickFix {
@@ -318,6 +326,10 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
         annotateMethod(method);
       }
+    }
+
+    public String getFamilyName() {
+      return getName();
     }
 
     private static void annotateMethod(final PsiMethod method) {

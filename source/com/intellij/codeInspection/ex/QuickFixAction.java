@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefImplicitConstructor;
@@ -25,7 +26,7 @@ import java.util.*;
  * @author max
  */
 public abstract class QuickFixAction extends AnAction {
-  private InspectionTool myTool;
+  protected InspectionTool myTool;
 
   public InspectionResultsView getInvoker(AnActionEvent e) {
     return (InspectionResultsView)e.getDataContext().getData(DataConstantsEx.INSPECTION_VIEW);
@@ -128,9 +129,18 @@ public abstract class QuickFixAction extends AnAction {
           public void run() {
             for (int i = 0; i < descriptors.length; i++) {
               ProblemDescriptor descriptor = descriptors[i];
-              if (descriptor.getPsiElement() != null && descriptor.getFix() != null) {
-                descriptor.getFix().applyFix(project, descriptor);
-                tool.ignoreProblem(descriptor);
+              final LocalQuickFix[] fixes = descriptor.getFixes();
+              if (descriptor.getPsiElement() != null && fixes != null) {
+                for (LocalQuickFix fix: fixes) {
+                  if (fix != null ) {
+                    final QuickFixAction quickFixAction = QuickFixAction.this;
+                    if (quickFixAction instanceof LocalQuickFixWrapper && !(((LocalQuickFixWrapper)quickFixAction).getFix()).getClass().isInstance(fix)){
+                       continue;
+                    }
+                    fix.applyFix(project, descriptor);
+                    tool.ignoreProblem(descriptor, fix);
+                  }
+                }
               }
             }
           }

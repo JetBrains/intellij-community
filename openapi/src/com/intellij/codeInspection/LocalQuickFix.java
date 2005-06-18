@@ -18,4 +18,7 @@ public interface LocalQuickFix {
    * @param descriptor problem reported by the tool which provided this quick fix action
    */
   void applyFix(Project project, ProblemDescriptor descriptor);
+
+  //to appear in "Apply Fix" statement when multiple Quick Fixes exist
+  String getFamilyName();
 }

@@ -74,18 +74,23 @@ public class DescriptorComposer extends HTMLComposer {
     appendAfterHeaderIndention(buf);
 
     composeDescription(descriptor, problemIdx, buf);
-    final LocalQuickFix fix = descriptor.getFix();
-    if (fix != null) {
+    final LocalQuickFix[] fixes = descriptor.getFixes();
+    if (fixes != null) {
       buf.append("<br><br>");
       appendHeading(buf, "Problem resolution");
       buf.append("<br>");
       appendAfterHeaderIndention(buf);
 
-      buf.append("<font style=\"font-family:verdana;\"");
-      buf.append("<a HREF=\"file://bred.txt#invokelocal:");
-      buf.append("\">");
-      buf.append(fix.getName());
-      buf.append("</a></font>");
+      int idx = 0;
+      for (LocalQuickFix fix : fixes) {
+        buf.append("<font style=\"font-family:verdana;\"");
+        buf.append("<a HREF=\"file://bred.txt#invokelocal:" + (idx++));
+        buf.append("\">");
+        buf.append(fix.getName());
+        buf.append("</a></font>");
+        buf.append("<br>");
+        appendAfterHeaderIndention(buf);
+      }
     }
   }
 

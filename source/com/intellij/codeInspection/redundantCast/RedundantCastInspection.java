@@ -85,6 +85,10 @@ public class RedundantCastInspection extends BaseLocalInspectionTool {
       PsiTypeCastExpression cast = (PsiTypeCastExpression)castTypeElement.getParent();
       removeCast(cast);
     }
+
+    public String getFamilyName() {
+      return getName();
+    }
   }
 
   public String getDisplayName() {

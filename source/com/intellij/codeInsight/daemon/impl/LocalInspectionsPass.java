@@ -162,8 +162,10 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       options.add(new AddNoInspectionAllForClassAction(psiElement));
       options.add(new AddSuppressWarningsAnnotationForAllAction(psiElement));
       options.add(new SwitchOffToolAction(tool));
-      if (problemDescriptor.getFix() != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor), options);
+      if (problemDescriptor.getFixes() != null) {
+        for (int k = 0; k < problemDescriptor.getFixes().length; k++) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor, k), options);
+        }
       } else {
         QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options);
       }
@@ -211,9 +213,6 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       LocalInspectionTool tool = myTools.get(i);
       //TODO
       PsiElement psiElement = descriptor.getPsiElement();
-
-      if (psiElement == null) continue; // How that might be? See http://www.intellij.net/tracker/idea/viewSCR?publicId=49161
-
       String message = renderDescriptionMessage(descriptor);
       final HighlightInfoType level = myLevels.get(i);
 
@@ -242,8 +241,10 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       options.add(new AddNoInspectionAllForClassAction(psiElement));
       options.add(new AddSuppressWarningsAnnotationForAllAction(psiElement));
       options.add(new SwitchOffToolAction(tool));
-      if (descriptor.getFix() != null) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor), options);
+      if (descriptor.getFixes() != null) {
+        for (int k = 0; k < descriptor.getFixes().length; k++) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), options);
+        }
       } else {
         QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options);
       }

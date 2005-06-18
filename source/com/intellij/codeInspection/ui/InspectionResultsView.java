@@ -269,7 +269,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
         final Object node = selectionPath.getLastPathComponent();
         if (node instanceof InspectionNode){
           dlg.selectInspectionTool(((InspectionNode)node).getTool().getShortName());
-        } 
+        }
       }
       dlg.show();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -454,7 +454,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
   }
 
   private void regsisterActionShortcuts(InspectionTool tool) {
-    final QuickFixAction[] fixes = tool.getQuickFixes();
+    final QuickFixAction[] fixes = tool.getQuickFixes(null);
     if (fixes != null) {
       for (QuickFixAction fix : fixes) {
         fix.registerCustomShortcutSet(fix.getShortcutSet(), this);
@@ -499,7 +499,13 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       map = new HashMap<String, InspectionGroupNode>();
       myGroups.put(errorLevel, map);
     }
-    InspectionGroupNode group = map.get(groupName);
+    Map<String, InspectionGroupNode> searchMap = new HashMap<String, InspectionGroupNode>(map);
+    if (!groupedBySeverity){
+      for (HighlightDisplayLevel level : myGroups.keySet()) {
+        searchMap.putAll(myGroups.get(level));
+      }
+    }
+    InspectionGroupNode group = searchMap.get(groupName);
     if (group == null) {
       group = new InspectionGroupNode(groupName);
       map.put(groupName, group);
@@ -627,28 +633,28 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     return myOccurenceNavigator.getPreviousOccurenceActionName();
   }
 
-  public void invokeLocalFix() {
+  public void invokeLocalFix(int idx) {
     if (myTree.getSelectionCount() != 1) return;
     final InspectionTreeNode node = (InspectionTreeNode)myTree.getSelectionPath().getLastPathComponent();
     if (node instanceof ProblemDescriptionNode) {
       final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
       final ProblemDescriptor descriptor = problemNode.getDescriptor();
       final RefElement element = problemNode.getElement();
-      invokeFix(element, descriptor);
+      invokeFix(element, descriptor, idx);
     }
     else if (node instanceof RefElementNode) {
       RefElementNode elementNode = (RefElementNode)node;
       RefElement element = elementNode.getElement();
       ProblemDescriptor descriptor = elementNode.getProblem();
       if (descriptor != null) {
-        invokeFix(element, descriptor);
+        invokeFix(element, descriptor, idx);
       }
     }
   }
 
-  private void invokeFix(final RefElement element, final ProblemDescriptor descriptor) {
-    final LocalQuickFix fix = descriptor.getFix();
-    if (fix != null) {
+  private void invokeFix(final RefElement element, final ProblemDescriptor descriptor, final int idx) {
+    final LocalQuickFix[] fixes = descriptor.getFixes();
+    if (fixes != null && fixes.length > idx && fixes[idx] != null) {
       PsiElement psiElement = element.getElement();
       if (psiElement != null && psiElement.isValid()) {
         if (!psiElement.isWritable()) {
@@ -664,13 +670,13 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
             Runnable command = new Runnable() {
               public void run() {
                 CommandProcessor.getInstance().markCurrentCommandAsComplex(myProject);
-                fix.applyFix(myProject, descriptor);
+                fixes[idx].applyFix(myProject, descriptor);
               }
             };
-            CommandProcessor.getInstance().executeCommand(myProject, command, fix.getName(), null);
+            CommandProcessor.getInstance().executeCommand(myProject, command, fixes[idx].getName(), null);
             final DescriptorProviderInspection tool = ((DescriptorProviderInspection)getSelectedTool());
             if (tool != null) {
-              tool.ignoreProblem(element, descriptor);
+              tool.ignoreProblem(element, descriptor, idx);
             }
             update();
           }
@@ -695,7 +701,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
       //noinspection ConstantConditions
       final @NotNull InspectionTool tool = getSelectedTool();
-      final QuickFixAction[] quickFixes = tool.getQuickFixes();
+      final QuickFixAction[] quickFixes = tool.getQuickFixes(getSelectedElements());
       if (quickFixes == null || quickFixes.length == 0) {
         e.getPresentation().setEnabled(false);
         return;
@@ -703,7 +709,13 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
       ActionGroup fixes = new ActionGroup() {
         public AnAction[] getChildren(AnActionEvent e) {
-          return quickFixes;
+          List<QuickFixAction> children = new ArrayList<QuickFixAction>();
+          for (QuickFixAction fix : quickFixes) {
+            if (fix != null){
+              children.add(fix);
+            }
+          }
+          return children.toArray(new AnAction[children.size()]);
         }
       };
 
@@ -713,11 +725,16 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     public void actionPerformed(AnActionEvent e) {
       final InspectionTool tool = getSelectedTool();
       if (tool == null) return;
-
-      final QuickFixAction[] quickFixes = tool.getQuickFixes();
+      final QuickFixAction[] quickFixes = tool.getQuickFixes(getSelectedElements());
       ActionGroup fixes = new ActionGroup() {
         public AnAction[] getChildren(AnActionEvent e) {
-          return quickFixes;
+          List<QuickFixAction> children = new ArrayList<QuickFixAction>();
+          for (QuickFixAction fix : quickFixes) {
+            if (fix != null){
+              children.add(fix);
+            }
+          }
+          return children.toArray(new AnAction[children.size()]);
         }
       };
 
@@ -834,7 +851,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     final InspectionTool tool = getSelectedTool();
     if (tool == null) return;
 
-    final QuickFixAction[] quickFixes = tool.getQuickFixes();
+    final QuickFixAction[] quickFixes = tool.getQuickFixes(getSelectedElements());
     if (quickFixes != null) {
       for (QuickFixAction quickFixe : quickFixes) {
         actions.add(quickFixe);
@@ -897,6 +914,9 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
     if (!node.isValid()) return;
     if (node instanceof RefElementNode) {
       out.add(((RefElementNode)node).getElement());
+    }
+    else if (node instanceof ProblemDescriptionNode){
+      out.add(((ProblemDescriptionNode)node).getElement());
     }
     else if (node instanceof InspectionPackageNode || node instanceof InspectionNode) {
       final Enumeration children = node.children();

@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
@@ -49,7 +50,7 @@ public class SameParameterValueInspection extends DescriptorProviderInspection {
         problems.add(getManager().createProblemDescriptor(refMethod.getElement(),
                                                           "Actual value of parameter '<code>" + refParameter.getName() +
                                                           "</code>' value is always '<code>" + value + "</code>'.",
-                                                          null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                                          (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
       }
     }
 

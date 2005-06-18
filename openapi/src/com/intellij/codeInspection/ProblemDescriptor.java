@@ -4,7 +4,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 
 /**
@@ -14,6 +13,6 @@ public interface ProblemDescriptor {
   PsiElement getPsiElement();
   String getDescriptionTemplate();
   int getLineNumber();
-  LocalQuickFix getFix();
+  LocalQuickFix[] getFixes();
   ProblemHighlightType getHighlightType();
 }

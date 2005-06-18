@@ -23,7 +23,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Browser extends JPanel {
@@ -159,10 +159,13 @@ public class Browser extends JPanel {
               }
               else if (ref.startsWith("invoke:")) {
                 int actionNumber = Integer.parseInt(ref.substring("invoke:".length()));
-                getTool().getQuickFixes()[actionNumber].doApplyFix(new RefElement[]{(RefElement)myCurrentEntity});
+                getTool().getQuickFixes(new RefElement[] {(RefElement)myCurrentEntity})[actionNumber].doApplyFix(new RefElement[]{(RefElement)myCurrentEntity});
               }
               else if (ref.startsWith("invokelocal:")) {
-                myView.invokeLocalFix();
+                int actionNumber = Integer.parseInt(ref.substring("invokelocal:".length()));
+                if (actionNumber > -1){
+                  myView.invokeLocalFix(actionNumber);
+                }
               }
               else {
                 int offset = Integer.parseInt(ref);

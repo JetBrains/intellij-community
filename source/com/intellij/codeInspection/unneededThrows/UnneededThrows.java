@@ -154,6 +154,10 @@ public class UnneededThrows extends DescriptorProviderInspection {
       }
     }
 
+    public String getFamilyName() {
+      return getName();
+    }
+
     private void removeExcessiveThrows(RefMethod refMethod) {
       try {
         Project project = getManager().getProject();

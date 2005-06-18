@@ -16,6 +16,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Map;
@@ -44,7 +45,8 @@ public abstract class InspectionTool implements JDOMExternalizable {
 
   public abstract void exportResults(Element parentNode);
 
-  public QuickFixAction[] getQuickFixes() {
+  @Nullable
+  public QuickFixAction[] getQuickFixes(final RefElement[] refElements) {
     return null;
   }
 

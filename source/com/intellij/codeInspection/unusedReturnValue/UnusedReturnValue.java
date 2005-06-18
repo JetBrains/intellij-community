@@ -16,7 +16,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
-import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 
@@ -117,6 +116,10 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
       }
     }
 
+    public String getFamilyName() {
+      return getName();
+    }
+
     private void makeMethodVoid(RefMethod refMethod) {
       PsiMethod psiMethod = (PsiMethod) refMethod.getElement();
       if (psiMethod == null) return;
@@ -128,10 +131,10 @@ public class UnusedReturnValue extends DescriptorProviderInspection {
       }
 
       ChangeSignatureProcessor csp = new ChangeSignatureProcessor(getManager().getProject(),
-        psiMethod,
-        false, null, psiMethod.getName(),
-        PsiType.VOID,
-        infos);
+                                                                  psiMethod,
+                                                                  false, null, psiMethod.getName(),
+                                                                  PsiType.VOID,
+                                                                  infos);
 
       csp.run();
     }

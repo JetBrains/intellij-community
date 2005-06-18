@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
@@ -23,10 +24,10 @@ public class DeprecationInspection extends DescriptorProviderInspection {
     getRefManager().iterate(new RefManager.RefIterator() {
       public void accept(RefElement refElement) {
         if (refElement instanceof RefMethod && ((RefMethod) refElement).isOverridesDeprecated()) {
-          addProblemElement(refElement, new ProblemDescriptor[]{getManager().createProblemDescriptor(refElement.getElement(), "Overrides deprecated method.", null, ProblemHighlightType.LIKE_DEPRECATED)});
+          addProblemElement(refElement, new ProblemDescriptor[]{getManager().createProblemDescriptor(refElement.getElement(), "Overrides deprecated method.", (LocalQuickFix [])null, ProblemHighlightType.LIKE_DEPRECATED)});
         } else if (refElement.isUsesDeprecatedApi()) {
           if (getDescriptions(refElement) != null) return;
-          addProblemElement(refElement, new ProblemDescriptor[] {getManager().createProblemDescriptor(refElement.getElement(), "Uses deprecated API.", null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)});
+          addProblemElement(refElement, new ProblemDescriptor[] {getManager().createProblemDescriptor(refElement.getElement(), "Uses deprecated API.", (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)});
         }
       }
     });

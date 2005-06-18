@@ -90,7 +90,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
           if (!info.isRead()) {
             if (!isOnTheFly) {
               descriptions.add(manager.createProblemDescriptor(psiVariable.getNameIdentifier(),
-                                                               "Variable <code>#ref</code> #loc is never used.", null,
+                                                               "Variable <code>#ref</code> #loc is never used.", (LocalQuickFix [])null,
                                                                ProblemHighlightType.LIKE_UNUSED_SYMBOL));
             }
           }
@@ -110,13 +110,13 @@ public class DefUseInspection extends BaseLocalInspectionTool {
           descriptions.add(manager.createProblemDescriptor(assignment.getRExpression(), "The value <code>#ref</code> assigned to " +
                                                                                         assignment.getLExpression().getText() +
                                                                                         " #loc is never used.",
-                                                           null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                                           (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
         else {
           if (context instanceof PsiPrefixExpression && REPORT_PREFIX_EXPRESSIONS ||
               context instanceof PsiPostfixExpression && REPORT_POSTFIX_EXPRESSIONS) {
             descriptions.add(manager.createProblemDescriptor(context, "The value changed at <code>#ref</code> #loc is never used.",
-                                                             null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                                             (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
         }
       }
@@ -129,7 +129,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
       public void visitLocalVariable(PsiLocalVariable variable) {
         if (!usedVariables.contains(variable) && variable.getInitializer() == null && !isOnTheFly) {
           descriptions.add(manager.createProblemDescriptor(variable.getNameIdentifier(),
-                                                           "Variable <code>#ref</code> #loc is never used.", null,
+                                                           "Variable <code>#ref</code> #loc is never used.", (LocalQuickFix [])null,
                                                            ProblemHighlightType.LIKE_UNUSED_SYMBOL));
         }
       }
@@ -151,7 +151,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
                lQualifier instanceof PsiThisExpression && rQualifier == null ||
                lQualifier == null && rQualifier instanceof PsiThisExpression) && !isOnTheFly) {
             descriptions.add(manager.createProblemDescriptor(expression, "The variable is assigned to itself in <code>#ref</code>.",
-                                                             null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                                                             (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
         }
       }
@@ -218,6 +218,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
 
 
   private static class RemoveInitializerFix implements LocalQuickFix {
+
     public String getName() {
       return "Remove Redundant Initializer";
     }
@@ -250,6 +251,10 @@ public class DefUseInspection extends BaseLocalInspectionTool {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
+    }
+
+    public String getFamilyName() {
+      return getName();
     }
   }
 

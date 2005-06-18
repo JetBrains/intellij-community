@@ -41,4 +41,8 @@ public class AddAssertStatementFix implements LocalQuickFix {
       LOG.error(e);
     }
   }
+
+  public String getFamilyName() {
+    return "Assert";
+  }
 }
