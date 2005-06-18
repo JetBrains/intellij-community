@@ -98,17 +98,30 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
       return getEnumeratedValues(elementDescriptor);
     }
 
+    final String namespacePrefix = myTag.getNamespacePrefix();
+    XmlTag type = myTag.findFirstSubTag(
+      ((namespacePrefix.length() > 0)?namespacePrefix+":":"")+"simpleType"
+    );
+    
+    if (type != null) {
+      return getEnumeratedValuesImpl(type);
+    }
+    
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  private String[] getEnumeratedValues(final XmlElementDescriptorImpl elementDescriptor) {
+  private String[] getEnumeratedValuesImpl(final XmlTag declaration) {
     final HashSet<String> variants = new HashSet<String>();
-    XmlUtil.collectEnumerationValues(((ComplexTypeDescriptor)elementDescriptor.getType()).getDeclaration(),variants);
+    XmlUtil.collectEnumerationValues(declaration,variants);
 
     if (variants.size() > 0) {
       return variants.toArray(new String[variants.size()]);
     }
     return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+  
+  private String[] getEnumeratedValues(final XmlElementDescriptorImpl elementDescriptor) {
+    return getEnumeratedValuesImpl(((ComplexTypeDescriptor)elementDescriptor.getType()).getDeclaration());
   }
 
   public String getDefaultName() {
