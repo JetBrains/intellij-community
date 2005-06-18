@@ -119,7 +119,7 @@ public class FileReference implements PsiPolyVariantReference {
     }
   }
 
-  public void processVariants(final PsiScopeProcessor processor) {
+  public void processVariants(@NotNull final PsiScopeProcessor processor) {
     final Collection<PsiElement> contexts = getContexts();
     for (PsiElement context : contexts) {
       if (context instanceof WebDirectoryElement) {

@@ -1,11 +1,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ResolveResult;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -117,10 +113,11 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     for (PsiReference reference : refs) {
       if (reference instanceof PsiPolyVariantReference) {
         result.addAll(Arrays.asList(((PsiPolyVariantReference)reference).multiResolve(incompleteCode)));
-      } else {
+      }
+      else {
         final PsiElement resolved = reference.resolve();
         if (resolved != null) {
-          result.add(PsiUtil.elementToResolveResult(resolved));
+          result.add(new PsiElementResolveResult(resolved));
         }
       }
     }

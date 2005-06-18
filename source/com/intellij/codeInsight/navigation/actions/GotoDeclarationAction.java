@@ -13,13 +13,11 @@ import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.ListPopup;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -206,13 +204,4 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
     return null;
   }
-
-  /*
-  public void update(AnActionEvent event, Presentation presentation) {
-    super.update(event, presentation);
-    if (!ActionPlaces.MAIN_MENU.equals(event.getPlace())) {
-      presentation.setText("Go to " + getTemplatePresentation().getText());
-    }
-  }
-  */
 }
