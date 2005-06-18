@@ -2,13 +2,11 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lexer.StringLiteralLexer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -26,8 +24,7 @@ import java.util.List;
  * @author Mike
  */
 public class SelectWordUtil {
-    private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.SelectWordUtil");
-
+    
   static Selectioner[] SELECTIONERS = new Selectioner[]{
     new LineCommentSelectioner(),
     new LiteralSelectioner(),
@@ -965,7 +962,11 @@ public class SelectWordUtil {
 
     public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
       XmlToken token = (XmlToken)e;
-      if (token.getTokenType() != XmlTokenType.XML_DATA_CHARACTERS) {
+      
+      if (token.getTokenType() != XmlTokenType.XML_DATA_CHARACTERS &&
+          token.getTokenType() != XmlTokenType.XML_START_TAG_START &&
+          token.getTokenType() != XmlTokenType.XML_END_TAG_START 
+        ) {
         List<TextRange> ranges = super.select(e, editorText, cursorOffset, editor);
         addWordSelection(editor.getSettings().isCamelWords(), editorText, cursorOffset, ranges);
         return ranges;
