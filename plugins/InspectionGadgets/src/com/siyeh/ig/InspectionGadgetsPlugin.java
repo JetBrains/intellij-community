@@ -53,6 +53,10 @@ import com.siyeh.ig.visibility.*;
 import java.io.*;
 import java.util.*;
 
+@SuppressWarnings({"OverlyCoupledClass",
+        "OverlyCoupledMethod",
+        "OverlyLongMethod",
+        "ClassWithTooManyMethods"})
 public class InspectionGadgetsPlugin implements ApplicationComponent,
                                                 InspectionToolProvider{
     private static final int NUM_INSPECTIONS = 500;
@@ -103,13 +107,13 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
                     out.println(currentGroupName);
                 }
                 printInspectionDescription(inspection, out);
-            } catch(InstantiationException e){
+            } catch(InstantiationException ignore){
                 out.print("Couldn't instantiate ");
                 out.println(className);
-            } catch(IllegalAccessException e){
+            } catch(IllegalAccessException ignore){
                 out.print("Couldn't access ");
                 out.println(className);
-            } catch(ClassCastException e){
+            } catch(ClassCastException ignore){
                 out.print("Couldn't cast ");
                 out.println(className);
             }
@@ -121,17 +125,17 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             final String className = aClass.getName();
             try{
                 final LocalInspectionTool inspection =
-                        (LocalInspectionTool) aClass.newInstance();
+                        aClass.newInstance();
                 if(inspection.isEnabledByDefault()){
                     out.println('\t' + inspection.getDisplayName());
                 }
-            } catch(InstantiationException e){
+            } catch(InstantiationException ignore){
                 out.print("Couldn't instantiate ");
                 out.println(className);
-            } catch(IllegalAccessException e){
+            } catch(IllegalAccessException ignore){
                 out.print("Couldn't access ");
                 out.println(className);
-            } catch(ClassCastException e){
+            } catch(ClassCastException ignore){
                 out.print("Couldn't cast ");
                 out.println(className);
             }
@@ -191,13 +195,13 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
                 if(((BaseInspection) inspection).hasQuickFix()){
                     numQuickFixes++;
                 }
-            } catch(InstantiationException e){
+            } catch(InstantiationException ignore){
                 out.print("Couldn't instantiate ");
                 out.println(className);
-            } catch(IllegalAccessException e){
+            } catch(IllegalAccessException ignore){
                 out.print("Couldn't access ");
                 out.println(className);
-            } catch(ClassCastException e){
+            } catch(ClassCastException ignore){
                 out.print("Couldn't cast ");
                 out.println(className);
             }
@@ -393,11 +397,11 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(EnumSwitchStatementWhichMissesCasesInspection.class);
     }
 
-    private boolean classExists(String className){
+    private static boolean classExists(String className){
         final Class<?> aClass;
         try{
             aClass = Class.forName(className);
-        } catch(ClassNotFoundException e){
+        } catch(ClassNotFoundException ignore){
             return false;
         }
         return aClass != null;
