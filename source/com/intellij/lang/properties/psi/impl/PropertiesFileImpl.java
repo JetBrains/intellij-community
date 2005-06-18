@@ -44,6 +44,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     super(project, name, text, PropertiesFileType.FILE_TYPE.getLanguage());
   }
 
+  @NotNull
   public FileType getFileType() {
     return PropertiesFileType.FILE_TYPE;
   }

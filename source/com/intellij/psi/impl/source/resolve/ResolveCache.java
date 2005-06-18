@@ -215,7 +215,7 @@ public class ResolveCache {
     return forPhysical ? pair.physicalMap : pair.nonPhysicalMap;
   }
 
-  private static class MapPair<K,V>{
+  public static class MapPair<K,V>{
     public WeakHashMap<K,V> physicalMap;
     public WeakHashMap<K,V> nonPhysicalMap;
 

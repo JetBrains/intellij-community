@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,7 +26,7 @@ public abstract class PsiFileBase extends PsiFileImpl {
 
   private final static IElementType FILE_TEXT_CHAMELEON = new IElementType("FILE_TEXT_CHAMELEON",
                                                                            Language.ANY); // Shouldn't happen to be used.
-  private final Language myLanguage;
+  @NotNull private final Language myLanguage;
 
   protected PsiFileBase(Project project,
                         VirtualFile file,
@@ -42,6 +43,7 @@ public abstract class PsiFileBase extends PsiFileImpl {
     myLanguage = language;
   }
 
+  @NotNull
   public final Language getLanguage() {
     return myLanguage;
   }

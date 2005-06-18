@@ -6,31 +6,32 @@ package com.intellij.psi;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 public interface PsiFile extends PsiElement, PsiFileSystemItem {
   PsiFile[] EMPTY_ARRAY = new PsiFile[0];
 
-  VirtualFile getVirtualFile();
+  @Nullable VirtualFile getVirtualFile();
 
-  PsiDirectory getContainingDirectory();
+  @Nullable PsiDirectory getContainingDirectory();
 
   long getModificationStamp();
   void setModificationStamp(long modificationStamp);
 
-  PsiElement[] getOnDemandImports(boolean includeImplicit, boolean checkIncludes);
-  PsiClass[] getSingleClassImports(boolean checkIncludes);
-  String[] getImplicitlyImportedPackages();
-  PsiJavaCodeReferenceElement[] getImplicitlyImportedPackageReferences();
-  PsiJavaCodeReferenceElement findImportReferenceTo(PsiClass aClass);
+  @NotNull PsiElement[] getOnDemandImports(boolean includeImplicit, boolean checkIncludes);
+  @NotNull PsiClass[] getSingleClassImports(boolean checkIncludes);
+  @NotNull String[] getImplicitlyImportedPackages();
+  @NotNull PsiJavaCodeReferenceElement[] getImplicitlyImportedPackageReferences();
+  @Nullable PsiJavaCodeReferenceElement findImportReferenceTo(PsiClass aClass);
 
-  PsiFile getOriginalFile();
-  
+  @Nullable PsiFile getOriginalFile();
+
   boolean canContainJavaCode();
 
-  FileType getFileType();
+  @NotNull FileType getFileType();
 
-  PsiFile[] getPsiRoots();
+  @NotNull PsiFile[] getPsiRoots();
 
-  PsiFile createPseudoPhysicalCopy();
+  @NotNull PsiFile createPseudoPhysicalCopy();
 }

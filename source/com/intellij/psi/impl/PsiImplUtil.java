@@ -119,7 +119,7 @@ public class PsiImplUtil {
     }
   }
 
-  public static PsiJavaCodeReferenceElement[] namesToPackageReferences(PsiManager manager, String[] names) {
+  @NotNull public static PsiJavaCodeReferenceElement[] namesToPackageReferences(PsiManager manager, String[] names) {
     PsiJavaCodeReferenceElement[] refs = new PsiJavaCodeReferenceElement[names.length];
     for (int i = 0; i < names.length; i++) {
       String name = names[i];

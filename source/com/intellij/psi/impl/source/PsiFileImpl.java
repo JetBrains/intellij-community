@@ -24,8 +24,9 @@ import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
-public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implements PsiFile, PsiFileEx {
+public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implements PsiFileEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
 
   private VirtualFile myFile;
@@ -62,10 +63,10 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   protected PsiFileImpl(Project project,
-                      FileElement fileElement,
-                      IElementType elementType,
-                      IElementType contentElementType,
-                      String name) {
+                        FileElement fileElement,
+                        IElementType elementType,
+                        IElementType contentElementType,
+                        String name) {
     super((PsiManagerImpl)PsiManager.getInstance(project), fileElement);
     LOG.assertTrue(name != null);
     myName = name;
@@ -223,18 +224,22 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     myModificationStampSticky = timeStampSticky;
   }
 
+  @NotNull
   public PsiElement[] getOnDemandImports(boolean includeImplicit, boolean checkIncludes) {
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiClass[] getSingleClassImports(boolean checkIncludes) {
     return PsiClass.EMPTY_ARRAY;
   }
 
+  @NotNull
   public String[] getImplicitlyImportedPackages() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @NotNull
   public PsiJavaCodeReferenceElement[] getImplicitlyImportedPackageReferences() {
     return PsiJavaCodeReferenceElement.EMPTY_ARRAY;
   }
@@ -326,10 +331,12 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     return false;
   }
 
+  @NotNull
   public PsiFile[] getPsiRoots() {
     return new PsiFile[]{this};
   }
 
+  @NotNull
   public PsiFile createPseudoPhysicalCopy() {
     PsiFileImpl copy = (PsiFileImpl)copy();
     copy.setIsPhysicalExplicitly(true); //?
@@ -350,8 +357,9 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   public abstract Lexer createLexer();
 
+  @NotNull
   public Language getLanguage() {
     final FileType fileType = getFileType();
-    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : Language.ANY;    
+    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : Language.ANY;
   }
 }

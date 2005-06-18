@@ -134,7 +134,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return topClass != null ? new LocalSearchScope(topClass) : new LocalSearchScope(method.getContainingFile());
       }
       else {
-        PsiPackage aPackage = file.getContainingDirectory().getPackage();
+        PsiDirectory directory = file.getContainingDirectory();
+        PsiPackage aPackage = directory == null ? null : directory.getPackage();
         if (aPackage != null) {
           SearchScope scope = GlobalSearchScope.packageScope(aPackage, false);
           scope = scope.intersectWith(maximalUseScope);
@@ -338,7 +339,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         final String propertyName = PropertyUtil.getPropertyName(method);
         if (myManager.getNameHelper().isIdentifier(propertyName)) {
           if (searchScope instanceof GlobalSearchScope) {
-            searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes(((GlobalSearchScope)searchScope), StdFileTypes.JSP, StdFileTypes.JSPX);
+            searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, StdFileTypes.JSP, StdFileTypes.JSPX);
           }
           if (!processElementsWithWord(processor1,
                                        searchScope,
@@ -542,10 +543,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                                  PsiSubstitutor.EMPTY);
         MethodSignature signature = method.getSignature(substitutor);
         PsiMethod method1 = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature);
-        if (method1 == null ||
-            method1.hasModifierProperty(PsiModifier.STATIC) ||
-                                                            (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
-                                                                                                                   !method1.getManager().arePackagesTheSame(parentClass, inheritor))) {
+        if (method1 == null
+            || method1.hasModifierProperty(PsiModifier.STATIC)
+            || (method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)
+                && !method1.getManager().arePackagesTheSame(parentClass, inheritor))) {
           return true;
         }
         return processor.execute(method1);

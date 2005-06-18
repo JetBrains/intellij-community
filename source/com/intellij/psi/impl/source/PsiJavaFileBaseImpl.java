@@ -16,6 +16,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -25,7 +26,7 @@ import java.util.Map;
 
 public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJavaFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaFileBaseImpl");
-  private static final Key CACHED_CLASSES_MAP_KEY = Key.create("PsiJavaFileBaseImpl.CACHED_CLASSES_MAP_KEY");
+  private static final Key<ResolveCache.MapPair<PsiJavaFile,Map<String, SoftReference<JavaResolveResult[]>>>> CACHED_CLASSES_MAP_KEY = Key.create("PsiJavaFileBaseImpl.CACHED_CLASSES_MAP_KEY");
 
   private PsiImportListImpl myRepositoryImportList = null;
   private String myCachedPackageName = null;
@@ -130,16 +131,16 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
   }
 
+  @NotNull
   public PsiElement[] getOnDemandImports(boolean includeImplicit, boolean checkIncludes) {
     List<PsiElement> array = new ArrayList<PsiElement>();
 
     PsiImportList importList = getImportList();
     PsiImportStatement[] statements = importList.getImportStatements();
-    for(int i = 0; i < statements.length; i++) {
-      PsiImportStatement statement = statements[i];
-      if (statement.isOnDemand()){
+    for (PsiImportStatement statement : statements) {
+      if (statement.isOnDemand()) {
         PsiElement resolved = statement.resolve();
-        if (resolved != null){
+        if (resolved != null) {
           array.add(resolved);
         }
       }
@@ -147,8 +148,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
     if (includeImplicit){
       PsiJavaCodeReferenceElement[] implicitRefs = getImplicitlyImportedPackageReferences();
-      for(int i = 0; i < implicitRefs.length; i++){
-        final PsiElement resolved = implicitRefs[i].resolve();
+      for (PsiJavaCodeReferenceElement implicitRef : implicitRefs) {
+        final PsiElement resolved = implicitRef.resolve();
         if (resolved != null) {
           array.add(resolved);
         }
@@ -158,15 +159,15 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return array.toArray(new PsiElement[array.size()]);
   }
 
+  @NotNull
   public PsiClass[] getSingleClassImports(boolean checkIncludes) {
     List<PsiClass> array = new ArrayList<PsiClass>();
     PsiImportList importList = getImportList();
     PsiImportStatement[] statements = importList.getImportStatements();
-    for(int i = 0; i < statements.length; i++) {
-      PsiImportStatement statement = statements[i];
-      if (!statement.isOnDemand()){
+    for (PsiImportStatement statement : statements) {
+      if (!statement.isOnDemand()) {
         PsiElement ref = statement.resolve();
-        if (ref instanceof PsiClass){
+        if (ref instanceof PsiClass) {
           array.add((PsiClass)ref);
         }
       }
@@ -177,11 +178,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   public PsiJavaCodeReferenceElement findImportReferenceTo(PsiClass aClass) {
     PsiImportList importList = getImportList();
     PsiImportStatement[] statements = importList.getImportStatements();
-    for(int i = 0; i < statements.length; i++) {
-      PsiImportStatement statement = statements[i];
-      if (!statement.isOnDemand()){
+    for (PsiImportStatement statement : statements) {
+      if (!statement.isOnDemand()) {
         PsiElement ref = statement.resolve();
-        if (ref != null && getManager().areElementsEquivalent(ref, aClass)){
+        if (ref != null && getManager().areElementsEquivalent(ref, aClass)) {
           return statement.getImportReference();
         }
       }
@@ -189,10 +189,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return null;
   }
 
+  @NotNull
   public String[] getImplicitlyImportedPackages() {
     return IMPLICIT_IMPORTS;
   }
 
+  @NotNull
   public PsiJavaCodeReferenceElement[] getImplicitlyImportedPackageReferences() {
     return PsiImplUtil.namesToPackageReferences(myManager, IMPLICIT_IMPORTS);
   }
@@ -287,8 +289,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
 
       final PsiClass[] classes = getClasses();
-      for(int i = 0; i < classes.length; i++){
-        PsiClass aClass = classes[i];
+      for (PsiClass aClass : classes) {
         if (!processor.execute(aClass, substitutor)) return false;
       }
 
@@ -296,16 +297,15 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       PsiImportStatement[] importStatements = importList.getImportStatements();
 
       //Single-type processing
-      for(int i1 = 0; i1 < importStatements.length; i1++) {
-        PsiImportStatement statement = importStatements[i1];
-        if (!statement.isOnDemand()){
+      for (PsiImportStatement statement : importStatements) {
+        if (!statement.isOnDemand()) {
           if (nameHint != null) {
             String refText = statement.getQualifiedName();
             if (refText == null || !refText.endsWith(name)) continue;
           }
 
           PsiElement resolved = statement.resolve();
-          if (resolved instanceof PsiClass){
+          if (resolved instanceof PsiClass) {
             processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, statement);
             if (!processor.execute(resolved, substitutor)) return false;
           }
@@ -313,19 +313,16 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
       processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, null);
 
-      {
-        // check in current package
-        String packageName = getPackageName();
-        PsiPackage aPackage = myManager.findPackage(packageName);
-        if (aPackage != null){
-          if(!PsiScopesUtil.processScope(aPackage, processor, substitutor, null, place))
-            return false;
-        }
+      // check in current package
+      String packageName = getPackageName();
+      PsiPackage aPackage = myManager.findPackage(packageName);
+      if (aPackage != null){
+        if(!PsiScopesUtil.processScope(aPackage, processor, substitutor, null, place))
+          return false;
       }
 
       //On demand processing
-      for (int i = 0; i < importStatements.length; i++) {
-        PsiImportStatement statement = importStatements[i];
+      for (PsiImportStatement statement : importStatements) {
         if (statement.isOnDemand()) {
           PsiElement resolved = statement.resolve();
           if (resolved != null) {
@@ -335,10 +332,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         }
       }
       processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, null);
-      
+
       PsiJavaCodeReferenceElement[] implicitlyImported = getImplicitlyImportedPackageReferences();
-      for (int i = 0; i < implicitlyImported.length; i++) {
-        PsiElement resolved = implicitlyImported[i].resolve();
+      for (PsiJavaCodeReferenceElement aImplicitlyImported : implicitlyImported) {
+        PsiElement resolved = aImplicitlyImported.resolve();
         if (resolved != null) {
           processOnDemandTarget(resolved, processor, substitutor, place);
         }
@@ -359,8 +356,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         final StaticImportFilteringProcessor staticImportProcessor = new StaticImportFilteringProcessor(processor, null);
 
         // single member processing
-        for (int i = 0; i < importStaticStatements.length; i++) {
-          PsiImportStaticStatement importStaticStatement = importStaticStatements[i];
+        for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
           if (!importStaticStatement.isOnDemand()) {
             final String referenceName = importStaticStatement.getReferenceName();
             final PsiClass targetElement = importStaticStatement.resolveTargetClass();
@@ -374,8 +370,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         }
 
         // on-demand processing
-        for (int i = 0; i < importStaticStatements.length; i++) {
-          PsiImportStaticStatement importStaticStatement = importStaticStatements[i];
+        for (PsiImportStaticStatement importStaticStatement : importStaticStatements) {
           if (importStaticStatement.isOnDemand()) {
             final PsiClass targetElement = importStaticStatement.resolveTargetClass();
             if (targetElement != null) {
@@ -406,8 +401,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
     else if (target instanceof PsiClass) {
       PsiClass[] inners = ((PsiClass)target).getInnerClasses();
-      for (int j = 0; j < inners.length; j++) {
-        PsiClass inner = inners[j];
+      for (PsiClass inner : inners) {
         if (!processor.execute(inner, substitutor)) return false;
       }
     }
@@ -418,10 +412,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   private JavaResolveResult[] getGuess(final String name){
-    final Map guessForFile = myGuessCache.get(this);
-    final Reference ref = guessForFile != null ? (Reference)guessForFile.get(name) : null;
+    final Map<String,SoftReference<JavaResolveResult[]>> guessForFile = myGuessCache.get(this);
+    final Reference<JavaResolveResult[]> ref = guessForFile != null ? (Reference<JavaResolveResult[]>)guessForFile.get(name) : null;
 
-    return ref != null ? (JavaResolveResult[])ref.get() : null;
+    return ref != null ? ref.get() : null;
   }
 
   private void setGuess(final String name, final JavaResolveResult[] cached){
