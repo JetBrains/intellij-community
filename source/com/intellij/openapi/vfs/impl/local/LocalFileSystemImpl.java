@@ -36,7 +36,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
   final Object LOCK = new Object();
 
   private final ArrayList<VirtualFile> myRoots = new ArrayList<VirtualFile>();
-  private final ArrayList<WatchRequest> myRootsToWatch = new ArrayList<WatchRequest>();
+  private final Set<WatchRequest> myRootsToWatch = new HashSet<WatchRequest>();
   private WatchRequest[] myCachedNormalizedRequests = null;
 
   private ArrayList<VirtualFile> myFilesToWatchManual = new ArrayList<VirtualFile>();
@@ -67,6 +67,20 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     @NotNull public VirtualFile getRoot() { return myRoot; }
 
     public boolean isToWatchRecursively() { return myToWatchRecursively; }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      final WatchRequestImpl that = (WatchRequestImpl)o;
+
+      if (myToWatchRecursively != that.myToWatchRecursively) return false;
+      return myRoot.equals(that.myRoot);
+   }
+
+    public int hashCode() {
+      return myRoot.hashCode();
+    }
   }
 
   public LocalFileSystemImpl() {
@@ -784,8 +798,9 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     synchronized (LOCK) {
       if (rootFile instanceof VirtualFileImpl) {
         final WatchRequestImpl result = new WatchRequestImpl(rootFile, toWatchRecursively);
-        myRootsToWatch.add(result);
-        setUpFileWatcher();
+        if (myRootsToWatch.add(result) ) {
+          setUpFileWatcher();
+        }
         return result;
       }
       return null;
