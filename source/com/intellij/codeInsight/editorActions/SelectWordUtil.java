@@ -799,7 +799,9 @@ public class SelectWordUtil {
     public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
       PsiJavaToken token = (PsiJavaToken)e;
 
-      if (token.getTokenType() != JavaTokenType.SEMICOLON) {
+      if (token.getTokenType() != JavaTokenType.SEMICOLON &&
+          token.getTokenType() != JavaTokenType.LPARENTH
+         ) {
         return super.select(e, editorText, cursorOffset, editor);
       }
       else {
