@@ -26,6 +26,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -159,6 +160,8 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
           }
         }
         myAnnotationHolder.clear();
+      } else if (element instanceof JspText) {
+        myXmlVisitor.visitJspElement((JspText)element);
       }
     }
   }

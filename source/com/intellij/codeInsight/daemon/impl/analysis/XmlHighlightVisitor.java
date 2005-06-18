@@ -19,9 +19,11 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -46,6 +48,7 @@ import java.util.StringTokenizer;
  */
 public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.ValidationHost {
   private static final String UNKNOWN_SYMBOL = "Cannot resolve symbol {0}";
+  private static final Key<String> DO_NOT_VALIDATE_KEY = Key.create("do not validate");
   private List<HighlightInfo> myResult = new SmartList<HighlightInfo>();
   private RefCountHolder myRefCountHolder;
 
@@ -502,6 +505,9 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   private void checkDuplicateAttribute(XmlTag tag, final XmlAttribute attribute) {
+    if (tag.getUserData(DO_NOT_VALIDATE_KEY) != null) {
+      return;
+    }
     XmlAttribute[] attributes = tag.getAttributes();
 
     for (XmlAttribute tagAttribute : attributes) {
@@ -554,13 +560,18 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   }
 
   public void visitXmlTag(XmlTag tag) {
-    checkReferences(tag, QuickFixProvider.NULL);
+    if (tag.getUserData(DO_NOT_VALIDATE_KEY) == null)
+      checkReferences(tag, QuickFixProvider.NULL);
   }
 
   public void visitXmlAttributeValue(XmlAttributeValue value) {
     if (!(value.getParent() instanceof XmlAttribute)) return;
+    
     XmlAttribute attribute = (XmlAttribute)value.getParent();
-
+    if (value.getUserData(DO_NOT_VALIDATE_KEY) != null) {
+      return;
+    }
+      
     XmlTag tag = attribute.getParent();
 
     XmlElementDescriptor elementDescriptor = tag.getDescriptor();
@@ -800,6 +811,16 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
       } else {
         myResult.add(HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF,context,message));
       }
+    }
+  }
+
+  public void visitJspElement(JspText text) {
+    final PsiElement parent = text.getParent();
+    
+    if (!(parent instanceof XmlText) &&
+        !(parent instanceof XmlDocument)
+        ) { // optimization
+      parent.putUserData(DO_NOT_VALIDATE_KEY, "");
     }
   }
 }
