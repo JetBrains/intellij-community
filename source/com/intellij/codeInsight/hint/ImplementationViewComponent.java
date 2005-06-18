@@ -244,9 +244,9 @@ public class ImplementationViewComponent extends JPanel {
 
     int start = getElementStart(elt);
     final int end = elt.getTextRange().getEndOffset();
-    int startLine = doc.getLineNumber(start);
 
-    final int lineStart = doc.getLineStartOffset(startLine);
+    final int lineStart = doc.getLineStartOffset(doc.getLineNumber(start));
+    final int lineEnd = doc.getLineEndOffset(doc.getLineNumber(end));
 
     CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
       public void run() {
@@ -254,7 +254,7 @@ public class ImplementationViewComponent extends JPanel {
           public void run() {
             Document fragmentDoc = myEditor.getDocument();
             fragmentDoc.setReadOnly(false);
-            fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), doc.getCharsSequence().subSequence(lineStart, end).toString());
+            fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), doc.getCharsSequence().subSequence(lineStart, lineEnd).toString());
             fragmentDoc.setReadOnly(true);
             myEditor.getCaretModel().moveToOffset(0);
             myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
