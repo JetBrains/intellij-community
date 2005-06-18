@@ -35,8 +35,14 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
 
   public NodeDescriptorFactoryImpl(Project project) {
     myProject = project;
-    myDescriptorSearcher        = new DescriptorTreeSearcher(new MarkedDescriptorTree());
+    myDescriptorSearcher = new DescriptorTreeSearcher(new MarkedDescriptorTree());
     myDisplayDescriptorSearcher = new DisplayDescriptorTreeSearcher(new MarkedDescriptorTree());
+  }
+
+  public void dispose() {
+    myCurrentHistoryTree.clear();
+    myDescriptorSearcher.clear();
+    myDisplayDescriptorSearcher.clear();
   }
 
   private <T extends NodeDescriptor> T getDescriptor(NodeDescriptor parent, DescriptorData<T> data) {
@@ -185,6 +191,10 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
 
     protected NodeDescriptor getSearched(NodeDescriptor parent) {
       return mySearchedDescriptors.get(parent);
+    }
+
+    public void clear() {
+      mySearchedDescriptors.clear();
     }
   }
 

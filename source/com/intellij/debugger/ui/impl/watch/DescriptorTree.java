@@ -10,8 +10,8 @@ import java.util.*;
  */
 
 public class DescriptorTree {
-  private HashMap<NodeDescriptor, List<NodeDescriptor>> myChildrenMap = new HashMap<NodeDescriptor, List<NodeDescriptor>>();
-  private List<NodeDescriptor> myRootChildren = new ArrayList<NodeDescriptor>();
+  private final HashMap<NodeDescriptor, List<NodeDescriptor>> myChildrenMap = new HashMap<NodeDescriptor, List<NodeDescriptor>>();
+  private final List<NodeDescriptor> myRootChildren = new ArrayList<NodeDescriptor>();
   private final boolean myInitial;
   private int myFrameCount = -1;
   private int myFrameIndex = -1;
@@ -22,6 +22,11 @@ public class DescriptorTree {
 
   public DescriptorTree(boolean isInitial) {
     myInitial = isInitial;
+  }
+
+  public void clear() {
+    myChildrenMap.clear();
+    myRootChildren.clear();
   }
 
   public boolean frameIdEquals(final int frameCount, final int frameIndex) {

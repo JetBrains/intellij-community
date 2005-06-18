@@ -84,6 +84,12 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     new TreeSpeedSearch(this);
   }
 
+  public void dispose() {
+    myDescriptorManager.dispose();
+    myDebuggerContext = DebuggerContextImpl.EMPTY_CONTEXT;
+    super.dispose();
+  }
+
   private void installSettingsListener() {
     if (mySettingsListener != null) {
       return;
