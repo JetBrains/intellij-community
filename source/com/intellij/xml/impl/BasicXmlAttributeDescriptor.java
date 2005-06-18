@@ -13,7 +13,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.xml.util.XmlUtil;
 
 public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescriptor {
   public String validateValue(XmlElement context, String value) {
@@ -25,7 +25,7 @@ public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescrip
       }
     }
 
-    if (isEnumerated()) {
+    if (isEnumerated() && XmlUtil.isSimpleXmlAttributeValue(value)) {
       String[] values = getEnumeratedValues();
       boolean valueWasFound = false;
 

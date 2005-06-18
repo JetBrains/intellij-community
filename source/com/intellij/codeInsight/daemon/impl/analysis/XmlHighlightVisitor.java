@@ -581,7 +581,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     if (myRefCountHolder != null && attributeDescriptor.hasIdType()) {
       final String unquotedValue = getUnquotedValue(value, tag);
 
-      if (XmlUtil.isValidXmlId(unquotedValue)) {
+      if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue)) {
         XmlTag xmlTag = myRefCountHolder.getTagById(unquotedValue);
 
         if (xmlTag == null ||
@@ -634,7 +634,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     if (attributeDescriptor.hasIdRefType()) {
       String unquotedValue = getUnquotedValue(value, tag);
-      if (XmlUtil.isValidXmlId(unquotedValue)) {
+      if (XmlUtil.isSimpleXmlAttributeValue(unquotedValue)) {
         XmlTag xmlTag = holder.getTagById(unquotedValue);
 
         if (xmlTag == null || !xmlTag.isValid()) {
