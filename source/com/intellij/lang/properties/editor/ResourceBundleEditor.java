@@ -204,7 +204,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           for (PropertiesFile propertiesFile : propertiesFiles) {
             EditorEx editor = (EditorEx)myEditors.get(propertiesFile);
             reinitSettings(editor);
-            editor.setRendererMode(propertyName == null);
             Property property = propertiesFile.findPropertyByKey(propertyName);
             final String value = property == null ? "" : property.getValue();
             final Document document = editor.getDocument();
@@ -333,10 +332,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   private @Nullable String getSelectedPropertyName() {
-    TreePath selected = myStructureViewComponent.getTree().getSelectionModel().getSelectionPath();
-    if (selected == null) {
-      return null;
-    }
+    JTree tree = myStructureViewComponent.getTree();
+    if (tree == null) return null;
+    TreePath selected = tree.getSelectionModel().getSelectionPath();
+    if (selected == null) return null;
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)selected.getLastPathComponent();
     Object value = ((AbstractTreeNode)node.getUserObject()).getValue();
     return value instanceof ResourceBundlePropertyStructureViewElement ? ((ResourceBundlePropertyStructureViewElement)value).getValue() : null;

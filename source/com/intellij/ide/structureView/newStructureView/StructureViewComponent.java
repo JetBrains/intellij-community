@@ -513,7 +513,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public JTree getTree() {
-    return myAbstractTreeBuilder.getTree();
+    return myAbstractTreeBuilder == null ? null : myAbstractTreeBuilder.getTree();
   }
 
   public void setKindSortingIsActive(boolean state) {
