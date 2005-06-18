@@ -324,6 +324,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerBugInspections(){
+        m_inspectionClasses.add(ObjectToStringInspection.class);
         m_inspectionClasses.add(IntegerDivisionInFloatingPointContextInspection.class);
         m_inspectionClasses.add(NonShortCircuitBooleanInspection.class);
         m_inspectionClasses.add(ComparisonOfShortAndCharInspection.class);
@@ -377,6 +378,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(AssignmentToStaticFieldFromInstanceMethodInspection.class);
         m_inspectionClasses.add(StaticCallOnSubclassInspection.class);
         m_inspectionClasses.add(OctalAndDecimalIntegersMixedInspection.class);
+        m_inspectionClasses.add(ObjectToStringInspection.class);
         m_inspectionClasses.add(IncompatibleMaskInspection.class);
         m_inspectionClasses.add(ForLoopWithMissingComponentInspection.class);
         m_inspectionClasses.add(ForLoopThatDoesntUseLoopVariableInspection.class);
@@ -564,8 +566,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(UnnecessaryLocalVariableInspection.class);
         m_inspectionClasses.add(UnnecessaryThisInspection.class);
         m_inspectionClasses.add(UnnecessaryBlockStatementInspection.class);
-        m_inspectionClasses.add(com.siyeh.ig.verbose.UnnecessaryInterfaceModifierInspection.class);
-        m_inspectionClasses.add(com.siyeh.ig.verbose.UnnecessaryEnumModifierInspection.class);
+        m_inspectionClasses.add(UnnecessaryInterfaceModifierInspection.class);
+        m_inspectionClasses.add(UnnecessaryEnumModifierInspection.class);
         m_inspectionClasses.add(UnnecessaryReturnInspection.class);
         m_inspectionClasses.add(UnnecessaryContinueInspection.class);
         m_inspectionClasses.add(UnnecessarySemicolonInspection.class);
@@ -573,7 +575,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(UnnecessaryQualifierForThisInspection.class);
         m_inspectionClasses.add(UnusedLabelInspection.class);
         m_inspectionClasses.add(RedundantFieldInitializationInspection.class);
-        m_inspectionClasses.add(com.siyeh.ig.verbose.RedundantImplementsInspection.class);
+        m_inspectionClasses.add(RedundantImplementsInspection.class);
         m_inspectionClasses.add(ExtendsObjectInspection.class);
         m_inspectionClasses.add(TypeParameterExtendsObjectInspection.class);
         m_inspectionClasses.add(PointlessArithmeticExpressionInspection.class);
@@ -584,8 +586,8 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(UnnecessaryDefaultInspection.class);
         m_inspectionClasses.add(UnnecessaryBoxingInspection.class);
         m_inspectionClasses.add(UnnecessaryUnboxingInspection.class);
-        m_inspectionClasses.add(com.siyeh.ig.verbose.UnnecessaryFinalOnParameterInspection.class);
-        m_inspectionClasses.add(com.siyeh.ig.verbose.UnnecessaryFinalOnLocalVariableInspection.class);
+        m_inspectionClasses.add(UnnecessaryFinalOnParameterInspection.class);
+        m_inspectionClasses.add(UnnecessaryFinalOnLocalVariableInspection.class);
         m_inspectionClasses.add(ForCanBeForeachInspection.class);
         m_inspectionClasses.add(WhileCanBeForeachInspection.class);
     }
@@ -800,6 +802,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerMaturityInspections(){
+        m_inspectionClasses.add(SuppressionAnnotationInspection.class);
         m_inspectionClasses.add(SystemOutErrInspection.class);
         m_inspectionClasses.add(ThrowablePrintStackTraceInspection.class);
         m_inspectionClasses.add(TodoCommentInspection.class);

@@ -1,15 +1,12 @@
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.GroupNames;
 
 public class TodoCommentInspection extends ClassInspection {
-
     public String getDisplayName() {
         return "TODO comment";
     }
@@ -27,11 +24,9 @@ public class TodoCommentInspection extends ClassInspection {
     }
 
     private static class ClassWithoutToStringVisitor extends BaseInspectionVisitor {
-
-        public void visitComment(PsiComment comment){
+        public void visitComment(PsiComment comment) {
             super.visitComment(comment);
-            if(TodoUtil.isTodoComment(comment))
-            {
+            if (TodoUtil.isTodoComment(comment)) {
                 registerError(comment);
             }
         }
