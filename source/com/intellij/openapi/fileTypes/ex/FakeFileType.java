@@ -7,7 +7,6 @@
 package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.project.Project;
@@ -46,7 +45,4 @@ public abstract class FakeFileType implements FileType {
     return null;
   }
 
-  public Language getLanguage() {
-    return null;
-  }
 }
