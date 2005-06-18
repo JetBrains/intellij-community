@@ -12,7 +12,12 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class InspectionGadgetsFix implements LocalQuickFix{
-    public void applyFix(Project project,
+  //to appear in "Apply Fix" statement when multiple Quick Fixes exist
+  public String getFamilyName() {
+    return "";
+  }
+
+  public void applyFix(Project project,
                          ProblemDescriptor descriptor){
         if(isQuickFixOnReadOnlyFile(descriptor)){
             return;
