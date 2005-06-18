@@ -1294,6 +1294,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         if (result != 0) return result;
       }
       else if (isSortByType()
+               && o1 instanceof AbstractTreeNode
+               && o2 instanceof AbstractTreeNode
                && (o1 instanceof PsiFileNode || ((AbstractTreeNode)o1).getValue() instanceof ResourceBundle )
                && (o2 instanceof PsiFileNode || ((AbstractTreeNode)o2).getValue() instanceof ResourceBundle )) {
         String type1 = o1 instanceof PsiFileNode ? extension(((PsiFileNode)o1).getValue()) : PropertiesFileType.FILE_TYPE.getDefaultExtension();
