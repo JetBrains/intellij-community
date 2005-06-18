@@ -123,6 +123,7 @@ public class GroupByWordPrefixes implements Grouper {
     List<String> words = keys.get(i).words;
     List<String> prevWords = keys.get(i - 1).words;
     if (prevWords.size() == parentPrefixLength) return true;
+    if (words.size() == parentPrefixLength) return true;
     return !Comparing.strEqual(words.get(parentPrefixLength), prevWords.get(parentPrefixLength));
   }
 
