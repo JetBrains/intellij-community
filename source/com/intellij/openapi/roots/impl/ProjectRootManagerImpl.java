@@ -353,8 +353,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       myModuleRootEventDispatcher.getMulticaster().beforeRootsChange(new ModuleRootEventImpl(myProject, filetypes));
     }
 
-    LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
-    myRootsToWatch.clear();
     myRootsChangeCounter++;
   }
 
@@ -394,6 +392,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private void addRootsToWatch() {
+    LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
+    myRootsToWatch.clear();
+
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     Set<VirtualFile> contentRoots = new HashSet<VirtualFile>();
     for (Module module : modules) {
