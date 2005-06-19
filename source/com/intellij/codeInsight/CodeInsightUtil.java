@@ -33,6 +33,7 @@ import java.util.List;
  */
 public class CodeInsightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.CodeInsightUtil");
+
   public static PsiExpression findExpressionInRange(PsiFile file, int startOffset, int endOffset) {
     PsiElement element1 = file.findElementAt(startOffset);
     PsiElement element2 = file.findElementAt(endOffset - 1);
@@ -85,8 +86,8 @@ public class CodeInsightUtil {
     if (endOffset != element2.getTextRange().getEndOffset()) return null;
 
     if (parent instanceof PsiCodeBlock && parent.getParent() instanceof PsiBlockStatement
-        && element1 == ((PsiCodeBlock) parent).getLBrace()
-        && element2 == ((PsiCodeBlock) parent).getRBrace()) {
+        && element1 == ((PsiCodeBlock)parent).getLBrace()
+        && element2 == ((PsiCodeBlock)parent).getRBrace()) {
       return new PsiElement[]{parent.getParent()};
     }
 
@@ -115,8 +116,8 @@ public class CodeInsightUtil {
     for (int i = 0; i < array.size(); i++) {
       PsiElement element = array.get(i);
       if (!(element instanceof PsiStatement
-             || element instanceof PsiWhiteSpace
-             || element instanceof PsiComment)) {
+            || element instanceof PsiWhiteSpace
+            || element instanceof PsiComment)) {
         return null;
       }
     }
@@ -129,7 +130,7 @@ public class CodeInsightUtil {
 
     // offsets in JspxFile behave themselves bad
     if (root instanceof TranslatingChangesDummyHolder) {
-      root.accept(new PsiRecursiveElementVisitor(){
+      root.accept(new PsiRecursiveElementVisitor() {
         public void visitElement(PsiElement element) {
           super.visitElement(element);
           list.add(element);
@@ -217,7 +218,7 @@ public class CodeInsightUtil {
       minIndent = minIndent != null ? indent.min(minIndent) : indent;
     }
     if (minIndent == null && line1 == line2 && line1 < document.getLineCount() - 1) {
-      return getMinLineIndent(project, document, line1+1, line1+1, fileType);
+      return getMinLineIndent(project, document, line1 + 1, line1 + 1, fileType);
     }
     //if (minIndent == Integer.MAX_VALUE){
     //  minIndent = 0;
@@ -229,6 +230,14 @@ public class CodeInsightUtil {
     if (type instanceof PsiArrayType) {
       int count = type.getArrayDimensions() - 1;
       PsiType componentType = type.getDeepComponentType();
+
+      if (componentType instanceof PsiClassType) {
+        final PsiClassType classType = (PsiClassType)componentType;
+        if (classType.resolve() instanceof PsiTypeParameter) {
+          return "null";
+        }
+      }
+
       StringBuffer buffer = new StringBuffer();
       buffer.append("new ");
       buffer.append(componentType.getCanonicalText());
@@ -239,16 +248,16 @@ public class CodeInsightUtil {
       return buffer.toString();
     }
     else if (type instanceof PsiPrimitiveType) {
-        if (PsiType.BOOLEAN == type) {
-          return "false";
-        }
-        else {
-          return "0";
-        }
+      if (PsiType.BOOLEAN == type) {
+        return "false";
       }
       else {
-        return "null";
+        return "0";
       }
+    }
+    else {
+      return "null";
+    }
   }
 
   public static PsiExpression[] findExpressionOccurrences(PsiElement scope, PsiExpression expr) {
@@ -262,8 +271,8 @@ public class CodeInsightUtil {
     for (int i = 0; i < children.length; i++) {
       PsiElement child = children[i];
       if (child instanceof PsiExpression) {
-        if (areExpressionsEquivalent(RefactoringUtil.unparenthesizeExpression((PsiExpression) child), expr)) {
-          array.add((PsiExpression) child);
+        if (areExpressionsEquivalent(RefactoringUtil.unparenthesizeExpression((PsiExpression)child), expr)) {
+          array.add((PsiExpression)child);
           continue;
         }
       }
@@ -282,7 +291,7 @@ public class CodeInsightUtil {
     for (int i = 0; i < children.length; i++) {
       PsiElement child = children[i];
       if (child instanceof PsiReferenceExpression) {
-        PsiElement ref = ((PsiReferenceExpression) child).resolve();
+        PsiElement ref = ((PsiReferenceExpression)child).resolve();
         if (ref != null && areElementsEquivalent(ref, referee)) {
           array.add(child);
         }
@@ -348,7 +357,7 @@ public class CodeInsightUtil {
       final Project project = file.getProject();
 
       final Editor editor = FileEditorManager.getInstance(project).openTextEditor(
-          new OpenFileDescriptor(project, file.getVirtualFile()), true);
+        new OpenFileDescriptor(project, file.getVirtualFile()), true);
 
       final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(document, project)) {
@@ -378,7 +387,7 @@ public class CodeInsightUtil {
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
-   public static void findChildRangeDuplicates(PsiElement first, PsiElement last,
+  public static void findChildRangeDuplicates(PsiElement first, PsiElement last,
                                               List<Pair<PsiElement, PsiElement>> result,
                                               PsiElement scope) {
     LOG.assertTrue(first.getParent() == last.getParent());
@@ -400,7 +409,8 @@ public class CodeInsightUtil {
         j++;
         if (next == last) break;
         next = PsiTreeUtil.skipSiblingsForward(next, new Class[]{PsiWhiteSpace.class});
-      } while(true);
+      }
+      while (true);
 
       if (next == last && j > i) {
         if (child != first) {
