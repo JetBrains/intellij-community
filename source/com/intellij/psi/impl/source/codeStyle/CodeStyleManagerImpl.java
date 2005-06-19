@@ -7,6 +7,8 @@ import com.intellij.newCodeFormatting.FormattingModel;
 import com.intellij.newCodeFormatting.FormattingModelBuilder;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -272,6 +274,15 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     } else {
       return null;
     }
+  }
+
+  @Nullable
+  public String getLineIndent(Editor editor) {
+    Document doc = editor.getDocument();
+    int offset = editor.getCaretModel().getOffset();
+    if (offset >= doc.getTextLength()) return "";
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(doc);
+    return getLineIndent(file, offset);
   }
 
   private boolean insideElement(final PsiElement element, final int offset) {

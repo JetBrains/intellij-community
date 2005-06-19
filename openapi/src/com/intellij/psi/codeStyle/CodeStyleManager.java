@@ -4,6 +4,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -40,6 +41,9 @@ public abstract class CodeStyleManager {
   public abstract boolean isLineToBeIndented(PsiFile file, int offset);
   @Nullable
   public abstract String getLineIndent(PsiFile file, int offset);
+
+  @Nullable
+  public abstract String getLineIndent(Editor editor);
 
   public abstract Indent getIndent(String text, FileType fileType);
   public abstract String fillIndent(Indent indent, FileType fileType);

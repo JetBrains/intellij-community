@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -177,10 +178,32 @@ public class EditorModificationUtil {
   public static String calcStringToFillVitualSpace(Editor editor) {
     int afterLineEnd = calcAfterLineEnd(editor);
     if (afterLineEnd > 0) {
+      final Project project = editor.getProject();
       StringBuffer buf = new StringBuffer();
+      if (project != null) {
+        String properIndent = CodeStyleManager.getInstance(project).getLineIndent(editor);
+        if (properIndent != null) {
+          int tabSize = editor.getSettings().getTabSize(project);
+          for (int i = 0; i < properIndent.length(); i++) {
+            if (properIndent.charAt(i) == ' ') {
+              afterLineEnd--;
+            }
+            else if (properIndent.charAt(i) == '\t') {
+              if (afterLineEnd < tabSize) {
+                break;
+              }
+              afterLineEnd -= tabSize;
+            }
+            buf.append(properIndent.charAt(i));
+            if (afterLineEnd == 0) break;
+          }
+        }
+      }
+
       for (int i = 0; i < afterLineEnd; i++) {
         buf.append(' ');
       }
+
       return buf.toString();
     }
 
