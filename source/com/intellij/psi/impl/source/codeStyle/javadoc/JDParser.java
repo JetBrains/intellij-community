@@ -153,8 +153,7 @@ public class JDParser {
       else {
         first = true;
         if (p2nl) {
-          boolean istagp = token.equals("<p/>") || token.equals("<p>");
-          if (istagp) {
+          if (isParaTag(token)) {
             list.add("");
             markers.add(Boolean.valueOf(preCount > 0));
             continue;
@@ -173,6 +172,19 @@ public class JDParser {
       }
     }
     return list;
+  }
+
+  private boolean isParaTag(final String token) {
+    String withoutWS = removeWhiteSpacesFrom(token).toLowerCase();
+    return withoutWS.equals("<p/>") || withoutWS.equals("<p>");
+  }
+
+  private String removeWhiteSpacesFrom(final String token) {
+    final StringBuffer result = new StringBuffer();
+    for (char c : token.toCharArray()) {
+      if (c != ' ') result.append(c);
+    }
+    return result.toString();
   }
 
   public static String toLines(ArrayList l) {
