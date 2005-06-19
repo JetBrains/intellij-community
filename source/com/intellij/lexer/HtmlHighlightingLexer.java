@@ -40,7 +40,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
   class ElEmbeddmentHandler implements TokenHandler {
     public void handleElement(Lexer lexer) {
       setEmbeddedLexer();
-      embeddedLexer.start(getBuffer(),HtmlHighlightingLexer.super.getTokenStart(),skipToTheEndOfTheEmbeddment());
+      embeddedLexer.start(getBuffer(),HtmlHighlightingLexer.super.getTokenStart(),HtmlHighlightingLexer.super.getTokenEnd());
     }
   }
 
@@ -124,6 +124,11 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     if (embeddedLexer==null) {
       super.advance();
     }
+  }
+
+  protected boolean isValidAttributeValueTokenType(final IElementType tokenType) {
+    return super.isValidAttributeValueTokenType(tokenType) ||
+      tokenType == ELTokenType.JSP_EL_CONTENT;
   }
 
   public IElementType getTokenType() {
