@@ -236,6 +236,7 @@ public class TargetElementUtil {
       if (!(element instanceof PsiPackage)) {
         PsiFile file = element.getContainingFile();
         if (file == null) return null;
+        if (file.getOriginalFile() != null) file = file.getOriginalFile();
         if (file.getVirtualFile() == null) return null;
       }
       return element;

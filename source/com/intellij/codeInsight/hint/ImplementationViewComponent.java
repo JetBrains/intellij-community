@@ -99,16 +99,16 @@ public class ImplementationViewComponent extends JPanel {
     FileDescriptor[] files = new FileDescriptor[myElements.length];
     for (int i = 0; i < elements.length; i++) {
       myElements[i] = elements[i].getNavigationElement();
-      files[i] = new FileDescriptor(myElements[i].getContainingFile().getVirtualFile());
+      files[i] = new FileDescriptor(getContainingFile(myElements[i]).getVirtualFile());
     }
-
 
     final Project project = myElements[0].getProject();
     EditorFactory factory = EditorFactory.getInstance();
     Document doc = factory.createDocument("");
     doc.setReadOnly(true);
     myEditor = factory.createEditor(doc, project);
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, myElements[0].getContainingFile().getName());
+    PsiFile psiFile = getContainingFile(myElements[0]);
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, psiFile.getName());
     ((EditorEx)myEditor).setHighlighter(highlighter);
     ((EditorEx)myEditor).setBackgroundColor(EditorFragmentComponent.getBackgroundColor(myEditor));
 
@@ -165,7 +165,7 @@ public class ImplementationViewComponent extends JPanel {
     }
     else {
       final JLabel label = new JLabel();
-      VirtualFile file = myElements[0].getContainingFile().getVirtualFile();
+      VirtualFile file = psiFile.getVirtualFile();
       label.setIcon(file.getIcon());
       label.setForeground(FileStatusManager.getInstance(project).getStatus(file).getColor());
       label.setText(file.getPresentableName());
@@ -211,7 +211,8 @@ public class ImplementationViewComponent extends JPanel {
 
     final PsiElement elt = myElements[myIndex];
     Project project = elt.getProject();
-    final VirtualFile vFile = elt.getContainingFile().getVirtualFile();
+    PsiFile psiFile = getContainingFile(elt);
+    final VirtualFile vFile = psiFile.getVirtualFile();
     final FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, vFile);
     for (FileEditorProvider provider : providers) {
       if (provider instanceof TextEditorProvider) {
@@ -240,7 +241,9 @@ public class ImplementationViewComponent extends JPanel {
 
   private void updateTextElement(final PsiElement elt) {
     Project project = elt.getProject();
-    final Document doc = PsiDocumentManager.getInstance(project).getDocument(elt.getContainingFile());
+    PsiFile psiFile = getContainingFile(elt);
+
+    final Document doc = PsiDocumentManager.getInstance(project).getDocument(psiFile);
 
     int start = getElementStart(elt);
     final int end = elt.getTextRange().getEndOffset();
@@ -262,6 +265,13 @@ public class ImplementationViewComponent extends JPanel {
         });
       }
     });
+  }
+
+  private PsiFile getContainingFile(final PsiElement elt) {
+    PsiFile psiFile = elt.getContainingFile();
+    PsiFile originalFile = psiFile.getOriginalFile();
+    if (originalFile != null) psiFile = originalFile;
+    return psiFile;
   }
 
   private int getElementStart(PsiElement elt) {
@@ -394,7 +404,7 @@ public class ImplementationViewComponent extends JPanel {
     public void actionPerformed(AnActionEvent e) {
       PsiElement element = myElements[myIndex];
       PsiElement navigationElement = element.getNavigationElement();
-      PsiFile file = navigationElement.getContainingFile();
+      PsiFile file = getContainingFile(navigationElement);
       Project project = element.getProject();
       FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file.getVirtualFile(), navigationElement.getTextOffset());
