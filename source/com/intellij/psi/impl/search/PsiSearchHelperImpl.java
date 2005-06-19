@@ -108,71 +108,39 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return new LocalSearchScope(file);
       }
     }
-    else if (element instanceof PsiMethod) {
+    else if (element instanceof PsiMethod || element instanceof PsiField) {
+      PsiMember member = (PsiMember) element;
       PsiFile file = element.getContainingFile();
       if (file instanceof JspFile) {
         return new LocalSearchScope(JspUtil.getReferencingFiles((JspFile)file));
       }
 
-      PsiMethod method = (PsiMethod)element;
-
-      PsiClass aClass = method.getContainingClass();
+      PsiClass aClass = member.getContainingClass();
       if (aClass instanceof PsiAnonymousClass) {
-        //method from anonymous class can be called from outside the class
+        //member from anonymous class can be called from outside the class
         PsiElement methodCallExpr = PsiTreeUtil.getParentOfType(aClass, PsiMethodCallExpression.class);
         return new LocalSearchScope(methodCallExpr != null ? methodCallExpr : aClass);
       }
 
-      if (method.hasModifierProperty(PsiModifier.PUBLIC)) {
+      if (member.hasModifierProperty(PsiModifier.PUBLIC)) {
         return maximalUseScope;
       }
-      else if (method.hasModifierProperty(PsiModifier.PROTECTED)) {
+      else if (member.hasModifierProperty(PsiModifier.PROTECTED)) {
         return maximalUseScope;
       }
-      else if (method.hasModifierProperty(PsiModifier.PRIVATE)) {
-        PsiClass topClass = PsiUtil.getTopLevelClass(method);
-        return topClass != null ? new LocalSearchScope(topClass) : new LocalSearchScope(method.getContainingFile());
+      else if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
+        PsiClass topClass = PsiUtil.getTopLevelClass(member);
+        return topClass != null ? new LocalSearchScope(topClass) : new LocalSearchScope(file);
       }
       else {
-        PsiDirectory directory = file.getContainingDirectory();
-        PsiPackage aPackage = directory == null ? null : directory.getPackage();
+        PsiPackage aPackage = file instanceof PsiJavaFile ? myManager.findPackage(((PsiJavaFile) file).getPackageName()) : null;
         if (aPackage != null) {
           SearchScope scope = GlobalSearchScope.packageScope(aPackage, false);
           scope = scope.intersectWith(maximalUseScope);
           return scope;
         }
-        else {
-          return new LocalSearchScope(file);
-        }
-      }
-    }
-    else if (element instanceof PsiField) {
-      PsiFile file = element.getContainingFile();
-      if (file instanceof JspFile) {
-        return new LocalSearchScope(JspUtil.getReferencingFiles((JspFile)file));
-      }
-      PsiField field = (PsiField)element;
-      if (field.hasModifierProperty(PsiModifier.PUBLIC)) {
+
         return maximalUseScope;
-      }
-      else if (field.hasModifierProperty(PsiModifier.PROTECTED)) {
-        return maximalUseScope;
-      }
-      else if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
-        PsiClass topClass = PsiUtil.getTopLevelClass(field);
-        return topClass != null ? new LocalSearchScope(topClass) : new LocalSearchScope(field.getContainingFile());
-      }
-      else {
-        final PsiDirectory directory = file.getContainingDirectory();
-        PsiPackage aPackage = directory == null ? null : directory.getPackage();
-        if (aPackage != null) {
-          SearchScope scope = GlobalSearchScope.packageScope(aPackage, false);
-          scope = scope.intersectWith(maximalUseScope);
-          return scope;
-        }
-        else {
-          return new LocalSearchScope(file);
-        }
       }
     }
     else if (element instanceof ImplicitVariable) {
