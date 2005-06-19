@@ -402,12 +402,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   public Pair<FileEditor[], FileEditorProvider[]> openFileImpl(final VirtualFile file,
                                                                final boolean focusEditor,
                                                                final HistoryEntry entry) {
-    final VirtualFile parentDir = file.getParent();
-    if (parentDir != null) {
-      final LocalFileSystem.WatchRequest request = LocalFileSystem.getInstance().addRootToWatch(parentDir, false);
-      file.putUserData(WATCH_REQUEST_KEY, request);
-    }
-    return openFileImpl2(mySplitters.getOrCreateCurrentWindow(), file, focusEditor, entry);
+      return openFileImpl2(mySplitters.getOrCreateCurrentWindow(), file, focusEditor, entry);
   }
 
   public Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(final EditorWindow window,
@@ -537,6 +532,13 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
       if (newEditorCreated) {
         final FileEditorManagerImpl fileEditorManager = window.getManager();
         fileEditorManager.myDispatcher.getMulticaster().fileOpened(fileEditorManager, file);
+
+        //Add request to watch this editor's virtual file
+        final VirtualFile parentDir = file.getParent();
+        if (parentDir != null) {
+          final LocalFileSystem.WatchRequest request = LocalFileSystem.getInstance().addRootToWatch(parentDir, false);
+          file.putUserData(WATCH_REQUEST_KEY, request);
+        }
       }
 
       //[jeka] this is a hack to support back-forward navigation
