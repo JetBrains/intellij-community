@@ -56,8 +56,8 @@ public class PsiConditionalExpressionImpl extends CompositePsiElement implements
     if (TypeConversionUtil.isNullType(type1) && !(type2 instanceof PsiPrimitiveType)) return type2;
     if (TypeConversionUtil.isNullType(type2) && !(type1 instanceof PsiPrimitiveType)) return type1;
 
-    if (type1.isAssignableFrom(type2)) return type1;
-    if (type2.isAssignableFrom(type1)) return type2;
+    if (TypeConversionUtil.isAssignable(type1, type2, false)) return type1;
+    if (TypeConversionUtil.isAssignable(type2, type1, false)) return type2;
     if (getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
       return null;
     }
