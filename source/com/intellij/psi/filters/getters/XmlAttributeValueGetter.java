@@ -3,6 +3,9 @@ package com.intellij.psi.filters.getters;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
+import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -27,12 +30,20 @@ public class XmlAttributeValueGetter implements ContextGetter {
       context = PsiTreeUtil.getParentOfType(context, XmlAttribute.class);
 
     if(context instanceof XmlAttribute){
-      XmlAttributeDescriptor jspTagAttribute = ((XmlAttribute)context).getDescriptor();
+      final XmlAttribute attribute = (XmlAttribute)context;
+      final XmlAttributeDescriptor descriptor = ((XmlAttribute)context).getDescriptor();
 
-      if(jspTagAttribute != null){
-        final String[] values = jspTagAttribute.getEnumeratedValues();
+      if(descriptor != null) {
+        final String[] values = descriptor.getEnumeratedValues();
         
         if((values == null || values.length==0)) {
+          if ("uri".equals(attribute.getName()) && 
+               attribute.getParent() instanceof JspDirective &&
+               "taglib".equals(attribute.getParent().getName())
+             ) {
+            return TldUtil.getPossibleTldUris((JspFile)context.getContainingFile());
+          }
+          
           final PsiReference[] references = ((XmlAttribute)context).getValueElement().getReferences();
           if (references.length == 0) return getAllWordsFromDocument(context,completionContext);
         }

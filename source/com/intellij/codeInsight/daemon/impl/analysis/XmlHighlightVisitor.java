@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
@@ -21,9 +22,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspText;
+import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
+import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -262,6 +266,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
   private void checkTagByDescriptor(final XmlTag tag) {
     String name = tag.getName();
+    
+    if (tag instanceof JspDirective) {
+      checkDirective(name, tag);
+    }
 
     XmlElementDescriptor elementDescriptor = null;
 
@@ -324,94 +332,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
               "Element " + name + " doesn't have required attribute " + attrName,
               myResult,
               getTagProblemInfoType(tag),
-              new IntentionAction() {
-                public String getText() {
-                  return "Insert Required Attribute";
-                }
-
-                public String getFamilyName() {
-                  return "Insert Required Attribute";
-                }
-
-                public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-                  return true;
-                }
-
-                public void invoke(final Project project, final Editor editor, PsiFile file) {
-                  if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-                  ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(tag);
-                  PsiElement anchor = SourceTreeToPsiMap.treeElementToPsi(
-                    XmlChildRole.EMPTY_TAG_END_FINDER.findChild(treeElement)
-                  );
-
-                  if (anchor == null) {
-                    anchor = SourceTreeToPsiMap.treeElementToPsi(
-                      XmlChildRole.START_TAG_END_FINDER.findChild(treeElement)
-                    );
-                  }
-
-                  if (anchor == null) return;
-
-                  final Template template = TemplateManager.getInstance(project).createTemplate("", "");
-                  template.addTextSegment(" " + attrName + "=\"");
-
-                  Expression expression = new Expression() {
-                    TextResult result = new TextResult("");
-
-                    public Result calculateResult(ExpressionContext context) {
-                      return result;
-                    }
-
-                    public Result calculateQuickResult(ExpressionContext context) {
-                      return null;
-                    }
-
-                    public LookupItem[] calculateLookupItems(ExpressionContext context) {
-                      return new LookupItem[0];
-                    }
-                  };
-                  template.addVariable("name", expression, expression, true);
-                  template.addTextSegment("\"");
-
-                  final PsiElement anchor1 = anchor;
-
-                  final Runnable runnable = new Runnable() {
-                    public void run() {
-                      ApplicationManager.getApplication().runWriteAction(
-                        new Runnable() {
-                          public void run() {
-                            int textOffset = anchor1.getTextOffset();
-                            editor.getCaretModel().moveToOffset(textOffset);
-                            TemplateManager.getInstance(project).startTemplate(editor, template, null);
-                          }
-                        }
-                      );
-                    }
-                  };
-
-                  if (!ApplicationManager.getApplication().isUnitTestMode()) {
-                    Runnable commandRunnable = new Runnable() {
-                      public void run() {
-                        CommandProcessor.getInstance().executeCommand(
-                          project,
-                          runnable,
-                          getText(),
-                          getFamilyName()
-                        );
-                      }
-                    };
-
-                    ApplicationManager.getApplication().invokeLater(commandRunnable);
-                  }
-                  else {
-                    runnable.run();
-                  }
-                }
-
-                public boolean startInWriteAction() {
-                  return true;
-                }
-              }
+              new InsertRequiredAttributeIntentionAction(tag, attrName, null)
             );
             return;
           }
@@ -421,6 +342,51 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     if (elementDescriptor instanceof Validator) {
       ((Validator)elementDescriptor).validate(tag,this);
+    }
+  }
+
+  private void checkDirective(final String name, final XmlTag tag) {
+    if ("taglib".equals(name)) {
+      final String uri = tag.getAttributeValue("uri");
+      
+      if (uri == null) {
+        if (tag.getAttributeValue("tagdir") == null) {
+          final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
+            HighlightInfoType.WRONG_REF,
+            XmlChildRole.START_TAG_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(tag)),
+            "Either uri or tagdir attribute should be specified"
+          );
+
+          myResult.add(highlightInfo);
+          QuickFixAction.registerQuickFixAction(
+            highlightInfo, 
+            new InsertRequiredAttributeIntentionAction(
+              tag, 
+              "uri", 
+              TldUtil.getPossibleTldUris((JspFile)tag.getContainingFile())
+            ), 
+            null
+          );
+          
+          QuickFixAction.registerQuickFixAction(
+            highlightInfo, 
+            new InsertRequiredAttributeIntentionAction(tag, "tagdir",null), 
+            null
+          );
+        }
+      } else {
+        final XmlFile tldDescriptor = TldUtil.getTldFileByUri(uri, (JspFile)tag.getContainingFile());
+
+        if (tldDescriptor == null) {
+          myResult.add(
+            HighlightInfo.createHighlightInfo(
+              HighlightInfoType.WRONG_REF,
+              tag.getAttribute("uri",null).getValueElement(),
+              "Cannot resolve taglib with uri " + uri
+            )
+          );
+        }
+      }
     }
   }
 
@@ -512,7 +478,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     for (XmlAttribute tagAttribute : attributes) {
       if (attribute != tagAttribute && Comparing.strEqual(attribute.getName(), tagAttribute.getName())) {
-        String localName = attribute.getLocalName();
+        final String localName = attribute.getLocalName();
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
           getTagProblemInfoType(tag),
           XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(attribute)),
@@ -521,7 +487,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
         IntentionAction intentionAction = new IntentionAction() {
           public String getText() {
-            return "Remove Duplicated Attribute";
+            return "Remove Duplicated Attribute " + localName;
           }
 
           public String getFamilyName() {
@@ -821,6 +787,112 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         !(parent instanceof XmlDocument)
         ) { // optimization
       parent.putUserData(DO_NOT_VALIDATE_KEY, "");
+    }
+  }
+
+  private static class InsertRequiredAttributeIntentionAction implements IntentionAction {
+    private final XmlTag myTag;
+    private final String myAttrName;
+    private String[] myValues;
+
+    public InsertRequiredAttributeIntentionAction(final XmlTag tag, final String attrName,final String[] values) {
+      myTag = tag;
+      myAttrName = attrName;
+      myValues = values;
+    }
+
+    public String getText() {
+      return "Insert Required Attribute " + myAttrName;
+    }
+
+    public String getFamilyName() {
+      return "Insert Required Attribute";
+    }
+
+    public boolean isAvailable(Project project, Editor editor, PsiFile file) {
+      return true;
+    }
+
+    public void invoke(final Project project, final Editor editor, PsiFile file) {
+      if (!CodeInsightUtil.prepareFileForWrite(file)) return;
+      ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(myTag);
+      PsiElement anchor = SourceTreeToPsiMap.treeElementToPsi(
+        XmlChildRole.EMPTY_TAG_END_FINDER.findChild(treeElement)
+      );
+
+      if (anchor == null) {
+        anchor = SourceTreeToPsiMap.treeElementToPsi(
+          XmlChildRole.START_TAG_END_FINDER.findChild(treeElement)
+        );
+      }
+
+      if (anchor == null) return;
+
+      final Template template = TemplateManager.getInstance(project).createTemplate("", "");
+      template.addTextSegment(" " + myAttrName + "=\"");
+
+      Expression expression = new Expression() {
+        TextResult result = new TextResult("");
+
+        public Result calculateResult(ExpressionContext context) {
+          return result;
+        }
+
+        public Result calculateQuickResult(ExpressionContext context) {
+          return null;
+        }
+
+        public LookupItem[] calculateLookupItems(ExpressionContext context) {
+          final LookupItem items[] = new LookupItem[(myValues != null)?myValues.length:0];
+          
+          if (myValues != null) {
+            for (int i = 0; i < items.length; i++) {
+              items[i] = LookupItemUtil.objectToLookupItem(myValues[i]);
+            }
+          }
+          return items;
+        }
+      };
+      template.addVariable("name", expression, expression, true);
+      template.addTextSegment("\"");
+
+      final PsiElement anchor1 = anchor;
+
+      final Runnable runnable = new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(
+            new Runnable() {
+              public void run() {
+                int textOffset = anchor1.getTextOffset();
+                editor.getCaretModel().moveToOffset(textOffset);
+                TemplateManager.getInstance(project).startTemplate(editor, template, null);
+              }
+            }
+          );
+        }
+      };
+
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        Runnable commandRunnable = new Runnable() {
+          public void run() {
+            CommandProcessor.getInstance().executeCommand(
+              project,
+              runnable,
+              getText(),
+              getFamilyName()
+            );
+          }
+        };
+
+        ApplicationManager.getApplication().invokeLater(commandRunnable);
+      }
+      else {
+        runnable.run();
+      }
+    }
+
+    public boolean startInWriteAction() {
+      return true;
     }
   }
 }
