@@ -78,7 +78,7 @@ public class XmlCompletionData extends CompletionData {
     {
       final CompletionVariant variant = new CompletionVariant(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS));
       variant.includeScopeClass(XmlToken.class, true);
-      variant.addCompletion(new SimpleTagContentEnumerationValuesGetter());
+      variant.addCompletion(new SimpleTagContentEnumerationValuesGetter(),TailType.NONE);
 
       registerVariant(variant);
     }
@@ -368,23 +368,25 @@ public class XmlCompletionData extends CompletionData {
           final XmlFile descriptorFile = descriptor.getNSDescriptor().getDescriptorFile();
 
           // skip content of embedded dtd, its content will be inserted by word completion
-          final PsiElementProcessor processor = new PsiElementProcessor() {
-            public boolean execute(final PsiElement element) {
-              if (element instanceof XmlEntityDecl) {
-                final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
-                if (xmlEntityDecl.isInternalReference()) results.add(xmlEntityDecl.getName());
+          if (!descriptorFile.equals(parentOfType.getContainingFile())) {
+            final PsiElementProcessor processor = new PsiElementProcessor() {
+              public boolean execute(final PsiElement element) {
+                if (element instanceof XmlEntityDecl) {
+                  final XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)element;
+                  if (xmlEntityDecl.isInternalReference()) results.add(xmlEntityDecl.getName());
+                }
+                return true;
               }
-              return true;
-            }
-          };
-
-          XmlUtil.processXmlElements(
-            descriptorFile,
-            processor,
-            true
-          );
-
-          return results.toArray(new Object[results.size()]);
+            };
+  
+            XmlUtil.processXmlElements(
+              descriptorFile,
+              processor,
+              true
+            );
+  
+            return results.toArray(new Object[results.size()]);
+          }
         }
       }
       return new Object[0];
