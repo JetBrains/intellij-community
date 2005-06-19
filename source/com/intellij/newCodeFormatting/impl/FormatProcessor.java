@@ -536,7 +536,7 @@ class FormatProcessor {
     final int index = getNewChildPosition(parent, offset);
     ChildAttributes childAttributes = parent.getBlock().getChildAttributes(index);
     final IndentInfo result = adjustLineIndent(parent, childAttributes, index);
-    processToken();
+    //processToken();
     return result;
   }
 

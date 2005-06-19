@@ -169,6 +169,38 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     }
   }
 
+  public String getLineIndent(final FormattingModel model,
+                              final CodeStyleSettings settings,
+                              final CodeStyleSettings.IndentOptions indentOptions,
+                              final int offset,
+                              final TextRange affectedRange) {
+      final FormattingDocumentModel documentModel = model.getDocumentModel();
+      final Block block = model.getRootBlock();
+      final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions, affectedRange);
+
+      final LeafBlockWrapper blockAfterOffset = processor.getBlockBefore(offset);
+
+      if (blockAfterOffset != null) {
+        final WhiteSpace whiteSpace = blockAfterOffset.getWhiteSpace();
+        processor.setAllWhiteSpacesAreReadOnly();
+        whiteSpace.setLineFeedsAreReadOnly(true);
+        final IndentInfo indent;
+        if (documentModel.getLineNumber(offset) == documentModel.getLineNumber(whiteSpace.getTextRange().getEndOffset())) {
+          whiteSpace.setReadOnly(false);
+          processor.formatWithoutRealModifications();
+          indent = new IndentInfo(0, whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
+        }
+        else {
+          indent = processor.getIndentAt(offset);
+        }
+
+        return indent.generateNewWhiteSpace(indentOptions);
+
+      } else {
+        return null;
+      }
+  }
+
   public static String getText(final FormattingDocumentModel documentModel) {
     return getCharSequence(documentModel).toString();
   }

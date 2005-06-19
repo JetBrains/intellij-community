@@ -247,6 +247,33 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     }
   }
 
+  @Nullable
+  public String getLineIndent(PsiFile file, int offset) {
+    final PsiElement element = file.findElementAt(offset);
+    if (element == null) return null;
+    if (!(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
+      return null;
+    }
+    final Language fileLanguage = file.getLanguage();
+    final FormattingModelBuilder builder = fileLanguage.getFormattingModelBuilder();
+    final Language elementLanguage = element.getLanguage();
+    final FormattingModelBuilder elementBuilder = elementLanguage.getFormattingModelBuilder();
+    if (builder != null && elementBuilder != null) {
+      final CodeStyleSettings settings = getSettings();
+      final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
+      final TextRange significantRange = getSignificantRange(file, offset);
+      final FormattingModel model = builder.createModel(file, settings);
+
+      return Formatter.getInstance().getLineIndent(model,
+                                                   settings,
+                                                   indentOptions,
+                                                   offset,
+                                                   significantRange);
+    } else {
+      return null;
+    }
+  }
+
   private boolean insideElement(final PsiElement element, final int offset) {
     final TextRange textRange = element.getTextRange();
     return textRange.getStartOffset() < offset && textRange.getEndOffset() >= offset;

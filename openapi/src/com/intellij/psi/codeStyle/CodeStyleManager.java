@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -37,6 +38,8 @@ public abstract class CodeStyleManager {
 
   public abstract int adjustLineIndent(PsiFile file, int offset) throws IncorrectOperationException;
   public abstract boolean isLineToBeIndented(PsiFile file, int offset);
+  @Nullable
+  public abstract String getLineIndent(PsiFile file, int offset);
 
   public abstract Indent getIndent(String text, FileType fileType);
   public abstract String fillIndent(Indent indent, FileType fileType);
