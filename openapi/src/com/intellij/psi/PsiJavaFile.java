@@ -4,11 +4,14 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 public interface PsiJavaFile extends PsiFile{
-  PsiClass[] getClasses();
+  @NotNull PsiClass[] getClasses();
 
-  PsiPackageStatement getPackageStatement();
-  String getPackageName();
+  @Nullable PsiPackageStatement getPackageStatement();
+  @NotNull String getPackageName();
 
-  PsiImportList getImportList();
+  @Nullable PsiImportList getImportList();
 }
