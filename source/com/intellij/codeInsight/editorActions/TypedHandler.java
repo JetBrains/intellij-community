@@ -522,8 +522,13 @@ public class TypedHandler implements TypedActionHandler {
     while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
     if(prevLeaf == null) return;
 
-    final XmlTag tag = PsiTreeUtil.getParentOfType(prevLeaf.getPsi(), XmlTag.class);
-    if(tag == null) return;
+    XmlTag tag = PsiTreeUtil.getParentOfType(prevLeaf.getPsi(), XmlTag.class);
+    if(tag == null) { // prevLeaf maybe in one tree and element in another
+      PsiElement element2 = file.findElementAt(prevLeaf.getStartOffset());
+      tag = PsiTreeUtil.getParentOfType(element2, XmlTag.class);
+      if (tag == null) return;
+    }
+    
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) != null) return;
     if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return;
     if (PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class) != null) return;
