@@ -103,13 +103,12 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     myDelegatedMethods = new LinkedHashSet<PsiMethod>();
     addAll(myDelegatedMethods, delegatedMethods);
     myDelegatedMethodsVisibility = new HashMap<PsiMethod, String>();
-    for (Iterator<PsiMethod> iterator = myDelegatedMethods.iterator(); iterator.hasNext();) {
-      PsiMethod method = iterator.next();
+    for (PsiMethod method : myDelegatedMethods) {
       MethodSignature signature = method.getSignature(getSuperSubstitutor(method.getContainingClass()));
       PsiMethod overridingMethod = MethodSignatureUtil.findMethodBySignature(myClass, signature, false);
       if (overridingMethod != null) {
         myDelegatedMethodsVisibility.put(method,
-                VisibilityUtil.getVisibilityModifier(overridingMethod.getModifierList()));
+                                         VisibilityUtil.getVisibilityModifier(overridingMethod.getModifierList()));
       }
     }
 
@@ -149,16 +148,15 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
       myClassImplementedInterfaces = instanceReferenceVisitor.getImplementedInterfaces();
     }
-    for (int i = 0; i < inheritors.length; i++) {
-      processClass(inheritors[i], usages);
+    for (PsiClass inheritor : inheritors) {
+      processClass(inheritor, usages);
     }
 
     return usages.toArray(new UsageInfo[usages.size()]);
   }
 
   private FieldAccessibility getFieldAccessibility(PsiElement element) {
-    for (Iterator<PsiClass> iterator = myClassInheritors.iterator(); iterator.hasNext();) {
-      PsiClass aClass = iterator.next();
+    for (PsiClass aClass : myClassInheritors) {
       if (PsiTreeUtil.isAncestor(aClass, element, false)) {
         return new FieldAccessibility(true, aClass);
       }
@@ -207,21 +205,21 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 //    final String nameJavaLangObject = ConflictsUtil.htmlEmphasize("java.lang.Object");
     final String classDescription = ConflictsUtil.getDescription(myClass, false);
 
-    for (int i = 0; i < usage.length; i++) {
-      if (usage[i] instanceof InheritanceToDelegationUsageInfo) {
-        InheritanceToDelegationUsageInfo usageInfo = (InheritanceToDelegationUsageInfo) usage[i];
+    for (UsageInfo aUsage : usage) {
+      if (aUsage instanceof InheritanceToDelegationUsageInfo) {
+        InheritanceToDelegationUsageInfo usageInfo = (InheritanceToDelegationUsageInfo)aUsage;
         /*if (usageInfo instanceof ObjectUpcastedUsageInfo) {
-          PsiElement container = ConflictsUtil.getContainer(usageInfo.element);
-          if (!reportedObjectUpcasts.contains(container)) {
-            String message = "An instance of " + classDescription + " is upcasted to "
-                    + nameJavaLangObject + " in " + ConflictsUtil.getDescription(container, true) + ".";
-            conflicts.add(message);
-            reportedObjectUpcasts.add(container);
-          }
-        } else*/
+         PsiElement container = ConflictsUtil.getContainer(usageInfo.element);
+         if (!reportedObjectUpcasts.contains(container)) {
+           String message = "An instance of " + classDescription + " is upcasted to "
+                   + nameJavaLangObject + " in " + ConflictsUtil.getDescription(container, true) + ".";
+           conflicts.add(message);
+           reportedObjectUpcasts.add(container);
+         }
+       } else*/
         if (!myIsDelegateOtherMembers && !usageInfo.getDelegateFieldAccessible().isAccessible()) {
           if (usageInfo instanceof NonDelegatedMemberUsageInfo) {
-            final PsiElement nonDelegatedMember = ((NonDelegatedMemberUsageInfo) usageInfo).nonDelegatedMember;
+            final PsiElement nonDelegatedMember = ((NonDelegatedMemberUsageInfo)usageInfo).nonDelegatedMember;
             HashSet<PsiElement> reportedContainers = reportedNonDelegatedUsages.get(nonDelegatedMember);
             if (reportedContainers == null) {
               reportedContainers = new HashSet<PsiElement>();
@@ -230,13 +228,14 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
             final PsiElement container = ConflictsUtil.getContainer(usageInfo.getElement());
             if (!reportedContainers.contains(container)) {
               String message = ConflictsUtil.getDescription(container, true) + " uses "
-                      + ConflictsUtil.getDescription(nonDelegatedMember, true) + " of an instance of a "
-                      + classDescription + ".";
+                               + ConflictsUtil.getDescription(nonDelegatedMember, true) + " of an instance of a "
+                               + classDescription + ".";
               conflicts.add(ConflictsUtil.capitalize(message));
               reportedContainers.add(container);
             }
-          } else if (usageInfo instanceof UpcastedUsageInfo) {
-            final PsiClass upcastedTo = ((UpcastedUsageInfo) usageInfo).upcastedTo;
+          }
+          else if (usageInfo instanceof UpcastedUsageInfo) {
+            final PsiClass upcastedTo = ((UpcastedUsageInfo)usageInfo).upcastedTo;
             HashSet<PsiElement> reportedContainers = reportedUpcasts.get(upcastedTo);
             if (reportedContainers == null) {
               reportedContainers = new HashSet<PsiElement>();
@@ -245,16 +244,17 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
             final PsiElement container = ConflictsUtil.getContainer(usageInfo.getElement());
             if (!reportedContainers.contains(container)) {
               String message = ConflictsUtil.getDescription(container, true) + " upcasts an instance of "
-                      + classDescription + " to " + ConflictsUtil.getDescription(upcastedTo, false) + ".";
+                               + classDescription + " to " + ConflictsUtil.getDescription(upcastedTo, false) + ".";
               conflicts.add(ConflictsUtil.capitalize(message));
               reportedContainers.add(container);
             }
           }
         }
-      } else if (usage[i] instanceof NoLongerOverridingSubClassMethodUsageInfo) {
-        NoLongerOverridingSubClassMethodUsageInfo info = (NoLongerOverridingSubClassMethodUsageInfo) usage[i];
+      }
+      else if (aUsage instanceof NoLongerOverridingSubClassMethodUsageInfo) {
+        NoLongerOverridingSubClassMethodUsageInfo info = (NoLongerOverridingSubClassMethodUsageInfo)aUsage;
         String message = ConflictsUtil.getDescription(info.getSubClassMethod(), true) + " will no longer override "
-                + ConflictsUtil.getDescription(info.getOverridenMethod(), true);
+                         + ConflictsUtil.getDescription(info.getOverridenMethod(), true);
         conflicts.add(message);
       }
     }
@@ -262,10 +262,9 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   private ObjectUpcastedUsageInfo[] objectUpcastedUsages(UsageInfo[] usages) {
     ArrayList<ObjectUpcastedUsageInfo> result = new ArrayList<ObjectUpcastedUsageInfo>();
-    for (int i = 0; i < usages.length; i++) {
-      UsageInfo usage = usages[i];
+    for (UsageInfo usage : usages) {
       if (usage instanceof ObjectUpcastedUsageInfo) {
-        result.add(((ObjectUpcastedUsageInfo) usage));
+        result.add(((ObjectUpcastedUsageInfo)usage));
       }
     }
     return result.toArray(new ObjectUpcastedUsageInfo[result.size()]);
@@ -306,17 +305,16 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     PsiSubstitutor inheritorSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(myClass, inheritor, PsiSubstitutor.EMPTY);
 
     PsiMethod[] methods = inheritor.getMethods();
-    for (int i = 0; i < methods.length; i++) {
-      PsiMethod method = methods[i];
+    for (PsiMethod method : methods) {
       final PsiMethod baseMethod = findSuperMethodInBaseClass(method);
 
       if (baseMethod != null) {
         if (!baseMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
           usages.add(new NoLongerOverridingSubClassMethodUsageInfo(method, baseMethod));
-        } else {
+        }
+        else {
           final PsiMethod[] methodsByName = myClass.findMethodsByName(method.getName(), false);
-          for (int j = 0; j < methodsByName.length; j++) {
-            final PsiMethod classMethod = methodsByName[j];
+          for (final PsiMethod classMethod : methodsByName) {
             final MethodSignature signature = classMethod.getSignature(inheritorSubstitutor);
             if (signature.equals(method.getSignature(PsiSubstitutor.EMPTY))) {
               if (!classMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -335,14 +333,15 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   protected void performRefactoring(UsageInfo[] usages) {
     try {
-      for (int i = 0; i < usages.length; i++) {
-        InheritanceToDelegationUsageInfo usage = (InheritanceToDelegationUsageInfo) usages[i];
+      for (UsageInfo aUsage : usages) {
+        InheritanceToDelegationUsageInfo usage = (InheritanceToDelegationUsageInfo)aUsage;
 
 
         if (usage instanceof UnqualifiedNonDelegatedMemberUsageInfo) {
-          delegateUsageFromClass(usage.getElement(), ((NonDelegatedMemberUsageInfo) usage).nonDelegatedMember,
-                  usage.getDelegateFieldAccessible());
-        } else {
+          delegateUsageFromClass(usage.getElement(), ((NonDelegatedMemberUsageInfo)usage).nonDelegatedMember,
+                                 usage.getDelegateFieldAccessible());
+        }
+        else {
           upcastToDelegation(usage.getElement(), usage.getDelegateFieldAccessible());
         }
       }
@@ -371,8 +370,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     innerClass = (PsiClass) myClass.add(innerClass);
 
     List<InnerClassMethod> innerClassMethods = getInnerClassMethods();
-    for (Iterator<InnerClassMethod> iterator = innerClassMethods.iterator(); iterator.hasNext();) {
-      InnerClassMethod innerClassMethod = iterator.next();
+    for (InnerClassMethod innerClassMethod : innerClassMethods) {
       innerClassMethod.createMethod(innerClass);
     }
   }
@@ -473,9 +471,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   }
 
   private void delegateMethods() throws IncorrectOperationException {
-    for (Iterator<PsiMethod> iterator = myDelegatedMethods.iterator(); iterator.hasNext();) {
-      PsiMethod method = iterator.next();
-
+    for (PsiMethod method : myDelegatedMethods) {
       if (!myAbstractDelegatedMethods.contains(method)) {
         PsiMethod methodToAdd = delegateMethod(myFieldName, method, getSuperSubstitutor(method.getContainingClass()));
 
@@ -539,9 +535,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   private void addImplementingInterfaces() throws IncorrectOperationException {
     final PsiReferenceList implementsList = myClass.getImplementsList();
-    for (Iterator<PsiClass> iterator = myDelegatedInterfaces.iterator(); iterator.hasNext();) {
-      PsiClass delegatedInterface = iterator.next();
-
+    for (PsiClass delegatedInterface : myDelegatedInterfaces) {
       if (!myClassImplementedInterfaces.contains(delegatedInterface)) {
         implementsList.add(myFactory.createClassReferenceElement(delegatedInterface));
       }
@@ -552,8 +546,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       extendsList.getReferenceElements()[0].delete();
     } else {
       final PsiJavaCodeReferenceElement[] interfaceRefs = implementsList.getReferenceElements();
-      for (int i = 0; i < interfaceRefs.length; i++) {
-        PsiJavaCodeReferenceElement interfaceRef = interfaceRefs[i];
+      for (PsiJavaCodeReferenceElement interfaceRef : interfaceRefs) {
         final PsiElement resolved = interfaceRef.resolve();
         if (myManager.areElementsEquivalent(myBaseClass, resolved)) {
           interfaceRef.delete();
@@ -606,8 +599,8 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       return PsiModifier.PUBLIC;
     }
 
-    for (int i = 0; i < usages.length; i++) {
-      InheritanceToDelegationUsageInfo usage = (InheritanceToDelegationUsageInfo) usages[i];
+    for (UsageInfo aUsage : usages) {
+      InheritanceToDelegationUsageInfo usage = (InheritanceToDelegationUsageInfo)aUsage;
       final FieldAccessibility delegateFieldAccessible = usage.getDelegateFieldAccessible();
       if (delegateFieldAccessible.isAccessible() && delegateFieldAccessible.getContainingClass() != myClass) {
         return PsiModifier.PROTECTED;
@@ -638,14 +631,12 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     final PsiJavaCodeReferenceElement baseClassReference = myFactory.createClassReferenceElement(myBaseClass);
 
     PsiMethod[] constructors = myClass.getConstructors();
-    for (int i = 0; i < constructors.length; i++) {
-      PsiMethod constructor = constructors[i];
+    for (PsiMethod constructor : constructors) {
       PsiCodeBlock body = constructor.getBody();
       final PsiStatement[] statements = body.getStatements();
       String fieldQualifier = "";
       PsiParameter[] constructorParams = constructor.getParameterList().getParameters();
-      for (int j = 0; j < constructorParams.length; j++) {
-        PsiParameter constructorParam = constructorParams[j];
+      for (PsiParameter constructorParam : constructorParams) {
         if (myFieldName.equals(constructorParam.getName())) {
           fieldQualifier = "this.";
           break;
@@ -654,38 +645,41 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       final String assignmentText = fieldQualifier + myFieldName + "= new " + defaultClassFieldType() + "()";
       if (statements.length < 1 || !RefactoringUtil.isSuperOrThisCall(statements[0], true, true) || myBaseClass.isInterface()) {
         PsiExpressionStatement assignmentStatement =
-                (PsiExpressionStatement) myFactory.createStatementFromText(
-                        assignmentText, body
-                );
+          (PsiExpressionStatement)myFactory.createStatementFromText(
+            assignmentText, body
+          );
         if (!myIsInnerClassNeeded) {
-          ((PsiNewExpression) assignmentStatement.getExpression()).getClassReference().replace(baseClassReference);
+          ((PsiNewExpression)assignmentStatement.getExpression()).getClassReference().replace(baseClassReference);
         }
 
-        assignmentStatement = (PsiExpressionStatement) CodeStyleManager.getInstance(myProject).reformat(assignmentStatement);
+        assignmentStatement = (PsiExpressionStatement)CodeStyleManager.getInstance(myProject).reformat(assignmentStatement);
         if (statements.length > 0) {
           if (!RefactoringUtil.isSuperOrThisCall(statements[0], true, false)) {
             body.addBefore(assignmentStatement, statements[0]);
-          } else {
+          }
+          else {
             body.addAfter(assignmentStatement, statements[0]);
           }
-        } else {
+        }
+        else {
           body.add(assignmentStatement);
         }
-      } else {
-        final PsiExpressionStatement callStatement = ((PsiExpressionStatement) statements[0]);
+      }
+      else {
+        final PsiExpressionStatement callStatement = ((PsiExpressionStatement)statements[0]);
         if (!RefactoringUtil.isSuperOrThisCall(callStatement, false, true)) {
           final PsiMethodCallExpression superConstructorCall =
-                  (PsiMethodCallExpression) callStatement.getExpression();
+            (PsiMethodCallExpression)callStatement.getExpression();
           PsiAssignmentExpression assignmentExpression =
-                  (PsiAssignmentExpression) myFactory.createExpressionFromText(
-                          assignmentText, superConstructorCall
-                  );
+            (PsiAssignmentExpression)myFactory.createExpressionFromText(
+              assignmentText, superConstructorCall
+            );
           PsiNewExpression newExpression =
-                  (PsiNewExpression) assignmentExpression.getRExpression();
+            (PsiNewExpression)assignmentExpression.getRExpression();
           if (!myIsInnerClassNeeded) {
             newExpression.getClassReference().replace(baseClassReference);
           }
-          assignmentExpression = (PsiAssignmentExpression) CodeStyleManager.getInstance(myProject).reformat(assignmentExpression);
+          assignmentExpression = (PsiAssignmentExpression)CodeStyleManager.getInstance(myProject).reformat(assignmentExpression);
           newExpression.getArgumentList().replace(superConstructorCall.getArgumentList());
           superConstructorCall.replace(assignmentExpression);
         }
@@ -696,8 +690,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   private boolean isFieldInitializerNeeded() {
     if (myBaseClass.isInterface()) return true;
     PsiMethod[] constructors = myClass.getConstructors();
-    for (int i = 0; i < constructors.length; i++) {
-      PsiMethod constructor = constructors[i];
+    for (PsiMethod constructor : constructors) {
       final PsiStatement[] statements = constructor.getBody().getStatements();
       if (statements.length > 0 && RefactoringUtil.isSuperOrThisCall(statements[0], true, false)) return false;
     }
@@ -710,15 +703,14 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     // find all neccessary constructors
     if (!myBaseClass.isInterface()) {
       PsiMethod[] constructors = myClass.getConstructors();
-      for (int i = 0; i < constructors.length; i++) {
-        PsiMethod constructor = constructors[i];
+      for (PsiMethod constructor : constructors) {
         final PsiStatement[] statements = constructor.getBody().getStatements();
         if (statements.length > 0 && RefactoringUtil.isSuperOrThisCall(statements[0], true, false)) {
           final PsiMethodCallExpression superConstructorCall =
-                  (PsiMethodCallExpression) ((PsiExpressionStatement) statements[0]).getExpression();
+            (PsiMethodCallExpression)((PsiExpressionStatement)statements[0]).getExpression();
           PsiElement superConstructor = superConstructorCall.getMethodExpression().resolve();
-          if (superConstructor instanceof PsiMethod && ((PsiMethod) superConstructor).isConstructor()) {
-            result.add(new InnerClassConstructor((PsiMethod) superConstructor));
+          if (superConstructor instanceof PsiMethod && ((PsiMethod)superConstructor).isConstructor()) {
+            result.add(new InnerClassConstructor((PsiMethod)superConstructor));
           }
         }
       }
@@ -736,8 +728,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
           OverridenMethodClassMemberReferencesVisitor visitor = new OverridenMethodClassMemberReferencesVisitor();
           myMethod.accept(visitor);
           final List<PsiAction> actions = visitor.getPsiActions();
-          for (Iterator<PsiAction> iterator = actions.iterator(); iterator.hasNext();) {
-            PsiAction action = iterator.next();
+          for (PsiAction action : actions) {
             action.run();
           }
           innerClass.add(myMethod);
@@ -746,8 +737,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      for (Iterator<PsiMethod> iterator = myOverridenMethods.iterator(); iterator.hasNext();) {
-        PsiMethod method = iterator.next();
+      for (PsiMethod method : myOverridenMethods) {
         result.add(new InnerClassOverridingMethod(method));
       }
     }
@@ -784,8 +774,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       }
       PsiMethod[] methods = myBaseClass.getAllMethods();
 
-      for (int i = 0; i < methods.length; i++) {
-        PsiMethod method = methods[i];
+      for (PsiMethod method : methods) {
         if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
           final MethodSignature signature = method.getSignature(getSuperSubstitutor(method.getContainingClass()));
           PsiMethod classMethod = MethodSignatureUtil.findMethodBySignature(myClass, signature, true);
@@ -824,13 +813,12 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
    */
   private String checkOuterClassAbstractMethod(MethodSignature methodSignature) {
     String visibility = PsiModifier.PROTECTED;
-    for (Iterator<PsiMethod> iterator = myDelegatedMethods.iterator(); iterator.hasNext();) {
-      PsiMethod method = iterator.next();
+    for (PsiMethod method : myDelegatedMethods) {
       MethodSignature otherSignature = method.getSignature(getSuperSubstitutor(method.getContainingClass()));
 
       if (MethodSignatureUtil.areSignaturesEqual(otherSignature, methodSignature)) {
         visibility = VisibilityUtil.getHighestVisibility(visibility,
-                VisibilityUtil.getVisibilityModifier(method.getModifierList()));
+                                                         VisibilityUtil.getVisibilityModifier(method.getModifierList()));
         myAbstractDelegatedMethods.add(method);
       }
     }
@@ -841,8 +829,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     LinkedHashSet<PsiMethod> result = new LinkedHashSet<PsiMethod>();
 
     PsiMethod[] methods = myClass.getMethods();
-    for (int i = 0; i < methods.length; i++) {
-      PsiMethod method = methods[i];
+    for (PsiMethod method : methods) {
       if (findSuperMethodInBaseClass(method) != null) result.add(method);
     }
     return result;
@@ -850,8 +837,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   private PsiMethod findSuperMethodInBaseClass (PsiMethod method) {
     final PsiMethod[] superMethods = method.findSuperMethods();
-    for (int j = 0; j < superMethods.length; j++) {
-      PsiMethod superMethod = superMethods[j];
+    for (PsiMethod superMethod : superMethods) {
       PsiClass containingClass = superMethod.getContainingClass();
       if (InheritanceUtil.isInheritorOrSelf(myBaseClass, containingClass, true)) {
         String qName = containingClass.getQualifiedName();
@@ -892,19 +878,20 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   }
 
   private static <T> void addAll(Collection<T> collection, T[] objs) {
-    for (int i = 0; i < objs.length; i++) {
-      collection.add(objs[i]);
+    for (T obj : objs) {
+      collection.add(obj);
     }
   }
 
   private boolean isDelegated(PsiMember classMember) {
     if(!(classMember instanceof PsiMethod)) return false;
     final PsiMethod method = (PsiMethod) classMember;
-    for (Iterator<PsiMethod> iterator = myDelegatedMethods.iterator(); iterator.hasNext();) {
-      PsiMethod delegatedMethod = iterator.next();
+    for (PsiMethod delegatedMethod : myDelegatedMethods) {
       //methods reside in base class, so no substitutor needed
       if (MethodSignatureUtil.areSignaturesEqual(method.getSignature(PsiSubstitutor.EMPTY),
-                                                 delegatedMethod.getSignature(PsiSubstitutor.EMPTY))) return true;
+                                                 delegatedMethod.getSignature(PsiSubstitutor.EMPTY))) {
+        return true;
+      }
     }
     return false;
   }
@@ -1108,8 +1095,8 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       HashSet<PsiClass> result = new HashSet<PsiClass>();
       while (aClass != null && !myManager.areElementsEquivalent(aClass, myBaseClass)) {
         final PsiClassType[] implementsTypes = aClass.getImplementsListTypes();
-        for (int i = 0; i < implementsTypes.length; i++) {
-          PsiClass resolved = implementsTypes[i].resolve();
+        for (PsiClassType implementsType : implementsTypes) {
+          PsiClass resolved = implementsType.resolve();
           if (resolved != null && !myManager.areElementsEquivalent(resolved, myBaseClass)) {
             result.add(resolved);
             RefactoringHierarchyUtil.getSuperClasses(resolved, result, true);
@@ -1153,6 +1140,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
     private void processTypedUsage(PsiType type, PsiExpression instanceRef) {
       PsiClass aClass = PsiUtil.resolveClassInType(type);
+      if (aClass == null) return;
       String qName = aClass.getQualifiedName();
       if (qName != null && "java.lang.Object".equals(qName)) {
         myUsageInfoStorage.add(new ObjectUpcastedUsageInfo(instanceRef, getFieldAccessibility(instanceRef)));
