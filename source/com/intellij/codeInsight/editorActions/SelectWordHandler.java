@@ -123,7 +123,7 @@ public class SelectWordHandler extends EditorActionHandler {
       final JspFile psiFile = (JspFile)e.getContainingFile();
       if (e.getParent().getTextLength() == psiFile.getTextLength()) {
         PsiFile baseRoot = psiFile.getBaseLanguageRoot();
-        PsiElement elt = baseRoot.findElementAt(e.getTextRange().getStartOffset());
+        PsiElement elt = baseRoot.getNode().findLeafElementAt(e.getTextRange().getStartOffset()).getPsi();
         return elt;
       }
     }
