@@ -19,10 +19,10 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author mike
  */
-public class AddExceptionToCatchAction extends BaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchAction");
+public class AddExceptionToCatchFix extends BaseIntentionAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchFix");
 
-  public AddExceptionToCatchAction() {
+  public AddExceptionToCatchFix() {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
