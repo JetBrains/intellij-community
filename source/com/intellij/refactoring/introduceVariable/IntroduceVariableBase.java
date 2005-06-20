@@ -198,7 +198,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     if (!IntroduceVariableBase.isLoopOrIf(container)) {
       if (expr.getParent() instanceof PsiExpressionStatement && anchor.equals(anchorStatement)) {
         PsiStatement statement = (PsiStatement) expr.getParent();
-        if (statement.getParent() instanceof PsiCodeBlock) {
+        PsiElement parent = statement.getParent();
+        if (parent instanceof PsiCodeBlock ||
+          //fabrique
+            parent instanceof PsiCodeFragment) {
           tempDeleteSelf = true;
         }
       }
