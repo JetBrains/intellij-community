@@ -256,7 +256,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                  final Wrap defaultWrap,
                                  final Indent childIndent) {
     if (child.getElementType() == ElementType.METHOD_CALL_EXPRESSION) {
-      result.add(createMethodCallExpressiobBlock(child,arrangeChildWrap(child, defaultWrap)));
+      result.add(createMethodCallExpressiobBlock(child,
+                                                 arrangeChildWrap(child, defaultWrap),
+                                                 arrangeChildAlignment(child, defaultAlignment)));
     }
     else if (child.getElementType() == ElementType.ARRAY_INITIALIZER_EXPRESSION) {
       result.addAll(new CodeBlockBlock(child, null, null, null, mySettings).buildChildren());
@@ -320,7 +322,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return child;
   }
 
-  private Block createMethodCallExpressiobBlock(final ASTNode node, final Wrap blockWrap) {
+  private Block createMethodCallExpressiobBlock(final ASTNode node, final Wrap blockWrap, final Alignment alignment) {
     final ArrayList<ASTNode> nodes = new ArrayList<ASTNode>();
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     collectNodes(nodes, node);
@@ -332,7 +334,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       subBlocks.add(createSynthBlock(subNodes, wrap));
     }
 
-    return new SynteticCodeBlock(subBlocks, null, mySettings, Formatter.getInstance().createContinuationWithoutFirstIndent(), blockWrap);
+    return new SynteticCodeBlock(subBlocks, alignment, mySettings, Formatter.getInstance().createContinuationWithoutFirstIndent(), blockWrap);
   }
 
   private Block createSynthBlock(final ArrayList<ASTNode> subNodes, final Wrap wrap)  {
