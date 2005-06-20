@@ -121,6 +121,7 @@ public class CyclicDependenciesPanel extends JPanel {
 
     mySettings.UI_FILTER_LEGALS = false;
     mySettings.UI_FLATTEN_PACKAGES = false;
+    mySettings.UI_SHOW_MODULES = false; //exist without modules - and doesn't with
     TreeUtil.selectFirstNode(myLeftTree);
   }
 
@@ -186,7 +187,6 @@ public class CyclicDependenciesPanel extends JPanel {
     group.add(new CloseAction());
     group.add(new RerunAction(this));
     group.add(new ShowFilesAction());
-    group.add(new ShowModulesAction());
     group.add(new GroupByScopeTypeAction());
     group.add(new HelpAction());
 
@@ -400,21 +400,6 @@ public class CyclicDependenciesPanel extends JPanel {
     }
   }
 
-  private final class ShowModulesAction extends ToggleAction {
-    ShowModulesAction() {
-      super("Show Modules", "Show/Hide Modules", IconLoader.getIcon("/objectBrowser/showModules.png"));
-    }
-
-    public boolean isSelected(AnActionEvent event) {
-      return mySettings.UI_SHOW_MODULES;
-    }
-
-    public void setSelected(AnActionEvent event, boolean flag) {
-      DependencyUISettings.getInstance().UI_SHOW_MODULES = flag;
-      mySettings.UI_SHOW_MODULES = flag;
-      rebuild();
-    }
-  }
 
   private final class GroupByScopeTypeAction extends ToggleAction {
     GroupByScopeTypeAction() {
