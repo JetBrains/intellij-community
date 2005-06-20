@@ -2,6 +2,8 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.ide.PasteProvider;
+import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,8 +27,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.ide.PasteProvider;
-import com.intellij.ide.actions.CopyReferenceAction;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -385,27 +385,13 @@ public class PasteHandler extends EditorActionHandler {
     Document document = editor.getDocument();
     CharSequence chars = document.getCharsSequence();
     endOffset = CharArrayUtil.shiftBackward(chars, endOffset - 1, "\n\r") + 1;
-    int line1 = document.getLineNumber(startOffset);
-    int line2 = document.getLineNumber(endOffset);
-
-    int lineStart = CharArrayUtil.shiftBackwardUntil(chars, startOffset - 1, "\n\r") + 1;
-    int spaceEnd = CharArrayUtil.shiftForward(chars, lineStart, " \t");
-    if (startOffset > spaceEnd) {
-      line1++;
-      if (line1 > line2) return;
-    }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     try {
-      for (int line = line1; line <= line2; line++) {
-        lineStart = document.getLineStartOffset(line);
-        if (codeStyleManager.isLineToBeIndented(file, lineStart)) {
-          codeStyleManager.adjustLineIndent(file, lineStart);
-        }
-      }
+      codeStyleManager.adjustLineIndent(file, new TextRange(startOffset, endOffset));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

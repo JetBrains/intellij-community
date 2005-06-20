@@ -111,6 +111,33 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
 
   }
 
+  public void adjustLineIndentsForRange(final FormattingModel model,
+                                        final CodeStyleSettings settings,
+                                        final CodeStyleSettings.IndentOptions indentOptions,
+                                        final TextRange rangeToAdjust) {
+    myIsActive++;
+    try {
+      final FormattingDocumentModel documentModel = model.getDocumentModel();
+      final Block block = model.getRootBlock();
+      final FormatProcessor processor = new FormatProcessor(documentModel, block, settings, indentOptions, rangeToAdjust);
+      LeafBlockWrapper tokenBlock = processor.getFirstTokenBlock();
+      while (tokenBlock != null) {
+        final WhiteSpace whiteSpace = tokenBlock.getWhiteSpace();
+        whiteSpace.setLineFeedsAreReadOnly(true);
+        if (!whiteSpace.containsLineFeeds()) {
+          whiteSpace.setIsReadOnly(true);
+        }
+        tokenBlock = tokenBlock.getNextBlock();
+      }
+      processor.formatWithoutRealModifications();
+      processor.performModifications(model);
+    }
+    finally {
+      myIsActive--;
+    }
+
+  }
+
   public int adjustLineIndent(final FormattingModel model,
                               final CodeStyleSettings settings,
                               final CodeStyleSettings.IndentOptions indentOptions,
@@ -287,9 +314,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
       WhiteSpace whiteSpace = current.getWhiteSpace();
 
       if (!whiteSpace.isReadOnly() && whiteSpace.containsLineFeeds()) {
-        //if (whiteSpace.getTextRange().getStartOffset() > affectedRange.getStartOffset()) {
-          storage.saveIndentInfo(current.calcIndentFromParent(), current.getTextRange().getStartOffset());
-        //}        
+        storage.saveIndentInfo(current.calcIndentFromParent(), current.getTextRange().getStartOffset());
       }
       current = current.getNextBlock();
     }
@@ -304,7 +329,6 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
   public boolean isActive() {
     return myIsActive > 0;
   }
-
 
   public Indent createSpaceIndent(final int spaces) {
     return new IndentImpl(IndentImpl.Type.SPACES, false, spaces);

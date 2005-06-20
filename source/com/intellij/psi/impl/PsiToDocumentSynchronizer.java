@@ -272,9 +272,10 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
         }
       }
       ex.setReadOnly(isReadOnly);
-      if(documentChangeTransaction.getChangeScope() != null)
+      if(documentChangeTransaction.getChangeScope() != null) {
         LOG.assertTrue(document.getText().equals(documentChangeTransaction.getChangeScope().getText()),
                        "Psi to document synchronization failed (send to IK)");
+      }
     }
     finally {
       ex.unSuppressGuardedExceptions();

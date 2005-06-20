@@ -7,6 +7,7 @@ package com.intellij.psi.codeStyle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ public abstract class CodeStyleManager {
   public abstract void optimizeImports(PsiFile file) throws IncorrectOperationException;
   public abstract PsiImportList prepareOptimizeImportsResult(PsiFile file);
 
+  public abstract void adjustLineIndent(PsiFile file, TextRange rangeToAdjust) throws IncorrectOperationException;
   public abstract int adjustLineIndent(PsiFile file, int offset) throws IncorrectOperationException;
   public abstract boolean isLineToBeIndented(PsiFile file, int offset);
   @Nullable

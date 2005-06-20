@@ -87,7 +87,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
                                   int startOffset,
                                   int endOffset,
                                   boolean canChangeWhiteSpacesOnly) throws IncorrectOperationException {
-     return reformatRangeImpl(element, startOffset, endOffset, canChangeWhiteSpacesOnly);
+    return reformatRangeImpl(element, startOffset, endOffset, canChangeWhiteSpacesOnly);
   }
 
   public PsiElement reformatRange(PsiElement element, int startOffset, int endOffset)
@@ -170,7 +170,7 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
     if (file instanceof PsiJavaFile) {
       PsiImportList newList = prepareOptimizeImportsResult(file);
       if (newList != null) {
-          ((PsiJavaFile)file).getImportList().replace(newList);
+        ((PsiJavaFile)file).getImportList().replace(newList);
       }
     }
   }
@@ -246,6 +246,21 @@ public class CodeStyleManagerImpl extends CodeStyleManagerEx implements ProjectC
 
     } else {
       return offset;
+    }
+  }
+
+  public void adjustLineIndent(PsiFile file, TextRange rangeToAdjust) throws IncorrectOperationException {
+    final Language fileLanguage = file.getLanguage();
+    final FormattingModelBuilder builder = fileLanguage.getFormattingModelBuilder();
+    if (builder != null) {
+      final CodeStyleSettings settings = getSettings();
+      final CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
+      final FormattingModel model = builder.createModel(file, settings);
+
+      Formatter.getInstance().adjustLineIndentsForRange(model,
+                                                        settings,
+                                                        indentOptions,
+                                                        rangeToAdjust);
     }
   }
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -35,15 +36,11 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
       startOffset = endOffset = editor.getCaretModel().getOffset();
     }
     int line1 = editor.offsetToLogicalPosition(startOffset).line;
-    int line2 = editor.offsetToLogicalPosition(endOffset).line;
     int col = editor.getCaretModel().getLogicalPosition().column;
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     try{
-      for(int line = line1; line <= line2; line++){
-        int lineStart = document.getLineStartOffset(line);
-        codeStyleManager.adjustLineIndent(file, lineStart);
-      }
+      codeStyleManager.adjustLineIndent(file, new TextRange(startOffset, endOffset));
     }
     catch(IncorrectOperationException e){
       LOG.error(e);
