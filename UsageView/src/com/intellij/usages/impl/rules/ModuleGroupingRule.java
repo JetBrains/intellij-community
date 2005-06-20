@@ -147,7 +147,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
 
     public int compareTo(UsageGroup o) {
       if (o instanceof LibraryUsageGroup) return -1;
-      return o.getText(null).compareTo(getText(null));
+      return getText(null).compareTo(o.getText(null));
     }
 
     public String toString() {
