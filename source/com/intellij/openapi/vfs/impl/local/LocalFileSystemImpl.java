@@ -455,7 +455,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
           final WatchRequest otherRequest = iterator1.next();
           final VirtualFile otherRoot = otherRequest.getRoot();
           final boolean otherRecursively = otherRequest.isToWatchRecursively();
-          if (root.equals(otherRoot) ||
+          if ((root.equals(otherRoot) && (recursively || !otherRecursively)) ||
               (VfsUtil.isAncestor(otherRoot, root, true) && otherRecursively)) {
             continue NextRoot;
           } else if (VfsUtil.isAncestor(root, otherRoot, true) && recursively) {
