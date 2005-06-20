@@ -306,6 +306,25 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       pathReferenceProvider
     );
     
+    registerReferenceProvider(
+      new ScopeFilter(
+        new AndFilter(
+          new ParentElementFilter(new TextFilter("uri")),
+          new ParentElementFilter(
+            new AndFilter(
+              new NamespaceFilter(XmlUtil.JSP_URI),
+              new AndFilter(
+                new ClassFilter(JspDirective.class),
+                new TextFilter("taglib")
+              )
+            ), 2
+          )
+        )
+      ),
+      XmlAttributeValue.class, 
+      new JspUriReferenceProvider()
+    );
+    
     //registerReferenceProvider(new ScopeFilter(new ParentElementFilter(new AndFilter(new TextFilter("target"),
     //                                                                                new ParentElementFilter(new AndFilter(
     //                                                                                  new NamespaceFilter(XmlUtil.ANT_URI),

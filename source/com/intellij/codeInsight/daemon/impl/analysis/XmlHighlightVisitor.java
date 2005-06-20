@@ -374,19 +374,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
             null
           );
         }
-      } else {
-        final XmlFile tldDescriptor = TldUtil.getTldFileByUri(uri, (JspFile)tag.getContainingFile());
-
-        if (tldDescriptor == null) {
-          myResult.add(
-            HighlightInfo.createHighlightInfo(
-              HighlightInfoType.WRONG_REF,
-              tag.getAttribute("uri",null).getValueElement(),
-              "Cannot resolve taglib with uri " + uri
-            )
-          );
-        }
-      }
+      } 
     }
   }
 

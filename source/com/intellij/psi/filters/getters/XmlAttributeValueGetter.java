@@ -37,13 +37,6 @@ public class XmlAttributeValueGetter implements ContextGetter {
         final String[] values = descriptor.getEnumeratedValues();
         
         if((values == null || values.length==0)) {
-          if ("uri".equals(attribute.getName()) && 
-               attribute.getParent() instanceof JspDirective &&
-               "taglib".equals(attribute.getParent().getName())
-             ) {
-            return TldUtil.getPossibleTldUris((JspFile)context.getContainingFile());
-          }
-          
           final PsiReference[] references = ((XmlAttribute)context).getValueElement().getReferences();
           if (references.length == 0) return getAllWordsFromDocument(context,completionContext);
         }
