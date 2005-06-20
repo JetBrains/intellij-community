@@ -13,6 +13,7 @@ import org.jdom.Element;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.io.File;
 
 /**
  * @author dyoma
@@ -93,6 +94,9 @@ public abstract class RunConfigurationBase implements RunConfiguration {
     for (Iterator<Element> iterator = element.getChildren(LOG_FILE).iterator(); iterator.hasNext();) {
       Element logFile = iterator.next();
       String file = logFile.getAttributeValue(PATH);
+      if (file != null){
+        file.replace('/', File.separatorChar);
+      }
       Boolean checked = Boolean.valueOf(logFile.getAttributeValue(CHECKED));
       String alias = logFile.getAttributeValue(ALIAS);
       addLogFile(file, alias, checked);
@@ -106,7 +110,7 @@ public abstract class RunConfigurationBase implements RunConfiguration {
       String alias = pair.second;
       boolean checked = myLogFiles.get(pair).booleanValue();
       Element logFile = new Element(LOG_FILE);
-      logFile.setAttribute(PATH, file);
+      logFile.setAttribute(PATH, file.replace(File.separatorChar, '/'));
       logFile.setAttribute(CHECKED, String.valueOf(checked));
       logFile.setAttribute(ALIAS, alias != null ? alias : file);
       element.addContent(logFile);
