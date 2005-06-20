@@ -11,6 +11,7 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.net.HTTPProxySettingsPanel;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -89,6 +90,8 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
       updateSettings.CHECK_UPDATES = false;
       updateSettings.ASK_USER = false;
     }
+
+    myComponent.myHTTPProxySettingsEditor.apply();
   }
 
   public boolean isModified() {
@@ -118,6 +121,8 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     UpdateSettings updateSettings = UpdateSettings.getInstance();
     isModified |= updateSettings.CHECK_UPDATES == myComponent.myRbNeverCheck.isSelected();
     isModified |= updateSettings.ASK_USER != myComponent.myRbAskBeforeCheck.isSelected();
+
+    isModified |= myComponent.myHTTPProxySettingsEditor.isModified();
 
     return isModified || getDiffOptions().isModified();
   }
@@ -213,6 +218,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
       myComponent.myUseUserDefinedBrowser.setSelected(true);
     }
     myComponent.updateBrowserField();
+    myComponent.myHTTPProxySettingsEditor.reset();
   }
 
   public void disposeUIResources() {
@@ -248,6 +254,8 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     private JCheckBox myUseCyclicBuffer;
     private JTextField myCyclicBufferSize;
     public JCheckBox myConfirmExit;
+    private JPanel myHTTPProxyPanel;
+    private final HTTPProxySettingsPanel myHTTPProxySettingsEditor;
 
     public MyComponent() {
       ButtonGroup buttonGroup = new ButtonGroup();
@@ -272,6 +280,10 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
         myUseSystemDefaultBrowser.setVisible(false);
         myUseUserDefinedBrowser.setVisible(false);
       }
+
+      myHTTPProxySettingsEditor = new HTTPProxySettingsPanel();
+      myHTTPProxyPanel.setLayout(new BorderLayout());
+      myHTTPProxyPanel.add(myHTTPProxySettingsEditor, BorderLayout.WEST);
     }
 
     private void updateBrowserField() {
@@ -281,7 +293,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
       myBrowserPathField.getTextField().setEnabled(myUseUserDefinedBrowser.isSelected());
       myBrowserPathField.getButton().setEnabled(myUseUserDefinedBrowser.isSelected());
     }
-
   }
 
 

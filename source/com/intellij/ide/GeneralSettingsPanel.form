@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.ide.GeneralSettingsConfigurable.MyComponent">
-  <grid id="9d13a" binding="myPanel" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="9d13a" binding="myPanel" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="30" y="5" width="558" height="475"/>
+      <xy x="30" y="5" width="758" height="509"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
@@ -12,7 +12,7 @@
       <grid id="75d1f" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="558" height="285"/>
+          <xy x="0" y="0" width="758" height="183"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
         </constraints>
         <properties/>
@@ -21,7 +21,7 @@
           <grid id="f4181" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="6" y="22" width="546" height="144"/>
+              <xy x="6" y="20" width="746" height="132"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -30,7 +30,7 @@
               <grid id="5d69a" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="0">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <xy x="0" y="0" width="381" height="144"/>
+                  <xy x="0" y="0" width="317" height="132"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="1" fill="1"/>
                 </constraints>
                 <properties/>
@@ -38,7 +38,7 @@
                 <children>
                   <component id="81bcc" class="javax.swing.JCheckBox" binding="myChkReopenLastProject">
                     <constraints>
-                      <xy x="0" y="0" width="201" height="24"/>
+                      <xy x="0" y="0" width="170" height="22"/>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                     </constraints>
                     <properties>
@@ -49,7 +49,7 @@
                   </component>
                   <component id="86192" class="javax.swing.JCheckBox" binding="myChkSyncOnFrameActivation">
                     <constraints>
-                      <xy x="0" y="24" width="241" height="24"/>
+                      <xy x="0" y="22" width="199" height="22"/>
                       <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                     </constraints>
                     <properties>
@@ -60,7 +60,7 @@
                   </component>
                   <component id="e5195" class="javax.swing.JCheckBox" binding="myChkSaveOnFrameDeactivation">
                     <constraints>
-                      <xy x="0" y="48" width="214" height="24"/>
+                      <xy x="0" y="44" width="177" height="22"/>
                       <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                     </constraints>
                     <properties>
@@ -71,7 +71,7 @@
                   </component>
                   <component id="204fc" class="javax.swing.JCheckBox" binding="myChkAutoSaveIfInactive">
                     <constraints>
-                      <xy x="0" y="72" width="303" height="24"/>
+                      <xy x="0" y="66" width="244" height="22"/>
                       <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                     </constraints>
                     <properties>
@@ -82,7 +82,7 @@
                   <grid id="6e62" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
-                      <xy x="303" y="72" width="78" height="24"/>
+                      <xy x="244" y="66" width="73" height="22"/>
                       <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="8" fill="2"/>
                     </constraints>
                     <properties/>
@@ -90,7 +90,7 @@
                     <children>
                       <component id="298ce" class="javax.swing.JLabel">
                         <constraints>
-                          <xy x="50" y="4" width="28" height="16"/>
+                          <xy x="50" y="4" width="23" height="14"/>
                           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                         </constraints>
                         <properties>
@@ -99,7 +99,7 @@
                       </component>
                       <component id="db590" class="javax.swing.JTextField" binding="myTfInactiveTimeout">
                         <constraints>
-                          <xy x="0" y="1" width="50" height="22"/>
+                          <xy x="0" y="1" width="50" height="20"/>
                           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1">
                             <minimum-size width="50" height="-1"/>
                             <preferred-size width="50" height="-1"/>
@@ -115,7 +115,7 @@
                   </grid>
                   <component id="ecfde" class="javax.swing.JCheckBox" binding="myUseCyclicBuffer">
                     <constraints>
-                      <xy x="0" y="96" width="258" height="24"/>
+                      <xy x="0" y="88" width="214" height="22"/>
                       <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                     </constraints>
                     <properties>
@@ -126,7 +126,7 @@
                   <grid id="32bf3" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
-                      <xy x="303" y="96" width="73" height="24"/>
+                      <xy x="244" y="88" width="70" height="22"/>
                       <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="8" fill="2"/>
                     </constraints>
                     <properties/>
@@ -134,7 +134,7 @@
                     <children>
                       <component id="93187" class="javax.swing.JLabel">
                         <constraints>
-                          <xy x="50" y="4" width="23" height="16"/>
+                          <xy x="50" y="4" width="19" height="14"/>
                           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                         </constraints>
                         <properties>
@@ -144,7 +144,7 @@
                       </component>
                       <component id="7a9bd" class="javax.swing.JTextField" binding="myCyclicBufferSize">
                         <constraints>
-                          <xy x="0" y="1" width="50" height="22"/>
+                          <xy x="0" y="1" width="50" height="20"/>
                           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1">
                             <minimum-size width="50" height="-1"/>
                             <preferred-size width="50" height="-1"/>
@@ -161,7 +161,7 @@
                   </grid>
                   <component id="e487d" class="javax.swing.JCheckBox" binding="myConfirmExit">
                     <constraints>
-                      <xy x="0" y="120" width="165" height="24"/>
+                      <xy x="0" y="110" width="135" height="22"/>
                       <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                     </constraints>
                     <properties>
@@ -174,7 +174,7 @@
               <grid id="8161c" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <xy x="391" y="0" width="155" height="92"/>
+                  <xy x="327" y="0" width="419" height="86"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="1" fill="1"/>
                 </constraints>
                 <properties/>
@@ -182,7 +182,7 @@
                 <children>
                   <component id="d06c7" class="javax.swing.JLabel">
                     <constraints>
-                      <xy x="0" y="2" width="135" height="16"/>
+                      <xy x="0" y="3" width="111" height="14"/>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                     </constraints>
                     <properties>
@@ -191,7 +191,7 @@
                   </component>
                   <component id="f231c" class="javax.swing.JRadioButton" binding="myRbCheckAutomatically">
                     <constraints>
-                      <xy x="0" y="44" width="155" height="24"/>
+                      <xy x="0" y="42" width="133" height="22"/>
                       <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                     </constraints>
                     <properties>
@@ -201,7 +201,7 @@
                   </component>
                   <component id="bbb51" class="javax.swing.JRadioButton" binding="myRbAskBeforeCheck">
                     <constraints>
-                      <xy x="0" y="20" width="138" height="24"/>
+                      <xy x="0" y="20" width="120" height="22"/>
                       <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                     </constraints>
                     <properties>
@@ -211,7 +211,7 @@
                   </component>
                   <component id="ae36b" class="javax.swing.JRadioButton" binding="myRbNeverCheck">
                     <constraints>
-                      <xy x="0" y="68" width="109" height="24"/>
+                      <xy x="0" y="64" width="97" height="22"/>
                       <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                     </constraints>
                     <properties>
@@ -223,10 +223,10 @@
               </grid>
             </children>
           </grid>
-          <grid id="aeccc" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="3ca04" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="6" y="171" width="546" height="108"/>
+              <xy x="54" y="179" width="746" height="20"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -234,8 +234,8 @@
             <children>
               <component id="2264e" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="0" y="89" width="140" height="16"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                  <xy x="0" y="3" width="115" height="14"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
                   <text value="Ignore files and folders:"/>
@@ -243,8 +243,8 @@
               </component>
               <component id="3cff8" class="javax.swing.JTextField" binding="myIgnoreFilesField">
                 <constraints>
-                  <xy x="150" y="86" width="396" height="22"/>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                  <xy x="125" y="0" width="621" height="20"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
                     <minimum-size width="-1" height="20"/>
                   </grid>
                 </constraints>
@@ -254,58 +254,6 @@
                   <text value=".dependency-info;CVS;RCS;SCCS;rcs;"/>
                 </properties>
               </component>
-              <grid id="cc9bc" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                <margin top="0" left="0" bottom="0" right="0"/>
-                <constraints>
-                  <xy x="0" y="0" width="546" height="81"/>
-                  <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
-                </constraints>
-                <properties/>
-                <border type="etched" title="Web Browser"/>
-                <children>
-                  <grid id="4093b" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                    <margin top="0" left="0" bottom="0" right="0"/>
-                    <constraints>
-                      <xy x="6" y="51" width="534" height="24"/>
-                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
-                    </constraints>
-                    <properties/>
-                    <border type="none"/>
-                    <children>
-                      <component id="eada9" class="javax.swing.JRadioButton" binding="myUseUserDefinedBrowser">
-                        <constraints>
-                          <xy x="0" y="0" width="46" height="24"/>
-                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                        </constraints>
-                        <properties>
-                          <text value="Use"/>
-                        </properties>
-                      </component>
-                      <component id="6a32e" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myBrowserPathField">
-                        <constraints>
-                          <xy x="56" y="1" width="478" height="22"/>
-                          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
-                            <minimum-size width="-1" height="20"/>
-                            <preferred-size width="150" height="-1"/>
-                          </grid>
-                        </constraints>
-                        <properties>
-                          <text value="C:\Program Files\Internet Explorer\IExplore.exe"/>
-                        </properties>
-                      </component>
-                    </children>
-                  </grid>
-                  <component id="3a5a5" class="javax.swing.JRadioButton" binding="myUseSystemDefaultBrowser">
-                    <constraints>
-                      <xy x="6" y="22" width="186" height="24"/>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                    </constraints>
-                    <properties>
-                      <text value="Use system default browser"/>
-                    </properties>
-                  </component>
-                </children>
-              </grid>
             </children>
           </grid>
         </children>
@@ -313,15 +261,15 @@
       <grid id="36e55" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="5" left="7" bottom="7" right="7"/>
         <constraints>
-          <xy x="0" y="290" width="558" height="94"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
+          <xy x="0" y="293" width="758" height="88"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
         </constraints>
         <properties/>
         <border type="etched" title="File Encoding (effective on restart)"/>
         <children>
           <component id="9d3a0" class="javax.swing.JCheckBox" binding="myChkUTFGuessing">
             <constraints>
-              <xy x="13" y="57" width="487" height="24"/>
+              <xy x="13" y="53" width="399" height="22"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -332,7 +280,7 @@
           <grid id="2aed7" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="13" y="27" width="532" height="25"/>
+              <xy x="13" y="25" width="732" height="23"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -340,7 +288,7 @@
             <children>
               <component id="a9ad9" class="javax.swing.JComboBox" binding="myCharsetNameCombo">
                 <constraints>
-                  <xy x="130" y="0" width="120" height="25"/>
+                  <xy x="130" y="0" width="120" height="23"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1">
                     <minimum-size width="120" height="-1"/>
                   </grid>
@@ -349,7 +297,7 @@
               </component>
               <component id="98462" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="0" y="4" width="120" height="16"/>
+                  <xy x="0" y="4" width="120" height="14"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
                     <minimum-size width="120" height="-1"/>
                   </grid>
@@ -360,7 +308,7 @@
               </component>
               <hspacer id="c921b">
                 <constraints>
-                  <xy x="250" y="7" width="282" height="11"/>
+                  <xy x="250" y="6" width="482" height="11"/>
                   <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
                 </constraints>
               </hspacer>
@@ -371,8 +319,8 @@
       <xy id="8c6fd" binding="myDiffOptionsPanel" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="389" width="558" height="20"/>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+          <xy x="0" y="386" width="758" height="20"/>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -380,10 +328,72 @@
       </xy>
       <vspacer id="4bc17">
         <constraints>
-          <xy x="273" y="409" width="11" height="66"/>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+          <xy x="373" y="406" width="11" height="103"/>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
+      <grid id="cc9bc" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="0" y="188" width="758" height="75"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="etched" title="Web Browser"/>
+        <children>
+          <grid id="4093b" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="6" y="47" width="746" height="22"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="eada9" class="javax.swing.JRadioButton" binding="myUseUserDefinedBrowser">
+                <constraints>
+                  <xy x="0" y="0" width="43" height="22"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Use"/>
+                </properties>
+              </component>
+              <component id="6a32e" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myBrowserPathField">
+                <constraints>
+                  <xy x="53" y="1" width="693" height="20"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                    <minimum-size width="-1" height="20"/>
+                    <preferred-size width="150" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value="C:\Program Files\Internet Explorer\IExplore.exe"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <component id="3a5a5" class="javax.swing.JRadioButton" binding="myUseSystemDefaultBrowser">
+            <constraints>
+              <xy x="6" y="20" width="159" height="22"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Use system default browser"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
+      <xy id="f6e5a" binding="myHTTPProxyPanel" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="0" y="268" width="758" height="20"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="etched" title="HTTP Proxy"/>
+        <children/>
+      </xy>
     </children>
   </grid>
 </form>
