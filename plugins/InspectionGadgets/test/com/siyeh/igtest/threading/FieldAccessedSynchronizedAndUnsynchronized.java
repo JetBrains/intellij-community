@@ -10,11 +10,13 @@ public class FieldAccessedSynchronizedAndUnsynchronized
         synchronized(m_lock)
         {
             m_contents = new Object();
+            getContents();
         }
     }
 
-    public Object getContents()
+    private Object getContents()
     {
+        getContents();
         return m_contents;
     }
 

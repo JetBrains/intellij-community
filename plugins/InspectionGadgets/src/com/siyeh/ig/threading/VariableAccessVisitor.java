@@ -7,7 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
-import java.util.Set;
+import java.util.Set;                                                           
 
 class VariableAccessVisitor extends PsiRecursiveElementVisitor{
     private final Set<PsiElement> m_synchronizedAccesses = new HashSet<PsiElement>(
@@ -80,7 +80,7 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
     private boolean methodIsAlwaysUsedSynchronized(PsiMethod method,
                                                    Set<PsiMethod> methodsAlwaysSynchronized,
                                                    Set<PsiMethod> methodsNotAlwaysSynchronized,
-                                                   Set<PsiMethod> processedMethods)
+                                                   Set<PsiMethod> pendingMethods)
     {
         if(methodsAlwaysSynchronized.contains(method)){
             return true;
@@ -91,6 +91,11 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
         if(!method.hasModifierProperty(PsiModifier.PRIVATE)){
             return false;
         }
+        if(pendingMethods.contains(method))
+        {
+            return true;
+        }
+        pendingMethods.add(method);
         final PsiManager manager = method.getManager();
         final PsiSearchHelper searchHelper = manager.getSearchHelper();
         final SearchScope scope = method.getUseScope();
@@ -99,37 +104,39 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
         for(PsiReference reference : references){
             if(!isInSynchronizedContext(reference,
                                         methodsAlwaysSynchronized,
-                                        methodsNotAlwaysSynchronized, processedMethods)){
+                                        methodsNotAlwaysSynchronized,
+                                        pendingMethods)){
                 methodsNotAlwaysSynchronized.add(method);
+                pendingMethods.remove(method);
                 return false;
             }
         }
         methodsAlwaysSynchronized.add(method);
+        pendingMethods.remove(method);
         return true;
     }
 
     private boolean isInSynchronizedContext(PsiReference reference,
                                             Set<PsiMethod> methodsAlwaysSynchronized,
                                             Set<PsiMethod> methodsNotAlwaysSynchronized,
-                                            final Set<PsiMethod> processedMethods)
+                                            Set<PsiMethod> pendingMethods)
     {
         final PsiElement element = reference.getElement();
         if(PsiTreeUtil.getParentOfType(element,
                                        PsiSynchronizedStatement.class) != null){
             return true;
         }
-        final PsiMethod method = PsiTreeUtil
-                .getParentOfType(element, PsiMethod.class);
+        final PsiMethod method =
+                PsiTreeUtil.getParentOfType(element, PsiMethod.class);
         if(method == null){
             return false;
         }
-        if (processedMethods.contains(method)) return true;
-        processedMethods.add(method);
         if(method.hasModifierProperty(PsiModifier.SYNCHRONIZED)){
             return true;
         }
         return methodIsAlwaysUsedSynchronized(method, methodsAlwaysSynchronized,
-                                              methodsNotAlwaysSynchronized, processedMethods);
+                                              methodsNotAlwaysSynchronized,
+                                              pendingMethods);
     }
 
     public void visitClassInitializer(@NotNull PsiClassInitializer initializer){
@@ -140,7 +147,7 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
 
     public void visitField(@NotNull PsiField field){
         m_inInitializer = true;
-        super.visitField(field);  
+        super.visitField(field);
         m_inInitializer = false;
     }
 

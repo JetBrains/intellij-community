@@ -1,4 +1,5 @@
-package com.siyeh.ig;
+
+        package com.siyeh.ig;
 
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -67,19 +68,19 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private final InspectionGadgetsTelemetry telemetry = new InspectionGadgetsTelemetry();
     private static final boolean TELEMETRY_ENABLED = true;
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         final InspectionGadgetsPlugin plugin = new InspectionGadgetsPlugin();
         final PrintStream out;
-        if(args.length == 0){
+        if (args.length == 0) {
             out = System.out;
-        } else{
+        } else {
             final OutputStream stream;
-            try{
+            try {
                 stream = new FileOutputStream(args[0]);
-            } catch(final FileNotFoundException e){
+            } catch (final FileNotFoundException e) {
                 return;
             }
-            out = new PrintStream(stream);
+            out = new PrintStream(stream);   
         }
         plugin.createDocumentation(out);
     }
