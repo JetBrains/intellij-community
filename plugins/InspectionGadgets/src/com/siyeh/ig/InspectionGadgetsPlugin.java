@@ -364,6 +364,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ResultSetIndexZeroInspection.class);
         m_inspectionClasses.add(LoopStatementsThatDontLoopInspection.class);
         m_inspectionClasses.add(MalformedRegexInspection.class);
+        m_inspectionClasses.add(MalformedFormatStringInspection.class);
         if(classExists("javax.xml.xpath.XPath"))
         {
             m_inspectionClasses.add(MalformedXPathInspection.class);
