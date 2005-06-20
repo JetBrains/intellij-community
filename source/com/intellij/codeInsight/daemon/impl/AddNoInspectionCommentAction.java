@@ -52,7 +52,9 @@ public class AddNoInspectionCommentAction implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiStatement container = getContainer();
-    ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[] {container.getContainingFile().getVirtualFile()});
+    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
+      .ensureFilesWritable(new VirtualFile[]{container.getContainingFile().getVirtualFile()});
+    if (status.hasReadonlyFiles()) return;
     PsiElement prev = PsiTreeUtil.skipSiblingsBackward(container, new Class[]{PsiWhiteSpace.class});
     PsiElementFactory factory = myContext.getManager().getElementFactory();
     if (prev instanceof PsiComment) {

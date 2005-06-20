@@ -83,7 +83,9 @@ public class AddNoInspectionDocTagAction implements IntentionAction {
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiDocCommentOwner container = getContainer();
-    ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(new VirtualFile[] {container.getContainingFile().getVirtualFile()});
+    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
+      .ensureFilesWritable(new VirtualFile[]{container.getContainingFile().getVirtualFile()});
+    if (status.hasReadonlyFiles()) return;
     PsiDocComment docComment = container.getDocComment();
     PsiManager manager = myContext.getManager();
     if (docComment == null) {
