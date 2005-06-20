@@ -231,8 +231,8 @@ public class TemplateState {
     mySegments = new TemplateSegments(myEditor);
     myTemplate = template;
 
-    int caretOffset = myEditor.getCaretModel().getOffset();
     preprocessTemplate(PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument), myEditor.getCaretModel().getOffset());
+    int caretOffset = myEditor.getCaretModel().getOffset();
 
     if (template.isInline()) {
       myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset + template.getTemplateText().length());
@@ -247,8 +247,7 @@ public class TemplateState {
   }
 
   private void preprocessTemplate(final PsiFile file, int caretOffset) {
-    if (file instanceof JspFile) {
-      /*
+    /*if (file instanceof JspFile) {
       try {
         caretOffset += JspUtil.escapeCharsInJspContext(((JspFile)file), caretOffset, myTemplate.getTemplateText());
         myEditor.getCaretModel().moveToOffset(caretOffset);
@@ -256,8 +255,7 @@ public class TemplateState {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-      */
-    }
+    }*/
   }
 
   private void processAllExpressions(final TemplateImpl template) {
