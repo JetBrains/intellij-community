@@ -5,6 +5,8 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
@@ -12,8 +14,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
@@ -56,11 +56,11 @@ public abstract class GlobalSearchScope extends SearchScope {
   }
 
   public static GlobalSearchScope projectProductionScope(Project project, final boolean includeNonJavaFiles) {
-    return new IntersectionScope(projectScope(project), new ProductionScopeFilter(project, includeNonJavaFiles), "Project Production Classes");
+    return new IntersectionScope(projectScope(project), new ProductionScopeFilter(project, includeNonJavaFiles), "Project Production Files");
   }
 
   public static GlobalSearchScope projectTestScope(Project project, final boolean includeNonJavaFiles) {
-    return new IntersectionScope(projectScope(project), new TestScopeFilter(project, includeNonJavaFiles), "Project Test Classes");
+    return new IntersectionScope(projectScope(project), new TestScopeFilter(project, includeNonJavaFiles), "Project Test Files");
   }
 
   public static GlobalSearchScope filterScope(Project project, NamedScope set, final boolean includeNonJavaFiles) {
