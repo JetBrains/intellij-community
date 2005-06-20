@@ -73,12 +73,14 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
     private boolean methodIsAlwaysUsedSynchronized(PsiMethod method){
         return methodIsAlwaysUsedSynchronized(method,
                                               new HashSet<PsiMethod>(),
+                                              new HashSet<PsiMethod>(),
                                               new HashSet<PsiMethod>());
     }
 
     private boolean methodIsAlwaysUsedSynchronized(PsiMethod method,
                                                    Set<PsiMethod> methodsAlwaysSynchronized,
-                                                   Set<PsiMethod> methodsNotAlwaysSynchronized)
+                                                   Set<PsiMethod> methodsNotAlwaysSynchronized,
+                                                   Set<PsiMethod> processedMethods)
     {
         if(methodsAlwaysSynchronized.contains(method)){
             return true;
@@ -97,7 +99,7 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
         for(PsiReference reference : references){
             if(!isInSynchronizedContext(reference,
                                         methodsAlwaysSynchronized,
-                                        methodsNotAlwaysSynchronized)){
+                                        methodsNotAlwaysSynchronized, processedMethods)){
                 methodsNotAlwaysSynchronized.add(method);
                 return false;
             }
@@ -108,7 +110,8 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
 
     private boolean isInSynchronizedContext(PsiReference reference,
                                             Set<PsiMethod> methodsAlwaysSynchronized,
-                                            Set<PsiMethod> methodsNotAlwaysSynchronized)
+                                            Set<PsiMethod> methodsNotAlwaysSynchronized,
+                                            final Set<PsiMethod> processedMethods)
     {
         final PsiElement element = reference.getElement();
         if(PsiTreeUtil.getParentOfType(element,
@@ -120,11 +123,13 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
         if(method == null){
             return false;
         }
+        if (processedMethods.contains(method)) return true;
+        processedMethods.add(method);
         if(method.hasModifierProperty(PsiModifier.SYNCHRONIZED)){
             return true;
         }
         return methodIsAlwaysUsedSynchronized(method, methodsAlwaysSynchronized,
-                                              methodsNotAlwaysSynchronized);
+                                              methodsNotAlwaysSynchronized, processedMethods);
     }
 
     public void visitClassInitializer(@NotNull PsiClassInitializer initializer){
