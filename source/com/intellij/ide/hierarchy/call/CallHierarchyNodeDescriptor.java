@@ -152,7 +152,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
   public void navigate(boolean requestFocus) {
     final PsiReference firstReference = myReferences.get(0);
     final PsiElement callElement = firstReference.getElement().getParent();
-    if (callElement instanceof Navigatable) {
+    if (callElement instanceof Navigatable && ((Navigatable)callElement).canNavigate()) {
       ((Navigatable)callElement).navigate(requestFocus);
     } else {
       FileEditorManager.getInstance(myProject).openFile(callElement.getContainingFile().getVirtualFile(), requestFocus);
