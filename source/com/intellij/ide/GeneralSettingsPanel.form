@@ -260,7 +260,7 @@
       </grid>
       <vspacer id="4bc17">
         <constraints>
-          <xy x="373" y="401" width="11" height="108"/>
+          <xy x="373" y="381" width="11" height="128"/>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
@@ -408,7 +408,7 @@
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <xy x="540" y="0" width="218" height="113"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="0" fill="3"/>
             </constraints>
             <properties/>
             <border type="etched" title="HTTP Proxy"/>
