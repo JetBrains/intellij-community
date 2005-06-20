@@ -23,6 +23,7 @@ public class ChameleonTransforming implements Constants {
         LOG.debug("\"transforming chameleon:\" + chameleon + \" in \" + chameleon.parent");
       }
       final ASTNode parent = chameleon.getTreeParent();
+      if (parent == null) return null;
       parent.getTextLength();
       PsiFileImpl file = (PsiFileImpl)SourceTreeToPsiMap.treeElementToPsi(parent).getContainingFile();
       if (file == null) return null;
