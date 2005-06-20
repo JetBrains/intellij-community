@@ -29,12 +29,13 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
 
   private String myName;
   private final JComponent myComponent;
+  private boolean myPathThrough;
 
   public MergingUpdateQueue(String name, int mergingTimeSpan, boolean isActive, JComponent component) {
     myComponent = component;
     myWaiterForMerge = new Timer(mergingTimeSpan, this);
     myName = name;
-
+    myPathThrough = ApplicationManager.getApplication().isUnitTestMode();
 
     if (isActive) {
       showNotify();
@@ -50,8 +51,15 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
       mySheduledUpdates.clear();
     }
   }
-  
-  
+
+  public final boolean isPathThrough() {
+    return myPathThrough;
+  }
+
+  public final void setPathThrough(boolean pathThrough) {
+    myPathThrough = pathThrough;
+  }
+
   public void hideNotify() {
     if (!myActive) {
       return;
@@ -87,8 +95,12 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
   }
 
   public void flush(boolean invokeLaterIfNotDispatch) {
-    if (myFlushing) return;
-    if (!isModalityStateCorrect()) return;
+    if (myFlushing) {
+      return;
+    }
+    if (!isModalityStateCorrect()) {
+      return;
+    }
 
     myFlushing = true;
     final Runnable toRun = new Runnable() {
@@ -154,14 +166,16 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
 
   public void queue(final Update update) {
     final Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode()) {
+    if (myPathThrough) {
       app.invokeLater(update);
       return;
     }
     
     synchronized(mySheduledUpdates) {
       boolean updateWasEatenByQueue = eatThisOrOthers(update);
-      if (updateWasEatenByQueue) return;
+      if (updateWasEatenByQueue) {
+        return;
+      }
 
       if (myActive) {
         if (mySheduledUpdates.isEmpty()) {
@@ -228,7 +242,9 @@ public class MergingUpdateQueue implements ActionListener, Disposable {
   }
 
   public ModalityState getModalityState() {
-    if (myComponent == null) return ModalityState.NON_MMODAL;
+    if (myComponent == null) {
+      return ModalityState.NON_MMODAL;
+    }
     return ModalityState.stateForComponent(myComponent);
   }
 }
