@@ -784,9 +784,8 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     synchronized (LOCK) {
       if (rootFile instanceof VirtualFileImpl) {
         final WatchRequestImpl result = new WatchRequestImpl(rootFile, toWatchRecursively);
-        if (myRootsToWatch.add(result) ) {
-          setUpFileWatcher();
-        }
+        myRootsToWatch.add(result);
+        setUpFileWatcher();
         return result;
       }
       return null;
@@ -806,7 +805,8 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
         }
       }
 
-      if (myRootsToWatch.addAll(result)) setUpFileWatcher();
+      myRootsToWatch.addAll(result);
+      setUpFileWatcher();
     }
 
     return result;
