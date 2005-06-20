@@ -74,10 +74,12 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
 
     String[] libraryUrls = moduleRootManager.getUrls(OrderRootType.CLASSES);
     for (String libraryUrl : libraryUrls) {
-      VirtualFile libPath = VirtualFileManager.getInstance().findFileByUrl(libraryUrl);
-      PsiDirectory directory = element.getManager().findDirectory(libPath);
-      if (directory != null) {
-        result.add(directory);
+      VirtualFile libFile = VirtualFileManager.getInstance().findFileByUrl(libraryUrl);
+      if (libFile != null) {
+        PsiDirectory directory = element.getManager().findDirectory(libFile);
+        if (directory != null) {
+          result.add(directory);
+        }
       }
     }
 
