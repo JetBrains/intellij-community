@@ -757,6 +757,17 @@ public class XmlUtil {
     return true;
   }
 
+  public static final boolean toCode(String str) {
+    for (int i = 0; i < str.length(); i++) {
+      if (toCode(str.charAt(i))) return true;
+    }
+    return false;
+  }
+
+  public static final boolean toCode(char ch) {
+    return "<&>\u00a0".indexOf(ch) >= 0;
+  }
+
   private static class MyAttributeInfo implements Comparable {
     boolean myRequired = true;
     String myName = null;

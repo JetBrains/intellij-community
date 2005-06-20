@@ -53,14 +53,4 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
     return null;
   }
 
-  public static final boolean toCode(String str) {
-    for (int i = 0; i < str.length(); i++) {
-      if (toCode(str.charAt(i))) return true;
-    }
-    return false;
-  }
-
-  public static final boolean toCode(char ch) {
-    return "<&>\u00a0".indexOf(ch) >= 0;
-  }
 }

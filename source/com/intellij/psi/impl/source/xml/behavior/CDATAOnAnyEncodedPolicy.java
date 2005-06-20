@@ -8,10 +8,17 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.CharTable;
+import com.intellij.xml.util.XmlUtil;
 
 public class CDATAOnAnyEncodedPolicy extends DefaultXmlPsiPolicy{
   public ASTNode encodeXmlTextContents(String displayText, PsiManager manager, CharTable charTableByTree) {
-    if(!toCode(displayText)) return super.encodeXmlTextContents(displayText, manager, charTableByTree);
+    if(!XmlUtil.toCode(displayText)) return super.encodeXmlTextContents(displayText, manager, charTableByTree);
+    final FileElement dummyParent = createCDATAElement(manager, charTableByTree, displayText);
+
+    return dummyParent.getFirstChildNode();
+  }
+
+  public static FileElement createCDATAElement(final PsiManager manager, final CharTable charTableByTree, final String displayText) {
     final FileElement dummyParent = new DummyHolder(manager, null, charTableByTree).getTreeElement();
     TreeUtil.addChildren(
       dummyParent,
@@ -34,7 +41,6 @@ public class CDATAOnAnyEncodedPolicy extends DefaultXmlPsiPolicy{
         "]]>".toCharArray(),
         0, 3, -1,
         dummyParent.getCharTable()));
-
-    return dummyParent.getFirstChildNode();
+    return dummyParent;
   }
 }

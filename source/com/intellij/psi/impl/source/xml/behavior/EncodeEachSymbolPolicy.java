@@ -9,15 +9,16 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.CharTable;
+import com.intellij.xml.util.XmlUtil;
 
 public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
   public ASTNode encodeXmlTextContents(String displayText, PsiManager manager, CharTable charTableByTree) {
-    if(!toCode(displayText)) return super.encodeXmlTextContents(displayText, manager, charTableByTree);
+    if(!XmlUtil.toCode(displayText)) return super.encodeXmlTextContents(displayText, manager, charTableByTree);
     final FileElement dummyParent = new DummyHolder(manager, null, charTableByTree).getTreeElement();
     int sectionStartOffset = 0;
     int offset = 0;
     while (offset < displayText.length()) {
-      if (toCode(displayText.charAt(offset))) {
+      if (XmlUtil.toCode(displayText.charAt(offset))) {
         final String plainSection = displayText.substring(sectionStartOffset, offset);
         if (plainSection.length() > 0) {
           TreeUtil.addChildren(dummyParent, (TreeElement)super.encodeXmlTextContents(plainSection, manager, charTableByTree));
