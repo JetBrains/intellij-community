@@ -2,7 +2,7 @@ package com.intellij.ide.todo.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.todo.HighlightedRegionProvider;
-import com.intellij.ide.todo.TodoFileDirComparator;
+import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -51,7 +51,7 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
         }
       }
     }
-    Collections.sort(children, TodoFileDirComparator.ourInstance);
+    Collections.sort(children, TodoFileDirAndModuleComparator.ourInstance);
     return children;
 
   }

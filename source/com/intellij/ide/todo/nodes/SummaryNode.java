@@ -2,7 +2,7 @@ package com.intellij.ide.todo.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.todo.ToDoSummary;
-import com.intellij.ide.todo.TodoFileDirComparator;
+import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
@@ -59,7 +59,7 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
         }
       }
     }
-    Collections.sort(children, TodoFileDirComparator.ourInstance);
+    Collections.sort(children, TodoFileDirAndModuleComparator.ourInstance);
     return children;
 
   }

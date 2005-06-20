@@ -5,7 +5,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.todo.HighlightedRegionProvider;
-import com.intellij.ide.todo.TodoFileDirComparator;
+import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -138,7 +138,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
           _dir = parentDirectory;
         }
       }
-      Collections.sort(children, TodoFileDirComparator.ourInstance);
+      Collections.sort(children, TodoFileDirAndModuleComparator.ourInstance);
     }
     else { // flatten packages
       final Iterator<PsiFile> iterator = myBuilder.getFiles(getValue());
@@ -168,7 +168,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
          }
 
       }
-      Collections.sort(children, TodoFileDirComparator.ourInstance);
+      Collections.sort(children, TodoFileDirAndModuleComparator.ourInstance);
     }
     return children;
   }

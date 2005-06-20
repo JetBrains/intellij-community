@@ -7,16 +7,17 @@ import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.todo.nodes.ModuleToDoNode;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 
 import java.util.Comparator;
 
-public final class TodoFileDirComparator implements Comparator{
-  public static final TodoFileDirComparator ourInstance=new TodoFileDirComparator();
+public final class TodoFileDirAndModuleComparator implements Comparator{
+  public static final TodoFileDirAndModuleComparator ourInstance=new TodoFileDirAndModuleComparator();
 
-  private TodoFileDirComparator(){}
+  private TodoFileDirAndModuleComparator(){}
 
   public int compare(Object obj1,Object obj2){
     if((obj1 instanceof PsiFileNode)&&(obj2 instanceof PsiFileNode)){
@@ -41,12 +42,12 @@ public final class TodoFileDirComparator implements Comparator{
       }else if(psiPackage1!=null){
         return psiPackage1.getQualifiedName().compareTo(psiPackage2.getQualifiedName());
       }else{
-        String path1=psiDirectory1.getVirtualFile().getPath().toLowerCase();
-        String path2=psiDirectory2.getVirtualFile().getPath().toLowerCase();
-        return path1.compareTo(path2);
+        return compareDirs(psiDirectory1, psiDirectory2);
       }
     } else if ((obj1 instanceof PackageElementNode) && (obj2 instanceof PackageElementNode)){
       return ((PackageElementNode)obj1).getValue().getPackage().getQualifiedName().compareTo(((PackageElementNode)obj2).getValue().getPackage().getQualifiedName());
+    } else if (obj1 instanceof ModuleToDoNode && obj2 instanceof ModuleToDoNode){
+      return ((ModuleToDoNode)obj1).getValue().getName().compareTo(((ModuleToDoNode)obj2).getValue().getName());
     } else if(obj1 instanceof ModuleToDoNode) {
       return -1;
     } else if(obj2 instanceof ModuleToDoNode) {
@@ -57,8 +58,16 @@ public final class TodoFileDirComparator implements Comparator{
   }
 
   private static int compareFiles(PsiFile psiFile1,PsiFile psiFile2){
-    String path1=psiFile1.getVirtualFile().getPath().toLowerCase();
-    String path2=psiFile2.getVirtualFile().getPath().toLowerCase();
+    return compareVirtualFiles(psiFile1.getVirtualFile(), psiFile2.getVirtualFile());
+  }
+
+  private static int compareDirs(PsiDirectory psiDirectory1, PsiDirectory psiDirectory2){
+    return compareVirtualFiles(psiDirectory1.getVirtualFile(), psiDirectory2.getVirtualFile());
+  }
+
+  private static int compareVirtualFiles(VirtualFile virtualFile1, VirtualFile virtualFile2) {
+    String path1=virtualFile1.getPath().toLowerCase();
+    String path2=virtualFile2.getPath().toLowerCase();
     return path1.compareTo(path2);
   }
 }
