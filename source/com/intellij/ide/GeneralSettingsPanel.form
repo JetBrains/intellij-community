@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.ide.GeneralSettingsConfigurable.MyComponent">
-  <grid id="9d13a" binding="myPanel" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="9d13a" binding="myPanel" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="30" y="5" width="758" height="509"/>
@@ -226,7 +226,7 @@
           <grid id="3ca04" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="54" y="179" width="746" height="20"/>
+              <xy x="6" y="157" width="746" height="20"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -258,78 +258,10 @@
           </grid>
         </children>
       </grid>
-      <grid id="36e55" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="5" left="7" bottom="7" right="7"/>
-        <constraints>
-          <xy x="0" y="293" width="758" height="88"/>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
-        </constraints>
-        <properties/>
-        <border type="etched" title="File Encoding (effective on restart)"/>
-        <children>
-          <component id="9d3a0" class="javax.swing.JCheckBox" binding="myChkUTFGuessing">
-            <constraints>
-              <xy x="13" y="53" width="399" height="22"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <margin top="2" left="0" bottom="2" right="2"/>
-              <text value="Files detected as encoded in UTF-family of encodings automatically load in UTF"/>
-            </properties>
-          </component>
-          <grid id="2aed7" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
-            <constraints>
-              <xy x="13" y="25" width="732" height="23"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <component id="a9ad9" class="javax.swing.JComboBox" binding="myCharsetNameCombo">
-                <constraints>
-                  <xy x="130" y="0" width="120" height="23"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1">
-                    <minimum-size width="120" height="-1"/>
-                  </grid>
-                </constraints>
-                <properties/>
-              </component>
-              <component id="98462" class="javax.swing.JLabel">
-                <constraints>
-                  <xy x="0" y="4" width="120" height="14"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
-                    <minimum-size width="120" height="-1"/>
-                  </grid>
-                </constraints>
-                <properties>
-                  <text value="Default encoding:"/>
-                </properties>
-              </component>
-              <hspacer id="c921b">
-                <constraints>
-                  <xy x="250" y="6" width="482" height="11"/>
-                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
-                </constraints>
-              </hspacer>
-            </children>
-          </grid>
-        </children>
-      </grid>
-      <xy id="8c6fd" binding="myDiffOptionsPanel" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
-        <constraints>
-          <xy x="0" y="386" width="758" height="20"/>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children/>
-      </xy>
       <vspacer id="4bc17">
         <constraints>
-          <xy x="373" y="406" width="11" height="103"/>
-          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+          <xy x="373" y="401" width="11" height="108"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
       <grid id="cc9bc" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -384,16 +316,106 @@
           </component>
         </children>
       </grid>
-      <xy id="f6e5a" binding="myHTTPProxyPanel" hgap="-1" vgap="-1">
+      <grid id="80a05" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="268" width="758" height="20"/>
+          <xy x="0" y="268" width="758" height="113"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
-        <border type="etched" title="HTTP Proxy"/>
-        <children/>
-      </xy>
+        <border type="none"/>
+        <children>
+          <grid id="6e0e1" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="0" y="0" width="530" height="113"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <grid id="36e55" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="5" left="7" bottom="7" right="7"/>
+                <constraints>
+                  <xy x="0" y="0" width="530" height="88"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
+                </constraints>
+                <properties/>
+                <border type="etched" title="File Encoding (effective on restart)"/>
+                <children>
+                  <component id="9d3a0" class="javax.swing.JCheckBox" binding="myChkUTFGuessing">
+                    <constraints>
+                      <xy x="13" y="53" width="399" height="22"/>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                    </constraints>
+                    <properties>
+                      <margin top="2" left="0" bottom="2" right="2"/>
+                      <text value="Files detected as encoded in UTF-family of encodings automatically load in UTF"/>
+                    </properties>
+                  </component>
+                  <grid id="2aed7" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
+                    <constraints>
+                      <xy x="13" y="25" width="504" height="23"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="a9ad9" class="javax.swing.JComboBox" binding="myCharsetNameCombo">
+                        <constraints>
+                          <xy x="130" y="0" width="120" height="23"/>
+                          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1">
+                            <minimum-size width="120" height="-1"/>
+                          </grid>
+                        </constraints>
+                        <properties/>
+                      </component>
+                      <component id="98462" class="javax.swing.JLabel">
+                        <constraints>
+                          <xy x="0" y="4" width="120" height="14"/>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
+                            <minimum-size width="120" height="-1"/>
+                          </grid>
+                        </constraints>
+                        <properties>
+                          <text value="Default encoding:"/>
+                        </properties>
+                      </component>
+                      <hspacer id="c921b">
+                        <constraints>
+                          <xy x="250" y="6" width="254" height="11"/>
+                          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+                        </constraints>
+                      </hspacer>
+                    </children>
+                  </grid>
+                </children>
+              </grid>
+              <xy id="8c6fd" binding="myDiffOptionsPanel" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <xy x="0" y="93" width="530" height="20"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </xy>
+            </children>
+          </grid>
+          <xy id="f6e5a" binding="myHTTPProxyPanel" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="540" y="0" width="218" height="113"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="etched" title="HTTP Proxy"/>
+            <children/>
+          </xy>
+        </children>
+      </grid>
     </children>
   </grid>
 </form>
