@@ -176,7 +176,11 @@ public class CollectionUtils{
         if(resolved == null) {
             return false;
         }
-        final String className = resolved.getQualifiedName();
+        return isCollectionClass(resolved);
+    }
+
+    public static boolean isCollectionClass(final PsiClass aClass){
+        final String className = aClass.getQualifiedName();
         return s_allCollectionClasses.contains(className);
     }
 

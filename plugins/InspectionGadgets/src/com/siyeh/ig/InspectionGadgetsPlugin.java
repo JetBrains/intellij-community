@@ -80,7 +80,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
             } catch (final FileNotFoundException e) {
                 return;
             }
-            out = new PrintStream(stream);   
+            out = new PrintStream(stream);
         }
         plugin.createDocumentation(out);
     }
@@ -470,6 +470,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(MissingDeprecatedAnnotationInspection.class);
         m_inspectionClasses.add(MissingOverrideAnnotationInspection.class);
         m_inspectionClasses.add(ExtendsAnnotationInspection.class);
+        m_inspectionClasses.add(ExtendsConcreteCollectionInspection.class);
     }
 
     private void registerCloneInspections(){
@@ -667,6 +668,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(CallToNativeMethodWhileLockedInspection.class);
         m_inspectionClasses.add(ObjectNotifyInspection.class);
         m_inspectionClasses.add(ThreadWithDefaultRunMethodInspection.class);
+        m_inspectionClasses.add(ExtendsThreadInspection.class);
         m_inspectionClasses.add(NakedNotifyInspection.class);
         m_inspectionClasses.add(UnconditionalWaitInspection.class);
         m_inspectionClasses.add(SystemRunFinalizersOnExitInspection.class);
