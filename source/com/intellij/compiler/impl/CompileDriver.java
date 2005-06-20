@@ -814,9 +814,10 @@ public class CompileDriver {
               compiler.generate(context, items.toArray(new GeneratingCompiler.GenerationItem[items.size()]), outputDir);
             context.getProgressIndicator().setText("Updating caches...");
             for (int idx = 0; idx < successfullyGenerated.length; idx++) {
-              GeneratingCompiler.GenerationItem item = successfullyGenerated[idx];
-              cache.update(itemToOutputPathMap.get(item), item.getValidityState());
-              filesToRefresh.add(new File(item.getPath()));
+              final GeneratingCompiler.GenerationItem item = successfullyGenerated[idx];
+              final String fullOutputPath = itemToOutputPathMap.get(item);
+              cache.update(fullOutputPath, item.getValidityState());
+              filesToRefresh.add(new File(fullOutputPath));
             }
           }
         }
