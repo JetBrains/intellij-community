@@ -447,6 +447,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     else if (myNode.getElementType() == ElementType.CLASS) {
       if (role == ChildRole.CLASS_OR_INTERFACE_KEYWORD) return defaultAlignment;
+      if (isAfterClassKeyword(child)) return null;
       if (role == ChildRole.MODIFIER_LIST) return defaultAlignment;
       if (role == ChildRole.DOC_COMMENT) return defaultAlignment;
       return null;
@@ -461,6 +462,18 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     else {
       return defaultAlignment;
     }
+  }
+
+  private boolean isAfterClassKeyword(final ASTNode child) {
+    ASTNode treePrev = child.getTreePrev();
+    while (treePrev != null) {
+      if (treePrev.getElementType() == ElementType.CLASS_KEYWORD ||
+        treePrev.getElementType() == ElementType.INTERFACE_KEYWORD) {
+        return true;
+      }
+      treePrev = treePrev.getTreePrev();
+    }
+    return false;
   }
 
   private Alignment createAlignment(final boolean alignOption, final Alignment defaultAlignment) {
