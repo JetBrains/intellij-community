@@ -35,6 +35,17 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     public int compare(Object o1, Object o2){
       LookupItem item1 = (LookupItem)o1;
       LookupItem item2 = (LookupItem)o2;
+      
+      int priority = item1.getObject() instanceof LookupValueWithPriority ? 
+                     ((LookupValueWithPriority)item1.getObject()).getPriority():
+                     LookupValueWithPriority.NORMAL;
+      
+      int priority2 = item2.getObject() instanceof LookupValueWithPriority ? 
+                     ((LookupValueWithPriority)item2.getObject()).getPriority():
+                     LookupValueWithPriority.NORMAL;
+      if (priority != priority2) {
+        return priority2 - priority;
+      }
       return item1.getLookupString().compareToIgnoreCase(item2.getLookupString());
     }
   };
