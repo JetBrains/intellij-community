@@ -63,6 +63,7 @@ public class CyclicDependenciesPanel extends JPanel {
     myUsagesPanel =
     new UsagesPanel(myProject, builder.getForwardBuilder());
 
+    mySettings.UI_SHOW_MODULES = false; //exist without modules - and doesn't with
 
     Splitter treeSplitter = new Splitter();
     treeSplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myLeftTree));
@@ -121,7 +122,7 @@ public class CyclicDependenciesPanel extends JPanel {
 
     mySettings.UI_FILTER_LEGALS = false;
     mySettings.UI_FLATTEN_PACKAGES = false;
-    mySettings.UI_SHOW_MODULES = false; //exist without modules - and doesn't with
+
     TreeUtil.selectFirstNode(myLeftTree);
   }
 
