@@ -1080,7 +1080,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     final Set<PsiParameter> newParameters = new HashSet<PsiParameter>();
     for (int i = 0; i < newParms.length; i++) {
       ParameterInfo newParm = newParms[i];
-      if (newParm.oldParameterIndex < 0) {
+      if (newParm.oldParameterIndex < 0 ||
+          !newParm.getName().equals(myChangeInfo.oldParameterNames[newParm.oldParameterIndex])) {
         newParameters.add(parameters[i]);
       }
     }
