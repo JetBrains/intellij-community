@@ -4,13 +4,15 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  *
  */
 public interface PsiImportList extends PsiElement {
-  PsiImportStatement[] getImportStatements();
-  PsiImportStaticStatement[] getImportStaticStatements();
-  PsiImportStatementBase[] getAllImportStatements();
+  @NotNull PsiImportStatement[] getImportStatements();
+  @NotNull PsiImportStaticStatement[] getImportStaticStatements();
+  @NotNull PsiImportStatementBase[] getAllImportStatements();
   PsiImportStatement findSingleClassImportStatement(String qName);
   PsiImportStatement findOnDemandImportStatement(String packageName);
   PsiImportStatementBase findSingleImportStatement(String name);

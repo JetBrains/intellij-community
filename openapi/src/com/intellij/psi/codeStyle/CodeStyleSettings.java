@@ -12,13 +12,13 @@ import org.jdom.Element;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
  *
  */
 public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
+
   public CodeStyleSettings() {
     initTypeToName();
     initImports();
@@ -39,7 +39,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     PARAMETER_TYPE_TO_NAME.addPair("*Exception", "e");
   }
 
-  private void initGeneralLocalVariable(TypeToNameMap map) {
+  private static void initGeneralLocalVariable(TypeToNameMap map) {
     map.addPair("int", "i");
     map.addPair("byte", "b");
     map.addPair("char", "c");
@@ -797,6 +797,12 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   //-----------------------------------JSPX formatting settings-----------------------------
   public boolean JSPX_ALIGN_JAVA_ACCORDING_TO_XML = true;
   public boolean JSPX_USE_HTML_FORMATTER = false;
+
+  // true if <%page import="x.y.z, x.y.t"%>
+  // false if <%page import="x.y.z"%>
+  //          <%page import="x.y.t"%>
+  public boolean JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST = false;
+
   //----------------------------------------------------------------------------------------
 
   
@@ -823,7 +829,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   private CodeStyleSettings myParentSettings;
 
-  public void readExternal(org.jdom.Element element) throws InvalidDataException {
+  public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     importOldIndentOptions(element);
   }
@@ -871,7 +877,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     }
   }
 
-  public void writeExternal(org.jdom.Element element) throws WriteExternalException {
+  public void writeExternal(Element element) throws WriteExternalException {
     final CodeStyleSettings parentSettings = myParentSettings == null ? new CodeStyleSettings() : myParentSettings;
     DefaultJDOMExternalizer.writeExternal(this, element, new DefaultJDOMExternalizer.JDOMFilter() {
       public boolean isAccept(Field field) {
@@ -951,8 +957,8 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     public void readExternal(Element element) throws InvalidDataException {
       myPatterns.clear();
       myNames.clear();
-      for (Iterator i = element.getChildren("pair").iterator(); i.hasNext();) {
-        Element e = (Element)i.next();
+      for (final Object o : element.getChildren("pair")) {
+        Element e = (Element)o;
 
         String pattern = e.getAttributeValue("type");
         String name = e.getAttributeValue("name");
@@ -1101,7 +1107,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     }
 
     public void copyFrom(PackageTable packageTable) {
-      myEntries = (ArrayList<Entry>)(packageTable.myEntries).clone();
+      myEntries = (ArrayList<Entry>)packageTable.myEntries.clone();
     }
 
     public Entry[] getEntries() {
@@ -1144,8 +1150,8 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     public void readExternal(Element element) throws InvalidDataException {
       myEntries.clear();
 
-      for (Iterator i = element.getChildren("package").iterator(); i.hasNext();) {
-        Element e = (Element)i.next();
+      for (final Object o : element.getChildren("package")) {
+        Element e = (Element)o;
         String packageName = e.getAttributeValue("name");
         boolean withSubpackages = "true".equals(e.getAttributeValue("withSubpackages"));
         if (packageName == null) {
@@ -1243,7 +1249,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
 
     public void copyFrom(ImportLayoutTable importLayoutTable) {
-      myEntries = (ArrayList<Entry>)(importLayoutTable.myEntries).clone();
+      myEntries = (ArrayList<Entry>)importLayoutTable.myEntries.clone();
     }
 
     public Entry[] getEntries() {
@@ -1273,8 +1279,8 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     public void readExternal(Element element) throws InvalidDataException {
       myEntries.clear();
       List children = element.getChildren();
-      for (Iterator i = children.iterator(); i.hasNext();) {
-        Element e = (Element)i.next();
+      for (final Object aChildren : children) {
+        Element e = (Element)aChildren;
         if ("package".equals(e.getName())) {
           String packageName = e.getAttributeValue("name");
           boolean withSubpackages = "true".equals(e.getAttributeValue("withSubpackages"));

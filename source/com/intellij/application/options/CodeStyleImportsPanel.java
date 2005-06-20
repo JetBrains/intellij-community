@@ -1,6 +1,7 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.*;
 import com.intellij.util.ui.Table;
@@ -36,6 +37,8 @@ public class CodeStyleImportsPanel extends JPanel {
   private JButton myRemovePackageFromPackagesButton;
   private Table myPackageTable;
   private CodeStyleSettings mySettings;
+  private JRadioButton myJspImportCommaSeparated;
+  private JRadioButton myJspOneImportPerDirective;
 
   public CodeStyleImportsPanel(CodeStyleSettings settings){
     mySettings = settings;
@@ -55,9 +58,50 @@ public class CodeStyleImportsPanel extends JPanel {
         new GridBagConstraints(0, 1, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                new Insets(0, 0, 0, 0), 0, 0));
 
-    add(new MyTailPanel(),
-        new GridBagConstraints(0, 2, 2, 1, 0, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+    add(createJspImportLayoutPanel(),
+        new GridBagConstraints(0, 2, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                new Insets(0, 0, 0, 0), 0, 0));
+
+    add(new MyTailPanel(),
+        new GridBagConstraints(0, 3, 2, 1, 0, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+                               new Insets(0, 0, 0, 0), 0, 0));
+  }
+
+  private JPanel createJspImportLayoutPanel() {
+    ButtonGroup buttonGroup = new ButtonGroup();
+    myJspImportCommaSeparated = new JRadioButton("Prefer comma separated import list");
+    myJspOneImportPerDirective = new JRadioButton("Prefer one import statement per page directive");
+    buttonGroup.add(myJspImportCommaSeparated);
+    buttonGroup.add(myJspOneImportPerDirective);
+    JPanel btnPanel = new JPanel(new BorderLayout());
+    btnPanel.add(myJspImportCommaSeparated, BorderLayout.NORTH);
+    btnPanel.add(myJspOneImportPerDirective, BorderLayout.CENTER);
+
+    final MultiLineLabel commaSeparatedLabel = new MultiLineLabel("<% page import=\"com.company.Boo, \n" +
+                                                                  "                 com.company.Far\"%>");
+    final MultiLineLabel oneImportPerDirectiveLabel = new MultiLineLabel("<% page import=\"com.company.Boo\"%>\n" +
+                                                                   "<% page import=\"com.company.Far\"%>");
+    final JPanel labelPanel = new JPanel(new BorderLayout());
+    labelPanel.setBorder(IdeBorderFactory.createTitledBorder("Preview"));
+
+    JPanel resultPanel = new JPanel(new BorderLayout());
+    resultPanel.add(btnPanel, BorderLayout.NORTH);
+    resultPanel.add(labelPanel, BorderLayout.CENTER);
+    resultPanel.setBorder(IdeBorderFactory.createTitledBorder("JSP imports layout"));
+
+
+    ActionListener actionListener = new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        boolean isComma = myJspImportCommaSeparated.isSelected();
+        labelPanel.removeAll();
+        labelPanel.add(isComma ? commaSeparatedLabel : oneImportPerDirectiveLabel, BorderLayout.CENTER);
+        labelPanel.repaint();
+        labelPanel.revalidate();
+      }
+    };
+    myJspImportCommaSeparated.addActionListener(actionListener);
+    myJspOneImportPerDirective.addActionListener(actionListener);
+    return resultPanel;
   }
 
   private JPanel createGeneralOptionsPanel() {
@@ -358,15 +402,13 @@ public class CodeStyleImportsPanel extends JPanel {
         CodeStyleSettings.PackageTable.Entry entry = myPackageList.getEntryAt(row);
         if(col == 0) {
           if(entry != null) {
-            CodeStyleSettings.PackageTable.Entry packageEntry = entry;
-            return packageEntry.getPackageName();
+            return entry.getPackageName();
           }
         }
 
         if(col == 1) {
           if(entry != null) {
-            CodeStyleSettings.PackageTable.Entry packageEntry = entry;
-            return packageEntry.isWithSubpackages() ? Boolean.TRUE : Boolean.FALSE;
+            return entry.isWithSubpackages() ? Boolean.TRUE : Boolean.FALSE;
           }
         }
         return null;
@@ -545,14 +587,13 @@ public class CodeStyleImportsPanel extends JPanel {
     myCbUseFQClassNamesInJavaDoc.setSelected(mySettings.USE_FQ_CLASS_NAMES_IN_JAVADOC);
     myCbUseSingleClassImports.setSelected(mySettings.USE_SINGLE_CLASS_IMPORTS);
     myCbInsertInnerClassImports.setSelected(mySettings.INSERT_INNER_CLASS_IMPORTS);
-    myClassCountField.setText(""+mySettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND);
-    myNamesCountField.setText(""+mySettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND);
+    myClassCountField.setText(Integer.toString(mySettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND));
+    myNamesCountField.setText(Integer.toString(mySettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND));
 
     myImportLayoutList.copyFrom(mySettings.IMPORT_LAYOUT_TABLE);
     CodeStyleSettings.ImportLayoutTable.Entry[] entries = myImportLayoutList.getEntries();
-    for(int i = 0; i < entries.length; i++){
-      CodeStyleSettings.ImportLayoutTable.Entry entry = entries[i];
-      if(isOtherEntry(entry)) {
+    for (CodeStyleSettings.ImportLayoutTable.Entry entry : entries) {
+      if (isOtherEntry(entry)) {
         myOtherPackageEntry = (CodeStyleSettings.ImportLayoutTable.PackageEntry)entry;
       }
     }
@@ -570,6 +611,13 @@ public class CodeStyleImportsPanel extends JPanel {
     }
     if(myPackageTable.getRowCount() > 0) {
       myPackageTable.getSelectionModel().setSelectionInterval(0, 0);
+    }
+
+    if (mySettings.JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST) {
+      myJspImportCommaSeparated.doClick();
+    }
+    else {
+      myJspOneImportPerDirective.doClick();
     }
     updateButtons();
   }
@@ -616,6 +664,8 @@ public class CodeStyleImportsPanel extends JPanel {
     }
 
     mySettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND = myPackageList;
+
+    mySettings.JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST = myJspImportCommaSeparated.isSelected();
   }
 
   public boolean isModified() {
@@ -642,6 +692,7 @@ public class CodeStyleImportsPanel extends JPanel {
 
     isModified |= isModified(myImportLayoutList, mySettings.IMPORT_LAYOUT_TABLE);
     isModified |= isModified(myPackageList, mySettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
+    isModified |= mySettings.JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST != myJspImportCommaSeparated.isSelected();
 
     return isModified;
   }
