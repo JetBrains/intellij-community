@@ -208,12 +208,14 @@ public class RefManager {
       if (!(aClass instanceof PsiTypeParameter)) {
         super.visitClass(aClass);
         RefElement refClass = RefManager.this.getReference(aClass);
-        refClass.buildReferences();
-        ArrayList children = refClass.getChildren();
-        if (children != null) {
-          for (Object aChildren : children) {
-            RefElement refChild = (RefElement)aChildren;
-            refChild.buildReferences();
+        if (refClass != null) {
+          refClass.buildReferences();
+          ArrayList children = refClass.getChildren();
+          if (children != null) {
+            for (Object aChildren : children) {
+              RefElement refChild = (RefElement)aChildren;
+              refChild.buildReferences();
+            }
           }
         }
       }
