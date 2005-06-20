@@ -5,6 +5,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 public class ExpandBooleanIntention extends Intention{
     public String getText(){
@@ -15,6 +16,7 @@ public class ExpandBooleanIntention extends Intention{
         return "Expand Boolean";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new ExpandBooleanPredicate();
     }

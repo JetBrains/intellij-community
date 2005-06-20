@@ -6,6 +6,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention{
     protected String getTextForElement(PsiElement element){
@@ -39,6 +40,7 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention{
         return "Replace Multiply with Shift";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new MultiplyByPowerOfTwoPredicate();
     }

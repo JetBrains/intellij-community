@@ -5,6 +5,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class FlipAssertLiteralIntention extends MutablyNamedIntention{
     protected String getTextForElement(PsiElement element){
@@ -25,6 +26,7 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention{
         return "Flip Assert Literal";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new AssertTrueOrFalsePredicate();
     }

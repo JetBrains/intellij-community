@@ -6,6 +6,7 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConditionalUtils;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class MergeIfAndIntention extends Intention{
     public String getText(){
@@ -16,6 +17,7 @@ public class MergeIfAndIntention extends Intention{
         return "Merge Nested Ifs To ANDed Condition";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new MergeIfAndPredicate();
     }
@@ -26,6 +28,7 @@ public class MergeIfAndIntention extends Intention{
                 (PsiJavaToken) element;
         final PsiIfStatement parentStatement =
                 (PsiIfStatement) token.getParent();
+        assert parentStatement != null;
         final PsiStatement parentThenBranch = parentStatement.getThenBranch();
         final PsiIfStatement childStatement =
                 (PsiIfStatement) ConditionalUtils.stripBraces(parentThenBranch);

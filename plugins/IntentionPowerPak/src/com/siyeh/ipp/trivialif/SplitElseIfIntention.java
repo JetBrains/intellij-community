@@ -7,6 +7,7 @@ import com.intellij.psi.PsiStatement;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 public class SplitElseIfIntention extends Intention{
     public String getText(){
@@ -17,6 +18,7 @@ public class SplitElseIfIntention extends Intention{
         return "Split Else If";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new SplitElseIfPredicate();
     }
@@ -26,6 +28,7 @@ public class SplitElseIfIntention extends Intention{
         final PsiJavaToken token = (PsiJavaToken) element;
         final PsiIfStatement parentStatement =
                 (PsiIfStatement) token.getParent();
+        assert parentStatement != null;
         final PsiStatement elseBranch = parentStatement.getElseBranch();
         final String newStatement = '{' + elseBranch.getText() + '}';
         replaceStatement(newStatement, elseBranch);

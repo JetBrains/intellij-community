@@ -5,8 +5,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 public class SplitDeclarationAndInitializationIntention extends Intention{
+    @NotNull
     protected PsiElementPredicate getElementPredicate(){
         return new SplitDeclarationAndInitializationPredicate();
     }
@@ -30,6 +32,7 @@ public class SplitDeclarationAndInitializationIntention extends Intention{
         PsiClassInitializer classInitializer =
                 elementFactory.createClassInitializer();
         final PsiClass containingClass = field.getContainingClass();
+        assert containingClass != null;
         classInitializer = (PsiClassInitializer) containingClass.addAfter(classInitializer,
                                                                           field);
         final PsiCodeBlock body = classInitializer.getBody();

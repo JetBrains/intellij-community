@@ -24,7 +24,8 @@ public class BoolUtils{
         return false;
     }
 
-    public static @Nullable PsiExpression findNegation(PsiExpression exp){
+    @Nullable
+    public static PsiExpression findNegation(PsiExpression exp){
         PsiExpression ancestor = exp;
         while(ancestor.getParent() instanceof PsiParenthesizedExpression){
             ancestor = (PsiExpression) ancestor.getParent();

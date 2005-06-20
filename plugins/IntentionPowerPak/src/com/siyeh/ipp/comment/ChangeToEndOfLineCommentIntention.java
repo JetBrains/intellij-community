@@ -5,8 +5,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 public class ChangeToEndOfLineCommentIntention extends Intention{
+    @NotNull
     protected PsiElementPredicate getElementPredicate(){
         return new CStyleCommentPredicate();
     }
@@ -29,6 +31,7 @@ public class ChangeToEndOfLineCommentIntention extends Intention{
         final PsiElementFactory factory = manager.getElementFactory();
         final String commentText = comment.getText();
         final PsiElement whitespace = comment.getNextSibling();
+        assert whitespace != null;
         final String text = commentText.substring(2, commentText.length()-2);
         final String[] lines = text.split("\n");
 
@@ -36,8 +39,8 @@ public class ChangeToEndOfLineCommentIntention extends Intention{
             final PsiComment nextComment =
                     factory.createCommentFromText("//" + lines[i].trim() ,
                                                   parent);
-             parent.addAfter(nextComment, comment);
-             parent.addAfter(whitespace.copy(), comment);
+            parent.addAfter(nextComment, comment);
+            parent.addAfter(whitespace.copy(), comment);
         }
         final PsiComment newComment =
                 factory.createCommentFromText("//" + lines[0], parent);

@@ -39,6 +39,7 @@ public class DemorgansIntention extends MutablyNamedIntention{
         PsiElement parent = exp.getParent();
         while(isConjunctionExpression(parent, tokenType)){
             exp = (PsiBinaryExpression) parent;
+            assert exp != null;
             parent = exp.getParent();
         }
         final String newExpression =

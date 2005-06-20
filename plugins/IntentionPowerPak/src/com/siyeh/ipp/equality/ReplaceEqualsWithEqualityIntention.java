@@ -5,6 +5,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceEqualsWithEqualityIntention extends Intention{
     public String getText(){
@@ -15,6 +16,7 @@ public class ReplaceEqualsWithEqualityIntention extends Intention{
         return "Replace Equals With Equality";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new EqualsPredicate();
     }

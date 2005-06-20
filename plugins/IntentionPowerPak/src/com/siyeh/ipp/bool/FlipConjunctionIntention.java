@@ -32,6 +32,7 @@ public class FlipConjunctionIntention extends MutablyNamedIntention{
         PsiElement parent = exp.getParent();
         while(isConjunctionExpression(parent, conjunctionType)){
             exp = (PsiExpression) parent;
+            assert exp != null;
             parent = exp.getParent();
         }
         final String newExpression = flipExpression(exp, conjunctionType);

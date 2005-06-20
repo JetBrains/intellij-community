@@ -4,6 +4,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceWithOperatorAssignmentIntention
         extends MutablyNamedIntention{
@@ -21,6 +22,7 @@ public class ReplaceWithOperatorAssignmentIntention
         return "Replace Assignment With Operator Assignment";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new AssignmentExpressionReplaceableWithOperatorAssigment();
     }

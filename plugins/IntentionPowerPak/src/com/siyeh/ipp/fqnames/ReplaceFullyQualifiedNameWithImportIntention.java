@@ -7,6 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceFullyQualifiedNameWithImportIntention extends Intention{
     public String getText(){
@@ -21,11 +22,12 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention{
         return new FullyQualifiedNamePredicate();
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException{
         PsiJavaCodeReferenceElement reference =
                 (PsiJavaCodeReferenceElement) element;
-        while(reference.getParent() instanceof PsiJavaCodeReferenceElement){
+        while(reference != null &&
+                reference.getParent() instanceof PsiJavaCodeReferenceElement){
             reference = (PsiJavaCodeReferenceElement) reference.getParent();
         }
 

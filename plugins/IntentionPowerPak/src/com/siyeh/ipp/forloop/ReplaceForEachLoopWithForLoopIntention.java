@@ -25,6 +25,7 @@ public class ReplaceForEachLoopWithForLoopIntention extends Intention{
         final PsiForeachStatement statement = (PsiForeachStatement) element.getParent();
 
         final StringBuffer newStatement = new StringBuffer();
+        assert statement != null;
         final PsiManager psiManager = statement.getManager();
         final Project project = psiManager.getProject();
         final CodeStyleManager codeStyleManager =

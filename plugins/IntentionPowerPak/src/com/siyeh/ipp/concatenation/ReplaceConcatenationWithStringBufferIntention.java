@@ -27,13 +27,16 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention{
         PsiElement parent = exp.getParent();
         while(ConcatenationUtils.isConcatenation(parent)){
             exp = (PsiBinaryExpression) parent;
+            assert exp != null;
             parent = exp.getParent();
         }
         final String text = exp.getText();
         final StringBuffer expString = new StringBuffer(text.length() * 3);
         if(isPartOfStringBufferAppend(exp)){
+            assert parent != null;
             final PsiMethodCallExpression methodCallExpression =
                     (PsiMethodCallExpression) parent.getParent();
+            assert methodCallExpression != null;
             final PsiReferenceExpression methodExpression =
                     methodCallExpression.getMethodExpression();
             final PsiExpression qualifierExpression =

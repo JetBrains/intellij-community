@@ -4,12 +4,14 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 public class CreateEnumSwitchBranchesIntention extends Intention{
+    @NotNull
     protected PsiElementPredicate getElementPredicate(){
         return new EnumSwitchPredicate();
     }

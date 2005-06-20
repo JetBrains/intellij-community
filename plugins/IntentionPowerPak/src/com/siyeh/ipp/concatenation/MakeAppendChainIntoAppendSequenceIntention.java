@@ -5,11 +5,13 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
+    @NotNull
     protected PsiElementPredicate getElementPredicate(){
         return new AppendChainPredicate();
     }

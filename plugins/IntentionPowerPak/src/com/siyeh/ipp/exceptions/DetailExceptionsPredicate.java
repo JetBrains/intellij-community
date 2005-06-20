@@ -22,16 +22,18 @@ class DetailExceptionsPredicate implements PsiElementPredicate{
         if(!JavaTokenType.TRY_KEYWORD.equals(tokenType)){
             return false;
         }
-        if(!(element.getParent() instanceof PsiTryStatement)){
+        final PsiElement parent = element.getParent();
+        if(!(parent instanceof PsiTryStatement)){
             return false;
         }
 
         final PsiTryStatement tryStatement =
-                (PsiTryStatement) element.getParent();
+                (PsiTryStatement) parent;
         if(ErrorUtil.containsError(tryStatement)){
             return false;
         }
         final Set<PsiType> exceptionsThrown = new HashSet<PsiType>(10);
+
         final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
         ExceptionUtils.calculateExceptionsThrownForCodeBlock(tryBlock,
                                                              exceptionsThrown);

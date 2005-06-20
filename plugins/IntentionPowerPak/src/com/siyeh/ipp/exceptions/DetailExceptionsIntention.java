@@ -26,6 +26,7 @@ public class DetailExceptionsIntention extends Intention{
         final PsiTryStatement tryStatement =
                 (PsiTryStatement) token.getParent();
 
+        assert tryStatement != null;
         final String text = tryStatement.getText();
         final int length = text.length();
         final StringBuffer newTryStatement = new StringBuffer(length);

@@ -7,6 +7,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class FlipConditionalIntention extends Intention{
     public String getText(){
@@ -17,6 +18,7 @@ public class FlipConditionalIntention extends Intention{
         return "Flip Conditional";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new FlipConditionalPredicate();
     }

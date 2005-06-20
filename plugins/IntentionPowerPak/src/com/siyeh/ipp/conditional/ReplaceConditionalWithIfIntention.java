@@ -95,6 +95,7 @@ public class ReplaceConditionalWithIfIntention extends Intention{
         final CodeStyleManager styleManager = mgr.getCodeStyleManager();
         ifElement = styleManager.reformat(ifElement);
         final PsiElement parent = ifElement.getParent();
+        assert parent != null;
         final PsiElement declarationElement =
                 parent.addBefore(declarationStatement, ifElement);
         styleManager.reformat(declarationElement);

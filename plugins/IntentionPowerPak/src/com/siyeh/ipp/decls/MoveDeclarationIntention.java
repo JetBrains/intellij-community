@@ -19,6 +19,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 public class MoveDeclarationIntention extends Intention{
+    @NotNull
     protected PsiElementPredicate getElementPredicate(){
         return new MoveDeclarationPredicate();
     }
@@ -64,6 +65,7 @@ public class MoveDeclarationIntention extends Intention{
                                                                                child);
         }
 
+        assert declaration != null;
         if(declaration.getDeclaredElements().length == 1){
             declaration.delete();
         } else{
@@ -113,6 +115,7 @@ public class MoveDeclarationIntention extends Intention{
                 newDeclaration = (PsiDeclarationStatement) block.addBefore(newDeclaration,
                                                                            statement);
                 final PsiElement parent = assignmentExpression.getParent();
+                assert parent != null;
                 parent.delete();
                 return newDeclaration;
             }

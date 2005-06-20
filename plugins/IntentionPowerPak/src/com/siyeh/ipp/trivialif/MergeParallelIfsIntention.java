@@ -5,6 +5,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 public class MergeParallelIfsIntention extends Intention{
     public String getText(){
@@ -15,6 +16,7 @@ public class MergeParallelIfsIntention extends Intention{
         return "Merge Parallel Ifs";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new MergeParallelIfsPredicate();
     }

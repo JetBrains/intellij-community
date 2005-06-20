@@ -6,6 +6,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
 
@@ -18,6 +19,7 @@ public class ConvertIntegerToHexIntention extends Intention{
         return "Convert To Hexadecimal";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new ConvertIntegerToHexPredicate();
     }

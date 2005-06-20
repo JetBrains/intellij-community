@@ -5,6 +5,7 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
 
@@ -17,6 +18,7 @@ public class ConvertIntegerToOctalIntention extends Intention{
         return "Convert To Octal";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new ConvertIntegerToOctalPredicate();
     }

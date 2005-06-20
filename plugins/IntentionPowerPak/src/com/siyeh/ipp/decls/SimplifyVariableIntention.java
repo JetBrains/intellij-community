@@ -5,6 +5,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 public class SimplifyVariableIntention extends Intention{
     public String getText(){
@@ -15,6 +16,7 @@ public class SimplifyVariableIntention extends Intention{
         return "Replace With Java Style Array Declaration";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new SimplifyVariablePredicate();
     }

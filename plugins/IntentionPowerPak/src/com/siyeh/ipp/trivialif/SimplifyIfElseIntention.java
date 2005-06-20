@@ -7,6 +7,7 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.BoolUtils;
 import com.siyeh.ipp.psiutils.ConditionalUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class SimplifyIfElseIntention extends Intention{
     public String getText(){
@@ -17,6 +18,7 @@ public class SimplifyIfElseIntention extends Intention{
         return "Simplify If Else";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new SimplifyIfElsePredicate();
     }

@@ -8,6 +8,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ControlFlowUtils;
 import com.siyeh.ipp.psiutils.DeclarationUtils;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -23,6 +24,7 @@ public class ReplaceIfWithSwitchIntention extends Intention{
         return "Replace If With Switch";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new IfToSwitchPredicate();
     }
@@ -32,6 +34,7 @@ public class ReplaceIfWithSwitchIntention extends Intention{
         final PsiJavaToken switchToken =
                 (PsiJavaToken) element;
         PsiIfStatement ifStatement = (PsiIfStatement) switchToken.getParent();
+        assert ifStatement != null;
         boolean breaksNeedRelabeled = false;
         PsiStatement breakTarget = null;
         String labelString = "";
@@ -188,9 +191,9 @@ public class ReplaceIfWithSwitchIntention extends Intention{
             final IElementType tokenType = sign.getTokenType();
             if(JavaTokenType.OROR.equals(tokenType)){
                 getValuesFromExpression( lhs, caseExpression,
-                                        values);
+                                         values);
                 getValuesFromExpression( rhs, caseExpression,
-                                        values);
+                                         values);
             } else{
                 if(EquivalenceChecker.expressionsAreEquivalent(caseExpression,
                                                                rhs)){

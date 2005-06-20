@@ -7,6 +7,7 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConditionalUtils;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceIfWithConditionalIntention extends Intention{
     public String getText(){
@@ -17,6 +18,7 @@ public class ReplaceIfWithConditionalIntention extends Intention{
         return "Replace If Else With Conditional";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new ReplaceIfWithConditionalPredicate();
     }
@@ -25,6 +27,7 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             throws IncorrectOperationException{
         final PsiJavaToken token = (PsiJavaToken) element;
         final PsiIfStatement ifStatement = (PsiIfStatement) token.getParent();
+        assert ifStatement != null;
         if(ReplaceIfWithConditionalPredicate.isReplaceableAssignment(ifStatement)){
             final PsiExpression condition = ifStatement.getCondition();
             final PsiStatement thenBranch = ifStatement.getThenBranch();

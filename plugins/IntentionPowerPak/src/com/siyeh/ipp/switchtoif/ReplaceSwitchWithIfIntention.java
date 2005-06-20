@@ -7,6 +7,7 @@ import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ControlFlowUtils;
 import com.siyeh.ipp.psiutils.SideEffectChecker;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -22,6 +23,7 @@ public class ReplaceSwitchWithIfIntention extends Intention{
         return "Replace Switch With If";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new SwitchPredicate();
     }
@@ -32,6 +34,7 @@ public class ReplaceSwitchWithIfIntention extends Intention{
                 (PsiJavaToken) element;
         final PsiSwitchStatement switchStatement =
                 (PsiSwitchStatement) switchToken.getParent();
+        assert switchStatement != null;
         final List<SwitchStatementBranch> allBranches = new ArrayList<SwitchStatementBranch>(10);
         final List<SwitchStatementBranch> openBranches = new ArrayList<SwitchStatementBranch>(10);
         SwitchStatementBranch currentBranch = null;

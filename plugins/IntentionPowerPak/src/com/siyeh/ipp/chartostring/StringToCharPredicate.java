@@ -74,6 +74,10 @@ class StringToCharPredicate implements PsiElementPredicate{
                 parent.getParent() instanceof PsiMethodCallExpression){
             final PsiMethodCallExpression methodCall =
                     (PsiMethodCallExpression) parent.getParent();
+            if(methodCall == null)
+            {
+                return false;
+            }
             final PsiReferenceExpression methodExpression =
                     methodCall.getMethodExpression();
             final PsiType type = methodExpression.getType();

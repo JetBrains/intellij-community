@@ -1,17 +1,19 @@
 package com.siyeh.ipp.comment;
 
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ChangeToCStyleCommentIntention extends Intention{
+    @NotNull
     protected PsiElementPredicate getElementPredicate(){
         return new EndOfLineCommentPredicate();
     }
@@ -32,8 +34,8 @@ public class ChangeToCStyleCommentIntention extends Intention{
         while(true){
             final PsiElement prevComment =
                     PsiTreeUtil.skipSiblingsBackward(firstComment,
-                                                    new Class[]{
-                                                        PsiWhiteSpace.class});
+                                                     new Class[]{
+                                                         PsiWhiteSpace.class});
             if(!isEndOfLineComment(prevComment)){
                 break;
             }

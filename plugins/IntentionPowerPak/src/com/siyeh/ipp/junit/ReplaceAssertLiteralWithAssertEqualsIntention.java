@@ -15,6 +15,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
         final PsiReferenceExpression methodExpression =
                 call.getMethodExpression();
         final String methodName = methodExpression.getReferenceName();
+        assert methodName != null;
         final String literal = methodName.substring("assert".length())
                 .toLowerCase();
 
@@ -45,6 +46,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention
         final PsiExpression qualifierExp =
                 methodExpression.getQualifierExpression();
         final String methodName = methodExpression.getReferenceName();
+        assert methodName != null;
         final String literal = methodName.substring("assert".length())
                 .toLowerCase();
 

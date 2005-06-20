@@ -11,17 +11,20 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.concatenation.ConcatenationUtils;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author <A href="bas@carp-technologies.nl">Bas Leijdekkers</a>
  */
 public class ConstantSubexpressionIntention extends MutablyNamedIntention{
+    @NotNull
     protected PsiElementPredicate getElementPredicate(){
         return new ConstantSubexpressionPredicate();
     }
 
     protected String getTextForElement(PsiElement element){
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) element.getParent();
+        assert binaryExpression != null;
         final PsiExpression lhs = binaryExpression.getLOperand();
         final PsiExpression leftSide;
         if(lhs instanceof PsiBinaryExpression){
@@ -48,6 +51,7 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention{
         final PsiConstantEvaluationHelper constantEvaluationHelper =
                 manager.getConstantEvaluationHelper();
         final PsiExpression expression = (PsiExpression) element.getParent();
+        assert expression !=null;
         String newExpression = "";
         final Object constantValue;
 
