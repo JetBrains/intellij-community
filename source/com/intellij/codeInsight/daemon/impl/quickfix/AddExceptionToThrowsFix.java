@@ -20,11 +20,11 @@ import java.util.*;
 /**
  * @author mike
  */
-public class AddExceptionToThrowsAction extends BaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToThrowsAction");
+public class AddExceptionToThrowsFix extends BaseIntentionAction {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToThrowsFix");
   private final PsiElement myWrongElement;
 
-  public AddExceptionToThrowsAction(PsiElement wrongElement) {
+  public AddExceptionToThrowsFix(PsiElement wrongElement) {
     myWrongElement = wrongElement;
   }
 
@@ -43,26 +43,34 @@ public class AddExceptionToThrowsAction extends BaseIntentionAction {
 
     final PsiClassType[] unhandledExceptions = filterInProjectExceptions(ExceptionUtil.getUnhandledExceptions(element), targetMethod);
 
-    boolean processSuperMethods = false;
+    addExceptionsToThrowsList(project, targetMethod, unhandledExceptions);
+  }
+
+  static void addExceptionsToThrowsList(final Project project, final PsiMethod targetMethod, final PsiClassType... unhandledExceptions) {
     final PsiMethod[] superMethods = getSuperMethods(targetMethod);
 
     boolean hasSuperMethodsWithoutExceptions = hasSuperMethodsWithoutExceptions(superMethods, unhandledExceptions);
 
+    final boolean processSuperMethods;
     if (hasSuperMethodsWithoutExceptions && superMethods.length > 0) {
       int result = Messages.showYesNoCancelDialog("Method '" + targetMethod.getName() + "' is inherited.\n" +
-         "Do you want to add exceptions to method signatures in the whole method hierarchy?", "Method Is Inherited", Messages.getQuestionIcon());
+                                                  "Do you want to add exceptions to method signatures in the whole method hierarchy?",
+                                                  "Method Is Inherited",
+                                                  Messages.getQuestionIcon());
 
       if (result == 0) processSuperMethods = true;
       else if (result == 1) processSuperMethods = false;
       else return;
     }
+    else {
+      processSuperMethods = false;
+    }
 
-    final boolean processSuperMethods1 = processSuperMethods;
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         public void run() {
           if (!CodeInsightUtil.prepareFileForWrite(targetMethod.getContainingFile())) return;
-          if (processSuperMethods1) {
+          if (processSuperMethods) {
             for (int i = 0; i < superMethods.length; i++) {
               PsiMethod superMethod = superMethods[i];
               if (!CodeInsightUtil.prepareFileForWrite(superMethod.getContainingFile())) return;
@@ -70,12 +78,12 @@ public class AddExceptionToThrowsAction extends BaseIntentionAction {
           }
 
           try {
-            processMethod(targetMethod, unhandledExceptions, project);
+            processMethod(project, targetMethod, unhandledExceptions);
 
-            if (processSuperMethods1) {
+            if (processSuperMethods) {
               for (int i = 0; i < superMethods.length; i++) {
                 PsiMethod superMethod = superMethods[i];
-                processMethod(superMethod, unhandledExceptions, project);
+                processMethod(project, superMethod, unhandledExceptions);
               }
             }
           }
@@ -87,13 +95,13 @@ public class AddExceptionToThrowsAction extends BaseIntentionAction {
     );
   }
 
-  private PsiMethod[] getSuperMethods(PsiMethod targetMethod) {
+  private static PsiMethod[] getSuperMethods(PsiMethod targetMethod) {
     List<PsiMethod> result = new ArrayList<PsiMethod>();
     _collectSuperMethods(targetMethod, result);
     return result.toArray(new PsiMethod[result.size()]);
   }
 
-  private void _collectSuperMethods(PsiMethod method, List<PsiMethod> result) {
+  private static void _collectSuperMethods(PsiMethod method, List<PsiMethod> result) {
     PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
     for (PsiMethod superMethod : superMethods) {
       result.add(superMethod);
@@ -118,7 +126,7 @@ public class AddExceptionToThrowsAction extends BaseIntentionAction {
     return false;
   }
 
-  private static void processMethod(PsiMethod targetMethod, PsiClassType[] unhandledExceptions, Project project) throws IncorrectOperationException {
+  private static void processMethod(Project project, PsiMethod targetMethod, PsiClassType[] unhandledExceptions) throws IncorrectOperationException {
     for (PsiClassType unhandledException : unhandledExceptions) {
       PsiClass exceptionClass = unhandledException.resolve();
       if (exceptionClass != null) {

@@ -1,9 +1,6 @@
 package com.intellij.codeInsight.intention.impl.config;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.PostIntentionsQuickFixAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.RemoveRedundantElseAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.*;
@@ -29,16 +26,19 @@ public class IntentionManagerImpl extends IntentionManager {
     addAction(new QuickFixAction());
     addAction(new PostIntentionsQuickFixAction());
 
-    registerIntentionAndMetaData(new SplitIfAction(), new String[]{"Control Flow"});
-    registerIntentionAndMetaData(new InvertIfConditionAction(), new String[]{"Control Flow"});
-    registerIntentionAndMetaData(new RemoveRedundantElseAction(), new String[]{"Control Flow"});
+    String[] CONTROL_FLOW_CAT = new String[]{"Control Flow"};
+    registerIntentionAndMetaData(new SplitIfAction(), CONTROL_FLOW_CAT);
+    registerIntentionAndMetaData(new InvertIfConditionAction(), CONTROL_FLOW_CAT);
+    registerIntentionAndMetaData(new RemoveRedundantElseAction(), CONTROL_FLOW_CAT);
 
-    registerIntentionAndMetaData(new CreateFieldFromParameterAction(), new String[]{"Declaration"});
-    registerIntentionAndMetaData(new AssignFieldFromParameterAction(), new String[]{"Declaration"});
-    registerIntentionAndMetaData(new CreateLocalVarFromInstanceofAction(), new String[]{"Declaration"});
-    registerIntentionAndMetaData(new ImplementAbstractClassAction(), new String[]{"Declaration"});
-    registerIntentionAndMetaData(new ImplementAbstractMethodAction(), new String[]{"Declaration"});
-    registerIntentionAndMetaData(new SplitDeclarationAction(), new String[]{"Declaration"});
+    String[] DECLARATION_CAT = new String[]{"Declaration"};
+    registerIntentionAndMetaData(new CreateFieldFromParameterAction(), DECLARATION_CAT);
+    registerIntentionAndMetaData(new AssignFieldFromParameterAction(), DECLARATION_CAT);
+    registerIntentionAndMetaData(new CreateLocalVarFromInstanceofAction(), DECLARATION_CAT);
+    registerIntentionAndMetaData(new ImplementAbstractClassAction(), DECLARATION_CAT);
+    registerIntentionAndMetaData(new ImplementAbstractMethodAction(), DECLARATION_CAT);
+    registerIntentionAndMetaData(new SplitDeclarationAction(), DECLARATION_CAT);
+    registerIntentionAndMetaData(new AddRuntimeExceptionToThrowsAction(), DECLARATION_CAT);
 
     registerIntentionAndMetaData(new SimplifyBooleanExpressionAction(), new String[]{"Boolean"});
 

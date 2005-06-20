@@ -645,7 +645,7 @@ public class HighlightUtil {
                                                       fixRange,
                                                       getUnhandledExceptionsDescriptor(unhandledExceptions));
       QuickFixAction.registerQuickFixAction(errorResult, new AddExceptionToCatchAction(), null);
-      QuickFixAction.registerQuickFixAction(errorResult, new AddExceptionToThrowsAction(element), null);
+      QuickFixAction.registerQuickFixAction(errorResult, new AddExceptionToThrowsFix(element), null);
       QuickFixAction.registerQuickFixAction(errorResult, new SurroundWithTryCatchAction(element), null);
       if (unhandledExceptions.length == 1) {
         QuickFixAction.registerQuickFixAction(errorResult, new GeneralizeCatchFix(element, unhandledExceptions[0]), null);
