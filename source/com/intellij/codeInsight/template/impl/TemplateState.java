@@ -19,12 +19,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspUtil;
+import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.lang.StdLanguages;
 
 import java.awt.*;
 import java.util.*;
@@ -107,8 +111,8 @@ public class TemplateState {
     }
 
     //Avoid the leak of the editor
-     releaseEditor();
-     myDocument = null;
+    releaseEditor();
+    myDocument = null;
   }
 
   public boolean isToProcessTab() {
@@ -118,11 +122,12 @@ public class TemplateState {
   private void setCurrentVariableNumber(int variableNumber) {
     int prevSegmentNumber = getCurrentSegmentNumber();
     myCurrentVariableNumber = variableNumber;
-    ((DocumentEx) myDocument).setStripTrailingSpacesEnabled(variableNumber < 0);
+    ((DocumentEx)myDocument).setStripTrailingSpacesEnabled(variableNumber < 0);
     if (variableNumber < 0) {
       myCurrentSegmentNumber = -1;
       releaseAll();
-    } else {
+    }
+    else {
       myCurrentSegmentNumber = getCurrentSegmentNumber();
       if (myCurrentSegmentNumber >= 0) {
         mySegments.setSegmentGreedy(myCurrentSegmentNumber, true);
@@ -135,7 +140,7 @@ public class TemplateState {
 
   public TextResult getVariableValue(String variableName) {
     if (variableName.equals(TemplateImpl.SELECTION)) {
-      return new TextResult((String) getProperties().get(ExpressionContext.SELECTION));
+      return new TextResult((String)getProperties().get(ExpressionContext.SELECTION));
     }
     if (variableName.equals(TemplateImpl.END)) {
       return new TextResult("");
@@ -199,27 +204,27 @@ public class TemplateState {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     UndoManager.getInstance(myProject).undoableActionPerformed(
-        new UndoableAction() {
-          public void undo() throws UnexpectedUndoException {
-            if (myDocument != null) {
-              setCurrentVariableNumber(-1);
-            }
-          }
-
-          public void redo() throws UnexpectedUndoException {
-            //TODO:
-            // throw new UnexpectedUndoException("Not implemented");
-          }
-
-          public DocumentReference[] getAffectedDocuments() {
-            if (myDocument == null) return new DocumentReference[0];
-            return new DocumentReference[]{DocumentReferenceByDocument.createDocumentReference(myDocument)};
-          }
-
-          public boolean isComplex() {
-            return false;
+      new UndoableAction() {
+        public void undo() throws UnexpectedUndoException {
+          if (myDocument != null) {
+            setCurrentVariableNumber(-1);
           }
         }
+
+        public void redo() throws UnexpectedUndoException {
+          //TODO:
+          // throw new UnexpectedUndoException("Not implemented");
+        }
+
+        public DocumentReference[] getAffectedDocuments() {
+          if (myDocument == null) return new DocumentReference[0];
+          return new DocumentReference[]{DocumentReferenceByDocument.createDocumentReference(myDocument)};
+        }
+
+        public boolean isComplex() {
+          return false;
+        }
+      }
     );
     myTemplateIndented = false;
     myCurrentVariableNumber = -1;
@@ -227,9 +232,12 @@ public class TemplateState {
     myTemplate = template;
 
     int caretOffset = myEditor.getCaretModel().getOffset();
+    preprocessTemplate(PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument), myEditor.getCaretModel().getOffset());
+
     if (template.isInline()) {
       myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset + template.getTemplateText().length());
-    } else {
+    }
+    else {
       myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset);
     }
     myTemplateRange.setGreedyToLeft(true);
@@ -238,32 +246,49 @@ public class TemplateState {
     processAllExpressions(template);
   }
 
+  private void preprocessTemplate(final PsiFile file, final int caretOffset) {
+    if (file instanceof JspFile) {
+      /*try {
+        JspUtil.escapeCharsInJspContext(((JspFile)file), caretOffset, myTemplate.getTemplateText());
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }*/
+    }
+  }
+
   private void processAllExpressions(final TemplateImpl template) {
     ApplicationManager.getApplication().runWriteAction(
-        new Runnable() {
-          public void run() {
-            toProcessChangedUpdate = false;
-            if (!template.isInline()) myDocument.insertString(myTemplateRange.getStartOffset(), template.getTemplateText());
-            for (int i = 0; i < template.getSegmentsCount(); i++) {
-              int segmentOffset = myTemplateRange.getStartOffset() + template.getSegmentOffset(i);
-              mySegments.addSegment(segmentOffset, segmentOffset);
-            }
-            toProcessChangedUpdate = true;
-            calcResults(false);
-            calcResults(false);  //Fixed SCR #[vk500] : all variables should be recalced twice on start.
-            doReformat();
+      new Runnable() {
+        public void run() {
+          toProcessChangedUpdate = false;
+          if (!template.isInline()) myDocument.insertString(myTemplateRange.getStartOffset(), template.getTemplateText());
+          for (int i = 0; i < template.getSegmentsCount(); i++) {
+            int segmentOffset = myTemplateRange.getStartOffset() + template.getSegmentOffset(i);
+            mySegments.addSegment(segmentOffset, segmentOffset);
+          }
 
-            int nextVariableNumber = getNextVariableNumber(-1);
-            if (nextVariableNumber == -1) {
-              finishTemplateEditing();
-            } else {
-              setCurrentVariableNumber(nextVariableNumber);
-              initTabStopHighlighters();
-              initListeners();
-              focusCurrentExpression();
-            }
+          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+
+          LOG.assertTrue(!documentManager.isUncommited(myDocument));
+
+          toProcessChangedUpdate = true;
+          calcResults(false);
+          calcResults(false);  //Fixed SCR #[vk500] : all variables should be recalced twice on start.
+          doReformat();
+
+          int nextVariableNumber = getNextVariableNumber(-1);
+          if (nextVariableNumber == -1) {
+            finishTemplateEditing();
+          }
+          else {
+            setCurrentVariableNumber(nextVariableNumber);
+            initTabStopHighlighters();
+            initListeners();
+            focusCurrentExpression();
           }
         }
+      }
     );
   }
 
@@ -286,7 +311,8 @@ public class TemplateState {
 
     if (myChangesFlag) {
       setCurrentVariableNumber(-1);
-    } else {
+    }
+    else {
       if (!mySegments.isInvalid()) {
         toProcessChangedUpdate = false;
         calcResults(true);
@@ -345,83 +371,87 @@ public class TemplateState {
           return 0;
         }
 
-        public void setPrefix(String prefix) {}
+        public void setPrefix(String prefix) {
+        }
 
         public void itemSelected(LookupItem item) {
         }
       };
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                if (myEditor == null) return;
+        public void run() {
+          if (myEditor == null) return;
 
-                final LookupManager lookupManager = LookupManager.getInstance(myProject);
-                if (lookupManager.isDisposed()) return;
-                final Lookup lookup = lookupManager.showLookup(myEditor, lookupItems, "", preferencePolicy,
-                    new DefaultCharFilter(psiFile));
-                lookup.setCurrentItem(lookupItems[0]); // [Valentin] not absolutely correct but all existing macros return the first item as the result
-                toProcessTab = false;
-                lookup.addLookupListener(
-                    new LookupAdapter() {
-                      public void lookupCanceled(LookupEvent event) {
-                        lookup.removeLookupListener(this);
-                        toProcessTab = true;
-                      }
-
-                      public void itemSelected(LookupEvent event) {
-                        lookup.removeLookupListener(this);
-                        toProcessTab = true;
-
-                        final LookupItem item = event.getItem();
-
-                        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-                        Integer bracketCount = (Integer) item.getAttribute(LookupItem.BRACKETS_COUNT_ATTR);
-                        if (bracketCount != null) {
-                          StringBuffer tail = new StringBuffer();
-                          for (int i = 0; i < bracketCount.intValue(); i++) {
-                            tail.append("[]");
-                          }
-                          EditorModificationUtil.insertStringAtCaret(myEditor, tail.toString());
-                          PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-                        }
-
-                        updateTypeBindings(item.getObject(), psiFile, context);
-
-                        char c = event.getCompletionChar();
-                        if (c == '.') {
-                          EditorModificationUtil.insertStringAtCaret(myEditor, ".");
-                          AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
-                          return;
-                        }
-
-                        if (item.getAttribute(Expression.AUTO_POPUP_NEXT_LOOKUP) != null) {
-                          AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
-                          return;
-                        }
-
-                        if (!isFinished()) {
-                          toProcessChangedUpdate = false;
-                          calcResults(true);
-                          toProcessChangedUpdate = true;
-                        }
-
-                        nextTab();
-                      }
-                    }
-                );
+          final LookupManager lookupManager = LookupManager.getInstance(myProject);
+          if (lookupManager.isDisposed()) return;
+          final Lookup lookup = lookupManager.showLookup(myEditor, lookupItems, "", preferencePolicy,
+                                                         new DefaultCharFilter(psiFile));
+          lookup
+            .setCurrentItem(
+              lookupItems[0]); // [Valentin] not absolutely correct but all existing macros return the first item as the result
+          toProcessTab = false;
+          lookup.addLookupListener(
+            new LookupAdapter() {
+              public void lookupCanceled(LookupEvent event) {
+                lookup.removeLookupListener(this);
+                toProcessTab = true;
               }
-            });
-    } else {
+
+              public void itemSelected(LookupEvent event) {
+                lookup.removeLookupListener(this);
+                toProcessTab = true;
+
+                final LookupItem item = event.getItem();
+
+                PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+                Integer bracketCount = (Integer)item.getAttribute(LookupItem.BRACKETS_COUNT_ATTR);
+                if (bracketCount != null) {
+                  StringBuffer tail = new StringBuffer();
+                  for (int i = 0; i < bracketCount.intValue(); i++) {
+                    tail.append("[]");
+                  }
+                  EditorModificationUtil.insertStringAtCaret(myEditor, tail.toString());
+                  PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
+                }
+
+                updateTypeBindings(item.getObject(), psiFile, context);
+
+                char c = event.getCompletionChar();
+                if (c == '.') {
+                  EditorModificationUtil.insertStringAtCaret(myEditor, ".");
+                  AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
+                  return;
+                }
+
+                if (item.getAttribute(Expression.AUTO_POPUP_NEXT_LOOKUP) != null) {
+                  AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
+                  return;
+                }
+
+                if (!isFinished()) {
+                  toProcessChangedUpdate = false;
+                  calcResults(true);
+                  toProcessChangedUpdate = true;
+                }
+
+                nextTab();
+              }
+            }
+          );
+        }
+      });
+    }
+    else {
       Result result = expressionNode.calculateResult(context);
       if (result instanceof PsiElementResult) {
-        updateTypeBindings(((PsiElementResult) result).getElement(), psiFile, context);
+        updateTypeBindings(((PsiElementResult)result).getElement(), psiFile, context);
       }
       if (result instanceof PsiTypeResult) {
-        updateTypeBindings(((PsiTypeResult) result).getType(), psiFile, context);
+        updateTypeBindings(((PsiTypeResult)result).getType(), psiFile, context);
       }
       if (result instanceof InvokeActionResult) {
-        ((InvokeActionResult) result).getAction().run();
+        ((InvokeActionResult)result).getAction().run();
       }
     }
     focusCurrentHighlighter(true);
@@ -431,9 +461,10 @@ public class TemplateState {
   private void updateTypeBindings(Object item, PsiFile file, ExpressionContext context) {
     PsiClass aClass = null;
     if (item instanceof PsiClass) {
-      aClass = (PsiClass) item;
-    } else if (item instanceof PsiType) {
-      aClass = PsiUtil.resolveClassInType(((PsiType) item));
+      aClass = (PsiClass)item;
+    }
+    else if (item instanceof PsiType) {
+      aClass = PsiUtil.resolveClassInType(((PsiType)item));
     }
 
     if (aClass != null) {
@@ -445,20 +476,21 @@ public class TemplateState {
           if (method != null) {
             PsiTypeParameterList paramList = method.getTypeParameterList();
             PsiTypeParameter[] params = paramList.getTypeParameters();
-            for (int i = 0; i < params.length; i++) {
-              PsiTypeParameter param = params[i];
+            for (PsiTypeParameter param : params) {
               if (param.getName().equals(aClass.getName())) return;
             }
             try {
               toProcessChangedUpdate = false;
               paramList.add(aClass.copy());
               toProcessChangedUpdate = true;
-            } catch (IncorrectOperationException e) {
+            }
+            catch (IncorrectOperationException e) {
               LOG.error(e);
             }
           }
         }
-      } else {
+      }
+      else {
         TextRange range = getCurrentVariableRange();
         if (range != null) {
           addImportForClass(aClass, range.getStartOffset(), range.getEndOffset());
@@ -470,40 +502,41 @@ public class TemplateState {
 
   private void calcResults(final boolean isQuick) {
     ApplicationManager.getApplication().runWriteAction(
-        new Runnable() {
-          public void run() {
-            BitSet calcedSegments = new BitSet();
+      new Runnable() {
+        public void run() {
+          BitSet calcedSegments = new BitSet();
 
-            do {
-              calcedSegments.clear();
-              for (int i = myCurrentVariableNumber + 1; i < myTemplate.getVariableCount(); i++) {
-                String variableName = myTemplate.getVariableNameAt(i);
-                int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
-                if (segmentNumber < 0) continue;
-                Expression expression = myTemplate.getExpressionAt(i);
-                Expression defaultValue = myTemplate.getDefaultValueAt(i);
-                String oldValue = getVariableValue(variableName).getText();
-                recalcSegment(segmentNumber, isQuick, expression, defaultValue);
+          do {
+            calcedSegments.clear();
+            for (int i = myCurrentVariableNumber + 1; i < myTemplate.getVariableCount(); i++) {
+              String variableName = myTemplate.getVariableNameAt(i);
+              int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
+              if (segmentNumber < 0) continue;
+              Expression expression = myTemplate.getExpressionAt(i);
+              Expression defaultValue = myTemplate.getDefaultValueAt(i);
+              String oldValue = getVariableValue(variableName).getText();
+              recalcSegment(segmentNumber, isQuick, expression, defaultValue);
+              String newValue = getVariableValue(variableName).getText();
+              if (!newValue.equals(oldValue)) {
+                calcedSegments.set(segmentNumber);
+              }
+            }
+
+            for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
+              if (!calcedSegments.get(i)) {
+                String variableName = myTemplate.getSegmentName(i);
                 String newValue = getVariableValue(variableName).getText();
-                if (!newValue.equals(oldValue)) {
-                  calcedSegments.set(segmentNumber);
-                }
+                int start = mySegments.getSegmentStart(i);
+                int end = mySegments.getSegmentEnd(i);
+                toProcessChangedUpdate = false;
+                replaceString(newValue, start, end, i);
+                toProcessChangedUpdate = true;
               }
-
-              for (int i = 0; i < myTemplate.getSegmentsCount(); i++) {
-                if (!calcedSegments.get(i)) {
-                  String variableName = myTemplate.getSegmentName(i);
-                  String newValue = getVariableValue(variableName).getText();
-                  int start = mySegments.getSegmentStart(i);
-                  int end = mySegments.getSegmentEnd(i);
-                  toProcessChangedUpdate = false;
-                  replaceString(newValue, start, end, i);
-                  toProcessChangedUpdate = true;
-                }
-              }
-            } while (!calcedSegments.isEmpty());
+            }
           }
+          while (!calcedSegments.isEmpty());
         }
+      }
     );
   }
 
@@ -515,11 +548,12 @@ public class TemplateState {
     Result result;
     if (isQuick) {
       result = expressionNode.calculateQuickResult(context);
-    } else {
+    }
+    else {
       result = expressionNode.calculateResult(context);
       if (expressionNode instanceof ConstantNode) {
         if (result instanceof TextResult) {
-          TextResult text = (TextResult) result;
+          TextResult text = (TextResult)result;
           if (text.getText().equals("") && defaultValue != null) {
             result = defaultValue.calculateResult(context);
           }
@@ -538,7 +572,7 @@ public class TemplateState {
     String newValue = result.toString();
     if (newValue == null) newValue = "";
 
-    if (element instanceof PsiJavaToken && ((PsiJavaToken) element).getTokenType() == JavaTokenType.STRING_LITERAL) {
+    if (element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.STRING_LITERAL) {
       newValue = StringUtil.escapeStringCharacters(newValue);
     }
 
@@ -561,7 +595,9 @@ public class TemplateState {
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (result instanceof PsiTypeResult) updateTypeBindings(((PsiTypeResult) result).getType(), psiFile, context);
+      if (result instanceof PsiTypeResult) {
+        updateTypeBindings(((PsiTypeResult)result).getType(), psiFile, context);
+      }
       else if (result instanceof PsiClass) updateTypeBindings(result, psiFile, context);
     }
 
@@ -669,8 +705,8 @@ public class TemplateState {
     int selEnd = myTemplate.getSelectionEndSegmentNumber();
     if (selStart >= 0 && selEnd >= 0) {
       myEditor.getSelectionModel().setSelection(
-          mySegments.getSegmentStart(selStart),
-          mySegments.getSegmentStart(selEnd)
+        mySegments.getSegmentStart(selStart),
+        mySegments.getSegmentStart(selEnd)
       );
     }
 
@@ -737,7 +773,7 @@ public class TemplateState {
           Expression e = myTemplate.getExpressionAt(j);
           String marker = "a";
           if (e instanceof MacroCallNode) {
-            marker = ((MacroCallNode) e).getMacro().getDefaultValue();
+            marker = ((MacroCallNode)e).getMacro().getDefaultValue();
           }
           int start = mySegments.getSegmentStart(i);
           myDocument.insertString(start, marker);
@@ -762,7 +798,7 @@ public class TemplateState {
           Expression e = myTemplate.getExpressionAt(j);
           String marker = "a"; //was default
           if (e instanceof MacroCallNode) {
-            marker = ((MacroCallNode) e).getMacro().getDefaultValue();
+            marker = ((MacroCallNode)e).getMacro().getDefaultValue();
           }
           myDocument.deleteString(mySegments.getSegmentStart(index), mySegments.getSegmentStart(index) + marker.length());
           break;
@@ -790,17 +826,20 @@ public class TemplateState {
 
   private RangeHighlighter getSegmentHighlighter(int segmentNumber, boolean isSelected, boolean isEnd) {
     TextAttributes attributes = isSelected
-        ? new TextAttributes(null, null, Color.red, EffectType.BOXED, 0)
-        : new TextAttributes();
+                                ? new TextAttributes(null, null, Color.red, EffectType.BOXED, 0)
+                                : new TextAttributes();
     TextAttributes endAttributes = new TextAttributes();
 
-    RangeHighlighter segmentHighlighter = null;
+    RangeHighlighter segmentHighlighter;
     int start = mySegments.getSegmentStart(segmentNumber);
     int end = mySegments.getSegmentEnd(segmentNumber);
     if (isEnd) {
-      segmentHighlighter = myEditor.getMarkupModel().addRangeHighlighter(start, end, HighlighterLayer.LAST + 1, endAttributes, HighlighterTargetArea.EXACT_RANGE);
-    } else {
-      segmentHighlighter = myEditor.getMarkupModel().addRangeHighlighter(start, end, HighlighterLayer.LAST + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
+      segmentHighlighter = myEditor.getMarkupModel()
+        .addRangeHighlighter(start, end, HighlighterLayer.LAST + 1, endAttributes, HighlighterTargetArea.EXACT_RANGE);
+    }
+    else {
+      segmentHighlighter = myEditor.getMarkupModel()
+        .addRangeHighlighter(start, end, HighlighterLayer.LAST + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
     }
     segmentHighlighter.setGreedyToLeft(true);
     segmentHighlighter.setGreedyToRight(true);
@@ -834,7 +873,8 @@ public class TemplateState {
           PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
           codeStyleManager.shortenClassReferences(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
           toProcessChangedUpdate = true;
-        } catch (IncorrectOperationException e) {
+        }
+        catch (IncorrectOperationException e) {
           LOG.error(e);
         }
       }
@@ -850,16 +890,19 @@ public class TemplateState {
           }
           codeStyleManager.reformatRange(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset(), true);
 
-          if (marker != null && marker.isValid()) { //[ven] TODO: [max] correct javadoc reformatting to eliminate isValid() check!!!
+          if (marker != null && marker.isValid()) {
+            //[ven] TODO: [max] correct javadoc reformatting to eliminate isValid() check!!!
             TextRange range = marker.getTextRange();
             mySegments.replaceSegmentAt(endSegmentNumber, range.getStartOffset(), range.getEndOffset());
             myDocument.deleteString(range.getStartOffset(), range.getEndOffset());
           }
           toProcessChangedUpdate = true;
-        } catch (IncorrectOperationException e) {
+        }
+        catch (IncorrectOperationException e) {
           LOG.error(e);
         }
-      } else if (myTemplate.isToIndent()) {
+      }
+      else if (myTemplate.isToIndent()) {
         if (!myTemplateIndented) {
           smartIndent(myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
           myTemplateIndented = true;
@@ -911,8 +954,8 @@ public class TemplateState {
 
   private void fireTemplateFinished() {
     TemplateStateListener[] listeners = myListeners.toArray(new TemplateStateListener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].templateFinished(myTemplate);
+    for (TemplateStateListener listener : listeners) {
+      listener.templateFinished(myTemplate);
     }
   }
 
@@ -938,13 +981,14 @@ public class TemplateState {
         if (!(tmp instanceof PsiJavaCodeReferenceElement) || tmp.getTextRange().getEndOffset() > endOffset) break;
         parent = tmp;
       }
-      if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement) parent).isQualified()) {
-        final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement) parent;
+      if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)parent).isQualified()) {
+        final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)parent;
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             try {
               ref.bindToElement(aClass);
-            } catch (IncorrectOperationException e) {
+            }
+            catch (IncorrectOperationException e) {
               LOG.error(e);
             }
           }
