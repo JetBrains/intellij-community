@@ -87,7 +87,7 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
           ApplicationManager.getApplication().saveAll();
         }
 
-        final FilePath[] roots = filterDescindingFiles(myScopeInfo.getRoots(context), project);
+        final FilePath[] roots = filterDescindingFiles(filterRoots(myScopeInfo.getRoots(context), context), project);
 
         final Map<UpdateEnvironment, Collection<FilePath>> updateEnvToVirtualFiles = createEnvToFilesMap(roots, project);
 
@@ -271,6 +271,23 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
     return false;
   }
 
+  private final FilePath[] filterRoots(FilePath[] roots, VcsContext vcsContext) {
+    final ArrayList<FilePath> result = new ArrayList<FilePath>();
+    for (int i = 0; i < roots.length; i++) {
+      FilePath file = roots[i];
+      AbstractVcs vcs = VcsUtil.getVcsFor(vcsContext.getProject(), file);
+      if (vcs != null) {
+        if (vcs.fileExistsInVcs(file)) {
+          UpdateEnvironment updateEnvironment = myActionInfo.getEnvironment(vcs);
+          if (updateEnvironment != null) {
+            result.add(file);
+          }
+        }
+      }
+    }
+    return result.toArray(new FilePath[result.size()]);
+  }
+
   protected void update(VcsContext vcsContext, Presentation presentation) {
     Project project = vcsContext.getProject();
 
@@ -287,29 +304,11 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
       presentation.setVisible(true);
       presentation.setEnabled(true);
 
-      FilePath[] roots = myScopeInfo.getRoots(vcsContext);
+      FilePath[] roots = filterRoots(myScopeInfo.getRoots(vcsContext), vcsContext);
       if (roots == null || roots.length == 0) {
         presentation.setVisible(false);
         presentation.setEnabled(false);
         return;
-      }
-      if (roots.length > 0) {
-        for (int i = 0; i < roots.length; i++) {
-          FilePath file = roots[i];
-          AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
-          if (vcs == null) {
-            presentation.setVisible(false);
-            presentation.setEnabled(false);
-            return;
-          }
-          UpdateEnvironment updateEnvironment = myActionInfo.getEnvironment(vcs);
-          if (updateEnvironment == null) {
-            presentation.setVisible(false);
-            presentation.setEnabled(false);
-            return;
-          }
-
-        }
       }
     } else {
       presentation.setVisible(false);
