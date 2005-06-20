@@ -246,14 +246,15 @@ public class TemplateState {
     processAllExpressions(template);
   }
 
-  private void preprocessTemplate(final PsiFile file, final int caretOffset) {
+  private void preprocessTemplate(final PsiFile file, int caretOffset) {
     if (file instanceof JspFile) {
-      /*try {
-        JspUtil.escapeCharsInJspContext(((JspFile)file), caretOffset, myTemplate.getTemplateText());
+      try {
+        caretOffset += JspUtil.escapeCharsInJspContext(((JspFile)file), caretOffset, myTemplate.getTemplateText());
+        myEditor.getCaretModel().moveToOffset(caretOffset);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
-      }*/
+      }
     }
   }
 
@@ -270,7 +271,7 @@ public class TemplateState {
 
           PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
 
-          LOG.assertTrue(!documentManager.isUncommited(myDocument));
+          documentManager.commitDocument(myDocument);
 
           toProcessChangedUpdate = true;
           calcResults(false);
