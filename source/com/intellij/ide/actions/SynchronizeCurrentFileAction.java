@@ -7,20 +7,16 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VirtualFile;
 
 
 public class SynchronizeCurrentFileAction extends AnAction {
 
   public void update(AnActionEvent e) {
-    hideFromProjectViewOnWindows(e);
-
     final VirtualFile[] files = getFiles(e);
     if (files != null && files.length > 0) {
       e.getPresentation().setEnabled(true);
@@ -34,21 +30,14 @@ public class SynchronizeCurrentFileAction extends AnAction {
     }
   }
 
-  private void hideFromProjectViewOnWindows(final AnActionEvent e) {
-    if (!SystemInfo.isUnix && ActionPlaces.PROJECT_VIEW_POPUP.equals(e.getPlace())) {
-      e.getPresentation().setVisible(false);
-    }
-  }
-
   public void actionPerformed(final AnActionEvent e) {
     final VirtualFile[] files = getFiles(e);
-    final FileStatusManager statusManager = FileStatusManager.getInstance(getProject(e));
 
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile file = files[i];
+    for (VirtualFile file : files) {
       if (file.isDirectory()) {
         final int response = Messages.showYesNoDialog(getProject(e),
-                                                      "You are trying to recursively synchronize a directory. This may take some time.\n Are you sure to continue?",
+                                                      "You are trying to recursively synchronize a directory. This may take some time." +
+                                                      "\n Are you sure to continue?",
                                                       "Synchronize files",
                                                       Messages.getQuestionIcon());
         if (response == 1) {
@@ -56,7 +45,6 @@ public class SynchronizeCurrentFileAction extends AnAction {
         }
       }
     }
-
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -67,18 +55,17 @@ public class SynchronizeCurrentFileAction extends AnAction {
       }
     });
 
-    for (int i = 0; i < files.length; i++) {
-      statusManager.fileStatusChanged(files[i]);
+    final FileStatusManager statusManager = FileStatusManager.getInstance(getProject(e));
+    for (VirtualFile file : files) {
+      statusManager.fileStatusChanged(file);
     }
-
   }
 
-  private Project getProject(AnActionEvent event) {
+  private static Project getProject(AnActionEvent event) {
     return (Project)event.getDataContext().getData(DataConstants.PROJECT);
   }
 
-  private VirtualFile[] getFiles(final AnActionEvent e) {
+  private static VirtualFile[] getFiles(final AnActionEvent e) {
     return (VirtualFile[])e.getDataContext().getData(DataConstants.VIRTUAL_FILE_ARRAY);
   }
-
 }
