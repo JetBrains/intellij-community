@@ -54,7 +54,7 @@ public class TemplateBuilder {
    * Adds end variable after the specified element
    */
   public void setEndVariableAfter(PsiElement element) {
-    myElements.remove(myEndElement);
+    if (myEndElement != null) myElements.remove(myEndElement);
     element = element.getNextSibling();
     myEndElement = element;
     myElements.add(element);
