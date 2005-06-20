@@ -18,14 +18,12 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.WeakList;
 import org.jdom.Element;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Iterator;
 
 public class CodeFoldingManagerImpl extends CodeFoldingManager implements ProjectComponent {
   private final Project myProject;
@@ -33,7 +31,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   private EditorFactoryListener myEditorFactoryListener;
   private EditorMouseMotionAdapter myMouseMotionListener;
 
-  private WeakList myDocumentsWithFoldingInfo = new WeakList();
+  private WeakList<Document> myDocumentsWithFoldingInfo = new WeakList<Document>();
 
   private final Key FOLDING_INFO_IN_DOCUMENT_KEY = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
 
@@ -48,8 +46,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   public void initComponent() { }
 
   public void disposeComponent() {
-    for (Iterator iterator = myDocumentsWithFoldingInfo.iterator(); iterator.hasNext();) {
-      Document document = (Document)iterator.next();
+    for (Document document : myDocumentsWithFoldingInfo) {
       if (document != null) {
         document.putUserData(FOLDING_INFO_IN_DOCUMENT_KEY, null);
       }
@@ -66,7 +63,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
         final Document document = editor.getDocument();
 
         PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        if (file == null || file instanceof XmlFile) return;
+        if (file == null) return;
         PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
         Runnable operation = new Runnable() {
@@ -118,7 +115,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       public void mouseMoved(EditorMouseEvent e) {
         if (e.getArea() != EditorMouseEventArea.FOLDING_OUTLINE_AREA) return;
         LightweightHint hint = null;
-        FoldRegion fold = null;
+        FoldRegion fold;
         try {
           Editor editor = e.getEditor();
           if (PsiDocumentManager.getInstance(myProject).isUncommited(editor.getDocument())) return;

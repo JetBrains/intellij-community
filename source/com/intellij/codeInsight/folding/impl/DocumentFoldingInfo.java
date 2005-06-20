@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
@@ -40,17 +41,16 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
 
     EditorFoldingInfo info = EditorFoldingInfo.get(editor);
     FoldRegion[] foldRegions = editor.getFoldingModel().getAllFoldRegions();
-    for (int i = 0; i < foldRegions.length; i++) {
-      FoldRegion region = foldRegions[i];
+    for (FoldRegion region : foldRegions) {
       PsiElement element = info.getPsiElement(region);
       boolean expanded = region.isExpanded();
       boolean collapseByDefault = element != null && FoldingPolicy.isCollapseByDefault(element);
-      if (collapseByDefault != !expanded || element == null){
-        if (element != null){
+      if (collapseByDefault != !expanded || element == null) {
+        if (element != null) {
           SmartPsiElementPointer pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element);
           mySmartPointersOrRangeMarkers.add(pointer);
         }
-        else if (region.isValid()){
+        else if (region.isValid()) {
           mySmartPointersOrRangeMarkers.add(region);
           String placeholderText = region.getPlaceholderText();
           if (placeholderText == null) placeholderText = DEFAULT_PLACEHOLDER;
@@ -62,12 +62,15 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
   }
 
   void setToEditor(Editor editor) {
+    LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
+    if (PsiManager.getInstance(myProject).isDisposed()) return;
+
     for(int i = 0; i < mySmartPointersOrRangeMarkers.size(); i++){
       Object o = mySmartPointersOrRangeMarkers.get(i);
       if (o instanceof SmartPsiElementPointer){
         SmartPsiElementPointer pointer = (SmartPsiElementPointer)o;
         PsiElement element = pointer.getElement();
-        if (element == null || element.getManager().isDisposed()) continue;
+        if (element == null) continue;
         FoldRegion region = FoldingUtil.findFoldRegion(editor, element);
         if (region != null){
           boolean state = myExpandedStates.get(i).booleanValue();

@@ -2,12 +2,13 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 
 class FoldingUtil {
 
@@ -20,11 +21,10 @@ class FoldingUtil {
 
   public static FoldRegion findFoldRegion(Editor editor, int startOffset, int endOffset) {
     FoldRegion[] foldRegions = ((FoldingModelEx)editor.getFoldingModel()).getAllFoldRegionsIncludingInvalid();
-    for (int i = 0; i < foldRegions.length; i++) {
-      FoldRegion region = foldRegions[i];
+    for (FoldRegion region : foldRegions) {
       if (region.isValid() &&
-        region.getStartOffset() == startOffset
-        && region.getEndOffset() == endOffset){
+          region.getStartOffset() == startOffset
+          && region.getEndOffset() == endOffset) {
         return region;
       }
     }
@@ -35,8 +35,7 @@ class FoldingUtil {
   public static FoldRegion findFoldRegionStartingAtLine(Editor editor, int line){
     FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     FoldRegion result = null;
-    for(int i = 0; i < regions.length; i++){
-      FoldRegion region = regions[i];
+    for (FoldRegion region : regions) {
       if (region.getDocument().getLineNumber(region.getStartOffset()) == line) {
         if (result != null) return null;
         result = region;
@@ -48,9 +47,8 @@ class FoldingUtil {
   public static FoldRegion[] getFoldRegionsAtOffset(Editor editor, int offset){
     ArrayList<FoldRegion> list = new ArrayList<FoldRegion>();
     FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
-    for(int i = 0; i < allRegions.length; i++){
-      FoldRegion region = allRegions[i];
-      if (region.getStartOffset() <= offset && offset <= region.getEndOffset()){
+    for (FoldRegion region : allRegions) {
+      if (region.getStartOffset() <= offset && offset <= region.getEndOffset()) {
         list.add(region);
       }
     }

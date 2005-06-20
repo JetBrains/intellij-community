@@ -25,7 +25,7 @@ class FoldingPolicy {
   /**
    * Returns map from element to range to fold, elements are sorted in reverse start offset order
    */
-  public static TreeMap<PsiElement,TextRange> getElementsToFold(PsiElement file, Document document) {
+  public static TreeMap<PsiElement, TextRange> getElementsToFold(PsiElement file, Document document) {
     TreeMap<PsiElement, TextRange> map = new TreeMap<PsiElement, TextRange>(new Comparator<PsiElement>() {
       public int compare(PsiElement element, PsiElement element1) {
         int startOffsetDiff = element1.getTextRange().getStartOffset() - element.getTextRange().getStartOffset();
@@ -38,8 +38,7 @@ class FoldingPolicy {
       final FoldingBuilder foldingBuilder = lang.getFoldingBuilder();
       if (foldingBuilder != null) {
         final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(file.getNode(), document);
-        for (int i = 0; i < foldingDescriptors.length; i++) {
-          FoldingDescriptor descriptor = foldingDescriptors[i];
+        for (FoldingDescriptor descriptor : foldingDescriptors) {
           map.put(SourceTreeToPsiMap.treeElementToPsi(descriptor.getElement()), descriptor.getRange());
         }
         return map;
@@ -47,7 +46,7 @@ class FoldingPolicy {
     }
 
     if (file instanceof PsiJavaFile) {
-      PsiImportList importList = ((PsiJavaFile) file).getImportList();
+      PsiImportList importList = ((PsiJavaFile)file).getImportList();
       if (importList != null) {
         PsiImportStatementBase[] statements = importList.getAllImportStatements();
         if (statements.length > 1) {
@@ -58,13 +57,13 @@ class FoldingPolicy {
         }
       }
 
-      PsiClass[] classes = ((PsiJavaFile) file).getClasses();
-      for (int i = 0; i < classes.length; i++) {
+      PsiClass[] classes = ((PsiJavaFile)file).getClasses();
+      for (PsiClass aClass : classes) {
         ProgressManager.getInstance().checkCanceled();
-        addElementsToFold(map, classes[i], document, true);
+        addElementsToFold(map, aClass, document, true);
       }
 
-      TextRange range = getFileHeader((PsiJavaFile) file);
+      TextRange range = getFileHeader((PsiJavaFile)file);
       if (range != null && document.getLineNumber(range.getEndOffset()) > document.getLineNumber(range.getStartOffset())) {
         map.put(file, range);
       }
@@ -73,7 +72,7 @@ class FoldingPolicy {
     return map;
   }
 
-  private static void findClasses(PsiElement scope, Map<PsiElement,TextRange> foldElements, Document document) {
+  private static void findClasses(PsiElement scope, Map<PsiElement, TextRange> foldElements, Document document) {
     final List<PsiClass> list = new ArrayList<PsiClass>();
     PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       public void visitClass(PsiClass aClass) {
@@ -82,8 +81,7 @@ class FoldingPolicy {
 
     };
     scope.accept(visitor);
-    for (Iterator<PsiClass> iterator = list.iterator(); iterator.hasNext();) {
-      PsiClass aClass = iterator.next();
+    for (PsiClass aClass : list) {
       if (aClass.isValid()) {
         addToFold(foldElements, aClass, document, true);
         addElementsToFold(foldElements, aClass, document, false);
@@ -91,8 +89,8 @@ class FoldingPolicy {
     }
   }
 
-  private static void addElementsToFold(Map<PsiElement,TextRange> map, PsiClass aClass, Document document, boolean foldJavaDocs) {
-    if (!(aClass.getParent() instanceof PsiJavaFile) || ((PsiJavaFile) aClass.getParent()).getClasses().length > 1) {
+  private static void addElementsToFold(Map<PsiElement, TextRange> map, PsiClass aClass, Document document, boolean foldJavaDocs) {
+    if (!(aClass.getParent() instanceof PsiJavaFile) || ((PsiJavaFile)aClass.getParent()).getClasses().length > 1) {
       addToFold(map, aClass, document, true);
     }
 
@@ -105,12 +103,12 @@ class FoldingPolicy {
     }
 
     PsiElement[] children = aClass.getChildren();
-    for (int j = 0; j < children.length; j++) {
+    for (PsiElement aChild : children) {
       ProgressManager.getInstance().checkCanceled();
 
-      PsiElement child = children[j];
+      PsiElement child = aChild;
       if (child instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod) child;
+        PsiMethod method = (PsiMethod)child;
         addToFold(map, method, document, true);
 
         if (!CodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) {
@@ -126,8 +124,9 @@ class FoldingPolicy {
             findClasses(body, map, document);
           }
         }
-      } else if (child instanceof PsiField) {
-        PsiField field = (PsiField) child;
+      }
+      else if (child instanceof PsiField) {
+        PsiField field = (PsiField)child;
         if (foldJavaDocs) {
           docComment = field.getDocComment();
           if (docComment != null) {
@@ -138,46 +137,52 @@ class FoldingPolicy {
         if (initializer != null) {
           findClasses(initializer, map, document);
         }
-      } else if (child instanceof PsiClassInitializer) {
-        PsiClassInitializer initializer = (PsiClassInitializer) child;
+      }
+      else if (child instanceof PsiClassInitializer) {
+        PsiClassInitializer initializer = (PsiClassInitializer)child;
         addToFold(map, initializer, document, true);
         findClasses(initializer, map, document);
-      } else if (child instanceof PsiClass) {
-        addElementsToFold(map, (PsiClass) child, document, true);
+      }
+      else if (child instanceof PsiClass) {
+        addElementsToFold(map, (PsiClass)child, document, true);
       }
     }
   }
 
   public static TextRange getRangeToFold(PsiElement element) {
     if (element instanceof PsiMethod) {
-      if (CodeGenerator.SETUP_METHOD_NAME.equals(((PsiMethod) element).getName())) {
+      if (CodeGenerator.SETUP_METHOD_NAME.equals(((PsiMethod)element).getName())) {
         return element.getTextRange();
       }
       else {
-        PsiCodeBlock body = ((PsiMethod) element).getBody();
+        PsiCodeBlock body = ((PsiMethod)element).getBody();
         if (body == null) return null;
         return body.getTextRange();
       }
-    } else if (element instanceof PsiClassInitializer) {
-      if (isGeneratedUIInitializer((PsiClassInitializer) element)) {
+    }
+    else if (element instanceof PsiClassInitializer) {
+      if (isGeneratedUIInitializer((PsiClassInitializer)element)) {
         return element.getTextRange();
       }
       else {
-        PsiCodeBlock body = ((PsiClassInitializer) element).getBody();
+        PsiCodeBlock body = ((PsiClassInitializer)element).getBody();
         if (body == null) return null;
         return body.getTextRange();
       }
-    } else if (element instanceof PsiClass) {
-      PsiClass aClass = (PsiClass) element;
+    }
+    else if (element instanceof PsiClass) {
+      PsiClass aClass = (PsiClass)element;
       PsiJavaToken lBrace = aClass.getLBrace();
       if (lBrace == null) return null;
       PsiJavaToken rBrace = aClass.getRBrace();
       if (rBrace == null) return null;
       return new TextRange(lBrace.getTextOffset(), rBrace.getTextOffset() + 1);
-    } else if (element instanceof PsiJavaFile) {
-      return getFileHeader((PsiJavaFile) element);
-    } else if (element instanceof PsiImportList) {
-      PsiImportList list = (PsiImportList) element;
+    }
+    else if (element instanceof PsiJavaFile) {
+      return getFileHeader((PsiJavaFile)element);
+    }
+    else if (element instanceof PsiImportList) {
+      PsiImportList list = (PsiImportList)element;
       PsiImportStatementBase[] statements = list.getAllImportStatements();
       if (statements.length == 0) return null;
       final PsiElement importKeyword = statements[0].getFirstChild();
@@ -185,20 +190,22 @@ class FoldingPolicy {
       int startOffset = importKeyword.getTextRange().getEndOffset() + 1;
       int endOffset = statements[statements.length - 1].getTextRange().getEndOffset();
       return new TextRange(startOffset, endOffset);
-    } else if (element instanceof PsiDocComment) {
+    }
+    else if (element instanceof PsiDocComment) {
       return element.getTextRange();
-    } else if (element instanceof XmlTag) {
+    }
+    else if (element instanceof XmlTag) {
       final Language language = element.getLanguage();
-      
+
       if (language != null) {
         final FoldingBuilder foldingBuilder = language.getFoldingBuilder();
 
         if (foldingBuilder instanceof XmlFoldingBuilder) {
           return ((XmlFoldingBuilder)foldingBuilder).getRangeToFold(element);
-        } 
+        }
       }
     }
-    
+
     return null;
   }
 
@@ -210,7 +217,8 @@ class FoldingPolicy {
       element = element.getNextSibling();
       if (element instanceof PsiWhiteSpace) {
         element = element.getNextSibling();
-      } else {
+      }
+      else {
         break;
       }
     }
@@ -231,21 +239,25 @@ class FoldingPolicy {
 
     if (element instanceof PsiImportList) {
       return "...";
-    } else if ( element instanceof PsiMethod && CodeGenerator.SETUP_METHOD_NAME.equals(((PsiMethod) element).getName()) ||
-               (element instanceof PsiClassInitializer && isGeneratedUIInitializer((PsiClassInitializer) element))) {
+    }
+    else if (element instanceof PsiMethod && CodeGenerator.SETUP_METHOD_NAME.equals(((PsiMethod)element).getName()) ||
+             (element instanceof PsiClassInitializer && isGeneratedUIInitializer((PsiClassInitializer)element))) {
       return "Automatically generated code";
-    } else if (element instanceof PsiMethod || element instanceof PsiClassInitializer || element instanceof PsiClass) {
+    }
+    else if (element instanceof PsiMethod || element instanceof PsiClassInitializer || element instanceof PsiClass) {
       return "{...}";
-    } else if (element instanceof PsiDocComment) {
+    }
+    else if (element instanceof PsiDocComment) {
       return "/**...*/";
-    } else if (element instanceof PsiFile) {
+    }
+    else if (element instanceof PsiFile) {
       return "/.../";
-    } else {
+    }
+    else {
       LOG.error("Unknown element:" + element);
       return null;
     }
   }
-
 
 
   public static boolean isCollapseByDefault(PsiElement element) {
@@ -260,24 +272,30 @@ class FoldingPolicy {
     CodeFoldingSettings settings = CodeFoldingSettings.getInstance();
     if (element instanceof PsiImportList) {
       return settings.COLLAPSE_IMPORTS;
-    } else if (element instanceof PsiMethod || element instanceof PsiClassInitializer) {
-      if (element instanceof PsiMethod && isSimplePropertyAccessor((PsiMethod) element)) {
+    }
+    else if (element instanceof PsiMethod || element instanceof PsiClassInitializer) {
+      if (element instanceof PsiMethod && isSimplePropertyAccessor((PsiMethod)element)) {
         return settings.COLLAPSE_ACCESSORS;
       }
-      if (element instanceof PsiMethod && CodeGenerator.SETUP_METHOD_NAME.equals(((PsiMethod) element).getName()) ||
+      if (element instanceof PsiMethod && CodeGenerator.SETUP_METHOD_NAME.equals(((PsiMethod)element).getName()) ||
           element instanceof PsiClassInitializer && isGeneratedUIInitializer((PsiClassInitializer)element)) {
         return true;
       }
       return settings.COLLAPSE_METHODS;
-    } else if (element instanceof PsiAnonymousClass) {
+    }
+    else if (element instanceof PsiAnonymousClass) {
       return settings.COLLAPSE_ANONYMOUS_CLASSES;
-    } else if (element instanceof PsiClass) {
+    }
+    else if (element instanceof PsiClass) {
       return element.getParent() instanceof PsiFile ? false : settings.COLLAPSE_INNER_CLASSES;
-    } else if (element instanceof PsiDocComment) {
+    }
+    else if (element instanceof PsiDocComment) {
       return settings.COLLAPSE_JAVADOCS;
-    } else if (element instanceof PsiJavaFile) {
+    }
+    else if (element instanceof PsiJavaFile) {
       return settings.COLLAPSE_FILE_HEADER;
-    } else {
+    }
+    else {
       LOG.error("Unknown element:" + element);
       return false;
     }
@@ -288,9 +306,11 @@ class FoldingPolicy {
     if (body.getStatements().length != 1) return false;
     PsiStatement statement = body.getStatements()[0];
     if (!(statement instanceof PsiExpressionStatement) ||
-        !(((PsiExpressionStatement) statement).getExpression() instanceof PsiMethodCallExpression)) return false;
+        !(((PsiExpressionStatement)statement).getExpression() instanceof PsiMethodCallExpression)) {
+      return false;
+    }
 
-    PsiMethodCallExpression call = (PsiMethodCallExpression) ((PsiExpressionStatement) statement).getExpression();
+    PsiMethodCallExpression call = (PsiMethodCallExpression)((PsiExpressionStatement)statement).getExpression();
     return CodeGenerator.SETUP_METHOD_NAME.equals(call.getMethodExpression().getReferenceName());
   }
 
@@ -301,21 +321,22 @@ class FoldingPolicy {
     if (statements == null || statements.length != 1) return false;
     PsiStatement statement = statements[0];
     if (PropertyUtil.isSimplePropertyGetter(method)) {
-      if  (statement instanceof PsiReturnStatement) {
-        PsiExpression returnValue = ((PsiReturnStatement) statement).getReturnValue();
+      if (statement instanceof PsiReturnStatement) {
+        PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
         if (returnValue instanceof PsiReferenceExpression) {
-          return ((PsiReferenceExpression) returnValue).resolve() instanceof PsiField;
+          return ((PsiReferenceExpression)returnValue).resolve() instanceof PsiField;
         }
       }
-    } else if (PropertyUtil.isSimplePropertySetter(method)) {
+    }
+    else if (PropertyUtil.isSimplePropertySetter(method)) {
       if (statement instanceof PsiExpressionStatement) {
-        PsiExpression expr = ((PsiExpressionStatement) statement).getExpression();
+        PsiExpression expr = ((PsiExpressionStatement)statement).getExpression();
         if (expr instanceof PsiAssignmentExpression) {
-          PsiExpression lhs = ((PsiAssignmentExpression) expr).getLExpression(),
-                        rhs = ((PsiAssignmentExpression) expr).getRExpression();
+          PsiExpression lhs = ((PsiAssignmentExpression)expr).getLExpression(),
+            rhs = ((PsiAssignmentExpression)expr).getRExpression();
           if (lhs instanceof PsiReferenceExpression && rhs instanceof PsiReferenceExpression) {
-            return ((PsiReferenceExpression) lhs).resolve() instanceof PsiField &&
-                   ((PsiReferenceExpression) rhs).resolve() instanceof PsiParameter;
+            return ((PsiReferenceExpression)lhs).resolve() instanceof PsiField &&
+                   ((PsiReferenceExpression)rhs).resolve() instanceof PsiParameter;
           }
         }
       }
@@ -323,17 +344,15 @@ class FoldingPolicy {
     return false;
   }
 
-  private static <T extends PsiNamedElement> int getChildIndex (T element, PsiElement parent, String name, Class<T> hisClass) {
+  private static <T extends PsiNamedElement> int getChildIndex(T element, PsiElement parent, String name, Class<T> hisClass) {
     PsiElement[] children = parent.getChildren();
     int index = 0;
-    
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
-      
+
+    for (PsiElement child : children) {
       if (hisClass.isAssignableFrom(child.getClass())) {
         T namedChild = (T)child;
         final String childName = namedChild.getName();
-        
+
         if ((name != null && name.equals(childName)) || name == childName) {
           if (namedChild.equals(element)) {
             return index;
@@ -355,8 +374,9 @@ class FoldingPolicy {
       else {
         return null;
       }
-    } else if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod) element;
+    }
+    else if (element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)element;
       PsiElement parent = method.getParent();
 
       StringBuffer buffer = new StringBuffer();
@@ -374,8 +394,9 @@ class FoldingPolicy {
       }
 
       return buffer.toString();
-    } else if (element instanceof PsiClass) {
-      PsiClass aClass = (PsiClass) element;
+    }
+    else if (element instanceof PsiClass) {
+      PsiClass aClass = (PsiClass)element;
       PsiElement parent = aClass.getParent();
 
       StringBuffer buffer = new StringBuffer();
@@ -392,15 +413,17 @@ class FoldingPolicy {
           buffer.append(";");
           buffer.append(parentSignature);
         }
-      } else {
+      }
+      else {
         buffer.append(aClass.getTextRange().getStartOffset());
         buffer.append(":");
         buffer.append(aClass.getTextRange().getEndOffset());
       }
 
       return buffer.toString();
-    } else if (element instanceof PsiClassInitializer) {
-      PsiClassInitializer initializer = (PsiClassInitializer) element;
+    }
+    else if (element instanceof PsiClassInitializer) {
+      PsiClassInitializer initializer = (PsiClassInitializer)element;
       PsiElement parent = initializer.getParent();
 
       StringBuffer buffer = new StringBuffer();
@@ -408,8 +431,7 @@ class FoldingPolicy {
 
       int index = 0;
       PsiElement[] children = parent.getChildren();
-      for (int i = 0; i < children.length; i++) {
-        PsiElement child = children[i];
+      for (PsiElement child : children) {
         if (child instanceof PsiClassInitializer) {
           if (child.equals(initializer)) break;
           index++;
@@ -426,8 +448,9 @@ class FoldingPolicy {
       }
 
       return buffer.toString();
-    } else if (element instanceof PsiField) { // needed for doc-comments only
-      PsiField field = (PsiField) element;
+    }
+    else if (element instanceof PsiField) { // needed for doc-comments only
+      PsiField field = (PsiField)element;
       PsiElement parent = field.getParent();
 
       StringBuffer buffer = new StringBuffer();
@@ -446,7 +469,8 @@ class FoldingPolicy {
       }
 
       return buffer.toString();
-    } else if (element instanceof PsiDocComment) {
+    }
+    else if (element instanceof PsiDocComment) {
       StringBuffer buffer = new StringBuffer();
       buffer.append("docComment;");
 
@@ -459,8 +483,9 @@ class FoldingPolicy {
       buffer.append(parentSignature);
 
       return buffer.toString();
-    } else if (element instanceof XmlTag) {
-      XmlTag tag = (XmlTag) element;
+    }
+    else if (element instanceof XmlTag) {
+      XmlTag tag = (XmlTag)element;
       PsiElement parent = tag.getParent();
 
       StringBuffer buffer = new StringBuffer();
@@ -478,22 +503,21 @@ class FoldingPolicy {
       }
 
       return buffer.toString();
-    } else if (element instanceof PsiJavaFile) {
+    }
+    else if (element instanceof PsiJavaFile) {
       return null;
     }
     return null;
   }
 
-  private static <T extends PsiNamedElement> T restoreElementInternal (PsiElement parent, String name, int index, Class<T> hisClass) {
+  private static <T extends PsiNamedElement> T restoreElementInternal(PsiElement parent, String name, int index, Class<T> hisClass) {
     PsiElement[] children = parent.getChildren();
-    
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
-      
+
+    for (PsiElement child : children) {
       if (hisClass.isAssignableFrom(child.getClass())) {
         T namedChild = (T)child;
         final String childName = namedChild.getName();
-        
+
         if ((name != null && name.equals(childName)) || name == childName) {
           if (index == 0) {
             return namedChild;
@@ -509,32 +533,36 @@ class FoldingPolicy {
   public static PsiElement restoreBySignature(PsiFile file, String signature) {
     int semicolonIndex = signature.indexOf(";");
     PsiElement parent;
-    
+
     if (semicolonIndex >= 0) {
       String parentSignature = signature.substring(semicolonIndex + 1);
       parent = restoreBySignature(file, parentSignature);
       if (parent == null) return null;
       signature = signature.substring(0, semicolonIndex);
-    } else {
+    }
+    else {
       parent = file;
     }
 
     StringTokenizer tokenizer = new StringTokenizer(signature, "#");
     String type = tokenizer.nextToken();
-    
+
     if (type.equals("imports")) {
       if (!(file instanceof PsiJavaFile)) return null;
-      return ((PsiJavaFile) file).getImportList();
-    } else if (type.equals("method")) {
+      return ((PsiJavaFile)file).getImportList();
+    }
+    else if (type.equals("method")) {
       String name = tokenizer.nextToken();
       try {
         int index = Integer.parseInt(tokenizer.nextToken());
         return restoreElementInternal(parent, name, index, PsiMethod.class);
-      } catch (NumberFormatException e) {
+      }
+      catch (NumberFormatException e) {
         LOG.error(e);
         return null;
       }
-    } else if (type.equals("class")) {
+    }
+    else if (type.equals("class")) {
       String name = tokenizer.nextToken();
 
       PsiNameHelper nameHelper = file.getManager().getNameHelper();
@@ -567,13 +595,13 @@ class FoldingPolicy {
       }
 
       return null;
-    } else if (type.equals("initializer")) {
+    }
+    else if (type.equals("initializer")) {
       try {
         int index = Integer.parseInt(tokenizer.nextToken());
 
         PsiElement[] children = parent.getChildren();
-        for (int i = 0; i < children.length; i++) {
-          PsiElement child = children[i];
+        for (PsiElement child : children) {
           if (child instanceof PsiClassInitializer) {
             if (index == 0) {
               return child;
@@ -583,11 +611,13 @@ class FoldingPolicy {
         }
 
         return null;
-      } catch (NumberFormatException e) {
+      }
+      catch (NumberFormatException e) {
         LOG.error(e);
         return null;
       }
-    } else if (type.equals("field")) {
+    }
+    else if (type.equals("field")) {
       String name = tokenizer.nextToken();
 
       try {
@@ -595,59 +625,68 @@ class FoldingPolicy {
         try {
           index = Integer.parseInt(tokenizer.nextToken());
         }
-        catch (NoSuchElementException e) { //To read previous XML versions correctly          
+        catch (NoSuchElementException e) { //To read previous XML versions correctly
         }
 
         return restoreElementInternal(parent, name, index, PsiField.class);
-      } catch (NumberFormatException e) {
+      }
+      catch (NumberFormatException e) {
         LOG.error(e);
         return null;
       }
 
-    } else if (type.equals("docComment")) {
+    }
+    else if (type.equals("docComment")) {
       if (parent instanceof PsiClass) {
-        return ((PsiClass) parent).getDocComment();
-      } else if (parent instanceof PsiMethod) {
-        return ((PsiMethod) parent).getDocComment();
-      } else if (parent instanceof PsiField) {
-        return ((PsiField) parent).getDocComment();
-      } else {
+        return ((PsiClass)parent).getDocComment();
+      }
+      else if (parent instanceof PsiMethod) {
+        return ((PsiMethod)parent).getDocComment();
+      }
+      else if (parent instanceof PsiField) {
+        return ((PsiField)parent).getDocComment();
+      }
+      else {
         return null;
       }
-    } else if (type.equals("tag")) {
+    }
+    else if (type.equals("tag")) {
       String name = tokenizer.nextToken();
 
       if (parent instanceof XmlFile) {
-        parent = ((XmlFile) parent).getDocument();
-      } 
+        parent = ((XmlFile)parent).getDocument();
+      }
 
       try {
         int index = Integer.parseInt(tokenizer.nextToken());
         PsiElement result = restoreElementInternal(parent, name, index, XmlTag.class);
-        
-        if (result == null && 
+
+        if (result == null &&
             file.getFileType() == StdFileTypes.JSP) {
           //TODO: FoldingBuilder API, psi roots, etc?
-          if(parent instanceof XmlDocument) {
-            // html tag, not found in jsp tree 
+          if (parent instanceof XmlDocument) {
+            // html tag, not found in jsp tree
             result = restoreElementInternal(HtmlUtil.getRealXmlDocument((XmlDocument)parent), name, index, XmlTag.class);
-          } else if (name.equals("null")) {
+          }
+          else if (name.equals("null")) {
             // scriplet/declaration missed because null name
-            result = restoreElementInternal(parent,null,index,XmlTag.class);
+            result = restoreElementInternal(parent, null, index, XmlTag.class);
           }
         }
-        
+
         return result;
-      } catch (NumberFormatException e) {
+      }
+      catch (NumberFormatException e) {
         LOG.error(e);
         return null;
       }
-    } else {
+    }
+    else {
       return null;
     }
   }
 
-  private static boolean addToFold(Map<PsiElement,TextRange> map, PsiElement elementToFold, Document document, boolean allowOneLiners) {
+  private static boolean addToFold(Map<PsiElement, TextRange> map, PsiElement elementToFold, Document document, boolean allowOneLiners) {
     LOG.assertTrue(elementToFold.isValid());
     TextRange range = getRangeToFold(elementToFold);
     if (range == null) return false;
@@ -658,14 +697,17 @@ class FoldingPolicy {
       if (startLine < endLine) {
         map.put(elementToFold, range);
         return true;
-      } else {
+      }
+      else {
         return false;
       }
-    } else {
+    }
+    else {
       if (range.getEndOffset() - range.getStartOffset() > getFoldingText(elementToFold).length()) {
         map.put(elementToFold, range);
         return true;
-      } else {
+      }
+      else {
         return false;
       }
     }
