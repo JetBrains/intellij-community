@@ -372,12 +372,14 @@ public abstract class GenericsHighlightUtil {
                                                                       elementToHighlight,
                                                                       description);
     List<IntentionAction> options = new ArrayList<IntentionAction>();
+    options.add(new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
     options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
     options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
-    options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
+    options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
     options.add(new AddNoInspectionAllForClassAction(elementToHighlight));
+    options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
+    options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.UNCHECKED_WARNING, elementToHighlight));
     options.add(new AddSuppressWarningsAnnotationForAllAction(elementToHighlight));
-    options.add(new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
     QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()), options);
     return highlightInfo;
   }
@@ -411,12 +413,14 @@ public abstract class GenericsHighlightUtil {
                                                                       typeCast,
                                                                       description);
       List<IntentionAction> options = new ArrayList<IntentionAction>();
+      options.add(new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
       options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
       options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
-      options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
+      options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
       options.add(new AddNoInspectionAllForClassAction(expression));
+      options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
+      options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.UNCHECKED_WARNING, expression));
       options.add(new AddSuppressWarningsAnnotationForAllAction(expression));
-      options.add(new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
       QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(expression.getContainingFile()), options);
       return highlightInfo;
     }
@@ -545,12 +549,14 @@ public abstract class GenericsHighlightUtil {
         if (InspectionManagerEx.inspectionResultSuppressed(call, HighlightDisplayKey.UNCHECKED_WARNING.toString())) return null;
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, element, description);
         List<IntentionAction> options = new ArrayList<IntentionAction>();
+        options.add(new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
         options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
         options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
-        options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
+        options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
         options.add(new AddNoInspectionAllForClassAction(call));
+        options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
+        options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.UNCHECKED_WARNING, call));
         options.add(new AddSuppressWarningsAnnotationForAllAction(call));
-        options.add(new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
         QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(element.getContainingFile()), options);
         return highlightInfo;
       }
@@ -895,11 +901,13 @@ public abstract class GenericsHighlightUtil {
                                                                               overrider.getReturnTypeElement(), message);
         List<IntentionAction> options = new ArrayList<IntentionAction>();
 
-        options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, overrider.getReturnTypeElement()));
-        options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNCHECKED_WARNING, overrider.getReturnTypeElement()));
-        options.add(new AddNoInspectionAllForClassAction(overrider.getReturnTypeElement()));
-        options.add(new AddSuppressWarningsAnnotationForAllAction(overrider.getReturnTypeElement()));
         options.add(new SwitchOffToolAction(HighlightDisplayKey.UNCHECKED_WARNING));
+        options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNCHECKED_WARNING, overrider.getReturnTypeElement()));
+        options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.UNCHECKED_WARNING, overrider.getReturnTypeElement()));
+        options.add(new AddNoInspectionAllForClassAction(overrider.getReturnTypeElement()));
+        options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNCHECKED_WARNING, overrider.getReturnTypeElement()));
+        options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.UNCHECKED_WARNING, overrider.getReturnTypeElement()));
+        options.add(new AddSuppressWarningsAnnotationForAllAction(overrider.getReturnTypeElement()));
         QuickFixAction.registerQuickFixAction(highlightInfo,
                                               new EmptyIntentionAction("Unchecked overriding", options),
                                               options);

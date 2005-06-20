@@ -283,12 +283,14 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
               if (info != null) {
                 list.add(info);
                 List<IntentionAction> options = new ArrayList<IntentionAction>();
+                options.add(new SwitchOffToolAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY));
                 options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
                 options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
-                options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
+                options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
                 options.add(new AddNoInspectionAllForClassAction(place));
+                options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
+                options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY, place));
                 options.add(new AddSuppressWarningsAnnotationForAllAction(place));
-                options.add(new SwitchOffToolAction(HighlightDisplayKey.ILLEGAL_DEPENDENCY));
                 QuickFixAction.registerQuickFixAction(info, new EditDependencyRulesAction(rules[0]), options);
               }
             }

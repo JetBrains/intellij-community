@@ -156,12 +156,13 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       highlights.add(highlightInfo);
       LocalInspectionTool tool = myTools.get(i);
       List<IntentionAction> options = new ArrayList<IntentionAction>();
+      options.add(new SwitchOffToolAction(tool));
       options.add(new AddNoInspectionCommentAction(tool, psiElement));
       options.add(new AddNoInspectionDocTagAction(tool, psiElement));
+      options.add(new AddNoInspectionForClassAction(tool, psiElement));
       options.add(new AddSuppressWarningsAnnotationAction(tool, psiElement));
-      options.add(new AddNoInspectionAllForClassAction(psiElement));
+      options.add(new AddSuppressWarningsAnnotationForClassAction(tool, psiElement));
       options.add(new AddSuppressWarningsAnnotationForAllAction(psiElement));
-      options.add(new SwitchOffToolAction(tool));
       if (problemDescriptor.getFixes() != null) {
         for (int k = 0; k < problemDescriptor.getFixes().length; k++) {
           QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor, k), options);
@@ -235,12 +236,14 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, psiElement, plainMessage, message);
       infos.add(highlightInfo);
       List<IntentionAction> options = new ArrayList<IntentionAction>();
+      options.add(new SwitchOffToolAction(tool));
       options.add(new AddNoInspectionCommentAction(tool, psiElement));
       options.add(new AddNoInspectionDocTagAction(tool, psiElement));
-      options.add(new AddSuppressWarningsAnnotationAction(tool, psiElement));
+      options.add(new AddNoInspectionForClassAction(tool, psiElement));
       options.add(new AddNoInspectionAllForClassAction(psiElement));
+      options.add(new AddSuppressWarningsAnnotationAction(tool, psiElement));
+      options.add(new AddSuppressWarningsAnnotationForClassAction(tool, psiElement));
       options.add(new AddSuppressWarningsAnnotationForAllAction(psiElement));
-      options.add(new SwitchOffToolAction(tool));
       if (descriptor.getFixes() != null) {
         for (int k = 0; k < descriptor.getFixes().length; k++) {
           QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), options);

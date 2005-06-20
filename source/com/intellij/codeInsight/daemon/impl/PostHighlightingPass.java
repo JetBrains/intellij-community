@@ -40,15 +40,15 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.uiDesigner.ReferenceUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.uiDesigner.ReferenceUtil;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public class PostHighlightingPass extends TextEditorHighlightingPass {
   private static final String SYMBOL_IS_NOT_USED = " ''{0}'' is never used";
@@ -214,12 +214,14 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     PsiElement parent = identifier.getParent();
     if (PsiUtil.hasErrorElementChild(parent)) return null;
     List<IntentionAction> options = new ArrayList<IntentionAction>();
+    options.add(new SwitchOffToolAction(HighlightDisplayKey.UNUSED_SYMBOL));
     options.add(new AddNoInspectionCommentAction(HighlightDisplayKey.UNUSED_SYMBOL, identifier));
     options.add(new AddNoInspectionDocTagAction(HighlightDisplayKey.UNUSED_SYMBOL, identifier));
-    options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNUSED_SYMBOL, identifier));
+    options.add(new AddNoInspectionForClassAction(HighlightDisplayKey.UNUSED_SYMBOL, identifier));
     options.add(new AddNoInspectionAllForClassAction(identifier));
+    options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.UNUSED_SYMBOL, identifier));
+    options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.UNUSED_SYMBOL, identifier));
     options.add(new AddSuppressWarningsAnnotationForAllAction(identifier));
-    options.add(new SwitchOffToolAction(HighlightDisplayKey.UNUSED_SYMBOL));
     InspectionProfile.UnusedSymbolSettings unusedSymbolSettings = profile.getUnusedSymbolSettings();
     if (parent instanceof PsiLocalVariable && unusedSymbolSettings.LOCAL_VARIABLE) {
       info = processLocalVariable((PsiLocalVariable)parent, options);
