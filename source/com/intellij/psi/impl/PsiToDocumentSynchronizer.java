@@ -75,13 +75,6 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     }
   }
 
-  private boolean isOriginal(final PsiElement changeScope, final PsiFile psiFile, final DocumentEx document) {
-    boolean original = true;
-    if(changeScope != null){
-    }
-    return original;
-  }
-
   public void childAdded(final PsiTreeChangeEvent event) {
     doSync(event, new DocSyncAction() {
       public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
