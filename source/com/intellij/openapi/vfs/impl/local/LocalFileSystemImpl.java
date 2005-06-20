@@ -443,22 +443,19 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     List<WatchRequest> result = new ArrayList<WatchRequest>();
     synchronized (LOCK) {
       NextRoot:
-      for (Iterator<WatchRequest> iterator = myRootsToWatch.iterator(); iterator.hasNext();) {
-        WatchRequest request = iterator.next();
+      for (WatchRequest request : myRootsToWatch) {
         VirtualFile root = request.getRoot();
-        //Here we remove requests for roots that have been invalidated,
-        //but were not removed before cause of normalization
-        if (!root.isValid()) iterator.remove();
-
         boolean recursively = request.isToWatchRecursively();
+
         for (Iterator<WatchRequest> iterator1 = result.iterator(); iterator1.hasNext();) {
           final WatchRequest otherRequest = iterator1.next();
           final VirtualFile otherRoot = otherRequest.getRoot();
           final boolean otherRecursively = otherRequest.isToWatchRecursively();
-          if ((root.equals(otherRoot) && (recursively || !otherRecursively)) ||
+          if ((root.equals(otherRoot) && (!recursively || otherRecursively)) ||
               (VfsUtil.isAncestor(otherRoot, root, true) && otherRecursively)) {
             continue NextRoot;
-          } else if (VfsUtil.isAncestor(root, otherRoot, true) && recursively) {
+          }
+          else if (VfsUtil.isAncestor(root, otherRoot, true) && (recursively || !otherRecursively)) {
             iterator1.remove();
           }
         }
