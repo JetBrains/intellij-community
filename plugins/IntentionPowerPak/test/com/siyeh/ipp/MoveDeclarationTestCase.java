@@ -3,15 +3,14 @@ package com.siyeh.ipp;
 public class MoveDeclarationTestCase {
     public int foo()
     {
-        @Deprecated int y;
+        int y = 3;        
         System.out.println("bar");
-        y = 3;
         y = 2;
         return y;
     }
     public void bar()
     {
-        int x;
+        int x ;
         System.out.println("x =");
         System.out.println(x);
     }

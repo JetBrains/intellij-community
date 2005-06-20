@@ -50,7 +50,9 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention{
         final Object lhsConstant = constantEvaluationHelper.computeConstantExpression(lhs);
         final String lhsText = lhsConstant.toString();
         String result;
-        if (lhsText.charAt(0) == '\'' || lhsText.charAt(0) == '"') {
+        if (lhsText.length() == 0) {
+            result = "";
+        }else if (lhsText.charAt(0) == '\'' || lhsText.charAt(0) == '"') {
             result = lhsText.substring(1, lhsText.length() - 1);
         } else{
             result = lhsText;
