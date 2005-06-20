@@ -13,6 +13,7 @@ import com.intellij.util.ArrayUtil;
  */
 class ReturnDocTagInfo implements JavadocTagInfo {
   public String checkTagValue(PsiDocTagValue value) {
+    if (value == null) return "Missing return value description";
     return null;
   }
 
