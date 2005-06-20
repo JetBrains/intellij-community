@@ -14,6 +14,10 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
   private JCheckBox myEnableCheckBox;
 
   private final JPanel myPanel = new JPanel(new BorderLayout());
+  private static final String OTHER_GROUP = "Other";
+  private static final String INVALID_TAGS_GROUP = "Invalid tags";
+  private static final String BLANK_LINES_GROUP = "Blank lines";
+  private static final String ALIGNMENT_GROUP = "Alignment";
 
   public JavaDocFormattingPanel(CodeStyleSettings settings) {
     super(settings);
@@ -38,23 +42,24 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
   }
 
   protected void initTables() {
-    initBooleanField("JD_ALIGN_PARAM_COMMENTS", "Align parameter descriptions", "Alignment");
-    initBooleanField("JD_ALIGN_EXCEPTION_COMMENTS", "Align thrown exception descriptions", "Alignment");
+    initBooleanField("JD_ALIGN_PARAM_COMMENTS", "Align parameter descriptions", ALIGNMENT_GROUP);
+    initBooleanField("JD_ALIGN_EXCEPTION_COMMENTS", "Align thrown exception descriptions", ALIGNMENT_GROUP);
 
-    initBooleanField("JD_ADD_BLANK_AFTER_DESCRIPTION", "After description", "Blank lines");
-    initBooleanField("JD_ADD_BLANK_AFTER_PARM_COMMENTS", "After parameter descriptions", "Blank lines");
-    initBooleanField("JD_ADD_BLANK_AFTER_RETURN", "After return tag", "Blank lines");
+    initBooleanField("JD_ADD_BLANK_AFTER_DESCRIPTION", "After description", BLANK_LINES_GROUP);
+    initBooleanField("JD_ADD_BLANK_AFTER_PARM_COMMENTS", "After parameter descriptions", BLANK_LINES_GROUP);
+    initBooleanField("JD_ADD_BLANK_AFTER_RETURN", "After return tag", BLANK_LINES_GROUP);
 
-    initBooleanField("JD_KEEP_INVALID_TAGS", "Keep invalid tags", "Invalid tags");
-    initBooleanField("JD_KEEP_EMPTY_PARAMETER", "Keep empty @param tags", "Invalid tags");
-    initBooleanField("JD_KEEP_EMPTY_RETURN", "Keep empty @return tags", "Invalid tags");
-    initBooleanField("JD_KEEP_EMPTY_EXCEPTION", "Keep empty @throws tags", "Invalid tags");
+    initBooleanField("JD_KEEP_INVALID_TAGS", "Keep invalid tags", INVALID_TAGS_GROUP);
+    initBooleanField("JD_KEEP_EMPTY_PARAMETER", "Keep empty @param tags", INVALID_TAGS_GROUP);
+    initBooleanField("JD_KEEP_EMPTY_RETURN", "Keep empty @return tags", INVALID_TAGS_GROUP);
+    initBooleanField("JD_KEEP_EMPTY_EXCEPTION", "Keep empty @throws tags", INVALID_TAGS_GROUP);
 
-    initBooleanField("JD_USE_THROWS_NOT_EXCEPTION", "Use @throws rather than @exception", "Other");
-    initBooleanField("WRAP_COMMENTS", "Wrap at right margin", "Other");
-    initBooleanField("JD_P_AT_EMPTY_LINES", "Generate \"<p/>\" on empty lines", "Other");
-    initBooleanField("JD_KEEP_EMPTY_LINES", "Keep empty lines", "Other");
-    initBooleanField("JD_DO_NOT_WRAP_ONE_LINE_COMMENTS", "Do not wrap one line comments", "Other" );
+    initBooleanField("JD_LEADING_ASTERISKS_ARE_ENABLED", "Enable leading asterisks", OTHER_GROUP);
+    initBooleanField("JD_USE_THROWS_NOT_EXCEPTION", "Use @throws rather than @exception", OTHER_GROUP);
+    initBooleanField("WRAP_COMMENTS", "Wrap at right margin", OTHER_GROUP);
+    initBooleanField("JD_P_AT_EMPTY_LINES", "Generate \"<p/>\" on empty lines", OTHER_GROUP);
+    initBooleanField("JD_KEEP_EMPTY_LINES", "Keep empty lines", OTHER_GROUP);
+    initBooleanField("JD_DO_NOT_WRAP_ONE_LINE_COMMENTS", "Do not wrap one line comments", OTHER_GROUP );
   }
 
   protected int getRightMargin() {

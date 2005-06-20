@@ -746,6 +746,9 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean JD_KEEP_EMPTY_EXCEPTION = true;
   public boolean JD_KEEP_EMPTY_RETURN = true;
 
+
+  public boolean JD_LEADING_ASTERISKS_ARE_ENABLED = true;
+
   // ---------------------------------------------------------------------------------------
 
 

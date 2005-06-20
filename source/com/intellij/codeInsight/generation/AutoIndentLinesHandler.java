@@ -40,7 +40,14 @@ public class AutoIndentLinesHandler implements CodeInsightActionHandler {
 
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     try{
-      codeStyleManager.adjustLineIndent(file, new TextRange(startOffset, endOffset));
+      if (startOffset == endOffset) {
+        int lineStart = document.getLineStartOffset(line1);
+        if (codeStyleManager.isLineToBeIndented(file, lineStart)) {
+          codeStyleManager.adjustLineIndent(file, lineStart);
+        }
+      } else {
+        codeStyleManager.adjustLineIndent(file, new TextRange(startOffset, endOffset));
+      }
     }
     catch(IncorrectOperationException e){
       LOG.error(e);

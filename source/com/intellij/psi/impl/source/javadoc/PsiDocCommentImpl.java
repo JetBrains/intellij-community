@@ -3,9 +3,11 @@ package com.intellij.psi.impl.source.javadoc;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.JavaDocLexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
@@ -115,7 +117,7 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     return WS_PATTERN.matcher(docCommentData.getText()).matches();
   }
 
-  private static void addNewLineToTag(CompositeElement tag) {
+  private static void addNewLineToTag(CompositeElement tag, Project project) {
     LOG.assertTrue(tag != null && tag.getElementType() == DOC_TAG);
     ASTNode current = tag.getLastChildNode();
     while (current != null && current.getElementType() == DOC_COMMENT_DATA && isWhitespaceCommentData(current)) {
@@ -125,9 +127,13 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(tag);
     final ASTNode newLine = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{'\n'}, 0, 1, treeCharTab, SharedImplUtil.getManagerByTree(tag));
     tag.addChild(newLine, null);
-    final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, new char[]{'*'}, 0, 1, treeCharTab,
-                                                                        SharedImplUtil.getManagerByTree(tag));
-    tag.addInternal(leadingAsterisk, leadingAsterisk, null, Boolean.TRUE);
+
+    if (CodeStyleSettingsManager.getSettings(project).JD_LEADING_ASTERISKS_ARE_ENABLED) {
+      final TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, new char[]{'*'}, 0, 1, treeCharTab,
+                                                                          SharedImplUtil.getManagerByTree(tag));
+
+      tag.addInternal(leadingAsterisk, leadingAsterisk, null, Boolean.TRUE);
+    }
     final TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, new char[]{' '}, 0, 1, treeCharTab, SharedImplUtil.getManagerByTree(tag));
     tag.addInternal(commentData, commentData, null, Boolean.TRUE);
   }
@@ -173,10 +179,10 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
     }
     if (needToAddNewline) {
       if (first.getTreePrev() != null && first.getTreePrev().getElementType() == DOC_TAG) {
-        addNewLineToTag((CompositeElement)first.getTreePrev());
+        addNewLineToTag((CompositeElement)first.getTreePrev(), getProject());
       }
       if (first.getTreeNext() != null && first.getTreeNext().getElementType() == DOC_TAG) {
-        addNewLineToTag((CompositeElement)first);
+        addNewLineToTag((CompositeElement)first, getProject());
       }
       else {
         removeEndingAsterisksFromTag((CompositeElement)first);

@@ -33,7 +33,12 @@ public class JDComment {
   }
 
   public String generate(String indent) {
-    String prefix = indent + " * ";
+    final String prefix;
+    if (myFormatter.getSettings().JD_LEADING_ASTERISKS_ARE_ENABLED) {
+      prefix = indent + " * ";
+    } else {
+      prefix = indent;
+    }
 
     StringBuffer sb = new StringBuffer();
 //  sb.append("/**\n");

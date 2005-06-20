@@ -156,7 +156,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
         boolean wsContainsCaret = whiteSpace.getTextRange().getStartOffset() <= offset && whiteSpace.getTextRange().getEndOffset() > offset;
 
         final CharSequence text = getCharSequence(documentModel);
-        int lineStartOffset = getLineStartOffset(offset, whiteSpace, text);
+        int lineStartOffset = getLineStartOffset(offset, whiteSpace, text, documentModel);
 
         processor.setAllWhiteSpacesAreReadOnly();
         whiteSpace.setLineFeedsAreReadOnly(true);
@@ -182,7 +182,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
         }
       } else {
         WhiteSpace lastWS = processor.getLastWhiteSpace();
-        int lineStartOffset = getLineStartOffset(offset, lastWS, getText(documentModel));
+        int lineStartOffset = getLineStartOffset(offset, lastWS, getText(documentModel), documentModel);
 
         final IndentInfo indent = new IndentInfo(0, 0, 0);
         final String newWS = lastWS.generateWhiteSpace(indentOptions, lineStartOffset, indent);
@@ -236,11 +236,16 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
     return documentModel.getText(new TextRange(0, documentModel.getTextLength()));
   }
 
-  private int getLineStartOffset(final int offset, final WhiteSpace whiteSpace, final CharSequence text) {
+  private int getLineStartOffset(final int offset,
+                                 final WhiteSpace whiteSpace,
+                                 final CharSequence text,
+                                 final FormattingDocumentModel documentModel) {
     int lineStartOffset = offset;
+
     lineStartOffset = CharArrayUtil.shiftBackwardUntil(text, lineStartOffset, " \t\n");
     if (lineStartOffset > whiteSpace.getTextRange().getStartOffset()) {
-      if (text.charAt(lineStartOffset) == '\n') {
+      if (text.charAt(lineStartOffset) == '\n'
+          && whiteSpace.getTextRange().getStartOffset() <= documentModel.getLineStartOffset(documentModel.getLineNumber(lineStartOffset - 1))) {
         lineStartOffset--;
       }
       lineStartOffset = CharArrayUtil.shiftBackward(text, lineStartOffset, "\t ");

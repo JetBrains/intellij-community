@@ -39,6 +39,10 @@ public class EnterHandler extends EditorWriteActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.EnterHandler");
 
   private EditorActionHandler myOriginalHandler;
+  private static final String DOC_COMMENT_SUFFIX = "*/";
+  private static final String DOC_COMMENT_PREFIX = "/**";
+  private static final char DOC_COMMENT_ASTERISK = '*';
+  private static final String DOC_COMMENT_ASTERISK_STRING = "*";
 
   public EnterHandler(EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;
@@ -50,13 +54,6 @@ public class EnterHandler extends EditorWriteActionHandler {
 
   public void executeWriteAction(Editor editor, DataContext dataContext) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    /*
-    if (!settings.SMART_ENTER_ACTION) {
-      myOriginalHandler.execute(editor, dataContext);
-      return;
-    }
-    */
-
     Project project = (Project)DataManager.getInstance().getDataContext(editor.getComponent()).getData(
       DataConstants.PROJECT);
     if (project == null) {
@@ -273,10 +270,10 @@ public class EnterHandler extends EditorWriteActionHandler {
 
   private static boolean isDocCommentComplete(PsiDocComment comment) {
     String commentText = comment.getText();
-    if (!commentText.endsWith("*/")) return false;
+    if (!commentText.endsWith(DOC_COMMENT_SUFFIX)) return false;
 
     Lexer lexer = new JavaLexer(comment.getManager().getEffectiveLanguageLevel());
-    lexer.start(commentText.toCharArray(), "/**".length(), commentText.length());
+    lexer.start(commentText.toCharArray(), DOC_COMMENT_PREFIX.length(), commentText.length());
     while (true) {
       IElementType tokenType = lexer.getTokenType();
       if (tokenType == null) {
@@ -284,7 +281,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       }
       if (tokenType == JavaTokenType.STRING_LITERAL || tokenType == JavaTokenType.CHARACTER_LITERAL) {
         String text = commentText.substring(lexer.getTokenStart(), lexer.getTokenEnd());
-        if (text.endsWith("*/")) return true;
+        if (text.endsWith(DOC_COMMENT_SUFFIX)) return true;
       }
       if (lexer.getTokenEnd() == commentText.length()) {
         return lexer.getTokenEnd() - lexer.getTokenStart() == 1;
@@ -352,6 +349,9 @@ public class EnterHandler extends EditorWriteActionHandler {
     private int myCaretAdvance;
 
     private boolean myForceIndent = false;
+    private static final String PLACE_HOLDER = "[PLACE_HOLDER]";
+    private static final String LINE_SEPARATOR = "\n";
+
 
     public DoEnterAction(
       PsiFile file,
@@ -376,18 +376,18 @@ public class EnterHandler extends EditorWriteActionHandler {
       try {
         final CharSequence chars = myDocument.getCharsSequence();
 
-        int offset = CharArrayUtil.shiftBackwardUntil(chars, myOffset - 1, "\n") - 1;
-        offset = CharArrayUtil.shiftBackwardUntil(chars, offset, "\n") + 1;
+        int offset = CharArrayUtil.shiftBackwardUntil(chars, myOffset - 1, LINE_SEPARATOR) - 1;
+        offset = CharArrayUtil.shiftBackwardUntil(chars, offset, LINE_SEPARATOR) + 1;
         int lineStart = CharArrayUtil.shiftForward(chars, offset, " \t");
 
-        boolean docStart = CharArrayUtil.regionMatches(chars, lineStart, "/**");
-        boolean docAsterisk = CharArrayUtil.regionMatches(chars, lineStart, "*");
+        boolean docStart = CharArrayUtil.regionMatches(chars, lineStart, DOC_COMMENT_PREFIX);
+        boolean docAsterisk = CharArrayUtil.regionMatches(chars, lineStart, DOC_COMMENT_ASTERISK_STRING);
         boolean slashSlash = CharArrayUtil.regionMatches(chars, lineStart, "//") &&
                              chars.charAt(CharArrayUtil.shiftForward(chars, myOffset, " \t")) != '\n';
 
         if (docStart) {
           PsiElement element = myFile.findElementAt(lineStart);
-          if (element.getText().equals("/**") && element.getParent() instanceof PsiDocComment) {
+          if (element.getText().equals(DOC_COMMENT_PREFIX) && element.getParent() instanceof PsiDocComment) {
             PsiDocComment comment = (PsiDocComment)element.getParent();
             int commentEnd = comment.getTextRange().getEndOffset();
             if (myOffset >= commentEnd) {
@@ -420,7 +420,7 @@ public class EnterHandler extends EditorWriteActionHandler {
 
         if (CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER || myForceIndent || docStart || docAsterisk ||
             slashSlash) {
-          myOffset = CodeStyleManager.getInstance(myFile.getProject()).adjustLineIndent(myFile, myOffset);
+          myOffset = CodeStyleManager.getInstance(getProject()).adjustLineIndent(myFile, myOffset);
         }
 
         if (docAsterisk || docStart || slashSlash) {
@@ -457,83 +457,104 @@ public class EnterHandler extends EditorWriteActionHandler {
 
     private void generateJavadoc() throws IncorrectOperationException {
       CodeInsightSettings settings = CodeInsightSettings.getInstance();
-      final String lineSeparator = "\n";
-
       StringBuffer buffer = new StringBuffer();
-      buffer.append("*");
-      buffer.append(lineSeparator);
-      buffer.append("*/");
+      buffer.append(DOC_COMMENT_ASTERISK);
+      buffer.append(LINE_SEPARATOR);
+      buffer.append(DOC_COMMENT_SUFFIX);
       
+      PsiDocComment comment = createComment(buffer, settings);
+
+      myOffset = comment.getTextRange().getStartOffset();
+      myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
+      myOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
+      myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
       removeTrailingSpaces(myDocument, myOffset);
 
+      if (!CodeStyleSettingsManager.getSettings(getProject()).JD_LEADING_ASTERISKS_ARE_ENABLED) {
+        LOG.assertTrue(myDocument.getCharsSequence().charAt(myOffset - 1) == DOC_COMMENT_ASTERISK);
+        myDocument.deleteString(myOffset - 1, myOffset);
+        myOffset--;
+      } else {
+        myDocument.insertString(myOffset, " ");
+        myOffset++;
+      }
+
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    }
+
+    private PsiDocComment createComment(final StringBuffer buffer, final CodeInsightSettings settings)
+      throws IncorrectOperationException {
       myDocument.insertString(myOffset, buffer.toString());
 
-      final Project project = myFile.getProject();
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-      CodeStyleManager.getInstance(project).adjustLineIndent(myFile, myOffset + buffer.length() - 2);
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      CodeStyleManager.getInstance(getProject()).adjustLineIndent(myFile, myOffset + buffer.length() - 2);
 
       PsiDocComment comment = PsiTreeUtil.getParentOfType(myFile.findElementAt(myOffset),
-                                                                         PsiDocComment.class);
-      final PsiElement context = comment.getParent();
+                                                          PsiDocComment.class);
 
+      comment = createJavaDocStub(settings, comment, getProject());
+
+      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(getProject());
+      comment = (PsiDocComment)codeStyleManager.reformat(comment);
+      PsiElement next = comment.getNextSibling();
+      if (!(next instanceof PsiWhiteSpace) || -1 == next.getText().indexOf(LINE_SEPARATOR)) {
+        int lineBreakOffset = comment.getTextRange().getEndOffset();
+        myDocument.insertString(lineBreakOffset, LINE_SEPARATOR);
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        codeStyleManager.adjustLineIndent(myFile, lineBreakOffset + 1);
+        comment = PsiTreeUtil.getParentOfType(myFile.findElementAt(myOffset), PsiDocComment.class);
+      }
+      return comment;
+    }
+
+    private PsiDocComment createJavaDocStub(final CodeInsightSettings settings,
+                                            final PsiDocComment comment,
+                                            final Project project) {
+      final PsiElement context = comment.getParent();
+      final StringBuffer buffer;
       if (settings.JAVADOC_STUB_ON_ENTER) {
         if (context instanceof PsiMethod) {
           PsiMethod psiMethod = (PsiMethod)context;
-          if (psiMethod.getDocComment() != comment) return;
+          if (psiMethod.getDocComment() != comment) return comment;
 
           buffer = new StringBuffer();
 
           final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
           for (int i = 0; i < parameters.length; i++) {
             PsiParameter parameter = parameters[i];
-            buffer.append("* @param ");
+            buffer.append(createDocCommentLine(" @param ", getProject()));
             buffer.append(parameter.getName());
-            buffer.append(lineSeparator);
+            buffer.append(LINE_SEPARATOR);
           }
 
           if (psiMethod.getReturnType() != null && psiMethod.getReturnType() != PsiType.VOID) {
-            buffer.append("* @return");
-            buffer.append(lineSeparator);
+            buffer.append(createDocCommentLine(" @return", getProject()));
+            buffer.append(LINE_SEPARATOR);
           }
 
           final PsiJavaCodeReferenceElement[] references = psiMethod.getThrowsList().getReferenceElements();
           for (int i = 0; i < references.length; i++) {
             PsiJavaCodeReferenceElement reference = references[i];
-            buffer.append("* @throws ");
+            buffer.append(createDocCommentLine(" @throws ", getProject()));
             buffer.append(reference.getText());
-            buffer.append(lineSeparator);
+            buffer.append(LINE_SEPARATOR);
           }
 
           if (buffer.length() != 0) {
-            myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, lineSeparator);
-            myOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), myOffset, lineSeparator);
+            myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
+            myOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), myOffset, LINE_SEPARATOR);
             myDocument.insertString(myOffset, buffer.toString());
           }
         }
 
         PsiDocumentManager.getInstance(project).commitAllDocuments();
-        comment = PsiTreeUtil.getParentOfType(myFile.findElementAt(myOffset), PsiDocComment.class);
+        return PsiTreeUtil.getParentOfType(myFile.findElementAt(myOffset), PsiDocComment.class);
       }
+      return comment;
+    }
 
-      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myFile.getProject());
-      comment = (PsiDocComment)codeStyleManager.reformat(comment);
-      PsiElement next = comment.getNextSibling();
-      if (!(next instanceof PsiWhiteSpace) || -1 == next.getText().indexOf(lineSeparator)) {
-        int lineBreakOffset = comment.getTextRange().getEndOffset();
-        myDocument.insertString(lineBreakOffset, lineSeparator);
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-        codeStyleManager.adjustLineIndent(myFile, lineBreakOffset + 1);
-        comment = PsiTreeUtil.getParentOfType(myFile.findElementAt(myOffset), PsiDocComment.class);
-      }
-
-      myOffset = comment.getTextRange().getStartOffset();
-      myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, lineSeparator);
-      myOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), myOffset, lineSeparator);
-      myOffset = CharArrayUtil.shiftForwardUntil(myDocument.getCharsSequence(), myOffset, lineSeparator);
-      removeTrailingSpaces(myDocument, myOffset);
-      myDocument.insertString(myOffset, " ");
-      myOffset++;
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
+    private Project getProject() {
+      return myFile.getProject();
     }
 
     private void removeTrailingSpaces(final Document document, final int offset) {
@@ -541,13 +562,13 @@ public class EnterHandler extends EditorWriteActionHandler {
       int endOffset = offset;
 
       final CharSequence charsSequence = document.getCharsSequence();
-      
+
       for (int i = startOffset; i < charsSequence.length(); i++) {
         final char c = charsSequence.charAt(i);
         endOffset = i;
-        if (c == '\n') {          
+        if (c == '\n') {
           break;
-        }        
+        }
         if (c != ' ' && c != '\t') {
           return;
         }
@@ -559,7 +580,7 @@ public class EnterHandler extends EditorWriteActionHandler {
     private boolean insertDocAsterisk(int lineStart, boolean docAsterisk) {
       PsiElement element = myFile.findElementAt(lineStart);
 
-      if (element.getText().equals("*") || element.getText().equals("/**")) {
+      if (element.getText().equals(DOC_COMMENT_ASTERISK_STRING) || element.getText().equals(DOC_COMMENT_PREFIX)) {
         PsiDocComment comment = null;
         if (element.getParent() instanceof PsiDocComment) {
           comment = (PsiDocComment)element.getParent();
@@ -574,8 +595,8 @@ public class EnterHandler extends EditorWriteActionHandler {
           }
           else {
             removeTrailingSpaces(myDocument, myOffset);
-            myDocument.insertString(myOffset, "* ");
-            PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
+            myDocument.insertString(myOffset, createDocCommentLine(" ", getProject()));
+            PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
           }
         }
         else {
@@ -586,6 +607,14 @@ public class EnterHandler extends EditorWriteActionHandler {
         docAsterisk = false;
       }
       return docAsterisk;
+    }
+  }
+
+  private static String createDocCommentLine(String lineData, Project project) {
+    if (!CodeStyleSettingsManager.getSettings(project).JD_LEADING_ASTERISKS_ARE_ENABLED) {
+      return lineData;
+    } else {
+    return DOC_COMMENT_ASTERISK + lineData;
     }
   }
 }
