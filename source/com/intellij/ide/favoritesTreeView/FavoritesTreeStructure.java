@@ -19,6 +19,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -195,9 +196,28 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
         return true;
       }
     };
-    for (Iterator<AbstractTreeNode> iterator = myRoot.getChildren().iterator(); iterator.hasNext();) {
-      AbstractTreeNode node = iterator.next();
-      if (node.getValue() instanceof PsiElement){
+    for (AbstractTreeNode node : myRoot.getChildren()) {
+      if (node.getValue() instanceof SmartPsiElementPointer) {
+        final VirtualFile virtualFile = BasePsiNode.getVirtualFile(((SmartPsiElementPointer)node.getValue()).getElement());
+        if (virtualFile == null) continue;
+        if (vFile.getPath().equals(virtualFile.getPath())) {
+          return true;
+        }
+        if (!virtualFile.isDirectory()) {
+          continue;
+        }
+        projectFileIndex.iterateContentUnderDirectory(virtualFile, contentIterator);
+      }
+      if (node.getValue() instanceof PackageElement) {
+        final PackageElement packageElement = ((PackageElement)node.getValue());
+        final PsiPackage aPackage = packageElement.getPackage();
+        GlobalSearchScope scope = packageElement.getModule() != null ? GlobalSearchScope.moduleScope(packageElement.getModule()) : GlobalSearchScope.projectScope(myProject);
+        final PsiDirectory[] directories = aPackage.getDirectories(scope);
+        for (PsiDirectory directory : directories) {
+          projectFileIndex.iterateContentUnderDirectory(directory.getVirtualFile(), contentIterator);
+        }
+      }
+      if (node.getValue() instanceof PsiElement) {
         final VirtualFile virtualFile = BasePsiNode.getVirtualFile(((PsiElement)node.getValue()));
         if (virtualFile == null) continue;
         if (vFile.getPath().equals(virtualFile.getPath())){
@@ -229,10 +249,9 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
       if (node.getValue() instanceof Form){
         Form form = (Form) node.getValue();
         PsiFile[] forms = form.getClassToBind().getManager().getSearchHelper().findFormsBoundToClass(form.getClassToBind().getQualifiedName());
-        for (int i = 0; i < forms.length; i++) {
-          PsiFile psiFile = forms[i];
+        for (PsiFile psiFile : forms) {
           final VirtualFile virtualFile = psiFile.getVirtualFile();
-          if (virtualFile != null && virtualFile.equals(vFile)){
+          if (virtualFile != null && virtualFile.equals(vFile)) {
             return true;
           }
         }
@@ -240,9 +259,19 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
       if (node.getValue() instanceof ModuleGroup){
         ModuleGroup group = (ModuleGroup) node.getValue();
         final Module[] modules = group.modulesInGroup(myProject, true);
-        for (int i = 0; i < modules.length; i++) {
-          Module module = modules[i];
+        for (Module module : modules) {
           ModuleRootManager.getInstance(module).getFileIndex().iterateContent(contentIterator);
+        }
+      }
+      if (node.getValue() instanceof ResourceBundle) {
+        ResourceBundle bundle = (ResourceBundle)node.getValue();
+        final List<PropertiesFile> propertiesFiles = bundle.getPropertiesFiles(myProject);
+        for (PropertiesFile file : propertiesFiles) {
+          final VirtualFile virtualFile = file.getVirtualFile();
+          if (virtualFile == null) continue;
+          if (vFile.getPath().equals(virtualFile.getPath())){
+            return true;
+          }
         }
       }
       if (!find.isEmpty()){
@@ -253,19 +282,23 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
   }
 
   public void initFavoritesList() {
-    for (Iterator<AbstractUrl> iterator = myAbstractUrls.keySet().iterator(); iterator.hasNext();) {
-      AbstractUrl abstractUrl = iterator.next();
+    for (java.util.Iterator<AbstractUrl> it = myAbstractUrls.keySet().iterator(); it.hasNext();) {
+      AbstractUrl abstractUrl = it.next();
       final Object[] path = abstractUrl.createPath(myProject);
-      if (path == null || path.length < 1 || path[0] == null ){
+      if (path == null || path.length < 1 || path[0] == null) {
         continue;
       }
       try {
-        if (abstractUrl instanceof FormUrl){
+        if (abstractUrl instanceof FormUrl) {
           final PsiManager psiManager = PsiManager.getInstance(myProject);
           myFavorites.add(FormNode.constructFormNode(psiManager, (PsiClass)path[0], myProject, myFavoritesConfiguration));
-        } else {
-          myFavorites.add(ProjectViewNode.createTreeNode((Class<? extends AbstractTreeNode>)Class.forName(myAbstractUrls.get(abstractUrl)), myProject, path[path.length - 1],
-                                                         myFavoritesConfiguration));
+        }
+        else {
+          myFavorites
+            .add(
+              ProjectViewNode.createTreeNode((Class<? extends AbstractTreeNode>)Class.forName(myAbstractUrls.get(abstractUrl)), myProject,
+                                             path[path.length - 1],
+                                             myFavoritesConfiguration));
         }
       }
       catch (Exception e) {
