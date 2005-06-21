@@ -720,6 +720,7 @@ public class CustomizableActionsPanel {
     };
     textField.addBrowseFolderListener("Browse Icon", "Browse icon for selected action", null,
                                         fileChooserDescriptor);
+    InsertPathAction.addTo(textField.getTextField(), fileChooserDescriptor);
     return textField;
   }
 
