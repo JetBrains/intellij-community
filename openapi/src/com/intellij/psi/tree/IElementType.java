@@ -43,7 +43,7 @@ public class IElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.tree.IElementType");
 
   private static int ourCounter = 0;
-  private static final TIntObjectHashMap ourRegistry = new TIntObjectHashMap();
+  private static final TIntObjectHashMap<IElementType> ourRegistry = new TIntObjectHashMap<IElementType>();
   private final short myIndex;
 
   public final static Predicate TRUE = new Predicate() {
@@ -56,15 +56,15 @@ public class IElementType {
   private final @NotNull Language myLanguage;
 
   public static IElementType[] enumerate(Predicate p) {
-    List matches = new ArrayList();
+    List<IElementType> matches = new ArrayList<IElementType>();
     Object[] values = ourRegistry.getValues();
-    for (int i = 0; i < values.length; i++) {
-      IElementType value = (IElementType)values[i];
+    for (Object value1 : values) {
+      IElementType value = (IElementType)value1;
       if (p.matches(value)) {
-        matches.add(value);                                                       
+        matches.add(value);
       }
     }
-    return (IElementType[])matches.toArray(new IElementType[matches.size()]);
+    return matches.toArray(new IElementType[matches.size()]);
   }
 
   public IElementType(@NotNull String debugName, @NotNull Language language) {
@@ -97,7 +97,7 @@ public class IElementType {
   }
 
   public static IElementType find(short idx) {
-    return (IElementType)ourRegistry.get(idx);
+    return ourRegistry.get(idx);
   }
 
   public interface Predicate {

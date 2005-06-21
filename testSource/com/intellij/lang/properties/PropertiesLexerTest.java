@@ -118,6 +118,12 @@ public class PropertiesLexerTest extends LightIdeaTestCase {
       "Properties:VALUE_CHARACTERS", "# y"
     });
   }
+  public void testComments() throws Exception {
+    doTest("#hhhh kkkk \n\n", new String[]{
+      "Properties:END_OF_LINE_COMMENT", "#hhhh kkkk ",
+      "WHITE_SPACE", "\n\n",
+    });
+  }
   public void testTabs() throws Exception {
     doTest("install/htdocs/imcms/html/link_editor.jsp/1002 = URL\\n\\\n" +
            "\t\\t\\teller meta_id:", new String[]{

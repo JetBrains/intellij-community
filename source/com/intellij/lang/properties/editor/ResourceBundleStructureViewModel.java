@@ -52,7 +52,7 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
   }
 
   public Filter[] getFilters() {
-    return new Filter[0];
+    return Filter.EMPTY_ARRAY;
   }
 
   public Object getCurrentEditorElement() {

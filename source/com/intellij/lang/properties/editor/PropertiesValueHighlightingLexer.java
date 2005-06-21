@@ -17,7 +17,6 @@ public class PropertiesValueHighlightingLexer extends LayeredLexer {
         }
       });
       registerSelfStoppingLayer(new StringLiteralLexer(StringLiteralLexer.NO_QUOTE_CHAR, PropertiesTokenTypes.VALUE_CHARACTERS, true, null),
-                                new IElementType[]{PropertiesTokenTypes.VALUE_CHARACTERS},
-                                new IElementType[0]);
+                                new IElementType[]{PropertiesTokenTypes.VALUE_CHARACTERS}, IElementType.EMPTY_ARRAY);
   }
 }
