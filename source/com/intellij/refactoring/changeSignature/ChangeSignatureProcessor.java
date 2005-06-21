@@ -165,7 +165,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         if (!isToCatchExceptions) {
           if (RefactoringUtil.isMethodUsage(ref)) {
             PsiExpressionList list = RefactoringUtil.getArgumentListByMethodReference(ref);
-            if (!method.isVarArgs() && list.getExpressions().length < parameterCount) continue;
+            if (!method.isVarArgs() && list.getExpressions().length != parameterCount) continue;
           }
         }
         if (RefactoringUtil.isMethodUsage(ref)) {
