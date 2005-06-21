@@ -48,6 +48,11 @@ public class ErrorHighlightingPanel extends InspectionToolsPanel {
     myDescriptors.add(new Descriptor(HighlightDisplayKey.ILLEGAL_DEPENDENCY, mySelectedProfile));
     myDescriptors.add(new Descriptor(HighlightDisplayKey.JAVADOC_ERROR, mySelectedProfile));
     myDescriptors.add(new Descriptor(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG, mySelectedProfile));
+    
+    myDescriptors.add(new Descriptor(HighlightDisplayKey.UNKNOWN_HTML_ATTRIBUTES, mySelectedProfile));
+    myDescriptors.add(new Descriptor(HighlightDisplayKey.UNKNOWN_HTML_TAG, mySelectedProfile));
+    myDescriptors.add(new Descriptor(HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE, mySelectedProfile));
+    
     myDescriptors.add(new Descriptor(HighlightDisplayKey.EJB_ERROR, mySelectedProfile));
     myDescriptors.add(new Descriptor(HighlightDisplayKey.EJB_WARNING, mySelectedProfile));
     myDescriptors.add(new Descriptor(HighlightDisplayKey.UNCHECKED_WARNING, mySelectedProfile));

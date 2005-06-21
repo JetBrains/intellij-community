@@ -60,6 +60,9 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
   private VisibleTreeState myVisibleTreeState = new VisibleTreeState();
 
   private String myAdditionalJavadocTags = "";
+  private String myAdditionalHtmlTags = "";
+  private String myAdditionalHtmlAttributes = "";
+  private String myAdditionalRequiredHtmlAttributes = "";
 
   public InspectionProfileImpl(File file, InspectionProfileManager manager) throws IOException, JDOMException {
     this(getProfileName(file), getBaseProfileName(file), file, manager);
@@ -94,7 +97,12 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>(inspectionProfile.myDisplayLevelMap);
     myTools = new HashMap<String, InspectionTool>(inspectionProfile.myTools);
     myVisibleTreeState = new VisibleTreeState(inspectionProfile.myVisibleTreeState);
+    
     myAdditionalJavadocTags = inspectionProfile.myAdditionalJavadocTags;
+    myAdditionalHtmlTags = inspectionProfile.myAdditionalHtmlTags;
+    myAdditionalHtmlAttributes = inspectionProfile.myAdditionalHtmlAttributes;
+    myAdditionalRequiredHtmlAttributes = inspectionProfile.myAdditionalRequiredHtmlAttributes;
+    
     myUnusedSymbolSettings = inspectionProfile.myUnusedSymbolSettings.copySettings();
     myBaseProfile = inspectionProfile.myBaseProfile;
     mySource = inspectionProfile;
@@ -191,10 +199,27 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
       }
       return true;
     }
+    
     if (key == HighlightDisplayKey.UNKNOWN_JAVADOC_TAG &&
         !myBaseProfile.getAdditionalJavadocTags().equals(getAdditionalJavadocTags())) {
       return true;
     }
+    
+    if (key == HighlightDisplayKey.UNKNOWN_HTML_TAG &&
+        !myBaseProfile.getAdditionalHtmlTags().equals(getAdditionalHtmlTags())) {
+      return true;
+    }
+    
+    if (key == HighlightDisplayKey.UNKNOWN_HTML_ATTRIBUTES &&
+        !myBaseProfile.getAdditionalHtmlAttributes().equals(getAdditionalHtmlAttributes())) {
+      return true;
+    }
+    
+    if (key == HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE &&
+        !myBaseProfile.getAdditionalNotRequiredHtmlAttributes().equals(getAdditionalNotRequiredHtmlAttributes())) {
+      return true;
+    }
+    
     if (!toolsSettings) {
       myDisplayLevelMap.put(key, myBaseProfile.getToolState(key));
       return true;
@@ -232,7 +257,44 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
       myAdditionalJavadocTags = tags;
     }
   }
-
+  
+  public void setAdditionalHtmlTags(String tags) throws UnableToEditDefaultProfileException {
+    checkEditable();
+    if (myBaseProfile != null && 
+        myBaseProfile.getAdditionalHtmlTags().length() > 0) {
+      myAdditionalHtmlTags = tags.length() > myBaseProfile.getAdditionalHtmlTags().length()
+                                ? tags.substring(myBaseProfile.getAdditionalHtmlTags().length() + 1).trim()
+                                : "";
+    }
+    else {
+      myAdditionalHtmlTags = tags;
+    }
+  }
+  
+  public void setAdditionalHtmlAttributes(String attributes) throws UnableToEditDefaultProfileException {
+    checkEditable();
+    if (myBaseProfile != null && myBaseProfile.getAdditionalHtmlAttributes().length() > 0) {
+      myAdditionalHtmlAttributes = attributes.length() > myBaseProfile.getAdditionalHtmlAttributes().length()
+                                ? attributes.substring(myBaseProfile.getAdditionalHtmlAttributes().length() + 1).trim()
+                                : "";
+    }
+    else {
+      myAdditionalHtmlAttributes = attributes;
+    }
+  }
+  
+  public void setAdditionalNotRequiredHtmlAttributes(String attributes) throws UnableToEditDefaultProfileException {
+    checkEditable();
+    if (myBaseProfile != null && myBaseProfile.getAdditionalNotRequiredHtmlAttributes().length() > 0) {
+      myAdditionalRequiredHtmlAttributes = attributes.length() > myBaseProfile.getAdditionalNotRequiredHtmlAttributes().length()
+                                ? attributes.substring(myBaseProfile.getAdditionalNotRequiredHtmlAttributes().length() + 1).trim()
+                                : "";
+    }
+    else {
+      myAdditionalRequiredHtmlAttributes = attributes;
+    }
+  }
+  
   public void resetToBase() {
     if (myBaseProfile != null) {
       myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>(myBaseProfile.myDisplayLevelMap);
@@ -275,6 +337,11 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myDisplayLevelMap.put(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT, new ToolState(HighlightDisplayLevel.WARNING));
     myDisplayLevelMap.put(HighlightDisplayKey.JAVADOC_ERROR, new ToolState(HighlightDisplayLevel.ERROR));
     myDisplayLevelMap.put(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG, new ToolState(HighlightDisplayLevel.ERROR));
+    
+    myDisplayLevelMap.put(HighlightDisplayKey.UNKNOWN_HTML_TAG, new ToolState(HighlightDisplayLevel.WARNING));
+    myDisplayLevelMap.put(HighlightDisplayKey.UNKNOWN_HTML_ATTRIBUTES, new ToolState(HighlightDisplayLevel.WARNING));
+    myDisplayLevelMap.put(HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE, new ToolState(HighlightDisplayLevel.WARNING));
+    
     myDisplayLevelMap.put(HighlightDisplayKey.EJB_ERROR, new ToolState(HighlightDisplayLevel.ERROR));
     myDisplayLevelMap.put(HighlightDisplayKey.EJB_WARNING, new ToolState(HighlightDisplayLevel.WARNING));
     myDisplayLevelMap.put(HighlightDisplayKey.ILLEGAL_DEPENDENCY, new ToolState(HighlightDisplayLevel.WARNING));
@@ -347,10 +414,27 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
       }
     }
     myVisibleTreeState.readExternal(element);
+    
     final Element additionalJavadocs = element.getChild("ADDITIONAL_JAVADOC_TAGS");
     if (additionalJavadocs != null) {
       myAdditionalJavadocTags = additionalJavadocs.getAttributeValue("value");
     }
+    
+    final Element additionalHtmlTags = element.getChild("ADDITIONAL_HTML_TAGS");
+    if (additionalHtmlTags != null) {
+      myAdditionalHtmlTags = additionalHtmlTags.getAttributeValue("value");
+    }
+    
+    final Element additionalHtmlAttributes = element.getChild("ADDITIONAL_HTML_ATTRIBUTES");
+    if (additionalHtmlAttributes != null) {
+      myAdditionalHtmlAttributes = additionalHtmlAttributes.getAttributeValue("value");
+    }
+    
+    final Element additionalRequiredHtmlAttributes = element.getChild("ADDITIONAL_REQUIRED_HTML_ATTRIBUTES");
+    if (additionalRequiredHtmlAttributes != null) {
+      myAdditionalRequiredHtmlAttributes = additionalRequiredHtmlAttributes.getAttributeValue("value");
+    }
+    
     final Element unusedSymbolSettings = element.getChild("UNUSED_SYMBOL_SETTINGS");
     myUnusedSymbolSettings.readExternal(unusedSymbolSettings);
 
@@ -384,10 +468,29 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
       element.addContent(inspectionElement);
     }
     myVisibleTreeState.writeExternal(element);
+    
     if (myAdditionalJavadocTags != null && myAdditionalJavadocTags.length() != 0) {
       final Element additionalTags = new Element("ADDITIONAL_JAVADOC_TAGS");
       additionalTags.setAttribute("value", myAdditionalJavadocTags);
       element.addContent(additionalTags);
+    }
+    
+    if (myAdditionalHtmlTags != null && myAdditionalHtmlTags.length() != 0) {
+      final Element additionalTags = new Element("ADDITIONAL_HTML_TAGS");
+      additionalTags.setAttribute("value", myAdditionalHtmlTags);
+      element.addContent(additionalTags);
+    }
+    
+    if (myAdditionalHtmlAttributes != null && myAdditionalHtmlAttributes.length() != 0) {
+      final Element additionalAttributes = new Element("ADDITIONAL_HTML_ATTRIBUTES");
+      additionalAttributes.setAttribute("value", myAdditionalHtmlAttributes);
+      element.addContent(additionalAttributes);
+    }
+    
+    if (myAdditionalRequiredHtmlAttributes != null && myAdditionalRequiredHtmlAttributes.length() != 0) {
+      final Element additionalAttributes = new Element("ADDITIONAL_REQUIRED_HTML_ATTRIBUTES");
+      additionalAttributes.setAttribute("value", myAdditionalRequiredHtmlAttributes);
+      element.addContent(additionalAttributes);
     }
 
     final Element unusedSymbolSettings = new Element("UNUSED_SYMBOL_SETTINGS");
@@ -561,6 +664,39 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     }
     return myAdditionalJavadocTags;
   }
+  
+  public String getAdditionalHtmlTags() {
+    if (myBaseProfile != null) {
+      return myBaseProfile.getAdditionalHtmlTags().length() > 0 ? 
+               myBaseProfile.getAdditionalHtmlTags() + 
+                 (myAdditionalHtmlTags.length() > 0 ? "," + myAdditionalHtmlTags
+                  : "") :
+             myAdditionalHtmlTags;
+    }
+    return myAdditionalHtmlTags;
+  }
+  
+  public String getAdditionalHtmlAttributes() {
+    if (myBaseProfile != null) {
+      return myBaseProfile.getAdditionalHtmlAttributes().length() > 0 ? 
+               myBaseProfile.getAdditionalHtmlAttributes() + 
+                 (myAdditionalHtmlAttributes.length() > 0 ? "," + myAdditionalHtmlAttributes
+                  : "") :
+             myAdditionalHtmlAttributes;
+    }
+    return myAdditionalHtmlAttributes;
+  }
+  
+  public String getAdditionalNotRequiredHtmlAttributes() {
+    if (myBaseProfile != null) {
+      return myBaseProfile.getAdditionalNotRequiredHtmlAttributes().length() > 0 ? 
+               myBaseProfile.getAdditionalNotRequiredHtmlAttributes() +
+                 (myAdditionalRequiredHtmlAttributes.length() > 0 ? "," + myAdditionalRequiredHtmlAttributes
+                                                                      : "") :
+             myAdditionalRequiredHtmlAttributes;
+    }
+    return myAdditionalRequiredHtmlAttributes;
+  }
 
   public void copyFrom(InspectionProfileImpl profile) {
     myDisplayLevelMap = new LinkedHashMap<HighlightDisplayKey, ToolState>(profile.myDisplayLevelMap);
@@ -575,6 +711,10 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
 
   private void copyToolsConfigurations(InspectionProfileImpl profile) {
     myAdditionalJavadocTags = profile.myAdditionalJavadocTags;
+    myAdditionalHtmlTags = profile.myAdditionalHtmlTags;
+    myAdditionalHtmlAttributes = profile.myAdditionalHtmlAttributes;
+    myAdditionalRequiredHtmlAttributes = profile.myAdditionalRequiredHtmlAttributes;
+    
     myUnusedSymbolSettings = profile.myUnusedSymbolSettings.copySettings();
     try {
       if (!profile.myTools.isEmpty()) {
@@ -679,7 +819,12 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
     myVisibleTreeState = inspectionProfile.myVisibleTreeState;
     myBaseProfile = inspectionProfile.myBaseProfile;
     myTools = inspectionProfile.myTools;
+    
     myAdditionalJavadocTags = inspectionProfile.myAdditionalJavadocTags;
+    myAdditionalRequiredHtmlAttributes = inspectionProfile.myAdditionalRequiredHtmlAttributes;
+    myAdditionalHtmlAttributes = inspectionProfile.myAdditionalHtmlAttributes;
+    myAdditionalHtmlTags = inspectionProfile.myAdditionalHtmlTags;
+    
     myUnusedSymbolSettings = inspectionProfile.myUnusedSymbolSettings.copySettings();
     save(new File(InspectionProfileManager.getProfileDirectory(), myName + ".xml"), myName);
   }

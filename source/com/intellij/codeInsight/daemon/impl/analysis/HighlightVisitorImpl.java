@@ -94,7 +94,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     myProject = project;
     mySettings = settings;
 
-    myXmlVisitor = new XmlHighlightVisitor();
+    myXmlVisitor = new XmlHighlightVisitor(settings);
     myJavadocVisitor = new JavadocHighlightVisitor(settings);
 
     myAspectHighlightVisitor = new AspectHighlighter();

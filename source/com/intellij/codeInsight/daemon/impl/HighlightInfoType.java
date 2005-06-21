@@ -35,6 +35,10 @@ public interface HighlightInfoType {
   HighlightInfoType JAVADOC_WRONG_REF = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.JAVADOC_ERROR, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
   HighlightInfoType JAVADOC_ERROR = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.JAVADOC_ERROR);
   HighlightInfoType UNKNOWN_JAVADOC_TAG = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG);
+  
+  HighlightInfoType UNKNOWN_HTML_TAG = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.UNKNOWN_HTML_TAG);
+  HighlightInfoType UNKNOWN_HTML_ATTRIBUTE = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.UNKNOWN_HTML_ATTRIBUTES);
+  HighlightInfoType REQUIRED_HTML_ATTRIBUTE = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE);
 
   /** @fabrique */
   HighlightInfoType LOCAL_VARIABLE = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES);

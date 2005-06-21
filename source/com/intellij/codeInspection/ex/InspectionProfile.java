@@ -74,12 +74,24 @@ public interface InspectionProfile {
     boolean isProperSetting(HighlightDisplayKey key);
 
     void setAdditionalJavadocTags(String tags) throws UnableToEditDefaultProfileException;
+    
+    void setAdditionalHtmlTags(String tags) throws UnableToEditDefaultProfileException;
+    
+    void setAdditionalHtmlAttributes(String attributes) throws UnableToEditDefaultProfileException;
+    
+    void setAdditionalNotRequiredHtmlAttributes(String attributes) throws UnableToEditDefaultProfileException;
 
     void resetToBase();
 
     InspectionTool[] getInspectionTools();
 
     String getAdditionalJavadocTags();
+    
+    String getAdditionalHtmlTags();
+    
+    String getAdditionalHtmlAttributes();
+    
+    String getAdditionalNotRequiredHtmlAttributes();
 
     void copyFrom(InspectionProfileImpl profile);
 

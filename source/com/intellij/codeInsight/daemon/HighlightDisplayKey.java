@@ -17,6 +17,11 @@ public class HighlightDisplayKey {
   public static final HighlightDisplayKey WRONG_PACKAGE_STATEMENT = register("WRONG_PACKAGE_STATEMENT", "Wrong package statement"); //no suppress
   public static final HighlightDisplayKey JAVADOC_ERROR = register("JAVADOC_ERROR", "JavaDoc errors");   //no suppress
   public static final HighlightDisplayKey UNKNOWN_JAVADOC_TAG = register("UNKNOWN_JAVADOC_TAG", "Unknown javadoc tags");  //no suppress
+  
+  public static final HighlightDisplayKey UNKNOWN_HTML_TAG = register("UNKNOWN_HTML_TAG", "Unknown html tags");  //no suppress
+  public static final HighlightDisplayKey UNKNOWN_HTML_ATTRIBUTES = register("UNKNOWN_HTML_ATTRIBUTE", "Unknown html attributes");  //no suppress
+  public static final HighlightDisplayKey REQUIRED_HTML_ATTRIBUTE = register("REQUIRED_HTML_ATTRIBUTE", "Required html attributes");  //no suppress
+  
   public static final HighlightDisplayKey EJB_ERROR = register("EJB_ERROR", "EJB errors");
   public static final HighlightDisplayKey EJB_WARNING = register("EJB_WARNING", "EJB warnings");
   public static final HighlightDisplayKey ILLEGAL_DEPENDENCY = register("ILLEGAL_DEPENDENCY", "Illegal package dependencies");

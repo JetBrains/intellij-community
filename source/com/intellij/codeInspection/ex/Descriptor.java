@@ -43,6 +43,11 @@ public class Descriptor {
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.ILLEGAL_DEPENDENCY, "Local_IllegalDependencies.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.JAVADOC_ERROR, "Local_JavaDoc.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG, "Local_UnknownJavaDocTags.html");
+    
+    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNKNOWN_HTML_TAG, "Local_UnknownHtmlTags.html");
+    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNKNOWN_HTML_ATTRIBUTES, "Local_UnknownHtmlAttributes.html");
+    ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE, "Local_NotRequiredHtmlAttributes.html");
+    
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.EJB_ERROR,  "Local_EJBErrors.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.EJB_WARNING, "Local_EJBWarnings.html");
     ourHighlightDisplayKeyToDescriptionsMap.put(HighlightDisplayKey.UNCHECKED_WARNING, "Local_UncheckedWarning.html");
@@ -129,8 +134,15 @@ public class Descriptor {
       myAdditionalConfigPanel = myTool.createOptionsPanel();
       return myAdditionalConfigPanel;
     }
+    
     if (myKey.equals(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG)){
       myAdditionalConfigPanel = createAdditionalJavadocTagsPanel(inspectionProfile);
+    } else if (myKey.equals(HighlightDisplayKey.UNKNOWN_HTML_TAG)){
+      myAdditionalConfigPanel = createAdditionalHtmlTagsPanel(inspectionProfile);
+    } else if (myKey.equals(HighlightDisplayKey.UNKNOWN_HTML_ATTRIBUTES)){
+      myAdditionalConfigPanel = createAdditionalHtmlAttributesPanel(inspectionProfile);
+    } else if (myKey.equals(HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE)){
+      myAdditionalConfigPanel = createAdditionalNotRequiredHtmlAttributesPanel(inspectionProfile);
     } else if (myKey.equals(HighlightDisplayKey.UNUSED_SYMBOL)){
       myAdditionalConfigPanel = createUnusedSymbolSettingsPanel(inspectionProfile);
     } else if (myAdditionalConfigPanel == null){
@@ -212,6 +224,92 @@ public class Descriptor {
     return additionalTagsPanel;
   }
 
+  public static FieldPanel createAdditionalHtmlTagsPanel(final InspectionProfile.ModifiableModel inspectionProfile){
+    FieldPanel additionalTagsPanel = new FieldPanel("Additional Html Tags", "Edit Additional Html Tags", null, null);
+    additionalTagsPanel.setPreferredSize(new Dimension(150, additionalTagsPanel.getPreferredSize().height));
+    additionalTagsPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        if (inspectionProfile != null) {
+          final Document document = e.getDocument();
+          try {
+            final String text = document.getText(0, document.getLength());
+            if (text != null && (text.length() > 0 || document.getLength() == 0)) {
+              inspectionProfile.setAdditionalHtmlTags(text.trim());
+            }
+          }
+          catch (BadLocationException e1) {
+            LOG.error(e1);
+          }
+          catch (InspectionProfile.UnableToEditDefaultProfileException e1) {
+            LOG.error(e1);
+          }
+        }
+      }
+    });
+    if (inspectionProfile != null) {
+      additionalTagsPanel.setText(inspectionProfile.getAdditionalHtmlTags());
+    }
+    return additionalTagsPanel;
+  }
+  
+  public static FieldPanel createAdditionalHtmlAttributesPanel(final InspectionProfile.ModifiableModel inspectionProfile){
+    FieldPanel additionalAttributesPanel = new FieldPanel("Additional Html Attributes", "Edit Additional Html Attributes", null, null);
+    
+    additionalAttributesPanel.setPreferredSize(new Dimension(150, additionalAttributesPanel.getPreferredSize().height));
+    additionalAttributesPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        if (inspectionProfile != null) {
+          final Document document = e.getDocument();
+          try {
+            final String text = document.getText(0, document.getLength());
+            if (text != null && (text.length() > 0 || document.getLength() == 0)) {
+              inspectionProfile.setAdditionalHtmlAttributes(text.trim());
+            }
+          }
+          catch (BadLocationException e1) {
+            LOG.error(e1);
+          }
+          catch (InspectionProfile.UnableToEditDefaultProfileException e1) {
+            LOG.error(e1);
+          }
+        }
+      }
+    });
+    if (inspectionProfile != null) {
+      additionalAttributesPanel.setText(inspectionProfile.getAdditionalHtmlAttributes());
+    }
+    return additionalAttributesPanel;
+  }
+  
+  public static FieldPanel createAdditionalNotRequiredHtmlAttributesPanel(final InspectionProfile.ModifiableModel inspectionProfile){
+    FieldPanel additionalAttributesPanel = new FieldPanel("Additional Not Required Html Attributes", "Edit Additional Not Required Html Attributes", null, null);
+    
+    additionalAttributesPanel.setPreferredSize(new Dimension(150, additionalAttributesPanel.getPreferredSize().height));
+    additionalAttributesPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        if (inspectionProfile != null) {
+          final Document document = e.getDocument();
+          try {
+            final String text = document.getText(0, document.getLength());
+            if (text != null && (text.length() > 0 || document.getLength() == 0)) {
+              inspectionProfile.setAdditionalNotRequiredHtmlAttributes(text.trim());
+            }
+          }
+          catch (BadLocationException e1) {
+            LOG.error(e1);
+          }
+          catch (InspectionProfile.UnableToEditDefaultProfileException e1) {
+            LOG.error(e1);
+          }
+        }
+      }
+    });
+    if (inspectionProfile != null) {
+      additionalAttributesPanel.setText(inspectionProfile.getAdditionalNotRequiredHtmlAttributes());
+    }
+    return additionalAttributesPanel;
+  }
+  
   public static JPanel createUnusedSymbolSettingsPanel(final InspectionProfile.ModifiableModel inspectionProfile){
     JPanel panel = new JPanel(new GridLayout(5, 1, 2, 2));
     final JCheckBox local = new JCheckBox("Check Local Variables");
