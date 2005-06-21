@@ -73,7 +73,8 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
   public UpdateSession updateDirectories(FilePath[] contentRoots, final UpdatedFiles updatedFiles, ProgressIndicator progressIndicator) {
     CvsConfiguration cvsConfiguration = CvsConfiguration.getInstance(myProject);
     final UpdateSettingsOnCvsConfiguration updateSettings = new UpdateSettingsOnCvsConfiguration(cvsConfiguration,
-                                                                                                 cvsConfiguration.CLEAN_COPY);
+                                                                                                 cvsConfiguration.CLEAN_COPY,
+                                                                                                 cvsConfiguration.RESET_STICKY);
     final UpdateHandler handler = CommandCvsHandler.createUpdateHandler(contentRoots,
                                                                         updateSettings, myProject, updatedFiles);
     handler.addCvsListener(new UpdatedFilesProcessor(updatedFiles));

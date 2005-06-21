@@ -12,10 +12,12 @@ import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 public class UpdateSettingsOnCvsConfiguration implements UpdateSettings{
   private final boolean myCleanCopy;
   private final CvsConfiguration myConfiguration;
+  private final boolean myResetSticky;
 
-  public UpdateSettingsOnCvsConfiguration(CvsConfiguration configuration, boolean cleanCopy) {
+  public UpdateSettingsOnCvsConfiguration(CvsConfiguration configuration, boolean cleanCopy, boolean resetSticky) {
     myCleanCopy = cleanCopy;
     myConfiguration = configuration;
+    myResetSticky = resetSticky;
   }
 
   public boolean getPruneEmptyDirectories() {
@@ -34,7 +36,7 @@ public class UpdateSettingsOnCvsConfiguration implements UpdateSettings{
   }
 
   public boolean getResetAllSticky() {
-    return myConfiguration.RESET_STICKY;
+    return myResetSticky;
   }
 
   public boolean getDontMakeAnyChanges() {

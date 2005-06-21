@@ -49,6 +49,7 @@ public class UpdateOptionsPanel {
     myChangeKeywordSubstitutionPanel =
     new ChangeKeywordSubstitutionPanel(CvsConfiguration.getInstance(myProject).UPDATE_KEYWORD_SUBSTITUTION);
     CvsConfiguration.getInstance(myProject).CLEAN_COPY = false;
+    CvsConfiguration.getInstance(myProject).RESET_STICKY = false;
     myMergingGroup = new JRadioButton[]{myDoNotMerge, myMergeWithBranch, myMergeTwoBranches};
     ButtonGroup mergingGroup = new ButtonGroup();
     mergingGroup.add(myDoNotMerge);
@@ -78,7 +79,7 @@ public class UpdateOptionsPanel {
 
     myBranch.setText(config.MERGE_WITH_BRANCH1_NAME);
     myBranch2.setText(config.MERGE_WITH_BRANCH2_NAME);
-    mySwitchToHeadRevision.setSelected(config.RESET_STICKY);
+    mySwitchToHeadRevision.setSelected(false);
     myCreateNewDirectories.setSelected(config.CREATE_NEW_DIRECTORIES);
     myCleanCopy.setSelected(false);
 
