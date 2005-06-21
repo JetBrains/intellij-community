@@ -150,7 +150,7 @@ public class SshConnectionSettings extends CvsConnectionSettings {
       String password = sshPasswordProvider.getPPKPasswordForCvsRoot(cvsRoot);
 
       if (password == null) {
-        SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(cvsRoot, "Enter PPK password for ");
+        SshPasswordDialog sshPasswordDialog = new SshPasswordDialog(cvsRoot, "Enter private key password for ");
         sshPasswordDialog.show();
         if (!sshPasswordDialog.isOK()) return false;
         password = sshPasswordDialog.getPassword();
