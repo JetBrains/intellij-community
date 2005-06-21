@@ -1269,7 +1269,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     try {
       String[] words = StringUtil.getWordsIn(searcher.getPattern()).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
-      LOG.assertTrue(words.length > 0);
+      if(words.length == 0) return true;
+
       Set<PsiFile> fileSet = new HashSet<PsiFile>();
       fileSet.addAll(Arrays.asList(myManager.getCacheManager().getFilesWithWord(words[0], searchContext, scope)));
       for (int i = 1; i < words.length; i++) {
