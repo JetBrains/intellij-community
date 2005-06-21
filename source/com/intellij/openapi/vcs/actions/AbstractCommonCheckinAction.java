@@ -86,7 +86,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       }
       final List<VcsException> errors = checkinFiles(project, context, roots, env);
 
-      showErrorConfirmation(errors);
+      processErrors(errors, VcsConfiguration.getInstance(project));
     }
 
   }
@@ -214,14 +214,18 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
       Messages.showErrorDialog("Cannot analyze changes: " + e.getLocalizedMessage(), "Analizing Changes");
     }
 
-    showErrorConfirmation(vcsExceptions);
+    processErrors(vcsExceptions, VcsConfiguration.getInstance(project));
 
   }
 
-  private void showErrorConfirmation(final List<VcsException> allExceptions) {
+  private void processErrors(final List<VcsException> allExceptions, VcsConfiguration config) {
     if (allExceptions.isEmpty()) return;
     int errorsSize = collectErrors(allExceptions).size();
     int warningsSize = allExceptions.size() - errorsSize;
+
+    if (errorsSize > 0) {
+      config.ERROR_OCCURED = true;
+    }
 
     if (errorsSize > 0 && warningsSize > 0) {
       Messages.showErrorDialog("Commit failed with errors and warnings", "Commit");

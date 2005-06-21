@@ -50,6 +50,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
 
   public boolean SHOW_CHECKOUT_OPTIONS = true;
 
+  public boolean ERROR_OCCURED = false;
 
   public String ACTIVE_VCS_NAME;
   public boolean UPDATE_GROUP_BY_PACKAGES = false;
