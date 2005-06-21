@@ -219,6 +219,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
                                        && !fileType.isBinary());
       }
 
+
       public void actionPerformed(AnActionEvent e) {
         DataContext dataContext = e.getDataContext();
         FilePath filePath = (FilePath)dataContext.getData(VcsDataConstants.FILE_PATH);
