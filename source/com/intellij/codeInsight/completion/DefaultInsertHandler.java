@@ -38,7 +38,7 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DefaultInsertHandler implements InsertHandler{
+public class DefaultInsertHandler implements InsertHandler,Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.DefaultInsertHandler");
 
   protected static final Object EXPANDED_TEMPLATE_ATTR = Key.create("EXPANDED_TEMPLATE_ATTR");
@@ -57,13 +57,25 @@ public class DefaultInsertHandler implements InsertHandler{
   public void handleInsert(final CompletionContext context,
                            int startOffset, LookupData data, LookupItem item,
                            final boolean signatureSelected, final char completionChar) {
+    DefaultInsertHandler delegate = this;
+    
+    if (isTemplateToBeCompleted(item)) {
+      try {
+        delegate = (DefaultInsertHandler)clone();
+        delegate.clear();
+      }
+      catch (CloneNotSupportedException e) {
+        e.printStackTrace();
+      }
+    } 
+    
     boolean toClear = true;
     try{
-      toClear = handleInsertInner(context, startOffset, data, item, signatureSelected, completionChar);
+      toClear = delegate.handleInsertInner(context, startOffset, data, item, signatureSelected, completionChar);
     }
     finally{
       if (toClear) {
-        clear();
+        delegate.clear();
       }
     }
   }
@@ -95,8 +107,7 @@ public class DefaultInsertHandler implements InsertHandler{
     myEditor = myContext.editor;
     myDocument = myEditor.getDocument();
 
-    if (myLookupItem.getObject() instanceof Template
-     && myLookupItem.getAttribute(EXPANDED_TEMPLATE_ATTR) == null){
+    if (isTemplateToBeCompleted(myLookupItem)){
         handleTemplate(context, signatureSelected, completionChar);
       // we could not clear in this case since handleTemplate has templateFinished lisntener that works
       // with e.g. myLookupItem
@@ -168,6 +179,11 @@ public class DefaultInsertHandler implements InsertHandler{
       return false;
     }
     return true;
+  }
+
+  private static boolean isTemplateToBeCompleted(final LookupItem lookupItem) {
+    return lookupItem.getObject() instanceof Template
+           && lookupItem.getAttribute(EXPANDED_TEMPLATE_ATTR) == null;
   }
 
   private int modifyTailTypeBasedOnMethodReturnType(boolean signatureSelected, boolean needLeftParenth, boolean hasParams, int tailType) {
