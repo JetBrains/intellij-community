@@ -198,8 +198,6 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     return result;
   }
 
-
-
   public AnAction[] getAdditionalActions(final FileHistoryPanel panel) {
     return new AnAction[]{new AnAction("Annotate", "Annotate file", IconLoader.getIcon("/actions/annotate.png")) {
       public void update(AnActionEvent e) {
