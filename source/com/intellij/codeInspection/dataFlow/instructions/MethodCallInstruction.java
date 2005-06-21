@@ -87,7 +87,7 @@ public class MethodCallInstruction extends Instruction {
 
   private void pushResult(DfaMemoryState state) {
     final DfaValue dfaValue;
-    if (myType != null && myType instanceof PsiClassType) {
+    if (myType != null && (myType instanceof PsiClassType || myType.getArrayDimensions() > 0)) {
       dfaValue = myIsNotNull ? myFactory.getNotNullFactory().create(myType) : myFactory.getTypeFactory().create(myType, myIsNullable);
     }
     else {

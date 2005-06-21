@@ -166,4 +166,8 @@ public class DataFlowTest extends InspectionTestCase {
   public void testfinalFields() throws Exception {
     doTest15();
   }
+
+  public void testNotNullArray() throws Exception {
+    doTest15();
+  }
 }
