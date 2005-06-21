@@ -466,7 +466,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ClassNameDiffersFromFileNameInspection.class);
         m_inspectionClasses.add(MarkerInterfaceInspection.class);
         m_inspectionClasses.add(FieldHasSetterButNoGetterInspection.class);
-        m_inspectionClasses.add(OverlyLargePrimitiveArrayInitializerInspection.class);
         m_inspectionClasses.add(AbstractClassNeverImplementedInspection.class);
         m_inspectionClasses.add(MissingDeprecatedAnnotationInspection.class);
         m_inspectionClasses.add(MissingOverrideAnnotationInspection.class);

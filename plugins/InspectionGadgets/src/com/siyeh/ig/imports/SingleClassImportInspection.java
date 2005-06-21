@@ -18,7 +18,7 @@ public class SingleClassImportInspection extends ClassInspection {
     }
 
     public String buildErrorString(PsiElement location) {
-        return "Single class import: #ref #loc";
+        return "Single class import '#ref' #loc";
     }
 
     public BaseInspectionVisitor buildVisitor() {
@@ -45,10 +45,6 @@ public class SingleClassImportInspection extends ClassInspection {
             for(final PsiImportStatement importStatement : importStatements){
                 if(!importStatement.isOnDemand()){
                     registerError(importStatement);
-                    final PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
-                    if(reference != null){
-                        registerError(reference);
-                    }
                 }
             }
         }
