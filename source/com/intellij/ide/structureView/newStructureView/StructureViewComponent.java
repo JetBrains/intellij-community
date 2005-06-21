@@ -150,17 +150,19 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   private static Object[] convertPathsToValues(TreePath[] selectionPaths) {
     if (selectionPaths != null) {
-      Object[] result = new Object[selectionPaths.length];
+      ArrayList result = new ArrayList();
 
-      for (int i = 0; i < selectionPaths.length; i++) {
-        TreePath selectionPath = selectionPaths[i];
-        Object value = ((AbstractTreeNode)((DefaultMutableTreeNode)selectionPath.getLastPathComponent()).getUserObject()).getValue();
-        if (value instanceof TreeElement) {
-          value = ((StructureViewTreeElement)value).getValue();
+      for (TreePath selectionPath : selectionPaths) {
+        final Object userObject = ((DefaultMutableTreeNode)selectionPath.getLastPathComponent()).getUserObject();
+        if (userObject instanceof AbstractTreeNode) {
+          Object value = ((AbstractTreeNode)userObject).getValue();
+          if (value instanceof TreeElement) {
+            value = ((StructureViewTreeElement)value).getValue();
+          }
+          result.add(value);
         }
-        result[i] = value;
       }
-      return result;
+      return result.toArray(new Object[result.size()]);
     }
     else {
       return null;
