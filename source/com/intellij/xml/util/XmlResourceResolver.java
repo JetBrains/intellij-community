@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
 import java.net.MalformedURLException;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.apache.xerces.xni.parser.XMLInputSource;
 import org.apache.xerces.xni.parser.XMLEntityResolver;
@@ -32,12 +34,17 @@ public class XmlResourceResolver implements XMLEntityResolver {
   private static Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlResourceResolver");
   private XmlFile myFile;
   private Project myProject;
+  private Map<String,String> myExternalResourcesMap = new HashMap<String, String>(1);
 
   public XmlResourceResolver(XmlFile _xmlFile, Project _project) {
     myFile = _xmlFile;
     myProject = _project;
   }
 
+  public String getPathByPublicId(String baseId) {
+    return myExternalResourcesMap.get(baseId);
+  }
+  
   public PsiFile resolve(final String baseSystemId, final String systemId) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: resolveEntity(baseSystemId='" + baseSystemId + "' systemId='" + systemId + "')");
@@ -97,7 +104,9 @@ public class XmlResourceResolver implements XMLEntityResolver {
     };
     ApplicationManager.getApplication().runReadAction(action);
 
-    return result[0];
+    final PsiFile psiFile = result[0];
+    if (psiFile != null) myExternalResourcesMap.put(systemId,psiFile.getVirtualFile().getUrl());
+    return psiFile;
   }
 
   public XMLInputSource resolveEntity(XMLResourceIdentifier xmlResourceIdentifier) throws XNIException, IOException {

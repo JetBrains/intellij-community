@@ -98,6 +98,10 @@ public class ExternalDocumentValidator {
         try {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
+              if (e.getPublicId() != null) {
+                return;
+              }
+              
               if (document.getLineCount() <= e.getLineNumber() || e.getLineNumber() <= 0) {
                 return;
               }

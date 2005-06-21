@@ -13,6 +13,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -63,6 +65,13 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     myErrorReporter = errorReporter;
   }
 
+  private VirtualFile getFile(String publicId) {
+    if (publicId == null) return myFile.getVirtualFile();
+    final String path = myXmlResourceResolver.getPathByPublicId(publicId);
+    if (path != null) return VfsUtil.findRelativeFile(path,null);
+    return null;
+  }
+  
   public abstract class ErrorReporter {
     public abstract void processError(SAXParseException ex,boolean warning);
 
@@ -76,8 +85,14 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static String buildMessageString(SAXParseException ex) {
-    return "(" + ex.getLineNumber() + ":" + ex.getColumnNumber() + ") " +ex.getMessage();
+  private String buildMessageString(SAXParseException ex) {
+    String msg = "(" + ex.getLineNumber() + ":" + ex.getColumnNumber() + ") " + ex.getMessage();
+    final VirtualFile file = getFile(ex.getPublicId());
+    
+    if ( file != null && !file.equals(myFile.getVirtualFile())) {
+      msg = file.getName() + ":" + msg;
+    }
+    return msg;
   }
 
   public class TestErrorReporter extends ErrorReporter {
@@ -194,7 +209,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
                 myErrorsView.addMessage(
                     warning ? MessageCategory.WARNING : MessageCategory.ERROR,
                     new String[]{ex.getLocalizedMessage()},
-                    myFile.getVirtualFile(),
+                    getFile(ex.getPublicId()),
                     ex.getLineNumber(),
                     ex.getColumnNumber(), null);
               }
