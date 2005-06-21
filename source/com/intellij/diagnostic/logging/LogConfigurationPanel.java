@@ -71,7 +71,8 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         ArrayList<MyFilesTableRowElement> newList = new ArrayList<MyFilesTableRowElement>(myModel.getItems());
-        newList.add(new MyFilesTableRowElement("", "", false));
+        final Pair<String, String> selectedNameLocation = showEditorDialog("", "");
+        newList.add(new MyFilesTableRowElement(selectedNameLocation.first, selectedNameLocation.second, false));
         myModel.setItems(newList);
         int index = myModel.getRowCount() - 1;
         myModel.fireTableRowsInserted(index, index);
@@ -254,6 +255,27 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     }
   }
 
+  private static Pair<String, String> showEditorDialog(String name, String location){
+    EditLocationDialog dialog = new EditLocationDialog(null, true, "Edit Log Files Aliases", "Alias:", "Log File Location:") {
+      protected FileChooserDescriptor getChooserDescriptor() {
+        return BrowseFilesListener.SINGLE_FILE_DESCRIPTOR;
+      }
+    };
+    dialog.init(name, location);
+    dialog.show();
+    if (dialog.isOK()) {
+      final EditLocationDialog.Pair pair = dialog.getPair();
+      if (pair != null) {
+        name = pair.getName();
+        location = pair.getLocation();
+        if (name == null || name.length() ==0){
+          name = location;
+        }
+      }
+    }
+    return Pair.create(location, name);
+  }
+
   private static class LogFileCellEditor extends AbstractTableCellEditor {
     private final CellEditorComponentWithBrowseButton<JTextField> myComponent;
     private Pair<String, String> mySelectedPair;
@@ -265,27 +287,10 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
       getChildComponent().setBorder(null);
       myComponent.getComponentWithButton().getButton().addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          EditLocationDialog dialog = new EditLocationDialog(null, true, "Edit Log Files Aliases", "Alias:", "Log File Location:") {
-            protected FileChooserDescriptor getChooserDescriptor() {
-              return BrowseFilesListener.SINGLE_FILE_DESCRIPTOR;
-            }
-          };
-          dialog.init(mySelectedPair.second, mySelectedPair.first);
-          dialog.show();
-          if (dialog.isOK()) {
-            final EditLocationDialog.Pair pair = dialog.getPair();
-            if (pair != null) {
-              String name = pair.getName();
-              final String location = pair.getLocation();
-              if (name == null || name.length() ==0){
-                name = location;
-              }
-              mySelectedPair = Pair.create(location, name);
-              JTextField textField = getChildComponent();
-              textField.setText(name);
-              textField.requestFocus();
-            }
-          }
+          mySelectedPair = showEditorDialog(mySelectedPair.second, mySelectedPair.first);
+          JTextField textField = getChildComponent();
+          textField.setText(mySelectedPair.second);
+          textField.requestFocus();
         }
       });
     }
