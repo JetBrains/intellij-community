@@ -162,4 +162,8 @@ public class DataFlowTest extends InspectionTestCase {
   public void testNullableReturn() throws Exception {
     doTest15();
   }
+
+  public void testfinalFields() throws Exception {
+    doTest15();
+  }
 }

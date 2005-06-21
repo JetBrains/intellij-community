@@ -33,8 +33,10 @@ public abstract class Instruction {
     return false;
   }
 
-  public void setMemoryStateProcessed(DfaMemoryState dfaMemState) {
+  public boolean setMemoryStateProcessed(DfaMemoryState dfaMemState) {
+    if (myProcessedStates.size() > DataFlowRunner.MAX_STATES_PER_BRANCH) return false;
     myProcessedStates.add(dfaMemState);
+    return true;
   }
 
   public void setIndex(int index) {

@@ -42,6 +42,10 @@ public class DataFlowRunner {
   private boolean myInNotNullMethod = false;
   private boolean myIsInMethod = false;
 
+  // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
+  // is executed more than this limit times.
+  public static final int MAX_STATES_PER_BRANCH = 300;
+
   public Instruction getInstruction(int index) {
     return myInstructions[index];
   }
@@ -120,7 +124,9 @@ public class DataFlowRunner {
         long distance = instructionState.getDistanceFromStart();
 
         if (instruction instanceof BranchingInstruction) {
-          instruction.setMemoryStateProcessed(instructionState.getMemoryState().createCopy());
+          if (!instruction.setMemoryStateProcessed(instructionState.getMemoryState().createCopy())) {
+            return false; // Too complex :(
+          }
         }
 
         DfaInstructionState[] after = instruction.apply(DataFlowRunner.this, instructionState.getMemoryState());
