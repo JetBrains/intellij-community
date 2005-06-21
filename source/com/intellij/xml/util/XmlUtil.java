@@ -650,7 +650,8 @@ public class XmlUtil {
       final String localName = tag.getLocalName();
       
       if (localName.equals("enumeration")) {
-        variants.add(tag.getAttributeValue("value"));
+        final String attributeValue = tag.getAttributeValue("value");
+        if (attributeValue != null) variants.add(attributeValue);
       } else if (localName.equals("union")) {
         variants.clear();
         return;
