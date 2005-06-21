@@ -673,7 +673,14 @@ public class BindingFactory {
                 if (((PsiWildcardType)y).isExtends()) {
                   /* T1, ? extends T2 */
                  if (yType instanceof PsiTypeVariable) {
-                    return create((PsiTypeVariable)yType, PsiWildcardType.createSuper(PsiManager.getInstance(myProject), xType));
+                   final PsiTypeVariable beta = myFactory.create();
+
+                   constraints.add (new Subtype(beta, yType));
+                   if (x != null) {
+                     constraints.add (new Subtype(x, yType));
+                   }
+
+                   return create ();
                   }
                   else {
                     if (constraints != null && xType != null && yType != null) {
@@ -685,7 +692,12 @@ public class BindingFactory {
                 }
                 else {/* T1, ? super T2 */
                   if (yType instanceof PsiTypeVariable) {
-                    return create(((PsiTypeVariable)yType), PsiWildcardType.createExtends(PsiManager.getInstance(myProject), xType));
+                    final PsiTypeVariable beta = myFactory.create();
+
+                    if (x != null) constraints.add (new Subtype(x, beta));
+                    constraints.add (new Subtype(yType, beta));
+
+                    return create();
                   }
                   else {
                     if (constraints != null && yType != null && xType != null) {
@@ -852,7 +864,7 @@ public class BindingFactory {
                                           return create();
                                         }
 
-                                        if (y instanceof PsiWildcardType) {
+                                        if (y == null || y instanceof PsiWildcardType) {
                                           return null;
                                         }
 
@@ -870,15 +882,19 @@ public class BindingFactory {
                                         final int xi = x.getIndex();
                                         final int yi = y.getIndex();
 
-                                        if (xi < yi) {
-                                          return create(x, y);
-                                        }
-                                        else if (yi < xi) {
-                                          return create(y, x);
-                                        }
-                                        else {
-                                          return create();
-                                        }
+                                        if (xi == yi)
+                                          return create ();
+
+                                        return create (y, PsiWildcardType.createExtends(PsiManager.getInstance(myProject), x));
+                                        /* if (xi < yi) {
+                                         return create(x, y);
+                                       }
+                                       else if (yi < xi) {
+                                         return create(y, x);
+                                       }
+                                       else {
+                                         return create();
+                                       } */
                                       }
 
                                       public Binding typeVar(final PsiType x, final PsiTypeVariable y) {

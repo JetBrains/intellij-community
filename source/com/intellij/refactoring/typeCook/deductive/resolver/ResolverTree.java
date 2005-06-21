@@ -36,6 +36,7 @@ public class ResolverTree {
   private Project myProject;
   private TObjectIntHashMap<PsiTypeVariable> myBindingDegree; //How many times this type variable is bound in the system
   private Settings mySettings;
+  private boolean mySolutionFound = false;
 
   private HashSet<Constraint> myConstraints;
 
@@ -318,16 +319,16 @@ public class ResolverTree {
       mySons[n++] = applyRule(riseBinding, addendumRise);
     }
 
-    if (sinkBinding != null) {
-      mySons[n++] = applyRule(sinkBinding, addendumSink);
-    }
-
     if (wcrdBinding != null) {
       mySons[n++] = applyRule(wcrdBinding, addendumWcrd);
     }
 
     if (omitBinding != null) {
       mySons[n++] = applyRule(omitBinding, addendumWcrd);
+    }
+
+    if (sinkBinding != null) {
+      mySons[n++] = applyRule(sinkBinding, addendumSink);
     }
   }
 
@@ -725,6 +726,7 @@ public class ResolverTree {
 
         if (mySons[i] != null) {
           mySons[i].resolve();
+          if (!mySettings.exhaustive() && mySettings.cookToWildcards() && mySons[i].mySolutionFound) break;
           mySons[i] = null;
         }
       }
@@ -734,6 +736,7 @@ public class ResolverTree {
         logSolution();
 
         mySolutions.putSolution(myCurrentBinding);
+        mySolutionFound = true;
       }
     }
   }
