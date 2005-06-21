@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
  */
 public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl");
-  private final static int VERSION = 1;
+  private final static int VERSION = 2;
 
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
   private SetWithArray myFileTypes = new SetWithArray(new THashSet<FileType>());
@@ -329,22 +329,38 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
       else if ("extensionMap".equals(e.getName())) {
         List mappings = e.getChildren("mapping");
+        
         for (int i = 0; i < mappings.size(); i++) {
           Element mapping = (Element)mappings.get(i);
           String ext = mapping.getAttributeValue("ext");
           String name = mapping.getAttributeValue("type");
           FileType type = getFileTypeByName(name);
+          
           if (type != null) {
+            if (savedVersion < VERSION && 
+                type == StdFileTypes.XML && 
+                ( ext.equals("dtd") || ext.equals("xhtml"))) {
+              continue;
+            }
             associateExtension(type, ext, false);
           }
         }
+        
         List removedMappings = e.getChildren("removed_mapping");
         for (int i = 0; i < removedMappings.size(); i++) {
           Element mapping = (Element)removedMappings.get(i);
           String ext = mapping.getAttributeValue("ext");
           String name = mapping.getAttributeValue("type");
           FileType type = getFileTypeByName(name);
+          
           if (type != null) {
+            if (savedVersion < VERSION) {
+              if((type == StdFileTypes.DTD && ext.equals("dtd")) ||
+                (type == StdFileTypes.XHTML && ext.equals("xhtml"))
+              ) {
+                continue;
+              }
+            }
             removeAssociation(type, ext, false);
           }
         }
@@ -529,9 +545,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private FileType loadFileType(Element typeElement, boolean isDefaults) {
     String fileTypeName = typeElement.getAttributeValue("name");
     String fileTypeDescr = typeElement.getAttributeValue("description");
-    String defaultExtension = typeElement.getAttributeValue("default_extension");
     String iconPath = typeElement.getAttributeValue("icon");
-    boolean isBinary = Boolean.valueOf(typeElement.getAttributeValue("binary")).booleanValue();
     String extensionsStr = typeElement.getAttributeValue("extensions");
 
     SyntaxTable table = null;
@@ -541,6 +555,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
 
     FileType type = getFileTypeByName(fileTypeName);
+    
+    if (!isDefaults && type == StdFileTypes.XML) {
+      extensionsStr = removeExtension(extensionsStr,"dtd");
+      extensionsStr = removeExtension(extensionsStr,"xhtml");
+    }
+    
     String[] exts = parse(extensionsStr);
     if (type != null) {
       if (extensionsStr != null) {
@@ -584,6 +604,20 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
 
     return type;
+  }
+
+  private static String removeExtension(String extensionsStr, String extension) {
+    int index = extensionsStr.indexOf(extension);
+
+    if (index != -1) {
+      final int extensionLength = extension.length();
+      boolean islastext = index + extensionLength == extensionsStr.length();
+      StringBuffer buf = new StringBuffer(extensionsStr);
+      final int start = index - (islastext ? 1 : 0);
+      buf.delete(start,start + 1 + extensionLength);
+      extensionsStr = buf.toString();
+    }
+    return extensionsStr;
   }
 
   private SyntaxTable readSyntaxTable(Element root) {
