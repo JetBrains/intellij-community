@@ -4,6 +4,7 @@ import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.junit2.configuration.ClassBrowser;
 import com.intellij.execution.junit2.configuration.CommonJavaParameters;
 import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
+import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -22,6 +23,7 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
   private final ConfigurationModuleSelector myModuleSelector;
   private final LogConfigurationPanel myLogConfigurations;
   private JPanel myLogsPanel;
+  private AlternativeJREPanel myAlternativeJREPanel;
 
   public ApplicationConfigurable2(final Project project) {
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
@@ -36,6 +38,8 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
     myModuleSelector.applyTo(configuration);
     myLogConfigurations.applyTo(configuration);
     configuration.MAIN_CLASS_NAME = getMainClassField().getText();
+    configuration.ALTERNATIVE_JRE_PATH = myAlternativeJREPanel.getPath();
+    configuration.ALTERNATIVE_JRE_PATH_ENABLED = myAlternativeJREPanel.isPathEnabled();
   }
 
   public void resetEditorFrom(final ApplicationConfiguration configuration) {
@@ -43,6 +47,7 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
     myModuleSelector.reset(configuration);
     myLogConfigurations.resetFrom(configuration);
     getMainClassField().setText(configuration.MAIN_CLASS_NAME);
+    myAlternativeJREPanel.init(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
   }
 
   public TextFieldWithBrowseButton getMainClassField() {

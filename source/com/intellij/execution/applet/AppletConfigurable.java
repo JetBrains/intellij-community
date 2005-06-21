@@ -3,6 +3,7 @@ package com.intellij.execution.applet;
 import com.intellij.execution.impl.CheckableRunConfigurationEditor;
 import com.intellij.execution.junit2.configuration.ClassBrowser;
 import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
+import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -44,6 +45,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   private JLabel myClassNameLabel;
   private JLabel myWidthLabel;
   private JLabel myHeightLabel;
+  private AlternativeJREPanel myAlternativeJREPanel;
   private ButtonGroup myAppletRadioButtonGroup = new ButtonGroup();
 
   private final Project myProject;
@@ -215,6 +217,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
       myParameters.setItems(cloneParameters(Arrays.asList(appletParameters)));
     }
     myModuleSelector.reset(configuration);
+    myAlternativeJREPanel.init(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
   }
 
   private RawCommandLineEditor getVMParametersComponent() {
@@ -250,6 +253,8 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     catch (NumberFormatException e) {
     }
     configuration.HTML_USED = myURL.isSelected();
+    configuration.ALTERNATIVE_JRE_PATH = myAlternativeJREPanel.getPath();
+    configuration.ALTERNATIVE_JRE_PATH_ENABLED = myAlternativeJREPanel.isPathEnabled();
   }
 
   private static abstract class MyColumnInfo extends ColumnInfo<AppletConfiguration.AppletParameter, String> {

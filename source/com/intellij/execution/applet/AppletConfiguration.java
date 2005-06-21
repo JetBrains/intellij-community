@@ -10,10 +10,12 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.RunnerInfo;
+import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -42,6 +44,8 @@ public class AppletConfiguration extends SingleClassConfiguration {
   public String POLICY_FILE;
   public String VM_PARAMETERS;
   private AppletParameter[] myAppletParameters;
+  public boolean ALTERNATIVE_JRE_PATH_ENABLED;
+  public String ALTERNATIVE_JRE_PATH;
 
   public AppletConfiguration(final String name, final Project project, ConfigurationFactory factory) {
     super(name, new RunConfigurationModule(project, false), factory);
@@ -60,22 +64,19 @@ public class AppletConfiguration extends SingleClassConfiguration {
         if (myHtmlURL != null) {
           final int classPathType = myHtmlURL.isHttp() ? JavaParameters.JDK_ONLY : JavaParameters.JDK_AND_CLASSES_AND_TESTS;
           final RunConfigurationModule runConfigurationModule = getConfigurationModule();
-          if (runConfigurationModule.getModule() == null) {
-            throw CantRunException.noModuleConfigured(runConfigurationModule.getModuleName());
-          }
-          params.configureByModule(runConfigurationModule.getModule(), classPathType);
+          JavaParametersUtil.configureModule(runConfigurationModule, params, classPathType, ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null);
           final String policyFileParameter = getPolicyFileParameter();
           if (policyFileParameter != null) {
             params.getVMParametersList().add(policyFileParameter);
           }
           params.getVMParametersList().addParametersString(VM_PARAMETERS);
           params.setMainClass("sun.applet.AppletViewer");
-          if (params.getJdk().getVersionString().indexOf("1.1") > -1) {
+         /* if (params.getJdk().getVersionString().indexOf("1.1") > -1) {
             params.getClassPath().add(params.getJdkPath() + File.separator + "lib" + File.separator + "classes.zip");
           }
           else {
             params.getClassPath().add(params.getJdkPath() + File.separator + "lib" + File.separator + "tools.jar");
-          }
+          }*/
           params.getProgramParametersList().add(myHtmlURL.getUrl());
         }
         return params;
@@ -221,6 +222,13 @@ public class AppletConfiguration extends SingleClassConfiguration {
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
+    if (ALTERNATIVE_JRE_PATH_ENABLED){
+      if (ALTERNATIVE_JRE_PATH == null ||
+          ALTERNATIVE_JRE_PATH.length() == 0 ||
+          !JavaSdkImpl.checkForJre(ALTERNATIVE_JRE_PATH)){
+        throw new RuntimeConfigurationWarning("\'" + ALTERNATIVE_JRE_PATH + "\' is not valid JRE home");
+      }
+    }
     getConfigurationModule().checkForWarning();
     if (HTML_USED) {
       if (HTML_FILE_NAME == null || HTML_FILE_NAME.length() == 0) {

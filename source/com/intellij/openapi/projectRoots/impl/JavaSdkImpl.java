@@ -416,6 +416,20 @@ public class JavaSdkImpl extends JavaSdk {
     return (children != null && children.length >= 2);
   }
 
+  public static boolean checkForJre(String file){
+    File ioFile = new File(new File(file.replace('/', File.separatorChar)).getAbsolutePath() + File.separator + "bin");
+    if (!ioFile.exists()) return false;
+    FileFilter fileFilter = new FileFilter() {
+      public boolean accept(File f) {
+        if (f.isDirectory()) return false;
+        if (f.getName().startsWith("java")) return true;
+        return false;
+      }
+    };
+    File[] children = ioFile.listFiles(fileFilter);
+    return (children != null && children.length >= 1);
+  }
+
   private static class ReadStreamThread extends Thread {
     private InputStream myStream;
 
