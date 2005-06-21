@@ -205,7 +205,7 @@ public class Descriptor {
           final Document document = e.getDocument();
           try {
             final String text = document.getText(0, document.getLength());
-            if (text != null && text.length() > 0) {
+            if (text != null) {
               inspectionProfile.setAdditionalJavadocTags(text.trim());
             }
           }
@@ -233,7 +233,7 @@ public class Descriptor {
           final Document document = e.getDocument();
           try {
             final String text = document.getText(0, document.getLength());
-            if (text != null && (text.length() > 0 || document.getLength() == 0)) {
+            if (text != null) {
               inspectionProfile.setAdditionalHtmlTags(text.trim());
             }
           }
@@ -262,7 +262,7 @@ public class Descriptor {
           final Document document = e.getDocument();
           try {
             final String text = document.getText(0, document.getLength());
-            if (text != null && (text.length() > 0 || document.getLength() == 0)) {
+            if (text != null) {
               inspectionProfile.setAdditionalHtmlAttributes(text.trim());
             }
           }
@@ -291,7 +291,7 @@ public class Descriptor {
           final Document document = e.getDocument();
           try {
             final String text = document.getText(0, document.getLength());
-            if (text != null && (text.length() > 0 || document.getLength() == 0)) {
+            if (text != null) {
               inspectionProfile.setAdditionalNotRequiredHtmlAttributes(text.trim());
             }
           }
