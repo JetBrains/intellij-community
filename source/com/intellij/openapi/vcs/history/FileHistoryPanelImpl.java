@@ -31,6 +31,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualTreeElement;
 import com.intellij.ui.dualView.DualView;
+import com.intellij.util.Alarm;
 import com.intellij.util.Icons;
 import com.intellij.util.TreeItem;
 import com.intellij.util.text.LineReader;
@@ -67,6 +68,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private VcsHistorySession myHistorySession;
   private final FilePath myFilePath;
   private final DualView myDualView;
+
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
 
   private static final String COMMIT_MESSAGE_TITLE = "Commit Message";
@@ -172,6 +175,18 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     createDualView(null);
 
     myPopupActions = createPopupActions();
+
+    myUpdateAlarm.addRequest(new Runnable() {
+      public void run() {
+        final boolean refresh = myHistorySession.refresh();
+        myUpdateAlarm.cancelAllRequests();
+        myUpdateAlarm.addRequest(this, 10000);
+
+        if(refresh) {
+          refresh();
+        }
+      }
+    }, 10000);
 
     init();
 
@@ -526,11 +541,15 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     protected void actionPerformed() {
-      showDifferences(myProject, getFirstSelectedRevision(), new CurrentRevision(myFilePath.getVirtualFile(),
-                                                                                 myHistorySession.getCurrentRevisionNumber()));
+      final VcsRevisionNumber currentRevisionNumber = myHistorySession.getCurrentRevisionNumber();
+      if (currentRevisionNumber != null) {
+        showDifferences(myProject, getFirstSelectedRevision(), new CurrentRevision(myFilePath.getVirtualFile(),
+                                                                                   currentRevisionNumber));
+      }
     }
 
     public boolean isEnabled() {
+      if (myHistorySession.getCurrentRevisionNumber() == null) return false;
       if (myFilePath.getVirtualFile() == null) return false;
       if (!super.isEnabled()) return false;
       //if (CvsEntriesManager.getInstance().getEntryFor(myVirtualFile) == null) return false;
@@ -834,6 +853,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   protected void dispose() {
     super.dispose();
     myDualView.dispose();
+    myUpdateAlarm.cancelAllRequests();
   }
 
   abstract class AbstractActionForSomeSelection extends AnAction {
@@ -1058,8 +1078,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                      Object treeNode) {
       VcsFileRevision revision = (VcsFileRevision)treeNode;
       if (revision == null) return;
-      if (myHistorySession.getCurrentRevisionNumber() == null) return;
-      if (revision.getRevisionNumber().compareTo(myHistorySession.getCurrentRevisionNumber()) == 0) {
+      final VcsRevisionNumber currentRevisionNumber = myHistorySession.getCurrentRevisionNumber();
+      if (currentRevisionNumber == null) return;
+      if (revision.getRevisionNumber().compareTo(currentRevisionNumber) == 0) {
         makeBold(component);
       }
     }

@@ -143,7 +143,7 @@ public class VcsHistoryDialog extends DialogWrapper {
       }
     });
 
-    
+
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         if (myList.getSelectedRowCount() == 1) {
