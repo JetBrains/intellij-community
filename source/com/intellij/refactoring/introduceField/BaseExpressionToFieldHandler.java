@@ -178,8 +178,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           final PsiClass destClass = settings.getDestinationClass() == null ? myParentClass : settings.getDestinationClass();
 
           if (!destClass.getContainingFile().isWritable()) {
-            RefactoringMessageUtil.checkReadOnlyStatus(project, destClass.getContainingFile());
-            return;
+            if (!RefactoringMessageUtil.checkReadOnlyStatus(project, destClass.getContainingFile())) return;
           }
 
           PsiField field = createField(fieldName, type, initializer,
