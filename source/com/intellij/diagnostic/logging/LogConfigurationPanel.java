@@ -110,7 +110,7 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     myWholePanel.add(scrollPane, BorderLayout.CENTER);
     myWholePanel.add(myButtonsPanel, BorderLayout.EAST);
-    myWholePanel.setBorder(BorderFactory.createTitledBorder("Log Files To Show In Console"));
+    myWholePanel.setBorder(BorderFactory.createTitledBorder("Log Files To Be Shown In Console"));
     myWholePanel.setPreferredSize(new Dimension(-1, 150));
   }
 
