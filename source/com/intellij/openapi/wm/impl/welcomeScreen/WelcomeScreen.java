@@ -203,7 +203,7 @@ public class WelcomeScreen {
     pluginsCaption.setFont(CAPTION_FONT);
     pluginsCaption.setForeground(CAPTION_COLOR);
 
-    JLabel installedPluginsCaption = new JLabel("Installed Plugins:");
+    JLabel installedPluginsCaption = new JLabel("User-Installed Plugins:");
     installedPluginsCaption.setFont(LINK_FONT);
     installedPluginsCaption.setForeground(CAPTION_COLOR);
 
@@ -236,10 +236,11 @@ public class WelcomeScreen {
 
       int embeddedPlugins = 0;
       int installedPlugins = 0;
+      String preinstalledPrefix = PathManager.getPreinstalledPluginsPath();
 
       for (int i = 0; i < myInstalledPlugins.length; i++) {
         PluginDescriptor plugin = myInstalledPlugins[i];
-        if (JET_BRAINS.equalsIgnoreCase(plugin.getVendor()) || INTELLIJ.equalsIgnoreCase(plugin.getVendor()) ) {
+        if (plugin.getPath().getAbsolutePath().startsWith(preinstalledPrefix)) {
           embeddedPlugins++;
           addListItemToPlugins(embeddedPluginsPanel, plugin.getName(), plugin.getDescription(), plugin.getVendorLogoPath(),
                                plugin.getPluginClassLoader(), plugin.getUrl());
