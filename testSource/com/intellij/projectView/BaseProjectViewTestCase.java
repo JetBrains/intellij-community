@@ -23,13 +23,12 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Iterator;
+import java.util.*;
 
 public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   protected AbstractTreeStructure myStructure;
   protected boolean myShowMembers = false;
+  private List<AbstractProjectViewPSIPane> myPanes = new ArrayList<AbstractProjectViewPSIPane>();
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -39,6 +38,13 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
         return myShowMembers;
       }
     };
+  }
+
+  protected void tearDown() throws Exception {
+    for (Iterator<AbstractProjectViewPSIPane> iterator = myPanes.iterator(); iterator.hasNext();) {
+      iterator.next().dispose();
+    }
+    super.tearDown();
   }
 
   protected AbstractProjectViewPSIPane createPane() {
@@ -53,7 +59,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
       protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
         return new ProjectTreeBuilder(myProject, myTree, treeModel, AlphaComparator.INSTANCE,
-        (ProjectAbstractTreeStructureBase)myTreeStructure) {
+                                      (ProjectAbstractTreeStructureBase)myTreeStructure) {
           protected AbstractTreeUpdater createUpdater() {
             return createTreeUpdater(this);
           }
@@ -91,6 +97,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
       }
     };
     pane.initTree();
+    myPanes.add(pane);
     return pane;
   }
 
@@ -122,7 +129,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   }
 
   protected static void collect(AbstractTreeNode node, MultiValuesMap<VirtualFile, AbstractTreeNode> map,
-                              final AbstractTreeStructure structure) {
+                                final AbstractTreeStructure structure) {
     Object[] kids = (Object[])structure.getChildElements(node);
     for (int i = 0; i < kids.length; i++) {
       ProjectViewNode kid = (ProjectViewNode)kids[i];
