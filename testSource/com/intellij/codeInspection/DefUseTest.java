@@ -36,4 +36,12 @@ public class DefUseTest extends InspectionTestCase {
   public void testSCR40364() throws Exception {
     doTest();
   }
+
+  public void testArrayLength() throws Exception {
+    doTest();
+  }
+
+  public void testUsedInArrayInitializer() throws Exception {
+    doTest();
+  }
 }
