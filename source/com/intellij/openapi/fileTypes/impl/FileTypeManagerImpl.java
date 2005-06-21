@@ -338,8 +338,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
           
           if (type != null) {
             if (savedVersion < VERSION && 
-                type == StdFileTypes.XML && 
-                ( ext.equals("dtd") || ext.equals("xhtml"))) {
+                ( type == StdFileTypes.XML && 
+                  ( ext.equals("dtd") || ext.equals("xhtml") || ext.equals("jspx") || ext.equals("tagx"))
+                ) ||
+                ext.equals("css")  
+              ) {
               continue;
             }
             associateExtension(type, ext, false);
@@ -356,7 +359,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
           if (type != null) {
             if (savedVersion < VERSION) {
               if((type == StdFileTypes.DTD && ext.equals("dtd")) ||
-                (type == StdFileTypes.XHTML && ext.equals("xhtml"))
+                (type == StdFileTypes.XHTML && ext.equals("xhtml")) ||
+                ext.equals("css") ||
+                (type == StdFileTypes.JSPX && (ext.equals("tagx") || ext.equals("jspx")))
               ) {
                 continue;
               }
@@ -556,9 +561,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
     FileType type = getFileTypeByName(fileTypeName);
     
-    if (!isDefaults && type == StdFileTypes.XML) {
-      extensionsStr = removeExtension(extensionsStr,"dtd");
-      extensionsStr = removeExtension(extensionsStr,"xhtml");
+    if (!isDefaults) {
+      if (type == StdFileTypes.XML) {
+        extensionsStr = removeExtension(extensionsStr,"dtd");
+        extensionsStr = removeExtension(extensionsStr,"xhtml");
+        extensionsStr = removeExtension(extensionsStr,"jspx");
+        extensionsStr = removeExtension(extensionsStr,"tagx");
+      } else if (extensionsStr != null && extensionsStr.indexOf("css") != -1) {
+        extensionsStr = removeExtension(extensionsStr,"css");
+      }
     }
     
     String[] exts = parse(extensionsStr);
