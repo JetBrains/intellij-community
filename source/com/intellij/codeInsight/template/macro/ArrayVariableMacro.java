@@ -26,10 +26,10 @@ public class ArrayVariableMacro extends VariableTypeMacroBase {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
     PsiElement place = file.findElementAt(offset);
     PsiVariable[] variables = MacroUtil.getVariablesVisibleAt(place, "");
-    for(int i = 0; i < variables.length; i++){
-      PsiType type = variables[i].getType();
-      if (type instanceof PsiArrayType){
-        array.add(variables[i]);
+    for (PsiVariable variable : variables) {
+      PsiType type = variable.getType();
+      if (type instanceof PsiArrayType) {
+        array.add(variable);
       }
     }
     return (PsiVariable[])array.toArray(new PsiVariable[array.size()]);

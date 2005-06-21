@@ -237,7 +237,6 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
   }
 
   private void loadTemplates(Application application) {
-    if (application.isUnitTestMode()) return; //test load speed optimization
     File[] files = getUserTemplateFiles();
     if (files == null) {
       return;
