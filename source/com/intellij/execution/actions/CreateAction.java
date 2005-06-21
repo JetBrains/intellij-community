@@ -4,7 +4,6 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.actionSystem.Presentation;
 
 public class CreateAction extends BaseRunConfigurationAction {
@@ -42,7 +41,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     }
 
     protected void updateText(final Presentation presentation, final String actionText) {
-      presentation.setText(myName + " " + actionText);
+      presentation.setText(myName + " " + actionText, false);
     }
 
     public abstract void perform(ConfigurationContext context);
@@ -75,7 +74,7 @@ public class CreateAction extends BaseRunConfigurationAction {
 
   private static class CreateAndEditPolicy extends CreatePolicy {
     protected void updateText(final Presentation presentation, final String actionText) {
-      presentation.setText("Create " + actionText + "...");
+      presentation.setText("Create " + actionText + "...", false);
     }
 
     public void perform(final ConfigurationContext context) {

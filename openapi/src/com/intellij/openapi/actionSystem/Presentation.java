@@ -80,7 +80,7 @@ public final class Presentation implements Cloneable {
         StringBuffer plainText = new StringBuffer();
         for(int i = 0; i < text.length(); i++){
           char ch = text.charAt(i);
-          if (ch == '_' || ch == '&'){
+          if (myMnemonic == 0 && (ch == '_' || ch == '&')){
             i++;
             if (i >= text.length()){
               break;

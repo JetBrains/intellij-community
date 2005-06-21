@@ -9,7 +9,6 @@ import com.intellij.execution.runners.JavaProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.localVcs.LocalVcs;
 import com.intellij.openapi.localVcs.LvcsConfiguration;
@@ -33,6 +32,10 @@ public class GenericDebuggerRunner implements JavaProgramRunner<GenericDebuggerR
                                                                  "debugging") {
     public String getRunContextActionId() {
       return "DebugClass";
+    }
+
+    public String getStartActionText() {
+      return "&Debug";
     }
   };
 
