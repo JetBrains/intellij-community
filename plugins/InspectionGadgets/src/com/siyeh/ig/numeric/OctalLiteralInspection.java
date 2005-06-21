@@ -46,7 +46,7 @@ public class OctalLiteralInspection extends ExpressionInspection{
                 return;
             }
             final String text = literal.getText();
-            if("0".equals(text) || "0L".equals(text)){
+            if("0".equals(text) || "0L".equals(text)|| "0l".equals(text)){
                 return;
             }
             if(text.charAt(0) != '0'){
