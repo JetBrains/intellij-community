@@ -65,9 +65,8 @@ public class ExpectedTypeUtils{
         return -1;
     }
 
-    private static
     @Nullable
-    PsiType getTypeOfParemeter(PsiMethod psiMethod,
+    private static PsiType getTypeOfParemeter(PsiMethod psiMethod,
                                int parameterPosition){
         final PsiParameterList paramList = psiMethod.getParameterList();
         final PsiParameter[] parameters = paramList.getParameters();
@@ -94,9 +93,8 @@ public class ExpectedTypeUtils{
         return param.getType();
     }
 
-    private static
     @Nullable
-    PsiMethod findCalledMethod(PsiExpressionList expList){
+    private static PsiMethod findCalledMethod(PsiExpressionList expList){
         final PsiElement parent = expList.getParent();
         if(parent instanceof PsiMethodCallExpression){
             final PsiMethodCallExpression methodCall =
@@ -298,30 +296,27 @@ public class ExpectedTypeUtils{
         public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression ref){
             final PsiManager manager = ref.getManager();
-            final PsiElement parent = ref.getParent();
-            if(parent instanceof PsiMethodCallExpression){
-                final PsiMethod psiMethod =
-                        ((PsiCall) parent).resolveMethod();
-                if(psiMethod == null){
-                    expectedType = null;
-                    return;
-                }
-                final PsiClass aClass = psiMethod.getContainingClass();
+            final PsiElement element = ref.resolve();
+            if(element instanceof PsiField){
+                final PsiField field = (PsiField) element;
+                final PsiClass aClass = field.getContainingClass();
                 final PsiElementFactory factory = manager.getElementFactory();
                 expectedType = factory.createType(aClass);
-            } else if(parent instanceof PsiReferenceExpression){
-                final PsiElement elt =
-                        ((PsiReference) parent).resolve();
-                if(elt instanceof PsiField){
-                    final PsiClass aClass =
-                            ((PsiMember) elt).getContainingClass();
-                    final PsiElementFactory factory =
-                            manager.getElementFactory();
-                    expectedType = factory.createType(aClass);
+            } else if(element instanceof PsiMethod){
+                final PsiMethod method = (PsiMethod) element;
+                final PsiMethod superMethod = method.findDeepestSuperMethod();
+                final PsiClass aClass;
+                if(superMethod != null){
+                    aClass = superMethod.getContainingClass();
                 } else{
-                    expectedType = null;
+                    aClass = method.getContainingClass();
                 }
+                final PsiElementFactory factory = manager.getElementFactory();
+                expectedType = factory.createType(aClass);
+            } else{
+                expectedType = null;
             }
         }
     }
 }
+
