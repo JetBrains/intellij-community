@@ -15,13 +15,7 @@ public interface VcsHistoryProvider {
 
   ColumnInfo[] getRevisionColumns();
 
-  /**
-   *
-   * @return null in order to use default (first) column to perform initial sorting
-   */
-  @Nullable ColumnInfo getDefaultColumnToSortBy();
-
-  AnAction[] getAdditionalActions();
+  AnAction[] getAdditionalActions(final FileHistoryPanel panel);
 
   String getHelpId();
 

@@ -169,7 +169,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       myDualView.switchToTheFlatMode();
     }
 
-    createDualView(vcs.getVcsHistoryProvider().getDefaultColumnToSortBy());
+    createDualView(null);
 
     myPopupActions = createPopupActions();
 
@@ -447,7 +447,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
     result.add(diffWithCurrent);
     result.add(new MyGetVersionAction());
-    AnAction[] additionalActions = getHistoryProvider().getAdditionalActions();
+    AnAction[] additionalActions = getHistoryProvider().getAdditionalActions(this);
     if (additionalActions != null) {
       for (int i = 0; i < additionalActions.length; i++) {
         result.add(additionalActions[i]);

@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TreeItem;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
-import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.log.Revision;
@@ -135,11 +134,6 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       };
   }
 
-  @Nullable
-  public ColumnInfo getDefaultColumnToSortBy() {
-    return null;
-  }
-
   public String getHelpId() {
     return "cvs.selectionHistory";
   }
@@ -198,7 +192,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   }
 
 
-  public AnAction[] getAdditionalActions() {
+  public AnAction[] getAdditionalActions(final FileHistoryPanel panel) {
     return new AnAction[]{new AnAction("Annotate", "Annotate file", IconLoader.getIcon("/actions/annotate.png")) {
                                 public void update(AnActionEvent e) {
                                   DataContext dataContext = e.getDataContext();
