@@ -28,6 +28,7 @@ public class MethodCallInstruction extends Instruction {
   private boolean[] myParametersNotNull;
   private @Nullable PsiType myType;
   private @NotNull PsiExpression[] myArgs;
+  private boolean myShouldFlushFields;
 
   public MethodCallInstruction(PsiCallExpression call, DfaValueFactory factory) {
     myCall = call;
@@ -52,9 +53,13 @@ public class MethodCallInstruction extends Instruction {
     }
     myType = myCall.getType();
 
+    myShouldFlushFields = true;
     if (call instanceof PsiNewExpression) {
       myIsNullable = false;
       myIsNotNull = true;
+      if (myType != null && myType.getArrayDimensions() > 0) {
+        myShouldFlushFields = false;
+      }
     }
   }
 
@@ -80,9 +85,10 @@ public class MethodCallInstruction extends Instruction {
     }
     finally {
       pushResult(memState);
-      memState.flushFields(runner);
+      if (myShouldFlushFields) {
+        memState.flushFields(runner);
+      }
     }
-
   }
 
   private void pushResult(DfaMemoryState state) {
