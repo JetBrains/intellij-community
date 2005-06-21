@@ -43,55 +43,57 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
-                final PsiExpression variable =
-                        (PsiExpression) descriptor.getPsiElement();
-                final PsiMethod method =
-                        PsiTreeUtil.getParentOfType(variable, PsiMethod.class);
+                throws IncorrectOperationException{
+            final PsiExpression variable =
+                    (PsiExpression) descriptor.getPsiElement();
+            final PsiMethod method =
+                    PsiTreeUtil.getParentOfType(variable, PsiMethod.class);
 
-                assert method != null;
-                final PsiCodeBlock body = method.getBody();
-                final String replacementText;
-                final PsiType type = variable.getType();
+            assert method != null;
+            final PsiCodeBlock body = method.getBody();
+            final PsiType type = variable.getType();
 
-                final PsiManager psiManager = PsiManager.getInstance(project);
+            final PsiManager psiManager = PsiManager.getInstance(project);
 
-                final CodeStyleManager codeStyleManager =
-                        psiManager.getCodeStyleManager();
-                final String originalVariableName = variable.getText();
-                final SuggestedNameInfo suggestions =
-                        codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE,
-                                                             originalVariableName + '1', variable, type);
-                final String[] names = suggestions.names;
-                final String baseName;
-                if(names != null && names.length > 0){
-                    baseName = names[0];
-                } else{
-                    baseName = "value";
-                }
-                final String variableName =
-                        codeStyleManager.suggestUniqueVariableName(baseName,
-                                                                   method,
-                                                                   false);
-                final String className = type.getPresentableText();
-                final PsiElement[] children = body.getChildren();
-                final StringBuffer buffer = new StringBuffer();
-                for(int i = 1; i < children.length; i++){
-                    replaceVariableName( children[i], variableName, originalVariableName, buffer);
-                }
-                replacementText = '{' + className + ' ' + variableName + " = " +
-                        originalVariableName +
-                        ';' +
-                        buffer;
+            final CodeStyleManager codeStyleManager =
+                    psiManager.getCodeStyleManager();
+            final String originalVariableName = variable.getText();
+            final SuggestedNameInfo suggestions =
+                    codeStyleManager
+                            .suggestVariableName(VariableKind.LOCAL_VARIABLE,
+                                                 originalVariableName + '1',
+                                                 variable, type);
+            final String[] names = suggestions.names;
+            final String baseName;
+            if(names != null && names.length > 0){
+                baseName = names[0];
+            } else{
+                baseName = "value";
+            }
+            final String variableName =
+                    codeStyleManager.suggestUniqueVariableName(baseName,
+                                                               method,
+                                                               false);
+            final String className = type.getPresentableText();
+            final PsiElement[] children = body.getChildren();
+            final StringBuffer buffer = new StringBuffer();
+            for(int i = 1; i < children.length; i++){
+                replaceVariableName(children[i], variableName,
+                                    originalVariableName, buffer);
+            }
+            final String replacementText = '{' + className + ' ' + variableName
+                    + " = " +
+                    originalVariableName +
+                    ';' +
+                    buffer;
 
-                final PsiElementFactory elementFactory =
-                        psiManager.getElementFactory();
-                final PsiCodeBlock block =
-                        elementFactory.createCodeBlockFromText(replacementText,
-                                                               null);
-                body.replace(block);
-                codeStyleManager.reformat(method);
-
+            final PsiElementFactory elementFactory =
+                    psiManager.getElementFactory();
+            final PsiCodeBlock block =
+                    elementFactory.createCodeBlockFromText(replacementText,
+                                                           null);
+            body.replace(block);
+            codeStyleManager.reformat(method);
         }
 
         private void replaceVariableName(PsiElement element,
@@ -124,8 +126,8 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
 
     private static class AssignmentToMethodParameterVisitor
             extends BaseInspectionVisitor{
-
-        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression){
+        public void visitAssignmentExpression(
+                @NotNull PsiAssignmentExpression expression){
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
@@ -134,7 +136,8 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
             checkForMethodParam(lhs);
         }
 
-        public void visitPrefixExpression(@NotNull PsiPrefixExpression expression){
+        public void visitPrefixExpression(
+                @NotNull PsiPrefixExpression expression){
             super.visitPrefixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
             if(sign == null){
@@ -152,7 +155,8 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
             checkForMethodParam(operand);
         }
 
-        public void visitPostfixExpression(@NotNull PsiPostfixExpression expression){
+        public void visitPostfixExpression(
+                @NotNull PsiPostfixExpression expression){
             super.visitPostfixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
             if(sign == null){
@@ -180,7 +184,8 @@ public class AssignmentToMethodParameterInspection extends ExpressionInspection{
             if(!(variable instanceof PsiParameter)){
                 return;
             }
-            if(((PsiParameter) variable).getDeclarationScope() instanceof PsiCatchSection){
+            if(((PsiParameter) variable)
+                    .getDeclarationScope() instanceof PsiCatchSection){
                 return;
             }
             registerError(expression);

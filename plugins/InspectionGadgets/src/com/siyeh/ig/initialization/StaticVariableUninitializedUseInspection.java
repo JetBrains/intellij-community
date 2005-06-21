@@ -66,8 +66,7 @@ public class StaticVariableUninitializedUseInspection extends FieldInspection {
             }
             final PsiClassInitializer[] initializers = containingClass.getInitializers();
             // Do the static initializers come in actual order in file? (They need to.)
-            final InitializationReadUtils iru;
-            iru = new InitializationReadUtils();
+            final InitializationReadUtils iru = new InitializationReadUtils();
 
             for(final PsiClassInitializer initializer : initializers){
                 if(initializer.hasModifierProperty(PsiModifier.STATIC)){

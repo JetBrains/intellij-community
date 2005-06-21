@@ -5,7 +5,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.*;
 import com.siyeh.ig.fixes.InlineVariableFix;
 import com.siyeh.ig.psiutils.VariableAssignedVisitor;
-import com.siyeh.ig.psiutils.VariableUsedVisitor;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -229,7 +229,7 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
             return false;
         }
         for (int i = followingStatementNumber; i < statements.length; i++) {
-            if (variableIsUsedInStatement(statements[i], variable)) {
+            if (VariableAccessUtils.variableIsUsed(statements[i], variable)) {
                 return false;
             }
 
@@ -290,7 +290,7 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
             return false;
         }
         for (int i = followingStatementNumber; i < statements.length; i++) {
-            if (variableIsUsedInStatement(statements[i], variable)) {
+            if (VariableAccessUtils.variableIsUsed(statements[i], variable)) {
                 return false;
             }
 
@@ -305,15 +305,6 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
                 = new VariableUsedInInnerClassVisitor(variable);
         block.accept(visitor);
         return visitor.isUsedInInnerClass();
-    }
-
-    private static boolean variableIsUsedInStatement(PsiStatement statement,
-                                                     PsiVariable variable) {
-
-        final VariableUsedVisitor visitor
-                = new VariableUsedVisitor(variable);
-        statement.accept(visitor);
-        return visitor.isUsed();
     }
 
 }

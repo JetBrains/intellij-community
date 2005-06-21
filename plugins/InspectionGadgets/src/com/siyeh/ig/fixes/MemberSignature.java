@@ -216,7 +216,6 @@ public class MemberSignature implements Comparable
                 PsiClass psiClass = classType.resolve();
 				if (psiClass != null)
 				{
-					final String qualifiedName;
 					final StringBuffer postFix = new StringBuffer("");
 					PsiClass containingClass = psiClass.getContainingClass();
 					while (containingClass != null)
@@ -226,16 +225,16 @@ public class MemberSignature implements Comparable
 						psiClass = containingClass;
 						containingClass = psiClass.getContainingClass();
 					}
-					qualifiedName = psiClass.getQualifiedName();
-					if (qualifiedName == null)
-					{
-						// for type parameters
-						buffer.append("java.lang.Object");
-					}
-					else
-					{
-						buffer.append(qualifiedName.replace('.', '/') + postFix);
-					}
+                    final String qualifiedName = psiClass.getQualifiedName();
+                    if(qualifiedName == null)
+                    {
+                        // for type parameters
+                        buffer.append("java.lang.Object");
+                    }
+                    else
+                    {
+                        buffer.append(qualifiedName.replace('.', '/') + postFix);
+                    }
 				}
             }
             else

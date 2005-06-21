@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToCatchBlockParameterInspection
         extends ExpressionInspection{
-
     private final AssignmentToCatchBlockParameterFix fix =
             new AssignmentToCatchBlockParameterFix();
 
@@ -44,60 +43,59 @@ public class AssignmentToCatchBlockParameterInspection
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
-                final PsiExpression variable =
-                        (PsiExpression) descriptor.getPsiElement();
-                final PsiCatchSection catchSection =
-                        PsiTreeUtil.getParentOfType(variable,
-                                                                      PsiCatchSection.class);
+                throws IncorrectOperationException{
+            final PsiExpression variable =
+                    (PsiExpression) descriptor.getPsiElement();
+            final PsiCatchSection catchSection =
+                    PsiTreeUtil.getParentOfType(variable,
+                                                PsiCatchSection.class);
 
-                assert catchSection != null;
-                final PsiCodeBlock body = catchSection.getCatchBlock();
-                final String replacementText;
-                final PsiType type = variable.getType();
+            assert catchSection != null;
+            final PsiCodeBlock body = catchSection.getCatchBlock();
+            final PsiType type = variable.getType();
 
-                final PsiManager psiManager = PsiManager.getInstance(project);
+            final PsiManager psiManager = PsiManager.getInstance(project);
 
-                final CodeStyleManager codeStyleManager =
-                        psiManager.getCodeStyleManager();
-                final String originalVariableName = variable.getText();
-                final SuggestedNameInfo suggestions =
-                        codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE,
-                                                             originalVariableName +
-                                                                     '1',
-                                                             variable, type);
-                final String[] names = suggestions.names;
-                final String baseName;
-                if(names != null && names.length > 0){
-                    baseName = names[0];
-                } else{
-                    baseName = "value";
-                }
-                final String variableName =
-                        codeStyleManager.suggestUniqueVariableName(baseName,
-                                                                   catchSection,
-                                                                   false);
-                final String className = type.getPresentableText();
-                assert body != null;
-                final PsiElement[] children = body.getChildren();
-                final StringBuffer buffer = new StringBuffer();
-                for(int i = 1; i < children.length; i++){
-                    replaceVariableName(children[i], variableName,
-                                        originalVariableName, buffer);
-                }
-                replacementText = '{' + className + ' ' + variableName + " = " +
-                        originalVariableName +
-                        ';' +
-                        buffer;
+            final CodeStyleManager codeStyleManager =
+                    psiManager.getCodeStyleManager();
+            final String originalVariableName = variable.getText();
+            final SuggestedNameInfo suggestions =
+                    codeStyleManager
+                            .suggestVariableName(VariableKind.LOCAL_VARIABLE,
+                                                 originalVariableName +
+                                                         '1',
+                                                 variable, type);
+            final String[] names = suggestions.names;
+            final String baseName;
+            if(names != null && names.length > 0){
+                baseName = names[0];
+            } else{
+                baseName = "value";
+            }
+            final String variableName =
+                    codeStyleManager.suggestUniqueVariableName(baseName,
+                                                               catchSection,
+                                                               false);
+            final String className = type.getPresentableText();
+            assert body != null;
+            final PsiElement[] children = body.getChildren();
+            final StringBuffer buffer = new StringBuffer();
+            for(int i = 1; i < children.length; i++){
+                replaceVariableName(children[i], variableName,
+                                    originalVariableName, buffer);
+            }
+            final String text = '{' + className + ' ' + variableName + " = " +
+                    originalVariableName +
+                    ';' +
+                    buffer;
 
-                final PsiElementFactory elementFactory =
-                        psiManager.getElementFactory();
-                final PsiCodeBlock block =
-                        elementFactory.createCodeBlockFromText(replacementText,
-                                                               null);
-                body.replace(block);
-                codeStyleManager.reformat(catchSection);
-
+            final PsiElementFactory elementFactory =
+                    psiManager.getElementFactory();
+            final PsiCodeBlock block =
+                    elementFactory.createCodeBlockFromText(text,
+                                                           null);
+            body.replace(block);
+            codeStyleManager.reformat(catchSection);
         }
 
         private void replaceVariableName(PsiElement element,
@@ -130,8 +128,8 @@ public class AssignmentToCatchBlockParameterInspection
 
     private static class AssignmentToCatchBlockParameterVisitor
             extends BaseInspectionVisitor{
-
-        public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression){
+        public void visitAssignmentExpression(
+                @NotNull PsiAssignmentExpression expression){
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
@@ -145,7 +143,8 @@ public class AssignmentToCatchBlockParameterInspection
             if(!(variable instanceof PsiParameter)){
                 return;
             }
-            if(!(((PsiParameter) variable).getDeclarationScope() instanceof PsiCatchSection)){
+            if(!(((PsiParameter) variable)
+                    .getDeclarationScope() instanceof PsiCatchSection)){
                 return;
             }
             registerError(lhs);

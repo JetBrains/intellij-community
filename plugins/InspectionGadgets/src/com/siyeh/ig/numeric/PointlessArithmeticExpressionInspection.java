@@ -38,12 +38,10 @@ public class PointlessArithmeticExpressionInspection extends ExpressionInspectio
     }
 
     private static String calculateReplacementExpression(PsiExpression expression) {
-        final PsiExpression lhs;
-        final PsiExpression rhs;
         final PsiBinaryExpression exp = (PsiBinaryExpression) expression;
         final PsiJavaToken sign = exp.getOperationSign();
-        lhs = exp.getLOperand();
-        rhs = exp.getROperand();
+        final PsiExpression lhs = exp.getLOperand();
+        final PsiExpression rhs = exp.getROperand();
         assert rhs != null;
         final IElementType tokenType = sign.getTokenType();
         if (tokenType.equals(JavaTokenType.PLUS)) {

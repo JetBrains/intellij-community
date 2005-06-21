@@ -88,4 +88,13 @@ public class VariableAccessUtils{
         }
         return referent.equals(variable);
     }
+
+    public static boolean variableIsUsed(PsiElement statement,
+                                         PsiVariable variable) {
+
+        final VariableUsedVisitor visitor
+                = new VariableUsedVisitor(variable);
+        statement.accept(visitor);
+        return visitor.isUsed();
+    }
 }

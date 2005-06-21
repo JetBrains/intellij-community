@@ -29,7 +29,7 @@ public class TailRecursionInspection extends ExpressionInspection{
     protected InspectionGadgetsFix buildFix(PsiElement location){
         final PsiMethod containingMethod =
                 PsiTreeUtil.getParentOfType(location,
-                                                        PsiMethod.class);
+                                            PsiMethod.class);
         if(mayBeReplacedByIterativeMethod(containingMethod)){
             return new RemoveTailRecursionFix();
         } else{
@@ -37,7 +37,8 @@ public class TailRecursionInspection extends ExpressionInspection{
         }
     }
 
-    private static boolean mayBeReplacedByIterativeMethod(PsiMethod containingMethod){
+    private static boolean mayBeReplacedByIterativeMethod(
+            PsiMethod containingMethod){
         if(!containingMethod.hasModifierProperty(PsiModifier.STATIC) &&
                 !containingMethod.hasModifierProperty(PsiModifier.PRIVATE)){
             return false;
@@ -60,66 +61,66 @@ public class TailRecursionInspection extends ExpressionInspection{
         }
 
         public void doFix(Project project,
-                             ProblemDescriptor descriptor)
-                                                           throws IncorrectOperationException{
-                final PsiElement methodNameToken =
-                        descriptor.getPsiElement();
-                final PsiMethod method =
-                        PsiTreeUtil.getParentOfType(methodNameToken,
-                                                                PsiMethod.class);
+                          ProblemDescriptor descriptor)
+                throws IncorrectOperationException{
+            final PsiElement methodNameToken =
+                    descriptor.getPsiElement();
+            final PsiMethod method =
+                    PsiTreeUtil.getParentOfType(methodNameToken,
+                                                PsiMethod.class);
 
-                assert method != null;
-                final PsiCodeBlock body = method.getBody();
-                final String replacementText;
+            assert method != null;
+            final PsiCodeBlock body = method.getBody();
 
-                final PsiManager psiManager = PsiManager.getInstance(project);
+            final PsiManager psiManager = PsiManager.getInstance(project);
 
-                final CodeStyleManager codeStyleManager =
-                        psiManager.getCodeStyleManager();
+            final CodeStyleManager codeStyleManager =
+                    psiManager.getCodeStyleManager();
 
-                final PsiElement[] children = body.getChildren();
-                final StringBuffer buffer = new StringBuffer();
-                final boolean[] containedTailCallInLoop = new boolean[1];
-                containedTailCallInLoop[0] = false;
-                for(int i = 1; i < children.length; i++){
-                    replaceTailCalls(children[i], method, buffer, containedTailCallInLoop);
-                }
-                final String labelString;
-                if(containedTailCallInLoop[0]){
-                    labelString = method.getName() + ':';
-                } else{
-                    labelString = "";
-                }
-                replacementText = '{' + labelString + "while(true){" +
-                        buffer + '}';
+            final PsiElement[] children = body.getChildren();
+            final StringBuffer buffer = new StringBuffer();
+            final boolean[] containedTailCallInLoop = new boolean[1];
+            containedTailCallInLoop[0] = false;
+            for(int i = 1; i < children.length; i++){
+                replaceTailCalls(children[i], method, buffer,
+                                 containedTailCallInLoop);
+            }
+            final String labelString;
+            if(containedTailCallInLoop[0]){
+                labelString = method.getName() + ':';
+            } else{
+                labelString = "";
+            }
+            final String replacementText = '{' + labelString + "while(true){" +
+                    buffer + '}';
 
-                final PsiElementFactory elementFactory =
-                        psiManager.getElementFactory();
-                final PsiCodeBlock block =
-                        elementFactory.createCodeBlockFromText(replacementText,
-                                                               null);
-                body.replace(block);
-                codeStyleManager.reformat(method);
-
+            final PsiElementFactory elementFactory =
+                    psiManager.getElementFactory();
+            final PsiCodeBlock block =
+                    elementFactory.createCodeBlockFromText(replacementText,
+                                                           null);
+            body.replace(block);
+            codeStyleManager.reformat(method);
         }
 
-
         private void replaceTailCalls(PsiElement element,
-                              PsiMethod method,
-                              StringBuffer out,
-                              boolean[] containedTailCallInLoop){
+                                      PsiMethod method,
+                                      StringBuffer out,
+                                      boolean[] containedTailCallInLoop){
 
             final String text = element.getText();
             if(isTailCallReturn(element, method)){
                 final PsiReturnStatement returnStatement =
                         (PsiReturnStatement) element;
                 final PsiMethodCallExpression call =
-                        (PsiMethodCallExpression) returnStatement.getReturnValue();
+                        (PsiMethodCallExpression) returnStatement
+                                .getReturnValue();
                 final PsiExpressionList argumentList = call.getArgumentList();
                 final PsiExpression[] args =
                         argumentList.getExpressions();
 
-                final PsiParameterList parameterList = method.getParameterList();
+                final PsiParameterList parameterList = method
+                        .getParameterList();
                 final PsiParameter[] parameters =
                         parameterList.getParameters();
                 final boolean isInBlock =
@@ -135,11 +136,11 @@ public class TailRecursionInspection extends ExpressionInspection{
                     final String argText = arg.getText();
                     out.append(parameterName + " = " + argText + ';');
                 }
-                if(ControlFlowUtils.blockCompletesWithStatement(method.getBody(), returnStatement))
-                {
-                     //don't do anything, as the continue is unnecessary
-                }
-                else if(ControlFlowUtils.isInLoop(element)){
+                if(ControlFlowUtils
+                        .blockCompletesWithStatement(method.getBody(),
+                                                     returnStatement)){
+                    //don't do anything, as the continue is unnecessary
+                } else if(ControlFlowUtils.isInLoop(element)){
                     final String methodName = method.getName();
                     containedTailCallInLoop[0] = true;
                     out.append("continue " + methodName + ';');
@@ -184,10 +185,7 @@ public class TailRecursionInspection extends ExpressionInspection{
         return new TailRecursionVisitor();
     }
 
-
     private static class TailRecursionVisitor extends BaseInspectionVisitor{
-
-
         public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);
             final PsiExpression returnValue = statement.getReturnValue();
@@ -196,7 +194,7 @@ public class TailRecursionInspection extends ExpressionInspection{
             }
             final PsiMethod containingMethod =
                     PsiTreeUtil.getParentOfType(statement,
-                                                            PsiMethod.class);
+                                                PsiMethod.class);
             if(containingMethod == null){
                 return;
             }

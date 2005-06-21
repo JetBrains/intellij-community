@@ -120,7 +120,9 @@ class FormatDecode{
 
             final Validator allowed;
             if(dateSpec != null)   // a t or T
+            {
                 allowed = DATE_VALIDATOR;
+            }
             else{
                 switch(Character.toLowerCase(spec.charAt(0))){
                     case 'b':

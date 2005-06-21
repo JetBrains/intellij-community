@@ -527,6 +527,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(OverlyComplexBooleanExpressionInspection.class);
         m_inspectionClasses.add(AssignmentToMethodParameterInspection.class);
         m_inspectionClasses.add(AssignmentToCatchBlockParameterInspection.class);
+        m_inspectionClasses.add(ReuseOfLocalVariableInspection.class);
         m_inspectionClasses.add(AssignmentToForLoopParameterInspection.class);
         m_inspectionClasses.add(NestedAssignmentInspection.class);
         m_inspectionClasses.add(LabeledStatementInspection.class);
