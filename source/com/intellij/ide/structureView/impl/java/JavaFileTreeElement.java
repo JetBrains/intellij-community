@@ -22,8 +22,7 @@ public class JavaFileTreeElement extends PsiTreeElementBase<PsiJavaFile> impleme
   public StructureViewTreeElement[] getChildrenBase() {
     PsiClass[] classes = getElement().getClasses();
     ArrayList<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
-    for (int i = 0; i < classes.length; i++) {
-      PsiClass aClass = classes[i];
+    for (PsiClass aClass : classes) {
       result.add(new JavaClassTreeElement(aClass, false));
     }
     return result.toArray(new StructureViewTreeElement[result.size()]);

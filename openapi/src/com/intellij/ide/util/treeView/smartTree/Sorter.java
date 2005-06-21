@@ -5,6 +5,8 @@ import com.intellij.openapi.util.IconLoader;
 import java.util.Comparator;
 
 public interface Sorter extends TreeAction {
+  Sorter[] EMPTY_ARRAY = new Sorter[0];
+
   Comparator getComparator();
 
   String ALPHA_SORTER_ID = "ALPHA_COMPARATOR";

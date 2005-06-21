@@ -50,7 +50,7 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
   }
 
   public Filter[] getFilters() {
-    return new Filter[0];
+    return Filter.EMPTY_ARRAY;
   }
 
   protected PsiFile getPsiFile() {

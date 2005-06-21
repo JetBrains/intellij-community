@@ -41,6 +41,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,8 +58,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
 
   private static Editor getEditorForFile(final PsiFile psiFile) {
     final FileEditor[] editors = FileEditorManager.getInstance(psiFile.getProject()).getEditors(psiFile.getVirtualFile());
-    for (int i = 0; i < editors.length; i++) {
-      FileEditor editor = editors[i];
+    for (FileEditor editor : editors) {
       if (editor instanceof TextEditor) {
         return ((TextEditor)editor).getEditor();
       }
@@ -114,8 +114,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   private boolean isSutable(final PsiElement element) {
     if (element == null) return false;
     final Class[] suitableClasses = getSuitableClasses();
-    for (int i = 0; i < suitableClasses.length; i++) {
-      Class suitableClass = suitableClasses[i];
+    for (Class suitableClass : suitableClasses) {
       if (suitableClass.isAssignableFrom(element.getClass())) return true;
     }
     return false;
@@ -129,5 +128,5 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
 
   }
 
-  protected abstract Class[] getSuitableClasses();
+  @NotNull protected abstract Class[] getSuitableClasses();
 }

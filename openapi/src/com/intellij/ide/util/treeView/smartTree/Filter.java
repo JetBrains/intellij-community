@@ -1,6 +1,8 @@
 package com.intellij.ide.util.treeView.smartTree;
 
 public interface Filter extends TreeAction{
+  Filter[] EMPTY_ARRAY = new Filter[0];
+
   boolean isVisible(TreeElement treeNode);
 
   /**

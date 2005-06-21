@@ -1,6 +1,10 @@
 package com.intellij.lang.html;
 
 import com.intellij.ide.highlighter.HtmlFileHighlighter;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.newCodeFormatting.FormattingModel;
@@ -15,6 +19,8 @@ import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
+import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -29,12 +35,12 @@ public class HTMLLanguage extends XMLLanguage {
     super("HTML", "text/html");
     myFormattingModelBuilder = new FormattingModelBuilder() {
       public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
-        return new PsiBasedFormattingModel(element.getContainingFile(), settings, 
-                                           new XmlBlock(SourceTreeToPsiMap.psiElementToTree(element), 
+        return new PsiBasedFormattingModel(element.getContainingFile(), settings,
+                                           new XmlBlock(SourceTreeToPsiMap.psiElementToTree(element),
                                                         null, null, new HtmlPolicy(settings, ElementType.HTML_TAG), null));
       }
     };
-    
+
   }
 
   public SyntaxHighlighter getSyntaxHighlighter(Project project) {
@@ -51,5 +57,14 @@ public class HTMLLanguage extends XMLLanguage {
 
   public FormattingModelBuilder getFormattingModelBuilder() {
     return myFormattingModelBuilder;
+  }
+
+  @Nullable
+  public StructureViewBuilder getStructureViewBuilder(final PsiElement psiElement) {
+    return new TreeBasedStructureViewBuilder() {
+      public StructureViewModel createStructureViewModel() {
+        return new XmlStructureViewTreeModel((XmlFile)psiElement);
+      }
+    };
   }
 }

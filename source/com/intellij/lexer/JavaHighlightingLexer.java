@@ -13,12 +13,10 @@ public class JavaHighlightingLexer extends LayeredLexer {
   public JavaHighlightingLexer(LanguageLevel languageLevel) {
     super(new JavaLexer(languageLevel));
     registerSelfStoppingLayer(new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL),
-                              new IElementType[]{JavaTokenType.STRING_LITERAL},
-                              new IElementType[0]);
+                              new IElementType[]{JavaTokenType.STRING_LITERAL}, IElementType.EMPTY_ARRAY);
 
     registerSelfStoppingLayer(new StringLiteralLexer('\'', JavaTokenType.STRING_LITERAL),
-                              new IElementType[]{JavaTokenType.CHARACTER_LITERAL},
-                              new IElementType[0]);
+                              new IElementType[]{JavaTokenType.CHARACTER_LITERAL}, IElementType.EMPTY_ARRAY);
 
 
     

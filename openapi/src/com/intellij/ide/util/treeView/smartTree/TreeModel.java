@@ -1,8 +1,10 @@
 package com.intellij.ide.util.treeView.smartTree;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface TreeModel {
-  TreeElement getRoot();
-  Grouper[] getGroupers();
-  Sorter[] getSorters();
-  Filter[] getFilters();
+  @NotNull TreeElement getRoot();
+  @NotNull Grouper[] getGroupers();
+  @NotNull Sorter[] getSorters();
+  @NotNull Filter[] getFilters();
 }

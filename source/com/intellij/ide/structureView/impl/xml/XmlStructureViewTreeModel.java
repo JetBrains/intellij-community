@@ -39,6 +39,7 @@ import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NotNull;
 
 public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel{
   private final XmlFile myFile;
@@ -48,20 +49,24 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
     myFile = file;
   }
 
+  @NotNull
   public StructureViewTreeElement getRoot() {
     return new XmlFileTreeElement(myFile);
   }
 
+  @NotNull
   public Grouper[] getGroupers() {
-    return new Grouper[0];
+    return Grouper.EMPTY_ARRAY;
   }
 
+  @NotNull
   public Sorter[] getSorters() {
-    return new Sorter[0];
+    return Sorter.EMPTY_ARRAY;
   }
 
+  @NotNull
   public Filter[] getFilters() {
-    return new Filter[0];
+    return Filter.EMPTY_ARRAY;
   }
 
   protected PsiFile getPsiFile() {
