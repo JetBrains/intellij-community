@@ -124,6 +124,8 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     }
 
     public void applyFix(Project project, ProblemDescriptor descriptor) {
+      if (!myField.isValid()) return; //weird. should not get here when field becomes invalid
+
       PsiManager manager = PsiManager.getInstance(project);
       PsiSearchHelper helper = manager.getSearchHelper();
       Set<PsiMethod> methodSet = new HashSet<PsiMethod>();
