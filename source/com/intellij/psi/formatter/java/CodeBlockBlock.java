@@ -3,9 +3,10 @@ package com.intellij.psi.formatter.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +16,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
   private final static int BEFORE_LBRACE = 1;
   private final static int INSIDE_BODY = 2;
   private final static int AFTER_CASE_LABEL = 3;
-  
+
   private final int myChildrenIndent;
 
   public CodeBlockBlock(final ASTNode node,
@@ -51,11 +52,11 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     ASTNode child = myNode.getFirstChildNode();
 
     int state = BEFORE_FIRST;
-    
+
     if (myNode.getPsi() instanceof JspClass) {
       state = INSIDE_BODY;
     }
-    
+
     while (child != null) {
       if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
         final Indent indent = calcCurrentIndent(child, state);
@@ -108,9 +109,9 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     if (child.getElementType() == ElementType.RBRACE) {
       return Formatter.getInstance().getNoneIndent();
     }
-    
+
     if (state == BEFORE_FIRST) return Formatter.getInstance().getNoneIndent();
-    
+
     if (child.getElementType() == ElementType.SWITCH_LABEL_STATEMENT) {
       return getCodeBlockInternalIndent(myChildrenIndent);
     }
@@ -139,8 +140,14 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     }
   }
 
+  @Override
+  @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    return new ChildAttributes(getCodeBlockInternalIndent(myChildrenIndent), null);
+    if (isAfterJavaDoc(newChildIndex)) {
+      return new ChildAttributes(Formatter.getInstance().getNoneIndent(), null);
+    } else {
+      return new ChildAttributes(getCodeBlockInternalIndent(myChildrenIndent), null);
+    }
   }
 
   protected Wrap getReservedWrap() {

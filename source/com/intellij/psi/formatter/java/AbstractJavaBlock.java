@@ -11,12 +11,11 @@ import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Iterator;
-
-import org.jetbrains.annotations.NotNull;
+import java.util.List;
 
 public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlock{
   protected final CodeStyleSettings mySettings;
@@ -357,8 +356,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   private List<Block> createJavaBlocks(final ArrayList<ASTNode> subNodes) {
     final ArrayList<Block> result = new ArrayList<Block>();
-    for (Iterator<ASTNode> iterator = subNodes.iterator(); iterator.hasNext();) {
-      ASTNode node = iterator.next();
+    for (ASTNode node : subNodes) {
       result.add(createJavaBlock(node, getSettings(), Formatter.getInstance().createContinuationWithoutFirstIndent(), null, null));
     }
     return result;
@@ -729,8 +727,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return ((JavaBlock)child2).getFirstTreeNode();
     } else if (child2 instanceof LeafBlock) {
       return ((LeafBlock)child2).getTreeNode();
-    } else if (child2 instanceof SynteticCodeBlock) {
-      return ((SynteticCodeBlock)child2).getFirstTreeNode();
     } else {
       return null;
     }
@@ -741,7 +737,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (myUseChildAttributes) {
       return new ChildAttributes(myChildIndent, myChildAlignment);
-    } else {
+    }
+    else if (isAfterJavaDoc(newChildIndex)) {
+      return new ChildAttributes(Formatter.getInstance().getNoneIndent(), myChildAlignment);
+    }
+    else {
       return super.getChildAttributes(newChildIndex);
     }
   }
@@ -752,5 +752,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   public CodeStyleSettings getSettings() {
     return mySettings;
+  }
+
+  protected boolean isAfterJavaDoc(final int newChildIndex) {
+    if (newChildIndex == 0) return false;
+    final Block previousBlock = getSubBlocks().get(newChildIndex - 1);
+    if (!(previousBlock instanceof AbstractBlock)) return false;
+    final IElementType previousElementType = ((AbstractBlock)previousBlock).getNode().getElementType();
+    return previousElementType ==JavaDocElementType.DOC_COMMENT;
   }
 }

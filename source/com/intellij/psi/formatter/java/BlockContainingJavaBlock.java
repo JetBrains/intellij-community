@@ -148,7 +148,9 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
   }
 
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    if (newChildIndex == 0 || newChildIndex == getSubBlocks().size()) {
+    if (isAfterJavaDoc(newChildIndex)) {
+      return new ChildAttributes(Formatter.getInstance().getNoneIndent(), null);
+    } else if (newChildIndex == 0 || newChildIndex == getSubBlocks().size()) {
       return new ChildAttributes(getCodeBlockExternalIndent(), null);
     } else {
       return new ChildAttributes(myIndentsBefore.get(newChildIndex), null);
