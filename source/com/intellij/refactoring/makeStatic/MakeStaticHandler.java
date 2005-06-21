@@ -118,9 +118,9 @@ public class MakeStaticHandler implements RefactoringActionHandler {
         String[] nameSuggestions =
                 CodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, null, null, type).names;
 
-        dialog = new MakeParametrizedStaticDialog(myProject, myMember,
-                                                  nameSuggestions,
-                                                  classRefsInMember);
+        dialog = new MakeParameterizedStaticDialog(myProject, myMember,
+                                                   nameSuggestions,
+                                                   classRefsInMember);
 
 
       }

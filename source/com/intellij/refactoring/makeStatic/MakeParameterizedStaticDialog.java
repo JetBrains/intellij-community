@@ -25,7 +25,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 
-public class MakeParametrizedStaticDialog extends AbstractMakeStaticDialog {
+public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
   private Project myProject;
   private String[] myNameSuggestions;
 
@@ -38,10 +38,10 @@ public class MakeParametrizedStaticDialog extends AbstractMakeStaticDialog {
   private final boolean myAnyNonFieldMembersUsed;
 
 
-  public MakeParametrizedStaticDialog(Project project,
-                                      PsiTypeParameterListOwner member,
-                                      String[] nameSuggestions,
-                                      InternalUsageInfo[] internalUsages) {
+  public MakeParameterizedStaticDialog(Project project,
+                                       PsiTypeParameterListOwner member,
+                                       String[] nameSuggestions,
+                                       InternalUsageInfo[] internalUsages) {
     super(project, member);
     myProject = project;
     myNameSuggestions = nameSuggestions;
@@ -104,25 +104,24 @@ public class MakeParametrizedStaticDialog extends AbstractMakeStaticDialog {
     HelpManager.getInstance().invokeHelp(HelpID.MAKE_METHOD_STATIC);
   }
 
-  protected JComponent createNorthPanel() {
+  protected JComponent createCenterPanel() {
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
     JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(IdeBorderFactory.createBorder());
 
     gbConstraints.insets = new Insets(4, 8, 4, 8);
-    gbConstraints.weighty = 1;
-    gbConstraints.weightx = 1;
-    gbConstraints.gridy = 0;
+    gbConstraints.weighty = 0;
+    gbConstraints.weightx = 0;
+    gbConstraints.gridx = 0;
+    gbConstraints.gridy = GridBagConstraints.RELATIVE;
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    gbConstraints.fill = GridBagConstraints.BOTH;
+    gbConstraints.fill = GridBagConstraints.NONE;
     gbConstraints.anchor = GridBagConstraints.WEST;
     panel.add(createDescriptionLabel(), gbConstraints);
-//    panel.add(new JLabel("Add object as a parameter with the following name:"), gbConstraints);
 
-    gbConstraints.weighty = 1;
-    gbConstraints.weightx = 1;
-    gbConstraints.gridy++;
+    gbConstraints.weighty = 0;
+    gbConstraints.weightx = 0;
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     gbConstraints.fill = GridBagConstraints.NONE;
     gbConstraints.anchor = GridBagConstraints.WEST;
@@ -133,12 +132,11 @@ public class MakeParametrizedStaticDialog extends AbstractMakeStaticDialog {
     myMakeClassParameter.setSelected(myAnyNonFieldMembersUsed);
 
     gbConstraints.insets = new Insets(0, 8, 4, 8);
-    gbConstraints.weighty = 1;
+    gbConstraints.weighty = 0;
     gbConstraints.weightx = 1;
-    gbConstraints.gridy++;
-    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.anchor = GridBagConstraints.EAST;
+    gbConstraints.gridwidth = 2;
+    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gbConstraints.anchor = GridBagConstraints.NORTHWEST;
     if(myNameSuggestions.length > 1) {
       myClassParameterNameInputField = createComboBoxForName();
     }
@@ -154,12 +152,12 @@ public class MakeParametrizedStaticDialog extends AbstractMakeStaticDialog {
     }
     panel.add(myClassParameterNameInputField, gbConstraints);
 
+    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
+
     if(myVariableData.length > 0) {
       gbConstraints.insets = new Insets(4, 8, 4, 8);
-      gbConstraints.weighty = 1;
-      gbConstraints.weightx = 1;
-      gbConstraints.gridy++;
-      gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
+      gbConstraints.weighty = 0;
+      gbConstraints.weightx = 0;
       gbConstraints.gridheight = 1;
       gbConstraints.fill = GridBagConstraints.NONE;
       gbConstraints.anchor = GridBagConstraints.WEST;
@@ -180,13 +178,13 @@ public class MakeParametrizedStaticDialog extends AbstractMakeStaticDialog {
         protected void doCancelAction() {
         }
       };
-      gbConstraints.gridy++;
+
       gbConstraints.insets = new Insets(0, 8, 4, 8);
+      gbConstraints.gridwidth = 2;
+      gbConstraints.fill = GridBagConstraints.BOTH;
+      gbConstraints.weighty = 1;
       panel.add(myParameterPanel, gbConstraints);
     }
-
-//    myParameterGroup.add(myMakeClassParameter);
-//    myParameterGroup.add(myMakeFieldParameters);
 
     ActionListener inputFieldValidator = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -202,11 +200,6 @@ public class MakeParametrizedStaticDialog extends AbstractMakeStaticDialog {
     updateControls();
 
     return panel;
-  }
-
-
-  protected JComponent createCenterPanel() {
-    return null;
   }
 
   protected boolean validateData() {
