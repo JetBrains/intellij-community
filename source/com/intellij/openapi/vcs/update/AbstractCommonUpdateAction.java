@@ -55,6 +55,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.OptionsDialog;
+import com.intellij.util.ContentsUtil;
 import com.intellij.vcsUtil.VcsUtil;
 
 import java.util.*;
@@ -200,9 +201,8 @@ public class AbstractCommonUpdateAction extends AbstractVcsAction {
     final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, null, project, updatedFiles, actionName, actionInfo);
     Content content = PeerFactory.getInstance().getContentFactory().createContent(updateInfoTree, actionInfo.getActionName() + " Info",
                                                                                   true);
-    contentManager.addContent(content);
+    ContentsUtil.addOrReplaceContent(contentManager, content, true);
     ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(null);
-    contentManager.setSelectedContent(content);
     updateInfoTree.expandRootChildren();
   }
 

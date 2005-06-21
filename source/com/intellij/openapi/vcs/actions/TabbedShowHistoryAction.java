@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.ContentsUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,7 +25,6 @@ import java.util.List;
 
 
 public class TabbedShowHistoryAction extends AbstractVcsAction {
-
   protected void update(VcsContext context, Presentation presentation) {
     presentation.setVisible(isVisible(context));
     presentation.setEnabled(isEnabled(context));
@@ -93,13 +93,12 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
       ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).getContentManager();
 
       FileHistoryPanelImpl fileHistoryPanel = new FileHistoryPanelImpl(project,
-                                                                                                    path, session, activeVcs, contentManager);
+                                                                       path, session, activeVcs, contentManager);
       Content content = PeerFactory.getInstance().getContentFactory().createContent(fileHistoryPanel, actionName, true);
-      contentManager.addContent(content);
+      ContentsUtil.addOrReplaceContent(contentManager, content, true);
 
       ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
       toolWindow.activate(null);
-      contentManager.setSelectedContent(content);
     }
     catch (Exception exception) {
       reportError(exception);
