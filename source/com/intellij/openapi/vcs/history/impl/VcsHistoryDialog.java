@@ -114,7 +114,10 @@ public class VcsHistoryDialog extends DialogWrapper {
     myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), myProject);
 
     myRevisions.addAll(session.getRevisionList());
-    myRevisions.add(new CurrentRevision(file, session.getCurrentRevisionNumber()));
+    final VcsRevisionNumber currentRevisionNumber = session.getCurrentRevisionNumber();
+    if (currentRevisionNumber != null) {
+      myRevisions.add(new CurrentRevision(file, currentRevisionNumber));
+    }
     Collections.sort((List)myRevisions, new Comparator<VcsFileRevision>() {
       public int compare(VcsFileRevision rev1, VcsFileRevision rev2){
         return VcsHistoryUtil.compare(rev1, rev2);
@@ -140,6 +143,7 @@ public class VcsHistoryDialog extends DialogWrapper {
       }
     });
 
+    
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         if (myList.getSelectedRowCount() == 1) {
