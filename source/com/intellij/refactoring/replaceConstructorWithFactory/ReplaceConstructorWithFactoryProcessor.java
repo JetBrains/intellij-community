@@ -206,6 +206,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
       for (UsageInfo usage : usages) {
         PsiNewExpression newExpression = (PsiNewExpression)usage.getElement();
+        if (newExpression == null) continue;
 
         VisibilityUtil.escalateVisibility(factoryMethod, newExpression);
         PsiMethodCallExpression factoryCall =
