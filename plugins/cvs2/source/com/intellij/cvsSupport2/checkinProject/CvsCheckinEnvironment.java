@@ -12,23 +12,22 @@ import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CheckinProject;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
-import com.intellij.cvsSupport2.cvshandlers.FileSetToBeUpdated;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.versions.AbstractRevisions;
-import com.intellij.openapi.vcs.checkin.*;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.checkin.DifferenceType;
+import com.intellij.openapi.vcs.checkin.RevisionsFactory;
+import com.intellij.openapi.vcs.checkin.VcsOperation;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.versions.AbstractRevisions;
 import com.intellij.util.ui.ColumnInfo;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -122,8 +121,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     String[] lines = LineTokenizer.tokenize(text.toCharArray(), false);
     StringBuffer buffer = new StringBuffer();
     boolean firstLine = true;
-    for (int i = 0; i < lines.length; i++) {
-      String line = lines[i];
+    for (String line : lines) {
       if (!line.startsWith("CVS:")) {
         if (!firstLine) buffer.append(System.getProperty("line.separator"));
         buffer.append(line);
@@ -143,23 +141,17 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     java.util.List<CvsCheckinFile> cvsCommitOprtations = new ArrayList<CvsCheckinFile>();
 
     java.util.List<VcsOperation> vcsOperations = checkinProjectPanel.getCheckinOperations(CvsVcs2.getInstance(myProject).getCheckinEnvironment());
-    for (Iterator<VcsOperation> iterator = vcsOperations.iterator(); iterator.hasNext();) {
-      cvsCommitOprtations.add((CvsCheckinFile)iterator.next());
+    for (final VcsOperation vcsOperation : vcsOperations) {
+      cvsCommitOprtations.add((CvsCheckinFile)vcsOperation);
     }
 
     CvsCheckinFile[] checkinOperations = cvsCommitOprtations.toArray(new CvsCheckinFile[cvsCommitOprtations.size()]);
 
 
-    Collection<VirtualFile> files = new ArrayList<VirtualFile>();
-    for (int i = 0; i < checkinOperations.length; i++) {
-      CvsVcsOperation checkinOperation = (CvsVcsOperation)checkinOperations[i];
-      VirtualFile file = checkinOperation.getVirtualFile();
-      if (file != null) files.add(file);
-    }
-
     CvsHandler checkinHandler = getCheckinHandler(checkinOperations,
                                                  myProject,
-                                                 dialog.getPreparedComment(CvsVcs2.getInstance(myProject).getCheckinEnvironment()));
+                                                 dialog.getPreparedComment(CvsVcs2.getInstance(myProject)
+                                                   .getCheckinEnvironment()));
 
     final CvsOperationExecutor executor = new CvsOperationExecutor(project);
     executor.setShowErrors(false);
@@ -170,12 +162,18 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   public List<VcsException> commit(FilePath[] roots, Project project, String preparedComment) {
     final CvsOperationExecutor executor = new CvsOperationExecutor(project);
     executor.setShowErrors(false);
+
+    final CvsConfiguration cvsConfiguration = CvsConfiguration.getInstance(myProject);
+
     CvsHandler handler = CommandCvsHandler.createCommitHandler(
           roots,
           new File[]{},
           preparedComment,
           "Commit " + (roots.length > 1 ? "files" : "file"),
-          CvsConfiguration.getInstance(project).MAKE_NEW_FILES_READONLY);
+          CvsConfiguration.getInstance(project).MAKE_NEW_FILES_READONLY,
+          myProject,
+          cvsConfiguration.TAG_AFTER_FILE_COMMIT,
+          cvsConfiguration.TAG_AFTER_FILE_COMMIT_NAME);
 
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);
     return executor.getResult().getErrorsAndWarnings();
@@ -189,14 +187,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     }
 
     public void executeInProgressAfterAction(ModalityContext modalityContext) {
-      FileSetToBeUpdated files = myHandler.getFiles();
-
-      try {
-        files.refreshSync();
-      }
-      finally {
-
-      }
+      myHandler.getFiles().refreshSync();
     }
 
     public void executionFinished(boolean successfully) {

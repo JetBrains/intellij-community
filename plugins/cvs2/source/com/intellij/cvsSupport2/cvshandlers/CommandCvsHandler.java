@@ -25,6 +25,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsImport.ImportOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsRemove.RemoveFilesOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.BranchOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagOperation;
+import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.RTagOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.UpdateOperation;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDateImpl;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
@@ -135,35 +136,48 @@ public class CommandCvsHandler extends AbstractCvsHandler {
                                                File[] locallyDeletedFiles,
                                                String commitMessage,
                                                String title,
-                                               boolean makeNewFilesReadOnly) {
+                                               boolean makeNewFilesReadOnly,
+                                               Project project,
+                                               final boolean tagFilesAfterCommit,
+                                               final String tagName) {
     CommitFilesOperation operation = new CommitFilesOperation(commitMessage, makeNewFilesReadOnly);
     if (selectedFiles != null) {
-      for (int i = 0; i < selectedFiles.length; i++) {
-        operation.addFile(selectedFiles[i].getIOFile());
+      for (FilePath selectedFile : selectedFiles) {
+        operation.addFile(selectedFile.getIOFile());
       }
     }
     if (locallyDeletedFiles != null) {
-      for (int i = 0; i < locallyDeletedFiles.length; i++) {
-        operation.addFile(locallyDeletedFiles[i]);
+      for (File locallyDeletedFile : locallyDeletedFiles) {
+        operation.addFile(locallyDeletedFile);
       }
     }
 
-    return new CommandCvsHandler(title, operation, FileSetToBeUpdated.selectedFiles(selectedFiles));
+    final CommandCvsHandler result = new CommandCvsHandler(title, operation, FileSetToBeUpdated.selectedFiles(selectedFiles));
+
+    if (tagFilesAfterCommit) {
+      RTagOperation[] rtagOperations = RTagOperation.createOn(selectedFiles,
+                                                              tagName,
+                                                              CvsConfiguration.getInstance(project).OVERRIDE_EXISTING_TAG_FOR_PROJECT);
+      for (RTagOperation rtagOperation : rtagOperations) {
+        result.addOperation(rtagOperation);
+      }
+    }
+
+    return result;
   }
 
   public static CvsHandler createAddFilesHandler(Collection addedRoots) {
     AddFilesOperation operation = new AddFilesOperation();
     ArrayList<AddedFileInfo> addedFileInfo = new ArrayList<AddedFileInfo>();
-    for (Iterator each = addedRoots.iterator(); each.hasNext();) {
-      AddedFileInfo info = (AddedFileInfo)each.next();
+    for (final Object addedRoot : addedRoots) {
+      AddedFileInfo info = (AddedFileInfo)addedRoot;
       info.clearAllCvsAdminDirectoriesInIncludedDirectories();
       addedFileInfo.addAll(info.collectAllIncludedFiles());
     }
 
     ArrayList<VirtualFile> addedFiles = new ArrayList<VirtualFile>();
 
-    for (Iterator<AddedFileInfo> iterator = addedFileInfo.iterator(); iterator.hasNext();) {
-      AddedFileInfo info = iterator.next();
+    for (AddedFileInfo info : addedFileInfo) {
       addedFiles.add(info.getFile());
       operation.addFile(info.getFile(), info.getKeywordSubstitution());
     }
@@ -173,16 +187,15 @@ public class CommandCvsHandler extends AbstractCvsHandler {
 
   public static CvsHandler createRemoveFilesHandler(Collection<File> files) {
     RemoveFilesOperation operation = new RemoveFilesOperation();
-    for (Iterator each = files.iterator(); each.hasNext();) {
-      operation.addFile(((File)each.next()).getPath());
+    for (final File file : files) {
+      operation.addFile(file.getPath());
     }
     return new CommandCvsHandler("Remove", operation, FileSetToBeUpdated.selectedFiles(getAdminDirectoriesFor(files)));
   }
 
   private static VirtualFile[] getAdminDirectoriesFor(Collection<File> files) {
     Collection<VirtualFile> result = new HashSet<VirtualFile>();
-    for (Iterator<File> each = files.iterator(); each.hasNext();) {
-      File file = each.next();
+    for (File file : files) {
       File parentFile = file.getParentFile();
       VirtualFile cvsAdminDirectory = CvsVfsUtil.findFileByIoFile(new File(parentFile, CvsUtil.CVS));
       if (cvsAdminDirectory != null) result.add(cvsAdminDirectory);
@@ -324,8 +337,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
 
   public static CvsHandler createGetFileFromRepositoryHandler(CvsLightweightFile[] cvsLightweightFiles, boolean makeNewFilesReadOnly) {
     CompositeOperaton compositeOperaton = new CompositeOperaton();
-    for (int i = 0; i < cvsLightweightFiles.length; i++) {
-      CvsLightweightFile cvsLightweightFile = cvsLightweightFiles[i];
+    for (CvsLightweightFile cvsLightweightFile : cvsLightweightFiles) {
       File root = cvsLightweightFile.getRoot();
       File workingDirectory = root;
       if (workingDirectory == null) continue;
@@ -335,7 +347,7 @@ public class CommandCvsHandler extends AbstractCvsHandler {
       String alternativeCheckoutPath = getAlternativeCheckoutPath(cvsLightweightFile, workingDirectory);
       CheckoutProjectOperation checkoutFileOperation = new CheckoutProjectOperation(new String[]{cvsLightweightFile.getModuleName()},
                                                                                     CvsEntriesManager.getInstance()
-                                                                                    .getCvsConnectionSettingsFor(root),
+                                                                                      .getCvsConnectionSettingsFor(root),
                                                                                     makeNewFilesReadOnly,
                                                                                     workingDirectory,
                                                                                     alternativeCheckoutPath,
