@@ -180,8 +180,7 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
 
     final ContentEntry[] contentEntries = myModel.getContentEntries();
     if (contentEntries.length > 0) {
-      for (int idx = 0; idx < contentEntries.length; idx++) {
-        final ContentEntry contentEntry = contentEntries[idx];
+      for (final ContentEntry contentEntry : contentEntries) {
         addContentEntryPanel(contentEntry);
       }
       selectContentEntry(contentEntries[0]);
@@ -388,8 +387,7 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
 
   private void addContentEntries(final VirtualFile[] files) {
     java.util.List<ContentEntry> contentEntries = new ArrayList<ContentEntry>();
-    for (int idx = 0; idx < files.length; idx++) {
-      final VirtualFile file = files[idx];
+    for (final VirtualFile file : files) {
       if (isAlreadyAdded(file)) {
         continue;
       }
@@ -414,8 +412,7 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
 
   private boolean isAlreadyAdded(VirtualFile file) {
     final VirtualFile[] contentRoots = myModel.getContentRoots();
-    for (int idx = 0; idx < contentRoots.length; idx++) {
-      VirtualFile contentRoot = contentRoots[idx];
+    for (VirtualFile contentRoot : contentRoots) {
       if (contentRoot.equals(file)) {
         return true;
       }
@@ -430,8 +427,7 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
   private static void addSourceRoots(final Project project, final ContentEntry[] contentEntries, final Runnable finishRunnable) {
     final HashMap<ContentEntry, java.util.List<Pair<File, String>>> entryToRootMap = new HashMap<ContentEntry, java.util.List<Pair<File, String>>>();
     final Map<File, ContentEntry> fileToEntryMap = new HashMap<File, ContentEntry>();
-    for (int idx = 0; idx < contentEntries.length; idx++) {
-      final ContentEntry contentEntry = contentEntries[idx];
+    for (final ContentEntry contentEntry : contentEntries) {
       entryToRootMap.put(contentEntry, null);
       fileToEntryMap.put(VfsUtil.virtualToIoFile(contentEntry.getFile()), contentEntry);
     }
@@ -565,11 +561,9 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
     }
 
     private void validateContentEntriesCandidates(VirtualFile[] files) throws Exception {
-      for (int i = 0; i < files.length; i++) {
-        final VirtualFile file = files[i];
+      for (final VirtualFile file : files) {
         // check for collisions with already existing entries
-        for (Iterator<ContentEntry> it = myEntryToEditorMap.keySet().iterator(); it.hasNext();) {
-          final ContentEntry contentEntry = it.next();
+        for (final ContentEntry contentEntry : myEntryToEditorMap.keySet()) {
           final VirtualFile contentEntryFile = contentEntry.getFile();
           if (contentEntryFile == null) {
             continue;  // skip invalid entry
@@ -587,22 +581,21 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
           if (VfsUtil.isAncestor(file, contentEntryFile, true)) {
             // intersection not allowed
             throw new Exception(
-              "Content root being added \"" + file.getPresentableUrl() + "\"\ndominates existing content root \"" + contentEntryFile.getPresentableUrl() +
+              "Content root being added \"" + file.getPresentableUrl() + "\"\ndominates existing content root \"" +
+              contentEntryFile.getPresentableUrl() +
               "\".\nContent entries should not intersect.");
           }
         }
         // check if the same root is configured for another module
         final Module[] modules = myModulesProvider.getModules();
-        for (int j = 0; j < modules.length; j++) {
-          final Module module = modules[j];
+        for (final Module module : modules) {
           if (myModuleName.equals(module.getName())) {
             continue;
           }
           ModuleRootModel rootModel = myModulesProvider.getRootModel(module);
           LOG.assertTrue(rootModel != null);
           final VirtualFile[] moduleContentRoots = rootModel.getContentRoots();
-          for (int k = 0; k < moduleContentRoots.length; k++) {
-            VirtualFile moduleContentRoot = moduleContentRoots[k];
+          for (VirtualFile moduleContentRoot : moduleContentRoots) {
             if (file.equals(moduleContentRoot)) {
               throw new Exception(
                 "Content root \"" + file.getPresentableUrl() + "\" already defined for module \"" + module.getName() +
