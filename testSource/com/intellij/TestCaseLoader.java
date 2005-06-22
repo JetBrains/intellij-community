@@ -8,14 +8,19 @@
  */
 package com.intellij;
 
+import com.intellij.idea.IdeaTestUtil;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.jetbrains.annotations.Bombed;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.IOException;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 public class TestCaseLoader {
   public static final String TEST_NAME_SUFFIX = "Test";
@@ -92,7 +97,28 @@ public class TestCaseLoader {
    * Determine if we should exclude this test case.
    */
   private boolean shouldExcludeTestClass(Class testCaseClass) {
-    return !myTestClassesFilter.matches(testCaseClass.getName(), myTestGroupName);
+    if (!myTestClassesFilter.matches(testCaseClass.getName(), myTestGroupName)) {
+     return true;
+    }
+    return isBombed(testCaseClass);
+  }
+
+  public static boolean isBombed(final Class testCaseClass) {
+    try {
+      final Bombed bombedAnnotation = (Bombed)testCaseClass.getAnnotation(Bombed.class);
+      if (bombedAnnotation == null) return false;
+      return !IdeaTestUtil.bombExplodes(bombedAnnotation.year(),
+                                        bombedAnnotation.month(),
+                                        bombedAnnotation.day(),
+                                        bombedAnnotation.time(),
+                                        0,
+                                        bombedAnnotation.user(),
+                                        bombedAnnotation.description());
+
+    }
+    catch (Exception e) {
+      return false;
+    }
   }
 
   public void loadTestCases(final Iterator classNamesIterator) {
