@@ -196,7 +196,7 @@ public class StartupActionScriptManager {
     }
 
     public void execute() throws IOException {
-      if (!FileUtil.delete(mySource)) {
+      if (mySource != null && mySource.exists() && !FileUtil.delete(mySource)) {
         System.err.println("Action " + this + " failed.");
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
                                       "<html>Cannot delete " + mySource.getAbsolutePath() + "<br>" +

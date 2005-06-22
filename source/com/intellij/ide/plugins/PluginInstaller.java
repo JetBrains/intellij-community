@@ -81,18 +81,22 @@ public class PluginInstaller {
     }
 
     synchronized (lock) {
+      File oldFile = null;
       if (PluginManager.isPluginInstalled(pluginNode.getId())) {
-        // add command to delete the 'action script' file
-        PluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginNode.getId());
-
-        StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath());
-        StartupActionScriptManager.addActionCommand(deleteOld);
+        //store old plugins file
+        oldFile = PluginManager.getPlugin(pluginNode.getId()).getPath();
       }
       // download plugin
       File file = RepositoryHelper.downloadPlugin(pluginNode, packet, count, available);
       if (file == null) {
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), "Plugin " + pluginNode.getName() + " was not installed.");
         return false;
+      }
+
+      if (oldFile != null){
+        // add command to delete the 'action script' file
+        StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(oldFile);
+        StartupActionScriptManager.addActionCommand(deleteOld);
       }
 
       if (file.getName().endsWith(".jar")) {
