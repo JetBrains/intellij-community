@@ -1,5 +1,6 @@
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;

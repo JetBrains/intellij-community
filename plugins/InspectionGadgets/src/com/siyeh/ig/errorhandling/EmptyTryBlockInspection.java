@@ -1,5 +1,6 @@
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTryStatement;

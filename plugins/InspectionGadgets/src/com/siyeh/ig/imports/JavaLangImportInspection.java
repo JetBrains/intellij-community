@@ -1,5 +1,6 @@
 package com.siyeh.ig.imports;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;

@@ -1,5 +1,6 @@
 package com.siyeh.ig.encapsulation;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;

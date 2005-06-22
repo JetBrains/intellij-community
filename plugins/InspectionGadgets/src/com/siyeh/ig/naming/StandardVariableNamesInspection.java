@@ -1,5 +1,6 @@
 package com.siyeh.ig.naming;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;

@@ -1,5 +1,6 @@
 package com.siyeh.ig.logging;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.siyeh.ig.BaseInspectionVisitor;

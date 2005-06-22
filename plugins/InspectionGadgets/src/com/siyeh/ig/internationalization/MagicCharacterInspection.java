@@ -1,5 +1,6 @@
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;

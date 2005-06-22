@@ -1,5 +1,6 @@
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
