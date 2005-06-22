@@ -21,6 +21,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
+@SuppressWarnings({"UNCHECKED_WARNING"})
 public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewNode<Type> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.BasePsiNode");
 

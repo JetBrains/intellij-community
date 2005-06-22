@@ -109,8 +109,7 @@ public final class TreeUtil {
       pathElements[pathStack.size() - i - 1] = pathStack.get(i);
     }
 
-    final TreePath treePath = new TreePath(pathElements);
-    return treePath;
+    return new TreePath(pathElements);
   }
 
   public static boolean isAncestor(final TreeNode ancestor, final TreeNode node) {
@@ -130,8 +129,7 @@ public final class TreeUtil {
   }
 
   private static boolean isDescendants(final TreePath path, final TreePath[] paths) {
-    for (int i = 0; i < paths.length; i++) {
-      final TreePath ancestor = paths[i];
+    for (final TreePath ancestor : paths) {
       if (isAncestor(ancestor, path)) return true;
     }
     return false;
@@ -210,10 +208,7 @@ public final class TreeUtil {
   private static void addEach(final TreeNode aRootNode, final TreeNode aNode, final List aPathStack) {
     aPathStack.add(aNode);
 
-    if (aNode == aRootNode) {
-      return;
-    }
-    else {
+    if (aNode != aRootNode) {
       addEach(aRootNode, aNode.getParent(), aPathStack);
     }
   }
@@ -229,8 +224,7 @@ public final class TreeUtil {
   private static boolean areComponentsEqual(final TreePath[] paths, final int componentIndex) {
     if (paths[0].getPathCount() <= componentIndex) return false;
     final Object pathComponent = paths[0].getPathComponent(componentIndex);
-    for (int i = 0; i < paths.length; i++) {
-      final TreePath treePath = paths[i];
+    for (final TreePath treePath : paths) {
       if (treePath.getPathCount() <= componentIndex) return false;
       if (!pathComponent.equals(treePath.getPathComponent(componentIndex))) return false;
     }
@@ -239,8 +233,7 @@ public final class TreeUtil {
 
   private static TreePath[] removeDuplicates(final TreePath[] paths) {
     final ArrayList<TreePath> result = new ArrayList<TreePath>();
-    for (int i = 0; i < paths.length; i++) {
-      final TreePath path = paths[i];
+    for (final TreePath path : paths) {
       if (!result.contains(path)) result.add(path);
     }
     return result.toArray(new TreePath[result.size()]);
@@ -250,8 +243,7 @@ public final class TreeUtil {
     if (paths == null) return new TreePath[0];
     final TreePath[] noDuplicates = removeDuplicates(paths);
     final ArrayList<TreePath> result = new ArrayList<TreePath>();
-    for (int i = 0; i < noDuplicates.length; i++) {
-      final TreePath path = noDuplicates[i];
+    for (final TreePath path : noDuplicates) {
       final ArrayList<TreePath> otherPaths = new ArrayList<TreePath>(Arrays.asList(noDuplicates));
       otherPaths.remove(path);
       if (!isDescendants(path, otherPaths.toArray(new TreePath[otherPaths.size()]))) result.add(path);
@@ -274,8 +266,8 @@ public final class TreeUtil {
   }
 
   private static void addChildrenTo(final MutableTreeNode node, final List children) {
-    for (Iterator iterator = children.iterator(); iterator.hasNext();) {
-      final MutableTreeNode child = (MutableTreeNode) iterator.next();
+    for (final Object aChildren : children) {
+      final MutableTreeNode child = (MutableTreeNode)aChildren;
       node.insert(child, node.getChildCount());
     }
   }
@@ -547,6 +539,31 @@ public final class TreeUtil {
       tree.requestFocus();
     }
     selectPath(tree, treePath);
+  }
+
+  public static List<TreePath> collectSelectedPaths(final JTree tree, final TreePath treePath) {
+    final ArrayList<TreePath> result = new ArrayList<TreePath>();
+    final TreePath[] selections = tree.getSelectionPaths();
+    if (selections != null) {
+      for (TreePath selection : selections) {
+        if (treePath.isDescendant(selection)) {
+          result.add(selection);
+        }
+      }
+    }
+    return result;
+  }
+
+  public static void unselect(JTree tree, final DefaultMutableTreeNode node) {
+    final TreePath rootPath = new TreePath(node.getPath());
+    final TreePath[] selectionPaths = tree.getSelectionPaths();
+    if (selectionPaths != null) {
+      for (TreePath selectionPath : selectionPaths) {
+        if (selectionPath.getPathCount() > rootPath.getPathCount() && rootPath.isDescendant(selectionPath)) {
+          tree.removeSelectionPath(selectionPath);
+        }
+      }
+    }
   }
 
   public interface RemoveNodeOperation {
