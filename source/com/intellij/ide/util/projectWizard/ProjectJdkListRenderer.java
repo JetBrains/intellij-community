@@ -23,7 +23,7 @@ public class ProjectJdkListRenderer extends ColoredListCellRenderer {
     else {
       final String str = value.toString();
       if (str != null) {
-        append(str, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+        append(str, selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
       }
     }
   }
