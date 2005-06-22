@@ -2,7 +2,6 @@ package com.intellij.cvsSupport2.application;
 
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.CvsVcs2;
-import com.intellij.cvsSupport2.cvshandlers.DirectoryPruner;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandEvent;
@@ -85,16 +84,15 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
     if (!CvsUtil.fileIsUnderCvs(file)) return;
     if (!shouldProcessEvent(event, false)) return;
     LOG.assertTrue(myCommandLevel > 0);
-    VirtualFile directory = file;
-    LOG.info("Preserving CVS info from " + directory);
+    LOG.info("Preserving CVS info from " + file);
     try {
       if (event.getRequestor() != myDeletedStorage) {
         if (myDeleteHandler == null) {
           myDeleteHandler =
           myDeletedStorage.createDeleteHandler(myProject, this);
         }
-        myDeleteHandler.addDeletedRoot(directory);
-        myDeletedStorage.saveCVSInfo(VfsUtil.virtualToIoFile(directory));
+        myDeleteHandler.addDeletedRoot(file);
+        myDeletedStorage.saveCVSInfo(VfsUtil.virtualToIoFile(file));
       }
     }
     catch (final IOException e) {
@@ -122,19 +120,13 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
     VirtualFile file = event.getFile();
     if (disabled(file)) return false;
     if (externalChange(event)) return false;
-    if (isPrunerEvent(event)) return false;
     if (isStorageEvent(event)) return false;
     if (!isUnderCvsManagedModuleRoot(file)) return false;
-    if (parentShouldBeUnderCvs && !parentIsUnderCvs(file)) return false;
-    return true;
+    return !(parentShouldBeUnderCvs && !parentIsUnderCvs(file));
   }
 
   private boolean isStorageEvent(VirtualFileEvent event) {
     return event.getRequestor() instanceof DeletedCVSDirectoryStorage;
-  }
-
-  private boolean isPrunerEvent(VirtualFileEvent event) {
-    return event.getRequestor() instanceof DirectoryPruner;
   }
 
   private boolean parentIsUnderCvs(VirtualFile file) {
@@ -157,7 +149,7 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent
     return myDeleteHandler != null;
   }
 
-  private final Module getFileModule(VirtualFile file) {
+  private Module getFileModule(VirtualFile file) {
     Module storedData = file.getUserData(FILE_MODULE);
     if (storedData != null) {
       return storedData;

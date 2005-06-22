@@ -345,7 +345,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     for (FilePath root : roots) {
       AbstractVcs vcs = VcsUtil.getVcsFor(project, root);
       if (vcs != null) {
-        if (vcs.fileExistsInVcs(root) || !filterRootsBeforeAction()) {
+        if (vcs.fileIsUnderVcs(root) || !filterRootsBeforeAction()) {
           CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
           if (checkinEnvironment != null) {
             result.add(root);

@@ -10,6 +10,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.UpdateOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.ui.CorruptedProjectFilesDialog;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.update.FileGroup;
@@ -22,7 +23,6 @@ import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 /**
  * author: lesya
@@ -37,6 +37,7 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
   private final Project myProject;
   private final Collection<MergedWithConflictProjectOrModuleFile> myCorruptedFiles = new ArrayList<MergedWithConflictProjectOrModuleFile>();
   private final UpdatedFiles myUpdatedFiles;
+  private final UpdateSettings myUpdateSettings;
 
   public UpdateHandler(FilePath[] files, UpdateSettings updateSettings, Project project, UpdatedFiles updatedFiles) {
     super("Update", new UpdateOperation(new FilePath[0], updateSettings, project),
@@ -44,6 +45,7 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
     myFiles = files;
     myProject = project;
     myUpdatedFiles = updatedFiles;
+    myUpdateSettings = updateSettings;
   }
 
   public void beforeLogin() {
@@ -69,7 +71,7 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
       String relativeFileName = UPDATE_PATTERN.getRelativeFileName(message);
       myNotProcessedRepositories.remove(cvsFileSystem.getLocalFileSystem().getFile(relativeFileName));
       int notProcessedSize = myNotProcessedRepositories.size();
-      progress.setFraction(0.5 + (double)(myDirectoriesToBeProcessedCount - notProcessedSize) / (2 * myDirectoriesToBeProcessedCount));
+      progress.setFraction(0.5 + (myDirectoriesToBeProcessedCount - notProcessedSize) / (2 * myDirectoriesToBeProcessedCount));
     }
   }
 
@@ -82,13 +84,22 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
   }
 
   protected void onOperationFinished(ModalityContext modalityContext) {
+
+    if (myUpdateSettings.getPruneEmptyDirectories()) {
+      final IOFilesBasedDirectoryPruner pruner = new IOFilesBasedDirectoryPruner(ProgressManager.getInstance().getProgressIndicator());
+      for (final VirtualFile myRoot : myRoots) {
+        pruner.addFile(new File(myRoot.getPath()));
+      }
+
+      pruner.execute();
+    }
+
     if (!myCorruptedFiles.isEmpty()) {
       int showOptions = CvsConfiguration.getInstance(myProject).SHOW_CORRUPTED_PROJECT_FILES;
 
       if (showOptions == Options.PERFORM_ACTION_AUTOMATICALLY) {
-        for (Iterator iterator = myCorruptedFiles.iterator(); iterator.hasNext();) {
-          MergedWithConflictProjectOrModuleFile file = (MergedWithConflictProjectOrModuleFile)iterator.next();
-          file.setShouldBeCheckedOut();
+        for (final MergedWithConflictProjectOrModuleFile myCorruptedFile : myCorruptedFiles) {
+          myCorruptedFile.setShouldBeCheckedOut();
         }
       }
       else if (showOptions == Options.SHOW_DIALOG){
@@ -100,13 +111,12 @@ public class UpdateHandler extends CommandCvsHandler implements PostCvsActivity 
 
       }
 
-      for (Iterator iterator = myCorruptedFiles.iterator(); iterator.hasNext();) {
-        MergedWithConflictProjectOrModuleFile file = (MergedWithConflictProjectOrModuleFile)iterator.next();
-        if (file.shouldBeCheckedOut()) {
-          addFileToCheckout(file.getOriginal());
+      for (final MergedWithConflictProjectOrModuleFile myCorruptedFile : myCorruptedFiles) {
+        if (myCorruptedFile.shouldBeCheckedOut()) {
+          addFileToCheckout(myCorruptedFile.getOriginal());
         }
         else {
-          myUpdatedFiles.getGroupById(FileGroup.MODIFIED_ID).add(file.getOriginal().getPath());
+          myUpdatedFiles.getGroupById(FileGroup.MODIFIED_ID).add(myCorruptedFile.getOriginal().getPath());
         }
       }
 

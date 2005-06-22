@@ -39,7 +39,6 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsUpdatePolicy;
-import com.intellij.cvsSupport2.cvshandlers.DirectoryPruner;
 import com.intellij.cvsSupport2.cvshandlers.UpdateHandler;
 import com.intellij.cvsSupport2.updateinfo.UpdatedFilesProcessor;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
@@ -96,9 +95,11 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
     final CvsResult result = cvsOperationExecutor.getResult();
     return new UpdateSessionAdapter(result.getErrorsAndWarnings(), result.isCanceled()) {
       public void onRefreshFilesCompleted() {
+        /*
         if (updateSettings.getPruneEmptyDirectories()) {
           new DirectoryPruner(handler.getRoots()).execute();
         }
+        */
         if (!updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty()) {
           ApplicationManager.getApplication().invokeAndWait(new Runnable() {
             public void run() {
