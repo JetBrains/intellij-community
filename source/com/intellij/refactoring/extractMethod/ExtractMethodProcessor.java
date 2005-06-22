@@ -16,6 +16,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.text.BlockSupport;
@@ -608,9 +610,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     PsiCodeBlock body = newMethod.getBody();
 
+    boolean isFinal = CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS;
     PsiParameterList list = newMethod.getParameterList();
     for (ParameterTablePanel.VariableData data : myVariableDatas) {
-      boolean isFinal = data.variable.hasModifierProperty(PsiModifier.FINAL);
       if (data.passAsParameter) {
         PsiParameter parm = myElementFactory.createParameter(data.name, data.variable.getType());
         if (isFinal) {
