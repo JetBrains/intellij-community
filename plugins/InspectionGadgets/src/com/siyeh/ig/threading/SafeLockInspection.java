@@ -62,7 +62,7 @@ public class SafeLockInspection extends ExpressionInspection{
                         PsiTreeUtil.getParentOfType(currentContext,
                                                                       PsiTryStatement.class);
                 if(tryStatement == null) {
-                    registerError(expression);
+                    registerError(lhs);
                     return;
                 }
                 if(resourceIsOpenedInTryAndClosedInFinally(tryStatement,
