@@ -516,7 +516,7 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
         if (status == DIRTY_STATUS) {
           ((VirtualFileImpl)file).refreshInternal(false, worker, modalityState, false);
         }
-        if (isRoot || (recursive && ((VirtualFileImpl)file).areChildrenCached())) {
+        if ((isRoot || recursive) && ((VirtualFileImpl)file).areChildrenCached()) {
           VirtualFile[] children = file.getChildren();
           for (VirtualFile child : children) {
             if (status == DIRTY_STATUS &&
