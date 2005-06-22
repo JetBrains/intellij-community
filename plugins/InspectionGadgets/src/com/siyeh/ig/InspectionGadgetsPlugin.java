@@ -668,6 +668,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ArithmeticOnVolatileFieldInspection.class);
         m_inspectionClasses.add(CallToNativeMethodWhileLockedInspection.class);
         m_inspectionClasses.add(ObjectNotifyInspection.class);
+        m_inspectionClasses.add(ConditionSignalInspection.class);
         m_inspectionClasses.add(ThreadWithDefaultRunMethodInspection.class);
         m_inspectionClasses.add(ExtendsThreadInspection.class);
         m_inspectionClasses.add(NakedNotifyInspection.class);
@@ -678,6 +679,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(WhileLoopSpinsOnFieldInspection.class);
         m_inspectionClasses.add(WaitNotInLoopInspection.class);
         m_inspectionClasses.add(WaitCalledOnConditionInspection.class);
+        m_inspectionClasses.add(NotifyCalledOnConditionInspection.class);
         m_inspectionClasses.add(VolatileLongOrDoubleFieldInspection.class);
         m_inspectionClasses.add(VolatileArrayFieldInspection.class);
         m_inspectionClasses.add(WaitNotInSynchronizedContextInspection.class);
