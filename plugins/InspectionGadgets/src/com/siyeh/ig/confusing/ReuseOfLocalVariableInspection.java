@@ -153,6 +153,11 @@ public class ReuseOfLocalVariableInspection
             if(loopExistsBetween(assignment, variableBlock)){
                 return;
             }
+            if(tryExistsBetween(assignment, variableBlock)){
+                // this could be weakened, slightly, if it could be verified
+                // that a variable is used in only one branch of a try statement
+                return;
+            }
             final PsiElement assignmentBlock =
                     assignment.getParent().getParent();
             if(assignmentBlock == null){
@@ -194,6 +199,21 @@ public class ReuseOfLocalVariableInspection
                         elementToTest instanceof PsiForStatement ||
                         elementToTest instanceof PsiDoWhileStatement
                         ){
+                    return true;
+                }
+                elementToTest = elementToTest.getParent();
+            }
+            return false;
+        }
+
+        private boolean tryExistsBetween(PsiAssignmentExpression assignment,
+                                          PsiCodeBlock block){
+            PsiElement elementToTest = assignment;
+            while(elementToTest != null){
+                if(elementToTest.equals(block)){
+                    return false;
+                }
+                if(elementToTest instanceof PsiTryStatement){
                     return true;
                 }
                 elementToTest = elementToTest.getParent();
