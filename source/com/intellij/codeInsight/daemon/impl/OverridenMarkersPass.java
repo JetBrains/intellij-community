@@ -129,8 +129,10 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
     PsiClass aClass = (PsiClass) element.getParent();
     if (aClass.getNameIdentifier().equals(element)) {
       if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
+        if ("java.lang.Object".equals(aClass.getQualifiedName())) return; // It's useless to have overriden markers for object.
+
         PsiElementProcessor.CollectElements<PsiClass> processor = new PsiElementProcessor.CollectElements<PsiClass>();
-        helper.processInheritors(processor, aClass, GlobalSearchScope.projectScope(myProject), false);
+        helper.processInheritors(processor, aClass, GlobalSearchScope.allScope(myProject), false);
         Collection<PsiClass> inheritors = processor.getCollection();
         if (!inheritors.isEmpty()) {
           if (!myClassToFirstDerivedMap.containsKey(aClass)){
@@ -159,9 +161,11 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
       if (!PsiUtil.canBeOverriden(method)) return;
 
       PsiClass parentClass = method.getContainingClass();
+      if ("java.lang.Object".equals(parentClass.getQualifiedName())) return; // It's useless to have overriden markers for object.
+
       if (!myClassToFirstDerivedMap.containsKey(parentClass)){
         PsiElementProcessor.FindElement<PsiClass> processor = new PsiElementProcessor.FindElement<PsiClass>();
-        helper.processInheritors(processor, parentClass, GlobalSearchScope.projectScope(myProject), false);
+        helper.processInheritors(processor, parentClass, GlobalSearchScope.allScope(myProject), false);
         PsiClass derived = processor.getFoundElement();
         myClassToFirstDerivedMap.put(parentClass, derived);
       }
@@ -183,7 +187,7 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
 
       if (!found){
         PsiElementProcessor.FindElement<PsiMethod> processor = new PsiElementProcessor.FindElement<PsiMethod>();
-        helper.processOverridingMethods(processor, method, GlobalSearchScope.projectScope(myProject), true);
+        helper.processOverridingMethods(processor, method, GlobalSearchScope.allScope(myProject), true);
         found = processor.isFound();
       }
 
