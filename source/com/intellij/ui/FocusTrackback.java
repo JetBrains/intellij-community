@@ -1,6 +1,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrame;
@@ -115,7 +116,11 @@ public class FocusTrackback {
       root = nextWindow;
     }
 
-    LOG.assertTrue(root instanceof IdeFrame);
+    if(((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
+      String className = root == null ? "null" : root.getClass().getName();
+      LOG.assertTrue(root instanceof IdeFrame, "Expected to be child for " + IdeFrame.class.getName() + " but was child of: " + className);
+    }
+
 
     return root;
   }
