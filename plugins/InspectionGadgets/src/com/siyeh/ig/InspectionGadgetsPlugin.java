@@ -679,6 +679,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ThreadStopSuspendResumeInspection.class);
         m_inspectionClasses.add(WhileLoopSpinsOnFieldInspection.class);
         m_inspectionClasses.add(WaitNotInLoopInspection.class);
+        m_inspectionClasses.add(AwaitNotInLoopInspection.class);
         m_inspectionClasses.add(WaitCalledOnConditionInspection.class);
         m_inspectionClasses.add(NotifyCalledOnConditionInspection.class);
         m_inspectionClasses.add(VolatileLongOrDoubleFieldInspection.class);
