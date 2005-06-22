@@ -1,10 +1,10 @@
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.GroupNames;
 
 public class ConditionalExpressionInspection extends ExpressionInspection {
 

@@ -1,10 +1,10 @@
 package com.siyeh.ig.maturity;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
-import com.siyeh.ig.GroupNames;
 
 public class TodoCommentInspection extends ClassInspection {
     public String getDisplayName() {

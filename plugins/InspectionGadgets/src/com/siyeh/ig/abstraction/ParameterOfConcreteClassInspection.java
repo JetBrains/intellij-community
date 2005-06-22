@@ -1,12 +1,10 @@
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiTypeElement;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
 

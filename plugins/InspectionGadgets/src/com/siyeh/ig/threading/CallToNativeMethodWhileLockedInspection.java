@@ -1,8 +1,8 @@
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ExpressionInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class CallToNativeMethodWhileLockedInspection extends ExpressionInspection {

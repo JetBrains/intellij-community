@@ -1,15 +1,15 @@
 package com.siyeh.ig.j2me;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
-import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.performance.InnerClassReferenceVisitor;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
+import com.siyeh.ig.performance.InnerClassReferenceVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class AnonymousInnerClassMayBeStaticInspection extends ClassInspection {

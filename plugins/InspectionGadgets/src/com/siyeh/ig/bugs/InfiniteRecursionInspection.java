@@ -1,10 +1,10 @@
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.psiutils.RecursionUtils;
 import org.jetbrains.annotations.NotNull;

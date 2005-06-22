@@ -1,9 +1,9 @@
 package com.siyeh.ig.jdk;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiAssertStatement;
 import com.intellij.psi.PsiElement;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 

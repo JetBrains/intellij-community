@@ -1,11 +1,11 @@
 package com.siyeh.ig.initialization;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.GroupNames;
 
 public class NonFinalStaticVariableUsedInClassInitializationInspection
                                                                        extends ExpressionInspection{

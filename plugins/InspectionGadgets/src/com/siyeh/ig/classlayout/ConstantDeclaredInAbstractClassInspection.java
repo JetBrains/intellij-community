@@ -1,12 +1,12 @@
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
-import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantDeclaredInAbstractClassInspection extends FieldInspection {

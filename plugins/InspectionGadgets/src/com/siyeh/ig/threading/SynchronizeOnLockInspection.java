@@ -1,10 +1,10 @@
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
 

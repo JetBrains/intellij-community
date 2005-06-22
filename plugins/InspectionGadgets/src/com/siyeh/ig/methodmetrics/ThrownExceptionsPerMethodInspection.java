@@ -1,11 +1,11 @@
 package com.siyeh.ig.methodmetrics;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReferenceList;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
 
 public class ThrownExceptionsPerMethodInspection extends MethodMetricInspection {

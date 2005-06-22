@@ -1,9 +1,9 @@
 package com.siyeh.ig.initialization;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
-import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.InitializationReadUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;

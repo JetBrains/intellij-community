@@ -1,11 +1,11 @@
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
-import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
 
 public class FieldHasSetterButNoGetterInspection extends FieldInspection {

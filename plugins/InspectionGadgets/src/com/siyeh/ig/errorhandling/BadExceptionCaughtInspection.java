@@ -1,11 +1,11 @@
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.GroupNames;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 

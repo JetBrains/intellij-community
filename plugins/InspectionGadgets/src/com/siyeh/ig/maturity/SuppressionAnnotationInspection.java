@@ -1,10 +1,10 @@
 package com.siyeh.ig.maturity;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
-import com.siyeh.ig.GroupNames;
 
 public class SuppressionAnnotationInspection extends ClassInspection{
     public String getDisplayName(){

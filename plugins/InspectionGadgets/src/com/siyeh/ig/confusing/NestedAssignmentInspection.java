@@ -1,12 +1,12 @@
 package com.siyeh.ig.confusing;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpressionListStatement;
 import com.intellij.psi.PsiExpressionStatement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
 
 public class NestedAssignmentInspection extends ExpressionInspection {

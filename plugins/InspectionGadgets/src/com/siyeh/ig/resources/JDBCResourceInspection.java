@@ -1,10 +1,10 @@
 package com.siyeh.ig.resources;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;

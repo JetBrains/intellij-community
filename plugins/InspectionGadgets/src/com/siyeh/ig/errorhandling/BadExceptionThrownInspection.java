@@ -1,5 +1,6 @@
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
@@ -8,7 +9,6 @@ import com.intellij.psi.PsiThrowStatement;
 import com.intellij.psi.PsiType;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.GroupNames;
 import org.jdom.Element;
 
 import javax.swing.*;

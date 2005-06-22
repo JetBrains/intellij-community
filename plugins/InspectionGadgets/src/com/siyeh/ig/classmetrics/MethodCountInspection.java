@@ -1,10 +1,10 @@
 package com.siyeh.ig.classmetrics;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
 
 public class MethodCountInspection

@@ -1,5 +1,6 @@
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,7 +33,7 @@ public  class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
     }
 
     public String getGroupDisplayName(){
-        return com.siyeh.ig.GroupNames.STYLE_GROUP_NAME;
+        return GroupNames.STYLE_GROUP_NAME;
     }
 
     public JComponent createOptionsPanel(){

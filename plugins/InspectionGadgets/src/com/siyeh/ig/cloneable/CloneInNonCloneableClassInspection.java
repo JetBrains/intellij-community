@@ -1,8 +1,9 @@
 package com.siyeh.ig.cloneable;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.MethodInspection;
 import com.siyeh.ig.fixes.MakeCloneableFix;
 import com.siyeh.ig.psiutils.CloneUtils;
 import org.jetbrains.annotations.NotNull;

@@ -1,10 +1,10 @@
 package com.siyeh.ig.abstraction;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiTypeElement;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
 
 public class LocalVariableOfConcreteClassInspection extends ExpressionInspection {

@@ -1,11 +1,11 @@
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
-import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.ConstantExpressionUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
 
 public class DivideByZeroInspection extends ExpressionInspection {

@@ -1,9 +1,9 @@
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
 
 public class StringToUpperWithoutLocaleInspection extends ExpressionInspection {

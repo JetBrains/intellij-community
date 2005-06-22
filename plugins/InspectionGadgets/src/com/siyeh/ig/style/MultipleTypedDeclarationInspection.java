@@ -1,9 +1,9 @@
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.VariableInspection;
 import com.siyeh.ig.fixes.NormalizeDeclarationFix;

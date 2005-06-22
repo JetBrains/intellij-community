@@ -1,9 +1,12 @@
 package com.siyeh.ig.security;
 
-import com.intellij.psi.*;
+import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiType;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.FieldInspection;
-import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 

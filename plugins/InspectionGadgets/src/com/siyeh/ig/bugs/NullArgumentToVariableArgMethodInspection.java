@@ -1,10 +1,10 @@
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
-import com.siyeh.ig.GroupNames;
 import org.jetbrains.annotations.NotNull;
 
 public class NullArgumentToVariableArgMethodInspection extends ExpressionInspection{

@@ -1,8 +1,9 @@
 package com.siyeh.ig.logging;
 
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.psi.*;
-import com.siyeh.ig.*;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ClassInspection;
+import com.siyeh.ig.RegExInputVerifier;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

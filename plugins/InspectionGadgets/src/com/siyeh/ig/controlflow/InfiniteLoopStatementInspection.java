@@ -1,11 +1,11 @@
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiDoWhileStatement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiForStatement;
 import com.intellij.psi.PsiWhileStatement;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.GroupNames;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
