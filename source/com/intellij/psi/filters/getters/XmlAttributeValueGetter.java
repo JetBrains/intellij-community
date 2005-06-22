@@ -29,8 +29,7 @@ public class XmlAttributeValueGetter implements ContextGetter {
     if(context != null)
       context = PsiTreeUtil.getParentOfType(context, XmlAttribute.class);
 
-    if(context instanceof XmlAttribute){
-      final XmlAttribute attribute = (XmlAttribute)context;
+    if(context instanceof XmlAttribute) {
       final XmlAttributeDescriptor descriptor = ((XmlAttribute)context).getDescriptor();
 
       if(descriptor != null) {
