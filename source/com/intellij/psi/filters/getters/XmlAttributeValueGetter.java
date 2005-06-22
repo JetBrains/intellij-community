@@ -39,6 +39,7 @@ public class XmlAttributeValueGetter implements ContextGetter {
         if((values == null || values.length==0)) {
           final PsiReference[] references = ((XmlAttribute)context).getValueElement().getReferences();
           if (references.length == 0) return getAllWordsFromDocument(context,completionContext);
+          if (values == null) return new Object[0];
         }
         return values;
       }
