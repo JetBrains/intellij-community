@@ -221,7 +221,7 @@ public class CodeEditUtil {
   private static void removeChildrenAndAdjustWhiteSpaces(final ASTNode first, final ASTNode last, final CompositeElement parent) {
     ASTNode lastChild = findLastChild(last);
     final ASTNode prevElement = TreeUtil.prevLeaf(first);
-    final ASTNode nextElement = findElementAfter(last == null ? parent : last, false);
+    ASTNode nextElement = findElementAfter(last == null ? parent : last, false);
     final ArrayList<PsiElement> dirtyElements = new ArrayList<PsiElement>();
     if (nextElement != null) {
       saveIndents(nextElement, dirtyElements);
@@ -252,7 +252,11 @@ public class CodeEditUtil {
           FormatterUtil.join(prevElement, TreeUtil.nextLeaf(prevElement));
         }
 
-        if (adjustWSBefore) {
+        if (!nextElement.getPsi().isValid()) {
+          nextElement = findElementAfter(last == null ? parent : last, false);
+        }
+
+        if (nextElement != null && adjustWSBefore) {
           adjustWhiteSpaceBefore(nextElement, true, true, true, false);
         }
 
@@ -267,6 +271,14 @@ public class CodeEditUtil {
     finally {
       clearIndentInfo(dirtyElements);
     }
+  }
+
+  private static ASTNode findLeafAfter(final ASTNode astNode) {
+    ASTNode value = TreeUtil.nextLeaf(astNode);
+    while (value != null && value.getElementType() == ElementType.WHITE_SPACE) {
+      value = TreeUtil.nextLeaf(value);
+    }
+    return value;
   }
 
   private static ASTNode findLastChild(final ASTNode last) {
@@ -517,13 +529,23 @@ public class CodeEditUtil {
 
     try {
       if (builder != null && elementBuilder != null) {
-        Formatter.getInstance().adjustTextRange(builder.createModel(file, settings), settings,
-                                                settings.getIndentOptions(file.getFileType()),
-                                                first.getTextRange(),
-                                                keepBlankLines,
-                                                keepLineBreaks,
-                                                changeWSBeforeFirstElement,
-                                                changeLineFeedsBeforeFirstElement, new MyIndentInfoStorage(file, null));
+        ASTNode firstNonSpaceLeaf = TreeUtil.findFirstLeaf(first);
+        while (firstNonSpaceLeaf != null && firstNonSpaceLeaf.getElementType() == ElementType.WHITE_SPACE) {
+          firstNonSpaceLeaf = TreeUtil.nextLeaf(firstNonSpaceLeaf);
+        }
+        if (firstNonSpaceLeaf != null) {
+          final int startOffset = firstNonSpaceLeaf.getStartOffset();
+          final int endOffset = first.getTextRange().getEndOffset();
+          if (startOffset < endOffset) {
+            Formatter.getInstance().adjustTextRange(builder.createModel(file, settings), settings,
+                                                    settings.getIndentOptions(file.getFileType()),
+                                                    new TextRange(startOffset, endOffset),
+                                                    keepBlankLines,
+                                                    keepLineBreaks,
+                                                    changeWSBeforeFirstElement,
+                                                    changeLineFeedsBeforeFirstElement, new MyIndentInfoStorage(file, null));
+          }
+        }
       }
     }
     finally {
