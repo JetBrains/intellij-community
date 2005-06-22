@@ -578,9 +578,7 @@ public final class PsiUtil {
     final PsiParameter[] parms = method.getParameterList().getParameters();
 
     if (!method.isVarArgs()) {
-      if (args == null || args.length != parms.length) {
-        return false;
-      }
+      if (args.length != parms.length) return false;
 
       for (int i = 0; i < args.length; i++) {
         final PsiExpression arg = args[i];
@@ -593,9 +591,7 @@ public final class PsiUtil {
         }
       }
     } else {
-      if (args == null || args.length < parms.length - 1) {
-        return false;
-      }
+      if (args.length < parms.length - 1) return false;
 
       PsiParameter lastParameter = parms[parms.length - 1];
       PsiType lastParmType = lastParameter.getType();
