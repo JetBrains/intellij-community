@@ -1,5 +1,6 @@
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -38,7 +39,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   public static final String SHORT_NAME = "FieldCanBeLocal";
 
   public String getGroupDisplayName() {
-    return GROUP_LOCAL_CODE_ANALYSIS;
+    return GroupNames.CLASSLAYOUT_GROUP_NAME;
   }
 
   public String getDisplayName() {

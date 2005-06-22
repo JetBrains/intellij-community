@@ -1,5 +1,6 @@
 package com.intellij.codeInspection.localCanBeFinal;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -197,7 +198,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
   }
 
   public String getGroupDisplayName() {
-    return GROUP_LOCAL_CODE_ANALYSIS;
+    return GroupNames.STYLE_GROUP_NAME;
   }
 
   public String getShortName() {

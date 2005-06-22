@@ -8,6 +8,7 @@
  */
 package com.intellij.codeInspection.defUse;
 
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.SideEffectWarningDialog;
 import com.intellij.codeInspection.InspectionManager;
@@ -263,7 +264,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
   }
 
   public String getGroupDisplayName() {
-    return GROUP_LOCAL_CODE_ANALYSIS;
+    return GroupNames.BUGS_GROUP_NAME;
   }
 
   public String getShortName() {

@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.duplicateStringLiteral;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -69,7 +70,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   public String getGroupDisplayName() {
-    return GROUP_LOCAL_CODE_ANALYSIS;
+    return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
   }
 
   public String getShortName() {

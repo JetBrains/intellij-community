@@ -9,6 +9,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInsight.intention.impl.AddAnnotationAction;
 import com.intellij.codeInspection.InspectionManager;
@@ -348,7 +349,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   }
 
   public String getGroupDisplayName() {
-    return GROUP_LOCAL_CODE_ANALYSIS;
+    return GroupNames.BUGS_GROUP_NAME;
   }
 
   public String getShortName() {
