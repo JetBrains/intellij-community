@@ -8,7 +8,7 @@ import com.siyeh.ig.GroupNames;
 
 public class SuppressionAnnotationInspection extends ClassInspection{
     public String getDisplayName(){
-        return "Inspection suppresion annotation";
+        return "Inspection supression annotation";
     }
 
     public String getGroupDisplayName(){
@@ -16,7 +16,7 @@ public class SuppressionAnnotationInspection extends ClassInspection{
     }
 
     public String buildErrorString(PsiElement location){
-        return "Inspection suppresion annotation #ref #loc";
+        return "Inspection supression annotation #ref #loc";
     }
 
     public BaseInspectionVisitor buildVisitor(){
