@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.lang.Language;
 
@@ -56,6 +57,9 @@ public abstract class BaseRefactoringAction extends AnAction {
       if (element == null) {
         final int offset = editor.getCaretModel().getOffset();
         if (file != null) element = file.findElementAt(offset);
+        if (element instanceof PsiWhiteSpace) {
+          element = file.findElementAt(element.getTextRange().getStartOffset() - 1);
+        }
       }
       if (element == null || file == null || element.getLanguage() == null ||
           !isAvailableForLanguage(element.getLanguage()) || !isAvailableForFile(file)) {
