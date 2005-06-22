@@ -60,8 +60,6 @@ public class AnnotationInspection extends BaseInspection {
     }
 
     private static class UnnecessaryInterfaceModifierVisitor extends BaseInspectionVisitor {
-
-
         public void visitAnnotation(PsiAnnotation annotation) {
             super.visitAnnotation(annotation);
             registerError(annotation);

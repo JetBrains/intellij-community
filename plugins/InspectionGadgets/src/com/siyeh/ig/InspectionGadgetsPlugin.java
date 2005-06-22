@@ -338,6 +338,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(EmptyInitializerInspection.class);
         m_inspectionClasses.add(EqualsBetweenInconvertibleTypesInspection.class);
         m_inspectionClasses.add(CastToIncompatibleInterfaceInspection.class);
+        m_inspectionClasses.add(CastConflictsWithInstanceofInspection.class);
         m_inspectionClasses.add(CollectionAddedToSelfInspection.class);
         m_inspectionClasses.add(InstanceofIncompatibleInterfaceInspection.class);
         m_inspectionClasses.add(InstantiationOfUtilityClassInspection.class);
