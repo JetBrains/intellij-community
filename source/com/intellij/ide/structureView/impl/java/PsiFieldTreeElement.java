@@ -6,13 +6,16 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 
+import java.util.Collection;
+import java.util.Collections;
+
 public class PsiFieldTreeElement extends JavaClassTreeElementBase<PsiField>{
   public PsiFieldTreeElement(PsiField field, boolean isInherited) {
     super(isInherited,field);
  }
 
-  public StructureViewTreeElement[] getChildrenBase() {
-    return new StructureViewTreeElement[0];
+  public Collection<StructureViewTreeElement> getChildrenBase() {
+    return Collections.EMPTY_LIST;
   }
 
   public ItemPresentation getPresentation() {

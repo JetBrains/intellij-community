@@ -10,6 +10,8 @@ import com.intellij.openapi.util.Iconable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,13 +26,13 @@ public class PropertiesFileStructureViewElement extends PsiTreeElementBase<Prope
     super(propertiesFile);
   }
 
-  public StructureViewTreeElement[] getChildrenBase() {
+  public Collection<StructureViewTreeElement> getChildrenBase() {
     List<Property> properties = getElement().getProperties();
-                                              
-    StructureViewTreeElement[] elements = new StructureViewTreeElement[properties.size()];
+
+    Collection<StructureViewTreeElement> elements = new ArrayList<StructureViewTreeElement>(properties.size());
     for (int i = 0; i < properties.size(); i++) {
       Property property = properties.get(i);
-      elements[i] = new PropertiesStructureViewElement(property);
+      elements.add(new PropertiesStructureViewElement(property));
     }
     return elements;
   }

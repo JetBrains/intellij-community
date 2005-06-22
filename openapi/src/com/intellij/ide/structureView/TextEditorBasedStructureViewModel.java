@@ -56,16 +56,6 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
 
   }
 
-  private static Editor getEditorForFile(final PsiFile psiFile) {
-    final FileEditor[] editors = FileEditorManager.getInstance(psiFile.getProject()).getEditors(psiFile.getVirtualFile());
-    for (FileEditor editor : editors) {
-      if (editor instanceof TextEditor) {
-        return ((TextEditor)editor).getEditor();
-      }
-    }
-    return null;
-  }
-
   protected TextEditorBasedStructureViewModel(final Editor editor) {
     myEditor = editor;
     myCaretListener = new CaretListener() {
@@ -86,6 +76,17 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     EditorFactory.getInstance().getEventMulticaster().addCaretListener(myCaretListener);
   }
 
+  private static Editor getEditorForFile(final PsiFile psiFile) {
+    final FileEditor[] editors = FileEditorManager.getInstance(psiFile.getProject()).getEditors(psiFile.getVirtualFile());
+    for (FileEditor editor : editors) {
+      if (editor instanceof TextEditor) {
+        return ((TextEditor)editor).getEditor();
+      }
+    }
+    return null;
+  }
+
+
   public final void addEditorPositionListener(FileEditorPositionListener listener) {
     myListeners.add(listener);
   }
@@ -102,7 +103,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     if (myEditor == null) return null;
     final int offset = myEditor.getCaretModel().getOffset();
     PsiElement element = getPsiFile().findElementAt(offset);
-    while (!isSutable(element)) {
+    while (!isSuitable(element)) {
       if (element == null) return null;
       element = element.getParent();
     }
@@ -111,7 +112,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
 
   protected abstract PsiFile getPsiFile();
 
-  private boolean isSutable(final PsiElement element) {
+  private boolean isSuitable(final PsiElement element) {
     if (element == null) return false;
     final Class[] suitableClasses = getSuitableClasses();
     for (Class suitableClass : suitableClasses) {

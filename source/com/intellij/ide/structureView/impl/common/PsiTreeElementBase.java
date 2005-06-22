@@ -31,21 +31,24 @@
  */
 package com.intellij.ide.structureView.impl.common;
 
+import com.intellij.codeInsight.CodeInsightColors;
 import com.intellij.ide.structureView.StructureViewExtension;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.pom.Navigatable;
-import com.intellij.codeInsight.CodeInsightColors;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Collection;
 
 public abstract class PsiTreeElementBase <Value extends PsiElement> implements StructureViewTreeElement<Value>, ItemPresentation {
   private final SmartPsiElementPointer mySmartPsiElementPointer;
@@ -93,20 +96,19 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
     if (element == null) return false;
     if (!(element instanceof PsiDocCommentOwner)) return false;
     return ((PsiDocCommentOwner)element).isDeprecated();
-    
+
   }
 
   public final StructureViewTreeElement[] getChildren() {
-    if (getElement() == null) return new StructureViewTreeElement[0];
-    if (!getElement().isValid()) return new StructureViewTreeElement[0];
+    if (getElement() == null) return StructureViewTreeElement.EMPTY_ARRAY;
+    if (!getElement().isValid()) return StructureViewTreeElement.EMPTY_ARRAY;
     List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
-    StructureViewTreeElement[] baseChildren = getChildrenBase();
-    result.addAll(Arrays.asList(baseChildren));
+    Collection<StructureViewTreeElement> baseChildren = getChildrenBase();
+    result.addAll(baseChildren);
     StructureViewFactoryEx structureViewFactory = StructureViewFactoryEx.getInstance(getElement().getProject());
     Class<? extends PsiElement> aClass = getElement().getClass();
     List<StructureViewExtension> allExtensions = structureViewFactory.getAllExtensions(aClass);
-    for (Iterator<StructureViewExtension> iterator = allExtensions.iterator(); iterator.hasNext();) {
-      StructureViewExtension extension = iterator.next();
+    for (StructureViewExtension extension : allExtensions) {
       StructureViewTreeElement[] children = extension.getChildren(getElement());
       if (children != null) {
         result.addAll(Arrays.asList(children));
@@ -134,5 +136,5 @@ public abstract class PsiTreeElementBase <Value extends PsiElement> implements S
     return canNavigate();
   }
 
-  public abstract StructureViewTreeElement[] getChildrenBase();
+  public abstract Collection<StructureViewTreeElement> getChildrenBase();
 }

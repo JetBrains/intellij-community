@@ -1,6 +1,10 @@
 package com.intellij.lang.java;
 
 import com.intellij.ide.highlighter.JavaFileHighlighter;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.impl.java.JavaFileTreeModel;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
@@ -10,10 +14,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.java.AbstractJavaBlock;
@@ -23,6 +24,7 @@ import com.intellij.newCodeFormatting.FormattingModelBuilder;
 import com.intellij.newCodeFormatting.FormattingModel;
 import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurroundDescriptor;
 import com.intellij.codeInsight.generation.surroundWith.JavaStatementsSurroundDescriptor;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -43,8 +45,8 @@ public class JavaLanguage extends Language {
     super("JAVA", "text/java");
     myFormattingModelBuilder = new FormattingModelBuilder() {
       public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
-        return new PsiBasedFormattingModel(element.getContainingFile(), settings, AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element), 
-                                                                                                settings));
+        return new PsiBasedFormattingModel(element.getContainingFile(), settings, AbstractJavaBlock.createJavaBlock(SourceTreeToPsiMap.psiElementToTree(element),
+                                                                                                                    settings));
       }
     };
   }
@@ -81,5 +83,14 @@ public class JavaLanguage extends Language {
 
   public SurroundDescriptor[] getSurroundDescriptors() {
     return SURROUND_DESCRIPTORS;
+  }
+
+  @Nullable
+  public StructureViewBuilder getStructureViewBuilder(final PsiElement psiElement) {
+    return new TreeBasedStructureViewBuilder() {
+      public StructureViewModel createStructureViewModel() {
+        return new JavaFileTreeModel((PsiJavaFile)psiElement);
+      }
+    };
   }
 }

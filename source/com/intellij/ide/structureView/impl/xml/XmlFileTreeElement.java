@@ -36,17 +36,20 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 
+import java.util.Collection;
+import java.util.Collections;
+
 public class XmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
   public XmlFileTreeElement(XmlFile file) {
     super(file);
   }
 
-  public StructureViewTreeElement[] getChildrenBase() {
+  public Collection<StructureViewTreeElement> getChildrenBase() {
     XmlDocument document = getElement().getDocument();
     if (document != null && document.getRootTag() != null) {
-      return new StructureViewTreeElement[]{new XmlTagTreeElement(document.getRootTag())};
+      return Collections.<StructureViewTreeElement>singletonList(new XmlTagTreeElement(document.getRootTag()));
     }
-    return new StructureViewTreeElement[0];
+    return Collections.EMPTY_LIST;
   }
 
   public String getPresentableText() {

@@ -15,9 +15,9 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     super(inherited,aClass);
   }
 
-  public StructureViewTreeElement[] getChildrenBase() {
+  public Collection<StructureViewTreeElement> getChildrenBase() {
     Collection<StructureViewTreeElement> classChildren = getClassChildren();
-    return classChildren.toArray(new StructureViewTreeElement[classChildren.size()]);
+    return classChildren;
   }
 
   private Collection<StructureViewTreeElement> getClassChildren() {

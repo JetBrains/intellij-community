@@ -36,16 +36,19 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 
+import java.util.Collection;
+import java.util.ArrayList;
+
 public class XmlTagTreeElement extends PsiTreeElementBase<XmlTag>{
   public XmlTagTreeElement(XmlTag tag) {
     super(tag);
   }
 
-  public StructureViewTreeElement[] getChildrenBase() {
+  public Collection<StructureViewTreeElement> getChildrenBase() {
     XmlTag[] subTags = getElement().getSubTags();
-    StructureViewTreeElement[] result = new StructureViewTreeElement[subTags.length];
-    for (int i = 0; i < result.length; i++) {
-      result[i] = new XmlTagTreeElement(subTags[i]);
+    Collection<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>(subTags.length);
+    for (XmlTag tag : subTags) {
+      result.add(new XmlTagTreeElement(tag));
     }
     return result;
   }
@@ -54,13 +57,13 @@ public class XmlTagTreeElement extends PsiTreeElementBase<XmlTag>{
     final StringBuffer buffer = new StringBuffer();
     buffer.append(getElement().getName());
     final XmlAttribute[] attributes = getElement().getAttributes();
-    for (int i = 0; i < attributes.length; i++) {
-      appendAttribute(attributes[i], buffer);
+    for (XmlAttribute attribute : attributes) {
+      appendAttribute(attribute, buffer);
     }
     return buffer.toString();
   }
 
-  private void appendAttribute(final XmlAttribute attribute, final StringBuffer buffer) {
+  private static void appendAttribute(final XmlAttribute attribute, final StringBuffer buffer) {
     buffer.append(" ");
     buffer.append(attribute.getName());
     buffer.append("=");

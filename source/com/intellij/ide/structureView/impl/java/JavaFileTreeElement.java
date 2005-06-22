@@ -8,6 +8,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 public class JavaFileTreeElement extends PsiTreeElementBase<PsiJavaFile> implements ItemPresentation {
 
@@ -19,13 +20,13 @@ public class JavaFileTreeElement extends PsiTreeElementBase<PsiJavaFile> impleme
     return getElement().getName();
   }
 
-  public StructureViewTreeElement[] getChildrenBase() {
+  public Collection<StructureViewTreeElement> getChildrenBase() {
     PsiClass[] classes = getElement().getClasses();
     ArrayList<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
     for (PsiClass aClass : classes) {
       result.add(new JavaClassTreeElement(aClass, false));
     }
-    return result.toArray(new StructureViewTreeElement[result.size()]);
+    return result;
 
   }
 
