@@ -33,9 +33,11 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.concurrency.SwingWorker;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
@@ -296,8 +298,8 @@ public class ContentEntriesEditor extends ModuleElementsEditor {
       }
     };
 
-    textField.addFocusListener(new FocusAdapter() {
-      public void focusLost(FocusEvent e) {
+    textField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
         commitRunnable.run();
       }
     });
