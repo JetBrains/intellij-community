@@ -57,9 +57,9 @@ public class ComparisonToNaNInspection extends ExpressionInspection{
             final PsiBinaryExpression comparison =
                     (PsiBinaryExpression) NaNExpression.getParent();
 
-            final PsiExpression qualifier;
             final PsiExpression lhs = comparison.getLOperand();
             final PsiExpression rhs = comparison.getROperand();
+            final PsiExpression qualifier;
             if(NaNExpression.equals(lhs)){
                 qualifier = rhs;
             } else{

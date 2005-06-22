@@ -44,12 +44,12 @@ public class MultipleTopLevelClassesInFileInspection extends ClassInspection {
             if (!(aClass.getParent() instanceof PsiJavaFile)) {
                 return;
             }
-            int numClasses = 0;
             final PsiJavaFile file = (PsiJavaFile) aClass.getParent();
             if(file == null)
             {
                 return;
             }
+            int numClasses=0;
             final PsiElement[] children = file.getChildren();
             for(final PsiElement child : children){
                 if(child instanceof PsiClass){

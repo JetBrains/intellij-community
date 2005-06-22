@@ -88,11 +88,11 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     private void createDocumentation(PrintStream out){
         final Class<? extends LocalInspectionTool>[] classes = getInspectionClasses();
         Arrays.sort(classes, new InspectionComparator());
-        String currentGroupName = "";
 
         final int numQuickFixes = countQuickFixes(classes, out);
         out.println(classes.length + " Inspections");
         out.println(numQuickFixes + " Quick Fixes");
+        String currentGroupName="";
 
         for(final Class<? extends LocalInspectionTool> aClass : classes){
             final String className = aClass.getName();
@@ -384,7 +384,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(AssignmentToStaticFieldFromInstanceMethodInspection.class);
         m_inspectionClasses.add(StaticCallOnSubclassInspection.class);
         m_inspectionClasses.add(OctalAndDecimalIntegersMixedInspection.class);
-        m_inspectionClasses.add(ObjectToStringInspection.class);
         m_inspectionClasses.add(IncompatibleMaskInspection.class);
         m_inspectionClasses.add(ForLoopWithMissingComponentInspection.class);
         m_inspectionClasses.add(ForLoopThatDoesntUseLoopVariableInspection.class);
@@ -600,6 +599,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerStyleInspections(){
+        m_inspectionClasses.add(TooBroadScopeInspection.class);
         m_inspectionClasses.add(ReturnThisInspection.class);
         m_inspectionClasses.add(ConstantOnLHSOfComparisonInspection.class);
         m_inspectionClasses.add(ConstantOnRHSOfComparisonInspection.class);
@@ -695,6 +695,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(EmptySynchronizedStatementInspection.class);
         m_inspectionClasses.add(NonSynchronizedMethodOverridesSynchronizedMethodInspection.class);
         m_inspectionClasses.add(PublicFieldAccessedInSynchronizedContextInspection.class);
+        m_inspectionClasses.add(SafeLockInspection.class);
         m_inspectionClasses.add(FieldAccessedSynchronizedAndUnsynchronizedInspection.class);
     }
 

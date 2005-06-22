@@ -62,11 +62,11 @@ public class CollectionAddedToSelfInspection extends ExpressionInspection {
             {
                 return;
             }
-            boolean hasMatchingArg = false;
             final PsiExpressionList argumentList = call.getArgumentList();
             if (argumentList == null) {
                 return;
             }
+            boolean hasMatchingArg=false;
             final PsiExpression[] args = argumentList.getExpressions();
             for(PsiExpression arg : args){
                 if(EquivalenceChecker.expressionsAreEquivalent(qualifier, arg)){

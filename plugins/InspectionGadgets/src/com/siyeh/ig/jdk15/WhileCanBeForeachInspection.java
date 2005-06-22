@@ -76,9 +76,6 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             final StringBuffer out = new StringBuffer(length);
             final PsiStatement body = whileStatement.getBody();
             final PsiStatement firstStatement = getFirstStatement(body);
-            final String contentVariableName;
-            final String finalString;
-            final PsiStatement statementToSkip;
             final PsiStatement initialization =
                     getPreviousStatement(whileStatement);
             final PsiDeclarationStatement declaration =
@@ -118,6 +115,9 @@ public class WhileCanBeForeachInspection extends StatementInspection{
             final String iteratorName = iterator.getName();
             final boolean isDeclaration =
                     isIteratorNextDeclaration(firstStatement, iteratorName, contentTypeString);
+            final PsiStatement statementToSkip;
+            final String finalString;
+            final String contentVariableName;
             if(isDeclaration){
                 final PsiDeclarationStatement decl =
                         (PsiDeclarationStatement) firstStatement;
@@ -263,9 +263,9 @@ public class WhileCanBeForeachInspection extends StatementInspection{
 
         private String createNewVarName(Project project, PsiWhileStatement scope,
                                         PsiType type, String containerName){
-            final String baseName;
             final CodeStyleManager codeStyleManager =
                     CodeStyleManager.getInstance(project);
+            final String baseName;
             if(containerName != null){
                 baseName = StringUtils.createSingularFromName(containerName);
             } else{

@@ -51,8 +51,8 @@ public class RandomDoubleForRandomIntegerInspection extends ExpressionInspection
             final String qualifierText = qualifier.getText();
             final PsiBinaryExpression multiplication = (PsiBinaryExpression) getContainingExpression(call);
             final PsiExpression cast = getContainingExpression(multiplication);
-            final PsiExpression multiplierExpression;
             assert multiplication != null;
+            final PsiExpression multiplierExpression;
             if(multiplication.getLOperand().equals(call))
             {
                 multiplierExpression = multiplication.getROperand();

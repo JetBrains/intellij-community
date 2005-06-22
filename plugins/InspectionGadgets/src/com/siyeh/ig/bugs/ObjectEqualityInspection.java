@@ -89,8 +89,8 @@ public class ObjectEqualityInspection extends ExpressionInspection {
             final PsiElement comparisonToken = descriptor.getPsiElement();
             final PsiBinaryExpression
                     expression = (PsiBinaryExpression) comparisonToken.getParent();
-            boolean negated = false;
             assert expression != null;
+            boolean negated=false;
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (JavaTokenType.NE.equals(tokenType)) {

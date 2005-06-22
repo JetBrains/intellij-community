@@ -85,9 +85,6 @@ public class ForCanBeForeachInspection extends StatementInspection{
             final StringBuffer out = new StringBuffer(length);
             final PsiStatement body = forStatement.getBody();
             final PsiStatement firstStatement = getFirstStatement(body);
-            final String contentVariableName;
-            final String finalString;
-            final PsiStatement statementToSkip;
             final PsiStatement initialization =
                     forStatement.getInitialization();
             final PsiDeclarationStatement declaration =
@@ -123,6 +120,9 @@ public class ForCanBeForeachInspection extends StatementInspection{
             final boolean isDeclaration =
                     isIteratorNextDeclaration(firstStatement, iteratorName,
                                               contentTypeString);
+            final PsiStatement statementToSkip;
+            final String finalString;
+            final String contentVariableName;
             if(isDeclaration){
                 final PsiDeclarationStatement decl =
                         (PsiDeclarationStatement) firstStatement;
@@ -185,12 +185,12 @@ public class ForCanBeForeachInspection extends StatementInspection{
             final String arrayName = arrayReference.getText();
             final PsiStatement body = forStatement.getBody();
             final PsiStatement firstStatement = getFirstStatement(body);
-            final String contentVariableName;
-            final String finalString;
-            final PsiStatement statementToSkip;
             final boolean isDeclaration =
                     isArrayElementDeclaration(firstStatement, arrayName,
                                               indexName);
+            final String contentVariableName;
+            final String finalString;
+            final PsiStatement statementToSkip;
             if(isDeclaration){
                 final PsiDeclarationStatement decl =
                         (PsiDeclarationStatement) firstStatement;
@@ -399,9 +399,9 @@ public class ForCanBeForeachInspection extends StatementInspection{
 
         private String createNewVarName(Project project, PsiForStatement scope,
                                         PsiType type, String containerName){
-            final String baseName;
             final CodeStyleManager codeStyleManager =
                     CodeStyleManager.getInstance(project);
+            final String baseName;
             if(containerName != null){
                 baseName = StringUtils.createSingularFromName(containerName);
             } else{

@@ -32,11 +32,11 @@ public class FallthruInSwitchStatementInspection extends StatementInspection {
 
         public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
-            boolean switchLabelValid = true;
             final PsiCodeBlock body = statement.getBody();
             if (body == null) {
                 return;
             }
+            boolean switchLabelValid=true;
             final PsiStatement[] statements = body.getStatements();
             for(final PsiStatement child : statements){
                 if(child instanceof PsiSwitchLabelStatement){

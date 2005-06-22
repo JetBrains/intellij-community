@@ -98,8 +98,8 @@ public class StringUtils{
     }
 
     @NotNull public static String createSingularFromName(@NotNull String name){
-        final String singularName;
         final int nameLength = name.length();
+        final String singularName;
         if(name.endsWith("ies")){
             singularName = name.substring(0, nameLength - 3) + 'y';
         } else if(name.endsWith("sses") || name.endsWith("shes")){

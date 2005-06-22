@@ -49,10 +49,10 @@ public class StringEqualityInspection extends ExpressionInspection {
         public void doFix(Project project, ProblemDescriptor descriptor)
                                                                          throws IncorrectOperationException{
             final PsiElement comparisonToken = descriptor.getPsiElement();
-            boolean negated = false;
             final PsiBinaryExpression expression =
                     (PsiBinaryExpression) comparisonToken.getParent();
             assert expression != null;
+            boolean negated=false;
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
             if (tokenType.equals(JavaTokenType.NE)) {

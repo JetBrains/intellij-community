@@ -254,9 +254,9 @@ public class CollectionUtils{
     }
 
     public static String getInterfaceForClass(String name){
+        final int paramStart = name.indexOf((int) '<');
         String baseName;
         final String arg;
-        final int paramStart = name.indexOf((int) '<');
         if(paramStart >= 0) {
             baseName = name.substring(0, paramStart);
             baseName = baseName.trim();

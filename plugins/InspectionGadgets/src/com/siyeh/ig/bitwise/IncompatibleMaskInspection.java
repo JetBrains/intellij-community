@@ -109,9 +109,9 @@ public class IncompatibleMaskInspection extends ExpressionInspection{
         }
         final long constantLongValue = (Long) constantValue;
 
-        final long constantMaskValue;
         final PsiExpression maskRhs = maskExpression.getROperand();
         final PsiExpression maskLhs = maskExpression.getLOperand();
+        final long constantMaskValue;
         if(PsiUtil.isConstantExpression(maskRhs)){
             final Object rhsValue =
                     ConstantExpressionUtil.computeCastTo(maskRhs, PsiType.LONG);

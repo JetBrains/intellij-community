@@ -87,7 +87,6 @@ public class SwitchStatementsWithoutDefaultInspection extends StatementInspectio
             if (!aClass.isEnum()) {
                 return false;
             }
-            int numCases = 0;
             final PsiCodeBlock body = statement.getBody();
             if (body == null) {
                 return false;
@@ -96,6 +95,7 @@ public class SwitchStatementsWithoutDefaultInspection extends StatementInspectio
             if (statements == null) {
                 return false;
             }
+            int numCases=0;
             for(final PsiStatement child : statements){
                 if(child instanceof PsiSwitchLabelStatement){
                     numCases++;

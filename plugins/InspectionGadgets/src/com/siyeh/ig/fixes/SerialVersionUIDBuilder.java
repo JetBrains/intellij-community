@@ -238,8 +238,8 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
                     MemberSignature.getClassAccessMethodMemberSignature();
             nonPrivateMethods.add(syntheticMethod);
         }
-        final StringBuffer fieldNameBuffer;
         PsiType unwrappedType = type;
+        final StringBuffer fieldNameBuffer;
         if(type instanceof PsiArrayType){
             fieldNameBuffer = new StringBuffer("array");
             while(unwrappedType instanceof PsiArrayType){

@@ -45,15 +45,14 @@ public class UnconstructableTestCaseInspection extends ClassInspection{
             if(!ClassUtils.isSubclass(aClass, "junit.framework.TestCase")){
                 return;
             }
-            boolean hasConstructor = false;
-            boolean hasNoArgConstructor = false;
-            boolean hasStringConstructor = false;
 
             final PsiMethod[] constructors = aClass.getConstructors();
             if(constructors == null){
                 return;
             }
-
+            boolean hasStringConstructor=false;
+            boolean hasNoArgConstructor=false;
+            boolean hasConstructor=false;
             for(final PsiMethod constructor : constructors){
                 hasConstructor = true;
                 if(!constructor.hasModifierProperty(PsiModifier.PUBLIC)){

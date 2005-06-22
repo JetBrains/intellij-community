@@ -89,11 +89,11 @@ public class MalformedFormatStringInspection extends ExpressionInspection{
             }
 
             final PsiExpression firstArg = args[0];
-            final int formatArgPosition;
             final PsiType type = firstArg.getType();
             if(type == null){
                 return;
             }
+            final int formatArgPosition;
             if("java.util.Locale".equals(type.getCanonicalText())
                     && args.length > 1){
                 formatArgPosition = 1;

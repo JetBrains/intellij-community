@@ -94,8 +94,8 @@ public class LengthOneStringsInConcatenationInspection extends ExpressionInspect
             if (!sign.getTokenType().equals(JavaTokenType.PLUS)) {
                 return false;
             }
-            final PsiExpression sibling;
             final PsiExpression lhs = binaryExp.getLOperand();
+            final PsiExpression sibling;
             if (lhs.equals(expression)) {
                 sibling = binaryExp.getROperand();
             } else {

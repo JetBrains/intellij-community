@@ -59,10 +59,10 @@ public class BooleanConstructorInspection extends ExpressionInspection{
             final PsiExpression[] args = argList.getExpressions();
             final PsiExpression arg = args[0];
             final String text = arg.getText();
-            final String newExpression;
             final PsiManager psiManager = expression.getManager();
             final LanguageLevel languageLevel =
                     psiManager.getEffectiveLanguageLevel();
+            final String newExpression;
             if("true".equals(text) || "\"true\"".equalsIgnoreCase(text)){
                 newExpression = "Boolean.TRUE";
             } else if("false".equals(text) || "\"false\"".equalsIgnoreCase(text)){
