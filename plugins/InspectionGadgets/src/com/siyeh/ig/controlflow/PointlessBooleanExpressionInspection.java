@@ -10,6 +10,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,9 +82,9 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
             } else if(isFalse(rhs)){
                 return lhsText;
             } else if(isTrue(lhs)){
-                return '!' + rhsText;
+                return createStringForNegatedExpression(rhs);
             } else{
-                return '!' + lhsText;
+                return createStringForNegatedExpression(lhs);
             }
         } else if(tokenType.equals(JavaTokenType.EQEQ)){
             if(isTrue(lhs)){
@@ -90,12 +92,34 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
             } else if(isTrue(rhs)){
                 return lhsText;
             } else if(isFalse(lhs)){
-                return '!' + rhsText;
+                return createStringForNegatedExpression(rhs);
             } else{
-                return '!' + lhsText;
+                return createStringForNegatedExpression(lhs);
             }
         } else{
             return "";
+        }
+    }
+
+    private static String createStringForNegatedExpression(PsiExpression exp){
+         if(ComparisonUtils.isComparison(exp)){
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression) exp;
+            final PsiJavaToken sign = binaryExpression.getOperationSign();
+            final String operator = sign.getText();
+            final String negatedComparison =
+                    ComparisonUtils.getNegatedComparison(operator);
+            final PsiExpression lhs = binaryExpression.getLOperand();
+            final PsiExpression rhs = binaryExpression.getROperand();
+            assert rhs != null;
+            return lhs.getText() + negatedComparison + rhs.getText();
+        } else{
+            if(ParenthesesUtils.getPrecendence(exp) >
+                    ParenthesesUtils.PREFIX_PRECEDENCE){
+                return  "!(" + exp.getText() + ')';
+            } else{
+                return '!' + exp.getText();
+            }
         }
     }
 
