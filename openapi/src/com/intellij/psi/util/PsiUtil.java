@@ -21,6 +21,9 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -748,6 +751,26 @@ public final class PsiUtil {
     }
     else if (element instanceof PsiMethod) return ((PsiMethod)element).getReturnType();
     return null;
+  }
+
+  public static int getRootIndex(PsiElement root) {
+    ASTNode node = root.getNode();
+    while(node != null && node.getTreeParent() != null) {
+      node = node.getTreeParent();
+    }
+    if(node != null) root = node.getPsi();
+    final PsiFile containingFile = root.getContainingFile();
+    final PsiFile[] psiRoots = containingFile.getPsiRoots();
+    for (int i = 0; i < psiRoots.length; i++) {
+      if(root == psiRoots[i]) return i;
+    }
+    throw new RuntimeException("invalid element");
+  }
+
+  public static int getRootsCount(final Language lang) {
+    if(lang == StdLanguages.JSP) return 4;
+    if(lang == StdLanguages.JSPX) return 4;
+    return 1;
   }
 
   private static class TypeParameterIterator implements Iterator<PsiTypeParameter> {

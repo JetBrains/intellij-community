@@ -21,6 +21,8 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -2056,5 +2058,42 @@ public class HighlightUtil {
     options.add(new AddSuppressWarningsAnnotationForAllAction(elementToHighlight));
     QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.DEPRECATED_SYMBOL), options), options);
     return highlightInfo;
+  }
+
+  public static boolean isRootHighlighted(final PsiElement psiRoot) {
+    final Module moduleForPsiElement = ModuleUtil.findModuleForPsiElement(psiRoot);
+    if(moduleForPsiElement == null) return true;
+    final HighlightingSettingsPerFile component = moduleForPsiElement.getComponent(HighlightingSettingsPerFile.class);
+    if(component == null) return true;
+
+    final FileHighlighingSetting settingForRoot = component.getHighlightingSettingForRoot(psiRoot);
+    return settingForRoot != FileHighlighingSetting.SKIP_HIGHLIGHTING;
+  }
+
+  public static void forceRootHighlighting(final PsiElement root, final boolean highlightFlag) {
+    final Module moduleForPsiElement = ModuleUtil.findModuleForPsiElement(root);
+    if(moduleForPsiElement == null) return;
+    final HighlightingSettingsPerFile component = moduleForPsiElement.getComponent(HighlightingSettingsPerFile.class);
+    if(component == null) return;
+    component.setHighlightingSettingForRoot(root, highlightFlag ? FileHighlighingSetting.FORCE_HIGHLIGHTING: FileHighlighingSetting.SKIP_HIGHLIGHTING);
+  }
+
+  public static boolean isRootInspected(final PsiElement psiRoot) {
+    if(!isRootHighlighted(psiRoot)) return false;
+    final Module moduleForPsiElement = ModuleUtil.findModuleForPsiElement(psiRoot);
+    if(moduleForPsiElement == null) return true;
+    final HighlightingSettingsPerFile component = moduleForPsiElement.getComponent(HighlightingSettingsPerFile.class);
+    if(component == null) return true;
+
+    final FileHighlighingSetting settingForRoot = component.getHighlightingSettingForRoot(psiRoot);
+    return settingForRoot != FileHighlighingSetting.SKIP_INSPECTION;
+  }
+
+  public static void forceRootInspection(final PsiElement root, final boolean inspectionFlag) {
+    final Module moduleForPsiElement = ModuleUtil.findModuleForPsiElement(root);
+    if(moduleForPsiElement == null) return;
+    final HighlightingSettingsPerFile component = moduleForPsiElement.getComponent(HighlightingSettingsPerFile.class);
+    if(component == null) return;
+    component.setHighlightingSettingForRoot(root, inspectionFlag ? FileHighlighingSetting.FORCE_HIGHLIGHTING: FileHighlighingSetting.SKIP_INSPECTION);
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
@@ -116,6 +117,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
 
     for (final PsiElement psiRoot : psiRoots) {
+      if(!HighlightUtil.isRootHighlighted(psiRoot)) continue;
       PsiElement[] elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       collectHighlights(elements, highlights);
     }

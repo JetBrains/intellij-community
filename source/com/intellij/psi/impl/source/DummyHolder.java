@@ -57,6 +57,14 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     if(contentElement != null) TreeUtil.addChildren(getTreeElement(), contentElement);
   }
 
+  public DummyHolder(PsiManager manager, PsiElement context, CharTable table, Language language) {
+    super((PsiManagerImpl)manager, DUMMY_HOLDER);
+    LOG.assertTrue(manager != null);
+    myContext = context;
+    myTable = table;
+    myLanguage = language;
+  }
+
   public DummyHolder(PsiManager manager, PsiElement context, CharTable table) {
     this(manager, context);
     myTable = table;

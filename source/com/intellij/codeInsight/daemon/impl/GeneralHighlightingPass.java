@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
@@ -128,6 +129,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     Collection<HighlightInfo> result = new THashSet<HighlightInfo>(100);
     try {
       for (final PsiElement psiRoot : psiRoots) {
+        if(!HighlightUtil.isRootHighlighted(psiRoot)) continue;
         long time = System.currentTimeMillis();
         PsiElement[] elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
         LOG.debug("Elements collected for: " + (System.currentTimeMillis() - time) / 1000.0 + "s");

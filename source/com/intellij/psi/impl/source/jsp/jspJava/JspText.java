@@ -23,15 +23,17 @@ public class JspText extends LeafPsiElement {
     return "JspText";
   }
 
-  public void setText(String text) {
-    super.setText(text);
-  }
-
   public void setFollowingText(final XmlText followingText) {
     myFollowingText = followingText;
   }
 
   public XmlText getFollowingText() {
     return myFollowingText;
+  }
+
+  public Object clone() {
+    final JspText text = (JspText)super.clone();
+    text.myFollowingText = null;
+    return text;
   }
 }

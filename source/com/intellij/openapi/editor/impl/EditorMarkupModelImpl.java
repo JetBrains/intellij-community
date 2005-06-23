@@ -13,6 +13,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoComposite;
 import com.intellij.codeInsight.daemon.impl.actions.ToggleGotoNextErrorOffAction;
 import com.intellij.codeInsight.daemon.impl.actions.ToggleGotoNextErrorOnAction;
+import com.intellij.codeInsight.daemon.impl.actions.ForceHighlightingGroup;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -462,6 +463,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       final DefaultActionGroup group = new DefaultActionGroup();
       group.add(new ToggleGotoNextErrorOnAction("Go to errors first"));
       group.add(new ToggleGotoNextErrorOffAction("Go to next error/warning"));
+      group.add(new ForceHighlightingGroup());
+
       PopupHandler.installUnknownPopupHandler(this, group, ActionManager.getInstance());
     }
 

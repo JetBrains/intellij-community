@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -71,6 +72,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
 
     PsiElement[] psiRoots = myFile.getPsiRoots();
     for (final PsiElement psiRoot : psiRoots) {
+      if(!HighlightUtil.isRootInspected(psiRoot)) continue;
       PsiElement[] elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       Set<PsiElement> workSet = new THashSet<PsiElement>();
       for (PsiElement element1 : elements) {
