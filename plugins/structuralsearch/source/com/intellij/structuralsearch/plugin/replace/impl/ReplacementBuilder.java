@@ -162,13 +162,13 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
   private int handleSubstitution(final ParameterInfo info, MatchResult match, StringBuffer result, int offset) {
     if (info.name.equals(match.getName())) {
       String replacementString = match.getMatchImage();
-
+       
       if (match.getAllSons().size() > 0) {
         // compound matches
         StringBuffer buf = new StringBuffer();
         MatchResult previous;
         MatchResult r = null;
-
+        
         if (info.methodParameterContext) {
           handleMethodParameter(buf,info);
         } else {
@@ -216,17 +216,17 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
       }
 
       offset = insertSubstitution(result,offset,info,replacementString);
-      offset = removeExtraSemicolon2(info, offset, result);
-
+      offset = removeExtraSemicolon2(info, offset, result,match);
     }
     return offset;
   }
 
-  private int removeExtraSemicolon2(ParameterInfo info, int offset, StringBuffer result) {
+  private int removeExtraSemicolon2(ParameterInfo info, int offset, StringBuffer result, MatchResult match) {
     if (info.statementContext) {
       int index = offset+info.startIndex;
       if (result.charAt(index-1)=='}' &&
-          result.charAt(index)==';'
+          result.charAt(index)==';' &&
+          !(match.getMatch() instanceof PsiDeclarationStatement)   // array init in dcl
          ) {
         result.deleteCharAt(index);
         --offset;
@@ -244,7 +244,8 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
       if (buf.charAt(buf.length()-1)==';' &&
           r.getMatchImage().charAt(r.getMatchImage().length()-1)==';' &&
           ( element instanceof PsiReturnStatement ||
-            element instanceof PsiDeclarationStatement
+            element instanceof PsiDeclarationStatement ||
+            element instanceof PsiAssertStatement
           )
          ) {
         // contains extra ;
