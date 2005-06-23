@@ -126,7 +126,7 @@ public class ReplaceDialog extends SearchDialog {
     final Runnable replaceSelected = new Runnable() {
       public void run() {
         final Set<Usage> infos = context.getUsageView().getSelectedUsages();
-        if (infos.isEmpty()) return;
+        if (infos == null || infos.isEmpty()) return;
 
         LocalVcs instance = LocalVcs.getInstance(searchContext.getProject());
         LvcsAction lvcsAction = instance.startAction("StructuralReplace",null,false);
