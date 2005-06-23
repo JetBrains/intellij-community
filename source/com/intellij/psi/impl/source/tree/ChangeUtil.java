@@ -150,7 +150,7 @@ public class ChangeUtil implements Constants {
     final FileElement treeElement = new DummyHolder(oldParent.getManager(), newCharTable, false).getTreeElement();
     TreeUtil.addChildren(treeElement, oldChild);
   }
-
+  
   private static void add(final TreeChangeEvent destinationTreeChange,
                           final CompositeElement parent,
                           final TreeElement first) {
