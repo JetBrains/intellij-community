@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.Constants;
@@ -9,8 +10,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.lang.ASTNode;
 
 import java.util.ArrayList;
 
@@ -37,8 +36,8 @@ class ReferenceAdjuster implements Constants {
       if (elementType == JAVA_CODE_REFERENCE || element.getTreeParent().getElementType() == REFERENCE_EXPRESSION || uncompleteCode) {
         final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(element);
         final PsiTypeElement[] typeParameters = ref.getParameterList().getTypeParameterElements();
-        for (int i = 0; i < typeParameters.length; i++) {
-          process((TreeElement)SourceTreeToPsiMap.psiElementToTree(typeParameters[i]), addImports, uncompleteCode);
+        for (PsiTypeElement typeParameter : typeParameters) {
+          process((TreeElement)SourceTreeToPsiMap.psiElementToTree(typeParameter), addImports, uncompleteCode);
         }
 
         boolean rightKind = true;
@@ -158,19 +157,11 @@ class ReferenceAdjuster implements Constants {
       PsiClass parentClass = refClass.getContainingClass();
       PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(reference);
       PsiManager manager = parentClass.getManager();
-      if (manager.getResolveHelper().isAccessible(refClass, psiReference, null)) {
-        for (ASTNode parent = reference.getTreeParent(); parent != null; parent = parent.getTreeParent()) {
-          PsiElement parentPsi = SourceTreeToPsiMap.treeElementToPsi(parent);
-          if (parentPsi instanceof PsiClass) {
-            PsiClass inner = ((PsiClass)parentPsi).findInnerClassByName(psiReference.getReferenceName(), true);
-            if (inner != null) {
-              if (inner == refClass) return replaceReferenceWithShort(reference);
-              return reference;
-            }
-            if (InheritanceUtil.isInheritorOrSelf((PsiClass)parentPsi, parentClass, true)) {
-              return replaceReferenceWithShort(reference);
-            }
-          }
+      final PsiResolveHelper resolveHelper = manager.getResolveHelper();
+      if (resolveHelper.isAccessible(refClass, psiReference, null)) {
+        final PsiClass resolved = resolveHelper.resolveReferencedClass(psiReference.getReferenceName(), reference.getPsi());
+        if (manager.areElementsEquivalent(resolved, refClass)) {
+          return replaceReferenceWithShort(reference);
         }
       }
 

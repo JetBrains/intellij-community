@@ -276,22 +276,9 @@ public class ChangeUtil implements Constants {
   }
 
   private static void encodeInformation(TreeElement element, ASTNode original) {
-    boolean encodeRefTargets = true;
-    if (original.getTreeParent() instanceof DummyHolderElement) {
-      DummyHolder dummyHolder = (DummyHolder)SourceTreeToPsiMap.treeElementToPsi(original.getTreeParent());
-      if (dummyHolder.getContext() == null && !dummyHolder.hasImports()) { // optimization
-        encodeRefTargets = false;
-      }
-    }
-    _encodeInformation(element, original, encodeRefTargets);
-  }
-
-  private static void _encodeInformation(TreeElement element, ASTNode original, boolean encodeRefTargets) {
     if (original instanceof CompositeElement) {
       if (original.getElementType() == ElementType.JAVA_CODE_REFERENCE || original.getElementType() == ElementType.REFERENCE_EXPRESSION) {
-        if (encodeRefTargets) {
-          encodeInformationInRef(element, original);
-        }
+        encodeInformationInRef(element, original);
       }
       else if (original.getElementType() == ElementType.MODIFIER_LIST) {
         if ((original.getTreeParent().getElementType() == ElementType.FIELD ||
@@ -307,7 +294,7 @@ public class ChangeUtil implements Constants {
       TreeElement child = (TreeElement)element.getFirstChildNode();
       ASTNode child1 = original.getFirstChildNode();
       while (child != null) {
-        _encodeInformation(child, child1, encodeRefTargets);
+        encodeInformation(child, child1);
         child = child.getTreeNext();
         child1 = child1.getTreeNext();
       }
@@ -672,8 +659,7 @@ public class ChangeUtil implements Constants {
     int off = range.getStartOffset();
     PsiElement[] children = root.getChildren();
     if (children.length != 0) {
-      for (int i = 0; i < children.length; i++) {
-        PsiElement child = children[i];
+      for (PsiElement child : children) {
         off += checkTextRanges(child);
       }
     }
