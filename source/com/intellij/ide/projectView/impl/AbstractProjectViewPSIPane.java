@@ -310,7 +310,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       final AbstractTreeNode draggableObject = findAbstractTreeNodeByLocation(dragOrigin);
       if (draggableObject != null) {
         try {
-          FavoritesViewImpl.getInstance(myProject).getCurrentTreeViewPanel().setDraggableObject(draggableObject);
+          FavoritesViewImpl.getInstance(myProject).getCurrentTreeViewPanel().setDraggableObject(draggableObject.getClass(), draggableObject.getValue());
           final MyDragSourceListener dragSourceListener = new MyDragSourceListener();
           dge.startDrag(DragSource.DefaultMoveNoDrop, new Transferable() {
             public DataFlavor[] getTransferDataFlavors() {

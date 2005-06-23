@@ -174,10 +174,11 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
   }
 
   public void commit() {
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
   }
 
   public boolean hasSomethingToCommit() {
-    return false;
+    return PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
   }
 
   public void removeFromFavorites(final AbstractTreeNode element) {
@@ -282,8 +283,7 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
   }
 
   public void initFavoritesList() {
-    for (java.util.Iterator<AbstractUrl> it = myAbstractUrls.keySet().iterator(); it.hasNext();) {
-      AbstractUrl abstractUrl = it.next();
+    for (AbstractUrl abstractUrl : myAbstractUrls.keySet()) {
       final Object[] path = abstractUrl.createPath(myProject);
       if (path == null || path.length < 1 || path[0] == null) {
         continue;

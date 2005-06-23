@@ -1,11 +1,12 @@
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.*;
+import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.ClassSmartPointerNode;
+import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.FieldSmartPointerNode;
+import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.MethodSmartPointerNode;
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.projectView.impl.nodes.Form;
-import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
-import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
-import com.intellij.ide.projectView.impl.nodes.PackageElement;
+import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
@@ -20,6 +21,7 @@ import com.intellij.openapi.localVcs.impl.LvcsIntegration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -717,9 +719,19 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   }
 
   //---------- DnD -------------
-  private AbstractTreeNode myDraggableObject;
-  public void setDraggableObject(final AbstractTreeNode draggableObject) {
+  private Object myDraggableObject;
+  private Class<? extends AbstractTreeNode> myKlass;
+  public void setDraggableObject(Class<? extends AbstractTreeNode> klass, Object draggableObject) {
     myDraggableObject = draggableObject;
+    if (klass == ClassTreeNode.class){
+      myKlass = ClassSmartPointerNode.class;
+    } else if (klass == PsiFieldNode.class) {
+      myKlass = FieldSmartPointerNode.class;
+    } else if (klass == PsiMethodNode.class){
+      myKlass = MethodSmartPointerNode.class;
+    } else {
+      myKlass = klass;
+    }
   }
   private class MyDropTargetListener implements DropTargetListener {
     public void dragEnter(DropTargetDragEvent dtde) {
@@ -745,16 +757,27 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       if (myDraggableObject != null) {
         int dropAction = dtde.getDropAction();
         if ((dropAction & DnDConstants.ACTION_MOVE) != 0) {
-          final Collection<AbstractTreeNode> children = ((AbstractTreeNode)myFavoritesTreeStructure.getRootElement()).getChildren();
-          for (Iterator<AbstractTreeNode> iterator = children.iterator(); iterator.hasNext();) {
-            AbstractTreeNode abstractTreeNode = iterator.next();
-            if (abstractTreeNode.getValue() == null
-                ? myDraggableObject.getValue() == null
-                : abstractTreeNode.getValue().equals(myDraggableObject.getValue())) {
+          final Collection<AbstractTreeNode> children = myFavoritesTreeStructure.getFavorites();
+          for (AbstractTreeNode abstractTreeNode : children) {
+            Object value = abstractTreeNode.getValue();
+            if (value instanceof SmartPsiElementPointer){
+              value = ((SmartPsiElementPointer)value).getElement();
+            }
+            if (Comparing.equal(value, myDraggableObject)) {
               return;
             }
           }
-          addToFavorites(myDraggableObject);
+          try {
+            if (myKlass == FormNode.class){
+              final PsiManager psiManager = PsiManager.getInstance(myProject);
+              addToFavorites(FormNode.constructFormNode(psiManager, (PsiClass)myDraggableObject, myProject, myFavoritesConfiguration));
+            } else {
+              addToFavorites(ProjectViewNode.createTreeNode(myKlass, myProject, myDraggableObject, myFavoritesConfiguration));
+            }
+          }
+          catch (Exception e) {
+            return;
+          }
           dtde.dropComplete(true);
           return;
         }

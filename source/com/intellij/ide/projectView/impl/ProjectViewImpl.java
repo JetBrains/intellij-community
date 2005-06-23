@@ -1310,6 +1310,10 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
     protected abstract boolean isSortByType();
 
+    protected boolean isAbbreviatePackageNames(){
+      return false;
+    }
+
     private static int getClassPosition(final PsiClass aClass) {
       if (aClass == null) {
         return 0;
@@ -1334,6 +1338,11 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       protected boolean isSortByType() {
         return ProjectViewImpl.this.isSortByType(pane.getId());
       }
+
+      protected boolean isAbbreviatePackageNames(){
+        return ProjectViewImpl.this.isAbbreviatePackageNames(pane.getId());
+      }
+
     });
   }
 
