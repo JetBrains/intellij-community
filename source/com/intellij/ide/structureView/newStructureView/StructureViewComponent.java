@@ -37,8 +37,8 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
+import java.util.List;
 
 public class StructureViewComponent extends JPanel implements TreeActionsOwner, DataProvider, StructureView {
   private static Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
@@ -79,13 +79,13 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     };
     JTree tree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement())));
     myAbstractTreeBuilder = new StructureTreeBuilder(project, tree,
-                                                    (DefaultTreeModel)tree.getModel(),treeStructure,myTreeModelWrapper);
+                                                     (DefaultTreeModel)tree.getModel(),treeStructure,myTreeModelWrapper);
     myAbstractTreeBuilder.updateFromRoot();
     add(new JScrollPane(myAbstractTreeBuilder.getTree()), BorderLayout.CENTER);
 
     myAbstractTreeBuilder.getTree().setCellRenderer(new NodeRenderer());
 
-    myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler(myProject);
+    myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject);
 
     JComponent toolbarComponent =
@@ -150,7 +150,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   private static Object[] convertPathsToValues(TreePath[] selectionPaths) {
     if (selectionPaths != null) {
-      ArrayList result = new ArrayList();
+      List<Object> result = new ArrayList<Object>();
 
       for (TreePath selectionPath : selectionPaths) {
         final Object userObject = ((DefaultMutableTreeNode)selectionPath.getLastPathComponent()).getUserObject();
@@ -221,7 +221,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   private Object[] getExpandedElements() {
-    final java.util.List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(getTree());
+    final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(getTree());
     return convertPathsToValues(expandedPaths.toArray(new TreePath[expandedPaths.size()]));
   }
 
@@ -326,7 +326,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public FileEditor getFileEditor() {
-    return null;
+    return myFileEditor;
   }
 
   private DefaultMutableTreeNode expandPathToElement(Object element) {
@@ -342,7 +342,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     if (pathToElement.size() == 1) {
       return (DefaultMutableTreeNode)tree.getModel().getRoot();
     }
-    
+
     DefaultMutableTreeNode currentTreeNode = (DefaultMutableTreeNode)tree.getModel().getRoot();
     pathToElement.remove(0);
     DefaultMutableTreeNode result = null;
@@ -531,10 +531,6 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   private final class MyAutoScrollToSourceHandler extends AutoScrollToSourceHandler {
     private boolean myShouldAutoScroll = true;
-
-    public MyAutoScrollToSourceHandler(Project project) {
-      super();
-    }
 
     public void setShouldAutoScroll(boolean shouldAutoScroll) {
       myShouldAutoScroll = shouldAutoScroll;

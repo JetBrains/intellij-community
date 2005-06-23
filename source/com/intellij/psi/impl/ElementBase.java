@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
+import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.SmartList;
 import gnu.trove.TIntObjectHashMap;
@@ -39,12 +40,9 @@ import java.util.List;
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
   public Icon getIcon(int flags) {
     if (!(this instanceof PsiElement)) return null;
-    return getIcon((PsiElement) this, flags, ((PsiElement) this).isWritable());
-  }
-
-  private static Icon getIcon(PsiElement element, int flags, boolean elementWritable) {
+    final PsiElement element = (PsiElement)this;
     RowIcon baseIcon;
-    final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !elementWritable;
+    final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
     int elementFlags = isLocked ? FLAGS_LOCKED : 0;
     if (element instanceof PsiDirectory) {
       Icon symbolIcon;
@@ -65,8 +63,16 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     }
     else if (element instanceof PsiFile) {
       PsiFile file = (PsiFile)element;
-      Icon symbolIcon = IconUtilEx.getIcon(file.getVirtualFile(), flags & ~ICON_FLAG_READ_STATUS, file.getProject());
-      baseIcon = createLayeredIcon(symbolIcon, elementFlags);
+
+      VirtualFile virtualFile = file.getVirtualFile();
+      final Icon fileTypeIcon;
+      if (virtualFile == null) {
+        fileTypeIcon = file.getFileType().getIcon();
+      }
+      else {
+        fileTypeIcon = IconUtil.getIcon(virtualFile, flags & ~ICON_FLAG_READ_STATUS, file.getProject());
+      }
+      baseIcon = createLayeredIcon(fileTypeIcon, elementFlags);
     }
     else if (element instanceof PsiClass) {
       final PsiClass aClass = (PsiClass)element;

@@ -1,10 +1,6 @@
 package com.intellij.lang.xhtml;
 
 import com.intellij.ide.highlighter.XmlFileHighlighter;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.ide.structureView.impl.xml.XmlStructureViewTreeModel;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.newCodeFormatting.FormattingModel;
@@ -19,8 +15,6 @@ import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
-import com.intellij.psi.xml.XmlFile;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -59,14 +53,5 @@ public class XHTMLLanguage extends XMLLanguage {
 
   public FormattingModelBuilder getFormattingModelBuilder() {
     return myFormattingModelBuilder;
-  }
-
-  @Nullable
-  public StructureViewBuilder getStructureViewBuilder(final PsiElement psiElement) {
-    return new TreeBasedStructureViewBuilder() {
-      public StructureViewModel createStructureViewModel() {
-        return new XmlStructureViewTreeModel((XmlFile)psiElement);
-      }
-    };
   }
 }

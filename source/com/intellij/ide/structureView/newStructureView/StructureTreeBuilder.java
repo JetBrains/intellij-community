@@ -104,10 +104,6 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
   }
 
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
-
-    public MyPsiTreeChangeListener() {
-    }
-
     public void childRemoved(PsiTreeChangeEvent event) {
       PsiElement child = event.getOldChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
@@ -165,8 +161,8 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
 
     private void updateByTransferable(final Transferable t) {
       final PsiElement[] psiElements = CopyPasteUtil.getElementsInTransferable(t);
-      for (int i = 0; i < psiElements.length; i++) {
-        myUpdater.addSubtreeToUpdateByElement(psiElements[i]);
+      for (PsiElement psiElement : psiElements) {
+        myUpdater.addSubtreeToUpdateByElement(psiElement);
       }
     }
   }

@@ -1,29 +1,35 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.ant.impl.ui.AntFileStructureList;
 import com.intellij.ant.impl.dom.impl.AntDOMProject;
+import com.intellij.ant.impl.ui.AntFileStructureList;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.impl.java.InheritedMembersFilter;
 import com.intellij.ide.structureView.impl.java.KindSorter;
+import com.intellij.ide.structureView.impl.jsp.StructureViewComposite;
 import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
+import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.FileStructureDialog;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
+import com.intellij.lang.Language;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.structureView.PropertiesFileStructureViewModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.structureView.PropertiesFileStructureViewModel;
+import com.intellij.psi.jsp.JspFile;
 
 /**
  *
@@ -41,8 +47,6 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
     if (editor == null) return;
     if (fileEditor == null) return;
 
-
-
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (psiFile == null) return;
 
@@ -52,7 +56,8 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
 
     final StructureViewBuilder structureViewBuilder = AntFileStructureList.canShowFor(psiFile) ? null : fileEditor.getStructureViewBuilder();
 
-    DialogWrapper dialog = createDialog(psiFile, structureViewBuilder, editor, project, (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE));
+    Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
+    DialogWrapper dialog = createDialog(psiFile, structureViewBuilder, editor, project, navigatable, fileEditor);
     if (dialog != null) {
       dialog.setTitle(psiFile.getVirtualFile().getPresentableUrl());
       dialog.show();
@@ -63,8 +68,8 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
                                       StructureViewBuilder structureViewBuilder,
                                       final Editor editor,
                                       Project project,
-                                      Navigatable navigatable) {
-     if (AntDOMProject.getOtCreate(psiFile) != null) {
+                                      Navigatable navigatable, final FileEditor fileEditor) {
+     if (AntFileStructureList.canShowFor(psiFile) && AntDOMProject.getOtCreate(psiFile) != null) {
        return AntFileStructureList.createDialog(editor, psiFile);
      }
      StructureViewModel structureViewModel;
@@ -73,6 +78,12 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
      }
      else if (psiFile instanceof PropertiesFile){
        structureViewModel = new PropertiesFileStructureViewModel((PropertiesFile)psiFile);
+     }
+     else if (psiFile instanceof JspFile) {
+       Language language = ((LanguageFileType)psiFile.getFileType()).getLanguage();
+       StructureViewComposite structureViewComposite = (StructureViewComposite)language.getStructureViewBuilder(psiFile).createStructureView(fileEditor, project);
+       StructureView structureView = structureViewComposite.getSelectedStructureView();
+       structureViewModel = ((StructureViewComponent)structureView).getTreeModel();
      }
      else {
        return null;

@@ -39,6 +39,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,6 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
 
   protected TextEditorBasedStructureViewModel(PsiFile psiFile) {
     this(getEditorForFile(psiFile));
-
   }
 
   protected TextEditorBasedStructureViewModel(final Editor editor) {
@@ -77,7 +77,14 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   }
 
   private static Editor getEditorForFile(final PsiFile psiFile) {
-    final FileEditor[] editors = FileEditorManager.getInstance(psiFile.getProject()).getEditors(psiFile.getVirtualFile());
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) {
+      PsiFile originalFile = psiFile.getOriginalFile();
+      if (originalFile == null) return null;
+      virtualFile = originalFile.getVirtualFile();
+      if (virtualFile == null) return null;
+    }
+    final FileEditor[] editors = FileEditorManager.getInstance(psiFile.getProject()).getEditors(virtualFile);
     for (FileEditor editor : editors) {
       if (editor instanceof TextEditor) {
         return ((TextEditor)editor).getEditor();
@@ -85,7 +92,6 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     }
     return null;
   }
-
 
   public final void addEditorPositionListener(FileEditorPositionListener listener) {
     myListeners.add(listener);
@@ -99,7 +105,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     EditorFactory.getInstance().getEventMulticaster().removeCaretListener(myCaretListener);
   }
 
-  public final Object getCurrentEditorElement() {
+  public Object getCurrentEditorElement() {
     if (myEditor == null) return null;
     final int offset = myEditor.getCaretModel().getOffset();
     PsiElement element = getPsiFile().findElementAt(offset);
@@ -112,7 +118,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
 
   protected abstract PsiFile getPsiFile();
 
-  private boolean isSuitable(final PsiElement element) {
+  protected boolean isSuitable(final PsiElement element) {
     if (element == null) return false;
     final Class[] suitableClasses = getSuitableClasses();
     for (Class suitableClass : suitableClasses) {
@@ -130,4 +136,8 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   }
 
   @NotNull protected abstract Class[] getSuitableClasses();
+
+  protected Editor getEditor() {
+    return myEditor;
+  }
 }

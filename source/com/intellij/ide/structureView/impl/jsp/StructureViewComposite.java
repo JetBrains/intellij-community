@@ -28,6 +28,7 @@ public class StructureViewComposite implements StructureView {
       this.icon = icon;
     }
   }
+
   public StructureViewComposite(@NotNull StructureViewDescriptor... views) {
     myStructureViews = views;
     mySelectedViewDescriptor = views[0];
