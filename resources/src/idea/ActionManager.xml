@@ -45,6 +45,7 @@
       <action id="EditorCopy" class="com.intellij.openapi.editor.actions.CopyAction" text="Copy"/>
       <action id="EditorCut" class="com.intellij.openapi.editor.actions.CutAction" text="Cut"/>
       <action id="EditorPaste" class="com.intellij.openapi.editor.actions.PasteAction" text="Paste"/>
+      <action id="EditorPasteSimple" class="com.intellij.openapi.editor.actions.SimplePasteAction" text="Paste Simple" description="Paste without formatting, autoimport, literal escaping etc."/>
       <action id="EditorPasteFromX11" class="com.intellij.openapi.editor.actions.PasteFromX11Action" text="Paste from X clipboard"/>
       <action id="EditorDelete" class="com.intellij.openapi.editor.actions.DeleteAction" text="Delete"/>
       <action id="EditorBackSpace" class="com.intellij.openapi.editor.actions.BackspaceAction" text="Backspace"/>
@@ -249,6 +250,7 @@
           <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction" text="Copy _Reference" description="Copy Java class/method/field reference"/>
           <action id="$Paste" class="com.intellij.ide.actions.PasteAction" text="_Paste" icon="/actions/menu-paste.png" description="Paste from clipboard"/>
           <action id="PasteMultiple" class="com.intellij.openapi.editor.actions.MultiplePasteAction" text="Past_e..." description="Paste from recent clipboards"/>
+          <reference ref="EditorPasteSimple"/>
           <reference ref="EditorToggleColumnMode"/>
         </group>
         <separator/>
