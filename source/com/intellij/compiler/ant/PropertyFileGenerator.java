@@ -22,7 +22,7 @@ import java.util.*;
 public class PropertyFileGenerator extends Generator{
   private List<Pair<String, String>> myProperties = new ArrayList<Pair<String, String>>();
 
-  public PropertyFileGenerator(Project project) {
+  public PropertyFileGenerator(Project project, GenerationOptions genOptions) {
     // path variables
     final PathMacrosImpl pathMacros = PathMacrosImpl.getInstanceEx();
     final Set<String> macroNamesSet = pathMacros.getUserMacroNames();
@@ -35,14 +35,16 @@ public class PropertyFileGenerator extends Generator{
       }
     }
     // jdk homes
-    final ProjectJdk[] usedJdks = BuildProperties.getUsedJdks(project);
-    for (int idx = 0; idx < usedJdks.length; idx++) {
-      ProjectJdk jdk = usedJdks[idx];
-      if (jdk.getHomeDirectory() == null) {
-        continue;
+    if (genOptions.forceTargetJdk) {
+      final ProjectJdk[] usedJdks = BuildProperties.getUsedJdks(project);
+      for (int idx = 0; idx < usedJdks.length; idx++) {
+        ProjectJdk jdk = usedJdks[idx];
+        if (jdk.getHomeDirectory() == null) {
+          continue;
+        }
+        final File homeDir = VfsUtil.virtualToIoFile(jdk.getHomeDirectory());
+        addProperty(BuildProperties.getJdkHomeProperty(jdk.getName()), homeDir.getPath().replace(File.separatorChar, '/'));
       }
-      final File homeDir = VfsUtil.virtualToIoFile(jdk.getHomeDirectory());
-      addProperty(BuildProperties.getJdkHomeProperty(jdk.getName()), homeDir.getPath().replace(File.separatorChar, '/'));
     }
   }
 

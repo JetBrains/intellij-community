@@ -58,8 +58,8 @@ public class BuildProperties extends CompositeGenerator {
       add(new Comment("The task requires the following libraries from IntelliJ IDEA distribution:"), 1);
       add(new Comment("  javac2.jar; jdom.jar; bcel.jar"));
       add(new Tag("taskdef", new Pair[] {
-        new Pair("name", "javac2"),
-        new Pair("classname", "com.intellij.uiDesigner.ant.Javac2"),
+        new Pair<String, String>("name", "javac2"),
+        new Pair<String, String>("classname", "com.intellij.uiDesigner.ant.Javac2"),
       }));
     }
 
@@ -75,7 +75,9 @@ public class BuildProperties extends CompositeGenerator {
 
     add(new CompilerResourcePatterns(project));
 
-    createJdkGenerators(project);
+    if (genOptions.forceTargetJdk) {
+      createJdkGenerators(project);
+    }
 
     LibraryDefinitionsGeneratorFactory factory = new LibraryDefinitionsGeneratorFactory((ProjectEx)project, genOptions);
 
@@ -122,7 +124,6 @@ public class BuildProperties extends CompositeGenerator {
             fileSet.add(new Include(relativePath.replace(File.separatorChar, '/')));
           }
         }
-        //add(new Property(jdkHomeProperty, homeDir.getPath().replace(File.separatorChar, '/')), 1);
         final Path jdkPath = new Path(getJdkPathId(jdkName));
         jdkPath.add(fileSet);
         add(jdkPath);

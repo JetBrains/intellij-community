@@ -91,8 +91,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements JDOM
     myMap.put(name, value);
   }
 
-  public boolean isTrueValue(String name) {
-    return Boolean.valueOf(getValue(name)).booleanValue();
+  public boolean isValueSet(String name) {
+    return myMap.containsKey(name);
   }
-
 }

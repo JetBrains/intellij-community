@@ -39,7 +39,9 @@ public class ModuleChunkClasspath extends Path{
           continue;
         }
         if (orderEntry instanceof JdkOrderEntry) {
-          pathItems.add(new PathRefItem(BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkClasspathProperty(chunk.getName()))));
+          if (genOptions.forceTargetJdk) {
+            pathItems.add(new PathRefItem(BuildProperties.propertyRef(BuildProperties.getModuleChunkJdkClasspathProperty(chunk.getName()))));
+          }
         }
         else if (orderEntry instanceof LibraryOrderEntry && !((LibraryOrderEntry)orderEntry).isModuleLevel()) {
           final String libraryName = ((LibraryOrderEntry)orderEntry).getLibraryName();

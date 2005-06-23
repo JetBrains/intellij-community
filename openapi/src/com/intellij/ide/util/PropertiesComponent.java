@@ -13,9 +13,14 @@ public abstract class PropertiesComponent {
     return ApplicationManager.getApplication().getComponent(PropertiesComponent.class);
   }
 
+  public final boolean isTrueValue(String name) {
+    return Boolean.valueOf(getValue(name)).booleanValue();
+  }
+
+  public abstract boolean isValueSet(String name);
+
   public abstract String getValue(String name);
 
   public abstract void setValue(String name, String value);
 
-  public abstract boolean isTrueValue(String name);
 }

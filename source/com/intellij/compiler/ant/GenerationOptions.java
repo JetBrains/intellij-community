@@ -26,6 +26,7 @@ public class GenerationOptions {
   public final boolean generateSingleFile;
   public final boolean enableFormCompiler;
   public final boolean backupPreviouslyGeneratedFiles;
+  public final boolean forceTargetJdk;
   private final ReplacePathToMacroMap myMacroReplacementMap; // from absolute path to macro substitutions
   private final Map<String, String> myOutputUrlToPropertyRefMap; // from absolute path to macro substitutions
   private final ModuleChunk[] myModuleChunks;
@@ -34,12 +35,12 @@ public class GenerationOptions {
   public GenerationOptions(Project project,
                            boolean generateSingleFile,
                            boolean enableFormCompiler,
-                           boolean backupPreviouslyGeneratedFiles,
-                           String[] representativeModuleNames) {
+                           boolean backupPreviouslyGeneratedFiles, boolean forceTargetJdk, String[] representativeModuleNames) {
     myProject = project;
     this.generateSingleFile = generateSingleFile;
     this.enableFormCompiler = enableFormCompiler;
     this.backupPreviouslyGeneratedFiles = backupPreviouslyGeneratedFiles;
+    this.forceTargetJdk = forceTargetJdk;
     myMacroReplacementMap = createReplacementMap();
     myModuleChunks = createModuleChunks(representativeModuleNames);
     myOutputUrlToPropertyRefMap = createOutputUrlToPropertyRefMap(myModuleChunks);

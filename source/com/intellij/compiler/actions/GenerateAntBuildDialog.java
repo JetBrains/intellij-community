@@ -31,16 +31,18 @@ import java.util.List;
  */
 public class GenerateAntBuildDialog extends DialogWrapper{
   private JPanel myPanel;
-  private JRadioButton myGenerateSingleFileBuild;
-  private JRadioButton myGenerateMultipleFilesBuild;
-  private JCheckBox myEnableUIFormsCompilation;
-  private JRadioButton myCbBackupFiles;
-  private JRadioButton myCbOverwriteFiles;
+  private JRadioButton myRbGenerateSingleFileBuild;
+  private JRadioButton myRbGenerateMultipleFilesBuild;
+  private JCheckBox myCbEnableUIFormsCompilation;
+  private JRadioButton myRbBackupFiles;
+  private JRadioButton myRbOverwriteFiles;
+  private JCheckBox myCbForceTargetJdk;
+  private JPanel myChunksPanel;
   private final Project myProject;
   private static final String SINGLE_FILE_PROPERTY = "GenerateAntBuildDialog.generateSingleFile";
   private static final String UI_FORM_PROPERTY = "GenerateAntBuildDialog.enableUiFormCompile";
+  private static final String FORCE_TARGET_JDK_PROPERTY = "GenerateAntBuildDialog.forceTargetJdk";
   private static final String BACKUP_FILES_PROPERTY = "GenerateAntBuildDialog.backupFiles";
-  private JPanel myChunksPanel;
   private MyTableModel myTableModel;
   private Table myTable;
 
@@ -65,21 +67,30 @@ public class GenerateAntBuildDialog extends DialogWrapper{
 
   private void loadSettings() {
     final PropertiesComponent properties = PropertiesComponent.getInstance(myProject);
-    final boolean singleFile = properties.isTrueValue(SINGLE_FILE_PROPERTY);
-    myGenerateSingleFileBuild.setSelected(singleFile);
-    myGenerateMultipleFilesBuild.setSelected(!singleFile);
-    final boolean uiForm = properties.isTrueValue(UI_FORM_PROPERTY);
-    myEnableUIFormsCompilation.setSelected(uiForm);
-    final boolean backup = properties.isTrueValue(BACKUP_FILES_PROPERTY);
-    myCbBackupFiles.setSelected(backup);
-    myCbOverwriteFiles.setSelected(!backup);
+    if (properties.isValueSet(SINGLE_FILE_PROPERTY)) {
+      final boolean singleFile = properties.isTrueValue(SINGLE_FILE_PROPERTY);
+      myRbGenerateSingleFileBuild.setSelected(singleFile);
+      myRbGenerateMultipleFilesBuild.setSelected(!singleFile);
+    }
+    if (properties.isValueSet(UI_FORM_PROPERTY)) {
+      myCbEnableUIFormsCompilation.setSelected(properties.isTrueValue(UI_FORM_PROPERTY));
+    }
+    if (properties.isValueSet(FORCE_TARGET_JDK_PROPERTY)) {
+      myCbForceTargetJdk.setSelected(properties.isTrueValue(FORCE_TARGET_JDK_PROPERTY));
+    }
+    if (properties.isValueSet(BACKUP_FILES_PROPERTY)) {
+      final boolean backup = properties.isTrueValue(BACKUP_FILES_PROPERTY);
+      myRbBackupFiles.setSelected(backup);
+      myRbOverwriteFiles.setSelected(!backup);
+    }
   }
 
   private void saveSettings() {
     final PropertiesComponent properties = PropertiesComponent.getInstance(myProject);
-    properties.setValue(SINGLE_FILE_PROPERTY, Boolean.toString(myGenerateSingleFileBuild.isSelected()));
-    properties.setValue(UI_FORM_PROPERTY, Boolean.toString(myEnableUIFormsCompilation.isSelected()));
-    properties.setValue(BACKUP_FILES_PROPERTY, Boolean.toString(myCbBackupFiles.isSelected()));
+    properties.setValue(SINGLE_FILE_PROPERTY, Boolean.toString(myRbGenerateSingleFileBuild.isSelected()));
+    properties.setValue(UI_FORM_PROPERTY, Boolean.toString(myCbEnableUIFormsCompilation.isSelected()));
+    properties.setValue(FORCE_TARGET_JDK_PROPERTY, Boolean.toString(myCbForceTargetJdk.isSelected()));
+    properties.setValue(BACKUP_FILES_PROPERTY, Boolean.toString(myRbBackupFiles.isSelected()));
   }
 
   protected void dispose() {
@@ -89,16 +100,17 @@ public class GenerateAntBuildDialog extends DialogWrapper{
 
   protected JComponent createCenterPanel() {
     final ButtonGroup group = new ButtonGroup();
-    group.add(myGenerateMultipleFilesBuild);
-    group.add(myGenerateSingleFileBuild);
+    group.add(myRbGenerateMultipleFilesBuild);
+    group.add(myRbGenerateSingleFileBuild);
 
     final ButtonGroup group1 = new ButtonGroup();
-    group1.add(myCbBackupFiles);
-    group1.add(myCbOverwriteFiles);
+    group1.add(myRbBackupFiles);
+    group1.add(myRbOverwriteFiles);
 
-    myGenerateMultipleFilesBuild.setSelected(true);
-    myCbBackupFiles.setSelected(true);
-    myEnableUIFormsCompilation.setSelected(true);
+    myRbGenerateMultipleFilesBuild.setSelected(true);
+    myRbBackupFiles.setSelected(true);
+    myCbEnableUIFormsCompilation.setSelected(true);
+    myCbForceTargetJdk.setSelected(true);
 
     initChunksPanel();
 
@@ -151,15 +163,19 @@ public class GenerateAntBuildDialog extends DialogWrapper{
   }
 
   public boolean isGenerateSingleFileBuild() {
-    return myGenerateSingleFileBuild.isSelected();
+    return myRbGenerateSingleFileBuild.isSelected();
   }
 
   public boolean isFormsCompilationEnabled() {
-    return myEnableUIFormsCompilation.isSelected();
+    return myCbEnableUIFormsCompilation.isSelected();
+  }
+
+  public boolean isForceTargetJdk() {
+    return myCbForceTargetJdk.isSelected();
   }
 
   public boolean isBackupFiles() {
-    return myCbBackupFiles.isSelected();
+    return myRbBackupFiles.isSelected();
   }
 
   public String[] getRepresentativeModuleNames() {

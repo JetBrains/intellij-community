@@ -27,7 +27,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     dialog.show();
     if (dialog.isOK()) {
       String[] names = dialog.getRepresentativeModuleNames();
-      final GenerationOptions genOptions = new GenerationOptions(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(), dialog.isBackupFiles(), names);
+      final GenerationOptions genOptions = new GenerationOptions(project, dialog.isGenerateSingleFileBuild(), dialog.isFormsCompilationEnabled(), dialog.isBackupFiles(), dialog.isForceTargetJdk(), names);
       generate(project, genOptions);
     }
   }
@@ -119,7 +119,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     }
     final DataOutputStream propertiesOut = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(propertiesFile)));
     try {
-      new PropertyFileGenerator(project).generate(propertiesOut);
+      new PropertyFileGenerator(project, genOptions).generate(propertiesOut);
     }
     finally {
       propertiesOut.close();
@@ -211,7 +211,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     // properties
     final DataOutputStream propertiesOut = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(propertiesFile)));
     try {
-      new PropertyFileGenerator(project).generate(propertiesOut);
+      new PropertyFileGenerator(project, genOptions).generate(propertiesOut);
       generated.add(propertiesFile);
     }
     finally {

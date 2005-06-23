@@ -35,7 +35,7 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
       final String outputPathRef = BuildProperties.propertyRef(BuildProperties.getOutputPathProperty(moduleChunkName));
       myProductionTarget.add(new Mkdir(outputPathRef));
 
-      final Javac javac = new Javac(genOptions.enableFormCompiler? "javac2" : "javac", moduleChunkName, outputPathRef);
+      final Javac javac = new Javac(genOptions, moduleChunkName, outputPathRef);
       javac.add(compilerArgs);
       javac.add(bootclasspathTag);
       javac.add(classpathTag);
@@ -52,7 +52,7 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
       final String testOutputPathRef = BuildProperties.propertyRef(BuildProperties.getOutputPathForTestsProperty(moduleChunkName));
       myTestsTarget.add(new Mkdir(testOutputPathRef));
 
-      final Javac javac = new Javac(genOptions.enableFormCompiler? "javac2" : "javac", moduleChunkName, testOutputPathRef);
+      final Javac javac = new Javac(genOptions, moduleChunkName, testOutputPathRef);
       javac.add(compilerArgs);
       javac.add(classpathTag);
       javac.add(new Tag("classpath", new Pair[]{new Pair<String, String>("location", BuildProperties.propertyRef(BuildProperties.getOutputPathProperty(moduleChunkName)))}));
