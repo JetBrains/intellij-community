@@ -151,9 +151,10 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   public XmlAttributeDescriptor getAttributeDescriptor(String attributeName){
     final String localName = XmlUtil.findLocalNameByQualifiedName(attributeName);
     final String namespacePrefix = XmlUtil.findPrefixByQualifiedName(attributeName);
+    final XmlNSDescriptorImpl xmlNSDescriptor = (XmlNSDescriptorImpl)getNSDescriptor();
     final String namespace = "".equals(namespacePrefix) ?
-      ((XmlNSDescriptorImpl)getNSDescriptor()).getDefaultNamespace() :
-      myDescriptorTag.getNamespaceByPrefix(namespacePrefix);
+                             ((xmlNSDescriptor != null)?xmlNSDescriptor.getDefaultNamespace():"") :
+                             myDescriptorTag.getNamespaceByPrefix(namespacePrefix);
 
     return getAttribute(localName, namespace);
   }
