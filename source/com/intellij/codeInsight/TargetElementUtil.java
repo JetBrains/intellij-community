@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlAttribute;
 
 public class TargetElementUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.TargetElementUtil");
@@ -100,7 +101,10 @@ public class TargetElementUtil {
         }
       }
       else if (parent instanceof PsiNamedElement) { // A bit hacky depends on navigation offset correctly overriden
-        if (parent.getTextOffset() == element.getTextOffset() && Comparing.equal(((PsiNamedElement)parent).getName(), element.getText())) {
+        if (parent.getTextOffset() == element.getTextOffset() &&
+            Comparing.equal(((PsiNamedElement)parent).getName(), element.getText()) &&
+            !(parent instanceof XmlAttribute)
+           ) {
           return parent;
         }
       }
@@ -225,7 +229,7 @@ public class TargetElementUtil {
     LookupItem item = activeLookup.getCurrentItem();
     if (item == null) return null;
     Object o = item.getObject();
-    
+
     if (o instanceof PsiClass
         || o instanceof PsiPackage
         || o instanceof PsiMethod

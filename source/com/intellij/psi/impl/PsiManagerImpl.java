@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.RepositoryManager;
@@ -49,6 +50,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xml.XmlElementDescriptor;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -442,6 +444,11 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       return MethodSignatureUtil.areSignaturesEqual(((PsiMethod)element1).getSignature(PsiSubstitutor.EMPTY),
                                                     ((PsiMethod)element2).getSignature(PsiSubstitutor.EMPTY));
     }
+    
+    if (element1 instanceof XmlTag && element2 instanceof XmlTag) {
+      if (!element1.isPhysical() && !element2.isPhysical()) return element1.getText().equals(element2.getText());
+    }
+    
     return false;
   }
 
