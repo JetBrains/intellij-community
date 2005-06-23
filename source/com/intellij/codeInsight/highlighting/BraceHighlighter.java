@@ -103,7 +103,7 @@ public class BraceHighlighter implements ProjectComponent {
   private void updateBraces(final Editor editor) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          if (!myIsDisposed && editor.getComponent().isShowing()) {
+          if (!myIsDisposed && editor.getComponent().isShowing() && !editor.isViewer()) {
             new BraceHighlightingHandler(myProject, editor, myAlarm).updateBraces();
           }
         }
