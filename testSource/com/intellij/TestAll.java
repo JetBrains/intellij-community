@@ -19,9 +19,7 @@ import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.util.ProfilingUtil;
-import junit.framework.Test;
-import junit.framework.TestResult;
-import junit.framework.TestSuite;
+import junit.framework.*;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -295,7 +293,28 @@ public class TestAll implements Test {
       return (Test)suiteMethod.invoke(null, new Class[0]);
     }
     catch (NoSuchMethodException e) {
-      return new TestSuite(testCaseClass);
+      return new TestSuite(testCaseClass){
+        public void addTest(Test test) {
+          if (!(test instanceof TestCase))  {
+            super.addTest(test);
+          } else {
+            Method method = findTestMethod(((TestCase)test));
+            if (method == null || !TestCaseLoader.isBombed(method)) {
+              super.addTest(test);
+            }
+          }
+
+        }
+
+        private Method findTestMethod(final TestCase testCase) {
+          try {
+            return testCase.getClass().getMethod(testCase.getName());
+          }
+          catch (NoSuchMethodException e1) {
+            return null;
+          }
+        }
+      };
     }
     catch (Exception e) {
       System.err.println("Failed to execute suite ()");
@@ -311,8 +330,9 @@ public class TestAll implements Test {
 
   private static String[] getClassRootsByStas() {
     String classpathFileName = System.getProperty("idea.test.classpath");
-    if (classpathFileName == null)
+    if (classpathFileName == null) {
       throw new IllegalArgumentException("System property 'idea.test.classpath' should be point to file with classpath.");
+    }
 
     List<String> classRoots = new ArrayList<String>();
     try {
@@ -325,8 +345,9 @@ public class TestAll implements Test {
       while (tokenizer.hasMoreTokens()) {
         String path = tokenizer.nextToken();
         // skip jars
-        if (!path.endsWith(".jar"))
+        if (!path.endsWith(".jar")) {
           classRoots.add(path);
+        }
       }
 
       return classRoots.toArray(new String [0]);

@@ -76,6 +76,7 @@ public class CodeEditUtil {
       boolean keepFirstIndent = keepFirstIndent(parent, anchorBefore, first, lastChild);
 
       parent.addChildren(first, lastChild, anchorBefore);
+      checkAllTrees(parent.getPsi().getContainingFile());
 
       treePrev = getPreviousElements(first);
       if (!FormatterUtil.join(TreeUtil.prevLeaf(first), first)){
@@ -95,6 +96,13 @@ public class CodeEditUtil {
     checkAllWhiteSpaces(parent);
 
     return returnFirstChangedNode(treePrev, parent);
+  }
+
+  private static void checkAllTrees(final PsiFile containingFile) {
+    final PsiFile[] psiRoots = containingFile.getPsiRoots();
+    for (int i = 0; i + 1 < psiRoots.length; i++) {
+      LOG.assertTrue(psiRoots[i].getText().equals(psiRoots[i+1].getText()));
+    }
   }
 
   private static boolean keepFirstIndent(final CompositeElement parent,

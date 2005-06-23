@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -103,22 +104,37 @@ public class TestCaseLoader {
     return isBombed(testCaseClass);
   }
 
-  public static boolean isBombed(final Class testCaseClass) {
+  public static boolean isBombed(final Method method) {
     try {
-      final Bombed bombedAnnotation = (Bombed)testCaseClass.getAnnotation(Bombed.class);
-      if (bombedAnnotation == null) return false;
-      return !IdeaTestUtil.bombExplodes(bombedAnnotation.year(),
-                                        bombedAnnotation.month(),
-                                        bombedAnnotation.day(),
-                                        bombedAnnotation.time(),
-                                        0,
-                                        bombedAnnotation.user(),
-                                        bombedAnnotation.description());
+      final Bombed bombedAnnotation = (Bombed)method.getAnnotation(Bombed.class);
+      return isBombed(bombedAnnotation);
 
     }
     catch (Exception e) {
       return false;
     }
+  }
+
+  public static boolean isBombed(final Class testCaseClass) {
+    try {
+      final Bombed bombedAnnotation = (Bombed)testCaseClass.getAnnotation(Bombed.class);
+      return isBombed(bombedAnnotation);
+
+    }
+    catch (Exception e) {
+      return false;
+    }
+  }
+
+  private static boolean isBombed(final Bombed bombedAnnotation) {
+    if (bombedAnnotation == null) return false;
+    return !IdeaTestUtil.bombExplodes(bombedAnnotation.year(),
+                                      bombedAnnotation.month(),
+                                      bombedAnnotation.day(),
+                                      bombedAnnotation.time(),
+                                      0,
+                                      bombedAnnotation.user(),
+                                      bombedAnnotation.description());
   }
 
   public void loadTestCases(final Iterator classNamesIterator) {
@@ -147,4 +163,5 @@ public class TestCaseLoader {
   public List getClasses() {
     return Collections.unmodifiableList(myClassList);
   }
+
 }
