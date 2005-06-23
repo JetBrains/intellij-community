@@ -2,7 +2,6 @@ package com.intellij.ide.commander;
 
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 
@@ -10,7 +9,6 @@ import javax.swing.*;
 import java.awt.*;
 
 final class ColoredCommanderRenderer extends ColoredListCellRenderer {
-  private static final Icon ourUpLevelIcon = IconLoader.getIcon("/nodes/upLevel.png");
   private CommanderPanel myCommanderPanel;
 
   public ColoredCommanderRenderer(final CommanderPanel commanderPanel) {
@@ -40,9 +38,6 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
       if (elementColor != null) {
         color = elementColor;
       }
-    }
-    else {
-      setIcon(ourUpLevelIcon);
     }
     append(value.toString(), new SimpleTextAttributes(Font.PLAIN, color));
     if (value instanceof PsiDirectoryNode) {

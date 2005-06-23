@@ -244,7 +244,7 @@ public abstract class AbstractListBuilder {
     final Object[] children = getChildren(parentElement);
     myModel.removeAllElements();
     if (shouldAddTopElement()) {
-      myModel.addElement("[ .. ]");
+      myModel.addElement(new TopLevelNode(myProject, parentElement.getValue()));
     }
 
     for (int i = 0; i < children.length; i++) {
@@ -340,7 +340,7 @@ public abstract class AbstractListBuilder {
     }
     myModel.removeAllElements();
     if (shouldAddTopElement()) {
-      myModel.addElement("[ .. ]");
+      myModel.addElement(new TopLevelNode(myProject, parentDescriptor.getValue()));
     }
     for (int i = 0; i < resultDescriptors.size(); i++) {
       final NodeDescriptor descriptor = (NodeDescriptor)resultDescriptors.get(i);
@@ -360,7 +360,7 @@ public abstract class AbstractListBuilder {
       myLeadSelectionIndex = leadSelectionIndex;
       mySelectedObjects = selectedObjects;
     }
-  };
+  }
 
   private SelectionInfo storeSelection() {
     final ListSelectionModel selectionModel = myList.getSelectionModel();
