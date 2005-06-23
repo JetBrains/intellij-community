@@ -24,6 +24,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.lang.properties.PropertiesReferenceProvider;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -266,6 +267,25 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
       ),
       XmlAttributeValue.class,
       pathReferenceProvider
+    );
+    
+    registerReferenceProvider(
+      new ScopeFilter(
+        new AndFilter(
+          new ParentElementFilter(new TextFilter("key")),
+          new ParentElementFilter(
+            new AndFilter(
+              new NamespaceFilter(XmlUtil.JSTL_FORMAT_URI),
+              new AndFilter(
+                new ClassFilter(XmlTag.class),
+                new TextFilter("message")
+              )
+            ), 2
+          )
+        )
+      ),
+      XmlAttributeValue.class,
+      new PropertiesReferenceProvider()
     );
 
     registerReferenceProvider(

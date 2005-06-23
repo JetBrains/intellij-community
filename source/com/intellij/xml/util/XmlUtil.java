@@ -59,6 +59,7 @@ public class XmlUtil {
   public static final String ANY_URI = "http://www.intellij.net/ns/any";
   
   public static final String JSTL_CORE_URI = "http://java.sun.com/jsp/jstl/core";
+  public static final String JSTL_FORMAT_URI = "http://java.sun.com/jsp/jstl/fmt";
 
   public static String getSchemaLocation(XmlTag tag, String namespace) {
     final String uri = ExternalResourceManagerEx.getInstanceEx().getResourceLocation(namespace);

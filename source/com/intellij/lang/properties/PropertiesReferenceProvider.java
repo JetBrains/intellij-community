@@ -3,20 +3,31 @@ package com.intellij.lang.properties;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.openapi.util.text.StringUtil;
 
 /**
  * @author cdr
  */
-class PropertiesReferenceProvider implements PsiReferenceProvider {
+public class PropertiesReferenceProvider implements PsiReferenceProvider {
   public PsiReference[] getReferencesByElement(PsiElement element) {
-    PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
-    final Object value = literalExpression.getValue();
+    final Object value;
+
+    if (element instanceof PsiLiteralExpression) {
+      PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
+      value = literalExpression.getValue();
+    } else if (element instanceof XmlAttributeValue) {
+      value = ((XmlAttributeValue)element).getValue();
+    } else {
+      value = null;
+    }
+
     if (value instanceof String) {
       String text = (String)value;
-      PsiReference reference = new PropertyReference(text, literalExpression);
+      PsiReference reference = new PropertyReference(text, element);
       return new PsiReference[]{reference};
     }
     return PsiReference.EMPTY_ARRAY;

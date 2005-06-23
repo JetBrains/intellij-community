@@ -6,6 +6,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 
@@ -13,24 +15,26 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author cdr
  */
 public class PropertyReference implements PsiPolyVariantReference {
   private final String myKey;
-  private final PsiLiteralExpression myLiteralExpression;
+  private final PsiElement myElement;
 
-  public PropertyReference(String key, final PsiLiteralExpression literalExpression) {
+  public PropertyReference(String key, final PsiElement element) {
     myKey = key;
-    myLiteralExpression = literalExpression;
+    myElement = element;
   }
 
   public PsiElement getElement() {
-    return myLiteralExpression;
+    return myElement;
   }
 
   public TextRange getRangeInElement() {
-    return new TextRange(1,myLiteralExpression.getTextLength()-1);
+    return new TextRange(1,myElement.getTextLength()-1);
   }
 
   public PsiElement resolve() {
@@ -38,6 +42,7 @@ public class PropertyReference implements PsiPolyVariantReference {
     return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
   }
 
+  @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     List<Property> properties = PropertiesUtil.findPropertiesByKey(getElement().getProject(), myKey);
     final ResolveResult[] result = new ResolveResult[properties.size()];
@@ -53,9 +58,20 @@ public class PropertyReference implements PsiPolyVariantReference {
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    PsiElementFactory factory = myLiteralExpression.getManager().getElementFactory();
-    PsiExpression newExpression = factory.createExpressionFromText("\"" + newElementName + "\"", myLiteralExpression);
-    return myLiteralExpression.replace(newExpression);
+    PsiElementFactory factory = myElement.getManager().getElementFactory();
+
+    if (myElement instanceof PsiLiteralExpression) {
+      PsiExpression newExpression = factory.createExpressionFromText("\"" + newElementName + "\"", myElement);
+      return myElement.replace(newExpression);
+    } else if (myElement instanceof XmlAttributeValue) {
+      return ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement).handleContentChange(
+        myElement,
+        getRangeInElement(),
+        newElementName
+      );
+    } else {
+      return null;
+    }
   }
 
   public PsiElement bindToElement(PsiElement element) throws IncorrectOperationException {
@@ -69,7 +85,7 @@ public class PropertyReference implements PsiPolyVariantReference {
   public Object[] getVariants() {
     Collection<VirtualFile> allPropertiesFiles = PropertiesFilesManager.getInstance().getAllPropertiesFiles();
     Set<String> variants = new THashSet<String>();
-    PsiManager psiManager = myLiteralExpression.getManager();
+    PsiManager psiManager = myElement.getManager();
     for (VirtualFile file : allPropertiesFiles) {
       if (!file.isValid()) continue;
       PropertiesFile propertiesFile = (PropertiesFile)psiManager.findFile(file);
@@ -81,7 +97,7 @@ public class PropertyReference implements PsiPolyVariantReference {
     }
     return variants.toArray(new Object[variants.size()]);
   }
-  
+
   public List<Property> suggestProperties() {
     return PropertiesUtil.findPropertiesByKey(getElement().getProject(), myKey);
   }
