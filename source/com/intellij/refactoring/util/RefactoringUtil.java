@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInspection.redundantCast.RedundantCastUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -42,7 +43,6 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
-import com.intellij.codeInspection.redundantCast.RedundantCastUtil;
 import gnu.trove.THashMap;
 
 import java.util.*;
@@ -210,7 +210,7 @@ public class RefactoringUtil {
                                              final Processor<UsageInfo> processor, final UsageInfoFactory factory) {
     PsiSearchHelper helper = element.getManager().getSearchHelper();
 
-    helper.processUsagesInNonJavaFiles(stringToSearch,
+    helper.processUsagesInNonJavaFiles(element, stringToSearch,
                                        new PsiNonJavaFileReferenceProcessor() {
                                          public boolean process(PsiFile psiFile, int startOffset, int endOffset) {
                                            UsageInfo usageInfo = factory.createUsageInfo(psiFile, startOffset, endOffset);

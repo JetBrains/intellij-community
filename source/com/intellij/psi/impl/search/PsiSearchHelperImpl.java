@@ -50,6 +50,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -1351,6 +1352,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public void processUsagesInNonJavaFiles(String qName,
                                           PsiNonJavaFileReferenceProcessor processor,
                                           GlobalSearchScope searchScope) {
+    processUsagesInNonJavaFiles(null, qName, processor, searchScope);
+  }
+
+  public void processUsagesInNonJavaFiles(@Nullable PsiElement originalElement,
+                                          String qName,
+                                          PsiNonJavaFileReferenceProcessor processor,
+                                          GlobalSearchScope searchScope) {
     ProgressManager progressManager = ProgressManager.getInstance();
     ProgressIndicator progress = progressManager.getProgressIndicator();
 
@@ -1377,7 +1385,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       char[] text = psiFile.textToCharArray();
       for (int index = LowLevelSearchUtil.searchWord(text, 0, text.length, searcher); index >= 0;) {
         PsiReference referenceAt = psiFile.findReferenceAt(index);
-        if (referenceAt == null) {
+        if (referenceAt == null ||
+            originalElement != null && !PsiSearchScopeUtil.isInScope(getUseScope(originalElement).intersectWith(searchScope), psiFile)) {
           if (!processor.process(psiFile, index, index + searcher.getPattern().length())) break AllFilesLoop;
         }
 

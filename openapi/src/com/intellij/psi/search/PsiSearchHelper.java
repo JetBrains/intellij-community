@@ -5,11 +5,10 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.aspects.psi.PsiPointcut;
-import com.intellij.aspects.psi.PsiPointcutDef;
-import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Processor;
+ import com.intellij.aspects.psi.PsiPointcut;
+ import com.intellij.aspects.psi.PsiPointcutDef;
+ import com.intellij.psi.*;
+ import com.intellij.util.Processor;
 
 public interface PsiSearchHelper {
   PsiReference[] findReferences(PsiElement element, SearchScope searchScope, boolean ignoreAccessScope);
@@ -48,6 +47,7 @@ public interface PsiSearchHelper {
 
   PsiFile[] findFilesWithPlainTextWords(String word);
   void processUsagesInNonJavaFiles(String qName, PsiNonJavaFileReferenceProcessor processor, GlobalSearchScope searchScope);
+  void processUsagesInNonJavaFiles(PsiElement originalElement, String qName, PsiNonJavaFileReferenceProcessor processor, GlobalSearchScope searchScope);
 
   SearchScope getUseScope(PsiElement element);
 
