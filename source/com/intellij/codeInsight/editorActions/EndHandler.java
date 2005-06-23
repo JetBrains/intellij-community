@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -41,10 +42,10 @@ public class EndHandler extends EditorActionHandler {
       }
       return;
     }
-    Document document = editor.getDocument();
+    final Document document = editor.getDocument();
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
 
-    if (file == null || !document.isWritable()){
+    if (file == null){
       if (myOriginalHandler != null){
         myOriginalHandler.execute(editor, dataContext);
       }
@@ -77,6 +78,9 @@ public class EndHandler extends EditorActionHandler {
                 caretModel.moveToLogicalPosition(new LogicalPosition(line, col));
 
                 if (caretModel.getLogicalPosition().column != col){
+                  if (!document.isWritable() && !FileDocumentManager.fileForDocumentCheckedOutSuccessfully(document, project)) {
+                    return;
+                  }
                   final String indentString = newChars.substring(lineStart, newOffset);
                   editor.getSelectionModel().removeSelection();
                   EditorModificationUtil.insertStringAtCaret(editor, indentString);
