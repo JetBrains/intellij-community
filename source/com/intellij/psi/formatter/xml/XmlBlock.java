@@ -11,10 +11,13 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.jsp.JspElementType;
+import com.intellij.psi.PsiFile;
 import com.intellij.codeFormatting.general.FormatterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.jetbrains.annotations.NotNull;
 
 public class XmlBlock extends AbstractXmlBlock {
   private final Indent myIndent;
@@ -46,7 +49,7 @@ public class XmlBlock extends AbstractXmlBlock {
         if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(tag)) {
           return result;
         }
-      } 
+      }
     }
 
     if (myNode instanceof CompositeElement) {
@@ -71,7 +74,7 @@ public class XmlBlock extends AbstractXmlBlock {
     }
     else {
       return null;
-    }    
+    }
   }
 
   public SpaceProperty getSpaceProperty(Block child1, Block child2) {
@@ -129,7 +132,7 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   public Indent getIndent() {
-    if (myNode.getElementType() == ElementType.XML_PROLOG 
+    if (myNode.getElementType() == ElementType.XML_PROLOG
         || myNode.getElementType() == ElementType.XML_DOCTYPE
         || SourceTreeToPsiMap.treeElementToPsi(myNode) instanceof XmlDocument) {
       return getFormatter().getNoneIndent();
@@ -137,7 +140,7 @@ public class XmlBlock extends AbstractXmlBlock {
     else if (myNode.getElementType() == ElementType.XML_COMMENT && myNode.textContains('\n')) {
       return getFormatter().createAbsoluteNoneIndent();
     }
-    
+
     /*
     if (myNode.getElementType() == ElementType.JSP_SCRIPTLET || myNode.getElementType() == ElementType.JSP_DECLARATION) {
       return getFormatter().getNoneIndent();
@@ -180,15 +183,20 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   public boolean isTextElement() {
-    return myNode.getElementType() == ElementType.XML_TEXT 
+    return myNode.getElementType() == ElementType.XML_TEXT
            || myNode.getElementType() == ElementType.XML_DATA_CHARACTERS
            || myNode.getElementType() == ElementType.XML_CHAR_ENTITY_REF
       ;
   }
 
+  @Override
+  @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (myNode.getElementType() == ElementType.JSP_DECLARATION || myNode.getElementType() == JspElementType.JSP_SCRIPTLET) {
       return new ChildAttributes(Formatter.getInstance().createNormalIndent(), null);
+    }
+    else if (myNode.getPsi() instanceof PsiFile) {
+      return new ChildAttributes(Formatter.getInstance().getNoneIndent(), null);
     }
     else {
       return super.getChildAttributes(newChildIndex);
