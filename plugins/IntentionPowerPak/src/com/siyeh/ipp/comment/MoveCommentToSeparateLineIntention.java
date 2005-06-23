@@ -5,6 +5,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class MoveCommentToSeparateLineIntention extends Intention{
@@ -24,19 +25,14 @@ public class MoveCommentToSeparateLineIntention extends Intention{
     public void processIntention(PsiElement element)
             throws IncorrectOperationException{
         final PsiComment selectedComment = (PsiComment) element;
-        final PsiWhiteSpace whiteSpace;
         PsiElement elementToCheck = selectedComment;
         PsiElement level = selectedComment;
+        final PsiWhiteSpace whiteSpace;
         while(true){
-            elementToCheck = elementToCheck.getPrevSibling();
+            elementToCheck = TreeUtil.getPrevLeaf(elementToCheck);
             if(elementToCheck == null)
             {
-                elementToCheck = level.getParent();
-                level = elementToCheck;
-            }
-            if(elementToCheck == null)
-            {
-               return;
+                return;   
             }
             if(isLineBreakWhiteSpace(elementToCheck)){
                 whiteSpace = (PsiWhiteSpace) elementToCheck;
@@ -56,8 +52,9 @@ public class MoveCommentToSeparateLineIntention extends Intention{
 
         selectedComment.delete();
         final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
-        codeStyleManager.reformat(parent);
+        codeStyleManager.reformat(insertedComment);
     }
+
 
     private static boolean isLineBreakWhiteSpace(PsiElement element){
         if(!(element instanceof PsiWhiteSpace))

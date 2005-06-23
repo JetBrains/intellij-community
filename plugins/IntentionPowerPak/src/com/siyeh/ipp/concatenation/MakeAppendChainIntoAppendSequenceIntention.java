@@ -41,10 +41,10 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
                     ((PsiMethodCallExpression) currentCall).getMethodExpression();
             currentCall = methodExpression.getQualifierExpression();
         }
-        final String targetText;
         final PsiManager mgr = element.getManager();
         final PsiElementFactory factory = mgr.getElementFactory();
         final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
+        final String targetText;
         final PsiStatement statement;
         final String firstStatement;
         if(call.getParent() instanceof PsiExpressionStatement){
@@ -86,8 +86,7 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
 
         for(Object aArgsList : argsList){
             final String arg = (String) aArgsList;
-            final String append;
-            append = targetText + ".append" + arg + ';';
+            final String append = targetText + ".append" + arg + ';';
             final PsiStatement newCall =
                     factory.createStatementFromText(append, null);
             final PsiElement insertedElement = statement.getParent()

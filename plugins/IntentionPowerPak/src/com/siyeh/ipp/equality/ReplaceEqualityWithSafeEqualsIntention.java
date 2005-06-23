@@ -31,9 +31,9 @@ public class ReplaceEqualityWithSafeEqualsIntention extends Intention{
                 ParenthesesUtils.stripParentheses(lhs);
         final PsiExpression strippedRhs =
                 ParenthesesUtils.stripParentheses(rhs);
-        final String expString;
         final String lhsText = strippedLhs.getText();
         final String rhsText = strippedRhs.getText();
+        final String expString;
         if(ParenthesesUtils.getPrecendence(strippedLhs) >
                 ParenthesesUtils.METHOD_CALL_PRECEDENCE){
             expString = lhsText + "==null?" + rhsText + " == null:(" + lhsText +

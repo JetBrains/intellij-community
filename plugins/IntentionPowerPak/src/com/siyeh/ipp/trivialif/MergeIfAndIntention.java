@@ -33,17 +33,17 @@ public class MergeIfAndIntention extends Intention{
         final PsiIfStatement childStatement =
                 (PsiIfStatement) ConditionalUtils.stripBraces(parentThenBranch);
 
-        final String childConditionText;
         final PsiExpression childCondition = childStatement.getCondition();
+        final String childConditionText;
         if(ParenthesesUtils.getPrecendence(childCondition)
                 > ParenthesesUtils.AND_PRECEDENCE){
             childConditionText = '(' + childCondition.getText() + ')';
         } else{
             childConditionText = childCondition.getText();
         }
-        final String parentConditionText;
 
         final PsiExpression parentCondition = parentStatement.getCondition();
+        final String parentConditionText;
         if(ParenthesesUtils.getPrecendence(parentCondition)
                 > ParenthesesUtils.AND_PRECEDENCE){
             parentConditionText = '(' + parentCondition.getText() + ')';

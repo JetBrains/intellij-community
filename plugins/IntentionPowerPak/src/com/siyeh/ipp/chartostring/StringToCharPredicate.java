@@ -37,12 +37,12 @@ class StringToCharPredicate implements PsiElementPredicate{
             if(!"java.lang.String".equals(parentTypeText)){
                 return false;
             }
-            final PsiExpression otherOperand;
             final PsiExpression lhs = parentExpression.getLOperand();
             final PsiExpression rhs = parentExpression.getROperand();
             if(rhs == null){
                 return false;
             }
+            final PsiExpression otherOperand;
             if(lhs.equals(element)){
                 otherOperand = rhs;
             } else{

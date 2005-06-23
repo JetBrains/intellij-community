@@ -31,9 +31,9 @@ public class AssertToIfIntention extends Intention{
         final PsiExpression description =
                 assertStatement.getAssertDescription();
 
-        final String newStatement;
         final String negatedConditionString =
                 BoolUtils.getNegatedExpressionText(condition);
+        final String newStatement;
         if(description == null){
             newStatement = "if(" + negatedConditionString +
                     "){ throw new IllegalArgumentException();}";

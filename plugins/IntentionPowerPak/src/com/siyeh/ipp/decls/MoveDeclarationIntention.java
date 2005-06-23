@@ -109,9 +109,8 @@ public class MoveDeclarationIntention extends Intention{
             final PsiAssignmentExpression assignmentExpression =
                     (PsiAssignmentExpression) referenceParent;
             if(referenceElement.equals(assignmentExpression.getLExpression())){
-                PsiDeclarationStatement newDeclaration;
-                newDeclaration = createNewDeclaration(variable,
-                                                      assignmentExpression.getRExpression());
+                PsiDeclarationStatement newDeclaration =
+                        createNewDeclaration(variable, assignmentExpression.getRExpression());
                 newDeclaration = (PsiDeclarationStatement) block.addBefore(newDeclaration,
                                                                            statement);
                 final PsiElement parent = assignmentExpression.getParent();
@@ -123,6 +122,13 @@ public class MoveDeclarationIntention extends Intention{
         return createNewDeclaration(variable, null);
     }
 
+    /**
+     *
+     * @param variable
+     * @param initializer
+     * @return
+     * @throws IncorrectOperationException
+     */
     private static PsiDeclarationStatement createNewDeclaration(@NotNull PsiLocalVariable variable,
                                                                 PsiExpression initializer)
             throws IncorrectOperationException{

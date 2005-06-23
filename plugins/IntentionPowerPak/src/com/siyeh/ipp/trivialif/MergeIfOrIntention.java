@@ -36,11 +36,12 @@ public class MergeIfOrIntention extends Intention{
             throws IncorrectOperationException{
         final PsiIfStatement parentStatement =
                 (PsiIfStatement) token.getParent();
+        assert parentStatement != null;
         final PsiIfStatement childStatement =
                 (PsiIfStatement) parentStatement.getElseBranch();
 
-        final String childConditionText;
         final PsiExpression childCondition = childStatement.getCondition();
+        final String childConditionText;
         if(ParenthesesUtils.getPrecendence(childCondition)
                 > ParenthesesUtils.OR_PRECEDENCE){
             childConditionText = '(' + childCondition.getText() + ')';
@@ -48,8 +49,8 @@ public class MergeIfOrIntention extends Intention{
             childConditionText = childCondition.getText();
         }
 
-        final String parentConditionText;
         final PsiExpression condition = parentStatement.getCondition();
+        final String parentConditionText;
         if(ParenthesesUtils.getPrecendence(condition)
                 > ParenthesesUtils.OR_PRECEDENCE){
             parentConditionText = '(' + condition.getText() + ')';
@@ -81,9 +82,9 @@ public class MergeIfOrIntention extends Intention{
                                                                  new Class[]{
                                                                      PsiWhiteSpace.class});
 
-        final String childConditionText;
         assert childStatement != null;
         final PsiExpression childCondition = childStatement.getCondition();
+        final String childConditionText;
         if(ParenthesesUtils.getPrecendence(childCondition)
                 > ParenthesesUtils.OR_PRECEDENCE){
             childConditionText = '(' + childCondition.getText() + ')';
@@ -91,8 +92,9 @@ public class MergeIfOrIntention extends Intention{
             childConditionText = childCondition.getText();
         }
 
-        final String parentConditionText;
+        assert parentStatement != null;
         final PsiExpression condition = parentStatement.getCondition();
+        final String parentConditionText;
         if(ParenthesesUtils.getPrecendence(condition)
                 > ParenthesesUtils.OR_PRECEDENCE){
             parentConditionText = '(' + condition.getText() + ')';

@@ -44,18 +44,18 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             final String lhsText = lhs.getText();
             final PsiJavaToken sign = thenAssign.getOperationSign();
             final String operator = sign.getText();
-            final String thenValue;
             final PsiExpression thenRhs = thenAssign.getRExpression();
             assert thenRhs != null;
+            final String thenValue;
             if(ParenthesesUtils.getPrecendence(thenRhs)
                     <= ParenthesesUtils.CONDITIONAL_PRECEDENCE){
                 thenValue = thenRhs.getText();
             } else{
                 thenValue = '(' + thenRhs.getText() + ')';
             }
-            final String elseValue;
             final PsiExpression elseRhs = elseAssign.getRExpression();
             assert elseRhs != null;
+            final String elseValue;
             if(ParenthesesUtils.getPrecendence(elseRhs)
                     <= ParenthesesUtils.CONDITIONAL_PRECEDENCE){
                 elseValue = elseRhs.getText();
@@ -83,16 +83,16 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             final PsiReturnStatement elseReturn =
                     (PsiReturnStatement) ConditionalUtils.stripBraces(elseBranch);
 
-            final String thenValue;
             final PsiExpression thenReturnValue = thenReturn.getReturnValue();
+            final String thenValue;
             if(ParenthesesUtils.getPrecendence(thenReturnValue)
                     <= ParenthesesUtils.CONDITIONAL_PRECEDENCE){
                 thenValue = thenReturnValue.getText();
             } else{
                 thenValue = '(' + thenReturnValue.getText() + ')';
             }
-            final String elseValue;
             final PsiExpression elseReturnValue = elseReturn.getReturnValue();
+            final String elseValue;
             if(ParenthesesUtils.getPrecendence(elseReturnValue)
                     <= ParenthesesUtils.CONDITIONAL_PRECEDENCE){
                 elseValue = elseReturnValue.getText();
@@ -119,17 +119,17 @@ public class ReplaceIfWithConditionalIntention extends Intention{
             final PsiReturnStatement elseBranch =
                     PsiTreeUtil.getNextSiblingOfType(ifStatement, PsiReturnStatement.class);
 
-            final String thenValue;
             final PsiExpression thenReturnValue = thenBranch.getReturnValue();
+            final String thenValue;
             if(ParenthesesUtils.getPrecendence(thenReturnValue)
                     <= ParenthesesUtils.CONDITIONAL_PRECEDENCE){
                 thenValue = thenReturnValue.getText();
             } else{
                 thenValue = '(' + thenReturnValue.getText() + ')';
             }
-            final String elseValue;
             assert elseBranch != null;
             final PsiExpression elseReturnValue = elseBranch.getReturnValue();
+            final String elseValue;
             if(ParenthesesUtils.getPrecendence(elseReturnValue)
                     <= ParenthesesUtils.CONDITIONAL_PRECEDENCE){
                 elseValue = elseReturnValue.getText();

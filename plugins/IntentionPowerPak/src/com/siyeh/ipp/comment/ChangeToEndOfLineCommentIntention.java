@@ -44,8 +44,8 @@ public class ChangeToEndOfLineCommentIntention extends Intention{
         }
         final PsiComment newComment =
                 factory.createCommentFromText("//" + lines[0], parent);
-        comment.replace(newComment);
-        codeStyleManager.reformat(parent);
+        final PsiElement replacedComment = comment.replace(newComment);
+        codeStyleManager.reformat(replacedComment);
     }
 
 }

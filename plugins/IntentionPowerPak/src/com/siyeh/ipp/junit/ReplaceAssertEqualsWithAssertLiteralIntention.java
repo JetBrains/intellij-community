@@ -51,8 +51,8 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
         final PsiExpression[] args = argumentList.getExpressions();
         final String callString;
         if(args.length == 2){
-            final PsiExpression otherArg;
             final String argText = args[0].getText();
+            final PsiExpression otherArg;
             if("true".equals(argText) ||
                     "false".equals(argText) ||
                     "null".equals(argText)){
@@ -63,8 +63,8 @@ public class ReplaceAssertEqualsWithAssertLiteralIntention
             callString = qualifier + getAssertString(argText) + '(' +
                     otherArg.getText() + ')';
         } else{
-            final PsiExpression otherArg;
             final String argText = args[1].getText();
+            final PsiExpression otherArg;
             if("true".equals(argText) ||
                     "false".equals(argText) ||
                     "null".equals(argText)){

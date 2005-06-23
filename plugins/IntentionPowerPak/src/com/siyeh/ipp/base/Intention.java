@@ -60,8 +60,8 @@ public abstract class Intention implements IntentionAction{
         final PsiElementFactory factory = mgr.getElementFactory();
 
         PsiExpression expressionToReplace = exp;
-        final String expString;
         final String newExpressionText = newExpression.getText();
+        final String expString;
         if(BoolUtils.isNegated(exp)){
             expressionToReplace = BoolUtils.findNegation(exp);
             expString = newExpressionText;

@@ -50,16 +50,16 @@ public class DemorgansIntention extends MutablyNamedIntention{
 
     private String convertConjunctionExpression(PsiBinaryExpression exp,
                                                 IElementType tokenType){
-        final String lhsText;
         final PsiExpression lhs = exp.getLOperand();
+        final String lhsText;
         if(isConjunctionExpression(lhs, tokenType)){
             lhsText = convertConjunctionExpression((PsiBinaryExpression) lhs,
                                                    tokenType);
         } else{
             lhsText = convertLeafExpression(lhs);
         }
-        final String rhsText;
         final PsiExpression rhs = exp.getROperand();
+        final String rhsText;
         if(isConjunctionExpression(rhs, tokenType)){
             rhsText = convertConjunctionExpression((PsiBinaryExpression) rhs,
                                                    tokenType);

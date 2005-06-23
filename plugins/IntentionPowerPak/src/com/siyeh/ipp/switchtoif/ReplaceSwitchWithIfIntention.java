@@ -37,15 +37,14 @@ public class ReplaceSwitchWithIfIntention extends Intention{
         assert switchStatement != null;
         final List<SwitchStatementBranch> allBranches = new ArrayList<SwitchStatementBranch>(10);
         final List<SwitchStatementBranch> openBranches = new ArrayList<SwitchStatementBranch>(10);
-        SwitchStatementBranch currentBranch = null;
 
         final StringBuffer ifStatementBuffer = new StringBuffer(1024);
-        final String expressionText;
-        final boolean hadSideEffects;
-        final String declarationString;
         final PsiManager mgr = switchStatement.getManager();
         final PsiExpression switchExpression = switchStatement.getExpression();
         final CodeStyleManager codeStyleMgr = mgr.getCodeStyleManager();
+        final String declarationString;
+        final boolean hadSideEffects;
+        final String expressionText;
         if(SideEffectChecker.mayHaveSideEffects(switchExpression)){
             hadSideEffects = true;
             final PsiType switchExpressionType = switchExpression.getType();
@@ -82,8 +81,8 @@ public class ReplaceSwitchWithIfIntention extends Intention{
             breakLabel = CaseUtil.findUniqueLabel(switchStatement, "Label");
             ifStatementBuffer.append(breakLabel + ':');
         }
+        SwitchStatementBranch currentBranch=null;
         final PsiElement[] children = body.getChildren();
-
         for(int i = 1; i < children.length - 1; i++){
             final PsiElement statement = children[i];
             if(statement instanceof PsiSwitchLabelStatement){

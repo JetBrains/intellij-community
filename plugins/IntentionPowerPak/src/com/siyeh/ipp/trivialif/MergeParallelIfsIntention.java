@@ -32,6 +32,7 @@ public class MergeParallelIfsIntention extends Intention{
 
         final String statement = mergeIfStatements(firstStatement, secondStatement);
 
+        assert firstStatement!=null;
         replaceStatement(statement, firstStatement);
         assert secondStatement != null;
         secondStatement.delete();
