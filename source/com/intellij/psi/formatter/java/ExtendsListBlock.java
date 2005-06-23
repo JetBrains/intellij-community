@@ -5,6 +5,7 @@ import com.intellij.newCodeFormatting.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.codeFormatting.general.FormatterUtil;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ public class ExtendsListBlock extends AbstractJavaBlock{
     Alignment alignment = alignList() ? Formatter.getInstance().createAlignment() : null;
 
     while (child != null) {
-      if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+      if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         if (ElementType.KEYWORD_BIT_SET.isInSet(child.getElementType())) {
           if (!elementsExceptKeyword.isEmpty()) {
             result.add(new SynteticCodeBlock(elementsExceptKeyword, null,  mySettings, Formatter.getInstance().getNoneIndent(), null));

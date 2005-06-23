@@ -5,6 +5,7 @@ import com.intellij.newCodeFormatting.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.codeFormatting.general.FormatterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,7 @@ public class DocCommentBlock extends AbstractJavaBlock{
       if (child.getElementType() == ElementType.DOC_COMMENT_START) {
         result.add(createJavaBlock(child, mySettings, Formatter.getInstance().getNoneIndent(),
                                    null, null));
-      } else if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+      } else if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         result.add(createJavaBlock(child, mySettings, Formatter.getInstance().createSpaceIndent(1), null, null));
       }
       child = child.getTreeNext();

@@ -378,7 +378,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     ChameleonTransforming.transformChildren(node);
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
-      if (!containsWhiteSpacesOnly(child)) {
+      if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
         if (child.getElementType() ==ElementType.METHOD_CALL_EXPRESSION || child.getElementType() == ElementType.REFERENCE_EXPRESSION) {
           collectNodes(nodes, child);
         } else {
@@ -628,7 +628,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
     ASTNode prev = child;
     while (child != null) {
-      if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+      if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         if (child.getElementType() == from) {
           result.add(createJavaBlock(child, mySettings, externalIndent, null, null));
         } else if (child.getElementType() == to) {
@@ -659,7 +659,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     final WrappingStrategy wrappingStrategy = WrappingStrategy.createDoNotWrapCommaStrategy(Formatter.getInstance()
       .createWrap(getWrapType(mySettings.ENUM_CONSTANTS_WRAP), true));
     while (child != null) {
-      if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+      if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         result.add(createJavaBlock(child, mySettings, Formatter.getInstance().createNormalIndent(),
                                    wrappingStrategy.getWrap(child.getElementType()), null));
         if (child == last) return child;

@@ -5,6 +5,7 @@ import com.intellij.newCodeFormatting.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.codeFormatting.general.FormatterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,7 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
     Indent currentIndent = getLabelIndent();
     Wrap currentWrap = null;
     while (child != null) {
-      if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+      if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         result.add(createJavaBlock(child, mySettings, currentIndent, currentWrap, null));
         if (child.getElementType() == ElementType.COLON) {
           currentIndent = Formatter.getInstance().getNoneIndent();

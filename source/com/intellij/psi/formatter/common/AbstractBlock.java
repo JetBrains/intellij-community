@@ -50,27 +50,6 @@ public abstract class AbstractBlock implements Block {
     return myNode;
   }
 
-  protected static boolean containsWhiteSpacesOnly(final ASTNode node) {
-    if (node.getElementType() == ElementType.WHITE_SPACE) return true;
-    if (node.getElementType() == ElementType.DOC_COMMENT_DATA && node.textContains('\n') && node.getText().trim().length() == 0) {
-      return true;
-      //EnterActionTest && JavaDocParamTest
-    }
-    if (node.getElementType() == ElementType.JSP_XML_TEXT && node.getText().trim().length() == 0) {
-      return true;
-    }
-    
-    if (node.getTextLength() == 0) return true;
-    if (node instanceof LeafElement) return false;
-
-    ASTNode child = node.getFirstChildNode();
-    while (child != null) {
-      if (!containsWhiteSpacesOnly(child)) return false;
-      child = child.getTreeNext();
-    }
-    return true;
-  }
-
   public ASTNode getTreeNode() {
     return myNode;
   }

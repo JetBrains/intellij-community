@@ -6,6 +6,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.codeFormatting.general.FormatterUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     }
 
     while (child != null) {
-      if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
+      if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
         final Indent indent = calcCurrentIndent(child, state);
         state = calcNewState(child, state);
         child = processChild(result, child, childAlignment, childWrap, indent);

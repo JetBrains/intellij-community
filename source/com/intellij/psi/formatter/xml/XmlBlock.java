@@ -11,6 +11,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.jsp.JspElementType;
+import com.intellij.codeFormatting.general.FormatterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +53,7 @@ public class XmlBlock extends AbstractXmlBlock {
       ChameleonTransforming.transformChildren(myNode);
       ASTNode child = myNode.getFirstChildNode();
       while (child != null) {
-        if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
+        if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
           result.add(createChildBlock(child, null, null, getChildDefaultIndent()));
         }
         child = child.getTreeNext();

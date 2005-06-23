@@ -357,4 +357,36 @@ public class FormatterUtil {
       LOG.error(e);
     }
   }
+
+  public static boolean containsWhiteSpacesOnly(final ASTNode node) {
+    if (node.getElementType() == ElementType.WHITE_SPACE && containsWhiteSpacesOnly(node.getText())) return true;
+    if (node.getElementType() == ElementType.DOC_COMMENT_DATA && node.textContains('\n') && node.getText().trim().length() == 0) {
+      return true;
+      //EnterActionTest && JavaDocParamTest
+    }
+    if (node.getElementType() == ElementType.JSP_XML_TEXT && node.getText().trim().length() == 0) {
+      return true;
+    }
+
+    if (node.getTextLength() == 0) return true;
+    if (node instanceof LeafElement) return false;
+
+    ASTNode child = node.getFirstChildNode();
+    while (child != null) {
+      if (!containsWhiteSpacesOnly(child)) return false;
+      child = child.getTreeNext();
+    }
+    return true;
+  }
+
+  private static boolean containsWhiteSpacesOnly(final String text) {
+    for (int i = 0; i < text.length() ; i++){
+      final char c = text.charAt(i);
+      if (c == ' ') continue;
+      if (c == '\t') continue;
+      if (c == '\n') continue;
+      return false;
+    }
+    return true;
+  }
 }

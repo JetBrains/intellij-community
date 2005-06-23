@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.codeFormatting.general.FormatterUtil;
 
 import java.util.ArrayList;
 
@@ -132,7 +133,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
         || element.getElementType() == ElementType.JSP_DECLARATION_START)) {
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
       while (element != null && element.getTextRange().getEndOffset() <=child.getTextRange().getEndOffset()) {
-        if (!containsWhiteSpacesOnly(element)) {
+        if (!FormatterUtil.containsWhiteSpacesOnly(element)) {
           subBlocks.add(createChildBlock(element, null, null, Formatter.getInstance().getNoneIndent()));
         }
         int nextOffset = element.getTextRange().getEndOffset();

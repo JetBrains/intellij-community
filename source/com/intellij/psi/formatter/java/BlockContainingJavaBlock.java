@@ -6,6 +6,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.codeFormatting.general.FormatterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
     int state = BEFORE_FIRST;
 
     while (child != null) {
-      if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){        
+      if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         final Indent indent = calcIndent(child,  state);
         myIndentsBefore.add(calcIndentBefore(child,  state));
         state = calcNewState(child, state);
@@ -134,7 +135,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
     if (child.getElementType() == ElementType.BLOCK_STATEMENT) return true;
     if (child.getElementType() == ElementType.CODE_BLOCK) return true;
     
-    if (containsWhiteSpacesOnly(child)) return isPartOfCodeBlock(child.getTreeNext());
+    if (FormatterUtil.containsWhiteSpacesOnly(child)) return isPartOfCodeBlock(child.getTreeNext());
     if (child.getElementType() == ElementType.END_OF_LINE_COMMENT) return isPartOfCodeBlock(child.getTreeNext());
     if (child.getElementType() == JavaDocElementType.DOC_COMMENT) return true;
     return false;

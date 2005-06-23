@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.codeFormatting.general.FormatterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +38,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     boolean insideTag = false;
 
     while (child != null) {
-      if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+      if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
 
         Wrap wrap = chooseWrap(child, tagBeginWrap, attrWrap, textWrap);
         Alignment alignment = chooseAlignment(child, attrAlignment, textAlignment);
@@ -106,7 +107,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     ChameleonTransforming.transformChildren(myNode);
     ASTNode child = textNode.getFirstChildNode();
     while (child != null) {
-      if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+      if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         final Indent indent = myXmlFormattingPolicy.indentChildrenOf(getTag())
                               ? getFormatter().createNormalIndent()
                               : getFormatter().getNoneIndent();
