@@ -67,6 +67,7 @@ public class CompletionUtil {
   }
 
   private static HashMap<FileType,CompletionData> completionDatas;
+  public static final Key<CompletionData> ENFORCE_COMPLETION_DATA_KEY = new Key<CompletionData>("Enforce completionData");
 
   private static void initBuiltInCompletionDatas() {
     completionDatas = new HashMap<FileType, CompletionData>();
@@ -143,6 +144,7 @@ public class CompletionUtil {
       }
     }
   }
+
   public static final CompletionData getCompletionDataByElement(PsiElement element, CompletionContext context){
     CompletionData wordCompletionData = null;
     ASTNode textContainer = element != null ? element.getNode() : null;
@@ -156,9 +158,12 @@ public class CompletionUtil {
     if(wordCompletionData != null) return new CompositeCompletionData(completionDataByElementInner, wordCompletionData);
     return completionDataByElementInner;
   }
+
   public static final CompletionData getCompletionDataByElementInner(PsiElement element, CompletionContext context){
     final PsiFile file = context.file;
-
+    if(context.file.getUserData(ENFORCE_COMPLETION_DATA_KEY) != null) {
+      return context.file.getUserData(ENFORCE_COMPLETION_DATA_KEY);
+    }
     final CompletionData completionDataByFileType = getCompletionDataByFileType(file.getFileType());
     if (completionDataByFileType != null) return completionDataByFileType;
 
