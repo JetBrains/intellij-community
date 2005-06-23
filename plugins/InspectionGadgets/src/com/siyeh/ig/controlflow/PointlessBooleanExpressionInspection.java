@@ -50,7 +50,8 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
         }
     }
 
-    private static @Nullable String calculateSimplifiedBinaryExpression(PsiBinaryExpression expression){
+    @Nullable
+    private static String calculateSimplifiedBinaryExpression(PsiBinaryExpression expression){
         final PsiJavaToken sign = expression.getOperationSign();
         final PsiExpression lhs = expression.getLOperand();
 
@@ -282,7 +283,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
         final Boolean value =
                 (Boolean) ConstantExpressionUtil.computeCastTo(expression,
                                                                PsiType.BOOLEAN);
-        return value != null && (value);
+        return value != null && value;
     }
 
     private static boolean isFalse(PsiExpression expression){
@@ -292,6 +293,6 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
         final Boolean value =
                 (Boolean) ConstantExpressionUtil.computeCastTo(expression,
                                                                PsiType.BOOLEAN);
-        return value != null && !(value);
+        return value != null && !value;
     }
 }
