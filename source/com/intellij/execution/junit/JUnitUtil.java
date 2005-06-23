@@ -144,7 +144,7 @@ public class JUnitUtil {
 
   private static PsiClass getTestCaseClass(final GlobalSearchScope scope, final Project project) throws NoJUnitException {
     final PsiClass testCaseClass = PsiManager.getInstance(project).findClass(TESTCASE_CLASS, scope); // TODO do not search in sources;
-    if (testCaseClass == null) throw new NoJUnitException();
+    if (testCaseClass == null) throw new NoJUnitException(scope.getDisplayName());
     return testCaseClass;
   }
 
@@ -162,11 +162,14 @@ public class JUnitUtil {
 
   public static PsiClass findPsiClass(final String qualifiedName, final Module module, final Project project, final boolean searchInLibs) {
     final GlobalSearchScope scope;
-    if (module != null)
+    if (module != null) {
       scope = searchInLibs
               ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
               : GlobalSearchScope.moduleWithDependenciesScope(module);
-    else scope = searchInLibs ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
+    }
+    else {
+      scope = searchInLibs ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
+    }
     return PsiManager.getInstance(project).findClass(qualifiedName, scope);
   }
 
@@ -291,6 +294,10 @@ public class JUnitUtil {
   public static class NoJUnitException extends CantRunException {
     public NoJUnitException() {
       super("No junit.jar");
+    }
+
+    public NoJUnitException(final String message) {
+      super("No junit.jar: " + message);
     }
   }
 }
