@@ -7,9 +7,7 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.util.*;
 
@@ -254,7 +252,7 @@ public class PathManager {
     File propFile = new File(propFilePath);
     if (propFile.exists()) {
       try {
-        final FileInputStream fis = new FileInputStream(propFile);
+        final InputStream fis = new BufferedInputStream(new FileInputStream(propFile));
         final PropertyResourceBundle bundle = new PropertyResourceBundle(fis);
         fis.close();
         final Enumeration keys = bundle.getKeys();

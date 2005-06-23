@@ -72,7 +72,7 @@ public class JDOMUtil {
 
   public static Document loadDocument(File file) throws JDOMException, IOException {
     SAXBuilder saxBuilder = createBuilder();
-    return saxBuilder.build(new InputStreamReader(new FileInputStream(file), ENCODING));
+    return saxBuilder.build(new InputStreamReader(new BufferedInputStream(new FileInputStream(file)), ENCODING));
   }
 
   public static Document loadDocument(InputStream stream) throws JDOMException, IOException {

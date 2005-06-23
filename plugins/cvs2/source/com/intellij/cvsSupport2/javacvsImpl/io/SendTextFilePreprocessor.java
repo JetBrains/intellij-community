@@ -1,16 +1,12 @@
 package com.intellij.cvsSupport2.javacvsImpl.io;
 
+import com.intellij.util.text.LineReader;
 import org.netbeans.lib.cvsclient.file.ISendTextFilePreprocessor;
 import org.netbeans.lib.cvsclient.file.IWriterFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.Collection;
 import java.util.Iterator;
-
-import com.intellij.util.text.LineReader;
 
 /**
  * author: lesya
@@ -18,7 +14,7 @@ import com.intellij.util.text.LineReader;
 public class SendTextFilePreprocessor implements ISendTextFilePreprocessor {
   public File getPreprocessedTextFile(File originalTextFile, IWriterFactory writerFactory) throws IOException {
     final File preprocessedTextFile = File.createTempFile("send", null);
-    Collection lines = new LineReader().readLines(new FileInputStream(originalTextFile));
+    Collection lines = new LineReader().readLines(new BufferedInputStream(new FileInputStream(originalTextFile)));
 
     FileOutputStream output = new FileOutputStream(preprocessedTextFile);
 

@@ -14,20 +14,21 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.util.ProfilingUtil;
-import junit.framework.*;
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestResult;
+import junit.framework.TestSuite;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.StringTokenizer;
 
 public class TestAll implements Test {
 
@@ -326,38 +327,6 @@ public class TestAll implements Test {
 
   private static String [] getClassRoots() {
     return System.getProperty("java.class.path").split(File.pathSeparator);
-  }
-
-  private static String[] getClassRootsByStas() {
-    String classpathFileName = System.getProperty("idea.test.classpath");
-    if (classpathFileName == null) {
-      throw new IllegalArgumentException("System property 'idea.test.classpath' should be point to file with classpath.");
-    }
-
-    List<String> classRoots = new ArrayList<String>();
-    try {
-      FileInputStream fis = new FileInputStream(classpathFileName);
-      ByteArrayOutputStream baos = new ByteArrayOutputStream(fis.available());
-      FileUtil.copy(fis, baos);
-      fis.close();
-
-      StringTokenizer tokenizer = new StringTokenizer(baos.toString(), System.getProperty("line.separator"), false);
-      while (tokenizer.hasMoreTokens()) {
-        String path = tokenizer.nextToken();
-        // skip jars
-        if (!path.endsWith(".jar")) {
-          classRoots.add(path);
-        }
-      }
-
-      return classRoots.toArray(new String [0]);
-    }
-    catch (FileNotFoundException e) {
-      throw new IllegalArgumentException("File " + classpathFileName + " is not exists.");
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public TestAll(String packageRoot) throws Throwable {
