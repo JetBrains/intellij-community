@@ -12,9 +12,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.impl.cache.CacheManager;
+import com.intellij.psi.search.UsageSearchContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,14 +52,14 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     };
     myPsiManager.setAssertOnFileLoadingFilter(javaFilesFilter); // check repository work
 
-    HighlightInfo[] infos = doHighlighting();
+    Collection<HighlightInfo> infos = doHighlighting();
 
     myPsiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
     data.checkResult(infos, myEditor.getDocument().getText());
   }
 
-  protected HighlightInfo[] doHighlighting() {
+  protected Collection<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     Document document = myEditor.getDocument();
@@ -79,7 +78,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     for (HighlightInfo aHighlights2 : highlights2) {
       list.add(aHighlights2);
     }
-    return list.toArray(new HighlightInfo[list.size()]);
+    return list;
   }
 
 }

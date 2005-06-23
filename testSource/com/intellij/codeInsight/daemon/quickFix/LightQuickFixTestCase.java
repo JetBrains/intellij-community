@@ -9,13 +9,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.xml.XmlFile;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -106,31 +106,32 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   protected List<IntentionAction> getAvailableActions() {
-    final HighlightInfo[] infos = doHighlighting();
+    final Collection<HighlightInfo> infos = doHighlighting();
     return getAvailableActions(infos, getEditor(), getFile());
   }
 
-  public static List<IntentionAction> getAvailableActions(final HighlightInfo[] infos, final Editor editor, final PsiFile file) {
+  public static List<IntentionAction> getAvailableActions(final Collection<HighlightInfo> infos, final Editor editor, final PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
     final List<IntentionAction> availableActions = new ArrayList<IntentionAction>();
-    for (int i = 0; infos != null && i < infos.length; i++) {
-      HighlightInfo info = infos[i];
-      final int startOffset = info.fixStartOffset;
-      final int endOffset = info.fixEndOffset;
-      if (startOffset <= offset && offset <= endOffset
-          && info.quickFixActionRanges != null
-      ) {
-        for (int j = 0; j < info.quickFixActionRanges.size(); j++) {
-          Pair<Pair<IntentionAction, List<IntentionAction>>,TextRange> pair = info.quickFixActionRanges.get(j);
-          IntentionAction action = pair.first.first;
-          TextRange range = pair.second;
-          if (range.getStartOffset() <= offset && offset <= range.getEndOffset() &&
-              action.isAvailable(getProject(), editor, file)) {
-            availableActions.add(action);
-            if (pair.first.second != null){
-              for (IntentionAction intentionAction : pair.first.second) {
-                if (intentionAction.isAvailable(getProject(), editor, file)){
-                  availableActions.add(intentionAction);
+    if (infos != null) {
+      for (HighlightInfo info :infos) {
+        final int startOffset = info.fixStartOffset;
+        final int endOffset = info.fixEndOffset;
+        if (startOffset <= offset && offset <= endOffset
+            && info.quickFixActionRanges != null
+        ) {
+          for (int j = 0; j < info.quickFixActionRanges.size(); j++) {
+            Pair<Pair<IntentionAction, List<IntentionAction>>,TextRange> pair = info.quickFixActionRanges.get(j);
+            IntentionAction action = pair.first.first;
+            TextRange range = pair.second;
+            if (range.getStartOffset() <= offset && offset <= range.getEndOffset() &&
+                action.isAvailable(getProject(), editor, file)) {
+              availableActions.add(action);
+              if (pair.first.second != null){
+                for (IntentionAction intentionAction : pair.first.second) {
+                  if (intentionAction.isAvailable(getProject(), editor, file)){
+                    availableActions.add(intentionAction);
+                  }
                 }
               }
             }

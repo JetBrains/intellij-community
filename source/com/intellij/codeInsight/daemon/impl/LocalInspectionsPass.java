@@ -33,10 +33,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
@@ -147,7 +144,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   }
 
   //for tests only
-  public HighlightInfo[] getHighlights() {
+  public Collection<HighlightInfo> getHighlights() {
     ArrayList<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
     for (int i = 0; i < myDescriptors.size(); i++) {
       ProblemDescriptor problemDescriptor = myDescriptors.get(i);
@@ -173,7 +170,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
         QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(tool.getDisplayName(), options), options);
       }
     }
-    return highlights.toArray(new HighlightInfo[highlights.size()]);
+    return highlights;
   }
 
   private void appendDescriptors(ProblemDescriptor[] problemDescriptors, LocalInspectionTool tool) {
@@ -182,7 +179,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     if (problemDescriptors != null) {
       boolean isError = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getErrorLevel(
         HighlightDisplayKey.find(tool.getShortName())) ==
-                        HighlightDisplayLevel.ERROR;
+                                                       HighlightDisplayLevel.ERROR;
       for (ProblemDescriptor problemDescriptor : problemDescriptors) {
         if (!InspectionManagerEx.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool.getID())) {
           myDescriptors.add(problemDescriptor);

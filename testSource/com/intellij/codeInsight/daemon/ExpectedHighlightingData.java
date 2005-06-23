@@ -10,11 +10,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import junit.framework.Assert;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -40,7 +41,7 @@ class ExpectedHighlightingData {
       this.marker = marker;
       this.endOfLine = endOfLine;
       this.enabled = enabled;
-      infos = new com.intellij.util.containers.HashSet<HighlightInfo>();
+      infos = new THashSet<HighlightInfo>();
       this.defaultErrorType = defaultErrorType;
       this.severity = severity;
     }
@@ -48,7 +49,7 @@ class ExpectedHighlightingData {
   Map<String,ExpectedHighlightingSet> highlightingTypes;
 
   public ExpectedHighlightingData(Document document,boolean checkWarnings, boolean checkInfos) {
-    highlightingTypes = new com.intellij.util.containers.HashMap<String,ExpectedHighlightingSet>();
+    highlightingTypes = new THashMap<String,ExpectedHighlightingSet>();
     highlightingTypes.put(ERROR_MARKER, new ExpectedHighlightingSet(ERROR_MARKER, HighlightInfoType.ERROR, HighlightSeverity.ERROR, false, true));
     highlightingTypes.put(WARNING_MARKER, new ExpectedHighlightingSet(WARNING_MARKER, HighlightInfoType.UNUSED_SYMBOL, HighlightSeverity.WARNING, false, checkWarnings));
     highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(INFO_MARKER, HighlightInfoType.TODO, HighlightSeverity.INFORMATION, false, checkInfos));
@@ -64,9 +65,8 @@ class ExpectedHighlightingData {
     String text = document.getText();
 
     String typesRegex = "";
-    for (Iterator<String> iterator = highlightingTypes.keySet().iterator(); iterator.hasNext();) {
-      String marker = iterator.next();
-      typesRegex += (typesRegex.length()==0 ? "" : "|") + "(?:"+marker+")";
+    for (String marker : highlightingTypes.keySet()) {
+      typesRegex += (typesRegex.length() == 0 ? "" : "|") + "(?:" + marker + ")";
     }
 
     // er...
@@ -118,8 +118,7 @@ class ExpectedHighlightingData {
 
         if (typeString != null) {
           Field[] fields = HighlightInfoType.class.getFields();
-          for (int i = 0; i < fields.length; i++) {
-            Field field = fields[i];
+          for (Field field : fields) {
             try {
               if (field.getName().equals(typeString)) type = (HighlightInfoType)field.get(null);
             }
@@ -141,9 +140,8 @@ class ExpectedHighlightingData {
     }
   }
 
-  void checkResult(HighlightInfo[] infos, String text) {
-    for (int i = 0; i < infos.length; i++) {
-      HighlightInfo info = infos[i];
+  void checkResult(Collection<HighlightInfo> infos, String text) {
+    for (HighlightInfo info : infos) {
       if (!expectedInfosContainsInfo(this, info)) {
         final int startOffset = info.startOffset;
         final int endOffset = info.endOffset;
@@ -156,23 +154,19 @@ class ExpectedHighlightingData {
         int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
 
         Assert.assertTrue("Extra text fragment highlighted " +
-            "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
-            "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
-            " :'" +
-            s +
-            "'" + (desc == null ? "" : " (" + desc + ")")
-            + " ["+info.type+"]",
-            false);
+                          "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
+                          "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
+                          " :'" +
+                          s +
+                          "'" + (desc == null ? "" : " (" + desc + ")")
+                          + " [" + info.type + "]",
+                          false);
       }
     }
     final Collection<ExpectedHighlightingSet> expectedHighlights = highlightingTypes.values();
-    for (Iterator<ExpectedHighlightingSet> iterator = expectedHighlights.iterator();
-         iterator.hasNext();) {
-      ExpectedHighlightingSet highlightingSet = iterator.next();
-
+    for (ExpectedHighlightingSet highlightingSet : expectedHighlights) {
       final Set<HighlightInfo> expInfos = highlightingSet.infos;
-      for (Iterator<HighlightInfo> iterator1 = expInfos.iterator(); iterator1.hasNext();) {
-        HighlightInfo expectedInfo = iterator1.next();
+      for (HighlightInfo expectedInfo : expInfos) {
         if (!infosContainsExpectedInfo(infos, expectedInfo) && highlightingSet.enabled) {
           final int startOffset = expectedInfo.startOffset;
           final int endOffset = expectedInfo.endOffset;
@@ -185,21 +179,20 @@ class ExpectedHighlightingData {
           int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
 
           Assert.assertTrue("Text fragment was not highlighted " +
-                     "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
-                     "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
-                     " :'" +
-                     s +
-                     "'" + (desc == null ? "" : " (" + desc + ")"),
-                     false);
+                            "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
+                            "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
+                            " :'" +
+                            s +
+                            "'" + (desc == null ? "" : " (" + desc + ")"),
+                            false);
         }
       }
     }
 
   }
 
-  private static boolean infosContainsExpectedInfo(HighlightInfo[] infos, HighlightInfo expectedInfo) {
-    for (int i = 0; i < infos.length; i++) {
-      HighlightInfo info = infos[i];
+  private static boolean infosContainsExpectedInfo(Collection<HighlightInfo> infos, HighlightInfo expectedInfo) {
+    for (HighlightInfo info : infos) {
       if (infoEquals(expectedInfo, info)) {
         return true;
       }
@@ -209,12 +202,10 @@ class ExpectedHighlightingData {
 
   private static boolean expectedInfosContainsInfo(ExpectedHighlightingData expectedHighlightsSet, HighlightInfo info) {
     final Collection<ExpectedHighlightingSet> expectedHighlights = expectedHighlightsSet.highlightingTypes.values();
-    for (Iterator<ExpectedHighlightingSet> iterator = expectedHighlights.iterator(); iterator.hasNext();) {
-      ExpectedHighlightingSet highlightingSet = iterator.next();
+    for (ExpectedHighlightingSet highlightingSet : expectedHighlights) {
       if (highlightingSet.severity == info.getSeverity() && !highlightingSet.enabled) return true;
       final Set<HighlightInfo> infos = highlightingSet.infos;
-      for (Iterator<HighlightInfo> iterator1 = infos.iterator(); iterator1.hasNext();) {
-        HighlightInfo expectedInfo = iterator1.next();
+      for (HighlightInfo expectedInfo : infos) {
         if (infoEquals(expectedInfo, info)) {
           return true;
         }
@@ -233,7 +224,7 @@ class ExpectedHighlightingData {
       (expectedInfo.type == null || info.type == expectedInfo.type) &&
 
       (Comparing.strEqual("*",expectedInfo.description) ? true :
-      expectedInfo.description == null || info.description == null ? info.description == expectedInfo.description :
-        Comparing.strEqual(info.description,expectedInfo.description));
+                                                        expectedInfo.description == null || info.description == null ? info.description == expectedInfo.description :
+                                                          Comparing.strEqual(info.description,expectedInfo.description));
   }
 }

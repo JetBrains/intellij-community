@@ -29,7 +29,7 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.j2ee.j2eeDom;
+package com.intellij.psi.util;
 
 import com.intellij.psi.PsiDirectory;
 

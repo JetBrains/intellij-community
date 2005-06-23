@@ -366,46 +366,6 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
-  public static HighlightInfo checkNullableStuff(PsiMethod method, List<MethodSignatureBackedByPsiMethod> superMethodSignatures) {
-    boolean isDeclaredNotNull = AnnotationUtil.isAnnotated(method, AnnotationUtil.NOT_NULL, false);
-    boolean isDeclaredNullable = AnnotationUtil.isAnnotated(method, AnnotationUtil.NULLABLE, false);
-    if (isDeclaredNullable && isDeclaredNotNull) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, method.getNameIdentifier(),
-                                               "Cannot annotate with both @Nullable and @NotNull");
-    }
-
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-
-    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
-      PsiMethod superMethod = superMethodSignature.getMethod();
-      if (isDeclaredNullable && AnnotationUtil.isNotNull(superMethod)) {
-        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, method.getNameIdentifier(),
-                                                 "Method annotated with @Nullable must not override @NotNull method");
-      }
-      if (!isDeclaredNullable && !isDeclaredNotNull && AnnotationUtil.isNotNull(superMethod)) {
-        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, method.getNameIdentifier(),
-                                                               "Not annotated method overrides method annotated with @NotNull");
-        QuickFixAction.registerQuickFixAction(info, new AddAnnotationAction(AnnotationUtil.NOT_NULL, method), null);
-        return info;
-      }
-      PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
-      if (superParameters.length != parameters.length) {
-        continue;
-      }
-      for (int i = 0; i < parameters.length; i++) {
-        PsiParameter parameter = parameters[i];
-        PsiParameter superParameter = superParameters[i];
-        if (AnnotationUtil.isAnnotated(parameter, AnnotationUtil.NOT_NULL, false) && AnnotationUtil.isAnnotated(superParameter,
-                                                                                                                AnnotationUtil.NULLABLE,
-                                                                                                                false)) {
-          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameter.getNameIdentifier(),
-                                                   "Parameter annotated @NonNull must not override @Nullable parameter");
-        }
-      }
-    }
-
-    return null;
-  }
 
 
 }

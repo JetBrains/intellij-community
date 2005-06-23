@@ -38,7 +38,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     };
     ((PsiManagerImpl) getPsiManager()).setAssertOnFileLoadingFilter(javaFilesFilter); // check repository work
 
-    HighlightInfo[] infos = doHighlighting();
+    Collection<HighlightInfo> infos = doHighlighting();
 
     ((PsiManagerImpl) getPsiManager()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
@@ -46,7 +46,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
   }
 
 
-  protected HighlightInfo[] doHighlighting() {
+  protected Collection<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     Document document = getEditor().getDocument();
@@ -60,6 +60,6 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
 
     HashSet<HighlightInfo> result = new HashSet<HighlightInfo>(highlights1);
     result.addAll(highlights2);
-    return result.toArray(new HighlightInfo[result.size()]);
+    return result;
   }
 }

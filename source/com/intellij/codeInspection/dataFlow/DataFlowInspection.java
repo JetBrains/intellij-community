@@ -11,7 +11,6 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
-import com.intellij.codeInsight.intention.impl.AddAnnotationAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -19,11 +18,9 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.ex.AddAssertStatementFix;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
-import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -244,7 +241,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         descriptions.add(manager.createProblemDescriptor(statement.getReturnValue(),
                                                          "Expression <code>#ref</code> probably evaluates to null and is being " +
                                                          "returned by the method which isn't declared as @Nullable",
-                                                         new AnnotateAsNullableFix(),
+                                                         new AnnotateMethodFix(AnnotationUtil.NULLABLE),
                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
 
       }
@@ -306,40 +303,6 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
     public String getFamilyName() {
       return getName();
-    }
-  }
-
-  private static class AnnotateAsNullableFix implements LocalQuickFix {
-    public String getName() {
-      return "Annotate method as @Nullable";
-    }
-
-    public void applyFix(Project project, ProblemDescriptor descriptor) {
-      final PsiElement psiElement = descriptor.getPsiElement();
-      if (psiElement instanceof PsiExpression) {
-        PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
-        PsiMethod superMethod = SuperMethodWarningUtil.checkSuperMethod(method, "annotate");
-        if (superMethod == null) return;
-
-        if (superMethod != method) {
-          annotateMethod(superMethod);
-        }
-
-        annotateMethod(method);
-      }
-    }
-
-    public String getFamilyName() {
-      return getName();
-    }
-
-    private static void annotateMethod(final PsiMethod method) {
-      try {
-        new AddAnnotationAction(AnnotationUtil.NULLABLE, method).invoke(method.getProject(), null, method.getContainingFile());
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
     }
   }
 

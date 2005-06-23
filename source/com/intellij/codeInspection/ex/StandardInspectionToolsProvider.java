@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.codeInspection.dependencyViolation.DependencyViolationInspection;
@@ -53,6 +54,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider, 
 
       DependencyViolationInspection.class,
       FieldCanBeLocalInspection.class,
+      NullableStuffInspection.class,
 
       DuplicateStringLiteralInspection.class,
       };
