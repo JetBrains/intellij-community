@@ -143,7 +143,7 @@ public class PrepareToDeployAction extends AnAction {
     final Manifest manifest = new Manifest();
 
     if (pluginModuleBuildProperties.isUseUserManifest() && pluginModuleBuildProperties.getManifestPath() != null) {
-      FileInputStream in = new FileInputStream(new File(pluginModuleBuildProperties.getManifestPath()));
+      InputStream in = new BufferedInputStream(new FileInputStream(new File(pluginModuleBuildProperties.getManifestPath())));
       manifest.read(in);
       in.close();
     } else {
