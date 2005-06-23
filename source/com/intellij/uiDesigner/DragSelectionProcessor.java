@@ -193,7 +193,7 @@ public final class DragSelectionProcessor extends EventProcessor{
       c.getConstraints().restore(myOriginalConstraints[i]);
       c.setBounds(myOriginalBounds[i]);
       final RadContainer originalParent = myOriginalParents[i];
-      if (c.getParent() == originalParent) {
+      if (c.getParent() != originalParent) {
         originalParent.addComponent(c);
       }
     }
