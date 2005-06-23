@@ -72,7 +72,7 @@ public class PrepareToDeployAction extends AnAction {
             FileUtil.delete(new File(defaultPath + ".jar"));
           }
         }
-        final ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile));
+        final ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
         ZipUtil.addFileToZip(zos, jarFile, "/" + name + "/lib/" + name + ".jar", new HashSet<String>(), new FileFilter() {
           public boolean accept(File pathname) {
             return true;
@@ -90,7 +90,7 @@ public class PrepareToDeployAction extends AnAction {
             File ioFile = VfsUtil.virtualToIoFile(virtualFile);
             if (!(virtualFile.getFileSystem() instanceof JarFileSystem)) {
               if (jar == null) {
-                jar = new JarOutputStream(new FileOutputStream(libraryJar));
+                jar = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(libraryJar)));
               }
               ZipUtil.addFileOrDirRecursively(jar, libraryJar, VfsUtil.virtualToIoFile(virtualFile), "", new FileFilter() {
                 public boolean accept(File pathname) {
@@ -150,7 +150,7 @@ public class PrepareToDeployAction extends AnAction {
       Attributes mainAttributes = manifest.getMainAttributes();
       ManifestBuilder.setGlobalAttributes(mainAttributes);
     }
-    ZipOutputStream jarPlugin = new JarOutputStream(new FileOutputStream(jarFile), manifest);
+    ZipOutputStream jarPlugin = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)), manifest);
 
     final HashSet<String> writtenItemRelativePaths = new HashSet<String>();
     for (Module module1 : modules) {
