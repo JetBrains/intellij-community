@@ -51,7 +51,7 @@ public class CvsFileUtil {
     if (!file.canWrite()) {
       new FileReadOnlyHandler().setFileReadOnly(file, false);
     }
-    writer = new PrintStream(new FileOutputStream(file));
+    writer = new PrintStream(new BufferedOutputStream(new FileOutputStream(file)));
 
     try {
       for (Iterator each = lines.iterator(); each.hasNext();) {

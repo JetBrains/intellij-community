@@ -15,17 +15,14 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.ui.Messages;
 import gnu.trove.THashSet;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.FileFilter;
-import java.util.Set;
+import java.io.*;
 import java.util.Collection;
+import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
@@ -102,8 +99,8 @@ public class BuildJarAction extends AnAction {
     // write temp file and rename it to the jar to avoid deployment of incomplete jar. SCR #30303
     final File tempFile = File.createTempFile("_"+ FileUtil.getNameWithoutExtension(jarFile), ".jar", jarFile.getParentFile());
     final JarOutputStream jarOutputStream = manifest == null ?
-                                            new JarOutputStream(new FileOutputStream(tempFile)) :
-                                            new JarOutputStream(new FileOutputStream(tempFile), manifest);
+                                            new JarOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile))) :
+                                            new JarOutputStream(new BufferedOutputStream(new FileOutputStream(tempFile)), manifest);
 
     final Set<String> tempWrittenRelativePaths = new THashSet<String>();
     final BuildRecipeImpl dependencies = new BuildRecipeImpl();

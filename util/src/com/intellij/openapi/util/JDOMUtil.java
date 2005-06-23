@@ -5,12 +5,14 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TIntObjectHashMap;
-import org.jdom.*;
+import org.jdom.Attribute;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
-import org.jdom.output.XMLOutputter;
 import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -19,7 +21,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author mike
@@ -27,6 +28,7 @@ import java.util.Map;
 public class JDOMUtil {
   //Logger is lasy-initialized in order not to use it outside the appClassLoader
   private static Logger ourLogger = null;
+  private static SAXBuilder ourSaxBuilder = null;
 
   private static Logger getLogger() {
     if (ourLogger == null) ourLogger = Logger.getInstance("#com.intellij.openapi.util.JDOMUtil");
@@ -89,15 +91,17 @@ public class JDOMUtil {
   }
 
   private static SAXBuilder createBuilder() {
-    final SAXBuilder saxBuilder = new SAXBuilder();
-    saxBuilder.setEntityResolver(new EntityResolver() {
-      public InputSource resolveEntity(String publicId,
-                                       String systemId)
-        throws SAXException, IOException {
-        return new InputSource(new CharArrayReader(new char[0]));
-      }
-    });
-    return saxBuilder;
+    if (ourSaxBuilder == null) {
+      ourSaxBuilder = new SAXBuilder();
+      ourSaxBuilder.setEntityResolver(new EntityResolver() {
+        public InputSource resolveEntity(String publicId,
+                                         String systemId)
+          throws SAXException, IOException {
+          return new InputSource(new CharArrayReader(new char[0]));
+        }
+      });
+    }
+    return ourSaxBuilder;
   }
 
   public static void writeDocument(Document document, File file, String lineSeparator) throws IOException {
@@ -159,7 +163,7 @@ public class JDOMUtil {
   public static String escapeText(String text) {
     return escapeText(text, false);
   }
-  
+
   private static String escapeText(String text, boolean escapeLineEnds) {
     StringBuffer buffer = null;
     for (int i = 0; i < text.length(); i++) {

@@ -27,6 +27,7 @@ import java.util.Iterator;
  */
 final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvider{
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.CutCopyPasteSupport");
+  private static final SAXBuilder SAX_BUILDER = new SAXBuilder();
 
   private static String myRecentyCopiedString;
   private static int myRecentyCopiedStringCount;
@@ -97,7 +98,7 @@ final class CutCopyPasteSupport implements CopyProvider, CutProvider, PasteProvi
     final TIntArrayList ys = new TIntArrayList();
       
     try {
-      final org.jdom.Document document = new SAXBuilder().build(new StringReader(serializedComponents), "UTF-8");
+      final org.jdom.Document document = SAX_BUILDER.build(new StringReader(serializedComponents), "UTF-8");
 
       final Element rootElement = document.getRootElement();
       if (!rootElement.getName().equals("serialized")) {

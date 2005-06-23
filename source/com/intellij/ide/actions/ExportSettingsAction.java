@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -26,8 +27,8 @@ public class ExportSettingsAction extends AnAction {
     Map<File,Set<ExportableApplicationComponent>> fileToComponents = getRegisteredComponentsAndFiles(exportableComponents);
 
     final ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(exportableComponents, fileToComponents, true,
-                                                                     "Select Components to Export",
-                                                                     "Please check all components to export:");
+                                                                                     "Select Components to Export",
+                                                                                     "Please check all components to export:");
     dialog.show();
     if (!dialog.isOK()) return;
     Set<ExportableApplicationComponent> markedComponents = dialog.getExportableComponents();
@@ -48,7 +49,7 @@ public class ExportSettingsAction extends AnAction {
                                                     "File Already Exists", Messages.getWarningIcon());
         if (ret != 0) return;
       }
-      final JarOutputStream output = new JarOutputStream(new FileOutputStream(saveFile));
+      final JarOutputStream output = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(saveFile)));
       final File configPath = new File(PathManager.getConfigPath());
       final HashSet<String> writtenItemRelativePaths = new HashSet<String>();
       for (Iterator<File> iterator = exportFiles.iterator(); iterator.hasNext();) {

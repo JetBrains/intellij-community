@@ -28,10 +28,10 @@ public class ReceiveTextFilePreprocessor implements IReceiveTextFilePreprocessor
   public void copyTextFileToLocation(File textFileSource, File targetFile, IReaderFactory readerFactory) throws IOException {
     VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(targetFile);
     if (myReceivedFileProcessor.shouldProcess(virtualFile, targetFile)) {
-      PrintStream target = new PrintStream(new FileOutputStream(targetFile));
+      PrintStream target = new PrintStream(new BufferedOutputStream(new FileOutputStream(targetFile)));
       try {
         String lineSeparator = getLineSeparatorFor(targetFile);
-        Collection lines = new LineReader().readLines(new FileInputStream(textFileSource));
+        Collection lines = new LineReader().readLines(new BufferedInputStream(new FileInputStream(textFileSource)));
         for (Iterator each = lines.iterator(); each.hasNext();) {
           target.write((byte[])each.next());
           if (each.hasNext()) target.print(lineSeparator);

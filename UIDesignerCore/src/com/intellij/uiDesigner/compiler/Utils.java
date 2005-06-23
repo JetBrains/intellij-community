@@ -25,6 +25,7 @@ import java.lang.reflect.Member;
 public final class Utils {
   public static final String FORM_NAMESPACE = "http://www.intellij.com/uidesigner/form/";
   private static final SAXParser SAX_PARSER = createParser();
+  private static final SAXBuilder SAX_BUILDER = new SAXBuilder();
 
   private static SAXParser createParser() {
     try {
@@ -43,7 +44,7 @@ public final class Utils {
       throw new AlienFormFileException();
     }
 
-    final org.jdom.Document document = new SAXBuilder().build(new StringReader(formFileContent), "UTF-8");
+    final org.jdom.Document document = SAX_BUILDER.build(new StringReader(formFileContent), "UTF-8");
 
     final LwRootContainer root = new LwRootContainer();
     root.read(document.getRootElement(), provider);

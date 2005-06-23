@@ -1,12 +1,11 @@
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressStream;
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.xml.sax.SAXException;
 
@@ -169,7 +168,7 @@ public class RepositoryHelper {
     pi.setText("Downloading plugin '" + pluginNode.getName() + "'");
     File file = File.createTempFile("plugin", "download",
                                     new File (PathManagerEx.getPluginTempPath()));
-    FileOutputStream fos = new FileOutputStream(file, false);
+    OutputStream fos = new BufferedOutputStream(new FileOutputStream(file, false));
 
     int responseCode = connection.getResponseCode();
     switch (responseCode) {

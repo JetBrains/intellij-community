@@ -11,10 +11,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.io.ZipUtil;
 import gnu.trove.THashSet;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -145,8 +142,8 @@ public class J2EEModuleBuildInstructionImpl extends BuildInstructionBase impleme
     }
     FileUtil.createParentDirs(jarFile);
     final JarOutputStream jarOutputStream = manifest == null ?
-                                            new JarOutputStream(new FileOutputStream(jarFile)) :
-                                            new JarOutputStream(new FileOutputStream(jarFile), manifest);
+                                            new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile))) :
+                                            new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)), manifest);
 
     final Set<String> tempWrittenRelativePaths = new THashSet<String>();
     try {

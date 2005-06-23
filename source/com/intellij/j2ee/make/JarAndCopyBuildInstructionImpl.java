@@ -7,10 +7,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.ZipUtil;
 import gnu.trove.THashSet;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.jar.JarOutputStream;
@@ -80,7 +77,7 @@ public class JarAndCopyBuildInstructionImpl extends FileCopyInstructionImpl impl
       Manifest manifest = new Manifest();
       ManifestBuilder.setGlobalAttributes(manifest.getMainAttributes());
 
-      final JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(jarFile), manifest);
+      final JarOutputStream jarOutputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)), manifest);
       try {
         boolean ok = ZipUtil.addDirToZipRecursively(jarOutputStream, jarFile, getFile(), "", fileFilter, new THashSet<String>());
         if (!ok) {

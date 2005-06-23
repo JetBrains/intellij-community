@@ -189,7 +189,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
     fileDocumentManager.saveDocument(fileDocumentManager.getDocument(currentVirtualFile));
     File ioProjectFile = VfsUtil.virtualToIoFile(currentVirtualFile);
     try {
-      FileOutputStream outputStream = new FileOutputStream(ioProjectFile);
+      OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(ioProjectFile));
       try {
         FileUtil.copy(new ByteArrayInputStream(document.getText().getBytes(currentVirtualFile.getCharset().name())),
                       outputStream);

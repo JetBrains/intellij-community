@@ -23,14 +23,14 @@ import com.intellij.xml.util.XmlUtil;
 
 import javax.swing.*;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.List;
-import java.util.LinkedList;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.StringTokenizer;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author mike
@@ -296,8 +296,12 @@ public class FetchExtResourceAction extends BaseIntentionAction {
     File res = new File(resPath);
 
     FileOutputStream out = new FileOutputStream(res);
-    out.write(bytes);
-    out.close();
+    try {
+      out.write(bytes);
+    }
+    finally {
+      out.close();
+    }
     return resPath;
   }
 
