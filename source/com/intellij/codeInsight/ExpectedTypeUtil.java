@@ -2,6 +2,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 
 import java.util.*;
 
@@ -17,12 +18,11 @@ public class ExpectedTypeUtil {
     for (int i = 1; i < typeInfos.size(); i++) {
       ExpectedTypeInfo[] next = typeInfos.get(i);
       acc.clear();
-      for (int j = 0; j < next.length; j++) {
-        ExpectedTypeInfo info = next[j];
+      for (ExpectedTypeInfo info : next) {
         for (Iterator<ExpectedTypeInfo> iterator = result.iterator(); iterator.hasNext();) {
           ExpectedTypeInfo[] intersection = iterator.next().intersect(info);
-          for (int k = 0; k < intersection.length; k++) {
-            acc.addInfo(intersection[k]);
+          for (ExpectedTypeInfo aIntersection : intersection) {
+            acc.addInfo(aIntersection);
           }
         }
       }
@@ -117,8 +117,7 @@ public class ExpectedTypeUtil {
 
     public PsiField[] findDeclaredFields(final PsiManager manager, String name) {
       List<PsiField> fields = new ArrayList<PsiField>();
-      for (Iterator<PsiClass> iterator = myOccurrenceClasses.iterator(); iterator.hasNext();) {
-        PsiClass aClass = iterator.next();
+      for (PsiClass aClass : myOccurrenceClasses) {
         final PsiField field = aClass.findFieldByName(name, true);
         if (field != null) fields.add(field);
       }
@@ -127,12 +126,28 @@ public class ExpectedTypeUtil {
 
     public PsiMethod[] findDeclaredMethods(final PsiManager manager, String name) {
       List<PsiMethod> methods = new ArrayList<PsiMethod>();
-      for (Iterator<PsiClass> iterator = myOccurrenceClasses.iterator(); iterator.hasNext();) {
-        PsiClass aClass = iterator.next();
+      for (PsiClass aClass : myOccurrenceClasses) {
         final PsiMethod[] occMethod = aClass.findMethodsByName(name, true);
         methods.addAll(Arrays.asList(occMethod));
       }
       return methods.toArray(new PsiMethod[methods.size()]);
     }
   }
+
+  public static PsiSubstitutor inferSubstitutor(final PsiMethod method, final PsiMethodCallExpression callExpr, final boolean forCompletion) {
+    final PsiResolveHelper helper = method.getManager().getResolveHelper();
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    PsiExpression[] args = callExpr.getArgumentList().getExpressions();
+    PsiSubstitutor result = PsiSubstitutor.EMPTY;
+    final Iterator<PsiTypeParameter> iterator = PsiUtil.typeParametersIterator(method.getContainingClass());
+    while(iterator.hasNext()) {
+      final PsiTypeParameter typeParameter = iterator.next();
+      PsiType type = helper.inferTypeForMethodTypeParameter(typeParameter, parameters, args, PsiSubstitutor.EMPTY, callExpr.getParent(), forCompletion);
+      if (type == PsiType.NULL) return null;
+      result = result.put(typeParameter, type);
+    }
+
+    return result;
+  }
+
 }

@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -572,21 +573,45 @@ public class CreateFromUsageUtils {
   }
 
   private static void addMemberInfo(PsiMember[] members,
-                                    PsiElement place,
+                                    PsiExpression expression,
                                     List<ExpectedTypeInfo[]> types,
                                     PsiElementFactory factory) {
-    if (members.length > MAX_GUESSED_MEMBERS_COUNT) return;
+    final StatisticsManager statisticsManager = StatisticsManager.getInstance();
+    Arrays.sort(members, new Comparator<PsiMember>() {
+      public int compare(final PsiMember m1, final PsiMember m2) {
+        int result = statisticsManager.getMemberUseCount(null, m2, null) - statisticsManager.getMemberUseCount(null, m1, null);
+        if (result != 0) return result;
+        final PsiClass aClass = m1.getContainingClass();
+        final PsiClass bClass = m2.getContainingClass();
+        if (aClass == null || bClass == null) return 0;
+        return statisticsManager.getMemberUseCount(null, bClass, null) - statisticsManager.getMemberUseCount(null, aClass, null);
+      }
+    });
 
     List<ExpectedTypeInfo> l = new ArrayList<ExpectedTypeInfo>();
-    PsiManager manager = place.getManager();
+    PsiManager manager = expression.getManager();
     ExpectedTypesProvider provider = ExpectedTypesProvider.getInstance(manager.getProject());
-    for (PsiMember member : members) {
+    for (int i = 0; i < Math.min(MAX_GUESSED_MEMBERS_COUNT, members.length); i++) {
+      PsiMember member = members[i];
       PsiClass aClass = member.getContainingClass();
-      if (manager.getResolveHelper().isAccessible(aClass, place, null)) {
-        if (!(aClass instanceof PsiAnonymousClass)) {
-          PsiClassType type = factory.createType(aClass);
-          l.add(provider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE));
+      if (aClass instanceof PsiAnonymousClass) continue;
+
+      if (manager.getResolveHelper().isAccessible(aClass, expression, null)) {
+        PsiClassType type;
+        final PsiElement pparent = expression.getParent().getParent();
+        if (pparent instanceof PsiMethodCallExpression) {
+
+          PsiSubstitutor substitutor = ExpectedTypeUtil.inferSubstitutor(((PsiMethod)member), (PsiMethodCallExpression)pparent, false);
+          if (substitutor == null) {
+            type = factory.createType(aClass);
+          } else {
+            type = factory.createType(aClass, substitutor);
+          }
         }
+        else {
+          type = factory.createType(aClass);
+        }
+        l.add(provider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE));
       }
     }
 
