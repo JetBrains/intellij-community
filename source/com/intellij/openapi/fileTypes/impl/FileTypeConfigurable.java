@@ -27,6 +27,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Eugene Belyaev
@@ -144,13 +145,19 @@ public class FileTypeConfigurable extends BaseConfigurable implements Applicatio
   }
 
   private void updateExtensionList() {
-    myExtensions.clearList();
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
+    List<String> extensions = new ArrayList<String>();
     for (final String extension : myTempExtension2TypeMap.keySet()) {
       if (type.equals(myTempExtension2TypeMap.get(extension))) {
-        myExtensions.addExtension(extension);
+        extensions.add(extension);
       }
+    }
+
+    myExtensions.clearList();
+    Collections.sort(extensions);    
+    for (String extension : extensions) {
+      myExtensions.addExtension(extension);
     }
     myExtensions.ensureSelectionExists();
   }
