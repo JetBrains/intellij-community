@@ -849,6 +849,59 @@ public class StructuralReplaceTest extends IdeaTestCase {
       expectedResult7,
       actualResult
     );
+    
+    String s16 = "public class SSTest {\n" +
+                 "  Object lock;\n" +
+                 "  public Object getProducts (String[] productNames) {\n" +
+                 "    synchronized (lock) {\n" +
+                 "      Object o = new Object ();\n" +
+                 "      assert o != null;\n" +
+                 "      return o;\n" +
+                 "    }\n" +
+                 "  }\n" +
+                 "}";
+    String s16_2 = "public class SSTest {\n" +
+                   "  Object lock;\n" +
+                   "  public void getProducts (String[] productNames) {\n" +
+                   "    synchronized (lock) {\n" +
+                   "      boolean[] v = {true};\n" +
+                   "    }\n" +
+                   "  }\n" +
+                   "}";
+    
+    String s17 = "synchronized(lock) {\n" +
+                 "  'Statement*;\n" +
+                 "}";
+    
+    String s18 = "$Statement$;";
+    String expectedResult8 = "public class SSTest {\n" +
+                             "  Object lock;\n" +
+                             "  public Object getProducts (String[] productNames) {\n" +
+                             "      Object o = new Object ();\n" +
+                             "      assert o != null;\n" +
+                             "      return o;\n" +
+                             "  }\n" +
+                             "}";
+    String expectedResult8_2 = "public class SSTest {\n" +
+                               "  Object lock;\n" +
+                               "  public void getProducts (String[] productNames) {\n" +
+                               "      boolean[] v = {true};\n" +
+                               "  }\n" +
+                               "}";
+    
+    actualResult = replacer.testReplace(s16,s17,s18,options);
+    assertEquals(
+      "extra ;",
+      expectedResult8,
+      actualResult
+    );
+    
+    actualResult = replacer.testReplace(s16_2,s17,s18,options);
+    assertEquals(
+      "missed ;",
+      expectedResult8_2,
+      actualResult
+    );
   }
 
   public void testClassReplacement() {
