@@ -2192,6 +2192,7 @@
         <xs:extension base="form.content">
           <xs:attributeGroup ref="attrs"/>
           <xs:attribute name="action" use="required" type="URI"/>
+          <xs:attribute name="name" type="xs:NMTOKEN"/>
           <xs:attribute name="method" default="get">
             <xs:simpleType>
               <xs:restriction base="xs:token">
