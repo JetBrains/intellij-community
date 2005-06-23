@@ -1310,6 +1310,31 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
           if (result != 0) return result;
         }
       }
+      if (isAbbreviatePackageNames()){
+        if (o1 instanceof PsiDirectoryNode) {
+          final PsiDirectory aDirectory1 = ((PsiDirectoryNode)o1).getValue();
+          final PsiDirectory aDirectory2 = ((PsiDirectoryNode)o2).getValue();
+          if (aDirectory1 != null &&
+              aDirectory2 != null) {
+            final PsiPackage aPackage1 = aDirectory1.getPackage();
+            final PsiPackage aPackage2 = aDirectory2.getPackage();
+            if (aPackage1 != null && aPackage2 != null){
+              return aPackage1.getQualifiedName().compareToIgnoreCase(aPackage2.getQualifiedName());
+            }
+          }
+        } else if (o1 instanceof PackageElementNode) {
+          final PackageElement packageElement1 = ((PackageElementNode)o1).getValue();
+          final PackageElement packageElement2 = ((PackageElementNode)o2).getValue();
+          if (packageElement1 != null &&
+              packageElement2 != null){
+            final PsiPackage aPackage1 = packageElement1.getPackage();
+            final PsiPackage aPackage2 = packageElement2.getPackage();
+            if (aPackage1 != null && aPackage2 != null) {
+              return aPackage1.getQualifiedName().compareToIgnoreCase(aPackage2.getQualifiedName());
+            }
+          }
+        }
+      }
       return AlphaComparator.INSTANCE.compare(o1, o2);
     }
 
