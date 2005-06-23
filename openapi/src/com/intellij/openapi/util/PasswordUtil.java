@@ -33,4 +33,15 @@ public class PasswordUtil {
     }
     return result;
   }
+  public static String requestPassword(String prompt, String title, final String defaultValue) {
+    final PasswordPromptDialog dialog = new PasswordPromptDialog(prompt, title, defaultValue);
+    dialog.show();
+    if (dialog.isOK()) {
+      return dialog.getPassword();
+    } else {
+      return null;
+    }
+  }
+
+
 }

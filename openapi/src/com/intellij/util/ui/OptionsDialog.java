@@ -16,7 +16,11 @@ import java.awt.*;
 
 public abstract class OptionsDialog extends DialogWrapper {
 
-  private final JCheckBox myCheckBoxDoNotShowDialog = new JCheckBox("Do not show this dialog in the future");
+  private JCheckBox myCheckBoxDoNotShowDialog;
+
+  protected String getDoNotShowMessage() {
+    return "Do not show this dialog in the future";
+  }
 
   protected final Project myProject;
 
@@ -41,6 +45,9 @@ public abstract class OptionsDialog extends DialogWrapper {
   }
 
   protected JComponent createSouthPanel() {
+
+    myCheckBoxDoNotShowDialog = new JCheckBox(getDoNotShowMessage());
+
     JComponent southPanel = super.createSouthPanel();
 
     if (!canBeHidden()) {

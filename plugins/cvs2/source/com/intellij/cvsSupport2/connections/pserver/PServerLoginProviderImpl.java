@@ -4,7 +4,7 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.cvsSupport2.javacvsImpl.io.StreamLogger;
-import com.intellij.cvsSupport2.ui.PasswordPromptDialog;
+import com.intellij.openapi.util.PasswordPromptDialog;
 import com.intellij.cvsSupport2.util.CvsFileUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +31,7 @@ public class PServerLoginProviderImpl extends PServerLoginProvider {
   }
 
   private String requestForPassword(String cvsroot) {
-    PasswordPromptDialog passwordDialog = new PasswordPromptDialog("Enter password for " + cvsroot);
+    PasswordPromptDialog passwordDialog = new PasswordPromptDialog("Enter password for " + cvsroot, "CVS Login", null);
     passwordDialog.show();
     if (!passwordDialog.isOK()) return null;
     return PServerPasswordScrambler.getInstance().scramble(passwordDialog.getPassword());
