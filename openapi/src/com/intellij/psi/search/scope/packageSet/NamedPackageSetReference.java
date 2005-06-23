@@ -10,7 +10,7 @@ public class NamedPackageSetReference implements PackageSet {
   private String myName;
 
   public NamedPackageSetReference(String name) {
-    myName = name;
+    myName = name.startsWith("$") ? name.substring(1) : name;
   }
 
   public boolean contains(PsiFile file, NamedScopesHolder holder) {
