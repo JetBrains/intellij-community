@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -327,7 +328,7 @@ public class PsiBuilderImpl implements PsiBuilder {
     lastIdx = Math.min(lastIdx, myLexems.size());
     while (curToken < lastIdx) {
       Token lexem = myLexems.get(curToken++);
-      final LeafPsiElement childNode = createLeaf(lexem);
+      final LeafElement childNode = createLeaf(lexem);
       if (childNode != null) {
         TreeUtil.addChildren((CompositeElement)curNode, childNode);
       }
@@ -336,7 +337,7 @@ public class PsiBuilderImpl implements PsiBuilder {
   }
 
   @Nullable
-  private LeafPsiElement createLeaf(final Token lexem) {
+  private LeafElement createLeaf(final Token lexem) {
     if (lexem.myTokenStart == lexem.myTokenEnd) return null; // Empty token. Most probably a parser directive like indent/dedent in phyton
     final IElementType type = lexem.getTokenType();
     if (myWhitespaces.isInSet(type)) {
@@ -344,6 +345,9 @@ public class PsiBuilderImpl implements PsiBuilder {
     }
     else if (myComments.isInSet(type)) {
       return new PsiCommentImpl(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
+    }
+    else if (type instanceof IChameleonElementType) {
+      return new ChameleonElement(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState);
     }
     return new LeafPsiElement(type, myLexer.getBuffer(), lexem.myTokenStart, lexem.myTokenEnd, lexem.myState, myCharTable);
   }
