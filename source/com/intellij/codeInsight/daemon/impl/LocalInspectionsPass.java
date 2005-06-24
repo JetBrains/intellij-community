@@ -212,6 +212,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       LocalInspectionTool tool = myTools.get(i);
       //TODO
       PsiElement psiElement = descriptor.getPsiElement();
+      if (psiElement == null) continue;
       String message = renderDescriptionMessage(descriptor);
       final HighlightInfoType level = myLevels.get(i);
 
