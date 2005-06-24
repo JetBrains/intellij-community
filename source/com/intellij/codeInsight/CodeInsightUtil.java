@@ -70,6 +70,7 @@ public class CodeInsightUtil {
       }
       if (parent instanceof PsiCodeBlock) break;
       if (parent instanceof JspFile) break;
+      if (parent instanceof PsiCodeFragment) break;
       if (parent instanceof PsiFile) return null;
       parent = parent.getParent();
     }
