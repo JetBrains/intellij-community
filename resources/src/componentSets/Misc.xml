@@ -13,10 +13,6 @@
       <implementation-class>com.intellij.ide.macro.MacroManager</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.ide.updates.UpdateSettings</interface-class>
-      <implementation-class>com.intellij.ide.updates.UpdateSettings</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.featureStatistics.ProductivityFeaturesRegistry</interface-class>
       <implementation-class>com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl</implementation-class>
     </component>
@@ -28,8 +24,7 @@
       <implementation-class>com.intellij.ide.TipOfTheDayManager</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.ide.updates.UpdateManager</interface-class>
-      <implementation-class>com.intellij.ide.updates.UpdateManager</implementation-class>
+      <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateChecker</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.diff.DiffManager</interface-class>

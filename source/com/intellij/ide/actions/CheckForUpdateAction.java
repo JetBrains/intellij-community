@@ -1,0 +1,37 @@
+package com.intellij.ide.actions;
+
+import com.intellij.ide.reporter.ConnectionException;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable;
+import com.intellij.openapi.util.SystemInfo;
+
+public class CheckForUpdateAction extends AnAction {
+
+  public void update(AnActionEvent e) {
+    e.getPresentation().setVisible(!SystemInfo.isMacSystemMenu);
+  }
+
+  public void actionPerformed(AnActionEvent e) {
+    actionPerformed();
+  }
+
+  public static void actionPerformed() {
+    try {
+      UpdateChecker.checkForUpdates();
+
+      if (UpdateChecker.NEW_VERION != null) {
+        UpdateSettingsConfigurable.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
+        UpdateSettingsConfigurable.getInstance().showUpdateInfoDialog();
+      }
+      else {
+        UpdateSettingsConfigurable.getInstance().showNoUpdatesDialog();
+      }
+    }
+    catch (ConnectionException e) {
+      Messages.showErrorDialog("Connection failed. Check your network connection and try again.", "Connection Error");
+    }
+  }
+}

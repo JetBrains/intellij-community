@@ -611,6 +611,7 @@
         <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction" text="_Online Documentation" description="Show online documentation"/>
         <separator/>
         <action id="Register" class="com.intellij.ide.actions.RegisterAction" text="_Register..." description="Enter registration data"/>
+        <action id="CheckForUpdate" class="com.intellij.ide.actions.CheckForUpdateAction" text="_Check for Update..." description="Check for available update" />
         <action id="About" class="com.intellij.ide.actions.AboutAction" text="_About" description="Show information about IDEA"/>
       </group>
 

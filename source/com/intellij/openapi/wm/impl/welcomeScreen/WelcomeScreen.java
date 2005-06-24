@@ -3,6 +3,8 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.help.impl.HelpManagerImpl;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.CheckForUpdateAction;
+import com.intellij.ide.actions.OpenProjectAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -19,7 +21,6 @@ import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
-import javax.swing.border.EtchedBorder;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
@@ -74,8 +75,10 @@ public class WelcomeScreen {
   private static final Icon CAPTION_IMAGE = IconLoader.getIcon("/general/welcomeCaption.png");
   private static final Icon DEVELOP_SLOGAN = IconLoader.getIcon("/general/developSlogan.png");
   private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/general/createNewProject.png");
+  private static final Icon OPEN_PROJECT_ICON = IconLoader.getIcon("/general/openProject.png");
   private static final Icon REOPEN_RECENT_ICON = IconLoader.getIcon("/general/reopenRecentProject.png");
   private static final Icon FROM_VCS_ICON = IconLoader.getIcon("/general/getProjectfromVCS.png");
+  private static final Icon CHECK_FOR_UPDATE_ICON = IconLoader.getIcon("/general/checkForUpdate.png");
   private static final Icon READ_HELP_ICON = IconLoader.getIcon("/general/readHelp.png");
   private static final Icon KEYMAP_ICON = IconLoader.getIcon("/general/defaultKeymap.png");
   private static final Icon DEFAULT_ICON = IconLoader.getIcon("/general/configurableDefault.png");
@@ -336,9 +339,25 @@ public class WelcomeScreen {
     quickStarts.addButton(newProject, "Create New Project", "Start the \"New Project\" Wizard that will guide you through " +
                                                             "the steps necessary for creating a new project.");
 
-    // TODO[pti]: add button "Open Project" to the Quickstart list
-
     final ActionManager actionManager = ActionManager.getInstance();
+
+    MyActionButton openProject = new ButtonWithExtension(OPEN_PROJECT_ICON, null) {
+      protected void onPress(InputEvent e, final MyActionButton button) {
+        final AnAction action = new OpenProjectAction();
+        action.actionPerformed(new AnActionEvent(e, new DataContext() {
+          public Object getData(String dataId) {
+            if (DataConstants.PROJECT.equals(dataId)) {
+              return null;
+            }
+            return button;
+          }
+        }, ActionPlaces.UNKNOWN, new PresentationFactory().getPresentation(action), actionManager, 0));
+      }
+    };
+
+    quickStarts.addButton(openProject, "Open Project...", "You can open any arbitrary IntelliJ IDEA project. " +
+                                                          "Click the icon or link to select the .IPR file from the File Chooser.");
+
     MyActionButton openRecentProject = new ButtonWithExtension(REOPEN_RECENT_ICON, null) {
       protected void onPress(InputEvent e, final MyActionButton button) {
         final AnAction action = new RecentProjectsAction();
@@ -367,7 +386,14 @@ public class WelcomeScreen {
                                                                              "a Version Control System. Click the icon or link to " +
                                                                              "select your VCS.");
 
-    // TODO[pti]: add button "Check for Updates" to the Quickstart list
+    MyActionButton checkForUpdate = new MyActionButton (CHECK_FOR_UPDATE_ICON, null) {
+      protected void onPress(InputEvent e) {
+        CheckForUpdateAction.actionPerformed();
+      }
+    };
+
+    quickStarts.addButton(checkForUpdate, "Check for Update", "IntelliJ IDEA will check for a new available update of itself, " +
+                                                              "using your internet connection.");
 
     // Append plug-in actions to the end of the QuickStart list
     quickStarts.appendActionsFromGroup((DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART));

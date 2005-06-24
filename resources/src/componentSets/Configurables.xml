@@ -83,6 +83,9 @@
     <component>
       <implementation-class>com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

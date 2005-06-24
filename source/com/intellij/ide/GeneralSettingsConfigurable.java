@@ -1,6 +1,5 @@
 package com.intellij.ide;
 
-import com.intellij.ide.updates.UpdateSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diff.impl.external.DiffOptionsForm;
@@ -76,20 +75,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
       });
     }
     getDiffOptions().apply();
-    UpdateSettings updateSettings = UpdateSettings.getInstance();
-
-    if (myComponent.myRbCheckAutomatically.isSelected()) {
-      updateSettings.CHECK_UPDATES = true;
-      updateSettings.ASK_USER = false;
-    }
-    else if (myComponent.myRbAskBeforeCheck.isSelected()) {
-      updateSettings.CHECK_UPDATES = true;
-      updateSettings.ASK_USER = true;
-    }
-    else {
-      updateSettings.CHECK_UPDATES = false;
-      updateSettings.ASK_USER = false;
-    }
 
     myComponent.myHTTPProxySettingsEditor.apply();
   }
@@ -118,9 +103,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
 
     isModified |= !Comparing.strEqual(settings.getCharsetName(), (String)myComponent.myCharsetNameCombo.getSelectedItem());
     isModified |= !FileTypeManagerEx.getInstanceEx().isIgnoredFilesListEqualToCurrent(myComponent.myIgnoreFilesField.getText());
-    UpdateSettings updateSettings = UpdateSettings.getInstance();
-    isModified |= updateSettings.CHECK_UPDATES == myComponent.myRbNeverCheck.isSelected();
-    isModified |= updateSettings.ASK_USER != myComponent.myRbAskBeforeCheck.isSelected();
 
     isModified |= myComponent.myHTTPProxySettingsEditor.isModified();
 
@@ -198,18 +180,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     myComponent.myCharsetNameCombo.setSelectedItem(settings.getCharsetName());
     myComponent.myChkUTFGuessing.setSelected(settings.isUseUTFGuessing());
     getDiffOptions().reset();
-    UpdateSettings updateSettings = UpdateSettings.getInstance();
-    if (updateSettings.CHECK_UPDATES) {
-      if (updateSettings.ASK_USER) {
-        myComponent.myRbAskBeforeCheck.setSelected(true);
-      }
-      else {
-        myComponent.myRbCheckAutomatically.setSelected(true);
-      }
-    }
-    else {
-      myComponent.myRbNeverCheck.setSelected(true);
-    }
 
     if (settings.isUseDefaultBrowser()) {
       myComponent.myUseSystemDefaultBrowser.setSelected(true);
