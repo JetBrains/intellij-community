@@ -28,7 +28,7 @@ import java.util.HashSet;
  */
 public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   private JPanel myWholePanel = new JPanel(new GridBagLayout());
-  private JLabel myPluginXMLLabel = new JLabel("Choose path to META-INF" + File.separator + "plugin.xml:");
+  private JLabel myPluginXMLLabel = new JLabel("Choose directory to contain META-INF" + File.separator + "plugin.xml:");
   private TextFieldWithBrowseButton myPluginXML = new TextFieldWithBrowseButton();
 
   private TextFieldWithBrowseButton myManifest = new TextFieldWithBrowseButton();
@@ -91,9 +91,10 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
       throw new ConfigurationException("Unable to set dependency on plugin module.");
     }
     final File plugin = myBuildProperties.getPluginXmlPath() != null ? new File(myBuildProperties.getPluginXmlPath()) : null;
+    final String newPluginPath = myPluginXML.getText() + File.separator + "META-INF" + File.separator + "plugin.xml";
     if (plugin != null &&
         plugin.exists() &&
-        !plugin.getPath().equals(myPluginXML.getText()) &&
+        !plugin.getPath().equals(newPluginPath) &&
         Messages.showYesNoDialog(myModule.getProject(),
                                  "Delete " + plugin.getPath() + " ?",
                                  "Clean up META-INF directory", null) == DialogWrapper.OK_EXIT_CODE) {
@@ -107,14 +108,14 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
                                                     "Remove old plugin.xml directory",
                                                     null);
     }
-    myBuildProperties.setPluginXMLUrl(myPluginXML.getText());
+    myBuildProperties.setPluginXMLUrl(newPluginPath);
     myBuildProperties.setManifestUrl(myManifest.getText());
     myBuildProperties.setUseUserManifest(myUseUserManifest.isSelected());
     myModified = false;
   }
 
   public void reset() {
-    myPluginXML.setText(myBuildProperties.getPluginXmlPath());
+    myPluginXML.setText(myBuildProperties.getPluginXmlPath().substring(0, myBuildProperties.getPluginXmlPath().length() - "/META-INF/plugin.xml".length()));
     myManifest.setText(myBuildProperties.getManifestPath());
     myUseUserManifest.setSelected(myBuildProperties.isUseUserManifest());
     myModified = false;
