@@ -232,8 +232,7 @@ public class TypeConversionUtil {
       PsiTypeParameter typeParam = iterator.next();
       PsiType typeArg1 = substitutor1.substitute(typeParam);
       PsiType typeArg2 = substitutor2.substitute(typeParam);
-      if (typeArg1 == null && typeArg2 == null) continue;
-      if (typeArg1 == null || typeArg2 == null) return true;
+      if (typeArg1 == null || typeArg2 == null) return false;
       if (typeArg1 instanceof PsiWildcardType || typeArg2 instanceof PsiWildcardType) return false;
 
       if (typeArg1 instanceof PsiClassType && ((PsiClassType)typeArg1).resolve() instanceof PsiTypeParameter) return false;

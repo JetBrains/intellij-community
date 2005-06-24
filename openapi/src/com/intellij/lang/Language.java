@@ -2,6 +2,7 @@ package com.intellij.lang;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
@@ -115,8 +116,21 @@ public abstract class Language {
     return TokenSet.EMPTY;
   }
 
+  /**
+   * @return normal annotator to be run in process,
+   * this annotator will be called incrementally on changed elements
+   */
   @Nullable
   public Annotator getAnnotator() {
+    return null;
+  }
+
+  /**
+   * @return out-of-process annotator for a whole file
+   * since this annotating is expensive it is run last
+   */
+  @Nullable
+  public ExternalAnnotator getExternalAnnotator() {
     return null;
   }
 
