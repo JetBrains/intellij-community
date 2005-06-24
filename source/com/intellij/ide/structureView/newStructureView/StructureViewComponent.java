@@ -48,7 +48,6 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   private FileEditor myFileEditor;
   private final TreeModelWrapper myTreeModelWrapper;
 
-
   private StructureViewState myStructureViewState;
   private boolean myAutoscrollFeedback;
 
@@ -121,7 +120,6 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   private PsiElement[] getSelectedPsiElements() {
     return filterPsiElements(getSelectedElements());
-
   }
 
   private static PsiElement[] filterPsiElements(Object[] selectedElements) {
@@ -214,10 +212,15 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public void storeState() {
-    myStructureViewState = new StructureViewState();
-    myStructureViewState.setExpandedElements(getExpandedElements());
-    myStructureViewState.setSelectedElements(getSelectedElements());
-    myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, myStructureViewState);
+    myStructureViewState = getState();
+    myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, getState());
+  }
+
+  public StructureViewState getState() {
+    StructureViewState structureViewState = new StructureViewState();
+    structureViewState.setExpandedElements(getExpandedElements());
+    structureViewState.setSelectedElements(getSelectedElements());
+    return structureViewState;
   }
 
   private Object[] getExpandedElements() {
@@ -228,14 +231,14 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   public void restoreState() {
     myStructureViewState = myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
-    if (myStructureViewState != null) {
+    if (myStructureViewState == null) {
+      TreeUtil.expand(getTree(), 2);
+    }
+    else {
       expandStoredElements();
       selectStoredElenents();
       myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, null);
       myStructureViewState = null;
-    }
-    else {
-      TreeUtil.expand(getTree(), 2);
     }
   }
 
@@ -254,11 +257,15 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
         if (element instanceof PsiElement && !((PsiElement)element).isValid()) {
           continue;
         }
-        DefaultMutableTreeNode node = myAbstractTreeBuilder.getNodeForElement(element);
-        if (node != null) {
-          getTree().addSelectionPath(new TreePath(node.getPath()));
-        }
+        addSelectionPathTo(element);
       }
+    }
+  }
+
+  public void addSelectionPathTo(final Object element) {
+    DefaultMutableTreeNode node = myAbstractTreeBuilder.getNodeForElement(element);
+    if (node != null) {
+      getTree().addSelectionPath(new TreePath(node.getPath()));
     }
   }
 
@@ -329,13 +336,10 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     return myFileEditor;
   }
 
-  private DefaultMutableTreeNode expandPathToElement(Object element) {
+  public DefaultMutableTreeNode expandPathToElement(Object element) {
     ArrayList<AbstractTreeNode> pathToElement = getPathToElement(element);
 
-    if (pathToElement.isEmpty())
-    {
-      return null;
-    }
+    if (pathToElement.isEmpty()) return null;
 
     JTree tree = myAbstractTreeBuilder.getTree();
 
@@ -351,18 +355,19 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       if (!pathToElement.isEmpty()) {
         topPathElement = pathToElement.get(0);
         pathToElement.remove(0);
-      } else {
+      }
+      else {
         topPathElement = null;
       }
       TreePath treePath = new TreePath(currentTreeNode.getPath());
-      if (!tree.isExpanded(treePath))
-      {
+      if (!tree.isExpanded(treePath)) {
         tree.expandPath(treePath);
       }
       if (topPathElement != null) {
         currentTreeNode = findInChildren(currentTreeNode, topPathElement);
         result = currentTreeNode;
-      } else {
+      }
+      else {
         currentTreeNode = null;
       }
     }
@@ -491,13 +496,13 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public void setActionActive(String name, boolean state) {
-
-    storeState();
-
     StructureViewFactoryEx.getInstance(myProject).setActiveAction(name, state);
+    rebuild();
+  }
 
+  public void rebuild() {
+    storeState();
     ((SmartTreeStructure)myAbstractTreeBuilder.getTreeStructure()).rebuildTree();
-
     myAbstractTreeBuilder.updateFromRoot();
     restoreState();
   }
@@ -505,7 +510,8 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   public boolean isActionActive(String name) {
     if (KindSorter.ID.equals(name)) {
       return mySortByKind;
-    } else {
+    }
+    else {
       return StructureViewFactoryEx.getInstance(myProject).isActionActive(name);
     }
   }
@@ -519,14 +525,8 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public void setKindSortingIsActive(boolean state) {
-    storeState();
-
     mySortByKind = state;
-
-    ((SmartTreeStructure)myAbstractTreeBuilder.getTreeStructure()).rebuildTree();
-
-    myAbstractTreeBuilder.updateFromRoot();
-    restoreState();
+    rebuild();
  }
 
   private final class MyAutoScrollToSourceHandler extends AutoScrollToSourceHandler {
@@ -541,14 +541,11 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     }
 
     protected void setAutoScrollMode(boolean state) {
-        ((StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject)).AUTOSCROLL_MODE = state;
+      ((StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject)).AUTOSCROLL_MODE = state;
     }
 
     protected void scrollToSource(JTree tree) {
-      if (myAbstractTreeBuilder == null)
-      {
-        return;
-      }
+      if (myAbstractTreeBuilder == null) return;
       myAutoscrollFeedback = true;
 
       Navigatable editSourceDescriptor = (Navigatable)DataManager.getInstance().getDataContext(getTree())
@@ -604,61 +601,44 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   public Object getData(String dataId) {
     if (DataConstants.PSI_ELEMENT.equals(dataId)) {
       TreePath path = getSelectedPath();
-      if (path == null)
-      {
-        return null;
-      }
+      if (path == null) return null;
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       AbstractTreeNode descriptor = (AbstractTreeNode)node.getUserObject();
       Object element = descriptor.getValue();
       if (element instanceof StructureViewTreeElement) {
         element = ((StructureViewTreeElement)element).getValue();
       }
-      if (!(element instanceof PsiElement))
-      {
-        return null;
-      }
-      if (!((PsiElement)element).isValid())
-      {
-        return null;
-      }
+      if (!(element instanceof PsiElement)) return null;
+      if (!((PsiElement)element).isValid()) return null;
       return element;
     }
-    else if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
+    if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
       return convertToPsiElementsArray(getSelectedElements());
     }
-    else if (DataConstants.FILE_EDITOR.equals(dataId)) {
+    if (DataConstants.FILE_EDITOR.equals(dataId)) {
       return myFileEditor;
     }
-    else if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
+    if (DataConstantsEx.CUT_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator.getCutProvider();
     }
-    else if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
+    if (DataConstantsEx.COPY_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator.getCopyProvider();
     }
-    else if (DataConstantsEx.PASTE_PROVIDER.equals(dataId)) {
+    if (DataConstantsEx.PASTE_PROVIDER.equals(dataId)) {
       return myCopyPasteDelegator.getPasteProvider();
     }
-    else if (DataConstantsEx.NAVIGATABLE.equals(dataId)) {
+    if (DataConstantsEx.NAVIGATABLE.equals(dataId)) {
       Object[] selectedElements = getSelectedTreeElements();
-      if (selectedElements == null || selectedElements.length == 0)
-      {
-        return null;
-      }
-      if (selectedElements[0] instanceof Navigatable)
-      {
+      if (selectedElements == null || selectedElements.length == 0) return null;
+      if (selectedElements[0] instanceof Navigatable) {
         return selectedElements[0];
       }
-      return null;
     }
     return null;
   }
 
   private static PsiElement[] convertToPsiElementsArray(final Object[] selectedElements) {
-    if (selectedElements == null)
-    {
-      return null;
-    }
+    if (selectedElements == null) return null;
     ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
     for (Object selectedElement : selectedElements) {
       if (selectedElement instanceof PsiElement && ((PsiElement)selectedElement).isValid()) {
@@ -674,10 +654,6 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   public StructureViewModel getTreeModel() {
     return myTreeModel;
-  }
-
-  protected AbstractTreeBuilder getTreeBuilder() {
-    return myAbstractTreeBuilder;
   }
 
   public boolean navigateToSelectedElement(boolean requestFocus) {

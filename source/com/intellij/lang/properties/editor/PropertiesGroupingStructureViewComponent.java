@@ -118,8 +118,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
         }
 
         ((PropertiesGroupingStructureViewModel)getTreeModel()).setSeparator(separator);
-        ((SmartTreeStructure)getTreeStructure()).rebuildTree();
-        getTreeBuilder().updateFromRoot();
+        rebuild();
       }
     }
 

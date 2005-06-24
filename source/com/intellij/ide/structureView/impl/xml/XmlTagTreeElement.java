@@ -73,21 +73,23 @@ public class XmlTagTreeElement extends PsiTreeElementBase<XmlTag>{
   }
 
   public String getPresentableText() {
+    return getElement().getName();
+  }
+
+  public String getLocationString() {
     final StringBuffer buffer = new StringBuffer();
-    buffer.append(getElement().getName());
     final XmlAttribute[] attributes = getElement().getAttributes();
     for (XmlAttribute attribute : attributes) {
-      appendAttribute(attribute, buffer);
+      if (buffer.length() != 0) {
+        buffer.append(" ");
+      }
+      buffer.append(attribute.getName());
+      buffer.append("=");
+      buffer.append("\"");
+      buffer.append(attribute.getValue());
+      buffer.append("\"");
     }
     return buffer.toString();
   }
 
-  private static void appendAttribute(final XmlAttribute attribute, final StringBuffer buffer) {
-    buffer.append(" ");
-    buffer.append(attribute.getName());
-    buffer.append("=");
-    buffer.append("\"");
-    buffer.append(attribute.getValue());
-    buffer.append("\"");
-  }
 }
