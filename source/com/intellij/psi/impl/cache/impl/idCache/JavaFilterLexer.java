@@ -16,7 +16,10 @@ public class JavaFilterLexer extends BaseFilterLexer {
 
   public void advance() {
     IElementType tokenType = myOriginalLexer.getTokenType();
-    if (tokenType == JavaTokenType.IDENTIFIER) {
+    if (tokenType == JavaTokenType.IDENTIFIER
+        || tokenType == JavaTokenType.LONG_LITERAL 
+        || tokenType == JavaTokenType.INTEGER_LITERAL
+        || tokenType == JavaTokenType.CHARACTER_LITERAL) {
       int start = getTokenStart();
       int end = getTokenEnd();
       IdCacheUtil.addOccurrence(myTable, getBuffer(), start, end, UsageSearchContext.IN_CODE);

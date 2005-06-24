@@ -224,7 +224,7 @@ public class FindInProjectUtil {
         // optimization
         CacheManager cacheManager = ((PsiManagerImpl)PsiManager.getInstance(project)).getCacheManager();
 
-        GlobalSearchScope scope = psiDirectory == null || psiDirectory.getPackage() == null ?
+        GlobalSearchScope scope = psiDirectory == null ?
                                         GlobalSearchScope.projectScope(project) :
                                         GlobalSearchScope.directoryScope(psiDirectory, true);
         List<String> words = StringUtil.getWordsIn(findModel.getStringToFind());
