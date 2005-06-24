@@ -690,7 +690,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   public static boolean validElement(PsiElement element) {
-    if (element instanceof PsiFileSystemItem) return true;
+    if (element instanceof PsiFile) return true;
     final Language language = element.getLanguage();
     if (language != null) {
       final RefactoringSupportProvider provider = language.getRefactoringSupportProvider();
