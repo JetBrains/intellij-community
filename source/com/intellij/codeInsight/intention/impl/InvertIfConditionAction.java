@@ -243,7 +243,7 @@ public class InvertIfConditionAction extends BaseIntentionAction {
       PsiElement nearestCodeBlock = findNearestCodeBlock(ifStatement);
       if (nearestCodeBlock != null) {
         ControlFlow flow2 = buildControlFlow(nearestCodeBlock);
-        nextUnreachable = !ControlFlowUtil.isInstructionReachable(flow2, flow2.getEndOffset(ifStatement) + 1, getThenOffset(flow2, ifStatement));
+        nextUnreachable = !ControlFlowUtil.isInstructionReachable(flow2, flow2.getEndOffset(ifStatement), getThenOffset(flow2, ifStatement));
       }
     }
     if (nextUnreachable) {
