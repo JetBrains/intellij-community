@@ -602,5 +602,10 @@ public class StringUtil {
     }
     return result.toString();
   }
-  
+
+  public static String stripQuotesAroundValue(String text) {
+    if (startsWithChar(text, '\"') || startsWithChar(text, '\'')) text = text.substring(1);
+    if (endsWithChar(text, '\"') || endsWithChar(text, '\'')) text = text.substring(0, text.length() - 1);
+    return text;
+  }
 }
