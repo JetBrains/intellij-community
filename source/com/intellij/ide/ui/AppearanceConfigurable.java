@@ -206,6 +206,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
       settings.fireUISettingsChanged();
     }
     myComponent.updateCombo();
+    settings.CLOSE_NON_MODIFIED_FILES_FIRST = myComponent.myCloseNonModifiedFilesFirstRadio.isSelected();
+    settings.ACTIVATE_MRU_EDITOR_ON_CLOSE = myComponent.myActivateMRUEditorOnCloseRadio.isSelected();
   }
 
   public void reset() {
@@ -243,6 +245,19 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     myComponent.myAlphaModeRatioSlider.setToolTipText(ratio + "%");
     myComponent.myAlphaModeRatioSlider.setEnabled(alphaModeEnabled && settings.ENABLE_ALPHA_MODE);
     myComponent.updateCombo();
+    // Editor Tabs
+    if (settings.CLOSE_NON_MODIFIED_FILES_FIRST) {
+      myComponent.myCloseNonModifiedFilesFirstRadio.setSelected(true);
+    }
+    else {
+      myComponent.myCloseLRUFilesRadio.setSelected(true);
+    }
+    if (settings.ACTIVATE_MRU_EDITOR_ON_CLOSE) {
+      myComponent.myActivateMRUEditorOnCloseRadio.setSelected(true);
+    }
+    else {
+      myComponent.myActivateLeftEditorOnCloseRadio.setSelected(true);
+    }
   }
   
   public boolean isModified() {
@@ -283,7 +298,13 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
       float ratio = myComponent.myAlphaModeRatioSlider.getValue() / 100f;
       isModified |= ratio != settings.ALPHA_MODE_RATIO;
     }
+    isModified |= isModified(myComponent.myCloseNonModifiedFilesFirstRadio, settings.CLOSE_NON_MODIFIED_FILES_FIRST);
+    isModified |= isModified(myComponent.myActivateMRUEditorOnCloseRadio, settings.ACTIVATE_MRU_EDITOR_ON_CLOSE);
     return isModified;
+  }
+
+  private static boolean isModified(JToggleButton checkBox, boolean value) {
+    return checkBox.isSelected() != value;
   }
 
   public void disposeUIResources() {
@@ -367,6 +388,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     private JCheckBox myHideKnownExtensions;
     private JCheckBox myHideIconsInQuickNavigation;
 
+    private JRadioButton myCloseNonModifiedFilesFirstRadio;
+    private JRadioButton myCloseLRUFilesRadio;
+    private JRadioButton myActivateMRUEditorOnCloseRadio;
+    private JRadioButton myActivateLeftEditorOnCloseRadio;
+
     public MyComponent() {
       ActionListener updater = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
@@ -377,6 +403,13 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
       myOverrideLAFFonts.addActionListener(updater);
       myIDEALafFont.setPreferredSize(new Dimension(myIDEALafFont.getPreferredSize().width,
                                                    myOverrideLAFFonts.getPreferredSize().height));
+      final ButtonGroup editortabs = new ButtonGroup();
+      editortabs.add(myActivateLeftEditorOnCloseRadio);
+      editortabs.add(myActivateMRUEditorOnCloseRadio);
+
+      final ButtonGroup closePolicy = new ButtonGroup();
+      closePolicy.add(myCloseNonModifiedFilesFirstRadio);
+      closePolicy.add(myCloseLRUFilesRadio);
     }
 
     public void updateCombo() {
