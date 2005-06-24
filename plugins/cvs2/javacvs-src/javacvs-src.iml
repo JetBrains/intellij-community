@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module version="4" relativePaths="true" type="JAVA_MODULE">
+  <component name="HighlightingSettingsPerFile" />
   <component name="ModuleRootManager" />
   <component name="NewModuleRootManager">
     <output url="file://$MODULE_DIR$/../javacvsClasses" />
