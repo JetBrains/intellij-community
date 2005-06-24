@@ -174,4 +174,8 @@ public class DataFlowTest extends InspectionTestCase {
   public void testFieldsFlashing() throws Exception {
     doTest15();
   }
+
+  public void testIDEADEV1575() throws Exception {
+    doTest15();
+  }
 }

@@ -202,11 +202,19 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         }
         else if (psiAnchor != null) {
           if (!reportedAnchors.contains(psiAnchor)) {
-            final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, trueSet.contains(instruction));
-            descriptions.add(manager.createProblemDescriptor(psiAnchor, "Condition <code>#ref</code> #loc is always <code>" +
-                                                                        (trueSet.contains(instruction) ? "true" : "false") +
-                                                                        "</code>.", localQuickFix,
-                                                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+            if (onTheLeftSideOfConditionalAssignemnt(psiAnchor)) {
+              descriptions.add(manager.createProblemDescriptor(psiAnchor, "Condition <code>#ref</code> #loc at the left side of assignment expression is always <code>" +
+                                                                          (trueSet.contains(instruction) ? "true" : "false") +
+                                                                          "</code>. Can be simplified to normal assignment.", (LocalQuickFix)null,
+                                                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+            }
+            else {
+              final LocalQuickFix localQuickFix = createSimplifyBooleanExpressionFix(psiAnchor, trueSet.contains(instruction));
+              descriptions.add(manager.createProblemDescriptor(psiAnchor, "Condition <code>#ref</code> #loc is always <code>" +
+                                                                          (trueSet.contains(instruction) ? "true" : "false") +
+                                                                          "</code>.", localQuickFix,
+                                                                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+            }
             reportedAnchors.add(psiAnchor);
           }
         }
@@ -248,6 +256,15 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     }
 
     return descriptions.toArray(new ProblemDescriptor[descriptions.size()]);
+  }
+
+  private static boolean onTheLeftSideOfConditionalAssignemnt(final PsiElement psiAnchor) {
+    final PsiElement parent = psiAnchor.getParent();
+    if (parent instanceof PsiAssignmentExpression) {
+      final PsiAssignmentExpression expression = (PsiAssignmentExpression)parent;
+      if (expression.getLExpression() == psiAnchor) return true;
+    }
+    return false;
   }
 
   private static @Nullable LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {

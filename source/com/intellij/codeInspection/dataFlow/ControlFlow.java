@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.containers.HashMap;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Stack;
 
@@ -78,5 +79,14 @@ public class ControlFlow {
 
   public void setFields(DfaVariableValue[] fields) {
     myFields = fields;
+  }
+
+  public void dump(PrintStream p) {
+    final Instruction[] instructions = getInstructions();
+
+    for (int i = 0; i < instructions.length; i++) {
+      Instruction instruction = instructions[i];
+      p.println(Integer.toString(i) + ": " + instruction.toString());
+    }
   }
 }
