@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -507,14 +508,14 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-    if (file == null || !codeAnalyzer.isHighlightingAvailable(file)) return false;
+    // dont optimize out imports in JSP since it can be included in other JSP
+    if (file == null || !codeAnalyzer.isHighlightingAvailable(file) || file instanceof JspFile) return false;
 
     if (!codeAnalyzer.isErrorAnalyzingFinished(file)) return false;
     HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
     if (errors.length != 0) return false;
 
-    if (fileHasUnchangedStatus()) return false;
-    return true;
+    return !fileHasUnchangedStatus();
   }
 
   private boolean fileHasUnchangedStatus() {
@@ -557,7 +558,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private static boolean isWriteReplaceMethod(PsiMethod method) {
     if (!method.getName().equals("writeReplace")) return false;
     PsiType returnType = method.getReturnType();
-    if (!returnType.equalsToText("java.lang.Object")) return false;
+    if (returnType == null || !returnType.equalsToText("java.lang.Object")) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != 0) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
@@ -572,7 +573,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (parameters.length != 0) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiType returnType = method.getReturnType();
-    if (!returnType.equalsToText("java.lang.Object")) return false;
+    if (returnType == null || !returnType.equalsToText("java.lang.Object")) return false;
     PsiClass aClass = method.getContainingClass();
     if (aClass != null && !isSerializable(aClass)) return false;
     return true;
