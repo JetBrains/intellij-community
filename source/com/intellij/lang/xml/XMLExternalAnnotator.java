@@ -33,11 +33,6 @@ public class XMLExternalAnnotator implements ExternalAnnotator, Validator.Valida
 
     final Project project = file.getProject();
 
-    //TODO: is it worth moving this check to ExternalToolPath itself?
-    final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
-    final HighlightInfo[] errors = DaemonCodeAnalyzerImpl.getHighlights(doc, HighlightSeverity.ERROR, project);
-    if (errors.length > 0) return;
-
     if (nsDescriptor instanceof Validator) {
       ((Validator)nsDescriptor).validate(document, this);
     }

@@ -44,6 +44,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.lang.annotation.HighlightSeverity;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -156,6 +157,8 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
         }
 
       case Pass.EXTERNAL_TOOLS:
+        if (DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject).length > 0) return null;
+
         return new ExternalToolPass(myFile, myEditor);
 
       default:
