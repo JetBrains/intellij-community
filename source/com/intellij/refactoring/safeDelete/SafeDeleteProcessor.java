@@ -84,6 +84,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     for (PsiElement element : myElements) {
       if (element instanceof PsiClass) {
         findClassUsages((PsiClass) element, usages);
+        if (element instanceof PsiTypeParameter) {
+          findTypeParameterExternalUsages(((PsiTypeParameter)element), usages);
+        }
       }
       else if (element instanceof PsiMethod) {
         findMethodUsages((PsiMethod) element, usages);
@@ -243,7 +246,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
               }
             }
             if(elements.size() > 0) {
-              new SafeDeleteHandler().invoke(myProject, elements.toArray(new PsiElement[elements.size()]), true);
+              SafeDeleteHandler.invoke(myProject, elements.toArray(new PsiElement[elements.size()]), true);
             }
           }
         });
@@ -341,9 +344,6 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
           ((PsiVariable)element).normalizeDeclaration();
         }
 
-        if (element instanceof PsiTypeParameter) {
-          deleteTypeParameterExternalUsages((PsiTypeParameter)element);
-        }
         element.delete();
       }
     } catch (IncorrectOperationException e) {
@@ -351,7 +351,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private static void deleteTypeParameterExternalUsages(PsiTypeParameter typeParameter) throws IncorrectOperationException {
+  private void findTypeParameterExternalUsages(final PsiTypeParameter typeParameter, Collection<UsageInfo> usages) {
     PsiTypeParameterListOwner owner = typeParameter.getOwner();
     int index = owner.getTypeParameterList().getTypeParameterIndex(typeParameter);
 
@@ -361,7 +361,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       if (reference instanceof PsiJavaCodeReferenceElement) {
         PsiTypeElement[] typeArgs = ((PsiJavaCodeReferenceElement)reference).getParameterList().getTypeParameterElements();
         if (typeArgs.length > index) {
-          typeArgs[index].delete();
+          usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(typeArgs[index], typeParameter, true));
         }
       }
     }
