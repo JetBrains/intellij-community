@@ -4,12 +4,14 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
         extends ClassInspection{
@@ -92,7 +94,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
                 return;
             }
             final PsiElement containingClass =
-                    ClassUtils.getContainingClass(expression);
+                    getContainingContextClass(expression);
             if(containingClass == null){
                 return;
             }
@@ -107,6 +109,23 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
             }
             final String memberClassName = memberClass.getName();
             registerError(expression, memberClassName);
+        }
+
+        @Nullable
+        private static PsiClass getContainingContextClass(
+                PsiReferenceExpression expression){
+            final PsiClass aClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+            if(aClass instanceof PsiAnonymousClass)
+            {
+                final PsiExpressionList args = ((PsiAnonymousClass) aClass).getArgumentList();
+                if(args!=null &&
+                        PsiTreeUtil.isAncestor(args, expression, true))
+                {
+                    return PsiTreeUtil
+                            .getParentOfType(aClass, PsiClass.class);
+                }
+            }
+            return aClass;
         }
     }
 }

@@ -27,7 +27,6 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
         return new CallToSimpleGetterInClassVisitor();
     }
 
-
     private class CallToSimpleGetterInClassVisitor
             extends BaseInspectionVisitor{
 
