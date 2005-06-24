@@ -132,6 +132,7 @@ public class CodeInsightUtil {
     if (element1 == null) element1 = root;
     ASTNode leafElementAt = root.getNode().findLeafElementAt(endOffset);
     if (leafElementAt == null && endOffset == root.getTextLength()) leafElementAt = root.getNode().findLeafElementAt(endOffset - 1);
+    if(leafElementAt == null) return PsiElement.EMPTY_ARRAY;
     PsiElement element2 = leafElementAt.getPsi();
     if (element2 == null) element2 = root;
     PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
