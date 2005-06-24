@@ -259,7 +259,10 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
               new NamespaceFilter(XmlUtil.JSTL_CORE_URI),
               new AndFilter(
                 new ClassFilter(XmlTag.class),
-                new TextFilter("import")
+                new OrFilter(
+                  new TextFilter("import"),
+                  new TextFilter("redirect")
+                )  
               )
             ), 2
           )
