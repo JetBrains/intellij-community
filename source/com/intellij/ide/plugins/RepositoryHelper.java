@@ -52,7 +52,7 @@ public class RepositoryHelper {
         is = urlConnection.getInputStream();
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        is = null;
       }
     }
   }
