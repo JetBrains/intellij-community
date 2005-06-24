@@ -92,18 +92,21 @@ public class RunContentBuilder {
           if (myRunProfile instanceof JUnitConfiguration){
             myComponent = console.getComponent();
           } else {
-            myComponent = new JTabbedPane();
-            ((JTabbedPane)myComponent).addTab("Console", console.getComponent());
             if (myRunProfile instanceof RunConfigurationBase){
               RunConfigurationBase base = (RunConfigurationBase)myRunProfile;
               final Map<Pair<String,String>,Boolean> logFiles = base.getLogFiles();
-              for (Iterator<Pair<String,String>> iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
-                Pair<String,String>  pair = iterator.next();
-                if (logFiles.get(pair).booleanValue()){
-                  final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(pair.first));
-                  myDisposeables.add(logTab);
-                  ((JTabbedPane)myComponent).addTab("Log: " + pair.second, logTab); //todo
+              if (!logFiles.isEmpty()){
+                myComponent = new JTabbedPane();
+                ((JTabbedPane)myComponent).addTab("Console", console.getComponent());
+                for (Pair<String, String> pair : logFiles.keySet()) {
+                  if (logFiles.get(pair).booleanValue()) {
+                    final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(pair.first));
+                    myDisposeables.add(logTab);
+                    ((JTabbedPane)myComponent).addTab("Log: " + pair.second, logTab);
+                  }
                 }
+              } else {
+                myComponent = console.getComponent();
               }
             }
           }
