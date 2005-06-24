@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.RepositoryManager;
@@ -48,9 +47,9 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
-import com.intellij.xml.XmlElementDescriptor;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -112,7 +111,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   private PsiMigrationImpl myCurrentMigration;
   private LanguageLevel myLanguageLevel;
   private PsiElementFinder[] myElementFinders;
-  private FileTypeManager myFileTypeManager;
 
   public PsiManagerImpl(Project project,
                         PsiManagerConfiguration psiManagerConfiguration,
@@ -132,13 +130,17 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
     myLanguageLevel = projectRootManagerEx.getLanguageLevel();
 
-    myFileManager = new FileManagerImpl(this, fileTypeManager, virtualFileManager, fileDocumentManager, projectRootManagerEx);
+    boolean isProjectDefault = project.isDefault();
+
+    myFileManager = isProjectDefault ? new EmptyRepository.EmptyFileManager() : new FileManagerImpl(this, fileTypeManager,
+                                                                                                    virtualFileManager, fileDocumentManager,
+                                                                                                    projectRootManagerEx);
     myElementFactory = new PsiElementFactoryImpl(this);
     mySearchHelper = new PsiSearchHelperImpl(this);
     myResolveHelper = new PsiResolveHelperImpl(this);
     //myMemoryManager = new MemoryManager();
     final CompositeCacheManager cacheManager = new CompositeCacheManager();
-    if (psiManagerConfiguration.REPOSITORY_ENABLED) {
+    if (psiManagerConfiguration.REPOSITORY_ENABLED && !isProjectDefault) {
       myShortNamesCache = new PsiShortNamesCacheImpl(this, projectRootManagerEx);
       cacheManager.addCacheManager(new CacheManagerImpl(this));
       myRepositoryElementsManager = new RepositoryElementsManager(this);
@@ -149,8 +151,8 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       myRepositoryElementsManager = new EmptyRepository.MyRepositoryElementsManager(this);
     }
     final CacheManager[] managers = myProject.getComponents(CacheManager.class);
-    for (int i = 0; i < managers.length; i++) {
-      cacheManager.addCacheManager(managers[i]);
+    for (CacheManager manager : managers) {
+      cacheManager.addCacheManager(manager);
     }
 
     myCacheManager = cacheManager;
@@ -184,7 +186,6 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
         }
       );
     }
-    myFileTypeManager = fileTypeManager;
   }
 
   public PsiConstantEvaluationHelper getConstantEvaluationHelper() {
@@ -216,8 +217,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   public boolean isPartOfPackagePrefix(String packageName) {
     final Collection<String> packagePrefixes = myFileManager.getNonTrivialPackagePrefixes();
-    for (Iterator<String> iterator = packagePrefixes.iterator(); iterator.hasNext();) {
-      final String subpackageName = iterator.next();
+    for (final String subpackageName : packagePrefixes) {
       if (isSubpackageOf(subpackageName, packageName)) return true;
     }
     return false;
@@ -251,8 +251,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
     if (element instanceof PsiPackage) {
       PsiDirectory[] dirs = ((PsiPackage) element).getDirectories();
-      for (int i = 0; i < dirs.length; i++) {
-        PsiDirectory dir = dirs[i];
+      for (PsiDirectory dir : dirs) {
         if (!isInProject(dir)) return false;
       }
       return true;
@@ -303,8 +302,8 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
         synchronizer.registerCacheUpdater(myRepositoryManager.getCacheUpdater());
 
         CacheUpdater[] updaters = myCacheManager.getCacheUpdaters();
-        for (int i = 0; i < updaters.length; i++) {
-          synchronizer.registerCacheUpdater(updaters[i]);
+        for (CacheUpdater updater : updaters) {
+          synchronizer.registerCacheUpdater(updater);
         }
       }
     }
@@ -360,8 +359,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   public PsiClass findClass(String qualifiedName, GlobalSearchScope scope) {
-    for (int i = 0; i < myElementFinders.length; i++) {
-      PsiElementFinder finder = myElementFinders[i];
+    for (PsiElementFinder finder : myElementFinders) {
       PsiClass aClass = finder.findClass(qualifiedName, scope);
       if (aClass != null) return aClass;
     }
@@ -371,11 +369,9 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   public PsiClass[] findClasses(String qualifiedName, GlobalSearchScope scope) {
     List<PsiClass> classes = new ArrayList<PsiClass>();
-    for (int i = 0; i < myElementFinders.length; i++) {
-      PsiElementFinder finder = myElementFinders[i];
+    for (PsiElementFinder finder : myElementFinders) {
       PsiClass[] finderClasses = finder.findClasses(qualifiedName, scope);
-      for (int j = 0; j < finderClasses.length; j++) {
-        PsiClass finderClass = finderClasses[j];
+      for (PsiClass finderClass : finderClasses) {
         classes.add(finderClass);
       }
     }
@@ -483,8 +479,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
   }
 
   public PsiPackage findPackage(String qualifiedName) {
-    for (int i = 0; i < myElementFinders.length; i++) {
-      PsiElementFinder finder = myElementFinders[i];
+    for (PsiElementFinder finder : myElementFinders) {
       PsiPackage aPackage = finder.findPackage(qualifiedName);
 
       if (aPackage != null) return aPackage;
@@ -686,8 +681,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
         );
       }
       PsiTreeChangeListener[] listeners = myCachedTreeChangeListeners;
-      for (int i = 0; i < listeners.length; i++) {
-        PsiTreeChangeListener listener = listeners[i];
+      for (PsiTreeChangeListener listener : listeners) {
         try {
           switch (event.getCode()) {
             case BEFORE_CHILD_ADDITION:
@@ -778,8 +772,7 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       WeakReference[] refs = myWeakRunnablesOnChange.toArray(
         new WeakReference[myWeakRunnablesOnChange.size()]);
       myWeakRunnablesOnChange.clear();
-      for (int i = 0; i < refs.length; i++) {
-        WeakReference ref = refs[i];
+      for (WeakReference ref : refs) {
         Runnable runnable = (Runnable)ref.get();
         if (runnable != null) {
           runnable.run();
@@ -796,8 +789,8 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   private static void runRunnables(ArrayList<Runnable> runnables) {
     Runnable[] array = runnables.toArray(new Runnable[runnables.size()]);
-    for (int i = 0; i < array.length; i++) {
-      array[i].run();
+    for (Runnable aArray : array) {
+      aArray.run();
     }
   }
 
@@ -966,11 +959,9 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   public PsiClass[] getClasses(PsiPackageImpl psiPackage, GlobalSearchScope scope) {
     List<PsiClass> result = new ArrayList<PsiClass>();
-    for (int i = 0; i < myElementFinders.length; i++) {
-      PsiElementFinder finder = myElementFinders[i];
+    for (PsiElementFinder finder : myElementFinders) {
       PsiClass[] classes = finder.getClasses(psiPackage, scope);
-      for (int j = 0; j < classes.length; j++) {
-        PsiClass aClass = classes[j];
+      for (PsiClass aClass : classes) {
         result.add(aClass);
       }
     }
@@ -980,11 +971,9 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
 
   public PsiPackage[] getSubPackages(PsiPackageImpl psiPackage, GlobalSearchScope scope) {
     List<PsiPackage> result = new ArrayList<PsiPackage>();
-    for (int i = 0; i < myElementFinders.length; i++) {
-      PsiElementFinder finder = myElementFinders[i];
+    for (PsiElementFinder finder : myElementFinders) {
       PsiPackage[] packages = finder.getSubPackages(psiPackage, scope);
-      for (int j = 0; j < packages.length; j++) {
-        PsiPackage aPackage = packages[j];
+      for (PsiPackage aPackage : packages) {
         result.add(aPackage);
       }
     }
@@ -1043,10 +1032,10 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     public PsiPackage[] getSubPackages(PsiPackage psiPackage, GlobalSearchScope scope) {
       final Map<String, PsiPackage> packagesMap = new HashMap<String, PsiPackage>();
       final PsiDirectory[] dirs = psiPackage.getDirectories(scope);
-      for (int i = 0; i < dirs.length; i++) {
-        PsiDirectory[] subdirs = dirs[i].getSubdirectories();
-        for (int j = 0; j < subdirs.length; j++) {
-          final PsiPackage aPackage = subdirs[j].getPackage();
+      for (PsiDirectory dir : dirs) {
+        PsiDirectory[] subdirs = dir.getSubdirectories();
+        for (PsiDirectory subdir : subdirs) {
+          final PsiPackage aPackage = subdir.getPackage();
           if (aPackage != null && !packagesMap.containsKey(aPackage.getQualifiedName())) {
             packagesMap.put(aPackage.getQualifiedName(), aPackage);
           }
@@ -1058,10 +1047,10 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     public PsiClass[] getClasses(PsiPackage psiPackage, GlobalSearchScope scope) {
       ArrayList<PsiClass> list = new ArrayList<PsiClass>();
       final PsiDirectory[] dirs = psiPackage.getDirectories(scope);
-      for (int i = 0; i < dirs.length; i++) {
-        PsiClass[] classes = dirs[i].getClasses();
-        for (int j = 0; j < classes.length; j++) {
-          list.add(classes[j]);
+      for (PsiDirectory dir : dirs) {
+        PsiClass[] classes = dir.getClasses();
+        for (PsiClass aClass : classes) {
+          list.add(aClass);
         }
       }
       return list.toArray(new PsiClass[list.size()]);
