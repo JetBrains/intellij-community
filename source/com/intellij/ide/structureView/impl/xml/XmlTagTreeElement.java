@@ -33,8 +33,14 @@ package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
+import com.intellij.ide.structureView.impl.jsp.jspView.JspViewDeclarationNode;
+import com.intellij.ide.structureView.impl.jsp.jspView.JspViewDirectiveNode;
+import com.intellij.ide.structureView.impl.jsp.jspView.JspViewScriptletNode;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.impl.source.jsp.jspJava.JspDeclaration;
+import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
+import com.intellij.psi.impl.source.jsp.jspJava.JspScriptlet;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -48,7 +54,20 @@ public class XmlTagTreeElement extends PsiTreeElementBase<XmlTag>{
     XmlTag[] subTags = getElement().getSubTags();
     Collection<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>(subTags.length);
     for (XmlTag tag : subTags) {
-      result.add(new XmlTagTreeElement(tag));
+      StructureViewTreeElement element;
+      if (tag instanceof JspDeclaration) {
+       element = new JspViewDeclarationNode((JspDeclaration)tag);
+      }
+      else if (tag instanceof JspDirective) {
+        element = new JspViewDirectiveNode((JspDirective)tag);
+      }
+      else if (tag instanceof JspScriptlet) {
+        element = new JspViewScriptletNode((JspScriptlet)tag);
+      }
+      else {
+        element = new XmlTagTreeElement(tag);
+      }
+      result.add(element);
     }
     return result;
   }

@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.parsing.xml.XmlPsiLexer;
@@ -72,8 +73,16 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
 
   private FileType myType = null;
   public FileType getFileType() {
-    if(myType != null) return myType;
-    return myType = FileTypeManager.getInstance().getFileTypeByFileName(getName());
+    if (myType == null) {
+      PsiFile originalFile = getOriginalFile();
+      if (originalFile != null && originalFile.getFileType() != null) {
+        myType = originalFile.getFileType();
+      }
+      else {
+        myType = FileTypeManager.getInstance().getFileTypeByFileName(getName());
+      }
+    }
+    return myType;
   }
 
   public Lexer createLexer() {
