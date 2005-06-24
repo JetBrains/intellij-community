@@ -2,10 +2,13 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.util.io.ZipUtil;
 
 import javax.swing.*;
@@ -51,7 +54,7 @@ public class PluginInstaller {
     return result;
   }
 
-  public static boolean prepareToInstall (PluginNode pluginNode, boolean packet, long count, long available) throws IOException {
+  public static boolean prepareToInstall (final PluginNode pluginNode, boolean packet, long count, long available) throws IOException {
     // check for dependent plugins at first.
     if (pluginNode.getDepends() != null && pluginNode.getDepends().size() > 0) {
       // prepare plugins list for install
@@ -89,7 +92,11 @@ public class PluginInstaller {
       // download plugin
       File file = RepositoryHelper.downloadPlugin(pluginNode, packet, count, available);
       if (file == null) {
-        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), "Plugin " + pluginNode.getName() + " was not installed.");
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            Messages.showErrorDialog("Plugin " + pluginNode.getName() + " was not installed.", "Failed to download");
+          }
+        });
         return false;
       }
 
