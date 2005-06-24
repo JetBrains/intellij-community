@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
@@ -48,8 +49,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   }
 
   private String extractValue(PsiElement element) {
-    String text = element.getText();
-    return text.substring(1, text.length() - 1);
+    return StringUtil.stripQuotesAroundValue(element.getText());
   }
 
   public XmlElement getDtdUrlElement() {

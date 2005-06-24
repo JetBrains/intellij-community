@@ -24,7 +24,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   }
 
   public String getValue() {
-    return StringUtil.stripLeadingrailingQuotes(getText());
+    return StringUtil.stripQuotesAroundValue(getText());
   }
 
   public PsiReference[] getReferences() {
