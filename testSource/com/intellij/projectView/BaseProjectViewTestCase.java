@@ -228,7 +228,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   protected boolean isExpanded(PsiElement element, AbstractProjectViewPSIPane pane) {
     DefaultMutableTreeNode nodeForElement = getNodeForElement(element, pane);
     if (nodeForElement == null) return false;
-    return isExpanded(nodeForElement, pane);
+    return isExpanded((DefaultMutableTreeNode)nodeForElement.getParent(), pane);
   }
 
   protected void assertListsEqual(DefaultListModel model, String expected) {

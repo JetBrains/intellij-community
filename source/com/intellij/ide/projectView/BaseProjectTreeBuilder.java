@@ -89,10 +89,13 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     return result;
   }
 
-  public void hideChildrenFor(AbstractTreeNode node) {
-    DefaultMutableTreeNode treeNode = getNodeForElement(node);
-    if (treeNode != null){
-      getTree().collapsePath(new TreePath(treeNode.getPath()));
+  public void hideChildrenFor(DefaultMutableTreeNode node) {
+    if (node != null){
+      final JTree tree = getTree();
+      final TreePath path = new TreePath(node.getPath());
+      if (tree.isExpanded(path)) {
+        tree.collapsePath(path);
+      }
     }
   }
 
@@ -106,7 +109,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     if (current instanceof ProjectViewNode && !(((ProjectViewNode)current).contains(file))) return null;
 
-    final DefaultMutableTreeNode currentNode = getNodeForElement(current);
+    DefaultMutableTreeNode currentNode = getNodeForElement(current);
 
     boolean expanded = currentNode == null ? false : getTree().isExpanded(new TreePath(currentNode.getPath()));
 
@@ -115,11 +118,18 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       AbstractTreeNode node = kids.get(i);
       AbstractTreeNode result = select(node, file, element);
       if (result != null) {
+        currentNode = getNodeForElement(current);
+        if (currentNode != null) {
+          final TreePath path = new TreePath(currentNode.getPath());
+          if (!getTree().isExpanded(path)) {
+            getTree().expandPath(path);
+          }
+        }
         return result;
       }
       else {
         if (!expanded) {
-          hideChildrenFor(node);
+          hideChildrenFor(currentNode);
         }
       }
     }

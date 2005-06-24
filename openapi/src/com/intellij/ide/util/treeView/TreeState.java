@@ -18,15 +18,21 @@ public class TreeState implements JDOMExternalizable {
   static class PathElement implements JDOMExternalizable {
     public String myItemId;
     public String myItemType;
-    public int myItemIndex;
 
-    public PathElement(final String itemId, final String itemType, final int itemIndex) {
+    private final int myItemIndex;
+    private final Object myUserObject;
+
+    public PathElement(final String itemId, final String itemType, final int itemIndex, Object userObject) {
       myItemId = itemId;
       myItemType = itemType;
+
       myItemIndex = itemIndex;
+      myUserObject = userObject;
     }
 
     public PathElement() {
+      myItemIndex = -1;
+      myUserObject = null;
     }
 
     public boolean matchedWith(NodeDescriptor nodeDescriptor) {
@@ -35,8 +41,11 @@ public class TreeState implements JDOMExternalizable {
     }
 
     public boolean matchedWithByIndex(NodeDescriptor nodeDescriptor) {
-      return Comparing.equal(myItemId, nodeDescriptor.toString()) &&
-             Comparing.equal(myItemIndex, nodeDescriptor.getIndex());
+      return Comparing.equal(myItemIndex, nodeDescriptor.getIndex());
+    }
+
+    public boolean matchedWithByObject(NodeDescriptor nodeDescriptor) {
+      return myUserObject != null && myUserObject.equals(nodeDescriptor);
     }
 
     public void readExternal(Element element) throws InvalidDataException {
@@ -155,7 +164,7 @@ public class TreeState implements JDOMExternalizable {
           //nodeDescriptor.update();
           final String key = nodeDescriptor.toString();
           final String type = nodeDescriptor.getClass().getName();
-          result.add(new PathElement(key, type, nodeDescriptor.getIndex()));
+          result.add(new PathElement(key, type, nodeDescriptor.getIndex(), nodeDescriptor));
         }
         else {
           return null;
@@ -196,6 +205,17 @@ public class TreeState implements JDOMExternalizable {
   }
 
   private DefaultMutableTreeNode findMatchedChild(DefaultMutableTreeNode parent, PathElement pathElement) {
+
+    for (int j = 0; j < parent.getChildCount(); j++) {
+      final TreeNode child = parent.getChildAt(j);
+      if (!(child instanceof DefaultMutableTreeNode)) continue;
+      final DefaultMutableTreeNode childNode = ((DefaultMutableTreeNode)child);
+      final Object userObject = childNode.getUserObject();
+      if (!(userObject instanceof NodeDescriptor)) continue;
+      final NodeDescriptor nodeDescriptor = ((NodeDescriptor)userObject);
+      if (pathElement.matchedWithByObject(nodeDescriptor)) return childNode;
+    }
+
     for (int j = 0; j < parent.getChildCount(); j++) {
       final TreeNode child = parent.getChildAt(j);
       if (!(child instanceof DefaultMutableTreeNode)) continue;
