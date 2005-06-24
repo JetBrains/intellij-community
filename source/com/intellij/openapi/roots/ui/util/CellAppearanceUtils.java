@@ -80,14 +80,14 @@ public class CellAppearanceUtils {
     return file.getIcon();
   }
 
-  public static CellAppearance forOrderEntry(OrderEntry orderEntry) {
+  public static CellAppearance forOrderEntry(OrderEntry orderEntry, boolean selected) {
     if (orderEntry instanceof JdkOrderEntry) {
       JdkOrderEntry jdkLibraryEntry = (JdkOrderEntry)orderEntry;
       ProjectJdk jdk = jdkLibraryEntry.getJdk();
       if (!orderEntry.isValid()) {
         return SimpleTextCellAppearance.invalid(jdkLibraryEntry.getJdkName(), INVALID_ICON);
       }
-      return forJdk(jdk, false);
+      return forJdk(jdk, false, selected);
     }
     else if (!orderEntry.isValid()) {
       return SimpleTextCellAppearance.invalid(orderEntry.getPresentableName(), INVALID_ICON);
@@ -178,7 +178,7 @@ public class CellAppearanceUtils {
     return new SimpleTextCellAppearance(relativePath, icon, textAttributes);
   }
 
-  public static CellAppearance forJdk(ProjectJdk jdk, boolean isInComboBox) {
+  public static CellAppearance forJdk(ProjectJdk jdk, boolean isInComboBox, final boolean selected) {
     if (jdk == null) {
       return SimpleTextCellAppearance.invalid(NO_JDK, INVALID_ICON);
     }
@@ -187,7 +187,7 @@ public class CellAppearanceUtils {
     appearance.setIcon(jdk.getSdkType().getIcon());
     VirtualFile homeDirectory = jdk.getHomeDirectory();
     SimpleTextAttributes attributes = (homeDirectory != null && homeDirectory.isValid())
-                                      ? SimpleTextAttributes.REGULAR_ATTRIBUTES
+                                      ? createSimpleCellAttributes(selected)
                                       : SimpleTextAttributes.ERROR_ATTRIBUTES;
     CompositeAppearance.DequeEnd ending = appearance.getEnding();
     ending.addText(name, attributes);

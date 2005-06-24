@@ -4,10 +4,10 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 
 import javax.swing.*;
 
@@ -18,7 +18,7 @@ import javax.swing.*;
 public class ProjectJdkListRenderer extends ColoredListCellRenderer {
   protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
     if (value == null || value instanceof ProjectJdk) {
-      CellAppearanceUtils.forJdk((ProjectJdk)value, false).customize(this);
+      CellAppearanceUtils.forJdk((ProjectJdk)value, false, selected).customize(this);
     }
     else {
       final String str = value.toString();
