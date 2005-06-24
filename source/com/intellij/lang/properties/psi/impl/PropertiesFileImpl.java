@@ -60,7 +60,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   private ASTNode getPropertiesList() {
-    return getNode().getFirstChildNode();
+    return getNode().findChildByType(PropertiesElementTypes.PROPERTIES_LIST);
   }
 
   private void ensurePropertiesLoaded() {
