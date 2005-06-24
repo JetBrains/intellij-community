@@ -109,7 +109,7 @@
       <implementation-class>com.intellij.application.options.ProjectCodeStyleConfigurable</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.impl.VcsManagerConfigurable</implementation-class>
+      <implementation-class>com.intellij.openapi.vcs.configurable.VcsManagerConfigurable</implementation-class>
     </component>        
     <!--<component>-->
     <!--  <implementation-class>com.intellij.j2ee.web.WebConfigurable</implementation-class>-->
