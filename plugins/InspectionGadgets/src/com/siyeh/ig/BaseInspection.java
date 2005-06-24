@@ -53,6 +53,10 @@ public abstract class BaseInspection extends LocalInspectionTool{
         return null;
     }
 
+    @Nullable protected InspectionGadgetsFix[] buildFixes(PsiElement location){
+        return null;
+    }
+
     @Nullable  public ProblemDescriptor[] checkMethod(PsiMethod method,
                                                    InspectionManager manager,
                                                    boolean isOnTheFly){

@@ -84,13 +84,13 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
         if(location == null){
             return;
         }
-        final LocalQuickFix fix = createFix(location);
+        final LocalQuickFix[] fix = createFixes(location);
         final String description = inspection.buildErrorString(location);
         registerError(location, description, fix);
     }
 
     private void registerError(PsiElement location, String description,
-                               LocalQuickFix fix){
+                               LocalQuickFix[] fix){
         final ProblemDescriptor problem
                 =
                 inspectionManager.createProblemDescriptor(location,
@@ -107,20 +107,26 @@ public abstract class BaseInspectionVisitor extends PsiRecursiveElementVisitor{
     }
 
     protected void registerError(PsiElement location, Object arg){
-        final LocalQuickFix fix = createFix(location);
+        final LocalQuickFix[] fix = createFixes(location);
         final String description = inspection.buildErrorString(arg);
         registerError(location, description, fix);
     }
 
-    @Nullable private LocalQuickFix createFix(PsiElement location){
-        final LocalQuickFix fix;
+    @Nullable
+    private LocalQuickFix[] createFixes(PsiElement location){
         if(!onTheFly &&
                 inspection.buildQuickFixesOnlyForOnTheFlyErrors()){
-            fix = null;
-        } else{
-            fix = inspection.buildFix(location);
+            return new LocalQuickFix[0];
         }
-        return fix;
+        final InspectionGadgetsFix[] fixes = inspection.buildFixes(location);
+        if(fixes != null){
+            return fixes;
+        }
+        final InspectionGadgetsFix fix = inspection.buildFix(location);
+        if(fix == null){
+            return new LocalQuickFix[0];
+        }
+        return new InspectionGadgetsFix[]{fix};
     }
 
     @Nullable
