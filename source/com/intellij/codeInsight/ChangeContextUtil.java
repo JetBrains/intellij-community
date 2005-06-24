@@ -169,7 +169,7 @@ public class ChangeContextUtil {
         else if (thisAccessExpr != null){
           final PsiClass realParentClass = refExpr.getCopyableUserData(REF_MEMBER_THIS_CLASS_KEY);
           refExpr.putCopyableUserData(REF_MEMBER_THIS_CLASS_KEY, null);
-          if (realParentClass.equals(thisClass) || (thisClass != null && thisClass.isInheritor(realParentClass, true))){
+          if (thisClass != null && (thisClass.equals(realParentClass) || thisClass.isInheritor(realParentClass, true))){
             boolean needQualifier = true;
             PsiElement refElement = refExpr.resolve();
             if (refMember.equals(refElement)){
