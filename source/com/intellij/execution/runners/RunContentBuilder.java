@@ -105,9 +105,10 @@ public class RunContentBuilder {
                     ((JTabbedPane)myComponent).addTab("Log: " + pair.second, logTab);
                   }
                 }
-              } else {
-                myComponent = console.getComponent();
               }
+            }
+            if (myComponent == null){
+              myComponent = console.getComponent();
             }
           }
         }
