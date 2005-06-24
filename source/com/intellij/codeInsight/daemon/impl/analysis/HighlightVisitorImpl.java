@@ -9,17 +9,13 @@ import com.intellij.codeInsight.daemon.impl.analysis.aspect.AspectHighlighter;
 import com.intellij.codeInsight.daemon.impl.analysis.ejb.EjbHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.j2ee.ejb.EjbUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -156,7 +152,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         if (myAnnotationHolder.hasAnnotations()) {
           Annotation[] annotations = myAnnotationHolder.getResult();
           for (Annotation annotation : annotations) {
-            myHolder.add(convertToHighlightInfo(annotation));
+            myHolder.add(HighlightUtil.convertToHighlightInfo(annotation));
           }
         }
         myAnnotationHolder.clear();
@@ -164,29 +160,6 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         myXmlVisitor.visitJspElement((JspText)element);
       }
     }
-  }
-
-  private static HighlightInfo convertToHighlightInfo(Annotation annotation) {
-    HighlightInfo info = new HighlightInfo(annotation.getTextAttributes(), convertType(annotation), annotation.getStartOffset(), annotation.getEndOffset(),
-                                                 annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping());
-    List<Pair<IntentionAction, TextRange>> fixes = annotation.getQuickFixes();
-    if (fixes != null) {
-      for (int i = 0; i < fixes.size(); i++) {
-        Pair<IntentionAction, TextRange> pair = fixes.get(i);
-        QuickFixAction.registerQuickFixAction(info, pair.getSecond(), pair.getFirst(), null);
-      }
-    }
-    return info;
-  }
-
-  private static HighlightInfoType convertType(Annotation annotation) {
-    ProblemHighlightType type = annotation.getHighlightType();
-    if (type == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
-    if (type == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
-    if (type == ProblemHighlightType.LIKE_DEPRECATED) return HighlightInfoType.DEPRECATED;
-    return annotation.getSeverity() == HighlightSeverity.ERROR ? HighlightInfoType.ERROR :
-           annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.WARNING :
-           HighlightInfoType.INFORMATION;
   }
 
   public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {

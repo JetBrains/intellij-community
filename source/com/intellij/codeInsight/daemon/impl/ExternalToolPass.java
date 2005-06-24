@@ -1,0 +1,60 @@
+package com.intellij.codeInsight.daemon.impl;
+
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+
+import java.util.List;
+import java.util.ArrayList;
+
+/**
+ * @author ven
+ */
+public class ExternalToolPass extends TextEditorHighlightingPass {
+  private final PsiFile myFile;
+  private AnnotationHolderImpl myAnnotationHolder;
+  HighlightInfoHolder myHolder;
+  private Project myProject;
+
+  public ExternalToolPass(PsiFile file,
+                             Editor editor) {
+    super(editor.getDocument());
+    myFile = file;
+    myProject = file.getProject();
+    myAnnotationHolder = new AnnotationHolderImpl();
+  }
+
+  public void doCollectInformation(ProgressIndicator progress) {
+    final ExternalAnnotator externalAnnotator = myFile.getLanguage().getExternalAnnotator();
+    if (externalAnnotator != null) {
+      externalAnnotator.annotate(myFile, myAnnotationHolder);
+    }
+  }
+
+  public void doApplyInformationToEditor() {
+    if (myAnnotationHolder.hasAnnotations()) {
+      List<HighlightInfo> infos = getHighlights();
+
+      UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(),
+                                                     infos, UpdateHighlightersUtil.EXTERNAL_TOOLS_HIGHLIGHTERS_GROUP);
+    }
+  }
+
+  public List<HighlightInfo> getHighlights() {
+    Annotation[] annotations = myAnnotationHolder.getResult();
+    List<HighlightInfo> infos = new ArrayList<HighlightInfo>();
+    for (Annotation annotation : annotations) {
+      infos.add(HighlightUtil.convertToHighlightInfo(annotation));
+    }
+    return infos;
+  }
+
+  public int getPassId() {
+    return Pass.EXTERNAL_TOOLS;
+  }
+}

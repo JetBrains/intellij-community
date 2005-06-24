@@ -11,17 +11,17 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
-import com.intellij.psi.impl.source.jsp.jspJava.TranslatingChangesDummyHolder;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.lang.ASTNode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -101,8 +101,7 @@ public class CodeInsightUtil {
     PsiElement[] children = parent.getChildren();
     ArrayList<PsiElement> array = new ArrayList<PsiElement>();
     boolean flag = false;
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
+    for (PsiElement child : children) {
       if (child.equals(element1)) {
         flag = true;
       }
@@ -129,20 +128,11 @@ public class CodeInsightUtil {
   public static PsiElement[] getElementsInRange(PsiElement root, final int startOffset, final int endOffset) {
     final List<PsiElement> list = new ArrayList<PsiElement>();
 
-    // offsets in JspxFile behave themselves bad
-    if (root instanceof TranslatingChangesDummyHolder) {
-      root.accept(new PsiRecursiveElementVisitor() {
-        public void visitElement(PsiElement element) {
-          super.visitElement(element);
-          list.add(element);
-        }
-      });
-      return list.toArray(new PsiElement[list.size()]);
-    }
-
-    PsiElement element1 = root.findElementAt(startOffset);
+    PsiElement element1 = root.getNode().findLeafElementAt(startOffset).getPsi();
     if (element1 == null) element1 = root;
-    PsiElement element2 = root.findElementAt(endOffset);
+    ASTNode leafElementAt = root.getNode().findLeafElementAt(endOffset);
+    if (leafElementAt == null && endOffset == root.getTextLength()) leafElementAt = root.getNode().findLeafElementAt(endOffset - 1);
+    PsiElement element2 = leafElementAt.getPsi();
     if (element2 == null) element2 = root;
     PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
 
@@ -269,8 +259,7 @@ public class CodeInsightUtil {
 
   private static void addExpressionOccurrences(PsiExpression expr, List<PsiExpression> array, PsiElement scope) {
     PsiElement[] children = scope.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
+    for (PsiElement child : children) {
       if (child instanceof PsiExpression) {
         if (areExpressionsEquivalent(RefactoringUtil.unparenthesizeExpression((PsiExpression)child), expr)) {
           array.add((PsiExpression)child);
@@ -289,8 +278,7 @@ public class CodeInsightUtil {
 
   private static void addReferenceExpressions(ArrayList<PsiElement> array, PsiElement scope, PsiElement referee) {
     PsiElement[] children = scope.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
+    for (PsiElement child : children) {
       if (child instanceof PsiReferenceExpression) {
         PsiElement ref = ((PsiReferenceExpression)child).resolve();
         if (ref != null && areElementsEquivalent(ref, referee)) {
@@ -337,8 +325,7 @@ public class CodeInsightUtil {
   private static PsiElement[] getFilteredChildren(PsiElement element1) {
     PsiElement[] children1 = element1.getChildren();
     ArrayList<PsiElement> array = new ArrayList<PsiElement>();
-    for (int i = 0; i < children1.length; i++) {
-      PsiElement child = children1[i];
+    for (PsiElement child : children1) {
       if (!(child instanceof PsiWhiteSpace)) {
         array.add(child);
       }

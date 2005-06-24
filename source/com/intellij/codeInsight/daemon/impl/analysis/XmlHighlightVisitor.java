@@ -1,20 +1,24 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.QuickFixProvider;
-import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.RefCountHolder;
 import com.intellij.codeInsight.daemon.impl.SwitchOffToolAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddHtmlTagOrAttributeToCustoms;
+import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.jsp.impl.JspElementDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -23,27 +27,28 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
+import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.jsp.tagLibrary.TldUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.jsp.impl.JspElementDescriptor;
 
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 /**
  * @author Mike
@@ -79,22 +84,21 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
                                         List<HighlightInfo> result,
                                         HighlightInfoType type,
                                         IntentionAction quickFixAction) {
-    addElementsForTagWithManyQuickFixes(tag, localizedMessage, result, type, new IntentionAction[] {quickFixAction});
+    addElementsForTagWithManyQuickFixes(tag, localizedMessage, result, type, quickFixAction);
   }
   private static void addElementsForTagWithManyQuickFixes(XmlTag tag,
                                         String localizedMessage,
                                         List<HighlightInfo> result,
                                         HighlightInfoType type,
-                                        IntentionAction[] quickFixActions) {
+                                        IntentionAction... quickFixActions) {
     ASTNode tagElement = SourceTreeToPsiMap.psiElementToTree(tag);
     ASTNode childByRole = XmlChildRole.START_TAG_NAME_FINDER.findChild(tagElement);
 
     if(childByRole != null) {
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, childByRole, localizedMessage);
       result.add(highlightInfo);
-      
-      for (int i = 0; i < quickFixActions.length; i++) {
-        final IntentionAction quickFixAction = quickFixActions[i];
+
+      for (final IntentionAction quickFixAction : quickFixActions) {
         if (quickFixAction == null) continue;
         QuickFixAction.registerQuickFixAction(highlightInfo, quickFixAction, null);
       }
@@ -104,12 +108,11 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     if(childByRole != null) {
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(type, childByRole, localizedMessage);
-      for (int i = 0; i < quickFixActions.length; i++) {
-        final IntentionAction quickFixAction = quickFixActions[i];
+      for (final IntentionAction quickFixAction : quickFixActions) {
         if (quickFixAction == null) continue;
         QuickFixAction.registerQuickFixAction(highlightInfo, quickFixAction, null);
       }
-      
+
       result.add(highlightInfo);
     }
   }
@@ -139,14 +142,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   //  super.visitXmlText(text);
   //}
 
-  public void visitXmlDocument(XmlDocument document) {
-    XmlTag rootTag = document.getRootTag();
-    XmlNSDescriptor nsDescriptor = rootTag == null ? null : rootTag.getNSDescriptor(rootTag.getNamespace(), false);
-
-    if (nsDescriptor instanceof Validator) {
-      ((Validator)nsDescriptor).validate(document, this);
-    }
-  }
 
   private void checkTag(XmlTag tag) {
     if (ourDoJaxpTesting) return;
@@ -413,7 +408,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -530,7 +525,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
                                       final XmlAttribute attribute,
                                       final String localizedMessage) {
     final HighlightInfoType tagProblemInfoType;
-    IntentionAction[] quickFixes = null;
+    IntentionAction[] quickFixes;
 
     if (tag instanceof HtmlTag) {
       if(isAdditionallyDeclared(mySettings.getInspectionProfile().getAdditionalHtmlAttributes(),localName)) return;
@@ -553,8 +548,8 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     myResult.add(highlightInfo);
 
     if (quickFixes != null) {
-      for (int i = 0; i < quickFixes.length; i++) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, quickFixes[i], null);
+      for (IntentionAction quickFix : quickFixes) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, quickFix, null);
       }
     }
   }
@@ -594,10 +589,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
           HighlightInfoType.UNKNOWN_HTML_TAG,
           HighlightDisplayKey.UNKNOWN_HTML_TAG
         );
-        
+
         return;
       }
-      
+
       checkReferences(tag, QuickFixProvider.NULL);
     }
   }

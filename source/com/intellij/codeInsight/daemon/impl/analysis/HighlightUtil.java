@@ -18,6 +18,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -37,6 +38,8 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.HighlightSeverity;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
@@ -2095,5 +2098,28 @@ public class HighlightUtil {
     final HighlightingSettingsPerFile component = moduleForPsiElement.getComponent(HighlightingSettingsPerFile.class);
     if(component == null) return;
     component.setHighlightingSettingForRoot(root, inspectionFlag ? FileHighlighingSetting.FORCE_HIGHLIGHTING: FileHighlighingSetting.SKIP_INSPECTION);
+  }
+
+  public static HighlightInfo convertToHighlightInfo(Annotation annotation) {
+    HighlightInfo info = new HighlightInfo(annotation.getTextAttributes(), convertType(annotation), annotation.getStartOffset(), annotation.getEndOffset(),
+                                           annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping());
+    List<Pair<IntentionAction, TextRange>> fixes = annotation.getQuickFixes();
+    if (fixes != null) {
+      for (int i = 0; i < fixes.size(); i++) {
+        Pair<IntentionAction, TextRange> pair = fixes.get(i);
+        QuickFixAction.registerQuickFixAction(info, pair.getSecond(), pair.getFirst(), null);
+      }
+    }
+    return info;
+  }
+
+  private static HighlightInfoType convertType(Annotation annotation) {
+    ProblemHighlightType type = annotation.getHighlightType();
+    if (type == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
+    if (type == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
+    if (type == ProblemHighlightType.LIKE_DEPRECATED) return HighlightInfoType.DEPRECATED;
+    return annotation.getSeverity() == HighlightSeverity.ERROR ? HighlightInfoType.ERROR :
+           annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.WARNING :
+           HighlightInfoType.INFORMATION;
   }
 }

@@ -36,7 +36,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 
 public abstract class TextEditorHighlightingPass implements HighlightingPass {
-  private final Document myDocument;
+  protected final Document myDocument;
   private final long myInitalStamp;
 
   protected TextEditorHighlightingPass(Document document) {

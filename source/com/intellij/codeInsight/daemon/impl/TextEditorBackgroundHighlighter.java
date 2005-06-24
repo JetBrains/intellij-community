@@ -59,7 +59,8 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     Pass.POST_UPDATE_ALL,
     Pass.UPDATE_OVERRIDEN_MARKERS,
     Pass.LOCAL_INSPECTIONS,
-    Pass.POPUP_HINTS2
+    Pass.POPUP_HINTS2,
+    Pass.EXTERNAL_TOOLS
   };
 
   private static final int[] VISIBLE_PASSES = new int[]{
@@ -154,6 +155,9 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
           return null;
         }
 
+      case Pass.EXTERNAL_TOOLS:
+        return new ExternalToolPass(myFile, myEditor);
+
       default:
         LOG.error("" + pass);
         return null;
@@ -197,7 +201,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
 
     PsiElement dirtyScope = DaemonCodeAnalyzer.getInstance(myProject).getFileStatusMap().getFileDirtyScope(document, part);
     if (dirtyScope != null && dirtyScope.isValid()) {
-      if (pass != Pass.POST_UPDATE_ALL) {
+      if (pass != Pass.POST_UPDATE_ALL && pass != Pass.EXTERNAL_TOOLS) {
         PsiFile file = dirtyScope.getContainingFile();
         if (file.getTextLength() != document.getTextLength()) {
           LOG.error("Length wrong! dirtyScope:" + dirtyScope,

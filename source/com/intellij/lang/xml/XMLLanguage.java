@@ -9,6 +9,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
@@ -104,5 +105,10 @@ public class XMLLanguage extends Language {
         return new XmlStructureViewTreeModel((XmlFile)psiElement);
       }
     };
+  }
+
+  @Nullable
+  public ExternalAnnotator getExternalAnnotator() {
+    return new XMLExternalAnnotator();
   }
 }

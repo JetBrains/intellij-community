@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.PostHighlightingPass;
+import com.intellij.codeInsight.daemon.impl.ExternalToolPass;
 import com.intellij.mock.MockProgressInidicator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -14,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.lang.annotation.HighlightSeverity;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -72,12 +74,34 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     Collection<HighlightInfo> highlights2 = action2.getHighlights();
 
     ArrayList<HighlightInfo> list = new ArrayList<HighlightInfo>();
-    for (HighlightInfo highlightInfo : highlights1) {
-      list.add(highlightInfo);
+    for (HighlightInfo info : highlights1) {
+      list.add(info);
     }
-    for (HighlightInfo aHighlights2 : highlights2) {
-      list.add(aHighlights2);
+
+    for (HighlightInfo info : highlights2) {
+      list.add(info);
     }
+
+    boolean isToLaunchExternal = true;
+    for (HighlightInfo info : list) {
+      if (info.getSeverity() == HighlightSeverity.ERROR) {
+        isToLaunchExternal = false;
+        break;
+      }
+    }
+
+    if (isToLaunchExternal) {
+      Collection<HighlightInfo> highlights3 = null;
+      ExternalToolPass action3 = new ExternalToolPass(myFile, myEditor);
+      action3.doCollectInformation(new MockProgressInidicator());
+
+      highlights3 = action3.getHighlights();
+      for (HighlightInfo info : highlights3) {
+        list.add(info);
+      }
+    }
+
+
     return list;
   }
 
