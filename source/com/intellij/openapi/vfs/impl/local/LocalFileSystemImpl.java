@@ -10,10 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileOperationsHandler;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -22,6 +19,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.vfs.local.win32.FileWatcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
@@ -775,9 +773,15 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     return "LocalFileSystem";
   }
 
-  public WatchRequest addRootToWatch(VirtualFile rootFile, final boolean toWatchRecursively) {
+  public WatchRequest addRootToWatch(VirtualFile rootFile, boolean toWatchRecursively) {
     LOG.assertTrue(rootFile != null);
     if(rootFile.getFileSystem() != this) return null;
+
+    if (!rootFile.isDirectory()) {
+      rootFile = rootFile.getParent();
+      toWatchRecursively = false;
+    }
+
     synchronized (LOCK) {
       if (rootFile instanceof VirtualFileImpl) {
         final WatchRequestImpl result = new WatchRequestImpl(rootFile, toWatchRecursively);
@@ -797,7 +801,13 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
       for (VirtualFile file : rootFiles) {
         LOG.assertTrue(file != null);
         if (file instanceof VirtualFileImpl) {
-          final WatchRequestImpl request = new WatchRequestImpl(file, toWatchRecursively);
+          boolean recWatch = toWatchRecursively;
+          if (!file.isDirectory()) {
+            file = file.getParent();
+            recWatch = false;
+          }
+
+          final WatchRequestImpl request = new WatchRequestImpl(file, recWatch);
           result.add(request);
         }
       }
@@ -824,55 +834,55 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     LOG.assertTrue(myHandlers.remove(handler), "Handler" + handler + " haven't been registered or already unregistered.");
   }
 
-  public boolean auxDelete(VirtualFile file) throws IOException {
+  @Nullable
+  public FileOperation auxDelete(VirtualFile file) throws IOException {
     for (LocalFileOperationsHandler handler : myHandlers) {
       if (handler.canHandleFileOperation(file)) {
-        handler.delete(file);
-        return true;
+        return handler.delete(file);
       }
     }
 
-    return false;
+    return null;
   }
 
-  public boolean auxMove(VirtualFile file, VirtualFile toDir) throws IOException {
+  @Nullable
+  public FileOperation auxMove(VirtualFile file, VirtualFile toDir) throws IOException {
     for (LocalFileOperationsHandler handler : myHandlers) {
       if (handler.canHandleFileOperation(file)) {
-        handler.move(file, toDir);
-        return true;
+        return handler.move(file, toDir);
       }
     }
-    return false;
+    return null;
   }
 
-  public boolean auxRename(VirtualFile file, String newName) throws IOException {
+  @Nullable
+  public FileOperation auxRename(VirtualFile file, String newName) throws IOException {
     for (LocalFileOperationsHandler handler : myHandlers) {
       if (handler.canHandleFileOperation(file)) {
-        handler.rename(file, newName);
-        return true;
+        return handler.rename(file, newName);
       }
     }
-    return false;
+    return null;
   }
 
-  public boolean auxCreateFile(VirtualFile dir, String name) throws IOException {
+  @Nullable
+  public FileOperation auxCreateFile(VirtualFile dir, String name) throws IOException {
     for (LocalFileOperationsHandler handler : myHandlers) {
       if (handler.canHandleFileOperation(dir)) {
-        handler.createFile(dir, name);
-        return true;
+        return handler.createFile(dir, name);
       }
     }
-    return false;
+    return null;
   }
 
-  public boolean auxCreateDirectory(VirtualFile dir, String name) throws IOException {
+  @Nullable
+  public FileOperation auxCreateDirectory(VirtualFile dir, String name) throws IOException {
     for (LocalFileOperationsHandler handler : myHandlers) {
       if (handler.canHandleFileOperation(dir)) {
-        handler.createDirectory(dir, name);
-        return true;
+        return handler.createDirectory(dir, name);
       }
     }
-    return false;
+    return null;
   }
 
   public void removeWatchedRoots(final Collection<WatchRequest> rootsToWatch) {

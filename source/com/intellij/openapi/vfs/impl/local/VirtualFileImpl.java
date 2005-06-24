@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.FileOperation;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.ProvidedContent;
@@ -194,11 +195,17 @@ public class VirtualFileImpl extends VirtualFile {
       throw new IOException("Invalid file name: \"" + newName + "\"");
     }
 
+    final FileOperation auxCommand = myFileSystem.auxRename(this, newName);
+    if (auxCommand != null) {
+      putUserData(FileOperation.KEY, auxCommand);
+    }
+
     myFileSystem.fireBeforePropertyChange(requestor, this, PROP_NAME, myName, newName);
 
     String oldName = myName;
-    if (myFileSystem.auxRename(this, newName)) {
+    if (auxCommand != null) {
       setName(newName);
+      auxCommand.perform();
     }
     else {
       PhysicalFile file = getPhysicalFile();
@@ -300,9 +307,15 @@ public class VirtualFileImpl extends VirtualFile {
       throw new IOException("Invalid file name: \"" + name + "\"");
     }
 
+    final FileOperation auxCommand = myFileSystem.auxCreateDirectory(this, name);
+
     PhysicalFile physicalFile = getPhysicalFile().createChild(name);
 
-    if (!myFileSystem.auxCreateDirectory(this, name)) {
+    if (auxCommand != null) {
+      putUserData(FileOperation.KEY, auxCommand);
+      auxCommand.perform();
+    }
+    else {
       VirtualFile file = findChild(name);
       if (file != null || physicalFile.exists()) {
         throw new IOException("Cannot create file " + physicalFile.getPath() + ". File already exists.");
@@ -328,9 +341,14 @@ public class VirtualFileImpl extends VirtualFile {
       throw new IOException("Invalid file name: \"" + name + "\"");
     }
 
+    final FileOperation auxCommand = myFileSystem.auxCreateFile(this, name);
 
     PhysicalFile physicalFile = getPhysicalFile().createChild(name);
-    if (!myFileSystem.auxCreateFile(this, name)) {
+    if (auxCommand != null) {
+      putUserData(FileOperation.KEY, auxCommand);
+      auxCommand.perform();
+    }
+    else {
       VirtualFile file = findChild(name);
       if (file != null || physicalFile.exists()) {
         throw new IOException("Cannot create file " + physicalFile.getPath() + ". File already exists.");
@@ -353,11 +371,19 @@ public class VirtualFileImpl extends VirtualFile {
       throw new IOException("Cannot delete root file " + physicalFile.getPath() + ".");
     }
 
+    final FileOperation auxCommand = myFileSystem.auxDelete(this);
+    if (auxCommand != null) {
+      putUserData(FileOperation.KEY, auxCommand);
+    }
+
     myFileSystem.fireBeforeFileDeletion(requestor, this);
 
     boolean isDirectory = isDirectory();
 
-    if (!myFileSystem.auxDelete(this)) {
+    if (auxCommand != null) {
+      auxCommand.perform();
+    }
+    else {
       delete(physicalFile);
     }
 
@@ -384,11 +410,19 @@ public class VirtualFileImpl extends VirtualFile {
 
     String name = getName();
     VirtualFileImpl oldParent = myParent;
+    final FileOperation auxCommand = myFileSystem.auxMove(this, newParent);
+    if (auxCommand != null) {
+      putUserData(FileOperation.KEY, auxCommand);
+    }
+
     myFileSystem.fireBeforeFileMovement(requestor, this, newParent);
 
     newParent.getChildren(); // Init children.
 
-    if (!myFileSystem.auxMove(this, newParent)) {
+    if (auxCommand != null) {
+      auxCommand.perform();
+    }
+    else {
       PhysicalFile physicalFile = getPhysicalFile();
       PhysicalFile newPhysicalParent = ((VirtualFileImpl)newParent).getPhysicalFile();
       PhysicalFile newPhysicalFile = newPhysicalParent.createChild(name);

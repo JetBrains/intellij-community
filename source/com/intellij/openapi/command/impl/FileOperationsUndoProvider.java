@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -25,21 +26,20 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
   private final UndoManagerImpl myUndoManager;
   private final Project myProject;
   private boolean myCommandStarted;
-  private Collection<RepositoryItem> myLockedRevisions = new HashSet<RepositoryItem>();
+  private final Collection<RepositoryItem> myLockedRevisions = new HashSet<RepositoryItem>();
   private final Key<CompositeUndoableAction> DELETE_UNDOABLE_ACTION_KEY = new Key<CompositeUndoableAction>("DeleteUndoableAction");
 
   private static class CompositeUndoableAction implements UndoableAction, Disposable {
-    private final List<MyUndoableAction> myActions = new ArrayList<MyUndoableAction>();
+    private final List<LvcsBasedUndoableAction> myActions = new ArrayList<LvcsBasedUndoableAction>();
 
-    public CompositeUndoableAction addAction(MyUndoableAction action) {
+    public CompositeUndoableAction addAction(LvcsBasedUndoableAction action) {
       myActions.add(action);
       return this;
     }
 
     public void undo() throws UnexpectedUndoException {
-      for (Iterator each = myActions.iterator(); each.hasNext();) {
-        UndoableAction undoableAction = (UndoableAction)each.next();
-        undoableAction.undo();
+      for (final LvcsBasedUndoableAction action : myActions) {
+        action.undo();
       }
     }
 
@@ -52,9 +52,8 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
 
     public DocumentReference[] getAffectedDocuments() {
       ArrayList<DocumentReference> result = new ArrayList<DocumentReference>();
-      for (Iterator each = myActions.iterator(); each.hasNext();) {
-        UndoableAction undoableAction = (UndoableAction)each.next();
-        result.addAll(Arrays.asList(undoableAction.getAffectedDocuments()));
+      for (final LvcsBasedUndoableAction action : myActions) {
+        result.addAll(Arrays.asList(action.getAffectedDocuments()));
       }
       return result.toArray(new DocumentReference[result.size()]);
     }
@@ -64,11 +63,9 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
     }
 
     public void dispose() {
-      for (Iterator each = myActions.iterator(); each.hasNext();) {
-        Disposable undoableAction = (Disposable)each.next();
-        undoableAction.dispose();
+      for (final LvcsBasedUndoableAction action : myActions) {
+        action.dispose();
       }
-
     }
 
     public boolean isEmpty() {
@@ -76,8 +73,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
     }
 
     public void actionCompleted() {
-      for (Iterator each = myActions.iterator(); each.hasNext();) {
-        MyUndoableAction action = (MyUndoableAction)each.next();
+      for (final LvcsBasedUndoableAction action : myActions) {
         action.actionCompleted();
       }
     }
@@ -215,6 +211,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
   }
 
   private CompositeUndoableAction createUndoableAction(final VirtualFile vFile) {
+
     CompositeUndoableAction compositeUndoableAction = new CompositeUndoableAction();
 
     if (myCommandStarted && (getLocalVcs() != null) && getLocalVcs().isAvailable()) {
@@ -232,17 +229,18 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
     synchronized (myLockedRevisions) {
       myLockedRevisions.add(afterActionPerformedRevision.getItem());
     }
-    MyUndoableAction action = new MyUndoableAction(vFile, filePath, isDirectory, afterActionPerformedRevision);
+    LvcsBasedUndoableAction action = new LvcsBasedUndoableAction(vFile, filePath, isDirectory, afterActionPerformedRevision);
     compositeUndoableAction.addAction(action);
 
     VirtualFile[] children = vFile.getChildren();
     if (children == null) return;
-    for (int i = 0; i < children.length; i++) {
-      addActionForFileTo(compositeUndoableAction, children[i]);
+    for (VirtualFile aChildren : children) {
+      addActionForFileTo(compositeUndoableAction, aChildren);
     }
 
   }
 
+  @Nullable
   private LvcsRevision getCurrentRevision(String filePath, boolean isDir) {
     LocalVcs vcs = getLocalVcs();
     LvcsObject lvcsFile = isDir ? (LvcsObject)vcs.findDirectory(filePath, true) : vcs.findFile(filePath, true);
@@ -267,9 +265,8 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
 
   private List<LvcsChange> filterOnlyGlobalChanges(List<LvcsChange> changes) {
     ArrayList<LvcsChange> result = new ArrayList<LvcsChange>();
-    for (Iterator iterator = changes.iterator(); iterator.hasNext();) {
-      LvcsChange lvcsChange = (LvcsChange)iterator.next();
-      if (lvcsChange.getChangeType() != LvcsChange.CONTENT_CHANGED) result.add(lvcsChange);
+    for (final LvcsChange change : changes) {
+      if (change.getChangeType() != LvcsChange.CONTENT_CHANGED) result.add(change);
     }
     return result;
   }
@@ -319,18 +316,44 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
     }
   }
 
-  private class MyUndoableAction implements UndoableAction, Disposable {
+  private class FileOperationUndoableAction implements UndoableAction {
+    private final VirtualFile myFile;
+    private final FileOperation myOperation;
+
+    public FileOperationUndoableAction(final VirtualFile file) {
+      myFile = file;
+      myOperation = file.getUserData(FileOperation.KEY);
+    }
+
+    public void undo() throws UnexpectedUndoException {
+      myOperation.undo();
+    }
+
+    public void redo() throws UnexpectedUndoException {
+      myOperation.perform();
+    }
+
+    public DocumentReference[] getAffectedDocuments() {
+      return new DocumentReference[] {new DocumentReferenceByVirtualFile(myFile)};
+    }
+
+    public boolean isComplex() {
+      return true;
+    }
+  }
+
+  private class LvcsBasedUndoableAction implements UndoableAction, Disposable {
     private LvcsRevision myBeforeUndoRevision;
     private LvcsRevision myAfterActionPerformedRevision;
 
-    private VirtualFile myFile;
+    private final VirtualFile myFile;
     private final String myFilePath;
     private final boolean myDirectory;
 
-    public MyUndoableAction(VirtualFile file,
-                            String filePath,
-                            boolean directory,
-                            LvcsRevision afterActionPerformedRevision) {
+    public LvcsBasedUndoableAction(VirtualFile file,
+                                   String filePath,
+                                   boolean directory,
+                                   LvcsRevision afterActionPerformedRevision) {
       myFile = file;
       myFilePath = filePath;
       myDirectory = directory;
@@ -376,9 +399,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
         else {
           throw new RuntimeException(e);
         }
-        return;
       }
-
     }
 
     public void redo() throws UnexpectedUndoException {

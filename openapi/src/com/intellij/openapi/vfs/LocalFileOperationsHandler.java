@@ -8,10 +8,10 @@ import java.io.IOException;
 public interface LocalFileOperationsHandler {
   boolean canHandleFileOperation(VirtualFile file);
 
-  void delete(VirtualFile file) throws IOException;
-  void move(VirtualFile file, VirtualFile toDir) throws IOException;
-  void rename(VirtualFile file, String newName) throws IOException;
+  FileOperation delete(VirtualFile file) throws IOException;
+  FileOperation move(VirtualFile file, VirtualFile toDir) throws IOException;
+  FileOperation rename(VirtualFile file, String newName) throws IOException;
 
-  void createFile(VirtualFile dir, String name) throws IOException;
-  void createDirectory(VirtualFile dir, String name) throws IOException;
+  FileOperation createFile(VirtualFile dir, String name) throws IOException;
+  FileOperation createDirectory(VirtualFile dir, String name) throws IOException;
 }
