@@ -47,44 +47,51 @@ public class CopyReferenceAction extends AnAction {
 
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
-    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    boolean enabled = editor != null && project != null;
-    if (enabled) {
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file == null) {
-        enabled = false;
-      }
-      else {
-        PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-
-        PsiMember member = findMemberToCopy(element);
-        enabled = member != null;
-      }
-    }
+    boolean enabled = isEnabled(dataContext);
     e.getPresentation().setEnabled(enabled);
+  }
+
+  private static boolean isEnabled(final DataContext dataContext) {
+    Project project = (Project)dataContext.getData(DataConstants.PROJECT);
+    if (project == null) return false;
+    if (dataContext.getData(DataConstants.PSI_ELEMENT) != null) return true;
+    Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
+    if (editor == null) return false;
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (file == null) return false;
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+
+    PsiElement member = findElementToCopy(element);
+    return member != null;
   }
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = (Editor)dataContext.getData(DataConstants.EDITOR);
     Project project = (Project)dataContext.getData(DataConstants.PROJECT);
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiElement element;
+    if (editor == null) {
+      element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
+    }
+    else {
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      element = file.findElementAt(editor.getCaretModel().getOffset());
+    }
 
-    PsiMember member = findMemberToCopy(element);
+    PsiElement member = findElementToCopy(element);
+    if (member == null) return;
 
-    if (member != null) {
-      doCopy(member, project);
-
-      HighlightManager highlightManager = HighlightManager.getInstance(project);
-      EditorColorsManager manager = EditorColorsManager.getInstance();
-      TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    doCopy(member, project);
+    HighlightManager highlightManager = HighlightManager.getInstance(project);
+    EditorColorsManager manager = EditorColorsManager.getInstance();
+    TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    if (editor != null) {
       highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{element}, attributes, true, null);
     }
   }
 
-  private static PsiMember findMemberToCopy(final PsiElement element) {
+  private static PsiElement findElementToCopy(final PsiElement element) {
+    if (element instanceof PsiMember || element instanceof PsiFile) return element;
     if (!(element instanceof PsiIdentifier)) return null;
     final PsiElement parent = element.getParent();
     PsiMember member = null;
