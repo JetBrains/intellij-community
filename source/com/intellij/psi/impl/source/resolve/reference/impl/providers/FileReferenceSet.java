@@ -62,10 +62,6 @@ public class FileReferenceSet {
     myElement = element;
   }
 
-  FileReference[] getReferences() {
-    return myReferences;
-  }
-
   boolean isCaseSensitive() {
     return myCaseSensitive;
   }

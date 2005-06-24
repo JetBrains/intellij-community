@@ -196,7 +196,7 @@ public class FileReference implements PsiPolyVariantReference {
       //Correct ranges
       int delta = newElementName.length() - myRange.getLength();
       myRange = new TextRange(getRangeInElement().getStartOffset(), getRangeInElement().getStartOffset() + newElementName.length());
-      FileReference[] references = myFileReferenceSet.getReferences();
+      FileReference[] references = myFileReferenceSet.getAllReferences();
       for (int idx = myIndex + 1; idx < references.length; idx++) {
         references[idx].myRange = references[idx].myRange.shiftRight(delta);
       }
