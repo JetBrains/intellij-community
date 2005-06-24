@@ -71,18 +71,6 @@ public class ComboBoxTableCellRenderer extends JPanel implements TableCellRender
 
     myCombo.setSelectedItem(tags.getSelection());
 
-    if (isSelected) {
-      myCombo.setBackground(table.getSelectionBackground());
-      setBackground(table.getSelectionBackground());
-      myCombo.setForeground(table.getSelectionForeground());
-      setForeground(table.getSelectionForeground());
-    }
-    else {
-      myCombo.setBackground(table.getBackground());
-      setBackground(table.getBackground());
-      myCombo.setForeground(table.getForeground());
-      setForeground(table.getForeground());
-    }
     return this;
   }
 
