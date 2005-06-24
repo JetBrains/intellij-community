@@ -6,6 +6,7 @@ import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
@@ -70,7 +71,13 @@ public class ModuleImpl extends BaseFileConfigurable implements Module {
     myPomModule = new PomModuleImpl(myPomModel, this);
 
     LOG.assertTrue(filePath != null);
-    String path = filePath.replace(File.separatorChar, '/');
+    final String path = filePath.replace(File.separatorChar, '/');
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      }
+    });
+
     String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, path);
     myFilePointer = VirtualFilePointerManager.getInstance().create(url, null);
     myVirtualFileListener = new MyVirtualFileListener();

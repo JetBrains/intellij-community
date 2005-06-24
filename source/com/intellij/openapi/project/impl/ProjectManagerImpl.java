@@ -22,6 +22,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -175,6 +176,16 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     catch (IOException e) {
     }
     ProjectImpl project = createProject(filePath, false, false, false);
+
+    // http://www.jetbrains.net/jira/browse/IDEA-1556. Enforce refresh. Project files may potentially reside in non-yet valid vfs paths.
+    final String[] paths = project.getConfigurationFilePaths();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        for (int i = 0; i < paths.length; i++) {
+          LocalFileSystem.getInstance().refreshAndFindFileByPath(paths[i].replace(File.separatorChar, '/'));
+        }
+      }
+    });
 
     final boolean macrosOk = checkMacros(project, getDefinedMacros());
     if (!macrosOk) {
