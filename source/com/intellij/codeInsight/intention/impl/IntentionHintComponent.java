@@ -36,7 +36,6 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.EventListener;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -221,8 +220,8 @@ public class IntentionHintComponent extends JPanel {
     setOpaque(false);
 
     boolean showFix = false;
-    for (Iterator iterator = quickFixes.iterator(); iterator.hasNext();) {
-      IntentionAction fix = (IntentionAction)((Pair)iterator.next()).first;
+    for (final Pair<IntentionAction, List<IntentionAction>> pairs : quickFixes) {
+      IntentionAction fix = pairs.first;
       if (IntentionManagerSettings.getInstance().isShowLightBulb(fix)) {
         showFix = true;
         break;
@@ -347,8 +346,7 @@ public class IntentionHintComponent extends JPanel {
 
     final Component component = myComponentHint.getComponent();
     final EventListener[] listeners = component.getListeners(FocusListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      EventListener listener = listeners[i];
+    for (EventListener listener : listeners) {
       ListenerUtil.addFocusListener(myListPopup.getWindow(), (FocusListener)listener);
     }
 
@@ -488,13 +486,13 @@ public class IntentionHintComponent extends JPanel {
   private void openChildPopup(final IntentionActionWithTextCaching action) {
     final ArrayList<Pair<IntentionAction, List<IntentionAction>>> intentions = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>();
     final List<IntentionAction> optionIntentions = action.getOptionIntentions();
-    for (Iterator<IntentionAction> iterator = optionIntentions.iterator(); iterator.hasNext();) {
-      intentions.add(new Pair<IntentionAction, List<IntentionAction>>(iterator.next(), null));
+    for (final IntentionAction optionIntention : optionIntentions) {
+      intentions.add(new Pair<IntentionAction, List<IntentionAction>>(optionIntention, null));
     }
     final ArrayList<Pair<IntentionAction, List<IntentionAction>>> quickFixes = new ArrayList<Pair<IntentionAction, List<IntentionAction>>>();
     final List<IntentionAction> optionFixes = action.getOptionFixes();
-    for (Iterator<IntentionAction> iterator = optionFixes.iterator(); iterator.hasNext();) {
-      quickFixes.add(new Pair<IntentionAction, List<IntentionAction>>(iterator.next(), null));
+    for (final IntentionAction optionFix : optionFixes) {
+      quickFixes.add(new Pair<IntentionAction, List<IntentionAction>>(optionFix, null));
     }
     final IntentionHintComponent listPopup = new IntentionHintComponent(myProject, myEditor, intentions, quickFixes, myListPopup);
     listPopup.showPopup();
