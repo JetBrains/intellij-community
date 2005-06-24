@@ -82,7 +82,13 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     else if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
       final EjbMethodRole role = J2EERolesUtil.getEjbRole(method);
-      Icon methodIcon = role == null ? Icons.METHOD_ICON : role.getIcon();
+      Icon methodIcon;
+      if (role == null) {
+        methodIcon = method.hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
+      }
+      else {
+        methodIcon = role.getIcon();
+      }
       baseIcon = createLayeredIcon(methodIcon, getFlags(method, false));
     }
     else if (element instanceof PsiField) {

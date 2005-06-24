@@ -54,6 +54,7 @@ public abstract class Icons {
   public static final Icon ENUM_ICON = IconLoader.getIcon("/nodes/enum.png");
   public static final Icon INTERFACE_ICON = IconLoader.getIcon("/nodes/interface.png");
   public static final Icon METHOD_ICON = IconLoader.getIcon("/nodes/method.png");
+  public static final Icon ABSTRACT_METHOD_ICON = IconLoader.getIcon("/nodes/abstractMethod.png");
   public static final Icon FIELD_ICON = IconLoader.getIcon("/nodes/field.png");
   public static final Icon PARAMETER_ICON = IconLoader.getIcon("/nodes/parameter.png");
   public static final Icon VARIABLE_ICON = IconLoader.getIcon("/nodes/variable.png");
