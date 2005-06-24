@@ -38,6 +38,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 
 import java.util.ArrayList;
@@ -47,7 +48,6 @@ import java.util.Set;
 
 public class CompositeShortNamesCache implements PsiShortNamesCache {
   private List<PsiShortNamesCache> myCaches = new ArrayList<PsiShortNamesCache>();
-  private static final String[] EMPTY_STRINGS = new String[0];
 
   public void addCache(PsiShortNamesCache cache) {
     myCaches.add(cache);
@@ -77,7 +77,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
       merger.add(cache.getAllFileNames());
     }
     String[] result = merger.getResult();
-    return result != null ? result : EMPTY_STRINGS;
+    return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   public PsiClass[] getClassesByName(String name, GlobalSearchScope scope) {
@@ -97,7 +97,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
       merger.add(cache.getAllClassNames(searchInLibraries));
     }
     String[] result = merger.getResult();
-    return result != null ? result : EMPTY_STRINGS;
+    return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   public void getAllClassNames(boolean searchInLibraries, HashSet<String> dest) {
@@ -124,7 +124,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
       merger.add(cache.getAllMethodNames(searchInLibraries));
     }
     String[] result = merger.getResult();
-    return result != null ? result : EMPTY_STRINGS;
+    return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   public void getAllMethodNames(boolean searchInLibraries, HashSet<String> set) {
@@ -151,7 +151,7 @@ public class CompositeShortNamesCache implements PsiShortNamesCache {
       merger.add(cache.getAllFieldNames(searchInLibraries));
     }
     String[] result = merger.getResult();
-    return result != null ? result : EMPTY_STRINGS;
+    return result != null ? result : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   public void getAllFieldNames(boolean checkBoxState, HashSet<String> set) {

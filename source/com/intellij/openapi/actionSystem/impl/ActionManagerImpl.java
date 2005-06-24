@@ -19,6 +19,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -702,7 +703,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements JDOMExte
       final THashSet<String> pluginActions = myPlugin2Id.get(pluginName);
       return pluginActions.toArray(new String[pluginActions.size()]);
     }
-    return new String[0];
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   private AnActionListener[] getActionListeners() {

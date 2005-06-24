@@ -9,6 +9,7 @@ import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 
 import java.util.LinkedHashMap;
@@ -60,8 +61,8 @@ class RenameViewDescriptor implements UsageViewDescriptor{
     }
 
 
-    myProcessedElementsHeader = StringUtil.join(processedElementsHeaders.toArray(new String[0]),", ");
-    myCodeReferencesText =  "References in code to " + StringUtil.join(codeReferences.toArray(new String[0]),", ") + " ";
+    myProcessedElementsHeader = StringUtil.join(processedElementsHeaders.toArray(ArrayUtil.EMPTY_STRING_ARRAY),", ");
+    myCodeReferencesText =  "References in code to " + StringUtil.join(codeReferences.toArray(ArrayUtil.EMPTY_STRING_ARRAY),", ") + " ";
     myHelpID = HelpID.getRenameHelpID(primaryElement);
   }
 

@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.codeStyle.StatisticsManagerEx;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.util.ScrambledInputStream;
 import com.intellij.util.ScrambledOutputStream;
+import com.intellij.util.ArrayUtil;
 
 import java.io.*;
 import java.lang.ref.SoftReference;
@@ -102,7 +103,7 @@ public class StatisticsManagerImpl extends StatisticsManager implements Statisti
   public String[] getNameSuggestions(PsiType type, NameContext context, String prefix) {
     final List<String> suggestions = new ArrayList<String>(MAX_NAME_SUGGESTIONS_COUNT);
     final String key1 = getMemberUseKey1(type);
-    if(key1 == null) return new String[0];
+    if(key1 == null) return ArrayUtil.EMPTY_STRING_ARRAY;
     final StatisticsUnit unit = getUnit(getUnitNumber(key1));
     final String[] possibleNames = unit.getKeys2(key1);
     Arrays.sort(possibleNames, new Comparator<String>() {

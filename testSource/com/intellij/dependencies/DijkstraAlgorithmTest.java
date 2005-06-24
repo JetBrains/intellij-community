@@ -19,7 +19,7 @@ public class DijkstraAlgorithmTest extends TestCase{
     graph.put("a", new String[]{"b","c", "d"});
     graph.put("b", new String[]{"d", "c"});
     graph.put("c", new String[]{"b"});
-    graph.put("d", new String[0]);
+    graph.put("d", ArrayUtil.EMPTY_STRING_ARRAY);
     myGraph = new GraphGenerator<String>(new GraphGenerator.SemiGraph<String>() {
       public Collection<String> getNodes() {
         return graph.keySet();
