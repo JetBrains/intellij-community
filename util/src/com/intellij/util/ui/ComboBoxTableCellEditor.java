@@ -3,6 +3,7 @@ package com.intellij.util.ui;
 import com.intellij.util.ListWithSelection;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicComboBoxRenderer;
 import java.awt.*;
 import java.util.Iterator;
 
@@ -16,7 +17,7 @@ public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
   private JComboBox myComboBox = new JComboBox();
 
   private ComboBoxTableCellEditor() {
-    myComboBox.setRenderer(new MyComboboxRenderer());
+    myComboBox.setRenderer(new BasicComboBoxRenderer());
     myPanel.add(
       myComboBox,
         new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0)
@@ -35,35 +36,11 @@ public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
 
     myComboBox.setSelectedItem(options.getSelection());
 
-    if (isSelected) {
-      myComboBox.setBackground(table.getSelectionBackground());
-      myPanel.setBackground(table.getSelectionBackground());
-      myComboBox.setForeground(table.getSelectionForeground());
-      myPanel.setForeground(table.getSelectionForeground());
-    }
-    else {
-      myComboBox.setBackground(table.getBackground());
-      myPanel.setBackground(table.getBackground());
-      myComboBox.setForeground(table.getForeground());
-      myPanel.setForeground(table.getForeground());
-    }
-
     return myPanel;
-
   }
 
   public Object getCellEditorValue() {
     return myComboBox.getSelectedItem();
-  }
-
-  private static class MyComboboxRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      if (component instanceof JLabel) {
-          ( (JLabel)component).setHorizontalAlignment(SwingConstants.CENTER);
-      }
-      return component;
-    }
   }
 
   public Dimension getPreferedSize() {
