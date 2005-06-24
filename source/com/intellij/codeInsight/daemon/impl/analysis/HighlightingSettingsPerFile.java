@@ -44,8 +44,8 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ModuleCo
     if(defaults == null) defaults = getDefaults(containingFile.getLanguage()).clone();
     defaults[PsiUtil.getRootIndex(root)] = setting;
     boolean toRemove = true;
-    for (int i = 0; i < defaults.length; i++) {
-      if(defaults[i] != FileHighlighingSetting.NONE) toRemove = false;
+    for (FileHighlighingSetting aDefault : defaults) {
+      if (aDefault != FileHighlighingSetting.NONE) toRemove = false;
     }
     if(!toRemove) myHighlightSettings.put(containingFile.getVirtualFile(), defaults);
     else myHighlightSettings.remove(containingFile.getVirtualFile());
@@ -63,13 +63,12 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ModuleCo
 
   public void readExternal(Element element) throws InvalidDataException {
     final List children = element.getChildren("file");
-    final Iterator iterator = children.iterator();
-    while (iterator.hasNext()) {
-      final Element child = (Element)iterator.next();
+    for (final Object aChildren : children) {
+      final Element child = (Element)aChildren;
       final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl(child.getAttributeValue("uri"));
       final List<FileHighlighingSetting> settings = new ArrayList<FileHighlighingSetting>();
       int index = 0;
-      while(child.getAttributeValue("root" + index) != null){
+      while (child.getAttributeValue("root" + index) != null) {
         final String attributeValue = child.getAttributeValue("root" + index);
         settings.add(Enum.valueOf(FileHighlighingSetting.class, attributeValue));
       }
@@ -78,6 +77,7 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ModuleCo
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
+    if (myHighlightSettings.isEmpty()) throw new WriteExternalException();
     for (Map.Entry<VirtualFile, FileHighlighingSetting[]> entry : myHighlightSettings.entrySet()) {
       final Element child = new Element("setting");
       element.addContent(child);
