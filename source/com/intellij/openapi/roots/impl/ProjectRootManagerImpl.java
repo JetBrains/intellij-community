@@ -400,10 +400,17 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       contentRoots.addAll(Arrays.asList(moduleRootManager.getContentRoots()));
-      contentRoots.add(module.getModuleFile());
+      final VirtualFile moduleFile = module.getModuleFile();
+      if (moduleFile != null) {
+        contentRoots.add(moduleFile);
+      }
     }
 
-    contentRoots.add(myProject.getProjectFile()); // No need to add workspace file separately since they're definetely on same directory with ipr.
+    final VirtualFile projectFile = myProject.getProjectFile();
+    if (projectFile != null) {
+      contentRoots.add(projectFile);
+      // No need to add workspace file separately since they're definetely on same directory with ipr.
+    }
 
     myRootsToWatch.addAll(LocalFileSystem.getInstance().addRootsToWatch(contentRoots, true));
 
