@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * User: anna
  * Date: Apr 22, 2005
@@ -72,11 +74,13 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
       public void actionPerformed(ActionEvent e) {
         ArrayList<MyFilesTableRowElement> newList = new ArrayList<MyFilesTableRowElement>(myModel.getItems());
         final Pair<String, String> selectedNameLocation = showEditorDialog("", "");
-        newList.add(new MyFilesTableRowElement(selectedNameLocation.first, selectedNameLocation.second, false));
-        myModel.setItems(newList);
-        int index = myModel.getRowCount() - 1;
-        myModel.fireTableRowsInserted(index, index);
-        myFilesTable.setRowSelectionInterval(index, index);
+        if (selectedNameLocation != null) {
+          newList.add(new MyFilesTableRowElement(selectedNameLocation.first, selectedNameLocation.second, false));
+          myModel.setItems(newList);
+          int index = myModel.getRowCount() - 1;
+          myModel.fireTableRowsInserted(index, index);
+          myFilesTable.setRowSelectionInterval(index, index);
+        }
       }
     });
     myRemoveButton.addActionListener(new ActionListener() {
@@ -255,6 +259,7 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
     }
   }
 
+  @Nullable
   private static Pair<String, String> showEditorDialog(String name, String location){
     EditLocationDialog dialog = new EditLocationDialog(null, true, "Edit Log Files Aliases", "Alias:", "Log File Location:") {
       protected FileChooserDescriptor getChooserDescriptor() {
@@ -271,9 +276,10 @@ public class LogConfigurationPanel extends SettingsEditor<RunConfigurationBase> 
         if (name == null || name.length() ==0){
           name = location;
         }
+        return Pair.create(location, name);
       }
     }
-    return Pair.create(location, name);
+    return null;
   }
 
   private static class LogFileCellEditor extends AbstractTableCellEditor {
