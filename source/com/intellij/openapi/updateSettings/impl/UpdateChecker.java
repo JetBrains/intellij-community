@@ -100,8 +100,7 @@ public final class UpdateChecker implements ApplicationComponent, ProjectManager
     final String availBuild = document.getRootElement().getChild("build").getTextTrim();
     final String availVersion = document.getRootElement().getChild("version").getTextTrim();
     String ourBuild = ApplicationInfo.getInstance().getBuildNumber().trim();
-    if ("__BUILD_NUMBER__".equals(ourBuild)) ourBuild = "123";// TODO: change to correct behavior
-                                                              // Integer.toString(Integer.MAX_VALUE);
+    if ("__BUILD_NUMBER__".equals(ourBuild)) ourBuild = Integer.toString(Integer.MAX_VALUE);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("build available:'" + availBuild + "' ourBuild='" + ourBuild + "' ");

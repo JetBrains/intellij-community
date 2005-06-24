@@ -179,6 +179,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
     }
   }
 
+  // TODO: extract class
   private static class UpdateInfoPanel {
 
     private JPanel myPanel;
@@ -193,10 +194,18 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
     public UpdateInfoPanel() {
       myBtnMoreInfo.setSelected(true);
       myBtnUpdateLater.setSelected(false);
-      myBuildNumber.setText("3381)"); // TODO: read correct number
-      myVersionNumber.setText("Irida"); // TODO: read correct number
+
+      final String build = ApplicationInfo.getInstance().getBuildNumber().trim();
+      myBuildNumber.setText(build + ")");
+      String version = ApplicationInfo.getInstance().getMajorVersion() + "." + ApplicationInfo.getInstance().getMajorVersion();
+      if (version.equalsIgnoreCase("null.null")) {
+        version = ApplicationInfo.getInstance().getVersionName();
+      }
+      myVersionNumber.setText(version);
       myNewBuildNumber.setText(Integer.toString(UpdateChecker.NEW_VERION.getLatestBuild()) + ")");
       myNewVersionNumber.setText(UpdateChecker.NEW_VERION.getLatestVersion());
+
+      // TODO: add action listener for the Close button
 
       myUpdatesLink.setForeground(Color.BLUE); // TODO: specify correct color
       myUpdatesLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -231,6 +240,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
     }
   }
 
+  // TODO: extract class
   private static class NoUpdatesPanel {
     private JLabel myUpdatesLink;
     private JButton myCloseButton;
