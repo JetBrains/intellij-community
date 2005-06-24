@@ -126,11 +126,19 @@ public class IdeFrame extends JFrame implements DataProvider {
   }
 
   private String calcFileTitle(final VirtualFile file) {
-    final String url = file.getPresentableUrl();
+    String url = file.getPresentableUrl();
     if (myProject == null) {
       return url;
     }
     else {
+      final VirtualFile projectFile = myProject.getProjectFile();
+      if (projectFile != null) {
+        //noinspection ConstantConditions
+        final String projectHomeUrl = projectFile.getParent().getPresentableUrl();
+        if (url.startsWith(projectHomeUrl)) {
+          url = "..." + url.substring(projectHomeUrl.length());
+        }
+      }
       final Module module = VfsUtil.getModuleForFile(myProject, file);
       if (module == null) return url;
       return new StringBuffer().append("[").append(module.getName()).append("] - ").append(url).toString();
