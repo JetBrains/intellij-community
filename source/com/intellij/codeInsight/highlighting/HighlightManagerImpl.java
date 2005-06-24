@@ -111,9 +111,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     Map<RangeHighlighter, HighlightInfo> highlightersMap = getHighlightInfoMap(editor, false);
     if (highlightersMap == null) return new RangeHighlighter[0];
     Set<RangeHighlighter> set = new HashSet<RangeHighlighter>();
-    for (Iterator<Map.Entry<RangeHighlighter, HighlightInfo>> it = highlightersMap.entrySet().iterator();
-         it.hasNext();) {
-      Map.Entry<RangeHighlighter, HighlightInfo> entry = it.next();
+    for (Map.Entry<RangeHighlighter, HighlightInfo> entry : highlightersMap.entrySet()) {
       HighlightInfo info = entry.getValue();
       if (info.editor.equals(editor)) set.add(entry.getKey());
     }
@@ -155,8 +153,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     }
     Color scrollmarkColor = getScrollMarkColor(attributes);
 
-    for (int i = 0; i < occurrences.length; i++) {
-      PsiReference occurrence = occurrences[i];
+    for (PsiReference occurrence : occurrences) {
       PsiElement element = occurrence.getElement();
       int startOffset = element.getTextRange().getStartOffset();
       int start = startOffset + occurrence.getRangeInElement().getStartOffset();
@@ -176,8 +173,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     }
     Color scrollmarkColor = getScrollMarkColor(attributes);
 
-    for (int i = 0; i < elements.length; i++) {
-      final PsiElement element = elements[i];
+    for (final PsiElement element : elements) {
       final TextRange range = element.getTextRange();
       addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, flags, highlightersVector, scrollmarkColor);
     }
@@ -224,8 +220,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
 
     Color scrollmarkColor = getScrollMarkColor(attributes);
 
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
+    for (PsiElement element : elements) {
       TextRange range = element.getTextRange();
       int start = range.getStartOffset();
       int end = range.getEndOffset();
@@ -246,8 +241,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     if (map == null) return false;
 
     boolean done = false;
-    for (Iterator<RangeHighlighter> iterator = map.keySet().iterator(); iterator.hasNext();) {
-      RangeHighlighter highlighter = iterator.next();
+    for (RangeHighlighter highlighter : map.keySet()) {
       HighlightInfo info = map.get(highlighter);
       if (!info.editor.equals(editor)) continue;
       if ((info.flags & mask) != 0) {
