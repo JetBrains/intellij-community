@@ -21,7 +21,7 @@ public interface JspFile extends PsiFile{
   boolean isErrorPage();
   boolean isSessionPage();
 
-  XmlTag[] getDirectiveTags(JspDirectiveKind directiveKind);
+  XmlTag[] getDirectiveTags(JspDirectiveKind directiveKind, final boolean searchInIncludes);
   XmlTag createDirective(XmlTag context, JspDirectiveKind page);
 
   PsiClass getJavaRoot();
