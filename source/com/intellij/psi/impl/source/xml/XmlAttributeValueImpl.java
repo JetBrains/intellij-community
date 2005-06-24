@@ -24,11 +24,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   }
 
   public String getValue() {
-    String text = getText();
-    if (StringUtil.startsWithChar(text, '\"') || StringUtil.startsWithChar(text, '\'')) text = text.substring(1);
-    if (StringUtil.endsWithChar(text, '\"') || StringUtil.endsWithChar(text, '\'')) text = text.substring(0, text.length() - 1);
-
-    return text;
+    return StringUtil.stripLeadingrailingQuotes(getText());
   }
 
   public PsiReference[] getReferences() {

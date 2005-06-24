@@ -1,25 +1,26 @@
 package com.intellij.xml.util;
 
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
-import com.intellij.psi.xml.*;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.psi.impl.source.jsp.jspJava.JspText;
-import com.intellij.psi.html.HtmlTag;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
-
-import java.util.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.DynamicFileReferenceSet;
+import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
 import gnu.trove.THashSet;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -200,45 +201,41 @@ public class HtmlUtil {
         if (text.equals(originalText)) return refs;
       }
 
-      if(PsiTreeUtil.getChildOfType(element, JspText.class) == null) {
-        String text = originalText;
-        int offset = 0;
-        if (text.length() > 0 &&
-            (text.charAt(0) == '"' || text.charAt(0) == '\'')
-           ) {
-          ++offset;
-        }
-  
-        text = text.substring(offset,text.length() - offset);
-        int ind = text.lastIndexOf('#');
-        String anchor = null;
-        if (ind != -1) {
-          anchor = text.substring(ind+1);
-          text = text.substring(0,ind);
-        }
-  
-        ind = text.lastIndexOf('?');
-        if (ind!=-1) text = text.substring(0,ind);
-  
-        if (text.length() > 0 && !text.startsWith("http://") && !text.startsWith("mailto:") &&
-            !text.startsWith("javascript:")
-           ) {
-          refs = new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this, false).getAllReferences();
-        } else {
-          refs = PsiReference.EMPTY_ARRAY;
-        }
-  
-        if (anchor != null &&
-            (refs.length > 0 || originalText.regionMatches(1+offset,anchor,0,anchor.length()))
-            ) {
-          PsiReference[] newrefs = new PsiReference[refs.length+1];
-          System.arraycopy(refs,0,newrefs,0,refs.length);
-          newrefs[refs.length] = new AnchorReference(anchor, refs.length > 0 ? refs[refs.length-1]:null,element);
-          refs = newrefs;
-        }
+      
+      String text = originalText;
+      int offset = 0;
+      if (text.length() > 0 &&
+          (text.charAt(0) == '"' || text.charAt(0) == '\'')
+         ) {
+        ++offset;
+      }
+
+      text = text.substring(offset,text.length() - offset);
+      int ind = text.lastIndexOf('#');
+      String anchor = null;
+      if (ind != -1) {
+        anchor = text.substring(ind+1);
+        text = text.substring(0,ind);
+      }
+
+      ind = text.lastIndexOf('?');
+      if (ind!=-1) text = text.substring(0,ind);
+
+      if (text.length() > 0 && !text.startsWith("http://") && !text.startsWith("mailto:") &&
+          !text.startsWith("javascript:")
+         ) {
+        refs = new DynamicFileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this, false).getAllReferences();
       } else {
-        // nothing when href is dynamically generated
         refs = PsiReference.EMPTY_ARRAY;
+      }
+
+      if (anchor != null &&
+          (refs.length > 0 || originalText.regionMatches(1+offset,anchor,0,anchor.length()))
+          ) {
+        PsiReference[] newrefs = new PsiReference[refs.length+1];
+        System.arraycopy(refs,0,newrefs,0,refs.length);
+        newrefs[refs.length] = new AnchorReference(anchor, refs.length > 0 ? refs[refs.length-1]:null,element);
+        refs = newrefs;
       }
       
       element.putUserData(cachedReferencesKey,refs);

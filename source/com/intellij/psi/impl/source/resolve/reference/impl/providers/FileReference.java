@@ -22,6 +22,7 @@ import java.util.List;
  * @author cdr
  */
 public class FileReference implements PsiPolyVariantReference {
+  public static final FileReference[] EMPTY = new FileReference[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference");
 
   private final int myIndex;

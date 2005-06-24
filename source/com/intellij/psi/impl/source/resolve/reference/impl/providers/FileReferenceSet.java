@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
@@ -81,7 +78,7 @@ public class FileReferenceSet {
     return myProvider;
   }
 
-  private void reparse(String str){
+  protected void reparse(String str){
     final List<FileReference> referencesList = new ArrayList<FileReference>();
     int currentSlash = -1;
     while(currentSlash + 1 < str.length() && str.charAt(currentSlash + 1) == ' ') currentSlash++;
@@ -101,7 +98,11 @@ public class FileReferenceSet {
       }
     }
 
-    myReferences = referencesList.toArray(new FileReference[referencesList.size()]);
+    setReferences(referencesList.toArray(new FileReference[referencesList.size()]));
+  }
+
+  protected void setReferences(final FileReference[] references) {
+    myReferences = references;
   }
 
   FileReference getReference(int index){
