@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module version="4" relativePaths="true" type="JAVA_MODULE">
-  <component name="HighlightingSettingsPerFile" />
   <component name="ModuleRootManager" />
   <component name="NewModuleRootManager">
     <output url="file://$MODULE_DIR$/classes" />
@@ -32,6 +31,10 @@
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="Annotations" exported="" />
     <orderEntryProperties />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="ACTIVE_VCS_NAME" value="Perforce" />
+    <option name="USE_PROJECT_VCS" value="true" />
   </component>
 </module>
 
