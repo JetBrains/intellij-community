@@ -22,7 +22,7 @@ import java.awt.*;
 
 public class ObjectEqualityInspection extends ExpressionInspection {
     /** @noinspection PublicField*/
-    public boolean m_ignoreEnums = false;
+    public boolean m_ignoreEnums = true;
     /** @noinspection PublicField*/
     public boolean m_ignoreClassObjects = false;
 
