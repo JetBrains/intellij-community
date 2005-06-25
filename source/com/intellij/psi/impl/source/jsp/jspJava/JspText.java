@@ -41,7 +41,6 @@ public class JspText extends LeafPsiElement {
 
   public void clearCaches() {
     super.clearCaches();
-    myFollowingText = null;
     myIncludes = null;
   }
 

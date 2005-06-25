@@ -128,12 +128,14 @@ public class CodeInsightUtil {
   public static PsiElement[] getElementsInRange(PsiElement root, final int startOffset, final int endOffset) {
     final List<PsiElement> list = new ArrayList<PsiElement>();
 
-    PsiElement element1 = root.getNode().findLeafElementAt(startOffset).getPsi();
+    final ASTNode leafElementAt1 = root.getNode().findLeafElementAt(startOffset);
+    if(leafElementAt1 == null) return PsiElement.EMPTY_ARRAY;
+    PsiElement element1 = leafElementAt1.getPsi();
     if (element1 == null) element1 = root;
-    ASTNode leafElementAt = root.getNode().findLeafElementAt(endOffset);
-    if (leafElementAt == null && endOffset == root.getTextLength()) leafElementAt = root.getNode().findLeafElementAt(endOffset - 1);
-    if(leafElementAt == null) return PsiElement.EMPTY_ARRAY;
-    PsiElement element2 = leafElementAt.getPsi();
+    ASTNode leafElementAt2 = root.getNode().findLeafElementAt(endOffset);
+    if (leafElementAt2 == null && endOffset == root.getTextLength()) leafElementAt2 = root.getNode().findLeafElementAt(endOffset - 1);
+    if(leafElementAt2 == null) return PsiElement.EMPTY_ARRAY;
+    PsiElement element2 = leafElementAt2.getPsi();
     if (element2 == null) element2 = root;
     PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
 
