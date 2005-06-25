@@ -61,7 +61,7 @@ public class VcsGeneralConfigurationPanel {
     List<VcsShowOptionsSettingImpl> options = ProjectLevelVcsManagerEx.getInstanceEx(project).getAllOptions();
 
     for (VcsShowOptionsSettingImpl setting : options) {
-      if (!setting.getApplicableVcses().isEmpty()) {
+      if (!setting.getApplicableVcses().isEmpty() || project.isDefault()) {
         final JCheckBox checkBox = new JCheckBox(setting.getDisplayName());
         myPromptsPanel.add(checkBox);
         myPromptOptions.put(setting, checkBox);
@@ -153,8 +153,10 @@ public class VcsGeneralConfigurationPanel {
   public void updateAvailableOptions(final Collection<AbstractVcs> activeVcses) {
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
       final JCheckBox checkBox = myPromptOptions.get(setting);
-      checkBox.setEnabled(setting.isApplicableTo(activeVcses));
-      checkBox.setToolTipText("Applicable to: " + composeText(setting.getApplicableVcses()));
+      checkBox.setEnabled(setting.isApplicableTo(activeVcses) || myProject.isDefault());
+      if (!myProject.isDefault()) {
+        checkBox.setToolTipText("Applicable to: " + composeText(setting.getApplicableVcses()));
+      }
     }
   }
 

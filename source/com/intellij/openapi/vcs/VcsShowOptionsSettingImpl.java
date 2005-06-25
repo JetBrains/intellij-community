@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs;
 import java.util.*;
 
 public class VcsShowOptionsSettingImpl implements VcsShowSettingOption {
-  private boolean myValue;
+  private boolean myValue = true;
   private final String myDisplayName;
   private final Collection<AbstractVcs> myApplicable = new HashSet<AbstractVcs>();
 
