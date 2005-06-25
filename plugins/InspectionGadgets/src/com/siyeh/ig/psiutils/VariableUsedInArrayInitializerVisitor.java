@@ -4,8 +4,9 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class VariableUsedInArrayInitializerVisitor extends PsiRecursiveElementVisitor{
+    @NotNull
+    private final PsiVariable variable;
     private boolean passed = false;
-    private final @NotNull PsiVariable variable;
 
     public VariableUsedInArrayInitializerVisitor(@NotNull PsiVariable variable){
         super();
@@ -15,28 +16,6 @@ public class VariableUsedInArrayInitializerVisitor extends PsiRecursiveElementVi
     public void visitElement(@NotNull PsiElement element){
         if(!passed){
             super.visitElement(element);
-        }
-    }
-
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
-        if(passed){
-            return;
-        }
-        super.visitMethodCallExpression(call);
-        final PsiExpressionList argumentList = call.getArgumentList();
-        if(argumentList == null){
-            return;
-        }
-
-        final PsiExpression[] args = argumentList.getExpressions();
-        if(args == null){
-            return;
-        }
-        for(final PsiExpression arg : args){
-
-            if(VariableAccessUtils.mayEvaluateToVariable(arg, variable)){
-                passed = true;
-            }
         }
     }
 

@@ -4,8 +4,9 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class VariablePassedAsArgumentVisitor extends PsiRecursiveElementVisitor{
+    @NotNull
+    private final PsiVariable variable;
     private boolean passed = false;
-    private final @NotNull PsiVariable variable;
 
     public VariablePassedAsArgumentVisitor(@NotNull PsiVariable variable){
         super();
