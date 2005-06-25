@@ -38,8 +38,7 @@ public class TemplateImpl implements Template {
     if (myVariables == null && template.myVariables == null) return true;
     if (myVariables == null || template.myVariables == null) return false;
     if (myVariables.size() != template.myVariables.size()) return false;
-    for (Iterator<Variable> it = myVariables.iterator(); it.hasNext();) {
-      Variable variable =  it.next();
+    for (Variable variable : myVariables) {
       if (template.myVariables.indexOf(variable) < 0) return false;
     }
 
@@ -338,8 +337,7 @@ public class TemplateImpl implements Template {
   }
 
   public boolean isSelectionTemplate() {
-    for (Iterator<Variable> iterator = myVariables.iterator(); iterator.hasNext();) {
-      Variable v = iterator.next();
+    for (Variable v : myVariables) {
       if (v.getName().equals(SELECTION)) return true;
     }
 
