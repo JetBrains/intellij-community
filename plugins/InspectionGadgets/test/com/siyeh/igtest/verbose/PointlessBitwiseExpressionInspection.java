@@ -1,6 +1,8 @@
 package com.siyeh.igtest.verbose;
 
 public class PointlessBitwiseExpressionInspection {
+    private static final int ZERO = 0;
+
     public static void main(String[] args) {
         final int i = 1;
         int j = i & 0;
@@ -15,6 +17,8 @@ public class PointlessBitwiseExpressionInspection {
         k = j >> 0;
         System.out.println(k);
         k = j >>> 0;
+        System.out.println(k);
+        k = j >>> ZERO;
         System.out.println(k);
     }
 

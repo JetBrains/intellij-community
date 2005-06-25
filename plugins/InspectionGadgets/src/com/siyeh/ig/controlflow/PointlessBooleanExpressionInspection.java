@@ -10,15 +10,38 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
 public class PointlessBooleanExpressionInspection extends ExpressionInspection{
+    private static final Set<IElementType> booleanTokens = new HashSet<IElementType>(
+            10);
+
+    static {
+        booleanTokens.add(JavaTokenType.ANDAND);
+        booleanTokens.add(JavaTokenType.AND);
+        booleanTokens.add(JavaTokenType.OROR);
+        booleanTokens.add(JavaTokenType.OR);
+        booleanTokens.add(JavaTokenType.XOR);
+        booleanTokens.add(JavaTokenType.EQEQ);
+        booleanTokens.add(JavaTokenType.NE);
+    }
+
+
+    public boolean m_ignoreExpressionsContainingConstants = false;
+
+    public JComponent createOptionsPanel(){
+        return new SingleCheckboxOptionsPanel(
+                "Ignore named constant in determinining pointless expressions",
+                this, "m_ignoreExpressionsContainingConstants");
+    }
     private final BooleanLiteralComparisonFix fix =
             new BooleanLiteralComparisonFix();
 
@@ -51,7 +74,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
     }
 
     @Nullable
-    private static String calculateSimplifiedBinaryExpression(PsiBinaryExpression expression){
+    private  String calculateSimplifiedBinaryExpression(PsiBinaryExpression expression){
         final PsiJavaToken sign = expression.getOperationSign();
         final PsiExpression lhs = expression.getLOperand();
 
@@ -102,7 +125,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
         }
     }
 
-    private static String createStringForNegatedExpression(PsiExpression exp){
+    private  String createStringForNegatedExpression(PsiExpression exp){
          if(ComparisonUtils.isComparison(exp)){
             final PsiBinaryExpression binaryExpression =
                     (PsiBinaryExpression) exp;
@@ -124,7 +147,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
         }
     }
 
-    private static String calculateSimplifiedPrefixExpression(PsiPrefixExpression expression){
+    private  String calculateSimplifiedPrefixExpression(PsiPrefixExpression expression){
         final PsiExpression operand = expression.getOperand();
         if(isTrue(operand)){
             return "false";
@@ -137,7 +160,7 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
         return fix;
     }
 
-    private static class BooleanLiteralComparisonFix
+    private  class BooleanLiteralComparisonFix
             extends InspectionGadgetsFix{
         public String getName(){
             return "Simplify";
@@ -162,20 +185,8 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
         }
     }
 
-    private static class PointlessBooleanExpressionVisitor
+    private  class PointlessBooleanExpressionVisitor
             extends BaseInspectionVisitor{
-        private static final Set<IElementType> booleanTokens = new HashSet<IElementType>(10);
-
-        static
-        {
-            booleanTokens.add(JavaTokenType.ANDAND);
-            booleanTokens.add(JavaTokenType.AND);
-            booleanTokens.add(JavaTokenType.OROR);
-            booleanTokens.add(JavaTokenType.OR);
-            booleanTokens.add(JavaTokenType.XOR);
-            booleanTokens.add(JavaTokenType.EQEQ);
-            booleanTokens.add(JavaTokenType.NE);
-        }
 
 
         public void visitClass(@NotNull PsiClass aClass){
@@ -252,31 +263,37 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
         }
     }
 
-    private static boolean equalityExpressionIsPointless(PsiExpression lhs,
+    private  boolean equalityExpressionIsPointless(PsiExpression lhs,
                                                          PsiExpression rhs){
         return isTrue(lhs) || isTrue(rhs) || isFalse(lhs) || isFalse(rhs);
     }
 
-    private static boolean andExpressionIsPointless(PsiExpression lhs,
+    private  boolean andExpressionIsPointless(PsiExpression lhs,
                                                     PsiExpression rhs){
         return isTrue(lhs) || isTrue(rhs);
     }
 
-    private static boolean orExpressionIsPointless(PsiExpression lhs,
+    private  boolean orExpressionIsPointless(PsiExpression lhs,
                                                    PsiExpression rhs){
         return isFalse(lhs) || isFalse(rhs);
     }
 
-    private static boolean xorExpressionIsPointless(PsiExpression lhs,
+    private  boolean xorExpressionIsPointless(PsiExpression lhs,
                                                     PsiExpression rhs){
         return isTrue(lhs) || isTrue(rhs) || isFalse(lhs) || isFalse(rhs);
     }
 
-    private static boolean notExpressionIsPointless(PsiExpression arg){
+    private  boolean notExpressionIsPointless(PsiExpression arg){
         return isFalse(arg) || isTrue(arg);
     }
 
-    private static boolean isTrue(PsiExpression expression){
+    private  boolean isTrue(PsiExpression expression){
+        if(m_ignoreExpressionsContainingConstants &&
+                !(expression instanceof PsiLiteralExpression))
+        {
+            return false;
+        }
+
         if(expression == null){
             return false;
         }
@@ -286,7 +303,11 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
         return value != null && value;
     }
 
-    private static boolean isFalse(PsiExpression expression){
+    private  boolean isFalse(PsiExpression expression){
+        if(m_ignoreExpressionsContainingConstants &&
+                !(expression instanceof PsiLiteralExpression)){
+            return false;
+        }
         if(expression == null){
             return false;
         }

@@ -4,12 +4,13 @@ public class PointlessBooleanInspection
 {
     private boolean m_foo;
     private boolean m_bar;
+    private static final boolean FALSE = false;
 
     public PointlessBooleanInspection(boolean foo)
     {
+
         this.m_foo = foo;
     }
-
     public void foo()
     {
         if(m_foo == true)
@@ -40,7 +41,7 @@ public class PointlessBooleanInspection
         {
 
         }
-        if(false != m_foo)
+        if(FALSE != m_foo)
         {
 
         }

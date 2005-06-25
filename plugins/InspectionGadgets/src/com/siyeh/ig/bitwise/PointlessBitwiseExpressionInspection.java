@@ -10,12 +10,36 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
 public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
+    /**
+     * @noinspection StaticCollection
+     */
+    private static final Set<IElementType> bitwiseTokens = new HashSet<IElementType>(
+            4);
+
+    static {
+        bitwiseTokens.add(JavaTokenType.AND);
+        bitwiseTokens.add(JavaTokenType.OR);
+        bitwiseTokens.add(JavaTokenType.XOR);
+        bitwiseTokens.add(JavaTokenType.LTLT);
+        bitwiseTokens.add(JavaTokenType.GTGT);
+        bitwiseTokens.add(JavaTokenType.GTGTGT);
+    }
+
+    public boolean m_ignoreExpressionsContainingConstants = false;
+
+    public JComponent createOptionsPanel(){
+        return new SingleCheckboxOptionsPanel(
+                "Ignore named constant in determinining pointless expressions",
+                this, "m_ignoreExpressionsContainingConstants");
+    }
 
     private final PointlessBitwiseFix fix = new PointlessBitwiseFix();
 
@@ -35,7 +59,7 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
                 calculateReplacementExpression((PsiExpression) location) + " #loc";
     }
 
-    private static String calculateReplacementExpression(PsiExpression expression) {
+    private String calculateReplacementExpression(PsiExpression expression) {
         final PsiBinaryExpression exp = (PsiBinaryExpression) expression;
         final PsiExpression lhs = exp.getLOperand();
         final PsiExpression rhs = exp.getROperand();
@@ -82,7 +106,7 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
         return fix;
     }
 
-    private static class PointlessBitwiseFix extends InspectionGadgetsFix {
+    private class PointlessBitwiseFix extends InspectionGadgetsFix {
         public String getName() {
             return "Simplify";
         }
@@ -96,21 +120,7 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
 
     }
 
-    private static class PointlessBitwiseVisitor extends BaseInspectionVisitor {
-        /**
-         * @noinspection StaticCollection
-         */
-        private static final Set<IElementType> bitwiseTokens = new HashSet<IElementType>(4);
-
-        static
-        {
-            bitwiseTokens.add(JavaTokenType.AND);
-            bitwiseTokens.add(JavaTokenType.OR);
-            bitwiseTokens.add(JavaTokenType.XOR);
-            bitwiseTokens.add(JavaTokenType.LTLT);
-            bitwiseTokens.add(JavaTokenType.GTGT);
-            bitwiseTokens.add(JavaTokenType.GTGTGT);
-        }
+    private class PointlessBitwiseVisitor extends BaseInspectionVisitor {
 
         public void visitClass(@NotNull PsiClass aClass) {
             //to avoid drilldown
@@ -172,23 +182,27 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
         }
     }
 
-    private static boolean shiftExpressionIsPointless(PsiExpression rhs, PsiType expressionType) {
+    private  boolean shiftExpressionIsPointless(PsiExpression rhs, PsiType expressionType) {
         return isZero(rhs, expressionType);
     }
 
-    private static boolean orExpressionIsPointless(PsiExpression lhs, PsiExpression rhs, PsiType expressionType) {
+    private  boolean orExpressionIsPointless(PsiExpression lhs, PsiExpression rhs, PsiType expressionType) {
         return isZero(lhs, expressionType) || isZero(rhs, expressionType) || isAllOnes(lhs, expressionType) || isAllOnes(rhs, expressionType);
     }
 
-    private static boolean xorExpressionIsPointless(PsiExpression lhs, PsiExpression rhs, PsiType expressionType) {
+    private  boolean xorExpressionIsPointless(PsiExpression lhs, PsiExpression rhs, PsiType expressionType) {
         return isZero(lhs, expressionType) || isZero(rhs, expressionType) || isAllOnes(lhs, expressionType) || isAllOnes(rhs, expressionType);
     }
 
-    private static boolean andExpressionIsPointless(PsiExpression lhs, PsiExpression rhs, PsiType expressionType) {
+    private  boolean andExpressionIsPointless(PsiExpression lhs, PsiExpression rhs, PsiType expressionType) {
         return isZero(lhs, expressionType) || isZero(rhs, expressionType) || isAllOnes(lhs, expressionType) || isAllOnes(rhs, expressionType);
     }
 
-    private static boolean isZero(PsiExpression expression, PsiType expressionType) {
+    private  boolean isZero(PsiExpression expression, PsiType expressionType) {
+        if(m_ignoreExpressionsContainingConstants && !(expression instanceof PsiLiteralExpression))
+        {
+            return false;
+        }
         final Object value = ConstantExpressionUtil.computeCastTo(expression, expressionType);
         if (value == null) {
             return false;
@@ -208,7 +222,11 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
         return value instanceof Byte && ((Byte) value) == 0;
     }
 
-    private static boolean isAllOnes(PsiExpression expression, PsiType expressionType) {
+    private  boolean isAllOnes(PsiExpression expression, PsiType expressionType) {
+        if(m_ignoreExpressionsContainingConstants
+                && !(expression instanceof PsiLiteralExpression)){
+            return false;
+        }
         final Object value = ConstantExpressionUtil.computeCastTo(expression, expressionType);
         if (value == null) {
             return false;
