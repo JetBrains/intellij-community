@@ -134,6 +134,7 @@ public abstract class Language {
     return null;
   }
 
+  @NotNull
   public FindUsagesProvider getFindUsagesProvider() {
     return EMPTY_FIND_USAGES_PROVIDER;
   }
@@ -148,7 +149,8 @@ public abstract class Language {
     return null;
   }
 
-  @NotNull public SurroundDescriptor[] getSurroundDescriptors() {
+  @NotNull
+  public SurroundDescriptor[] getSurroundDescriptors() {
     return EMPTY_SURROUND_DESCRIPTORS_ARRAY;
   }
 
