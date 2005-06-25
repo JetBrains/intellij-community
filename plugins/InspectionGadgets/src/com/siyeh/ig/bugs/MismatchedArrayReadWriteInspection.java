@@ -112,7 +112,11 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection{
         if(VariableAccessUtils.variableIsReturned(variable, context)){
             return true;
         }
-        return VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
+        if(VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
+                                                                context)){
+            return true;
+        }
+        return VariableAccessUtils.variableIsUsedInArrayInitializer(variable,
                                                                     context);
     }
 
@@ -142,7 +146,11 @@ public class MismatchedArrayReadWriteInspection extends VariableInspection{
         if(VariableAccessUtils.variableIsReturned(variable, context)){
             return true;
         }
-        return VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
+        if(VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
+                                                                context)){
+            return true;
+        }
+        return VariableAccessUtils.variableIsUsedInArrayInitializer(variable,
                                                                     context);
     }
 }

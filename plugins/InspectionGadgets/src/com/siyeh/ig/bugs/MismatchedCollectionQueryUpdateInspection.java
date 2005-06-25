@@ -114,7 +114,12 @@ public class MismatchedCollectionQueryUpdateInspection
         if(VariableAccessUtils.variableIsReturned(variable, context)){
             return true;
         }
-        return VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context);
+        if(VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
+                                                                context)){
+            return true;
+        }
+        return VariableAccessUtils.variableIsUsedInArrayInitializer(variable,
+                                                                    context);
     }
 
     private static boolean collectionContentsAreQueried(PsiVariable variable,
@@ -135,7 +140,12 @@ public class MismatchedCollectionQueryUpdateInspection
         if(VariableAccessUtils.variableIsReturned(variable, context)){
             return true;
         }
-        return VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context);
+        if(VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
+                                                                context)){
+            return true;
+        }
+        return VariableAccessUtils.variableIsUsedInArrayInitializer(variable,
+                                                                    context);
     }
 
     private static boolean collectionQueryCalled(PsiVariable variable,

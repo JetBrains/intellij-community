@@ -22,6 +22,13 @@ public class VariableAccessUtils{
         return visitor.isPassed();
     }
 
+    public static boolean variableIsUsedInArrayInitializer(@NotNull PsiVariable variable,
+                                                           @NotNull PsiElement context){
+        final VariableUsedInArrayInitializerVisitor visitor = new VariableUsedInArrayInitializerVisitor(variable);
+        context.accept(visitor);
+        return visitor.isPassed();
+    }
+
     public static boolean variableIsAssigned(@NotNull PsiVariable variable,
                                              @NotNull PsiElement context){
         final VariableAssignedVisitor visitor = new VariableAssignedVisitor(variable);
