@@ -689,14 +689,21 @@ public class TemplateState {
 
   private void finishTemplateEditing() {
     int endSegmentNumber = myTemplate.getEndSegmentNumber();
-    int offset = myTemplateRange.getEndOffset();
+    int offset = -1;
     if (endSegmentNumber >= 0) {
       offset = mySegments.getSegmentStart(endSegmentNumber);
+    } else {
+      if (!myTemplate.isSelectionTemplate()) { //do not move caret to the end of range for selection templates
+        offset = myTemplateRange.getEndOffset();
+      }
     }
-    myEditor.getCaretModel().moveToOffset(offset);
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    myEditor.getSelectionModel().removeSelection();
 
+    if (offset >= 0) {
+      myEditor.getCaretModel().moveToOffset(offset);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
+
+    myEditor.getSelectionModel().removeSelection();
     int selStart = myTemplate.getSelectionStartSegmentNumber();
     int selEnd = myTemplate.getSelectionEndSegmentNumber();
     if (selStart >= 0 && selEnd >= 0) {
