@@ -51,6 +51,7 @@ public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
   }
 
   public void projectOpened() {
+    super.projectOpened();
   }
 
   public void projectClosed() {

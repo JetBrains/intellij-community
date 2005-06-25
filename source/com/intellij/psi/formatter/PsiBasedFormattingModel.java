@@ -54,7 +54,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
       if (leafElement != null) {
         LOG.assertTrue(leafElement.getPsi().isValid());
         final int oldElementLength = leafElement.getTextRange().getLength();
-        if (leafElement.getTextRange().getStartOffset() < textRange.getStartOffset()) {
+        if (false/*leafElement.getTextRange().getStartOffset() < textRange.getStartOffset()*/) {
           final int newElementLength = new Helper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, getSpaceCount(whiteSpace))
             .getTextRange().getLength();
           blockLength = blockLength - oldElementLength + newElementLength;

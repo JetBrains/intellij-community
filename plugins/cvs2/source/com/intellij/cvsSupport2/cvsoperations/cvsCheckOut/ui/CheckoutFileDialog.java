@@ -1,11 +1,10 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsCheckOut.ui;
 
+import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProviderOnVirtualFiles;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.ui.DateOrRevisionOrTagSettings;
-import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.ui.DateOrRevisionOrTagSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.OptionsDialog;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.util.ui.OptionsDialog;
@@ -40,15 +39,11 @@ public class CheckoutFileDialog extends OptionsDialog {
   }
 
   protected void setToBeShown(boolean value, boolean onOk) {
-    getConfiguration().SHOW_CHECKOUT_OPTIONS = value;
+    CvsVcs2.getInstance(myProject).getCheckoutOptions().setValue(value);
   }
 
   protected boolean isToBeShown() {
-    return getConfiguration().SHOW_CHECKOUT_OPTIONS;
-  }
-
-  private VcsConfiguration getConfiguration() {
-    return VcsConfiguration.getInstance(myProject);
+    return CvsVcs2.getInstance(myProject).getCheckoutOptions().getValue();
   }
 
   private CvsConfiguration getCvsConfiguration() {

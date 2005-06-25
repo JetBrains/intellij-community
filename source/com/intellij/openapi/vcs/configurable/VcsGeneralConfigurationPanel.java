@@ -3,10 +3,16 @@ package com.intellij.openapi.vcs.configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsShowOptionsSettingImpl;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 public class VcsGeneralConfigurationPanel {
 
@@ -14,14 +20,6 @@ public class VcsGeneralConfigurationPanel {
   private JCheckBox myReuseLastComment;
   private JCheckBox myPutFocusIntoComment;
   private JCheckBox myShowReadOnlyStatusDialog;
-
-  private JCheckBox myShowUpdate;
-  private JCheckBox myShowCommit;
-  private JCheckBox myShowAdd;
-
-  private JCheckBox myShowRemove;
-  private JCheckBox myShowEdit;
-  private JCheckBox myShowCheckout;
 
   private JRadioButton myShowDialogOnAddingFile;
   private JRadioButton myPerformActionOnAddingFile;
@@ -37,7 +35,10 @@ public class VcsGeneralConfigurationPanel {
   private final JRadioButton[] myOnFileRemovingGroup;
 
   private final Project myProject;
+  private JPanel myPromptsPanel;
 
+
+  Map<VcsShowOptionsSettingImpl, JCheckBox> myPromptOptions = new LinkedHashMap<VcsShowOptionsSettingImpl, JCheckBox>();
 
   public VcsGeneralConfigurationPanel(final Project project) {
 
@@ -55,6 +56,21 @@ public class VcsGeneralConfigurationPanel {
       myDoNothingOnRemovingFile
     };
 
+    myPromptsPanel.setLayout(new GridLayout(3, 0));
+
+    List<VcsShowOptionsSettingImpl> options = ProjectLevelVcsManagerEx.getInstanceEx(project).getAllOptions();
+
+    for (VcsShowOptionsSettingImpl setting : options) {
+      if (!setting.getApplicableVcses().isEmpty()) {
+        final JCheckBox checkBox = new JCheckBox(setting.getDisplayName());
+        myPromptsPanel.add(checkBox);
+        myPromptOptions.put(setting, checkBox);
+      }
+    }
+
+    myPromptsPanel.setSize(myPromptsPanel.getPreferredSize());
+
+
   }
 
   public void apply() throws ConfigurationException {
@@ -65,12 +81,9 @@ public class VcsGeneralConfigurationPanel {
     settings.SAVE_LAST_COMMIT_MESSAGE = myReuseLastComment.isSelected();
     settings.FORCE_NON_EMPTY_COMMENT = myForceNonEmptyComment.isSelected();
 
-    settings.SHOW_EDIT_DIALOG = myShowEdit.isSelected();
-    settings.SHOW_CHECKOUT_OPTIONS = myShowCheckout.isSelected();
-    settings.SHOW_ADD_OPTIONS = myShowAdd.isSelected();
-    settings.SHOW_REMOVE_OPTIONS = myShowRemove.isSelected();
-    settings.SHOW_UPDATE_OPTIONS = myShowUpdate.isSelected();
-    settings.SHOW_CHECKIN_OPTIONS = myShowCommit.isSelected();
+    for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
+      setting.setValue(myPromptOptions.get(setting).isSelected());
+    }
 
     settings.ON_FILE_ADDING = getSelected(myOnFileAddingGroup);
     settings.ON_FILE_REMOVING = getSelected(myOnFileRemovingGroup);
@@ -110,17 +123,11 @@ public class VcsGeneralConfigurationPanel {
       return true;
     }
 
-    return !(
-      settings.SHOW_ADD_OPTIONS == myShowAdd.isSelected() &&
-      settings.SHOW_REMOVE_OPTIONS == myShowRemove.isSelected() &&
-      settings.SHOW_UPDATE_OPTIONS == myShowUpdate.isSelected() &&
-      settings.SHOW_CHECKIN_OPTIONS == myShowCommit.isSelected()&&
-      settings.SHOW_EDIT_DIALOG == myShowEdit.isSelected()      &&
-      settings.SHOW_CHECKOUT_OPTIONS == myShowCheckout.isSelected()&&
-      settings.ON_FILE_ADDING == getSelected(myOnFileAddingGroup)  &&
-      settings.ON_FILE_REMOVING == getSelected(myOnFileRemovingGroup)
-    );
+    for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
+      if (setting.getValue() != myPromptOptions.get(setting).isSelected()) return true;
+    }
 
+    return false;
   }
 
   public void reset() {
@@ -130,26 +137,33 @@ public class VcsGeneralConfigurationPanel {
     myForceNonEmptyComment.setSelected(settings.FORCE_NON_EMPTY_COMMENT);
     myShowReadOnlyStatusDialog.setSelected(getReadOnlyStatusHandler().SHOW_DIALOG);
 
-    myShowUpdate.setSelected(settings.SHOW_UPDATE_OPTIONS);
-    myShowCommit.setSelected(settings.SHOW_CHECKIN_OPTIONS);
-    myShowAdd.setSelected(settings.SHOW_ADD_OPTIONS);
-    myShowRemove.setSelected(settings.SHOW_REMOVE_OPTIONS);
-    myShowEdit.setSelected(settings.SHOW_EDIT_DIALOG);
-    myShowCheckout.setSelected(settings.SHOW_CHECKOUT_OPTIONS);
+    for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
+      myPromptOptions.get(setting).setSelected(setting.getValue());
+    }
 
     myOnFileAddingGroup[settings.ON_FILE_ADDING].setSelected(true);
     myOnFileRemovingGroup[settings.ON_FILE_REMOVING].setSelected(true);
   }
 
-  private void createButtonGroup(JRadioButton[] group) {
-    ButtonGroup buttonGroup = new ButtonGroup();
-    for (int i = 0; i < group.length; i++) {
-      buttonGroup.add(group[i]);
-    }
-  }
-
 
   public JComponent getPanel() {
     return myPanel;
+  }
+
+  public void updateAvailableOptions(final Collection<AbstractVcs> activeVcses) {
+    for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
+      final JCheckBox checkBox = myPromptOptions.get(setting);
+      checkBox.setEnabled(setting.isApplicableTo(activeVcses));
+      checkBox.setToolTipText("Applicable to: " + composeText(setting.getApplicableVcses()));
+    }
+  }
+
+  private String composeText(final List<AbstractVcs> applicableVcses) {
+    final StringBuffer result = new StringBuffer();
+    for (AbstractVcs abstractVcs : applicableVcses) {
+      if (result.length() > 0) result.append(", ");
+      result.append(abstractVcs.getDisplayName());
+    }
+    return result.toString();
   }
 }

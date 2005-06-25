@@ -1,9 +1,9 @@
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
-import com.intellij.openapi.vcs.actions.VcsContext;
-import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.application.DeletedCVSDirectoryStorage;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
@@ -14,9 +14,10 @@ import com.intellij.cvsSupport2.cvsoperations.cvsAdd.ui.AbstractAddOptionsDialog
 import com.intellij.cvsSupport2.ui.Options;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.OptionsDialog;
+import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.OptionsDialog;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,9 +56,9 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     super.update(e);
     if (!e.getPresentation().isVisible())
       return;
-    VcsConfiguration config = getCommonConfig(e);
-    if (config == null) return;
-    adjustName(config.SHOW_ADD_OPTIONS, e);
+    Project project = CvsContextWrapper.createCachedInstance(e).getProject();
+    if (project == null) return;
+    adjustName(CvsVcs2.getInstance(project).getAddOptions().getValue(), e);
   }
 
   protected String getTitle(VcsContext context) {

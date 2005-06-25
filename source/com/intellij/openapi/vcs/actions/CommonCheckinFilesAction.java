@@ -34,6 +34,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 
 public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
@@ -83,7 +84,7 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
       return true;
     }
     else {
-      return VcsConfiguration.getInstance(project).SHOW_CHECKIN_OPTIONS;
+      return ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.CHECKIN).getValue();
     }
   }
 

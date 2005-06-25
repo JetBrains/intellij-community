@@ -794,9 +794,6 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean HTML_WRAP_TAG_BEGIN = false;
   // ---------------------------------------------------------------------------------------
 
-  //-----------------------------------JSPX formatting settings-----------------------------
-  public boolean JSPX_ALIGN_JAVA_ACCORDING_TO_XML = true;
-  public boolean JSPX_USE_HTML_FORMATTER = false;
 
   // true if <%page import="x.y.z, x.y.t"%>
   // false if <%page import="x.y.z"%>

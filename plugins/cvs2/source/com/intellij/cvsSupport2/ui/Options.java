@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.ui;
 
 import com.intellij.cvsSupport2.config.CvsConfiguration;
+import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
 
@@ -11,11 +12,11 @@ public interface Options {
 
   Options ADD_ACTION = new Options() {
     public boolean isToBeShown(Project project) {
-      return VcsConfiguration.getInstance(project).SHOW_ADD_OPTIONS;
+      return CvsVcs2.getInstance(project).getAddOptions().getValue();
     }
 
     public void setToBeShown(boolean value, Project project, boolean onOk) {
-      VcsConfiguration.getInstance(project).SHOW_ADD_OPTIONS = value;
+      CvsVcs2.getInstance(project).getAddOptions().setValue(value);
     }
   };
 
@@ -45,11 +46,11 @@ public interface Options {
 
   Options REMOVE_ACTION = new Options() {
     public boolean isToBeShown(Project project) {
-      return VcsConfiguration.getInstance(project).SHOW_REMOVE_OPTIONS;
+      return CvsVcs2.getInstance(project).getRemoveOptions().getValue();
     }
 
     public void setToBeShown(boolean value, Project project, boolean onOk) {
-      VcsConfiguration.getInstance(project).SHOW_REMOVE_OPTIONS = value;
+      CvsVcs2.getInstance(project).getRemoveOptions().setValue(value);
     }
   };
 

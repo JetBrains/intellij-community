@@ -36,6 +36,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class ProjectLevelVcsManager {
   public static final String FILE_VIEW_TOOL_WINDOW_ID = "File View";
@@ -65,4 +66,10 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract void addMessageToConsoleWindow(String message, TextAttributes attributes);
 
+  @NotNull
+  public abstract VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option,
+                                                         @NotNull AbstractVcs vcs);
+  @NotNull
+  public abstract VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName,
+                                                               @NotNull AbstractVcs vcs);
 }

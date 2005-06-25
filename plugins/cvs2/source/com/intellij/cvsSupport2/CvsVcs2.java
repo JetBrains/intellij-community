@@ -64,6 +64,10 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
   private final CvsUpToDateRevisionProvider myUpToDateRevisionProvider;
   private final CvsAnnotationProvider myCvsAnnotationProvider;
   private final CvsDiffProvider myDiffProvider;
+  private VcsShowSettingOption myAddOptions;
+  private VcsShowSettingOption myRemoveOptions;
+  private VcsShowSettingOption myCheckoutOptions;
+  private VcsShowSettingOption myEditOption;
 
   public CvsVcs2(Project project, CvsStorageComponent cvsStorageComponent) {
     super(project);
@@ -88,14 +92,22 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
   }
 
   public void projectOpened() {
+    super.projectOpened();
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    myAddOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.ADD, this);
+    myRemoveOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.ADD, this);
+    myCheckoutOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.CHECKOUT, this);
+    myEditOption = vcsManager.getStandardOption(VcsConfiguration.StandardOption.EDIT, this);
+
     myProjectIsOpened = true;
+  }
+
+  public void initComponent() {
   }
 
   public String getComponentName() {
     return "CvsVcs2";
   }
-
-  public void initComponent() { }
 
   public Project getProject() {
     return myProject;
@@ -176,6 +188,18 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
                                CvsOperationExecutorCallback.EMPTY);
   }
 
+  public VcsShowSettingOption getAddOptions() {
+    return myAddOptions;
+  }
+
+  public VcsShowSettingOption getRemoveOptions() {
+    return myRemoveOptions;
+  }
+
+  public VcsShowSettingOption getCheckoutOptions() {
+    return myCheckoutOptions;
+  }
+
   private static class MyFileStatusProvider implements FileStatusProvider {
     public FileStatus getStatus(VirtualFile virtualFile) {
       return CvsStatusProvider.getStatus(virtualFile);
@@ -187,8 +211,7 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
   }
 
   public void editFiles(final VirtualFile[] files) {
-    VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
-    if (configuration.SHOW_EDIT_DIALOG) {
+    if (getEditOptions().getValue()) {
       EditOptionsDialog editOptionsDialog = new EditOptionsDialog(myProject);
       editOptionsDialog.show();
       if (!editOptionsDialog.isOK()) return;
@@ -230,8 +253,8 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
   public void entriesChanged(VirtualFile parent) {
     VirtualFile[] children = parent.getChildren();
     if (children == null) return;
-    for (int i = 0; i < children.length; i++) {
-      entryChanged(children[i]);
+    for (VirtualFile aChildren : children) {
+      entryChanged(aChildren);
     }
   }
 
@@ -299,5 +322,11 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
   public DiffProvider getDiffProvider() {
     return myDiffProvider;
   }
+
+  public VcsShowSettingOption getEditOptions() {
+    return myEditOption;
+  }
+
+
 }
 

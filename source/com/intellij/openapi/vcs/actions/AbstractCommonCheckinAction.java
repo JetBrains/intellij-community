@@ -38,6 +38,7 @@ import com.intellij.openapi.localVcs.LvcsAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.VcsOperation;
 import com.intellij.openapi.vcs.fileView.impl.FileViewPanel;
@@ -112,7 +113,8 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
   private List<VcsException> checkinFiles(final Project project, final VcsContext context, FilePath[] roots, CheckinEnvironment checkinEnvironment) {
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
     List<VcsException> vcsExceptions = new ArrayList<VcsException>();
-    if (configuration.SHOW_CHECKIN_OPTIONS || OptionsDialog.shiftIsPressed(context.getModifiers())) {
+    if (ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.CHECKIN).getValue() 
+        || OptionsDialog.shiftIsPressed(context.getModifiers())) {
 
 
       CheckinFileDialog dialog = new CheckinFileDialog(project, getActionName(context),

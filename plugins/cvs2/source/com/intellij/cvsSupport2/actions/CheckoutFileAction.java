@@ -1,7 +1,9 @@
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
+import com.intellij.cvsSupport2.actions.cvsContext.CvsContextWrapper;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
@@ -9,7 +11,6 @@ import com.intellij.cvsSupport2.cvsoperations.cvsCheckOut.ui.CheckoutFileDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.util.ui.OptionsDialog;
@@ -42,9 +43,9 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
     if (!e.getPresentation().isVisible()) {
       return;
     }
-    VcsConfiguration config = getCommonConfig(e);
-    if (config == null) return;
-    adjustName(config.SHOW_CHECKOUT_OPTIONS, e);
+    Project project = CvsContextWrapper.createCachedInstance(e).getProject();
+    if (project == null) return;
+    adjustName(CvsVcs2.getInstance(project).getCheckoutOptions().getValue(), e);
   }
 
   protected CvsHandler getCvsHandler(CvsContext context) {
@@ -62,7 +63,7 @@ public class CheckoutFileAction extends ActionOnSelectedElement {
     Project project = context.getProject();
     FilePath[] filesArray = context.getSelectedFilePaths();
     List<FilePath> files = Arrays.asList(filesArray);
-    if (VcsConfiguration.getInstance(project).SHOW_CHECKOUT_OPTIONS
+    if (CvsVcs2.getInstance(project).getCheckoutOptions().getValue()
         || OptionsDialog.shiftIsPressed(context.getModifiers())){
       CheckoutFileDialog checkoutFileDialog = new CheckoutFileDialog(project,
                                                                      files);

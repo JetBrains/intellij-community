@@ -1,5 +1,6 @@
 package com.intellij.psi.formatter.xml;
 
+import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
@@ -15,7 +16,6 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspText;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.codeFormatting.general.FormatterUtil;
 
 import java.util.ArrayList;
 
@@ -195,20 +195,12 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     final PsiElement[] psiRoots = (element.getContainingFile()).getPsiRoots();
     LOG.assertTrue(psiRoots.length == 4);
     final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(psiRoots[1]);
-    if (settings.JSPX_USE_HTML_FORMATTER) {
-      return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.HTML_TAG), null);
-    } else {
-      return new XmlBlock(rootNode, null, null, new XmlPolicy(settings, ElementType.HTML_TAG), null);
-    }
+    return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.HTML_TAG), null);
   }
 
   public static Block creareJspxRoot(final PsiElement element, final CodeStyleSettings settings) {
     final ASTNode rootNode = SourceTreeToPsiMap.psiElementToTree(element);
-    if (settings.JSPX_USE_HTML_FORMATTER) {
-      return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.XML_TAG), null);
-    } else {
-      return new XmlBlock(rootNode, null, null, new XmlPolicy(settings, ElementType.XML_TAG), null);
-    }
+    return new XmlBlock(rootNode, null, null, new HtmlPolicy(settings, ElementType.XML_TAG), null);
   }
 
 }

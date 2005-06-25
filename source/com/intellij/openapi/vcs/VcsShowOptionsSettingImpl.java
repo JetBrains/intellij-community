@@ -1,7 +1,6 @@
 package com.intellij.openapi.vcs;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.*;
 
 public class VcsShowOptionsSettingImpl implements VcsShowSettingOption {
   private boolean myValue;
@@ -11,6 +10,10 @@ public class VcsShowOptionsSettingImpl implements VcsShowSettingOption {
 
   public VcsShowOptionsSettingImpl(final String displayName) {
     myDisplayName = displayName;
+  }
+
+  public VcsShowOptionsSettingImpl(VcsConfiguration.StandardOption option) {
+    this(option.getId());
   }
 
   public boolean getValue(){
@@ -29,7 +32,14 @@ public class VcsShowOptionsSettingImpl implements VcsShowSettingOption {
     myApplicable.add(vcs);
   }
 
-  public boolean isApplicableTo(AbstractVcs vcs) {
-    return myApplicable.contains(vcs);
+  public boolean isApplicableTo(Collection<AbstractVcs> vcs) {
+    for (AbstractVcs abstractVcs : vcs) {
+      if (myApplicable.contains(abstractVcs)) return true;
+    }
+    return false;
+  }
+
+  public List<AbstractVcs> getApplicableVcses() {
+    return new ArrayList<AbstractVcs>(myApplicable);
   }
 }

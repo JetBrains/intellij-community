@@ -213,8 +213,6 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myDoNotAlignChildrenMinSize.setText(String.valueOf(settings.HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES));
     myTextElementsTagNames.setText(settings.HTML_TEXT_ELEMENTS);
     myKeepWhiteSpacesTagNames.setText(settings.HTML_KEEP_WHITESPACES_INSIDE);
-
-    myKeepBlankLines.setEnabled(myShouldKeepBlankLines.isSelected());
   }
 
   public boolean isModified(CodeStyleSettings settings) {

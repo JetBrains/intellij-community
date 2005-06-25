@@ -4,26 +4,47 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.fileView.FileViewEnvironment;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
-import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.diff.DiffProvider;
 
-public abstract class AbstractVcs {
+public abstract class AbstractVcs implements ProjectComponent {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.AbstractVcs");
 
   protected final Project myProject;
   private boolean myIsStarted = false;
+  private VcsShowSettingOption myCheckinOption;
+  private VcsShowSettingOption myUpdateOption;
+  private VcsShowSettingOption myStatusOption;
+
 
   public AbstractVcs(Project project) {
     myProject = project;
+  }
+
+  public void projectOpened() {
+    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+
+    if (getCheckinEnvironment() != null) {
+      myCheckinOption = vcsManager.getStandardOption(VcsConfiguration.StandardOption.CHECKIN, this);
+    }
+
+    if (getUpdateEnvironment() != null) {
+      myUpdateOption = vcsManager.getStandardOption(VcsConfiguration.StandardOption.UPDATE, this);
+    }
+
+    if (getStatusEnvironment() != null) {
+      myStatusOption = vcsManager.getStandardOption(VcsConfiguration.StandardOption.STATUS, this);
+    }
   }
 
   public abstract String getName();
@@ -139,5 +160,26 @@ public abstract class AbstractVcs {
 
   public DiffProvider getDiffProvider() {
     return null;
+  }
+
+  public VcsShowSettingOption getCheckinOptions() {
+    if (myCheckinOption == null) {
+      LOG.assertTrue(false, "projectOpened was not called from super");
+      myCheckinOption = ProjectLevelVcsManager.getInstance(myProject).getStandardOption(VcsConfiguration.StandardOption.CHECKIN, this);
+    }
+    return myCheckinOption;
+  }
+
+  public VcsShowSettingOption getUpdateOptions() {
+    if (myUpdateOption == null) {
+      LOG.assertTrue(false, "projectOpened was not called from super");
+      myUpdateOption = ProjectLevelVcsManager.getInstance(myProject).getStandardOption(VcsConfiguration.StandardOption.UPDATE, this);
+    }
+    return myUpdateOption;
+  }
+
+
+  public VcsShowSettingOption getStatusOptions(){
+    return myStatusOption;
   }
 }

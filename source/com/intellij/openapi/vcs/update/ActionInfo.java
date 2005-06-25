@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.options.Configurable;
 
@@ -10,7 +11,7 @@ import java.util.LinkedHashMap;
 public interface ActionInfo {  
   ActionInfo UPDATE = new ActionInfo() {
     public boolean showOptions(Project project) {
-      return VcsConfiguration.getInstance(project).SHOW_UPDATE_OPTIONS;
+      return ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).getValue();
     }
 
     public UpdateEnvironment getEnvironment(AbstractVcs vcs) {
@@ -29,12 +30,12 @@ public interface ActionInfo {
         }
 
         protected boolean isToBeShown() {
-          return VcsConfiguration.getInstance(project).SHOW_UPDATE_OPTIONS;
+          return ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).getValue();
         }
 
         protected void setToBeShown(boolean value, boolean onOk) {
           if (onOk) {
-            VcsConfiguration.getInstance(project).SHOW_UPDATE_OPTIONS = value;
+            ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).setValue(value);
           }
         }
       };
@@ -66,12 +67,12 @@ public interface ActionInfo {
         }
 
         protected boolean isToBeShown() {
-          return VcsConfiguration.getInstance(project).SHOW_STATUS_OPTIONS;
+          return ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).getValue();
         }
 
         protected void setToBeShown(boolean value, boolean onOk) {
           if (onOk) {
-            VcsConfiguration.getInstance(project).SHOW_STATUS_OPTIONS = value;
+            ProjectLevelVcsManagerEx.getInstanceEx(project).getOptions(VcsConfiguration.StandardOption.UPDATE).setValue(value);
           }
         }
       };

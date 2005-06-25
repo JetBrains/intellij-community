@@ -22,6 +22,26 @@ import java.util.List;
 
 public final class VcsConfiguration implements JDOMExternalizable, ProjectComponent {
 
+  public enum StandardOption {
+    CHECKIN("Checkin"),
+    ADD("Add"),
+    REMOVE("Remove"),
+    EDIT("Edit"),
+    CHECKOUT("Checkout"),
+    STATUS("Status"),
+    UPDATE("Update");
+
+    StandardOption(final String id) {
+     myId = id;
+   }
+
+    private final String myId;
+
+    public String getId() {
+      return myId;
+    }
+  }
+
   public boolean PUT_FOCUS_INTO_COMMENT = false;
   public boolean FORCE_NON_EMPTY_COMMENT = false;
 
@@ -42,6 +62,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   public int ON_FILE_ADDING = Options.SHOW_DIALOG;
   public int ON_FILE_REMOVING = Options.SHOW_DIALOG;
 
+  /*
   public boolean SHOW_CHECKIN_OPTIONS = true;
   public boolean SHOW_ADD_OPTIONS = true;
   public boolean SHOW_REMOVE_OPTIONS = true;
@@ -49,6 +70,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   public boolean SHOW_CHECKOUT_OPTIONS = true;
   public boolean SHOW_STATUS_OPTIONS = true;
   public boolean SHOW_UPDATE_OPTIONS = true;
+  */
 
   public boolean ERROR_OCCURED = false;
 

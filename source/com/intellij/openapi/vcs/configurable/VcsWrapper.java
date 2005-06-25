@@ -22,7 +22,7 @@ class VcsWrapper {
       return "< None >";
     }
     else {
-      return vcs.getName();
+      return vcs.getDisplayName();
     }
   }
 
