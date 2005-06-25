@@ -24,6 +24,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ArrayList;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author cdr
  */
@@ -89,6 +91,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     return false;
   }
 
+  @Nullable
   private static PsiInstanceOfExpression getInstanceOfExpressionAtCaret(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
@@ -100,13 +103,26 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class, PsiWhileStatement.class);
     if (statement instanceof PsiIfStatement) {
       PsiExpression condition = ((PsiIfStatement)statement).getCondition();
-      if (condition instanceof PsiInstanceOfExpression && atSameLine(condition, editor)) return (PsiInstanceOfExpression)condition;
+      if (condition instanceof PsiInstanceOfExpression) {
+        if (atSameLine(condition, editor) || insideEmptyBlockOfStatement(statement, element)) {
+          return (PsiInstanceOfExpression)condition;
+        }
+      }
     }
     else if (statement instanceof PsiWhileStatement) {
       PsiExpression condition = ((PsiWhileStatement)statement).getCondition();
-      if (condition instanceof PsiInstanceOfExpression && atSameLine(condition, editor)) return (PsiInstanceOfExpression)condition;
+      if (condition instanceof PsiInstanceOfExpression) {
+        if (atSameLine(condition, editor) || insideEmptyBlockOfStatement(statement, element)) {
+          return (PsiInstanceOfExpression)condition;
+        }
+      }
     }
     return null;
+  }
+
+  private static boolean insideEmptyBlockOfStatement(PsiStatement stmt, PsiElement elementAtCaret) {
+    PsiBlockStatement block = PsiTreeUtil.getParentOfType(elementAtCaret, PsiBlockStatement.class);
+    return block != null && block.getParent() == stmt && block.getCodeBlock().getStatements().length == 0;
   }
 
   private static boolean atSameLine(final PsiExpression condition, final Editor editor) {
@@ -119,6 +135,8 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
 
     try {
       final PsiDeclarationStatement decl = createLocalVariableDeclaration(instanceOfExpression);
+      if (decl == null) return;
+      
       PsiLocalVariable localVariable = (PsiLocalVariable)decl.getDeclaredElements()[0];
       TemplateBuilder builder = new TemplateBuilder(localVariable);
       builder.setEndVariableAfter(localVariable.getNameIdentifier());
@@ -148,6 +166,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     }
   }
 
+  @Nullable
   private static PsiDeclarationStatement createLocalVariableDeclaration(final PsiInstanceOfExpression instanceOfExpression) throws IncorrectOperationException {
     PsiElementFactory factory = instanceOfExpression.getManager().getElementFactory();
     PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(a)b", instanceOfExpression);
@@ -160,6 +179,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     return element;
   }
 
+  @Nullable
   private static PsiDeclarationStatement insertAtAnchor(final PsiInstanceOfExpression instanceOfExpression, PsiDeclarationStatement toInsert) throws IncorrectOperationException {
     boolean negated = isNegated(instanceOfExpression);
     PsiStatement statement = PsiTreeUtil.getParentOfType(instanceOfExpression, PsiStatement.class);
