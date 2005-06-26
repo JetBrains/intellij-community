@@ -122,6 +122,7 @@ public class MismatchedCollectionQueryUpdateInspection
                                                                     context);
     }
 
+
     private static boolean collectionContentsAreQueried(PsiVariable variable,
                                                         PsiElement context){
         final PsiExpression initializer = variable.getInitializer();
