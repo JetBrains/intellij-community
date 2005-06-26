@@ -1,0 +1,6 @@
+public class X {
+  int f() {
+      System.out.println(i);
+      i++;
+  }
+}
