@@ -3,16 +3,17 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.MethodInspection;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.Set;
+import java.util.HashSet;
 
 public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspection {
     private final AbstractMethodOverridesAbstractMethodFix fix = new AbstractMethodOverridesAbstractMethodFix();
@@ -58,20 +59,76 @@ public class AbstractMethodOverridesAbstractMethodInspection extends MethodInspe
             if (method.isConstructor()) {
                 return;
             }
+            if(!isAbstract(method))
+            {
+                return;
+            }
             final PsiClass containingClass = method.getContainingClass();
+            if(containingClass == null)
+            {
+                return;
+            }
             if (!method.hasModifierProperty(PsiModifier.ABSTRACT) &&
                     !containingClass.isInterface()) {
                 return;
             }
             final PsiMethod[] superMethods = PsiSuperMethodUtil.findSuperMethods(method);
             for(final PsiMethod superMethod : superMethods){
-                final PsiClass superClass = superMethod.getContainingClass();
-                if(superClass.isInterface() ||
-                        superMethod.hasModifierProperty(PsiModifier.ABSTRACT)){
-                    registerMethodError(method);
-                    return;
+                if(isAbstract(superMethod)){
+                    if(methodsHaveSameReturnTypes(method, superMethod) &&
+                            haveSameExceptionSignatures(method, superMethod))
+                    {
+                        registerMethodError(method);
+                        return;
+                    }
                 }
             }
+        }
+
+        private static boolean haveSameExceptionSignatures(PsiMethod method1,
+                                                    PsiMethod method2){
+            final PsiReferenceList list1 = method1.getThrowsList();
+            final PsiClassType[] exceptions1 = list1.getReferencedTypes();
+            final PsiReferenceList list2 = method2.getThrowsList();
+            final PsiClassType[] exceptions2 = list2.getReferencedTypes();
+            if(exceptions1.length !=exceptions2.length)
+            {
+                return false;
+            }
+            final Set<PsiClassType> set1 = new HashSet<PsiClassType>();
+            Collections.addAll(set1, exceptions1);
+            for(PsiClassType anException : exceptions2){
+                if(!set1.contains(anException)){
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static boolean methodsHaveSameReturnTypes(PsiMethod method1,
+                                                   PsiMethod method2){
+            final PsiType type1 = method1.getReturnType();
+            if(type1 == null)
+            {
+                return false;
+            }
+            final PsiType type2 = method2.getReturnType();
+            if(type2 == null)
+            {
+                return false;
+            }
+            return type1.equals(type2);
+        }
+
+        private static boolean isAbstract(PsiMethod method){
+            final PsiClass containingClass = method.getContainingClass();
+            if(method.hasModifierProperty(PsiModifier.ABSTRACT)){
+                return true;
+            }
+            if(containingClass == null){
+                return false;
+            }
+            return containingClass.isInterface();
         }
     }
 }
