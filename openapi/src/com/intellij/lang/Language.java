@@ -117,7 +117,7 @@ public abstract class Language {
   }
 
   /**
-   * @return normal annotator to be run in process,
+   * @return normal annotator to annotate this language
    * this annotator will be called incrementally on changed elements
    */
   @Nullable
@@ -126,8 +126,8 @@ public abstract class Language {
   }
 
   /**
-   * @return out-of-process annotator for a whole file
-   * since this annotating is expensive it is run last
+   * @return external annotator for a whole file.
+   * Since this annotating is expensive due to nonincrementality, it is run last
    */
   @Nullable
   public ExternalAnnotator getExternalAnnotator() {
