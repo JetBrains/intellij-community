@@ -7,10 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class VariableAccessVisitor extends PsiRecursiveElementVisitor {
-    private final Map<PsiElement,Integer> m_accessCounts = new HashMap<PsiElement, Integer>(2);
-    private final Set<PsiElement> m_overAccessedFields = new HashSet<PsiElement>(2);
-    private static final Integer ONE = 1;
-    private static final Integer TWO = 2;
+    private final Map<PsiField,Integer> m_accessCounts = new HashMap<PsiField, Integer>(2);
+    private final Set<PsiField> m_overAccessedFields = new HashSet<PsiField>(2);
 
     public VariableAccessVisitor() {
         super();
@@ -27,25 +25,26 @@ public class VariableAccessVisitor extends PsiRecursiveElementVisitor {
         if (!(element instanceof PsiField)) {
             return;
         }
-        final Set<PsiElement> overAccessedFields = m_overAccessedFields;
-        if (overAccessedFields.contains(element)) {
+        final PsiField field = (PsiField) element;
+        final Set<PsiField> overAccessedFields = m_overAccessedFields;
+        if (overAccessedFields.contains(field)) {
             return;
         }
-        if (ControlFlowUtils.isInLoop(element)) {
-            overAccessedFields.add(element);
+        if (ControlFlowUtils.isInLoop(field)) {
+            overAccessedFields.add(field);
         }
-        final Map<PsiElement,Integer> accessCounts = m_accessCounts;
-        final Integer count = accessCounts.get(element);
+        final Map<PsiField,Integer> accessCounts = m_accessCounts;
+        final Integer count = accessCounts.get(field);
         if (count == null) {
-            accessCounts.put(element, ONE);
-        } else if (count.equals(ONE)) {
-            accessCounts.put(element, TWO);
+            accessCounts.put(field, 1);
+        } else if (count == 1) {
+            accessCounts.put(field, 2);
         } else {
-            overAccessedFields.add(element);
+            overAccessedFields.add(field);
         }
     }
 
-    public Set<PsiElement> getOveraccessedFields() {
+    public Set<PsiField> getOveraccessedFields() {
         return Collections.unmodifiableSet(m_overAccessedFields);
     }
 }

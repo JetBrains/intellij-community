@@ -6,6 +6,6 @@ or which are accessed in a loop.  While such field access may be logically corre
 to replace such accesses with local variables, copying the fields to a temporary local and copying back if necessary.
 <p>
 Use the checkbox below to ignore instances of <b><font color="#000080">final</font></b> fields being repeatedly accessed, as many compilers and JVMs
-can optimize that case without explicit creation of a temporary local variable.
+can optimize that case without explicit creation of a temporary local variable.   Constant fields are always ignored by this inspection.
 </font></td> </tr> <tr> <td height="20"> <font face="verdana" size="-2">Powered by InspectionGadgets </font> </td> </tr> </table> </body>
 </html>

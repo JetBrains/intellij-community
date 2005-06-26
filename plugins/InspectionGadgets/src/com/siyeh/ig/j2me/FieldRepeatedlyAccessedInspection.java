@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.MethodInspection;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.performance.VariableAccessVisitor;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
@@ -50,16 +51,27 @@ public class FieldRepeatedlyAccessedInspection extends MethodInspection {
             }
             final VariableAccessVisitor visitor = new VariableAccessVisitor();
             method.accept(visitor);
-            final Set<PsiElement> fields = visitor.getOveraccessedFields();
-            for(Object field1 : fields){
-                final PsiField field = (PsiField) field1;
-                if(!m_ignoreFinalFields ||
-                        !field.hasModifierProperty(PsiModifier.FINAL)){
-                    registerError(nameIdentifier, field);
+            final Set<PsiField> fields = visitor.getOveraccessedFields();
+            for(PsiField field : fields){
+                if(isConstant(field) || m_ignoreFinalFields &&
+                        field.hasModifierProperty(PsiModifier.FINAL)){
+                    continue;
                 }
+                registerError(nameIdentifier, field);
             }
         }
 
+        private boolean isConstant(PsiField field){
+            if(!field.hasModifierProperty(PsiModifier.STATIC) ||
+                    !field.hasModifierProperty(PsiModifier.FINAL)){
+                return false ;
+            }
+            final PsiType type = field.getType();
+            if(type == null){
+                return false;
+            }
+            return ClassUtils.isImmutable(type);
+        }
     }
 
 }
