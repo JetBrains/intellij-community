@@ -249,53 +249,50 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private static void inlineConstructorCall(PsiCall constructorCall) {
     final PsiMethod oldConstructor = constructorCall.resolveMethod();
-    if (oldConstructor == null) return;
+    LOG.assertTrue (oldConstructor != null);
     final PsiManager manager = oldConstructor.getManager();
     final PsiExpression[] instanceCreationArguments = constructorCall.getArgumentList().getExpressions();
     final PsiParameter[] parameters = oldConstructor.getParameterList().getParameters();
-    if (parameters.length != instanceCreationArguments.length) return;
+    LOG.assertTrue (parameters.length == instanceCreationArguments.length);
 
-    PsiCodeBlock body = oldConstructor.getBody();
-    if (body == null) return;
-    PsiStatement[] statements = body.getStatements();
-    if (statements.length != 1 || !(statements[0] instanceof PsiExpressionStatement)) return;
+    PsiStatement[] statements = oldConstructor.getBody().getStatements();
+    LOG.assertTrue (statements.length == 1 && statements[0] instanceof PsiExpressionStatement);
     PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-    if (!(expression instanceof PsiMethodCallExpression)) return;
+    LOG.assertTrue (expression instanceof PsiMethodCallExpression);
 
     PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
-    if (methodExpression != null && "this".equals(methodExpression.getReferenceName())) {
-      PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression.copy();
-      final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
-      for (PsiExpression arg : args) {
-        arg.accept(new PsiRecursiveElementVisitor() {
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
-            PsiElement resolved = expression.resolve();
-            //For some unknown reason declarationScope != oldConstructor, though equivalent
-            if (resolved instanceof PsiParameter && manager
-              .areElementsEquivalent(((PsiParameter)resolved).getDeclarationScope(), oldConstructor)) {
-              PsiElement declarationScope = ((PsiParameter)resolved).getDeclarationScope();
-              PsiParameter[] declarationParameters = ((PsiMethod)declarationScope).getParameterList().getParameters();
-              for (int j = 0; j < declarationParameters.length; j++) {
-                if (declarationParameters[j] == resolved) {
-                  try {
-                    expression.replace(instanceCreationArguments[j]);
-                    break;
-                  }
-                  catch (IncorrectOperationException e) {
-                    LOG.error(e);
-                  }
+    LOG.assertTrue(methodExpression != null);
+    PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression.copy();
+    final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
+    for (PsiExpression arg : args) {
+      arg.accept(new PsiRecursiveElementVisitor() {
+        public void visitReferenceExpression(PsiReferenceExpression expression) {
+          PsiElement resolved = expression.resolve();
+          if (resolved instanceof PsiParameter && manager.areElementsEquivalent(((PsiParameter)resolved).getDeclarationScope(),
+                                                                                 oldConstructor)) {
+            PsiElement declarationScope = ((PsiParameter)resolved).getDeclarationScope();
+            PsiParameter[] declarationParameters = ((PsiMethod)declarationScope).getParameterList().getParameters();
+            for (int j = 0; j < declarationParameters.length; j++) {
+              if (declarationParameters[j] == resolved) {
+                try {
+                  expression.replace(instanceCreationArguments[j]);
+                  break;
+                }
+                catch (IncorrectOperationException e) {
+                  LOG.error(e);
                 }
               }
             }
           }
-        });
-      }
-      try {
-        constructorCall.getArgumentList().replace(methodCall.getArgumentList());
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+        }
+      });
+    }
+
+    try {
+      constructorCall.replace(methodCall);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
     }
   }
 
