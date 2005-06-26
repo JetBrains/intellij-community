@@ -37,11 +37,10 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -119,8 +118,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     PsiSearchHelper helper = myManager.getSearchHelper();
 
     PsiMethod[] overridingMethods = helper.findOverridingMethods(myMethodToSearchFor, GlobalSearchScope.projectScope(myProject), true);
-    for (int j = 0; j < overridingMethods.length; j++) {
-      result.add(new UsageInfo(overridingMethods[j]));
+    for (PsiMethod overridingMethod : overridingMethods) {
+      result.add(new UsageInfo(overridingMethod));
     }
 
     if(myMethodToSearchFor.isConstructor()) {
@@ -208,13 +207,12 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       myParameterInitializer.accept(anySupers);
       if (anySupers.isResult()) {
         final UsageInfo[] u = usages[0];
-        for (int i = 0; i < u.length; i++) {
-          UsageInfo usageInfo = u[i];
+        for (UsageInfo usageInfo : u) {
           if (!(usageInfo.getElement() instanceof PsiMethod) && !(usageInfo instanceof InternalUsageInfo)) {
             final PsiElement element = usageInfo.getElement();
             if (!PsiTreeUtil.isAncestor(myMethodToReplaceIn.getContainingClass(), element, false)) {
               conflicts.add("Parameter initializer contains " + ConflictsUtil.htmlEmphasize("super")
-                      + ", but not all calls to method are in its class.");
+                            + ", but not all calls to method are in its class.");
               break;
             }
           }
@@ -237,12 +235,10 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       myParameterInitializer.accept(collector);
       final Set<PsiElement> result = collector.myResult;
       if (!result.isEmpty()) {
-        for (int i = 0; i < usageArray.length; i++) {
-          final UsageInfo usageInfo = usageArray[i];
+        for (final UsageInfo usageInfo : usageArray) {
           if (usageInfo instanceof ExternalUsageInfo && RefactoringUtil.isMethodUsage(usageInfo.getElement())) {
             final PsiElement place = usageInfo.getElement();
-            for (Iterator<PsiElement> iterator = result.iterator(); iterator.hasNext();) {
-              final PsiElement element = iterator.next();
+            for (final PsiElement element : result) {
               if (element instanceof PsiMember &&
                   !myManager.getResolveHelper().isAccessible((PsiMember)element, place, null)) {
                 String message =
@@ -335,15 +331,15 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
       // Changing external occurences (the tricky part)
       ChangeContextUtil.encodeContextInfo(myParameterInitializer, true);
-      for (int i = 0; i < usages.length; i++) {
-        UsageInfo usage = usages[i];
-
+      for (UsageInfo usage : usages) {
         if (!(usage instanceof InternalUsageInfo)) {
-          if(usage instanceof DefaultConstructorImplicitUsageInfo) {
-            addSuperCall(((DefaultConstructorImplicitUsageInfo) usage).getConstructor());
-          } else if(usage instanceof NoConstructorClassUsageInfo) {
-            addDefaultConstructor(((NoConstructorClassUsageInfo) usage).getPsiClass());
-          } else if (usage.getElement() instanceof PsiMethod) {
+          if (usage instanceof DefaultConstructorImplicitUsageInfo) {
+            addSuperCall(((DefaultConstructorImplicitUsageInfo)usage).getConstructor());
+          }
+          else if (usage instanceof NoConstructorClassUsageInfo) {
+            addDefaultConstructor(((NoConstructorClassUsageInfo)usage).getPsiClass());
+          }
+          else if (usage.getElement() instanceof PsiMethod) {
             if (!myManager.areElementsEquivalent(usage.getElement(), myMethodToReplaceIn)) {
               changeMethodSignatureAndResolveFieldConflicts((PsiMethod)usage.getElement(), initializerType);
             }
@@ -365,18 +361,16 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       ChangeContextUtil.clearContextInfo(myParameterInitializer);
 
       // Replacing expression occurences
-      for (int j = 0; j < usages.length; j++) {
-        UsageInfo usage = usages[j];
-
-        if(usage instanceof ChangedMethodCallInfo) {
+      for (UsageInfo usage : usages) {
+        if (usage instanceof ChangedMethodCallInfo) {
           PsiElement element = usage.getElement();
 
           processChangedMethodCall(element);
         }
         else if (usage instanceof InternalUsageInfo) {
           PsiElement element = usage.getElement();
-          if(element instanceof PsiExpression) {
-            element = RefactoringUtil.outermostParenthesizedExpression((PsiExpression) element);
+          if (element instanceof PsiExpression) {
+            element = RefactoringUtil.outermostParenthesizedExpression((PsiExpression)element);
           }
           PsiElement newExpr = factory.createExpressionFromText(myParameterName, element);
           element.replace(newExpr);
@@ -558,9 +552,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
       PsiElementFactory factory = myContext.getManager().getElementFactory();
 
-      for (Iterator<Map.Entry<PsiExpression,String>> iterator = mappingsSet.iterator(); iterator.hasNext();) {
-        Map.Entry<PsiExpression,String> entry = iterator.next();
-
+      for (Map.Entry<PsiExpression, String> entry : mappingsSet) {
         PsiExpression oldRef = entry.getKey();
         PsiElement newRef = factory.createExpressionFromText(entry.getValue(), null);
         oldRef.replace(newRef);
