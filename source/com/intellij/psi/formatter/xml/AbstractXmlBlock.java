@@ -49,8 +49,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return null;
   }
 
-  private Wrap getTagEndWrapping(final Formatter formatter, final XmlTag parent) {
-    return formatter.createWrap(myXmlFormattingPolicy.getWrappingTypeForTagEnd(parent), true);
+  private Wrap getTagEndWrapping(final XmlTag parent) {
+    return getFormatter().createWrap(myXmlFormattingPolicy.getWrappingTypeForTagEnd(parent), true);
   }
 
   protected Wrap chooseWrap(final ASTNode child, final Wrap tagBeginWrap, final Wrap attrWrap, final Wrap textWrap) {
@@ -60,14 +60,23 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     if (elementType == ElementType.XML_START_TAG_START) return tagBeginWrap;
     if (elementType == ElementType.XML_END_TAG_START) {
       final PsiElement parent = SourceTreeToPsiMap.treeElementToPsi(child.getTreeParent());
-      if ((parent instanceof XmlTag) && ((XmlTag)parent).getSubTags().length > 0) {
-        return getTagEndWrapping(getFormatter(), (XmlTag)parent);
+      if ((parent instanceof XmlTag) && canWrapTagEnd((XmlTag)parent)) {
+        return getTagEndWrapping((XmlTag)parent);
       } else {
         return null;
       }
     }
     if (elementType == ElementType.XML_TEXT || elementType == ElementType.XML_DATA_CHARACTERS) return textWrap;
     return null;
+  }
+
+  private boolean canWrapTagEnd(final XmlTag tag) {
+    return tag.getSubTags().length > 0 || isScriptletOrDeclaration(tag);
+  }
+
+  private boolean isScriptletOrDeclaration(final XmlTag tag) {
+    final String name = tag.getName();
+    return name.equalsIgnoreCase(JSPX_SCRIPTLET_TAG_NAME) || name.equalsIgnoreCase(JSPX_DECLARATION_TAG_NAME);
   }
 
   protected Formatter getFormatter() {
@@ -91,22 +100,27 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     }
   }
 
-  protected Wrap createTagBeginWrapping(final Formatter formatter) {
-    return formatter.createWrap(myXmlFormattingPolicy.getWrappingTypeForTagBegin(), true);
+  protected Wrap createTagBeginWrapping(final XmlTag tag) {
+    return getFormatter().createWrap(myXmlFormattingPolicy.getWrappingTypeForTagBegin(tag), true);
   }
 
   protected Block createChildBlock(final ASTNode child, final Wrap wrap, final Alignment alignment, final Indent indent) {
     final Language myLanguage = myNode.getPsi().getLanguage();
     final Language childLanguage = child.getPsi().getLanguage();
     if (useMyFormatter(myLanguage, childLanguage)) {
+
+      if (child.getElementType() == ElementType.JSP_EXPRESSION) {
+        return new XmlBlock(child, null, null, myXmlFormattingPolicy, indent);
+      }
+
       Block jspScriptletNode = buildBlockForScriptletNode(child,indent);
       if (jspScriptletNode != null) {
         return jspScriptletNode;
       }
-      if (child.getElementType() == ElementType.JSP_XML_TEXT || child.getPsi() instanceof JspText) {
-        final Pair<ASTNode, Language> javaElement = JspTextBlock.findAnotherTreeElementAt(child);
-        if (javaElement != null) {
-          return new JspTextBlock(child, myXmlFormattingPolicy, javaElement, indent);
+      if (myXmlFormattingPolicy.processJsp() && (child.getElementType() == ElementType.JSP_XML_TEXT || child.getPsi() instanceof JspText)) {
+        final Pair<PsiElement,Language> root = JspTextBlock.findPsiRootAt(child);
+        if (root != null) {
+          return new JspTextBlock(child, myXmlFormattingPolicy, indent, root);
         }
       }
       if (child.getElementType() == getTagType() || child.getElementType() == ElementType.XML_TAG) {
@@ -171,7 +185,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       return false;
     }
     if (child.getText().trim().length() == 0) return false;
-    return JspTextBlock.findAnotherTreeElementAt(child) != null;
+    return JspTextBlock.findPsiRootAt(child) != null;
   }
 
   public ASTNode getTreeNode() {

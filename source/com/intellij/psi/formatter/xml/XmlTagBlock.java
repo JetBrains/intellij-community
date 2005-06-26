@@ -29,7 +29,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     final Formatter formatter = getFormatter();
     final Wrap attrWrap = formatter.createWrap(getWrapType(myXmlFormattingPolicy.getAttributesWrap()), false);
     final Wrap textWrap = formatter.createWrap(getWrapType(myXmlFormattingPolicy.getTextWrap()), true);
-    final Wrap tagBeginWrap = createTagBeginWrapping(formatter);
+    final Wrap tagBeginWrap = createTagBeginWrapping(getTag());
     final Alignment attrAlignment = formatter.createAlignment();
     final Alignment textAlignment = formatter.createAlignment();
     final ArrayList<Block> result = new ArrayList<Block>();
@@ -59,11 +59,12 @@ public class XmlTagBlock extends AbstractXmlBlock{
           result.add(createTagDescriptionNode(localResult));
           localResult = new ArrayList<Block>();
         }
-        else if (isJspxJavaContainingNode(child)) {
+        else if (myXmlFormattingPolicy.processJsp() && isJspxJavaContainingNode(child)) {
           localResult.add(new JspTextBlock(child,
                                            myXmlFormattingPolicy,
-                                           JspTextBlock.findAnotherTreeElementAt(child),
-                                           getFormatter().getNoneIndent()));
+                                           getFormatter().getNoneIndent(),
+                                           JspTextBlock.findPsiRootAt(child)
+          ));
         }
         else if (child.getElementType() == ElementType.XML_TEXT) {
           createXmlTextBlocks(localResult, child, wrap, alignment);

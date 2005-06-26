@@ -109,7 +109,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myVcss = new ArrayList<AbstractVcs>(Arrays.asList(vcses));
   }
 
-  private final Map<String, VcsShowOptionsSettingImpl> mySettings = new LinkedHashMap<String, VcsShowOptionsSettingImpl>();
+  private final Map<String, VcsShowOptionsSettingImpl> myOptions = new LinkedHashMap<String, VcsShowOptionsSettingImpl>();
+  private final Map<String, VcsShowConfirmationOptionImpl> myConfirmations = new LinkedHashMap<String, VcsShowConfirmationOptionImpl>();
 
   public void initComponent() {
     createSettingFor(VcsConfiguration.StandardOption.ADD);
@@ -119,10 +120,26 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     createSettingFor(VcsConfiguration.StandardOption.UPDATE);
     createSettingFor(VcsConfiguration.StandardOption.STATUS);
     createSettingFor(VcsConfiguration.StandardOption.EDIT);
+
+    myConfirmations.put(VcsConfiguration.StandardConfirmation.ADD.getId(),
+                        new VcsShowConfirmationOptionImpl(
+                          VcsConfiguration.StandardConfirmation.ADD.getId(),
+                          "When files are created with IDEA:",
+                          "Do not add",
+                          "Show options before adding to version control",
+                          "Add silently"));
+
+    myConfirmations.put(VcsConfiguration.StandardConfirmation.ADD.getId(),
+                        new VcsShowConfirmationOptionImpl(
+                          VcsConfiguration.StandardConfirmation.ADD.getId(),
+                          "Show options before removing from version control",
+                          "Do not remove",
+                          "Show options before removing from version control",
+                          "Remove silently"));
   }
 
   private void createSettingFor(final VcsConfiguration.StandardOption option) {
-    mySettings.put(option.getId(), new VcsShowOptionsSettingImpl(option));
+    myOptions.put(option.getId(), new VcsShowOptionsSettingImpl(option));
   }
 
   public void registerVcs(AbstractVcs vcs) {
@@ -505,11 +522,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @NotNull
   public VcsShowSettingOption getOptions(VcsConfiguration.StandardOption option) {
-    return mySettings.get(option.getId());
+    return myOptions.get(option.getId());
   }
 
   public List<VcsShowOptionsSettingImpl> getAllOptions() {
-    return new ArrayList<VcsShowOptionsSettingImpl>(mySettings.values());
+    return new ArrayList<VcsShowOptionsSettingImpl>(myOptions.values());
   }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
@@ -517,7 +534,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @NotNull
   public VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option, @NotNull AbstractVcs vcs) {
     LOG.assertTrue(myIsBeforeProjectStarted, "getStandardOption should be called from projectOpened only");
-    final VcsShowOptionsSettingImpl options = mySettings.get(option.getId());
+    final VcsShowOptionsSettingImpl options = myOptions.get(option.getId());
     options.addApplicableVcs(vcs);
     return options;
   }
@@ -532,10 +549,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   private VcsShowOptionsSettingImpl getOrCreateOption(String actionName) {
-    if (!mySettings.containsKey(actionName)) {
-      mySettings.put(actionName, new VcsShowOptionsSettingImpl(actionName));
+    if (!myOptions.containsKey(actionName)) {
+      myOptions.put(actionName, new VcsShowOptionsSettingImpl(actionName));
     }
-    return mySettings.get(actionName);
+    return myOptions.get(actionName);
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -559,7 +576,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (VcsShowOptionsSettingImpl setting : mySettings.values()) {
+    for (VcsShowOptionsSettingImpl setting : myOptions.values()) {
       final Element settingElement = new Element(OPTIONS_SETTING);
       element.addContent(settingElement);
       settingElement.setAttribute(VALUE_ATTTIBUTE, Boolean.toString(setting.getValue()));
@@ -567,4 +584,16 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     }
   }
 
+  @NotNull
+  public VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option,
+                                                           @NotNull AbstractVcs vcs) {
+    LOG.assertTrue(myIsBeforeProjectStarted, "VcsShowConfirmationOption should be called from projectOpened only");
+    final VcsShowConfirmationOptionImpl result = myConfirmations.get(option.getId());
+    result.addApplicableVcs(vcs);
+    return result;
+  }
+
+  public List<VcsShowConfirmationOptionImpl> getAllConfirmations() {
+    return new ArrayList<VcsShowConfirmationOptionImpl>(myConfirmations.values());
+  }
 }

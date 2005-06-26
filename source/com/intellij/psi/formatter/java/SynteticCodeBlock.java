@@ -8,6 +8,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 
 import java.util.List;
+import java.util.ArrayList;
 
 public class SynteticCodeBlock implements Block, JavaBlock{
   private final List<Block> mySubBlocks;
@@ -15,8 +16,10 @@ public class SynteticCodeBlock implements Block, JavaBlock{
   private final Indent myIndentContent;
   private final CodeStyleSettings mySettings;
   private final Wrap myWrap;
-  
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.newXmlFormatter.java.SynteticCodeBlock");
+
+  private final TextRange myTextRange;
 
   public SynteticCodeBlock(final List<Block> subBlocks,
                            final Alignment alignment,
@@ -27,15 +30,16 @@ public class SynteticCodeBlock implements Block, JavaBlock{
     if (subBlocks.isEmpty()) {
       LOG.assertTrue(false);
     }
-    mySubBlocks = subBlocks;    
+    mySubBlocks = new ArrayList<Block>(subBlocks);
     myAlignment = alignment;
     mySettings = settings;
     myWrap = wrap;
+    myTextRange = new TextRange(mySubBlocks.get(0).getTextRange().getStartOffset(),
+                         mySubBlocks.get(mySubBlocks.size() - 1).getTextRange().getEndOffset());
   }
 
   public TextRange getTextRange() {
-    return new TextRange(mySubBlocks.get(0).getTextRange().getStartOffset(),
-                         mySubBlocks.get(mySubBlocks.size() - 1).getTextRange().getEndOffset());
+    return myTextRange;
   }
 
   public List<Block> getSubBlocks() {

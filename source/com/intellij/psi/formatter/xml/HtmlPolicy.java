@@ -13,7 +13,7 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
 
-public class HtmlPolicy implements XmlFormattingPolicy{
+public class HtmlPolicy extends XmlFormattingPolicy{
   private final IElementType myHtmlTagType;
   private CodeStyleSettings mySettings;
 
@@ -88,15 +88,22 @@ public class HtmlPolicy implements XmlFormattingPolicy{
   }
 
   public int getWrappingTypeForTagEnd(final XmlTag xmlTag) {
-    return Wrap.NORMAL;
+    return isScriptletOrDeclaration(xmlTag)? Wrap.ALWAYS : Wrap.NORMAL;
   }
 
-  public int getWrappingTypeForTagBegin() {
-    if (mySettings.HTML_WRAP_TAG_BEGIN) {
+  public int getWrappingTypeForTagBegin(final XmlTag tag) {
+    if (mySettings.HTML_WRAP_TAG_BEGIN || isScriptletOrDeclaration(tag)) {
       return Wrap.ALWAYS;
     } else {
       return Wrap.NORMAL;
     }
+  }
+
+  private boolean isScriptletOrDeclaration(final XmlTag tag) {
+    final String name = tag.getName();
+    return name.equalsIgnoreCase("jsp:scriptlet")
+           || name.equalsIgnoreCase("jsp:declaration")
+           || name.equalsIgnoreCase("jsp:root");
   }
 
   public boolean isTextElement(XmlTag tag) {

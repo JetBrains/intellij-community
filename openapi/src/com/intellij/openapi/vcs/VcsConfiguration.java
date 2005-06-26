@@ -42,6 +42,21 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
     }
   }
 
+  public enum StandardConfirmation {
+    ADD("Add"),
+    REMOVE("Remove");
+
+    StandardConfirmation(final String id) {
+     myId = id;
+   }
+
+    private final String myId;
+
+    public String getId() {
+      return myId;
+    }
+  }
+
   public boolean PUT_FOCUS_INTO_COMMENT = false;
   public boolean FORCE_NON_EMPTY_COMMENT = false;
 

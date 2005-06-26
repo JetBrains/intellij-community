@@ -7,7 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 
-public class XmlPolicy implements XmlFormattingPolicy{
+public class XmlPolicy extends XmlFormattingPolicy{
   private final CodeStyleSettings mySettings;
   private final IElementType myXmlTag;
 
@@ -38,7 +38,7 @@ public class XmlPolicy implements XmlFormattingPolicy{
            : Wrap.NORMAL;
   }
 
-  public int getWrappingTypeForTagBegin() {
+  public int getWrappingTypeForTagBegin(final XmlTag tag) {
     return Wrap.ALWAYS;
   }
 

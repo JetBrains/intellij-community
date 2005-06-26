@@ -2,10 +2,7 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsShowSettingOption;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsShowOptionsSettingImpl;
+import com.intellij.openapi.vcs.*;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,4 +24,6 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
   public abstract VcsShowSettingOption getOptions(VcsConfiguration.StandardOption option);
 
   public abstract List<VcsShowOptionsSettingImpl> getAllOptions();
+
+  public abstract List<VcsShowConfirmationOptionImpl> getAllConfirmations();
 }

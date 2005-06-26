@@ -69,6 +69,11 @@ public abstract class ProjectLevelVcsManager {
   @NotNull
   public abstract VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option,
                                                          @NotNull AbstractVcs vcs);
+
+  @NotNull
+  public abstract VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option,
+                                                             @NotNull AbstractVcs vcs);
+
   @NotNull
   public abstract VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName,
                                                                @NotNull AbstractVcs vcs);
