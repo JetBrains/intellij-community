@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.pom.Navigatable;
@@ -181,7 +182,14 @@ public class FileStructureDialog extends DialogWrapper {
         builder.addUpdateRequest();
       }
     });
-    checkBox.setMnemonic('N');
+
+    if (SystemInfo.isMac) {
+      checkBox.setMnemonic('D'); // N produces input method event we're not able to prevent from happening.
+    }
+    else {
+      checkBox.setMnemonic('N');
+    }
+
     checkBox.setFocusable(false);
 
     panel.add(checkBox, new GridBagConstraints(0,0,1,1,0,0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets(0,5,0,5),0,0));

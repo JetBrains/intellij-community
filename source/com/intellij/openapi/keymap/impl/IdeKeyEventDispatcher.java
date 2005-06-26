@@ -13,6 +13,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ui.KeyboardShortcutDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
@@ -228,7 +229,15 @@ public final class IdeKeyEventDispatcher {
 
     boolean hasSecondStroke = fillActionsList(focusOwner, keyStroke, null, isModalContext);
 
-    if(myActions.size() == 0){
+    if(myActions.size() == 0) {
+      if (SystemInfo.isMac) {
+        if (e.getID() == KeyEvent.KEY_PRESSED && e.getModifiersEx() == KeyEvent.ALT_DOWN_MASK && hasMnemonicInWindow(focusOwner, e.getKeyCode())) {
+          myPressedWasProcessed = true;
+          myState = STATE_PROCESSED;
+          return false;
+        }
+      }
+
       // there's nothing mapped for this stroke
       return false;
     }
@@ -272,6 +281,47 @@ public final class IdeKeyEventDispatcher {
         return false;
       }
     }
+  }
+
+  private boolean hasMnemonicInWindow(Component focusOwner, int keyCode) {
+    if (keyCode == KeyEvent.VK_ALT) return false; // Optimization
+    final Container container = getContainer(focusOwner);
+    return hasMnemonic(container, keyCode);
+  }
+
+  private Container getContainer(final Component focusOwner) {
+    if (focusOwner.isLightweight()) {
+      Container container = focusOwner.getParent();
+      while (container != null) {
+        final Container parent = container.getParent();
+        if (parent instanceof JLayeredPane) break;
+        if (parent != null && parent.isLightweight()) {
+          container = parent;
+        }
+        else {
+          break;
+        }
+      }
+      return container;
+    }
+
+    return SwingUtilities.windowForComponent(focusOwner);
+  }
+
+  private boolean hasMnemonic(final Container container, final int keyCode) {
+    if (container == null) return false;
+
+    final Component[] components = container.getComponents();
+    for (Component component : components) {
+      if (component instanceof AbstractButton) {
+        final AbstractButton button = (AbstractButton)component;
+        if (button.getMnemonic() == keyCode) return true;
+      }
+      if (component instanceof Container) {
+        if (hasMnemonic((Container)component, keyCode)) return true;
+      }
+    }
+    return false;
   }
 
   private boolean processAction(final KeyEvent e, DataContext dataContext) {

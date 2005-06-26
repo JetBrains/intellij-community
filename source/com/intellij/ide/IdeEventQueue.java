@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
@@ -316,6 +317,12 @@ public class IdeEventQueue extends EventQueue {
 
     if (myDispatcher != null && myDispatcher.dispatch(e)) {
       return;
+    }
+
+    if (e instanceof InputMethodEvent) {
+      if (SystemInfo.isMac && myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
+        return;
+      }
     }
 
     if ((e instanceof InputEvent) && Patches.SPECIAL_WINPUT_METHOD_PROCESSING) {
