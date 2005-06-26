@@ -31,7 +31,7 @@ public class CreateLocalFromUsageAction extends CreateVarFromUsageAction {
 
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
-    if(!CreateFromUsageUtils.isSimpleReference(myReferenceExpression)) return false;
+    if(!!myReferenceExpression.isQualified()) return false;
     PsiElement scope = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiModifierListOwner.class);
     return scope instanceof PsiMethod || scope instanceof PsiClassInitializer || scope instanceof PsiLocalVariable;
   }

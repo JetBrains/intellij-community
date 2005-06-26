@@ -39,10 +39,6 @@ public class CreateFromUsageUtils {
     "#com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils");
   private static final int MAX_GUESSED_MEMBERS_COUNT = 10;
 
-  public static boolean isSimpleReference (PsiReferenceExpression refExpr) {
-    return refExpr.getQualifierExpression() == null;
-  }
-
   public static boolean isValidReference(PsiReference reference, boolean unresolvedOnly) {
     if (!(reference instanceof PsiJavaReference)) return false;
     JavaResolveResult[] results = ((PsiJavaReference)reference).multiResolve(true);

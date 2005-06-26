@@ -36,6 +36,7 @@ public class BringVariableIntoScopeAction implements IntentionAction {
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PsiJavaFile)) return false;
+    if (myUnresolvedReference.isQualified()) return false;
     final String referenceName = myUnresolvedReference.getReferenceName();
     if (referenceName == null) return false;
 
