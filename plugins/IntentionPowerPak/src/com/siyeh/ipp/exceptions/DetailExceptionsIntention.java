@@ -4,6 +4,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -16,6 +17,7 @@ public class DetailExceptionsIntention extends Intention{
         return "Detail Exceptions";
     }
 
+    @NotNull
     public PsiElementPredicate getElementPredicate(){
         return new DetailExceptionsPredicate();
     }
@@ -40,8 +42,10 @@ public class DetailExceptionsIntention extends Intention{
         ExceptionUtils.calculateExceptionsThrownForCodeBlock(tryBlock,
                                                              exceptionsThrown);
 
+
         final HeirarchicalTypeComparator comparator =
                 new HeirarchicalTypeComparator();
+        final List<PsiType> exceptionsAlreadyEmitted = new ArrayList<PsiType>(10);
         final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
         for(PsiCatchSection catchSection : catchSections){
             final PsiParameter param = catchSection.getParameter();
@@ -55,9 +59,9 @@ public class DetailExceptionsIntention extends Intention{
                         exceptionsToExpand.add(thrownType);
                     }
                 }
+                exceptionsToExpand.removeAll(exceptionsAlreadyEmitted);
                 Collections.sort(exceptionsToExpand, comparator);
-                for(Object aExceptionsToExpand : exceptionsToExpand){
-                    final PsiType thrownType = (PsiType) aExceptionsToExpand;
+                for(PsiType thrownType : exceptionsToExpand){
                     newTryStatement.append("catch(");
                     final String exceptionType =
                             thrownType.getPresentableText();
@@ -68,6 +72,7 @@ public class DetailExceptionsIntention extends Intention{
                     newTryStatement.append(')');
                     final String blockText = block.getText();
                     newTryStatement.append(blockText);
+                    exceptionsAlreadyEmitted.add(thrownType);
                 }
             }
         }

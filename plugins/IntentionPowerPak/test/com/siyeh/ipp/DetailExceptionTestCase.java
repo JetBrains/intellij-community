@@ -9,8 +9,10 @@ public class DetailExceptionTestCase{
         Connection conn;
         try{
             Class.forName("logon.name");
-            conn = DriverManager
+            DriverManager
                     .getConnection("jdbc:mysql://localhost/test", "root", "");
+        } catch(ClassNotFoundException e){
+
         } catch(Exception e){
 
         }
