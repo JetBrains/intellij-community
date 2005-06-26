@@ -260,10 +260,12 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
   private static void registerIntention(PsiExpression[] expressions,
                                         HighlightInfo highlightInfo,
                                         TextRange fixRange, JavaResolveResult candidate, PsiElement context) {
-    PsiMethod method = (PsiMethod)candidate.getElement();
-    PsiSubstitutor substitutor = candidate.getSubstitutor();
-    if (method.getManager().isInProject(method)) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new ChangeMethodSignatureFromUsageFix(method, expressions, substitutor, context), null);
+    if (candidate.isStaticsScopeCorrect()) {
+      PsiMethod method = (PsiMethod)candidate.getElement();
+      PsiSubstitutor substitutor = candidate.getSubstitutor();
+      if (method.getManager().isInProject(method)) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new ChangeMethodSignatureFromUsageFix(method, expressions, substitutor, context), null);
+      }
     }
   }
 
