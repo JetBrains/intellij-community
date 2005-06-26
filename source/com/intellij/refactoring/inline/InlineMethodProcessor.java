@@ -93,6 +93,17 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean preprocessUsages(UsageInfo[][] usages) {
+    ArrayList<String> conflicts = new ArrayList<String>();
+
+    if (!myInlineThisOnly) {
+      final PsiMethod[] superMethods = myMethod.findSuperMethods();
+        for (PsiMethod method : superMethods) {
+          final String action = method.hasModifierProperty(PsiModifier.ABSTRACT) ? "implements" : "overrides";
+          final String message = "Inlined method " + action + " method from " + method.getContainingClass().getQualifiedName();
+          conflicts.add(message);
+        }
+    }
+
     final ReferencedElementsCollector collector = new ReferencedElementsCollector();
     myMethod.accept(collector);
     final Map<PsiMember,Set<PsiMember>> containersToReferenced;
@@ -105,7 +116,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                                new UsageInfo[]{new UsageInfo(myReference)});
       fromForReference = ConflictsUtil.getDescription(ConflictsUtil.getContainer(myReference), true);
     }
-    ArrayList<String> conflicts = new ArrayList<String>();
+
     final Set<PsiMember> containers = containersToReferenced.keySet();
     for (PsiMember container : containers) {
       Set<PsiMember> referencedInaccessible = containersToReferenced.get(container);
@@ -137,7 +148,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
    *
    * @param referencedElements
    * @param usages
-   * @return
    */
   private static Map<PsiMember,Set<PsiMember>> getInaccessible(HashSet<PsiMember> referencedElements, UsageInfo[] usages) {
     Map<PsiMember,Set<PsiMember>> result = new HashMap<PsiMember, Set<PsiMember>>();
