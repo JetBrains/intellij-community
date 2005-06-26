@@ -18,7 +18,10 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate{
         }
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression) parent;
         final PsiBinaryExpression subexpression = getSubexpression(binaryExpression);
-
+        if(subexpression == null)
+        {
+            return false;
+        }
         if(binaryExpression.equals(subexpression) &&
                 !isPartOfConstantExpression(binaryExpression)){
             // handled by ConstantExpressonIntention
@@ -29,7 +32,14 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate{
             // handled by JoinConcatenatedStringLiteralsIntention
             return false;
         }
-        return PsiUtil.isConstantExpression(subexpression);
+        if(!PsiUtil.isConstantExpression(subexpression)){
+            return false;
+        }
+        final PsiManager manager = element.getManager();
+        final PsiConstantEvaluationHelper helper =
+                manager.getConstantEvaluationHelper();
+        final Object value = helper.computeConstantExpression(subexpression);
+        return value != null;
     }
 
     private static boolean isPartOfConstantExpression(PsiBinaryExpression binaryExpression){
@@ -63,10 +73,14 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate{
         }
         final PsiBinaryExpression lhsBinaryExpression = (PsiBinaryExpression) lhs;
         final PsiExpression leftSide = lhsBinaryExpression.getROperand();
+        if(leftSide == null)
+        {
+           return null;
+        }
         try{
             lhs.replace(leftSide);
-        } catch(IncorrectOperationException e){
-            throw new RuntimeException(e);
+        } catch(IncorrectOperationException ignore){
+            return null;
         }
         return binaryExpression;
     }

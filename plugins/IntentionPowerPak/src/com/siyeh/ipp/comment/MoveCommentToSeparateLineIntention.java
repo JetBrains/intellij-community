@@ -30,9 +30,8 @@ public class MoveCommentToSeparateLineIntention extends Intention{
         final PsiWhiteSpace whiteSpace;
         while(true){
             elementToCheck = TreeUtil.getPrevLeaf(elementToCheck);
-            if(elementToCheck == null)
-            {
-                return;   
+            if(elementToCheck == null){
+                return;
             }
             if(isLineBreakWhiteSpace(elementToCheck)){
                 whiteSpace = (PsiWhiteSpace) elementToCheck;
@@ -41,13 +40,14 @@ public class MoveCommentToSeparateLineIntention extends Intention{
         }
         final PsiElement copyWhiteSpace = whiteSpace.copy();
         final PsiElement parent = whiteSpace.getParent();
-        assert parent!=null;
+        assert parent != null;
         final PsiManager manager = selectedComment.getManager();
         final PsiElementFactory factory = manager.getElementFactory();
         final String commentText = selectedComment.getText();
         final PsiComment newComment =
                 factory.createCommentFromText(commentText, parent);
-        final PsiElement insertedComment = parent.addBefore(newComment, whiteSpace);
+        final PsiElement insertedComment = parent
+                .addBefore(newComment, whiteSpace);
         parent.addBefore(copyWhiteSpace, insertedComment);
 
         selectedComment.delete();
@@ -55,10 +55,8 @@ public class MoveCommentToSeparateLineIntention extends Intention{
         codeStyleManager.reformat(insertedComment);
     }
 
-
     private static boolean isLineBreakWhiteSpace(PsiElement element){
-        if(!(element instanceof PsiWhiteSpace))
-        {
+        if(!(element instanceof PsiWhiteSpace)){
             return false;
         }
         final String text = element.getText();
@@ -66,6 +64,6 @@ public class MoveCommentToSeparateLineIntention extends Intention{
     }
 
     private static boolean containsLineBreak(String text){
-        return text.indexOf((int) '\n')>=0 || text.indexOf((int) '\r') >= 0;
+        return text.indexOf((int) '\n') >= 0 || text.indexOf((int) '\r') >= 0;
     }
 }
