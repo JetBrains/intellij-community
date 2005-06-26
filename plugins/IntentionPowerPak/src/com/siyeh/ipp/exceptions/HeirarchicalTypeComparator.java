@@ -14,6 +14,6 @@ class HeirarchicalTypeComparator implements Comparator{
         if(type2.isAssignableFrom(type1)){
             return -1;
         }
-        return 0;
+        return type1.getCanonicalText().compareTo(type2.getCanonicalText());
     }
 }

@@ -275,6 +275,9 @@ class ExceptionUtils{
         } else if(exp instanceof PsiBinaryExpression){
             calculateExceptionsThrownForBinaryExpression((PsiBinaryExpression) exp,
                                                          exceptionTypes);
+        }  else if(exp instanceof PsiAssignmentExpression){
+            calculateExceptionsThrownForAssignmentExpression((PsiAssignmentExpression) exp,
+                                                         exceptionTypes);
         } else if(exp instanceof PsiConditionalExpression){
             calculateExceptionsThrownForConditionalExcpression((PsiConditionalExpression) exp,
                                                                exceptionTypes);
@@ -373,6 +376,13 @@ class ExceptionUtils{
         final PsiExpression lOperand = binaryExp.getLOperand();
         calculateExceptionsThrown(lOperand, exceptionTypes);
         final PsiExpression rhs = binaryExp.getROperand();
+        calculateExceptionsThrown(rhs, exceptionTypes);
+    }
+    private static void calculateExceptionsThrownForAssignmentExpression(PsiAssignmentExpression assignment,
+                                                                     Set<PsiType> exceptionTypes){
+        final PsiExpression lOperand = assignment.getLExpression();
+        calculateExceptionsThrown(lOperand, exceptionTypes);
+        final PsiExpression rhs = assignment.getRExpression();
         calculateExceptionsThrown(rhs, exceptionTypes);
     }
 
