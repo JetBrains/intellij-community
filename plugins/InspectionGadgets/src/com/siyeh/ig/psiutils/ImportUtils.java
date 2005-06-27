@@ -2,19 +2,19 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 
-public class ImportUtils {
-    private ImportUtils() {
+public class ImportUtils{
+    private ImportUtils(){
         super();
     }
 
-    public static boolean nameCanBeImported(String fqName, PsiJavaFile file) {
-        if (hasExactImportMatch(fqName, file)) {
+    public static boolean nameCanBeImported(String fqName, PsiJavaFile file){
+        if(hasExactImportMatch(fqName, file)){
             return true;
         }
-        if (hasExactImportConflict(fqName, file)) {
+        if(hasExactImportConflict(fqName, file)){
             return false;
         }
-        if (hasOnDemandImportConflict(fqName, file)) {
+        if(hasOnDemandImportConflict(fqName, file)){
             return false;
         }
         if(containsConflictingClassReference(fqName, file)){
@@ -23,14 +23,28 @@ public class ImportUtils {
         return !containsConflictingClassName(fqName, file);
     }
 
-    private static boolean containsConflictingClassName(String name,
-                                                     PsiJavaFile file){
-         return false;//TODO:
+    private static boolean containsConflictingClassName(String fqName,
+                                                        PsiJavaFile file){
+
+        final int lastDotIndex = fqName.lastIndexOf((int) '.');
+        final String shortName = fqName.substring(lastDotIndex + 1);
+        final PsiClass[] classes = file.getClasses();
+        for(PsiClass aClass : classes){
+            if(shortName.equals(aClass.getName())){
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    private static boolean hasExactImportMatch(String fqName, PsiJavaFile file) {
+    private static boolean hasExactImportMatch(String fqName, PsiJavaFile file){
         final PsiImportList imports = file.getImportList();
-        final PsiImportStatement[] importStatements = imports.getImportStatements();
+        if(imports == null){
+            return false;
+        }
+        final PsiImportStatement[] importStatements = imports
+                .getImportStatements();
         for(final PsiImportStatement importStatement : importStatements){
             if(!importStatement.isOnDemand()){
                 final String importName = importStatement.getQualifiedName();
@@ -42,9 +56,14 @@ public class ImportUtils {
         return false;
     }
 
-    private static boolean hasExactImportConflict(String fqName, PsiJavaFile file) {
+    private static boolean hasExactImportConflict(String fqName,
+                                                  PsiJavaFile file){
         final PsiImportList imports = file.getImportList();
-        final PsiImportStatement[] importStatements = imports.getImportStatements();
+        if(imports == null){
+            return false;
+        }
+        final PsiImportStatement[] importStatements = imports
+                .getImportStatements();
         final int lastDotIndex = fqName.lastIndexOf((int) '.');
         final String shortName = fqName.substring(lastDotIndex + 1);
         final String dottedShortName = '.' + shortName;
@@ -62,15 +81,21 @@ public class ImportUtils {
         return false;
     }
 
-    public static boolean hasOnDemandImportConflict(String fqName, PsiJavaFile file) {
+    public static boolean hasOnDemandImportConflict(String fqName,
+                                                    PsiJavaFile file){
         final PsiImportList imports = file.getImportList();
-        final PsiImportStatement[] importStatements = imports.getImportStatements();
+        if(imports == null){
+            return false;
+        }
+        final PsiImportStatement[] importStatements = imports
+                .getImportStatements();
         final int lastDotIndex = fqName.lastIndexOf((int) '.');
         final String shortName = fqName.substring(lastDotIndex + 1);
         final String packageName = fqName.substring(0, lastDotIndex);
         for(final PsiImportStatement importStatement : importStatements){
             if(importStatement.isOnDemand()){
-                final PsiJavaCodeReferenceElement ref = importStatement.getImportReference();
+                final PsiJavaCodeReferenceElement ref = importStatement
+                        .getImportReference();
                 if(ref == null){
                     continue;
                 }
@@ -91,10 +116,25 @@ public class ImportUtils {
                 }
             }
         }
+        if(!"java.lang".equals(packageName)){
+            final PsiManager manager = file.getManager();
+            final PsiPackage javaLangPackage = manager.findPackage("java.lang");
+            if(javaLangPackage == null){
+                return false;
+            }
+            final PsiClass[] classes = javaLangPackage.getClasses();
+            for(final PsiClass aClass : classes){
+                final String className = aClass.getName();
+                if(shortName.equals(className)){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
-    private static boolean containsConflictingClassReference(String fqName, PsiJavaFile file) {
+    private static boolean containsConflictingClassReference(String fqName,
+                                                             PsiJavaFile file){
         final int lastDotIndex = fqName.lastIndexOf((int) '.');
         final String shortName = fqName.substring(lastDotIndex + 1);
         final PsiClass[] classes = file.getClasses();
@@ -105,54 +145,59 @@ public class ImportUtils {
                 }
             }
         }
-        final ClassReferenceVisitor visitor = new ClassReferenceVisitor(shortName, fqName);
+        final ClassReferenceVisitor visitor = new ClassReferenceVisitor(
+                shortName, fqName);
         file.accept(visitor);
         return visitor.isReferenceFound();
     }
 
-    public static boolean importStatementMatches(PsiImportStatement importStatement, String name) {
+    public static boolean importStatementMatches(
+            PsiImportStatement importStatement, String name){
         final String qualifiedName = importStatement.getQualifiedName();
 
-        if (importStatement.isOnDemand()) {
+        if(importStatement.isOnDemand()){
             final int lastDotIndex = name.lastIndexOf((int) '.');
             final String packageName = name.substring(0, lastDotIndex);
             return packageName.equals(qualifiedName);
-        } else {
+        } else{
             return name.equals(qualifiedName);
         }
     }
 
-    private static class ClassReferenceVisitor extends PsiRecursiveElementVisitor {
+    private static class ClassReferenceVisitor
+            extends PsiRecursiveElementVisitor{
         private final String m_name;
         private final String fullyQualifiedName;
         private boolean m_referenceFound = false;
 
-        private ClassReferenceVisitor(String className, String fullyQualifiedName) {
+        private ClassReferenceVisitor(String className,
+                                      String fullyQualifiedName){
             super();
             m_name = className;
             this.fullyQualifiedName = fullyQualifiedName;
         }
 
-
-        public void visitReferenceElement(PsiJavaCodeReferenceElement ref) {
+        public void visitReferenceElement(PsiJavaCodeReferenceElement ref){
             final String text = ref.getText();
-            if (text.indexOf((int) '.') >= 0) {
+            if(text.indexOf((int) '.') >= 0){
                 return;
             }
             final PsiElement element = ref.resolve();
 
-            if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
+            if(element instanceof PsiClass
+                    && !(element instanceof PsiTypeParameter)){
                 final PsiClass aClass = (PsiClass) element;
                 final String testClassName = aClass.getName();
                 final String testClassQualifiedName = aClass.getQualifiedName();
-                if (testClassQualifiedName != null && testClassName != null && !testClassQualifiedName.equals(fullyQualifiedName) &&
-                        testClassName.equals(m_name)) {
+                if(testClassQualifiedName != null && testClassName != null
+                        && !testClassQualifiedName.equals(fullyQualifiedName) &&
+                        testClassName.equals(m_name)){
                     m_referenceFound = true;
                 }
             }
         }
 
-        private boolean isReferenceFound() {
+        private boolean isReferenceFound(){
             return m_referenceFound;
         }
     }
