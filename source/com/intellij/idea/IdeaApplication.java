@@ -4,6 +4,7 @@ import com.incors.plaf.alloy.*;
 import com.intellij.ExtensionPoints;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -21,6 +22,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.ui.Splash;
 import org.jdom.Element;
 
@@ -129,6 +131,24 @@ public class IdeaApplication {
           }
         }
       }, ModalityState.NON_MMODAL);
+
+      app.invokeLater(new Runnable() {
+        public void run() {
+          if (UpdateChecker.isMyVeryFirstOpening() &&
+              UpdateChecker.checkNeeded()) {
+            try {
+              UpdateChecker.setMyVeryFirstOpening(false);
+              UpdateChecker.checkForUpdates();
+              if (UpdateChecker.NEW_VERION != null) {
+                UpdateChecker.showUpdateInfoDialog(true);
+              }
+            }
+            catch (ConnectionException e) {
+              // It's not a problem on automatic check
+            }
+          }
+        }
+      });
     }
   }
 

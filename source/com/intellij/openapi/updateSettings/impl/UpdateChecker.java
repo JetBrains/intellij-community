@@ -8,12 +8,9 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.actions.CheckForUpdateAction;
 import com.intellij.ide.license.LicenseManager;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -46,7 +43,7 @@ public final class UpdateChecker implements ApplicationComponent, ProjectManager
 
   private static long CHECK_INTERVAL = 0;
   private static boolean alreadyChecked = false;
-  private static boolean myVeryFirstProjectOpening = true;
+  private static boolean myVeryFirstOpening = true;
 
   public static NewVersion NEW_VERION = null;
 
@@ -56,6 +53,14 @@ public final class UpdateChecker implements ApplicationComponent, ProjectManager
 
     public String getComponentName() {
     return "UpdateChecker";
+  }
+
+  public static boolean isMyVeryFirstOpening() {
+    return myVeryFirstOpening;
+  }
+
+  public static void setMyVeryFirstOpening(final boolean myVeryFirstProjectOpening) {
+    UpdateChecker.myVeryFirstOpening = myVeryFirstProjectOpening;
   }
 
   public void initComponent() {
@@ -100,6 +105,8 @@ public final class UpdateChecker implements ApplicationComponent, ProjectManager
       LOG.debug("enter: checkForUpdates()");
     }
 
+    setAlreadyChecked(true);
+
     final Document document;
     try {
       document = loadVersionInfo();
@@ -112,7 +119,7 @@ public final class UpdateChecker implements ApplicationComponent, ProjectManager
     final String availBuild = document.getRootElement().getChild("build").getTextTrim();
     final String availVersion = document.getRootElement().getChild("version").getTextTrim();
     String ourBuild = ApplicationInfo.getInstance().getBuildNumber().trim();
-    if ("__BUILD_NUMBER__".equals(ourBuild)) ourBuild = Integer.toString(Integer.MIN_VALUE);
+    if ("__BUILD_NUMBER__".equals(ourBuild)) ourBuild = Integer.toString(Integer.MAX_VALUE);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("build available:'" + availBuild + "' ourBuild='" + ourBuild + "' ");
@@ -178,16 +185,6 @@ public final class UpdateChecker implements ApplicationComponent, ProjectManager
   }
 
   public void projectOpened(Project project) {
-    if (!myVeryFirstProjectOpening || ApplicationManagerEx.getApplicationEx().isInternal() ||
-        !GeneralSettings.getInstance().isReopenLastProject()
-      ) {
-      return;
-    }
-    myVeryFirstProjectOpening = false;
-
-    if (checkNeeded()) {
-      CheckForUpdateAction.actionPerformed(true);
-    }
   }
 
   public boolean canCloseProject(Project project) {
