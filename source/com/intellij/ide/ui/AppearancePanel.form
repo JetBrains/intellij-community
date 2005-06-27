@@ -467,7 +467,7 @@
           <component id="44b00" class="javax.swing.JCheckBox" binding="myAlwaysShowWindowButtonsCheckBox">
             <constraints>
               <xy x="48" y="79" width="214" height="22"/>
-              <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="0"/>
+              <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="9" fill="0"/>
             </constraints>
             <properties>
               <margin top="2" left="2" bottom="2" right="2"/>
