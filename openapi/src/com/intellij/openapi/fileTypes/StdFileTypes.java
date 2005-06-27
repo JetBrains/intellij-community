@@ -41,6 +41,7 @@ public class StdFileTypes {
   public static LanguageFileType HTML;
   public static LanguageFileType XHTML;
   public static LanguageFileType ASPECT;
+  public static LanguageFileType PROPERTIES;
   public static FileType PLAIN_TEXT;
   public static FileType ARCHIVE;
   public static FileType UNKNOWN;

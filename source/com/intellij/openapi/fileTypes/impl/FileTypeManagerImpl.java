@@ -22,6 +22,7 @@ import com.intellij.util.PatternUtil;
 import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.HashSet;
 import com.intellij.lang.Language;
+import com.intellij.lang.properties.PropertiesFileType;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Document;
@@ -148,8 +149,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   public String getIgnoredFilesList() {
     StringBuffer sb = new StringBuffer();
-    for (Iterator<String> iterator = myIgnoredFileMasksSet.iterator(); iterator.hasNext();) {
-      String ignoreMask = iterator.next();
+    for (String ignoreMask : myIgnoredFileMasksSet) {
       sb.append(ignoreMask);
       sb.append(';');
     }
@@ -199,8 +199,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (myNotIgnoredFiles.contains(name)) return false;
     if (myIgnoredFiles.contains(name)) return true;
 
-    for (Iterator<Pattern> iterator = myIgnorePatterns.iterator(); iterator.hasNext();) {
-      Pattern pattern = iterator.next();
+    for (Pattern pattern : myIgnorePatterns) {
       if (pattern.matcher(name).matches()) {
         myIgnoredFiles.add(name);
         return true;
@@ -216,10 +215,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return getAssociatedExtensions(extMap, type);
   }
 
-  private String[] getAssociatedExtensions(Map<String, FileType> extMap, FileType type) {
+  private static String[] getAssociatedExtensions(Map<String, FileType> extMap, FileType type) {
     List<String> exts = new ArrayList<String>();
-    for (Iterator<String> iterator = extMap.keySet().iterator(); iterator.hasNext();) {
-      String ext = iterator.next();
+    for (String ext : extMap.keySet()) {
       if (extMap.get(ext) == type) {
         exts.add(ext);
       }
@@ -234,8 +232,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private void removeAllAssociations(FileType type) {
     Set<String> exts = myExtToFileTypeMap.keySet();
     String[] extsStrings = exts.toArray(new String[exts.size()]);
-    for (int i = 0; i < extsStrings.length; i++) {
-      String s = extsStrings[i];
+    for (String s : extsStrings) {
       if (myExtToFileTypeMap.get(s) == type) myExtToFileTypeMap.remove(s);
     }
   }
@@ -315,12 +312,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   public void readExternal(Element parentNode) throws InvalidDataException {
     int savedVersion = getVersion(parentNode);
-    for (Iterator iterator = parentNode.getChildren().iterator(); iterator.hasNext();) {
-      final Element e = (Element)iterator.next();
+    for (final Object o : parentNode.getChildren()) {
+      final Element e = (Element)o;
       if ("filetypes".equals(e.getName())) {
         List children = e.getChildren("filetype");
-        for (Iterator i = children.iterator(); i.hasNext();) {
-          Element element = (Element)i.next();
+        for (final Object aChildren : children) {
+          Element element = (Element)aChildren;
           loadFileType(element, true);
         }
       }
@@ -329,40 +326,40 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
       else if ("extensionMap".equals(e.getName())) {
         List mappings = e.getChildren("mapping");
-        
+
         for (int i = 0; i < mappings.size(); i++) {
           Element mapping = (Element)mappings.get(i);
           String ext = mapping.getAttributeValue("ext");
           String name = mapping.getAttributeValue("type");
           FileType type = getFileTypeByName(name);
-          
+
           if (type != null) {
-            if (savedVersion < VERSION && 
-                ( type == StdFileTypes.XML && 
-                  ( ext.equals("dtd") || ext.equals("xhtml") || ext.equals("jspx") || ext.equals("tagx"))
+            if (savedVersion < VERSION &&
+                (type == StdFileTypes.XML &&
+                 (ext.equals("dtd") || ext.equals("xhtml") || ext.equals("jspx") || ext.equals("tagx"))
                 ) ||
-                ext.equals("css")  
+                  ext.equals("css")
               ) {
               continue;
             }
             associateExtension(type, ext, false);
           }
         }
-        
+
         List removedMappings = e.getChildren("removed_mapping");
         for (int i = 0; i < removedMappings.size(); i++) {
           Element mapping = (Element)removedMappings.get(i);
           String ext = mapping.getAttributeValue("ext");
           String name = mapping.getAttributeValue("type");
           FileType type = getFileTypeByName(name);
-          
+
           if (type != null) {
             if (savedVersion < VERSION) {
-              if((type == StdFileTypes.DTD && ext.equals("dtd")) ||
-                (type == StdFileTypes.XHTML && ext.equals("xhtml")) ||
-                ext.equals("css") ||
-                (type == StdFileTypes.JSPX && (ext.equals("tagx") || ext.equals("jspx")))
-              ) {
+              if ((type == StdFileTypes.DTD && ext.equals("dtd")) ||
+                  (type == StdFileTypes.XHTML && ext.equals("xhtml")) ||
+                  ext.equals("css") ||
+                  (type == StdFileTypes.JSPX && (ext.equals("tagx") || ext.equals("jspx")))
+                ) {
                 continue;
               }
             }
@@ -380,7 +377,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
-  private int getVersion(final Element node) {
+  private static int getVersion(final Element node) {
     final String verString = node.getAttributeValue("version");
     if (verString == null) return 0;
     try {
@@ -402,14 +399,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
     Map<String, FileType> defaultMappings = new HashMap<String, FileType>(myInitialAssociations);
 
-    for (Iterator<String> iterator = myExtToFileTypeMap.keySet().iterator(); iterator.hasNext();) {
-      String ext = iterator.next();
+    for (String ext : myExtToFileTypeMap.keySet()) {
       FileType type = myExtToFileTypeMap.get(ext);
       if (type != null) {
         if (defaultMappings.get(ext) == type) {
           defaultMappings.remove(ext);
         }
-        else if (!shouldNotSave(type)){
+        else if (!shouldNotSave(type)) {
           Element mapping = new Element("mapping");
           mapping.setAttribute("ext", ext);
           mapping.setAttribute("type", type.getName());
@@ -418,8 +414,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
     }
 
-    for (Iterator<String> i = defaultMappings.keySet().iterator(); i.hasNext();) {
-      String ext = i.next();
+    for (String ext : defaultMappings.keySet()) {
       FileType type = defaultMappings.get(ext);
       Element mapping = new Element("removed_mapping");
       mapping.setAttribute("ext", ext);
@@ -468,6 +463,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     registerFileTypeWithoutNotification(StdFileTypes.IDEA_PROJECT = new ProjectFileType(), new String[]{"ipr"});
     registerFileTypeWithoutNotification(StdFileTypes.IDEA_MODULE = new ModuleFileType(), new String[]{"iml"});
     registerFileTypeWithoutNotification(StdFileTypes.UNKNOWN = new UnknownFileType(), null);
+    registerFileTypeWithoutNotification(StdFileTypes.PROPERTIES = PropertiesFileType.FILE_TYPE, new String[] {"properties"});
   }
 
   private static String[] parse(String semicolonDelimited) {
@@ -486,9 +482,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private void registerFileTypeWithoutNotification(FileType fileType, String[] extensions) {
     myFileTypes.add(fileType);
     if (extensions != null) {
-      for (int i = 0; i < extensions.length; i++) {
-        myExtToFileTypeMap.put(extensions[i], fileType);
-        myInitialAssociations.put(extensions[i], fileType);
+      for (String extension : extensions) {
+        myExtToFileTypeMap.put(extension, fileType);
+        myInitialAssociations.put(extension, fileType);
       }
     }
     if (fileType instanceof FakeFileType) {
@@ -496,7 +492,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
-  private File[] getFileTypeFiles() {
+  private static File[] getFileTypeFiles() {
     File fileTypesDir = getFileTypesDir(true);
     if (fileTypesDir == null) return new File[0];
 
@@ -511,8 +507,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
 //    return files;
     ArrayList<File> fileList = new ArrayList<File>();
-    for (int i = 0; i < files.length; i++) {
-      File file = files[i];
+    for (File file : files) {
       if (!file.isDirectory()) {
         fileList.add(file);
       }
@@ -522,9 +517,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private void loadAllFileTypes() {
     File[] files = getFileTypeFiles();
-    for (int i = 0; i < files.length; i++) {
+    for (File file : files) {
       try {
-        loadFileType(files[i]);
+        loadFileType(file);
       }
       catch (JDOMException e) {
       }
@@ -576,8 +571,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (type != null) {
       if (extensionsStr != null) {
         removeAllAssociations(type);
-        for (int i = 0; i < exts.length; i++) {
-          associateExtension(type, exts[i], false);
+        for (String ext : exts) {
+          associateExtension(type, ext, false);
         }
       }
 
@@ -631,15 +626,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return extensionsStr;
   }
 
-  private SyntaxTable readSyntaxTable(Element root) {
+  private static SyntaxTable readSyntaxTable(Element root) {
     SyntaxTable table = new SyntaxTable();
 
-    for (Iterator iterator = root.getChildren().iterator(); iterator.hasNext();) {
-      Element element = (Element)iterator.next();
+    for (final Object o : root.getChildren()) {
+      Element element = (Element)o;
 
       if ("options".equals(element.getName())) {
-        for (Iterator i = element.getChildren("option").iterator(); i.hasNext();) {
-          Element e = (Element)i.next();
+        for (final Object o1 : element.getChildren("option")) {
+          Element e = (Element)o1;
           String name = e.getAttributeValue("name");
           String value = e.getAttributeValue("value");
           if ("LINE_COMMENT".equals(name)) {
@@ -656,11 +651,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
           }
           else if ("NUM_POSTFIXES".equals(name)) {
             table.setNumPostfixChars(value);
-          } else if ("HAS_BRACES".equals(name)) {
+          }
+          else if ("HAS_BRACES".equals(name)) {
             table.setHasBraces(Boolean.valueOf(value).booleanValue());
-          } else if ("HAS_BRACKETS".equals(name)) {
+          }
+          else if ("HAS_BRACKETS".equals(name)) {
             table.setHasBrackets(Boolean.valueOf(value).booleanValue());
-          } else if ("HAS_PARENS".equals(name)) {
+          }
+          else if ("HAS_PARENS".equals(name)) {
             table.setHasParens(Boolean.valueOf(value).booleanValue());
           }
         }
@@ -668,26 +666,26 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       else if ("keywords".equals(element.getName())) {
         boolean ignoreCase = Boolean.valueOf(element.getAttributeValue("ignore_case")).booleanValue();
         table.setIgnoreCase(ignoreCase);
-        for (Iterator i = element.getChildren("keyword").iterator(); i.hasNext();) {
-          Element e = (Element)i.next();
+        for (final Object o1 : element.getChildren("keyword")) {
+          Element e = (Element)o1;
           table.addKeyword1(e.getAttributeValue("name"));
         }
       }
       else if ("keywords2".equals(element.getName())) {
-        for (Iterator i = element.getChildren("keyword").iterator(); i.hasNext();) {
-          Element e = (Element)i.next();
+        for (final Object o1 : element.getChildren("keyword")) {
+          Element e = (Element)o1;
           table.addKeyword2(e.getAttributeValue("name"));
         }
       }
       else if ("keywords3".equals(element.getName())) {
-        for (Iterator i = element.getChildren("keyword").iterator(); i.hasNext();) {
-          Element e = (Element)i.next();
+        for (final Object o1 : element.getChildren("keyword")) {
+          Element e = (Element)o1;
           table.addKeyword3(e.getAttributeValue("name"));
         }
       }
       else if ("keywords4".equals(element.getName())) {
-        for (Iterator i = element.getChildren("keyword").iterator(); i.hasNext();) {
-          Element e = (Element)i.next();
+        for (final Object o1 : element.getChildren("keyword")) {
+          Element e = (Element)o1;
           table.addKeyword4(e.getAttributeValue("name"));
         }
       }
@@ -696,7 +694,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return table;
   }
 
-  private File getFileTypesDir(boolean create) {
+  private static File getFileTypesDir(boolean create) {
     String directoryPath = PathManager.getConfigPath() + File.separator + "filetypes";
     File directory = new File(directoryPath);
     if (!directory.exists()) {
@@ -709,11 +707,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return directory;
   }
 
-  private boolean shouldNotSave(FileType fileType) {
+  private static boolean shouldNotSave(FileType fileType) {
     return fileType == StdFileTypes.UNKNOWN || fileType.isReadOnly();
   }
 
-  private void writeHeader(Element root, FileType fileType) {
+  private static void writeHeader(Element root, FileType fileType) {
     root.setAttribute("binary", String.valueOf(fileType.isBinary()));
     final String defaultExtension = fileType.getDefaultExtension();
     if (defaultExtension != null) {
@@ -724,7 +722,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     root.setAttribute("name", fileType.getName());
   }
 
-  private void writeSyntaxTableData(Element root, FileType fileType) {
+  private static void writeSyntaxTableData(Element root, FileType fileType) {
     if (!(fileType instanceof CustomFileType)) return;
 
     SyntaxTable table = ((CustomFileType)fileType).getSyntaxTable();
@@ -794,11 +792,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     root.addContent(highlightingElement);
   }
 
-  private void writeKeywords(Set keywords, Element keywordsElement) {
-    Iterator iterator = keywords.iterator();
-    while (iterator.hasNext()) {
+  private static void writeKeywords(Set keywords, Element keywordsElement) {
+    for (final Object keyword : keywords) {
       Element e = new Element("keyword");
-      e.setAttribute("name", (String)iterator.next());
+      e.setAttribute("name", (String)keyword);
       keywordsElement.addContent(e);
     }
   }
@@ -819,8 +816,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     fireBeforeFileTypesChanged();
     myFileTypes = new SetWithArray(fileTypes);
     myExtToFileTypeMap = new HashMap<String, FileType>(extension2TypeMap.size());
-    for (Iterator<String> it = extension2TypeMap.keySet().iterator(); it.hasNext();) {
-      final String ext = it.next();
+    for (final String ext : extension2TypeMap.keySet()) {
       associateExtension(extension2TypeMap.get(ext), ext, false);
     }
     fireFileTypesChanged();

@@ -111,7 +111,6 @@ public class FindInProjectUtil {
 
   private static void addFilesUnderDirectory(PsiDirectory directory, List<PsiFile> fileList, boolean isRecursive, Pattern fileMaskRegExp) {
     final PsiElement[] children = directory.getChildren();
-    if (children == null) return;
 
     for (PsiElement child : children) {
       if (child instanceof PsiFile &&
@@ -167,12 +166,11 @@ public class FindInProjectUtil {
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     try {
       int i =0;
-      for (Iterator<PsiFile> iterator = psiFiles.iterator(); iterator.hasNext();i++) {
-        final PsiFile psiFile = iterator.next();
+      for (final PsiFile psiFile : psiFiles) {
         ProgressManager.getInstance().checkCanceled();
         final VirtualFile virtualFile = psiFile.getVirtualFile();
+        final int index = i++;
         if (virtualFile == null) continue;
-        final int index = i;
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {

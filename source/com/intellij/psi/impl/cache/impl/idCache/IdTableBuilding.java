@@ -4,6 +4,7 @@ import com.intellij.aspects.lexer.AspectjLexer;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.Language;
+import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lang.cacheBuilder.WordOccurence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
@@ -89,6 +90,20 @@ public class IdTableBuilding {
     }
   }
 
+  private static class PropertiesIdCacheBuilder implements IdCacheBuilder {
+    public void build(char[] chars,
+                      int length,
+                      TIntIntHashMap wordsTable,
+                      TodoPattern[] todoPatterns,
+                      int[] todoCounts,
+                      final PsiManager manager) {
+      Lexer lexer = new PropertiesFilterLexer(new PropertiesLexer(), wordsTable, todoCounts);
+      lexer = new FilterLexer(lexer, new FilterLexer.SetFilter(ElementType.WHITE_SPACE_OR_COMMENT_BIT_SET));
+      lexer.start(chars);
+      while (lexer.getTokenType() != null) lexer.advance();
+    }
+  }
+
   static class JavaIdCacheBuilder implements IdCacheBuilder {
     protected Lexer createLexer() {
       return new JavaLexer(LanguageLevel.JDK_1_3);
@@ -107,6 +122,7 @@ public class IdTableBuilding {
       while (lexer.getTokenType() != null) lexer.advance();
     }
   }
+
 
   static class AspectJIdCacheBuilder extends JavaIdCacheBuilder {
     protected Lexer createLexer() {
@@ -209,6 +225,7 @@ public class IdTableBuilding {
     registerCacheBuilder(StdFileTypes.JSPX,new JspxIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.PLAIN_TEXT,new TextIdCacheBuilder());
     registerCacheBuilder(StdFileTypes.GUI_DESIGNER_FORM,new FormFileIdCacheBuilder());
+    registerCacheBuilder(StdFileTypes.PROPERTIES, new PropertiesIdCacheBuilder());
   }
 
   public static IdCacheBuilder getCacheBuilder(FileType fileType) {
@@ -220,11 +237,9 @@ public class IdTableBuilding {
       final Language lang = ((LanguageFileType)fileType).getLanguage();
       if (lang != null) {
         final FindUsagesProvider findUsagesProvider = lang.getFindUsagesProvider();
-        if (findUsagesProvider != null) {
-          final WordsScanner scanner = findUsagesProvider.getWordsScanner();
-          if (scanner != null) {
-            return new WordsScannerIdCacheBuilderAdapter(scanner);
-          }
+        final WordsScanner scanner = findUsagesProvider.getWordsScanner();
+        if (scanner != null) {
+          return new WordsScannerIdCacheBuilderAdapter(scanner);
         }
       }
     }
