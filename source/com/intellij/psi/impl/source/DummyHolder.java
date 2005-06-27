@@ -83,7 +83,13 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   }
 
   public boolean importClass(PsiClass aClass) {
-    LOG.assertTrue(myContext == null);
+    if (myContext != null) {
+      final PsiClass resolved = getManager().getResolveHelper().resolveReferencedClass(aClass.getName(), myContext);
+      if (resolved != null) {
+        return resolved.equals(aClass);
+      }
+    }
+    
     String className = aClass.getName();
     if (!myPseudoImports.containsKey(className)) {
       myPseudoImports.put(className, aClass);
