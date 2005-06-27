@@ -187,7 +187,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       }
 
       public void fileChanged(VirtualFile propertiesFile, final VirtualFilePropertyEvent event) {
-        if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+        if (event != null && VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
           recreateEditorsPanel();
         }
         else {
