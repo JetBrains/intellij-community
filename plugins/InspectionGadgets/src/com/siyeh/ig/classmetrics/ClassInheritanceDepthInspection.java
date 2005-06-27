@@ -12,42 +12,43 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ClassInheritanceDepthInspection
-        extends ClassMetricInspection {
+        extends ClassMetricInspection{
     public String getID(){
         return "ClassTooDeepInInheritanceTree";
     }
+
     private static final int CLASS_INHERITANCE_LIMIT = 2;
 
-    public String getDisplayName() {
+    public String getDisplayName(){
         return "Class too deep in inheritance tree";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.CLASSMETRICS_GROUP_NAME;
     }
 
-    protected int getDefaultLimit() {
+    protected int getDefaultLimit(){
         return CLASS_INHERITANCE_LIMIT;
     }
 
-    protected String getConfigurationLabel() {
+    protected String getConfigurationLabel(){
         return "Inheritance depth limit:";
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         final PsiClass aClass = (PsiClass) location.getParent();
         final int count = getInheritanceDepth(aClass, new HashSet<PsiClass>());
-        return "#ref is too deep in inheritance tree (inheritance depth = " + count + ") #loc";
+        return "#ref is too deep in inheritance tree (inheritance depth = "
+                + count + ") #loc";
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+    public BaseInspectionVisitor buildVisitor(){
         return new ClassNestingLevel();
     }
 
-    private class ClassNestingLevel extends BaseInspectionVisitor {
-
-        public void visitClass(@NotNull PsiClass aClass) {
-            if (aClass.isEnum()) {
+    private class ClassNestingLevel extends BaseInspectionVisitor{
+        public void visitClass(@NotNull PsiClass aClass){
+            if(aClass.isEnum()){
                 return;
             }
             if(aClass instanceof PsiTypeParameter ||
@@ -56,35 +57,24 @@ public class ClassInheritanceDepthInspection
             }
             // note: no call to super
 
-            final int inheritanceDepth = getInheritanceDepth(aClass, new HashSet<PsiClass>());
-            if (inheritanceDepth <= getLimit()) {
+            final int inheritanceDepth = getInheritanceDepth(aClass,
+                                                             new HashSet<PsiClass>());
+            if(inheritanceDepth <= getLimit()){
                 return;
             }
             registerClassError(aClass);
         }
     }
 
-    private int getInheritanceDepth(PsiClass aClass, Set<PsiClass> visited) {
-        if (visited.contains(aClass)) {
+    private int getInheritanceDepth(PsiClass aClass, Set<PsiClass> visited){
+        if(visited.contains(aClass)){
             return 0;
         }
         visited.add(aClass);
-        final PsiClass[] supers = aClass.getSupers();
-        if (supers == null || supers.length == 0) {
+        final PsiClass superClass = aClass.getSuperClass();
+        if(superClass == null){
             return 0;
         }
-        int maxAncestorDepth = 0;
-        for(PsiClass aSuper : supers){
-            if(aSuper == null)
-            {
-                continue;
-            }
-           final int ancestorDepth = getInheritanceDepth(aSuper, visited);
-            if(ancestorDepth > maxAncestorDepth){
-                maxAncestorDepth = ancestorDepth;
-            }
-        }
-        return maxAncestorDepth + 1;
+        return getInheritanceDepth(superClass, visited) + 1;
     }
-
 }
