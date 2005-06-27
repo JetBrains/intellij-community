@@ -196,9 +196,11 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   public void unloadContent() {
     LOG.assertTrue(getTreeElement() != null);
-
+    clearCaches();
     setTreeElement(null);
   }
+
+  public void clearCaches() {}
 
   public String getText() {
     return new String(textToCharArray());
