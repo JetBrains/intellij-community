@@ -151,17 +151,26 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         String localName = styleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);
         localName = RefactoringUtil.suggestUniqueVariableName(localName, anchorBlock, myField);
         try {
-          final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), null);
+
           final PsiElement anchor = getAnchorElement(anchorBlock, refs);
-          final PsiElement newVariable = anchorBlock.addAfter(decl, anchor);
-          if (newCaretPosition == null) {
-            newCaretPosition = newVariable;
-          }
-          final PsiReferenceExpression refExpr = (PsiReferenceExpression)elementFactory.createExpressionFromText(localName, null);
-          for (PsiReference ref : refs) {
-            if (ref instanceof PsiReferenceExpression) {
-              ((PsiReferenceExpression)ref).replace(refExpr);
+          final PsiElement newDeclaration;
+          if (anchor instanceof PsiExpressionStatement &&
+              ((PsiExpressionStatement)anchor).getExpression() instanceof PsiAssignmentExpression) {
+            final PsiAssignmentExpression expression = (PsiAssignmentExpression)((PsiExpressionStatement)anchor).getExpression();
+            if (expression.getLExpression() instanceof PsiReferenceExpression &&
+                ((PsiReferenceExpression)expression.getLExpression()).isReferenceTo(myField)) {
+              final PsiExpression initializer = expression.getRExpression();
+              final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), initializer);
+              newDeclaration = anchor.replace(decl);
             }
+            else {
+              newDeclaration = addDeclarationWithoutInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refs);
+            }
+          } else {
+            newDeclaration = addDeclarationWithoutInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refs);
+          }
+          if (newCaretPosition == null) {
+            newCaretPosition = newDeclaration;
           }
         }
         catch (IncorrectOperationException e) {
@@ -191,6 +200,24 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
     }
 
+    private PsiElement addDeclarationWithoutInitializerAndRetargetReferences(final PsiElementFactory elementFactory,
+                                                                             final String localName,
+                                                                             final PsiCodeBlock anchorBlock, final PsiElement anchor,
+                                                                             final PsiReference[] refs)
+      throws IncorrectOperationException {
+      final PsiElement newDeclaration;
+      final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), null);
+      newDeclaration = anchorBlock.addBefore(decl, anchor);
+
+      final PsiReferenceExpression refExpr = (PsiReferenceExpression)elementFactory.createExpressionFromText(localName, null);
+      for (PsiReference ref : refs) {
+        if (ref instanceof PsiReferenceExpression) {
+          ((PsiReferenceExpression)ref).replace(refExpr);
+        }
+      }
+      return newDeclaration;
+    }
+
     public String getFamilyName() {
       return getName();
     }
@@ -208,7 +235,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         firstElement = firstElement.getParent();
       }
 
-      return PsiTreeUtil.skipSiblingsBackward(firstElement, new Class[]{PsiWhiteSpace.class, PsiComment.class});
+      return firstElement;
     }
 
     private static PsiCodeBlock findAnchorBlock(final PsiReference[] refs) {
