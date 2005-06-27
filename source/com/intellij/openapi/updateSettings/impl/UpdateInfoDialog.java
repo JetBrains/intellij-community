@@ -1,10 +1,10 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.license.LicenseManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +21,8 @@ import java.awt.event.MouseEvent;
 
 class UpdateInfoDialog extends DialogWrapper {
 
-  private static final String DOWNLOAD_URL = "http://www.jetbrains.com/idea/download/";
+  private static final String RELEASE_URL = "http://www.jetbrains.com/idea/download/";
+  private static final String EAP_URL = "http://www.intellij.net/eap/products/idea/download.jsp";
   private static UpdateInfoPanel myUpdateInfoPanel;
 
   protected UpdateInfoDialog(final boolean canBeParent) {
@@ -44,7 +45,14 @@ class UpdateInfoDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    BrowserUtil.launchBrowser(DOWNLOAD_URL);
+    final String downloadUrl;
+    if (LicenseManager.getInstance().isEap()) {
+      downloadUrl = EAP_URL;
+    }
+    else {
+      downloadUrl = RELEASE_URL;
+    }
+    BrowserUtil.launchBrowser(downloadUrl);
   }
 
   public boolean shouldCloseOnCross() {
@@ -60,7 +68,7 @@ class UpdateInfoDialog extends DialogWrapper {
           UpdateSettingsConfigurable updatesSettings = UpdateSettingsConfigurable.getInstance();
           updatesSettings.setCheckNowEnabled(false);
           ShowSettingsUtil.getInstance().editConfigurable(myUpdateInfoPanel.myPanel, updatesSettings);
-          updatesSettings.setCheckNowEnabled(true);          
+          updatesSettings.setCheckNowEnabled(true);
         }
         public void mouseEntered(MouseEvent e) {
         }

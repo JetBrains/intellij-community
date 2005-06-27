@@ -76,8 +76,15 @@ public final class UpdateChecker implements ApplicationComponent, ProjectManager
 
   static {
     URL url = null;
+    String downloadUrl;
+    if (LicenseManager.getInstance().isEap()) {
+      downloadUrl = "http://www.intellij.net/eap/products/idea/redirect.jsp?filename=update.xml";
+    }
+    else {
+      downloadUrl = "http://www.jetbrains.com/updates/update.xml";
+    }
     try {
-      url = new URL("http://www.jetbrains.com/updates/update.xml");
+      url = new URL(downloadUrl);
     }
     catch (MalformedURLException e) {
       LOG.error(e);
@@ -142,7 +149,7 @@ public final class UpdateChecker implements ApplicationComponent, ProjectManager
   }
 
   public static boolean checkNeeded() {
-    if (!LicenseManager.getInstance().shouldCheckForUpdates() || alreadyChecked) {
+    if (alreadyChecked) {
         return false;
     }
     final UpdateSettingsConfigurable settings = UpdateSettingsConfigurable.getInstance();
