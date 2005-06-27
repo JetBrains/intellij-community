@@ -260,6 +260,18 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
         )
       ), getProviderByType(PROPERTY_FILE_KEY_PROVIDER)
     );
+    
+    registerXmlAttributeValueReferenceProvider(
+      new String[]{"altKey","titleKey","pageKey","srcKey"},
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new NamespaceFilter(XmlUtil.STRUTS_HTML_URI),
+            new ClassFilter(XmlTag.class)
+          ), 2
+        )
+      ), getProviderByType(PROPERTY_FILE_KEY_PROVIDER)
+    );
 
     registerXmlAttributeValueReferenceProvider(
       new String[]{"code"},
