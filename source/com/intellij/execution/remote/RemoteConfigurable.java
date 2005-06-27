@@ -4,15 +4,18 @@
  */
 package com.intellij.execution.remote;
 
+import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.DocumentAdapter;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.awt.*;
 import java.awt.event.*;
 
 public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
@@ -28,6 +31,8 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private JPanel myShmemPanel;
   private JPanel mySocketPanel;
   private RemoteConfigurationArguments myHelpArea;
+  private JPanel myLogsPanel;
+  private final LogConfigurationPanel myLogConfigurations;
   private String myHostName = "";
 
   public RemoteConfigurable() {
@@ -91,9 +96,12 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     };
     myAddressField.addFocusListener(fieldFocusListener);
     myPortField.addFocusListener(fieldFocusListener);
+    myLogConfigurations = new LogConfigurationPanel();
+    myLogsPanel.setLayout(new BorderLayout());
+    myLogsPanel.add(myLogConfigurations.getLoggerComponent(), BorderLayout.CENTER);
   }
 
-  public void applyEditorTo(final RemoteConfiguration configuration) {
+  public void applyEditorTo(final RemoteConfiguration configuration) throws ConfigurationException {
     LOG.assertTrue(configuration != null);
     final RemoteConfiguration remoteConfiguration = configuration;
     remoteConfiguration.HOST = (myHostField.isEditable() ? myHostField.getText() : myHostName).trim();
@@ -110,6 +118,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     }
     remoteConfiguration.USE_SOCKET_TRANSPORT = myRbSocket.isSelected();
     remoteConfiguration.SERVER_MODE = myRbListen.isSelected();
+    myLogConfigurations.applyTo(remoteConfiguration);
   }
 
   public void resetEditorFrom(final RemoteConfiguration configuration) {
@@ -136,6 +145,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
       myRbAttach.doClick();
     }
     myRbShmem.setEnabled(SystemInfo.isWindows);
+    myLogConfigurations.resetFrom(configuration);
   }
 
   public JComponent createEditor() {

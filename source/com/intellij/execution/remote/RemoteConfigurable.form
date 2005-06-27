@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.execution.remote.RemoteConfigurable">
-  <grid id="715ea" binding="myPanel" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="715ea" binding="myPanel" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="64" y="1" width="474" height="387"/>
+      <xy x="64" y="1" width="478" height="387"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
@@ -11,7 +11,7 @@
     <children>
       <component id="49c58" class="javax.swing.JLabel">
         <constraints>
-          <xy x="0" y="3" width="311" height="14"/>
+          <xy x="0" y="3" width="315" height="14"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
         </constraints>
         <properties>
@@ -20,15 +20,15 @@
       </component>
       <vspacer id="3ca11">
         <constraints>
-          <xy x="231" y="334" width="11" height="53"/>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+          <xy x="233" y="346" width="11" height="41"/>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
       <grid id="e37d3" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="5" vgap="8">
         <margin top="3" left="5" bottom="5" right="5"/>
         <constraints>
-          <xy x="0" y="164" width="474" height="170"/>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1">
+          <xy x="0" y="176" width="478" height="170"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1">
             <minimum-size width="-1" height="170"/>
             <maximum-size width="-1" height="170"/>
           </grid>
@@ -39,7 +39,7 @@
           <grid id="d0319" binding="mySocketPanel" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="11" y="83" width="452" height="48"/>
+              <xy x="11" y="83" width="456" height="48"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
             </constraints>
             <properties/>
@@ -47,7 +47,7 @@
             <children>
               <component id="11a97" class="javax.swing.JTextField" binding="myPortField">
                 <constraints>
-                  <xy x="31" y="28" width="421" height="20"/>
+                  <xy x="35" y="28" width="421" height="20"/>
                   <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1">
                     <preferred-size width="150" height="-1"/>
                   </grid>
@@ -56,7 +56,7 @@
               </component>
               <component id="76d9b" class="javax.swing.JTextField" binding="myHostField">
                 <constraints>
-                  <xy x="31" y="0" width="421" height="20"/>
+                  <xy x="35" y="0" width="421" height="20"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1">
                     <preferred-size width="150" height="-1"/>
                   </grid>
@@ -65,7 +65,7 @@
               </component>
               <component id="66348" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="0" y="3" width="26" height="14"/>
+                  <xy x="0" y="3" width="30" height="14"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
                 </constraints>
                 <properties>
@@ -74,7 +74,7 @@
               </component>
               <component id="24ab6" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="2" y="31" width="24" height="14"/>
+                  <xy x="2" y="31" width="28" height="14"/>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
                 </constraints>
                 <properties>
@@ -86,7 +86,7 @@
           <grid id="446e3" binding="myShmemPanel" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="11" y="139" width="452" height="20"/>
+              <xy x="11" y="139" width="456" height="20"/>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
             </constraints>
             <properties/>
@@ -94,7 +94,7 @@
             <children>
               <component id="9623e" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="0" y="3" width="114" height="14"/>
+                  <xy x="0" y="3" width="124" height="14"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
                 </constraints>
                 <properties>
@@ -103,7 +103,7 @@
               </component>
               <component id="d75e1" class="javax.swing.JTextField" binding="myAddressField">
                 <constraints>
-                  <xy x="119" y="0" width="333" height="20"/>
+                  <xy x="129" y="0" width="327" height="20"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1">
                     <preferred-size width="150" height="-1"/>
                   </grid>
@@ -117,7 +117,7 @@
           <grid id="353eb" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="11" y="23" width="452" height="52"/>
+              <xy x="11" y="23" width="456" height="52"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
             </constraints>
             <properties/>
@@ -125,7 +125,7 @@
             <children>
               <component id="9ca9f" class="javax.swing.JRadioButton" binding="myRbSocket">
                 <constraints>
-                  <xy x="85" y="0" width="57" height="22"/>
+                  <xy x="89" y="0" width="59" height="22"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -134,7 +134,7 @@
               </component>
               <component id="43956" class="javax.swing.JRadioButton" binding="myRbShmem">
                 <constraints>
-                  <xy x="147" y="0" width="100" height="22"/>
+                  <xy x="153" y="0" width="102" height="22"/>
                   <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -143,7 +143,7 @@
               </component>
               <component id="360fe" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="0" y="34" width="80" height="14"/>
+                  <xy x="0" y="34" width="84" height="14"/>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
                 </constraints>
                 <properties>
@@ -152,7 +152,7 @@
               </component>
               <component id="130cc" class="javax.swing.JRadioButton" binding="myRbAttach">
                 <constraints>
-                  <xy x="85" y="30" width="57" height="22"/>
+                  <xy x="89" y="30" width="59" height="22"/>
                   <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -161,7 +161,7 @@
               </component>
               <component id="886d9" class="javax.swing.JRadioButton" binding="myRbListen">
                 <constraints>
-                  <xy x="147" y="30" width="53" height="22"/>
+                  <xy x="153" y="30" width="55" height="22"/>
                   <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -170,7 +170,7 @@
               </component>
               <component id="a481c" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="29" y="4" width="51" height="14"/>
+                  <xy x="29" y="4" width="55" height="14"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
                 </constraints>
                 <properties>
@@ -183,13 +183,23 @@
       </grid>
       <component id="aa30e" class="com.intellij.execution.remote.RemoteConfigurationArguments" binding="myHelpArea">
         <constraints>
-          <xy x="0" y="25" width="474" height="134"/>
+          <xy x="0" y="25" width="478" height="121"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="6" anchor="8" fill="3">
             <preferred-size width="150" height="100"/>
           </grid>
         </constraints>
         <properties/>
       </component>
+      <xy id="78eea" binding="myLogsPanel" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="0" y="151" width="478" height="20"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children/>
+      </xy>
     </children>
   </grid>
 </form>
