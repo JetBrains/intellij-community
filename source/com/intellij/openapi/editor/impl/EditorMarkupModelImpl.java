@@ -89,8 +89,23 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private class MarkSpots {
     private List<MarkSpot> mySpots;
+    private int myEditorScrollbarTop = -1;
+    private int myEditorTargetHeight = -1;
+    private int myEditorSourceHeight = -1;
+
+    private void recalcEditorDimensions() {
+      EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
+      myEditorScrollbarTop = scrollBar.getDecScrollButtonHeight() + 1;
+      int bottom = scrollBar.getIncScrollButtonHeight();
+      myEditorTargetHeight = myScrollBarHeight - myEditorScrollbarTop - bottom;
+      myEditorSourceHeight = myEditor.getPreferredSize().height;
+    }
+
     private void clear() {
       mySpots = null;
+      myEditorScrollbarTop = -1;
+      myEditorSourceHeight = -1;
+      myEditorTargetHeight = -1;
     }
 
     public boolean showToolTipByMouseMove(final MouseEvent e, final double width) {
@@ -142,6 +157,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
       return false;
     }
+
     private class PositionedRangeHighlighter {
       private final RangeHighlighter highlighter;
       private final int yStart;
@@ -168,6 +184,18 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       return new PositionedRangeHighlighter(mark, yStartPosition, yEndPosition);
     }
 
+    private int visibleLineToYPosition(int lineNumber) {
+      if (myEditorScrollbarTop == -1) {
+        recalcEditorDimensions();
+      }
+      if (myEditorSourceHeight < myEditorTargetHeight) {
+        return myEditorScrollbarTop + lineNumber * myEditor.getLineHeight();
+      }
+      else {
+        final int lineCount = myEditorSourceHeight / myEditor.getLineHeight();
+        return myEditorScrollbarTop + (int)(((float)lineNumber / lineCount) * myEditorTargetHeight);
+      }
+    }
 
     private void recalcMarkSpots() {
       if (mySpots != null) return;
@@ -572,22 +600,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     tooltipController.showTooltipByMouseMove(myEditor, e, tooltipObject,
                                              myEditor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT,
                                              ERROR_STRIPE_TOOLTIP_GROUP);
-  }
-
-  private int visibleLineToYPosition(int lineNumber) {
-    EditorImpl.MyScrollBar scrollBar = myEditor.getVerticalScrollBar();
-    int top = scrollBar.getDecScrollButtonHeight() + 1;
-    int bottom = scrollBar.getIncScrollButtonHeight();
-    final int targetHeight = myScrollBarHeight - top - bottom;
-    final int sourceHeight = myEditor.getPreferredSize().height;
-
-    if (sourceHeight < targetHeight) {
-      return top + lineNumber * myEditor.getLineHeight();
-    }
-    else {
-      final int lineCount = sourceHeight / myEditor.getLineHeight();
-      return top + (int)(((float)lineNumber / lineCount) * targetHeight);
-    }
   }
 
   private ErrorStripeListener[] getCachedErrorMarkerListeners() {
