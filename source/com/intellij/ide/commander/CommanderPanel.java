@@ -355,11 +355,16 @@ public class CommanderPanel extends JPanel {
       myTitlePanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED, color.brighter(), color.darker()));
       myParentTitle.setForeground(Color.black);
     }
-    if (myList.getSelectedIndices().length == 0 && myList.getModel().getSize() > 0) {
+    final int[] selectedIndices = myList.getSelectedIndices();
+    if (selectedIndices.length == 0 && myList.getModel().getSize() > 0) {
       myList.setSelectedIndex(0);
       if (!myList.hasFocus()) {
         myList.requestFocus();
       }
+    }
+    else if (myList.getModel().getSize() > 0){
+      // need this to generate SelectionChanged events so that listeners, added by Commander, will be notified
+      myList.setSelectedIndices(selectedIndices);
     }
   }
 
@@ -485,12 +490,12 @@ public class CommanderPanel extends JPanel {
     }
 
     public void setText(String text) {
-      super.setText(text);
-      if (text != null && text.trim().length() == 0) {
-        text = null;
+      if (text == null || text.length() == 0) {
+        text = " ";
       }
+      super.setText(text);
       if (myPanel != null) {
-        myPanel.setToolTipText(text);
+        myPanel.setToolTipText(text.trim().length() == 0? null : text);
       }
     }
   }

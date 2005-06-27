@@ -16,9 +16,12 @@ import com.intellij.util.OpenSourceUtil;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.ListSelectionEvent;
 import javax.swing.tree.TreePath;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.*;
 
 public abstract class AutoScrollToSourceHandler {
   private Alarm myAutoScrollAlarm;
@@ -33,45 +36,72 @@ public abstract class AutoScrollToSourceHandler {
         if (e.getClickCount() == 2) return;
 
         TreePath location = tree.getPathForLocation(e.getPoint().x, e.getPoint().y);
-        if (location == null) return;
-
-        myAutoScrollAlarm.cancelAllRequests();
-        if (isAutoScrollMode()){
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              scrollToSource(tree);
-            }
-          });
+        if (location != null) {
+          onMouseClicked(tree);
         }
       }
     });
     tree.addTreeSelectionListener(
       new TreeSelectionListener() {
         public void valueChanged(TreeSelectionEvent e) {
-          if (!isAutoScrollMode()) {
-            return;
-          }
-          if (!tree.hasFocus()) {
-            return;
-          }
-          myAutoScrollAlarm.cancelAllRequests();
-          myAutoScrollAlarm.addRequest(
-            new Runnable() {
-              public void run() {
-                scrollToSource(tree);
-              }
-            },
-            500
-          );
+          onSelectionChanged(tree);
         }
       }
+    );
+  }
+
+  public void install(final JList jList) {
+    myAutoScrollAlarm = new Alarm();
+    jList.addMouseListener(new MouseAdapter() {
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 2) return;
+        final Object source = e.getSource();
+        final int index = jList.locationToIndex(SwingUtilities.convertPoint(source instanceof Component? ((Component)source) : null, e.getPoint(), jList));
+        if (index >= 0 && index < jList.getModel().getSize()) {
+          onMouseClicked(jList);
+        }
+      }
+    });
+    jList.addListSelectionListener(new ListSelectionListener() {
+      public void valueChanged(ListSelectionEvent e) {
+        onSelectionChanged(jList);
+      }
+    });
+  }
+
+  private void onMouseClicked(final Component component) {
+    myAutoScrollAlarm.cancelAllRequests();
+    if (isAutoScrollMode()){
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          scrollToSource(component);
+        }
+      });
+    }
+  }
+
+  private void onSelectionChanged(final Component component) {
+    if (!isAutoScrollMode()) {
+      return;
+    }
+    if (!component.hasFocus()) {
+      return;
+    }
+    myAutoScrollAlarm.cancelAllRequests();
+    myAutoScrollAlarm.addRequest(
+      new Runnable() {
+        public void run() {
+          scrollToSource(component);
+        }
+      },
+      500
     );
   }
 
   protected abstract boolean isAutoScrollMode();
   protected abstract void setAutoScrollMode(boolean state);
 
-  protected void scrollToSource(JTree tree) {
+  protected void scrollToSource(Component tree) {
     DataContext dataContext=DataManager.getInstance().getDataContext(tree);
     final VirtualFile vFile = (VirtualFile)dataContext.getData(DataConstants.VIRTUAL_FILE);
     if (vFile != null) {

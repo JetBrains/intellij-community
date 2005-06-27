@@ -75,7 +75,7 @@ public final class CallHierarchyBrowser extends JPanel implements DataProvider {
         HierarchyBrowserManager.getInstance(myProject).IS_AUTOSCROLL_TO_SOURCE = state;
       }
 
-      protected void scrollToSource(JTree tree) {
+      protected void scrollToSource(Component tree) {
         super.scrollToSource(tree);
       }
 

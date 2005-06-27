@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.ui.AutoScrollToSourceHandler;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -51,6 +52,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
   private Element myElement;
   private FocusWatcher myFocusWatcher;
   private CommanderHistory myHistory;
+  private boolean myAutoScrollMode = false;
 
   public Commander(final Project project, KeymapManager keymapManager) {
     super(new BorderLayout());
@@ -201,7 +203,22 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
 
     add(mySplitter, BorderLayout.CENTER);
 
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.COMMANDER_TOOLBAR, createToolbarActions(), true);
+    final AutoScrollToSourceHandler handler = new AutoScrollToSourceHandler() {
+      protected boolean isAutoScrollMode() {
+        return myAutoScrollMode;
+      }
+
+      protected void setAutoScrollMode(boolean state) {
+        myAutoScrollMode = state;
+      }
+    };
+    handler.install(myLeftPanel.myList);
+    handler.install(myRightPanel.myList);
+
+    final DefaultActionGroup toolbarActions = createToolbarActions();
+    toolbarActions.add(handler.createToggleAction());
+
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.COMMANDER_TOOLBAR, toolbarActions, true);
     add(toolbar.getComponent(), BorderLayout.NORTH);
 
     processConfigurationElement();
@@ -212,7 +229,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     setupToolWindow();
   }
 
-  private ActionGroup createToolbarActions() {
+  private DefaultActionGroup createToolbarActions() {
     final ActionManager actionManager = ActionManager.getInstance();
     final DefaultActionGroup group = new DefaultActionGroup();
 
@@ -244,7 +261,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
 
     group.add(actionManager.getAction(IdeActions.ACTION_COMMANDER_SWAP_PANELS));
     group.add(actionManager.getAction(IdeActions.ACTION_COMMANDER_SYNC_VIEWS));
-    
+
     return group;
   }
 

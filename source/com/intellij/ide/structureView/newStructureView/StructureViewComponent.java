@@ -544,7 +544,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
       ((StructureViewFactoryImpl)StructureViewFactoryEx.getInstance(myProject)).AUTOSCROLL_MODE = state;
     }
 
-    protected void scrollToSource(JTree tree) {
+    protected void scrollToSource(Component tree) {
       if (myAbstractTreeBuilder == null) return;
       myAutoscrollFeedback = true;
 
