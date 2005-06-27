@@ -676,6 +676,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (PropertyUtil.isSimplePropertyAccessor(method)) {
       String propertyName = PropertyUtil.getPropertyName(method);
       if (myManager.getNameHelper().isIdentifier(propertyName)) {
+        if (searchScope instanceof GlobalSearchScope) {
+          searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope,
+                                                                        StdFileTypes.JSP, StdFileTypes.JSPX);
+        }
         toContinue = processElementsWithWord(processor1,
                                              searchScope,
                                              propertyName,
