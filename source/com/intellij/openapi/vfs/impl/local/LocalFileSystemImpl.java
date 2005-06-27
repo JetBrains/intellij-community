@@ -10,7 +10,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileOperationsHandler;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -19,7 +22,6 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.vfs.local.win32.FileWatcher;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
@@ -834,55 +836,40 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
     LOG.assertTrue(myHandlers.remove(handler), "Handler" + handler + " haven't been registered or already unregistered.");
   }
 
-  @Nullable
-  public FileOperation auxDelete(VirtualFile file) throws IOException {
+  public boolean auxDelete(VirtualFile file) throws IOException {
     for (LocalFileOperationsHandler handler : myHandlers) {
-      if (handler.canHandleFileOperation(file)) {
-        return handler.delete(file);
-      }
+      if (handler.delete(file)) return true;
     }
 
-    return null;
+    return false;
   }
 
-  @Nullable
-  public FileOperation auxMove(VirtualFile file, VirtualFile toDir) throws IOException {
+  public boolean auxMove(VirtualFile file, VirtualFile toDir) throws IOException {
     for (LocalFileOperationsHandler handler : myHandlers) {
-      if (handler.canHandleFileOperation(file)) {
-        return handler.move(file, toDir);
-      }
+      if (handler.move(file, toDir)) return true;
     }
-    return null;
+    return false;
   }
 
-  @Nullable
-  public FileOperation auxRename(VirtualFile file, String newName) throws IOException {
+  public boolean auxRename(VirtualFile file, String newName) throws IOException {
     for (LocalFileOperationsHandler handler : myHandlers) {
-      if (handler.canHandleFileOperation(file)) {
-        return handler.rename(file, newName);
-      }
+      if (handler.rename(file, newName)) return true;
     }
-    return null;
+    return false;
   }
 
-  @Nullable
-  public FileOperation auxCreateFile(VirtualFile dir, String name) throws IOException {
+  public boolean auxCreateFile(VirtualFile dir, String name) throws IOException {
     for (LocalFileOperationsHandler handler : myHandlers) {
-      if (handler.canHandleFileOperation(dir)) {
-        return handler.createFile(dir, name);
-      }
+      if (handler.createFile(dir, name)) return true;
     }
-    return null;
+    return false;
   }
 
-  @Nullable
-  public FileOperation auxCreateDirectory(VirtualFile dir, String name) throws IOException {
+  public boolean auxCreateDirectory(VirtualFile dir, String name) throws IOException {
     for (LocalFileOperationsHandler handler : myHandlers) {
-      if (handler.canHandleFileOperation(dir)) {
-        return handler.createDirectory(dir, name);
-      }
+      if (handler.createDirectory(dir, name)) return true;
     }
-    return null;
+    return false;
   }
 
   public void removeWatchedRoots(final Collection<WatchRequest> rootsToWatch) {

@@ -316,32 +316,6 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
     }
   }
 
-  private class FileOperationUndoableAction implements UndoableAction {
-    private final VirtualFile myFile;
-    private final FileOperation myOperation;
-
-    public FileOperationUndoableAction(final VirtualFile file) {
-      myFile = file;
-      myOperation = file.getUserData(FileOperation.KEY);
-    }
-
-    public void undo() throws UnexpectedUndoException {
-      myOperation.undo();
-    }
-
-    public void redo() throws UnexpectedUndoException {
-      myOperation.perform();
-    }
-
-    public DocumentReference[] getAffectedDocuments() {
-      return new DocumentReference[] {new DocumentReferenceByVirtualFile(myFile)};
-    }
-
-    public boolean isComplex() {
-      return true;
-    }
-  }
-
   private class LvcsBasedUndoableAction implements UndoableAction, Disposable {
     private LvcsRevision myBeforeUndoRevision;
     private LvcsRevision myAfterActionPerformedRevision;
