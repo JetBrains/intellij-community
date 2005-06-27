@@ -38,7 +38,5 @@ public class UncheckedExceptionClassInspection extends ClassInspection {
             }
             registerClassError(aClass);
         }
-
     }
-
 }

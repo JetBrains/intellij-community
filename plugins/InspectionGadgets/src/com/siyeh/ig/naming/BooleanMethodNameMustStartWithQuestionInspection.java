@@ -151,7 +151,10 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends MethodInsp
             return false;
         }
     }
-
+    public boolean foo()
+    {
+        return true;
+    }
     public class Form{
         private JPanel contentPanel;
         private JButton addButton;

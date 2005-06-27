@@ -17,7 +17,15 @@ public class ImportUtils {
         if (hasOnDemandImportConflict(fqName, file)) {
             return false;
         }
-        return !containsConflictingClassReference(fqName, file);
+        if(containsConflictingClassReference(fqName, file)){
+            return false;
+        }
+        return !containsConflictingClassName(fqName, file);
+    }
+
+    private static boolean containsConflictingClassName(String name,
+                                                     PsiJavaFile file){
+         return false;//TODO:
     }
 
     private static boolean hasExactImportMatch(String fqName, PsiJavaFile file) {

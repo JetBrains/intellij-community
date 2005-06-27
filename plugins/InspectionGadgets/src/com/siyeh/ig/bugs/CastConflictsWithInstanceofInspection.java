@@ -50,56 +50,80 @@ public class CastConflictsWithInstanceofInspection extends ExpressionInspection{
             boolean hasConfirmingInstanceof = false;
             PsiIfStatement currentStatement = PsiTreeUtil
                     .getParentOfType(expression, PsiIfStatement.class);
-            while(currentStatement!=null)
-            {
-                final PsiExpression condition = currentStatement.getCondition();
-                if(condition instanceof PsiInstanceOfExpression){
-                    final PsiInstanceOfExpression instanceOfCondition =
-                            (PsiInstanceOfExpression) condition;
-                    if(isConflicting(instanceOfCondition, operand, castType)){
-                        hasConflictingInstanceof = true;
-                    } else if(isConfirming(instanceOfCondition, operand, castType)){
-                        hasConfirmingInstanceof = true;
+            while(currentStatement != null){
+                if(!isInElse(expression, currentStatement)){
+                    final PsiExpression condition = currentStatement
+                            .getCondition();
+                    if(condition instanceof PsiInstanceOfExpression){
+                        final PsiInstanceOfExpression instanceOfCondition =
+                                (PsiInstanceOfExpression) condition;
+                        if(isConflicting(instanceOfCondition, operand,
+                                         castType)){
+                            hasConflictingInstanceof = true;
+                        } else if(isConfirming(instanceOfCondition, operand,
+                                               castType)){
+                            hasConfirmingInstanceof = true;
+                        }
                     }
                 }
-
-                currentStatement = PsiTreeUtil.getParentOfType(currentStatement, PsiIfStatement.class);
+                currentStatement = PsiTreeUtil
+                        .getParentOfType(currentStatement,
+                                         PsiIfStatement.class);
             }
             if(hasConflictingInstanceof && !hasConfirmingInstanceof){
                 registerError(castTypeElement);
             }
         }
 
+        private static boolean isInElse(PsiExpression expression,
+                                 PsiIfStatement statement){
+            final PsiStatement branch = statement.getElseBranch();
+            if(branch == null)
+            {
+                return false;
+            }
+            return PsiTreeUtil.isAncestor(branch, expression, true);
+        }
+
         private boolean isConflicting(PsiInstanceOfExpression condition,
                                       PsiExpression operand,
                                       PsiType castType){
             final PsiExpression conditionOperand = condition.getOperand();
-            if(!EquivalenceChecker.expressionsAreEquivalent(operand, conditionOperand))
-            {
+            if(!EquivalenceChecker
+                    .expressionsAreEquivalent(operand, conditionOperand)){
                 return false;
             }
-            final PsiTypeElement type = condition.getCheckType();
-            if(type == null)
-            {
+            final PsiTypeElement typeElement = condition.getCheckType();
+            if(typeElement == null){
                 return false;
             }
-            return !type.equals(castType);   //TODO: should this take inheritance into account
+            final PsiType type = typeElement.getType();
+            if(type == null){
+                return false;
+            }
+            return !type
+                    .equals(castType);   //TODO: should this take inheritance into account
         }
 
         private boolean isConfirming(PsiInstanceOfExpression condition,
-                                      PsiExpression operand,
-                                      PsiType castType){
+                                     PsiExpression operand,
+                                     PsiType castType){
             final PsiExpression conditionOperand = condition.getOperand();
-            if(!EquivalenceChecker.expressionsAreEquivalent(operand, conditionOperand))
-            {
+            if(!EquivalenceChecker
+                    .expressionsAreEquivalent(operand, conditionOperand)){
                 return false;
             }
-            final PsiTypeElement type = condition.getCheckType();
-            if(type == null)
-            {
+
+            final PsiTypeElement typeElement = condition.getCheckType();
+            if(typeElement == null){
                 return false;
             }
-            return type.equals(castType);   //TODO: should this take inheritance into account
+            final PsiType type = typeElement.getType();
+            if(type == null){
+                return false;
+            }
+            return type
+                    .equals(castType);   //TODO: should this take inheritance into account
         }
     }
 }

@@ -89,7 +89,7 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
     }
 
     private class BadExceptionCaughtVisitor extends BaseInspectionVisitor {
- 
+
         public void visitTryStatement(@NotNull PsiTryStatement statement) {
 
             super.visitTryStatement(statement);
@@ -114,10 +114,7 @@ public class BadExceptionCaughtInspection extends ExpressionInspection {
                     }
                 }
             }
-
         }
-
-
     }
 
     /** @noinspection PublicInnerClass*/

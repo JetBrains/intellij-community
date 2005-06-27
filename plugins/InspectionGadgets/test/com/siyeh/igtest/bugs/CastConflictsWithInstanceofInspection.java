@@ -5,16 +5,13 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiElement;
 
 public class CastConflictsWithInstanceofInspection {
-
-    public void foo()
-    {
+    public void foo() {
         Number x = bar();
 
-        System.out.println((Double)x);
+        System.out.println((Double) x);
 
-        if(x instanceof Float)
-        {
-            System.out.println((Double)x);
+        if (x instanceof Float) {
+            System.out.println((Double) x);
         }
     }
 
@@ -23,8 +20,14 @@ public class CastConflictsWithInstanceofInspection {
     }
 
     void method(PsiElement p) {
-      if (p instanceof PsiReferenceExpression) {
-        PsiStatement stmt = (PsiStatement) p;
+        if (p instanceof PsiReferenceExpression) {
+            PsiStatement stmt = (PsiStatement) p;
+            PsiReferenceExpression ref = (PsiReferenceExpression) p;
+        } else {
+            PsiStatement stmt = (PsiStatement) p;
+
+        }
+
     }
 
 }
