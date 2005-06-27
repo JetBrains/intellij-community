@@ -88,22 +88,21 @@ public class HtmlPolicy extends XmlFormattingPolicy{
   }
 
   public int getWrappingTypeForTagEnd(final XmlTag xmlTag) {
-    return isScriptletOrDeclaration(xmlTag)? Wrap.ALWAYS : Wrap.NORMAL;
+    return shouldBeWrapped(xmlTag)? Wrap.ALWAYS : Wrap.NORMAL;
   }
 
   public int getWrappingTypeForTagBegin(final XmlTag tag) {
-    if (mySettings.HTML_WRAP_TAG_BEGIN || isScriptletOrDeclaration(tag)) {
+    if (mySettings.HTML_WRAP_TAG_BEGIN || shouldBeWrapped(tag)) {
       return Wrap.ALWAYS;
     } else {
       return Wrap.NORMAL;
     }
   }
 
-  private boolean isScriptletOrDeclaration(final XmlTag tag) {
+  private boolean shouldBeWrapped(final XmlTag tag) {
     final String name = tag.getName();
-    return name.equalsIgnoreCase("jsp:scriptlet")
-           || name.equalsIgnoreCase("jsp:declaration")
-           || name.equalsIgnoreCase("jsp:root");
+    if (name == null) return false;
+    return name.toLowerCase().startsWith("jsp:");
   }
 
   public boolean isTextElement(XmlTag tag) {

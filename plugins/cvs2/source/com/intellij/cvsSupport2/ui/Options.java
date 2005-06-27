@@ -1,9 +1,9 @@
 package com.intellij.cvsSupport2.ui;
 
-import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.CvsVcs2;
+import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 
 public interface Options {
   boolean isToBeShown(Project project);
@@ -22,12 +22,11 @@ public interface Options {
 
   Options ON_FILE_ADDING = new Options() {
     public boolean isToBeShown(Project project) {
-      return VcsConfiguration.getInstance(project).ON_FILE_ADDING
-             == com.intellij.util.Options.SHOW_DIALOG;
+      return CvsVcs2.getInstance(project).getAddConfirmation().getValue() == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
     }
 
     public void setToBeShown(boolean value, Project project, boolean onOk) {
-      VcsConfiguration.getInstance(project).ON_FILE_ADDING = CvsConfiguration.convertToEnumValue(value, onOk);
+      CvsVcs2.getInstance(project).getAddConfirmation().setValue(CvsConfiguration.convertToEnumValue(value, onOk));
     }
 
   };
@@ -35,12 +34,11 @@ public interface Options {
 
   Options ON_FILE_REMOVING = new Options() {
     public boolean isToBeShown(Project project) {
-      return VcsConfiguration.getInstance(project).ON_FILE_REMOVING
-             == com.intellij.util.Options.SHOW_DIALOG;
+      return CvsVcs2.getInstance(project).getRemoveConfirmation().getValue() == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
     }
 
     public void setToBeShown(boolean value, Project project, boolean onOk) {
-      VcsConfiguration.getInstance(project).ON_FILE_REMOVING = CvsConfiguration.convertToEnumValue(value, onOk);
+      CvsVcs2.getInstance(project).getRemoveConfirmation().setValue(CvsConfiguration.convertToEnumValue(value, onOk));
     }
   };
 

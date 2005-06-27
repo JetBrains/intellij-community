@@ -23,6 +23,9 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
   @NotNull
   public abstract VcsShowSettingOption getOptions(VcsConfiguration.StandardOption option);
 
+  @NotNull
+  public abstract VcsShowConfirmationOptionImpl getConfirmation(VcsConfiguration.StandardConfirmation option);
+
   public abstract List<VcsShowOptionsSettingImpl> getAllOptions();
 
   public abstract List<VcsShowConfirmationOptionImpl> getAllConfirmations();

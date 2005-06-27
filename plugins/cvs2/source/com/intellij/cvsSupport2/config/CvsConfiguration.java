@@ -7,6 +7,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.util.Options;
 import org.netbeans.lib.cvsclient.command.Watch;
 import org.jdom.Element;
@@ -91,15 +92,15 @@ public class CvsConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public void initComponent() { }
 
-  public static byte convertToEnumValue(boolean value, boolean onOk) {
+  public static VcsShowConfirmationOption.Value convertToEnumValue(boolean value, boolean onOk) {
     if (value) {
-      return Options.SHOW_DIALOG;
+      return VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
     }
     else if (onOk) {
-      return Options.PERFORM_ACTION_AUTOMATICALLY;
+      return VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY;
     }
     else {
-      return Options.DO_NOTHING;
+      return VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY;
     }
   }
 

@@ -71,12 +71,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   private boolean canWrapTagEnd(final XmlTag tag) {
-    return tag.getSubTags().length > 0 || isScriptletOrDeclaration(tag);
-  }
-
-  private boolean isScriptletOrDeclaration(final XmlTag tag) {
-    final String name = tag.getName();
-    return name.equalsIgnoreCase(JSPX_SCRIPTLET_TAG_NAME) || name.equalsIgnoreCase(JSPX_DECLARATION_TAG_NAME);
+    return tag.getSubTags().length > 0 || tag.getName().toLowerCase().startsWith("jsp:");
   }
 
   protected Formatter getFormatter() {

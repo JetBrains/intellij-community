@@ -69,6 +69,9 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
   private VcsShowSettingOption myCheckoutOptions;
   private VcsShowSettingOption myEditOption;
 
+  private VcsShowConfirmationOption myAddConfirmation;
+  private VcsShowConfirmationOption myRemoveConfirmation;
+
   public CvsVcs2(Project project, CvsStorageComponent cvsStorageComponent) {
     super(project);
     myCvsHistoryProvider = new CvsHistoryProvider(project);
@@ -98,6 +101,9 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
     myRemoveOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.ADD, this);
     myCheckoutOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.CHECKOUT, this);
     myEditOption = vcsManager.getStandardOption(VcsConfiguration.StandardOption.EDIT, this);
+
+    myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
+    myRemoveConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
 
     myProjectIsOpened = true;
   }
@@ -327,6 +333,13 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
     return myEditOption;
   }
 
+  public VcsShowConfirmationOption getAddConfirmation() {
+    return myAddConfirmation;
+  }
+
+  public VcsShowConfirmationOption getRemoveConfirmation() {
+    return myRemoveConfirmation;
+  }
 
 }
 

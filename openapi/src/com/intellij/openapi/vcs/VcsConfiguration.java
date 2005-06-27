@@ -74,8 +74,10 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   public float FILE_HISTORY_DIALOG_COMMENTS_SPLITTER_PROPORTION = 0.8f;
   public float FILE_HISTORY_DIALOG_SPLITTER_PROPORTION = 0.5f;
 
+  /*
   public int ON_FILE_ADDING = Options.SHOW_DIALOG;
   public int ON_FILE_REMOVING = Options.SHOW_DIALOG;
+  */
 
   /*
   public boolean SHOW_CHECKIN_OPTIONS = true;

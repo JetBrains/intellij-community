@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.application;
 
 import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.actions.AddFileOrDirectoryAction;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContextAdapter;
@@ -9,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.util.Options;
 
 import java.util.ArrayList;
@@ -53,7 +55,7 @@ class AddHandler {
     }
 
     if (!myAddedFiles.isEmpty()) {
-      if (VcsConfiguration.getInstance(myProject).ON_FILE_ADDING != Options.DO_NOTHING) {
+      if (CvsVcs2.getInstance(myProject).getAddConfirmation().getValue() != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
                 if (!myCvsStorageComponent.getIsActive()) return;

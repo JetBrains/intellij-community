@@ -2,17 +2,18 @@ package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsShowOptionsSettingImpl;
-import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class VcsGeneralConfigurationPanel {
 
@@ -39,6 +40,8 @@ public class VcsGeneralConfigurationPanel {
 
 
   Map<VcsShowOptionsSettingImpl, JCheckBox> myPromptOptions = new LinkedHashMap<VcsShowOptionsSettingImpl, JCheckBox>();
+  private JPanel myRemoveConfirmationPanel;
+  private JPanel myAddConfirmationPanel;
 
   public VcsGeneralConfigurationPanel(final Project project) {
 
@@ -85,20 +88,28 @@ public class VcsGeneralConfigurationPanel {
       setting.setValue(myPromptOptions.get(setting).isSelected());
     }
 
-    settings.ON_FILE_ADDING = getSelected(myOnFileAddingGroup);
-    settings.ON_FILE_REMOVING = getSelected(myOnFileRemovingGroup);
+    getAddConfirmation().setValue(getSelected(myOnFileAddingGroup));
+    getRemoveConfirmation().setValue(getSelected(myOnFileRemovingGroup));
 
 
     getReadOnlyStatusHandler().SHOW_DIALOG = myShowReadOnlyStatusDialog.isSelected();
   }
 
+  private VcsShowConfirmationOption getAddConfirmation() {
+    return ProjectLevelVcsManagerEx.getInstanceEx(myProject)
+      .getConfirmation(VcsConfiguration.StandardConfirmation.ADD);
+  }
 
-  private int getSelected(JRadioButton[] group) {
-    for (int i = 0; i < group.length; i++) {
-      JRadioButton jRadioButton = group[i];
-      if (jRadioButton.isSelected()) return i;
-    }
-    return -1;
+  private VcsShowConfirmationOption getRemoveConfirmation() {
+    return ProjectLevelVcsManagerEx.getInstanceEx(myProject)
+      .getConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
+  }
+
+
+  private VcsShowConfirmationOption.Value getSelected(JRadioButton[] group) {
+    if (group[0].isSelected()) return VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
+    if (group[1].isSelected()) return VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY;
+    return VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY;
   }
 
 
@@ -127,6 +138,9 @@ public class VcsGeneralConfigurationPanel {
       if (setting.getValue() != myPromptOptions.get(setting).isSelected()) return true;
     }
 
+    if (getSelected(myOnFileAddingGroup) != getAddConfirmation().getValue()) return true;
+    if (getSelected(myOnFileRemovingGroup) != getRemoveConfirmation().getValue()) return true;
+
     return false;
   }
 
@@ -141,8 +155,19 @@ public class VcsGeneralConfigurationPanel {
       myPromptOptions.get(setting).setSelected(setting.getValue());
     }
 
-    myOnFileAddingGroup[settings.ON_FILE_ADDING].setSelected(true);
-    myOnFileRemovingGroup[settings.ON_FILE_REMOVING].setSelected(true);
+    selectInGroup(myOnFileAddingGroup, getAddConfirmation());
+    selectInGroup(myOnFileRemovingGroup, getRemoveConfirmation());
+  }
+
+  private void selectInGroup(final JRadioButton[] group, final VcsShowConfirmationOption confirmation) {
+    final VcsShowConfirmationOption.Value value = confirmation.getValue();
+    final int index;
+    switch(value) {
+      case SHOW_CONFIRMATION: index = 0; break;
+      case DO_ACTION_SILENTLY: index = 1; break;
+      default: index = 2;
+    }
+    group[index].setSelected(true);
   }
 
 
@@ -158,6 +183,18 @@ public class VcsGeneralConfigurationPanel {
         checkBox.setToolTipText("Applicable to: " + composeText(setting.getApplicableVcses()));
       }
     }
+
+    if (!myProject.isDefault()) {
+      final ProjectLevelVcsManagerEx vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
+      final VcsShowConfirmationOptionImpl addConfirmation = vcsManager.getConfirmation(VcsConfiguration.StandardConfirmation.ADD);
+      UIUtil.setEnabled(myAddConfirmationPanel, addConfirmation.isApplicableTo(activeVcses), true);
+      myAddConfirmationPanel.setToolTipText("Applicable to: " + composeText(addConfirmation.getApplicableVcses()));
+
+      final VcsShowConfirmationOptionImpl removeConfirmation = vcsManager.getConfirmation(VcsConfiguration.StandardConfirmation.REMOVE);
+      UIUtil.setEnabled(myRemoveConfirmationPanel, removeConfirmation.isApplicableTo(activeVcses), true);
+      myRemoveConfirmationPanel.setToolTipText("Applicable to: " + composeText(removeConfirmation.getApplicableVcses()));
+    }
+
   }
 
   private String composeText(final List<AbstractVcs> applicableVcses) {

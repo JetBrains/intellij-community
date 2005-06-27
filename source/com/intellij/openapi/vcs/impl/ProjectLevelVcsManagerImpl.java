@@ -129,9 +129,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
                           "Show options before adding to version control",
                           "Add silently"));
 
-    myConfirmations.put(VcsConfiguration.StandardConfirmation.ADD.getId(),
+    myConfirmations.put(VcsConfiguration.StandardConfirmation.REMOVE.getId(),
                         new VcsShowConfirmationOptionImpl(
-                          VcsConfiguration.StandardConfirmation.ADD.getId(),
+                          VcsConfiguration.StandardConfirmation.REMOVE.getId(),
                           "Show options before removing from version control",
                           "Do not remove",
                           "Show options before removing from version control",
@@ -595,5 +595,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public List<VcsShowConfirmationOptionImpl> getAllConfirmations() {
     return new ArrayList<VcsShowConfirmationOptionImpl>(myConfirmations.values());
+  }
+
+  @NotNull
+  public VcsShowConfirmationOptionImpl getConfirmation(VcsConfiguration.StandardConfirmation option) {
+    return myConfirmations.get(option.getId());
   }
 }

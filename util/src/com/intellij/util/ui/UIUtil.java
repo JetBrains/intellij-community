@@ -2,6 +2,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
 
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
@@ -20,4 +21,19 @@ public class UIUtil {
 
     return (modifiers & ActionEvent.ALT_MASK) == (modifiers & ActionEvent.CTRL_MASK);
   }
+
+  public static void setEnabled(Component component, boolean enabled, boolean recursively) {
+    component.setEnabled(enabled);
+    if (recursively) {
+      if (component instanceof Container) {
+        final Container container = ((Container)component);
+        final int subComponentCount = container.getComponentCount();
+        for (int i = 0; i < subComponentCount; i++) {
+          setEnabled(container.getComponent(i), enabled, recursively);
+        }
+
+      }
+    }
+  }
+
 }
