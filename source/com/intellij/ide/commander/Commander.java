@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -215,11 +216,13 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     handler.install(myLeftPanel.myList);
     handler.install(myRightPanel.myList);
 
-    final DefaultActionGroup toolbarActions = createToolbarActions();
-    toolbarActions.add(handler.createToggleAction());
-
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.COMMANDER_TOOLBAR, toolbarActions, true);
-    add(toolbar.getComponent(), BorderLayout.NORTH);
+    final boolean shouldAddToolbar = !ApplicationManager.getApplication().isUnitTestMode();
+    if (shouldAddToolbar) {
+      final DefaultActionGroup toolbarActions = createToolbarActions();
+      toolbarActions.add(handler.createToggleAction());
+      final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.COMMANDER_TOOLBAR, toolbarActions, true);
+      add(toolbar.getComponent(), BorderLayout.NORTH);
+    }
 
     processConfigurationElement();
     myElement = null;
