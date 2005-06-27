@@ -8,10 +8,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
@@ -161,7 +158,8 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       options.add(new AddSuppressWarningsAnnotationAction(tool, psiElement));
       options.add(new AddSuppressWarningsAnnotationForClassAction(tool, psiElement));
       options.add(new AddSuppressWarningsAnnotationForAllAction(psiElement));
-      if (problemDescriptor.getFixes() != null) {
+      final LocalQuickFix[] fixes = problemDescriptor.getFixes();
+      if (fixes != null && fixes.length > 0) {
         for (int k = 0; k < problemDescriptor.getFixes().length; k++) {
           QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(problemDescriptor, k), options);
         }
@@ -243,8 +241,9 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       options.add(new AddSuppressWarningsAnnotationAction(tool, psiElement));
       options.add(new AddSuppressWarningsAnnotationForClassAction(tool, psiElement));
       options.add(new AddSuppressWarningsAnnotationForAllAction(psiElement));
-      if (descriptor.getFixes() != null) {
-        for (int k = 0; k < descriptor.getFixes().length; k++) {
+      final LocalQuickFix[] fixes = descriptor.getFixes();
+      if (fixes != null && fixes.length > 0) {
+        for (int k = 0; k < fixes.length; k++) {
           QuickFixAction.registerQuickFixAction(highlightInfo, new QuickFixWrapper(descriptor, k), options);
         }
       } else {
