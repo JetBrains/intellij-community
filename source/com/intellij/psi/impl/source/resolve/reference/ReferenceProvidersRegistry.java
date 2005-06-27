@@ -4,10 +4,7 @@ import com.intellij.ant.impl.dom.impl.RegisterInPsi;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
@@ -25,10 +22,9 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import com.intellij.lang.properties.PropertiesReferenceProvider;
+import com.intellij.util.ArrayUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -41,6 +37,17 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   private final List<Class> myTempScopes = new ArrayList<Class>();
   private final List<ProviderBinding> myBindings = new ArrayList<ProviderBinding>();
   private final List<Pair<Class, ElementManipulator>> myManipulators = new ArrayList<Pair<Class, ElementManipulator>>();
+  private final Map<ReferenceProviderType,PsiReferenceProvider> myReferenceTypeToProviderMap = new HashMap<ReferenceProviderType, PsiReferenceProvider>(5);
+
+  static public class ReferenceProviderType {
+    private String myId;
+    private ReferenceProviderType(String id) { myId = id; }
+    public String toString() { return myId; }
+  }
+
+  public static ReferenceProviderType PROPERTY_FILE_KEY_PROVIDER = new ReferenceProviderType("Property File Key Provider");
+  public static ReferenceProviderType CLASS_REFERENCE_PROVIDER = new ReferenceProviderType("Class Reference Provider");
+  public static ReferenceProviderType PATH_REFERENCES_PROVIDER = new ReferenceProviderType("Path References Provider");
 
   public static final ReferenceProvidersRegistry getInstance(Project project) {
     return project.getComponent(ReferenceProvidersRegistry.class);
@@ -55,346 +62,346 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     registerManipulator(PsiPlainTextFile.class, new PlainFileManipulator());
     registerManipulator(XmlToken.class, new XmlTokenManipulator());
     // Binding declarations
-    final JavaClassReferenceProvider classReferenceProvider = new JavaClassReferenceProvider();
-    registerReferenceProvider(
+
+    myReferenceTypeToProviderMap.put(CLASS_REFERENCE_PROVIDER, new JavaClassReferenceProvider());
+    myReferenceTypeToProviderMap.put(PATH_REFERENCES_PROVIDER, new JspxIncludePathReferenceProvider());
+    myReferenceTypeToProviderMap.put(PROPERTY_FILE_KEY_PROVIDER, new PropertiesReferenceProvider());
+
+    registerXmlAttributeValueReferenceProvider(
+      new String[]{"class", "type"},
       new ScopeFilter(
         new ParentElementFilter(
           new AndFilter(
-            new TextFilter(new String[]{"class", "type"}),
-            new ParentElementFilter(
-              new AndFilter(
-                new TextFilter("useBean"),
-                new NamespaceFilter(XmlUtil.JSP_URI)
-              )
-            )
-          )
-        )),
-      XmlAttributeValue.class,
-      classReferenceProvider
+            new TextFilter("useBean"),
+            new NamespaceFilter(XmlUtil.JSP_URI)
+          ), 2
+        )
+      ), getProviderByType(CLASS_REFERENCE_PROVIDER)
     );
+
     RegisterInPsi.referenceProviders(this);
 
-    registerReferenceProvider(
+    registerXmlAttributeValueReferenceProvider(
+      new String[]{"extends"},
       new ScopeFilter(
         new ParentElementFilter(
           new AndFilter(
-            new TextFilter("extends"),
-            new ParentElementFilter(
+            new OrFilter(
               new AndFilter(
-                new OrFilter(
-                  new AndFilter(
-                    new ClassFilter(XmlTag.class),
-                    new TextFilter("directive.page")
-                  ),
-                  new AndFilter(
-                    new ClassFilter(JspDirective.class),
-                    new TextFilter("page")
-                  )
-                ),
-                new NamespaceFilter(XmlUtil.JSP_URI)
+                new ClassFilter(XmlTag.class),
+                new TextFilter("directive.page")
+              ),
+              new AndFilter(
+                new ClassFilter(JspDirective.class),
+                new TextFilter("page")
               )
-            )
-          )
+            ),
+            new NamespaceFilter(XmlUtil.JSP_URI)
+          ),
+          2
         )
-      ),
-      XmlAttributeValue.class, 
-      classReferenceProvider
+      ), getProviderByType(CLASS_REFERENCE_PROVIDER)
     );
 
-    registerReferenceProvider(
+    registerXmlAttributeValueReferenceProvider(
+      new String[]{"type"},
       new ScopeFilter(
         new ParentElementFilter(
           new AndFilter(
-            new TextFilter("type"),
-            new ParentElementFilter(
+            new OrFilter(
               new AndFilter(
-                new OrFilter(
-                  new AndFilter(
-                    new ClassFilter(XmlTag.class),
-                    new TextFilter("directive.attribute")
-                  ),
-                  new AndFilter(
-                    new ClassFilter(JspDirective.class),
-                    new TextFilter("attribute")
-                  )
-                ),
-                new NamespaceFilter(XmlUtil.JSP_URI)
+                new ClassFilter(XmlTag.class),
+                new TextFilter("directive.attribute")
+              ),
+              new AndFilter(
+                new ClassFilter(JspDirective.class),
+                new TextFilter("attribute")
               )
-            )
-          )
+            ),
+            new NamespaceFilter(XmlUtil.JSP_URI)
+          ),
+          2
         )
-      ),
-      XmlAttributeValue.class, 
-      classReferenceProvider
+      ), getProviderByType(CLASS_REFERENCE_PROVIDER)
     );
-    
-    registerReferenceProvider(
+
+    registerXmlAttributeValueReferenceProvider(
+      new String[]{"variable-class"},
       new ScopeFilter(
         new ParentElementFilter(
           new AndFilter(
-            new TextFilter("variable-class"),
-            new ParentElementFilter(
+            new OrFilter(
               new AndFilter(
-                new OrFilter(
-                  new AndFilter(
-                    new ClassFilter(XmlTag.class),
-                    new TextFilter("directive.variable")
-                  ),
-                  new AndFilter(
-                    new ClassFilter(JspDirective.class),
-                    new TextFilter("variable")
-                  )
-                ),
-                new NamespaceFilter(XmlUtil.JSP_URI)
+                new ClassFilter(XmlTag.class),
+                new TextFilter("directive.variable")
+              ),
+              new AndFilter(
+                new ClassFilter(JspDirective.class),
+                new TextFilter("variable")
               )
-            )
-          )
+            ),
+            new NamespaceFilter(XmlUtil.JSP_URI)
+          ),
+          2
         )
-      ),
-      XmlAttributeValue.class, 
-      classReferenceProvider
+      ), getProviderByType(CLASS_REFERENCE_PROVIDER)
     );
-    
-    registerReferenceProvider(
+
+    registerXmlAttributeValueReferenceProvider(
+      new String[] { "import" },
       new ScopeFilter(
         new ParentElementFilter(
           new AndFilter(
-            new TextFilter("import"),
-            new ParentElementFilter(
+            new OrFilter(
               new AndFilter(
-                new OrFilter(
-                  new AndFilter(
-                    new ClassFilter(XmlTag.class),
-                    new TextFilter("directive.page")
-                  ),
-                  new AndFilter(
-                    new ClassFilter(JspDirective.class),
-                    new TextFilter("page")
-                  )
-                ),
-                new NamespaceFilter(XmlUtil.JSP_URI)
+                new ClassFilter(XmlTag.class),
+                new TextFilter("directive.page")
+              ),
+              new AndFilter(
+                new ClassFilter(JspDirective.class),
+                new TextFilter("page")
               )
-            )
-          )
+            ),
+            new NamespaceFilter(XmlUtil.JSP_URI)
+          ),
+          2
         )
       ),
-      XmlAttributeValue.class,
       new JspImportListReferenceProvider()
     );
 
-    final JspxIncludePathReferenceProvider pathReferenceProvider = new JspxIncludePathReferenceProvider();
-    registerReferenceProvider(
+    registerXmlAttributeValueReferenceProvider(
+      new String[]{"errorPage"},
       new ScopeFilter(
-        new AndFilter(
-          new ParentElementFilter(new TextFilter("errorPage")),
-          new ParentElementFilter(
-            new AndFilter(
-              new NamespaceFilter(XmlUtil.JSP_URI),
-              new OrFilter(
-                new AndFilter(
-                  new ClassFilter(JspDirective.class),
-                  new TextFilter("page")
-                ),
-                new AndFilter(
-                  new ClassFilter(XmlTag.class),
-                  new TextFilter("directive.page")
-                ))
-            ), 2
-          )
-        )
-      ),
-      XmlAttributeValue.class,
-      pathReferenceProvider
-    );
-
-    registerReferenceProvider(
-      new ScopeFilter(
-        new AndFilter(
-          new ParentElementFilter(new TextFilter("file")),
-          new ParentElementFilter(
-            new AndFilter(
-              new NamespaceFilter(XmlUtil.JSP_URI),
-              new OrFilter(
-                new AndFilter(
-                  new ClassFilter(JspDirective.class),
-                  new TextFilter("include")
-                ),
-                new AndFilter(
-                  new ClassFilter(XmlTag.class),
-                  new TextFilter("directive.include")
-                ))
-            ), 2
-          )
-        )
-      ),
-      XmlAttributeValue.class, 
-      pathReferenceProvider
-    );
-
-    registerReferenceProvider(
-      new ScopeFilter(
-        new AndFilter(
-          new ParentElementFilter(new TextFilter("value")),
-          new ParentElementFilter(
-            new AndFilter(
-              new NamespaceFilter(XmlUtil.JSTL_CORE_URI),
+        new ParentElementFilter(
+          new AndFilter(
+            new NamespaceFilter(XmlUtil.JSP_URI),
+            new OrFilter(
+              new AndFilter(
+                new ClassFilter(JspDirective.class),
+                new TextFilter("page")
+              ),
               new AndFilter(
                 new ClassFilter(XmlTag.class),
-                new TextFilter("url")
-              )
-            ), 2
-          )
+                new TextFilter("directive.page")
+              ))
+          ), 2
         )
-      ),
-      XmlAttributeValue.class,
-      pathReferenceProvider
+      ), getProviderByType(PATH_REFERENCES_PROVIDER)
     );
 
-    registerReferenceProvider(
+    registerXmlAttributeValueReferenceProvider(
+      new String[]{"file"},
       new ScopeFilter(
-        new AndFilter(
-          new ParentElementFilter(new TextFilter("url")),
-          new ParentElementFilter(
-            new AndFilter(
-              new NamespaceFilter(XmlUtil.JSTL_CORE_URI),
+        new ParentElementFilter(
+          new AndFilter(
+            new NamespaceFilter(XmlUtil.JSP_URI),
+            new OrFilter(
               new AndFilter(
-                new ClassFilter(XmlTag.class),
-                new OrFilter(
-                  new TextFilter("import"),
-                  new TextFilter("redirect")
-                )  
-              )
-            ), 2
-          )
-        )
-      ),
-      XmlAttributeValue.class,
-      pathReferenceProvider
-    );
-    
-    registerReferenceProvider(
-      new ScopeFilter(
-        new AndFilter(
-          new ParentElementFilter(new TextFilter("key")),
-          new ParentElementFilter(
-            new AndFilter(
-              new NamespaceFilter(XmlUtil.JSTL_FORMAT_URI),
-              new AndFilter(
-                new ClassFilter(XmlTag.class),
-                new TextFilter("message")
-              )
-            ), 2
-          )
-        )
-      ),
-      XmlAttributeValue.class,
-      new PropertiesReferenceProvider()
-    );
-
-    registerReferenceProvider(
-      new ScopeFilter(
-        new AndFilter(
-          new ParentElementFilter(new TextFilter("page")),
-          new ParentElementFilter(
-            new AndFilter(
-              new NamespaceFilter(XmlUtil.JSP_URI),
-              new AndFilter(
-                new ClassFilter(XmlTag.class),
+                new ClassFilter(JspDirective.class),
                 new TextFilter("include")
-              )
-            ), 2
-          )
+              ),
+              new AndFilter(
+                new ClassFilter(XmlTag.class),
+                new TextFilter("directive.include")
+              ))
+          ), 2
         )
-      ),
-      XmlAttributeValue.class, 
-      pathReferenceProvider
+      ), getProviderByType(PATH_REFERENCES_PROVIDER)
     );
 
-    registerReferenceProvider(
+    registerXmlAttributeValueReferenceProvider(
+      new String[]{"value"},
       new ScopeFilter(
-        new AndFilter(
-          new ParentElementFilter(new TextFilter("tagdir")),
-          new ParentElementFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new NamespaceFilter(XmlUtil.JSTL_CORE_URI),
             new AndFilter(
-              new NamespaceFilter(XmlUtil.JSP_URI),
-              new AndFilter(
-                new ClassFilter(JspDirective.class),
-                new TextFilter("taglib")
-              )
-            ), 2
-          )
+              new ClassFilter(XmlTag.class),
+              new TextFilter("url")
+            )
+          ), 2
         )
-      ),
-      XmlAttributeValue.class, 
-      pathReferenceProvider
+      ), getProviderByType(PATH_REFERENCES_PROVIDER)
     );
-    
-    registerReferenceProvider(
+
+    registerXmlAttributeValueReferenceProvider(
+      new String[]{"url"},
       new ScopeFilter(
-        new AndFilter(
-          new ParentElementFilter(new TextFilter("uri")),
-          new ParentElementFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new NamespaceFilter(XmlUtil.JSTL_CORE_URI),
             new AndFilter(
-              new NamespaceFilter(XmlUtil.JSP_URI),
-              new AndFilter(
-                new ClassFilter(JspDirective.class),
-                new TextFilter("taglib")
+              new ClassFilter(XmlTag.class),
+              new OrFilter(
+                new TextFilter("import"),
+                new TextFilter("redirect")
               )
-            ), 2
-          )
+            )
+          ), 2
+        )
+      ), getProviderByType(PATH_REFERENCES_PROVIDER)
+    );
+
+    registerXmlAttributeValueReferenceProvider(
+      new String[]{"key"},
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new OrFilter(
+              new NamespaceFilter(XmlUtil.JSTL_FORMAT_URI),
+              new NamespaceFilter(XmlUtil.STRUTS_BEAN_URI)
+            ),
+            new AndFilter(
+              new ClassFilter(XmlTag.class),
+              new TextFilter("message")
+            )
+          ), 2
+        )
+      ), getProviderByType(PROPERTY_FILE_KEY_PROVIDER)
+    );
+
+    registerXmlAttributeValueReferenceProvider(
+      new String[]{"code"},
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new NamespaceFilter(XmlUtil.SPRING_URI),
+            new AndFilter(
+              new ClassFilter(XmlTag.class),
+              new TextFilter("message", "theme")
+            )
+          ), 2
+        )
+      ), getProviderByType(PROPERTY_FILE_KEY_PROVIDER)
+    );
+
+    registerXmlAttributeValueReferenceProvider(
+      new String[]{"page"},
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new NamespaceFilter(XmlUtil.JSP_URI),
+            new AndFilter(
+              new ClassFilter(XmlTag.class),
+              new TextFilter("include")
+            )
+          ), 2
+        )
+      ), getProviderByType(PATH_REFERENCES_PROVIDER)
+    );
+
+    registerXmlAttributeValueReferenceProvider(
+      new String[]{"tagdir"},
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new NamespaceFilter(XmlUtil.JSP_URI),
+            new AndFilter(
+              new ClassFilter(JspDirective.class),
+              new TextFilter("taglib")
+            )
+          ), 2
+        )
+      ), getProviderByType(PATH_REFERENCES_PROVIDER)
+    );
+
+    registerXmlAttributeValueReferenceProvider(
+      new String[] { "uri" },
+      new ScopeFilter(
+        new ParentElementFilter(
+          new AndFilter(
+            new NamespaceFilter(XmlUtil.JSP_URI),
+            new AndFilter(
+              new ClassFilter(JspDirective.class),
+              new TextFilter("taglib")
+            )
+          ), 2
         )
       ),
-      XmlAttributeValue.class, 
       new JspUriReferenceProvider()
     );
-    
-    //registerReferenceProvider(new ScopeFilter(new ParentElementFilter(new AndFilter(new TextFilter("target"),
-    //                                                                                new ParentElementFilter(new AndFilter(
-    //                                                                                  new NamespaceFilter(XmlUtil.ANT_URI),
-    //                                                                                  new TextFilter("antcall")))))),
-    //                          XmlAttributeValue.class, new AntTargetReferenceProvider());
-    registerReferenceProvider(new NotFilter(new ParentElementFilter(new NamespaceFilter(XmlUtil.ANT_URI), 2)),
-                              XmlAttributeValue.class, new JavaClassListReferenceProvider());
+
+    final JavaClassListReferenceProvider classListProvider = new JavaClassListReferenceProvider();
+    registerXmlAttributeValueReferenceProvider(
+      null,
+      new NotFilter(new ParentElementFilter(new NamespaceFilter(XmlUtil.ANT_URI), 2)),
+      classListProvider
+    );
+
     registerReferenceProvider(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS), XmlToken.class,
-                              new JavaClassListReferenceProvider());
+                              classListProvider);
 
     //registerReferenceProvider(PsiPlainTextFile.class, new JavaClassListReferenceProvider());
 
     HtmlUtil.HtmlReferenceProvider provider = new HtmlUtil.HtmlReferenceProvider();
-    registerReferenceProvider(provider.getFilter(), XmlAttributeValue.class, provider);
+    registerXmlAttributeValueReferenceProvider(
+      null,
+      provider.getFilter(),
+      provider
+    );
 
     final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider();
     registerReferenceProvider(PsiLiteralExpression.class, filePathReferenceProvider);
   }
 
   public void registerReferenceProvider(ElementFilter elementFilter, Class scope, PsiReferenceProvider provider) {
-    final ProviderBinding binding = new ProviderBinding(elementFilter, scope);
+    if (scope == XmlAttributeValue.class) {
+      registerXmlAttributeValueReferenceProvider(null, elementFilter, provider);
+      return;
+    }
+
+    final SimpleProviderBinding binding = new SimpleProviderBinding(elementFilter, scope);
     binding.registerProvider(provider);
     myBindings.add(binding);
+  }
+
+  public void registerXmlAttributeValueReferenceProvider(String[] attributeNames, ElementFilter elementFilter, PsiReferenceProvider provider) {
+    XmlAttributeValueProviderBinding attributeValueProviderBinding = null;
+    for(ProviderBinding binding:myBindings) {
+      if (binding instanceof XmlAttributeValueProviderBinding) {
+        attributeValueProviderBinding = (XmlAttributeValueProviderBinding)binding;
+        break;
+      }
+    }
+
+    if (attributeValueProviderBinding == null) {
+      attributeValueProviderBinding = new XmlAttributeValueProviderBinding();
+      myBindings.add(attributeValueProviderBinding);
+    }
+
+    attributeValueProviderBinding.registerProvider(
+      attributeNames,
+      elementFilter,
+      provider
+    );
+  }
+
+  public PsiReferenceProvider getProviderByType(ReferenceProviderType type) {
+    return myReferenceTypeToProviderMap.get(type);
   }
 
   public void registerReferenceProvider(Class scope, PsiReferenceProvider provider) {
-    final ProviderBinding binding = new ProviderBinding(scope);
-    binding.registerProvider(provider);
-    myBindings.add(binding);
+    registerReferenceProvider(null, scope, provider);
   }
 
   public PsiReferenceProvider[] getProvidersByElement(PsiElement element) {
-    final List<PsiReferenceProvider> ret = new ArrayList<PsiReferenceProvider>();
+    PsiReferenceProvider[] ret = PsiReferenceProvider.EMPTY_ARRAY;
     PsiElement current;
     do {
       current = element;
 
       for (final ProviderBinding binding : myBindings) {
-        if (binding.isAcceptable(current)) {
-          ret.addAll(Arrays.asList(binding.getProviders()));
+        final PsiReferenceProvider[] acceptableProviders = binding.getAcceptableProviders(current);
+        if (acceptableProviders != null && acceptableProviders.length > 0) {
+          ret = ArrayUtil.mergeArrays(ret, acceptableProviders, PsiReferenceProvider.class);
         }
       }
       element = ResolveUtil.getContext(element);
     }
     while (!isScopeFinal(current.getClass()));
 
-    return ret.toArray(new PsiReferenceProvider[ret.size()]);
+    return ret;
   }
 
   public <T extends PsiElement> ElementManipulator<T> getManipulator(T element) {

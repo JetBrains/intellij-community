@@ -12,6 +12,8 @@ import com.intellij.psi.scope.PsiScopeProcessor;
  * To change this template use Options | File Templates.
  */
 public interface PsiReferenceProvider{
+  PsiReferenceProvider[] EMPTY_ARRAY = new PsiReferenceProvider[0];
+
   PsiReference[] getReferencesByElement(PsiElement element);
   /**
    * @deprecated
