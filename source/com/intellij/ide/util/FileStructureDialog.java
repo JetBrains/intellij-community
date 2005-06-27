@@ -154,7 +154,7 @@ public class FileStructureDialog extends DialogWrapper {
         return result;
       }
                                 });
-    //myCommanderPanel.setTitlePanelVisible(false);
+    myCommanderPanel.setTitlePanelVisible(false);
 
     new AnAction() {
       public void actionPerformed(AnActionEvent e) {

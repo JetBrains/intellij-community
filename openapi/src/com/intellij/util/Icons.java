@@ -60,6 +60,7 @@ public abstract class Icons {
   public static final Icon VARIABLE_ICON = IconLoader.getIcon("/nodes/variable.png");
   public static final Icon XML_TAG_ICON = IconLoader.getIcon("/nodes/tag.png");
   public static final Icon ANT_TARGET_ICON = IconLoader.getIcon("/ant/target.png");
+  public static final Icon ANT_META_TARGET_ICON = IconLoader.getIcon("/ant/metaTarget.png");
   public static final Icon LIBRARY_ICON = IconLoader.getIcon("/nodes/ppLib.png");
   public static final Icon WEB_ICON = IconLoader.getIcon("/nodes/ppWeb.png");
   public static final Icon JAR_ICON = IconLoader.getIcon("/nodes/ppJar.png");
