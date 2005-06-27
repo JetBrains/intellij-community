@@ -45,12 +45,12 @@ public class PinActiveTabAction extends ToggleAction {
     VirtualFile file = getFile(context);
     if(file != null){
       // 1. Check editor
-      final Project project = (Project)context.getData(DataConstants.PROJECT);
-      final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-      EditorWindow editorWindow = (EditorWindow)context.getData(DataConstantsEx.EDITOR_WINDOW);
-      if (editorWindow == null){
-        editorWindow = fileEditorManager.getCurrentWindow();
+      EditorWindow editorWindow = getEditorWindow(context);
+      if (!editorWindow.isFileOpen(file)) {
+        file = editorWindow.getSelectedFile();
+        if (file == null) return false;
       }
+
       return editorWindow.isFilePinned(file);
     }
     else{
@@ -70,18 +70,28 @@ public class PinActiveTabAction extends ToggleAction {
     VirtualFile file = getFile(context);
     if(file != null){
       // 1. Check editor
-      Project project = (Project)context.getData(DataConstants.PROJECT);
-      final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-      EditorWindow editorWindow = (EditorWindow)context.getData(DataConstantsEx.EDITOR_WINDOW);
-      if (editorWindow == null){
-        editorWindow = fileEditorManager.getCurrentWindow();
+      EditorWindow editorWindow = getEditorWindow(context);
+      if (!editorWindow.isFileOpen(file)) {
+        file = editorWindow.getSelectedFile();
+        if (file == null) return;
       }
+
       editorWindow.setFilePinned(file, state);
     }
     else{
       Content content = getContent(context); // at this point content cannot be null
       content.setPinned(state);
     }
+  }
+
+  private EditorWindow getEditorWindow(DataContext context) {
+    final Project project = (Project) context.getData(DataConstants.PROJECT);
+    final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
+    EditorWindow editorWindow = (EditorWindow) context.getData(DataConstantsEx.EDITOR_WINDOW);
+    if (editorWindow == null) {
+      editorWindow = fileEditorManager.getCurrentWindow();
+    }
+    return editorWindow;
   }
 
   public void update(AnActionEvent e){
