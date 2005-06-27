@@ -2,6 +2,7 @@ package com.siyeh.ig.imports;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +30,13 @@ public class OnDemandImportInspection extends ClassInspection {
 
         public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
-            if (!(aClass.getParent() instanceof PsiJavaFile)) {
+            final PsiElement parent = aClass.getParent();
+            if (!(parent instanceof PsiJavaFile)) {
                 return;
             }
-            final PsiJavaFile file = (PsiJavaFile) aClass.getParent();
-            if(file == null)
+            final PsiJavaFile file = (PsiJavaFile) parent;
+
+            if(aClass.getContainingFile() instanceof JspFile)
             {
                 return;
             }

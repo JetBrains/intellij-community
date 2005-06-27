@@ -2,6 +2,7 @@ package com.siyeh.ig.imports;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -36,6 +37,9 @@ public class UnusedImportInspection extends ClassInspection {
 
         public void visitClass(@NotNull PsiClass aClass) {
             if (!(aClass.getParent() instanceof PsiJavaFile)) {
+                return;
+            }
+            if(aClass.getContainingFile() instanceof JspFile){
                 return;
             }
             final PsiJavaFile file = (PsiJavaFile) aClass.getParent();
