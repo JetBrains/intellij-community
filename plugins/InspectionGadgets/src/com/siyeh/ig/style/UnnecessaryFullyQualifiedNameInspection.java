@@ -20,8 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public  class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
-
+public class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
     @SuppressWarnings("PublicField")
     public boolean m_ignoreJavadoc = false;
 
@@ -37,9 +36,10 @@ public  class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
     }
 
     public JComponent createOptionsPanel(){
-        return new SingleCheckboxOptionsPanel("Ignore fully qualified names in javadoc",
-                                              this,
-                                              "m_ignoreJavadoc");
+        return new SingleCheckboxOptionsPanel(
+                "Ignore fully qualified names in javadoc",
+                this,
+                "m_ignoreJavadoc");
     }
 
     public String buildErrorString(PsiElement location){
@@ -61,7 +61,7 @@ public  class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
+                throws IncorrectOperationException{
             final CodeStyleSettingsManager settingsManager =
                     CodeStyleSettingsManager.getInstance(project);
             final CodeStyleSettings settings =
@@ -73,7 +73,8 @@ public  class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
                 settings.USE_FQ_CLASS_NAMES_IN_JAVADOC = false;
                 settings.USE_FQ_CLASS_NAMES = false;
                 final PsiJavaCodeReferenceElement reference =
-                        (PsiJavaCodeReferenceElement) descriptor.getPsiElement();
+                        (PsiJavaCodeReferenceElement) descriptor
+                                .getPsiElement();
                 final PsiManager psiManager = reference.getManager();
                 final CodeStyleManager styleManager =
                         psiManager.getCodeStyleManager();
@@ -100,7 +101,7 @@ public  class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
         }
 
         public void visitReferenceElement(PsiJavaCodeReferenceElement element){
-
+            super.visitReferenceElement(element);
             final String text = element.getText();
             if(text.indexOf((int) '.') < 0){
                 return;
@@ -119,8 +120,7 @@ public  class UnnecessaryFullyQualifiedNameInspection extends ClassInspection{
             }
             final PsiReferenceParameterList typeParameters =
                     element.getParameterList();
-            if(typeParameters == null)
-            {
+            if(typeParameters == null){
                 return;
             }
             typeParameters.accept(this);
