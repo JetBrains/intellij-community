@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,6 +27,7 @@ public abstract class AbstractTreeNode<Value> extends NodeDescriptor implements 
     setValue(value);
   }
 
+  @NotNull
   public abstract Collection<AbstractTreeNode> getChildren();
 
   public final boolean update() {

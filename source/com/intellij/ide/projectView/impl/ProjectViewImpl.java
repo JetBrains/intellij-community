@@ -15,6 +15,7 @@ import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.projectView.ResourceBundleNode;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.application.ModalityState;
@@ -1280,7 +1281,15 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   public abstract static class GroupByTypeComparator implements Comparator<NodeDescriptor> {
-    public int compare(final NodeDescriptor o1, final NodeDescriptor o2) {
+    public int compare(NodeDescriptor o1, NodeDescriptor o2) {
+      if (!isSortByType() && o1 instanceof ResourceBundleNode) {
+        o1 = ((ResourceBundleNode)o1).getChildren().iterator().next();
+        o1.update();
+      }
+      if (!isSortByType() && o2 instanceof ResourceBundleNode) {
+        o2 = ((ResourceBundleNode)o2).getChildren().iterator().next();
+        o2.update();
+      }
       if (o1 instanceof PsiDirectoryNode != o2 instanceof PsiDirectoryNode) {
         return o1 instanceof PsiDirectoryNode ? -1 : 1;
       }
@@ -1301,8 +1310,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       else if (isSortByType()
                && o1 instanceof AbstractTreeNode
                && o2 instanceof AbstractTreeNode
-               && (o1 instanceof PsiFileNode || ((AbstractTreeNode)o1).getValue() instanceof ResourceBundle )
-               && (o2 instanceof PsiFileNode || ((AbstractTreeNode)o2).getValue() instanceof ResourceBundle )) {
+               && (o1 instanceof PsiFileNode || ((AbstractTreeNode)o1).getValue() instanceof ResourceBundle)
+               && (o2 instanceof PsiFileNode || ((AbstractTreeNode)o2).getValue() instanceof ResourceBundle)) {
         String type1 = o1 instanceof PsiFileNode ? extension(((PsiFileNode)o1).getValue()) : PropertiesFileType.FILE_TYPE.getDefaultExtension();
         String type2 = o2 instanceof PsiFileNode ? extension(((PsiFileNode)o2).getValue()) : PropertiesFileType.FILE_TYPE.getDefaultExtension();
         if (type1 != null && type2 != null) {
