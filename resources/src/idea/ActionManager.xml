@@ -460,6 +460,7 @@
         <action id="ReplaceConstructorWithFactory" class="com.intellij.refactoring.actions.ReplaceConstructorWithFactoryAction" text="Replace Constructor with F_actory Method..." description="Create a static factory method and use it instead of a constructor"/>
         <separator/>
         <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction" text="Generify..." description="Convert your code to use generic types"/>
+        <action id="Migrate" class="com.intellij.refactoring.actions.MigrateAction" text="Mi_grate..." description="Open migration dialog"/>
         <action id="Type Migration" internal="true" class="com.intellij.refactoring.actions.TypeMigrationAction" text="Type Migration..." description="Migrate one type to another"/>
         <separator/>
         <action id="ExtractInclude" class="com.intellij.refactoring.actions.ExtractIncludeAction" text="Extract Include File..." description="Turn the selected code fragment into included file"/>
@@ -523,8 +524,6 @@
           <separator/>
           <group id="PlaySavedMacroActions" class="com.intellij.ide.actionMacro.actions.MacrosGroup"/>
         </group>
-        <separator/>
-        <action id="Migrate" class="com.intellij.refactoring.actions.MigrateAction" text="Mi_grate..." description="Open migration dialog"/>
         <separator/>
         <group>
           <action id="ValidateXml" class="com.intellij.xml.actions.ValidateXmlAction" text="_Validate" description="Validate the current xml file"/>
