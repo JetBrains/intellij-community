@@ -91,7 +91,8 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
     CharSequence text = document.getCharsSequence();
     int oldStartOffset = e.getOffset();
 
-    int startIndex = Math.max(0, mySegments.findSegmentIndex(oldStartOffset) - 2);
+    final int oldStartIndex = Math.max(0, mySegments.findSegmentIndex(oldStartOffset) - 2);
+    int startIndex = oldStartIndex;
 
     int data;
     do {
@@ -113,6 +114,8 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
     int lastTokenStart = -1;
 
     while (myLexer.getTokenType() != null) {
+      if (startIndex >= oldStartIndex) break;
+
       int tokenStart = myLexer.getTokenStart();
       if (tokenStart == lastTokenStart) {
         throw new IllegalStateException("Error while updating lexer: " + e + " document text: " + e.getDocument().getText());
@@ -122,8 +125,8 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
       int lexerState = myLexer.getState();
       data = packData(myLexer.getTokenType(), lexerState);
       if (mySegments.getSegmentStart(startIndex) != tokenStart ||
-        mySegments.getSegmentEnd(startIndex) != tokenEnd ||
-        mySegments.getSegmentData(startIndex) != data) {
+          mySegments.getSegmentEnd(startIndex) != tokenEnd ||
+          mySegments.getSegmentData(startIndex) != data) {
         break;
       }
       startIndex++;
