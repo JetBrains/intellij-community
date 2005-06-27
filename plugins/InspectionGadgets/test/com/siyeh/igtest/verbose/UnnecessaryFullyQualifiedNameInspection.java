@@ -2,7 +2,7 @@ package com.siyeh.igtest.verbose;
 
 import java.io.PrintStream;
 import java.util.Properties;
-
+       
 /**
  * {@link java.lang.String}
  */
