@@ -3,6 +3,8 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.ide.highlighter.*;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.lang.Language;
+import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
@@ -21,8 +23,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.UniqueFileNamesProvider;
 import com.intellij.util.containers.HashSet;
-import com.intellij.lang.Language;
-import com.intellij.lang.properties.PropertiesFileType;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Document;
@@ -55,6 +55,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final EventDispatcher<FileTypeListener> myDispatcher = EventDispatcher.create(FileTypeListener.class);
   private final THashMap<FileType, SyntaxTable> myDefaultTables = new THashMap<FileType, SyntaxTable>();
   private final Map<String, FileType> myInitialAssociations = new HashMap<String, FileType>();
+  private Map<String, String> myUnresolvedMappings = new HashMap<String, String>();
 
   // -------------------------------------------------------------------------
   // Constructor
@@ -345,6 +346,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
             }
             associateExtension(type, ext, false);
           }
+          else {
+            // Not yet loaded plugin could add the file type later.
+            myUnresolvedMappings.put(ext, name);
+          }
         }
 
         List removedMappings = e.getChildren("removed_mapping");
@@ -456,7 +461,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
     registerFileTypeWithoutNotification(StdFileTypes.JSP = new NewJspFileType(), parse("xjsp;jsp;jsf;jspf;tag;tagf"));
     registerFileTypeWithoutNotification(StdFileTypes.JSPX = new JspxFileType(), parse ("jspx;tagx"));
-    registerFileTypeWithoutNotification(StdFileTypes.PLAIN_TEXT = new PlainTextFileType(), parse("txt;sh;bat;properties;cmd;policy;log;cgi;pl;MF;sql"));
+    registerFileTypeWithoutNotification(StdFileTypes.PLAIN_TEXT = new PlainTextFileType(), parse("txt;sh;bat;cmd;policy;log;cgi;pl;MF;sql"));
     registerFileTypeWithoutNotification(StdFileTypes.XML = new XmlFileType(), parse("xml;xsd;tld;xsl;jnlp;wsdl;hs;jhm"));
     registerFileTypeWithoutNotification(StdFileTypes.DTD = new DTDFileType(), parse("dtd;ent;mod"));
     registerFileTypeWithoutNotification(StdFileTypes.GUI_DESIGNER_FORM = new GuiFormFileType(), new String[] {"form"});
@@ -490,6 +495,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
     if (fileType instanceof FakeFileType) {
       mySpecialFileTypes.add((FakeFileType)fileType);
+    }
+
+    // Resolve unresolved mappings initialized before certain plugin initialized.
+    for (String ext : new HashSet<String>(myUnresolvedMappings.keySet())) {
+      String name = myUnresolvedMappings.get(ext);
+      if (Comparing.equal(name, fileType.getName())) {
+        myExtToFileTypeMap.put(ext, fileType);
+        myUnresolvedMappings.remove(ext);
+      }
     }
   }
 
@@ -556,7 +570,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
 
     FileType type = getFileTypeByName(fileTypeName);
-    
+
     if (!isDefaults) {
       if (type == StdFileTypes.XML) {
         extensionsStr = removeExtension(extensionsStr,"dtd");
@@ -567,7 +581,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         extensionsStr = removeExtension(extensionsStr,"css");
       }
     }
-    
+
     String[] exts = parse(extensionsStr);
     if (type != null) {
       if (extensionsStr != null) {
@@ -603,7 +617,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       if (fileTypeName != null) ft.setName(fileTypeName);
     }
 
-    if (isDefaults) {                                                                     
+    if (isDefaults) {
       myDefaultTypes.add(type);
       if (table != null) {
         myDefaultTables.put(type, table);
