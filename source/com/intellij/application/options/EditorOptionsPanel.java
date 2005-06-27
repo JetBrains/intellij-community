@@ -56,8 +56,7 @@ public class EditorOptionsPanel {
   private JCheckBox myCbVirtualSpace;
   private JCheckBox myCbCaretInsideTabs;
 
-  private JTextField myEditorTabLimitField;
-  private JTextField myRecentFilesLimitField;
+
 
 
   private JCheckBox myCbHighlightScope;
@@ -164,8 +163,7 @@ public class EditorOptionsPanel {
 
     // Limits
 
-    myEditorTabLimitField.setText(Integer.toString(uiSettings.EDITOR_TAB_LIMIT));
-    myRecentFilesLimitField.setText(Integer.toString(uiSettings.RECENT_FILES_LIMIT));
+
     myClipboardContentLimitTextField.setText(Integer.toString(uiSettings.MAX_CLIPBOARD_CONTENTS));
     
 
@@ -302,26 +300,7 @@ public class EditorOptionsPanel {
 
     // Limits
 
-    String temp = myEditorTabLimitField.getText();
-    if(temp.trim().length() > 0){
-      try {
-        int newEditorTabLimit = new Integer(temp).intValue();
-        if(newEditorTabLimit>0&&newEditorTabLimit!=uiSettings.EDITOR_TAB_LIMIT){
-          uiSettings.EDITOR_TAB_LIMIT=newEditorTabLimit;
-          uiSettingsChanged = true;
-        }
-      }catch (NumberFormatException ignored){}
-    }
-    temp=myRecentFilesLimitField.getText();
-    if(temp.trim().length() > 0){
-      try {
-        int newRecentFilesLimit=new Integer(temp).intValue();
-        if(newRecentFilesLimit>0&&uiSettings.RECENT_FILES_LIMIT!=newRecentFilesLimit){
-          uiSettings.RECENT_FILES_LIMIT=newRecentFilesLimit;
-          uiSettingsChanged = true;
-        }
-      }catch (NumberFormatException ignored){}
-    }
+
 
     int maxClipboardContents = getMaxClipboardContents();
     if (uiSettings.MAX_CLIPBOARD_CONTENTS != maxClipboardContents) {
@@ -443,8 +422,7 @@ public class EditorOptionsPanel {
     isModified |= isModified(myCbVirtualPageAtBottom, editorSettings.isAdditionalPageAtBottom());
 
     // Limits
-    isModified |= isModified(myEditorTabLimitField, UISettings.getInstance().EDITOR_TAB_LIMIT);
-    isModified |= isModified(myRecentFilesLimitField, UISettings.getInstance().RECENT_FILES_LIMIT);
+
 
     isModified |= getMaxClipboardContents() != uiSettings.MAX_CLIPBOARD_CONTENTS;
 

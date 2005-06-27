@@ -208,6 +208,31 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     myComponent.updateCombo();
     settings.CLOSE_NON_MODIFIED_FILES_FIRST = myComponent.myCloseNonModifiedFilesFirstRadio.isSelected();
     settings.ACTIVATE_MRU_EDITOR_ON_CLOSE = myComponent.myActivateMRUEditorOnCloseRadio.isSelected();
+
+    temp = myComponent.myEditorTabLimitField.getText();
+    boolean uiSettingsChanged = false;
+    if(temp.trim().length() > 0){
+      try {
+        int newEditorTabLimit = new Integer(temp).intValue();
+        if(newEditorTabLimit>0&&newEditorTabLimit!=settings.EDITOR_TAB_LIMIT){
+          settings.EDITOR_TAB_LIMIT=newEditorTabLimit;
+          uiSettingsChanged = true;
+        }
+      }catch (NumberFormatException ignored){}
+    }
+    temp=myComponent.myRecentFilesLimitField.getText();
+    if(temp.trim().length() > 0){
+      try {
+        int newRecentFilesLimit=new Integer(temp).intValue();
+        if(newRecentFilesLimit>0&&settings.RECENT_FILES_LIMIT!=newRecentFilesLimit){
+          settings.RECENT_FILES_LIMIT=newRecentFilesLimit;
+          uiSettingsChanged = true;
+        }
+      }catch (NumberFormatException ignored){}
+    }
+    if(uiSettingsChanged){
+      settings.fireUISettingsChanged();
+    }
   }
 
   public void reset() {
@@ -258,6 +283,9 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     else {
       myComponent.myActivateLeftEditorOnCloseRadio.setSelected(true);
     }
+
+    myComponent.myEditorTabLimitField.setText(Integer.toString(settings.EDITOR_TAB_LIMIT));
+    myComponent.myRecentFilesLimitField.setText(Integer.toString(settings.RECENT_FILES_LIMIT));
   }
   
   public boolean isModified() {
@@ -300,7 +328,20 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     }
     isModified |= isModified(myComponent.myCloseNonModifiedFilesFirstRadio, settings.CLOSE_NON_MODIFIED_FILES_FIRST);
     isModified |= isModified(myComponent.myActivateMRUEditorOnCloseRadio, settings.ACTIVATE_MRU_EDITOR_ON_CLOSE);
+
+    isModified |= isModified(myComponent.myEditorTabLimitField, UISettings.getInstance().EDITOR_TAB_LIMIT);
+    isModified |= isModified(myComponent.myRecentFilesLimitField, UISettings.getInstance().RECENT_FILES_LIMIT);
     return isModified;
+  }
+
+  private static boolean isModified(JTextField textField, int value) {
+    try {
+      int fieldValue = Integer.parseInt(textField.getText().trim());
+      return fieldValue != value;
+    }
+    catch(NumberFormatException e) {
+      return false;
+    }
   }
 
   private static boolean isModified(JToggleButton checkBox, boolean value) {
@@ -392,6 +433,9 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     private JRadioButton myCloseLRUFilesRadio;
     private JRadioButton myActivateMRUEditorOnCloseRadio;
     private JRadioButton myActivateLeftEditorOnCloseRadio;
+
+    private JTextField myEditorTabLimitField;
+    private JTextField myRecentFilesLimitField;
 
     public MyComponent() {
       ActionListener updater = new ActionListener() {

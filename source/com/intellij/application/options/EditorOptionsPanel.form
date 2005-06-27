@@ -1,35 +1,192 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.application.options.EditorOptionsPanel">
-  <grid id="650a0" binding="myPanel" row-count="4" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="650a0" binding="myPanel" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="52" y="18" width="688" height="578"/>
+      <xy x="52" y="18" width="636" height="540"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="860df" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="860df" row-count="5" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="480" y="233" width="208" height="298"/>
+          <xy x="480" y="233" width="156" height="287"/>
           <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
+          <grid id="efd81" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="5" bottom="5" right="5"/>
+            <constraints>
+              <xy x="0" y="108" width="156" height="80"/>
+              <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="etched" title="Paste"/>
+            <children>
+              <component id="630f6" class="javax.swing.JLabel">
+                <constraints>
+                  <xy x="11" y="24" width="53" height="14"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Reformat:"/>
+                </properties>
+              </component>
+              <component id="4eeb7" class="javax.swing.JComboBox" binding="myReformatOnPasteCombo">
+                <constraints>
+                  <xy x="96" y="20" width="49" height="22"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="18331" class="javax.swing.JLabel">
+                <constraints>
+                  <xy x="11" y="51" width="75" height="14"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Insert imports:"/>
+                </properties>
+              </component>
+              <component id="1688" class="javax.swing.JComboBox" binding="mySmartPasteCombo">
+                <constraints>
+                  <xy x="96" y="47" width="49" height="22"/>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
+                </constraints>
+                <properties/>
+              </component>
+            </children>
+          </grid>
+          <grid id="200c2" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="5" bottom="0" right="10"/>
+            <constraints>
+              <xy x="0" y="0" width="156" height="103"/>
+              <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="etched" title="Imports"/>
+            <children>
+              <component id="5b608" class="javax.swing.JCheckBox" binding="myCbAddUnabmigiousImports">
+                <constraints>
+                  <xy x="11" y="61" width="129" height="36"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="&lt;html&gt;Add unambiguous imports on the fly&lt;/html&gt;"/>
+                </properties>
+              </component>
+              <component id="b9c63" class="javax.swing.JCheckBox" binding="myCbOptimizeImports">
+                <constraints>
+                  <xy x="11" y="20" width="129" height="36"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="&lt;html&gt;Optimize imports on the fly&lt;/html&gt;"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <component id="498f1" class="javax.swing.JLabel">
+            <constraints>
+              <xy x="0" y="193" width="98" height="42"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="9" fill="1"/>
+            </constraints>
+            <properties>
+              <text value="&lt;html&gt;Maximum number&lt;br&gt; of contents to keep&lt;br&gt; in clipboard:&lt;/html&gt;"/>
+            </properties>
+          </component>
+          <component id="25b75" class="javax.swing.JTextField" binding="myClipboardContentLimitTextField">
+            <constraints>
+              <xy x="108" y="193" width="35" height="20"/>
+              <grid row="2" column="1" row-span="3" col-span="1" vsize-policy="0" hsize-policy="2" anchor="9" fill="0">
+                <preferred-size width="35" height="-1"/>
+              </grid>
+            </constraints>
+            <properties>
+              <text value="5"/>
+            </properties>
+          </component>
+          <component id="301cb" class="javax.swing.JLabel">
+            <constraints>
+              <xy x="0" y="243" width="143" height="14"/>
+              <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Strip trailing spaces on Save:"/>
+            </properties>
+          </component>
+          <component id="35690" class="javax.swing.JComboBox" binding="myStripTrailingSpacesCombo">
+            <constraints>
+              <xy x="0" y="265" width="156" height="22"/>
+              <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
+            </constraints>
+            <properties/>
+          </component>
+        </children>
+      </grid>
+      <grid id="adb3f" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="234" y="233" width="236" height="287"/>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="8dc1a" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="0" y="127" width="236" height="160"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="etched" title="Advanced mouse usages"/>
+            <children>
+              <component id="34803" class="javax.swing.JCheckBox" binding="myCbEnableDnD">
+                <constraints>
+                  <xy x="6" y="20" width="127" height="36"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="&lt;html&gt;Enable Drag'n'Drop&lt;br&gt;functionality in editor&lt;/html&gt;"/>
+                </properties>
+              </component>
+              <component id="d0105" class="javax.swing.JCheckBox" binding="myCbEnableWheelFontChange">
+                <constraints>
+                  <xy x="6" y="62" width="147" height="36"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="&lt;html&gt;Enable Ctrl+MouseWheel&lt;br&gt;changes font size&lt;/html&gt;"/>
+                </properties>
+              </component>
+              <component id="18220" class="javax.swing.JCheckBox" binding="myCbHonorCamelHumpsWhenSelectingByClicking">
+                <constraints>
+                  <xy x="6" y="104" width="169" height="50"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="&lt;html&gt;&lt;body&gt;Honor &quot;CamelHumps&quot;&lt;br&gt; words settings&lt;br&gt;when selecting on double click&lt;/body&gt;&lt;/html&gt;"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
           <grid id="426b1" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="5" bottom="5" right="5"/>
             <constraints>
-              <xy x="0" y="94" width="208" height="119"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
+              <xy x="0" y="0" width="236" height="122"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
             </constraints>
             <properties/>
             <border type="etched" title="Properties Files"/>
             <children>
               <component id="42260" class="javax.swing.JComboBox" binding="myDefaultPropertiesFilesCharset">
                 <constraints>
-                  <xy x="31" y="86" width="166" height="22"/>
+                  <xy x="31" y="89" width="194" height="22"/>
                   <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
                 </constraints>
                 <properties/>
@@ -46,7 +203,7 @@
               <grid id="f4424" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="6" bottom="0" right="0"/>
                 <constraints>
-                  <xy x="11" y="61" width="186" height="20"/>
+                  <xy x="11" y="61" width="214" height="23"/>
                   <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
                 </constraints>
                 <properties/>
@@ -54,7 +211,7 @@
                 <children>
                   <component id="119fb" class="javax.swing.JLabel">
                     <constraints>
-                      <xy x="6" y="3" width="180" height="14"/>
+                      <xy x="6" y="4" width="180" height="14"/>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                     </constraints>
                     <properties>
@@ -66,313 +223,12 @@
               </grid>
             </children>
           </grid>
-          <grid id="efd81" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="5" bottom="5" right="5"/>
-            <constraints>
-              <xy x="0" y="218" width="208" height="80"/>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
-            </constraints>
-            <properties/>
-            <border type="etched" title="Paste"/>
-            <children>
-              <component id="630f6" class="javax.swing.JLabel">
-                <constraints>
-                  <xy x="11" y="24" width="53" height="14"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Reformat:"/>
-                </properties>
-              </component>
-              <component id="4eeb7" class="javax.swing.JComboBox" binding="myReformatOnPasteCombo">
-                <constraints>
-                  <xy x="96" y="20" width="101" height="22"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
-                </constraints>
-                <properties/>
-              </component>
-              <component id="18331" class="javax.swing.JLabel">
-                <constraints>
-                  <xy x="11" y="51" width="75" height="14"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Insert imports:"/>
-                </properties>
-              </component>
-              <component id="1688" class="javax.swing.JComboBox" binding="mySmartPasteCombo">
-                <constraints>
-                  <xy x="96" y="47" width="101" height="22"/>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
-                </constraints>
-                <properties/>
-              </component>
-            </children>
-          </grid>
-          <grid id="200c2" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="5" bottom="0" right="10"/>
-            <constraints>
-              <xy x="0" y="0" width="208" height="89"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
-            </constraints>
-            <properties/>
-            <border type="etched" title="Imports"/>
-            <children>
-              <component id="5b608" class="javax.swing.JCheckBox" binding="myCbAddUnabmigiousImports">
-                <constraints>
-                  <xy x="11" y="47" width="181" height="36"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="&lt;html&gt;Add unambiguous imports on the fly&lt;/html&gt;"/>
-                </properties>
-              </component>
-              <component id="b9c63" class="javax.swing.JCheckBox" binding="myCbOptimizeImports">
-                <constraints>
-                  <xy x="11" y="20" width="154" height="22"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="&lt;html&gt;Optimize imports on the fly&lt;/html&gt;"/>
-                </properties>
-              </component>
-            </children>
-          </grid>
-        </children>
-      </grid>
-      <grid id="9795c" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
-        <constraints>
-          <xy x="0" y="233" width="224" height="325"/>
-          <grid row="1" column="0" row-span="2" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children>
-          <grid id="58a7a" row-count="8" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
-            <constraints>
-              <xy x="0" y="0" width="224" height="325"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="3"/>
-            </constraints>
-            <properties/>
-            <border type="etched" title="Display"/>
-            <children>
-              <component id="2b4c4" class="javax.swing.JCheckBox" binding="myCbModifiedTabsMarkedWithAsterisk">
-                <constraints>
-                  <xy x="6" y="25" width="179" height="22"/>
-                  <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Mark modified tabs with asterisk"/>
-                </properties>
-              </component>
-              <component id="718a" class="javax.swing.JCheckBox" binding="myCbBlinkCaret">
-                <constraints>
-                  <xy x="6" y="62" width="119" height="22"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <selected value="true"/>
-                  <text value="Caret blinking (ms):"/>
-                </properties>
-              </component>
-              <component id="68f0a" class="javax.swing.JCheckBox" binding="myCbBlockCursor">
-                <constraints>
-                  <xy x="6" y="98" width="99" height="22"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Use block caret"/>
-                </properties>
-              </component>
-              <component id="9fe07" class="javax.swing.JCheckBox" binding="myCbRightMargin">
-                <constraints>
-                  <xy x="6" y="134" width="189" height="36"/>
-                  <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <selected value="true"/>
-                  <text value="&lt;html&gt;&lt;body&gt;Right margin&lt;br&gt;(configured in Code Style options)&lt;/body&gt;&lt;/html&gt;"/>
-                </properties>
-              </component>
-              <component id="a2796" class="javax.swing.JCheckBox" binding="myCbShowLineNumbers">
-                <constraints>
-                  <xy x="6" y="184" width="115" height="22"/>
-                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Show line numbers"/>
-                </properties>
-              </component>
-              <component id="52af3" class="javax.swing.JCheckBox" binding="myCbShowMethodSeparators">
-                <constraints>
-                  <xy x="6" y="220" width="146" height="22"/>
-                  <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Show method separators"/>
-                </properties>
-              </component>
-              <component id="1f86" class="javax.swing.JCheckBox" binding="myCbShowWhitespaces">
-                <constraints>
-                  <xy x="6" y="256" width="114" height="22"/>
-                  <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Show whitespaces"/>
-                </properties>
-              </component>
-              <component id="61cf9" class="javax.swing.JCheckBox" binding="myCbSmoothScrolling">
-                <constraints>
-                  <xy x="6" y="292" width="103" height="22"/>
-                  <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <selected value="true"/>
-                  <text value="Smooth scrolling"/>
-                </properties>
-              </component>
-              <component id="2459c" class="javax.swing.JTextField" binding="myBlinkIntervalField">
-                <constraints>
-                  <xy x="135" y="63" width="50" height="20"/>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
-                    <preferred-size width="50" height="-1"/>
-                    <maximum-size width="50" height="-1"/>
-                  </grid>
-                </constraints>
-                <properties>
-                  <text value="500"/>
-                </properties>
-              </component>
-            </children>
-          </grid>
-        </children>
-      </grid>
-      <grid id="adb3f" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
-        <constraints>
-          <xy x="234" y="233" width="236" height="298"/>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children>
-          <grid id="8dc1a" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
-            <constraints>
-              <xy x="0" y="127" width="236" height="171"/>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3"/>
-            </constraints>
-            <properties/>
-            <border type="etched" title="Advanced mouse usages"/>
-            <children>
-              <component id="34803" class="javax.swing.JCheckBox" binding="myCbEnableDnD">
-                <constraints>
-                  <xy x="6" y="22" width="127" height="36"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="&lt;html&gt;Enable Drag'n'Drop&lt;br&gt;functionality in editor&lt;/html&gt;"/>
-                </properties>
-              </component>
-              <component id="d0105" class="javax.swing.JCheckBox" binding="myCbEnableWheelFontChange">
-                <constraints>
-                  <xy x="6" y="68" width="147" height="36"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="&lt;html&gt;Enable Ctrl+MouseWheel&lt;br&gt;changes font size&lt;/html&gt;"/>
-                </properties>
-              </component>
-              <component id="18220" class="javax.swing.JCheckBox" binding="myCbHonorCamelHumpsWhenSelectingByClicking">
-                <constraints>
-                  <xy x="6" y="113" width="169" height="50"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="&lt;html&gt;&lt;body&gt;Honor &quot;CamelHumps&quot;&lt;br&gt; words settings&lt;br&gt;when selecting on double click&lt;/body&gt;&lt;/html&gt;"/>
-                </properties>
-              </component>
-            </children>
-          </grid>
-          <grid id="b63dd" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="5" bottom="5" right="5"/>
-            <constraints>
-              <xy x="0" y="0" width="236" height="109"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="3"/>
-            </constraints>
-            <properties/>
-            <border type="etched" title="Limits"/>
-            <children>
-              <component id="b7b79" class="javax.swing.JLabel">
-                <constraints>
-                  <xy x="11" y="48" width="47" height="14"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Tab limit:"/>
-                </properties>
-              </component>
-              <component id="eaa8f" class="javax.swing.JLabel">
-                <constraints>
-                  <xy x="11" y="23" width="85" height="14"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="Recent files limit:"/>
-                </properties>
-              </component>
-              <component id="498f1" class="javax.swing.JLabel">
-                <constraints>
-                  <xy x="11" y="70" width="146" height="28"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="8" fill="0"/>
-                </constraints>
-                <properties>
-                  <text value="&lt;html&gt;Maximum number of&lt;br&gt;contents to keep in clipboard:&lt;/html&gt;"/>
-                </properties>
-              </component>
-              <component id="25b75" class="javax.swing.JTextField" binding="myClipboardContentLimitTextField">
-                <constraints>
-                  <xy x="167" y="74" width="30" height="20"/>
-                  <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0">
-                    <preferred-size width="30" height="-1"/>
-                  </grid>
-                </constraints>
-                <properties>
-                  <text value="5"/>
-                </properties>
-              </component>
-              <component id="5e4a9" class="javax.swing.JTextField" binding="myRecentFilesLimitField">
-                <constraints>
-                  <xy x="167" y="20" width="30" height="20"/>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0">
-                    <preferred-size width="30" height="-1"/>
-                  </grid>
-                </constraints>
-                <properties>
-                  <text value="10"/>
-                </properties>
-              </component>
-              <component id="174a1" class="javax.swing.JTextField" binding="myEditorTabLimitField">
-                <constraints>
-                  <xy x="167" y="45" width="30" height="20"/>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0">
-                    <preferred-size width="30" height="-1"/>
-                  </grid>
-                </constraints>
-                <properties>
-                  <text value="15"/>
-                </properties>
-              </component>
-            </children>
-          </grid>
         </children>
       </grid>
       <vspacer id="f0d8b">
         <constraints>
-          <xy x="346" y="558" width="11" height="20"/>
-          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+          <xy x="346" y="520" width="11" height="20"/>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
         </constraints>
       </vspacer>
       <grid id="1821b" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="10" vgap="-1">
@@ -604,7 +460,7 @@
       <grid id="55a45" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="480" y="0" width="208" height="228"/>
+          <xy x="480" y="0" width="156" height="228"/>
           <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
@@ -613,7 +469,7 @@
           <grid id="54c3d" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="0" width="208" height="75"/>
+              <xy x="0" y="0" width="156" height="75"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
             </constraints>
             <properties/>
@@ -642,7 +498,7 @@
           <grid id="5342a" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="82" width="208" height="144"/>
+              <xy x="0" y="82" width="156" height="144"/>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="1"/>
             </constraints>
             <properties/>
@@ -680,29 +536,100 @@
           </grid>
         </children>
       </grid>
-      <grid id="c7588" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="10" bottom="0" right="10"/>
+      <grid id="58a7a" row-count="8" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="234" y="536" width="454" height="22"/>
-          <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="1" fill="1"/>
+          <xy x="0" y="233" width="224" height="287"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="3"/>
         </constraints>
         <properties/>
-        <border type="none"/>
+        <border type="etched" title="Display"/>
         <children>
-          <component id="35690" class="javax.swing.JComboBox" binding="myStripTrailingSpacesCombo">
+          <component id="2b4c4" class="javax.swing.JCheckBox" binding="myCbModifiedTabsMarkedWithAsterisk">
             <constraints>
-              <xy x="163" y="0" width="281" height="22"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
-            </constraints>
-            <properties/>
-          </component>
-          <component id="301cb" class="javax.swing.JLabel">
-            <constraints>
-              <xy x="10" y="4" width="143" height="14"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <xy x="6" y="22" width="179" height="22"/>
+              <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
-              <text value="Strip trailing spaces on Save:"/>
+              <text value="Mark modified tabs with asterisk"/>
+            </properties>
+          </component>
+          <component id="718a" class="javax.swing.JCheckBox" binding="myCbBlinkCaret">
+            <constraints>
+              <xy x="6" y="54" width="119" height="22"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <selected value="true"/>
+              <text value="Caret blinking (ms):"/>
+            </properties>
+          </component>
+          <component id="68f0a" class="javax.swing.JCheckBox" binding="myCbBlockCursor">
+            <constraints>
+              <xy x="6" y="86" width="99" height="22"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Use block caret"/>
+            </properties>
+          </component>
+          <component id="9fe07" class="javax.swing.JCheckBox" binding="myCbRightMargin">
+            <constraints>
+              <xy x="6" y="118" width="189" height="36"/>
+              <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <selected value="true"/>
+              <text value="&lt;html&gt;&lt;body&gt;Right margin&lt;br&gt;(configured in Code Style options)&lt;/body&gt;&lt;/html&gt;"/>
+            </properties>
+          </component>
+          <component id="a2796" class="javax.swing.JCheckBox" binding="myCbShowLineNumbers">
+            <constraints>
+              <xy x="6" y="164" width="115" height="22"/>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Show line numbers"/>
+            </properties>
+          </component>
+          <component id="52af3" class="javax.swing.JCheckBox" binding="myCbShowMethodSeparators">
+            <constraints>
+              <xy x="6" y="195" width="146" height="22"/>
+              <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Show method separators"/>
+            </properties>
+          </component>
+          <component id="1f86" class="javax.swing.JCheckBox" binding="myCbShowWhitespaces">
+            <constraints>
+              <xy x="6" y="226" width="114" height="22"/>
+              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <text value="Show whitespaces"/>
+            </properties>
+          </component>
+          <component id="61cf9" class="javax.swing.JCheckBox" binding="myCbSmoothScrolling">
+            <constraints>
+              <xy x="6" y="257" width="103" height="22"/>
+              <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+            </constraints>
+            <properties>
+              <selected value="true"/>
+              <text value="Smooth scrolling"/>
+            </properties>
+          </component>
+          <component id="2459c" class="javax.swing.JTextField" binding="myBlinkIntervalField">
+            <constraints>
+              <xy x="135" y="55" width="50" height="20"/>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1">
+                <preferred-size width="50" height="-1"/>
+                <maximum-size width="50" height="-1"/>
+              </grid>
+            </constraints>
+            <properties>
+              <text value="500"/>
             </properties>
           </component>
         </children>
