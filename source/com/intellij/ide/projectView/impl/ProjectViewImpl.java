@@ -13,7 +13,6 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.projectView.ResourceBundleNode;
 import com.intellij.openapi.actionSystem.*;
@@ -42,6 +41,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
@@ -1312,8 +1312,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
                && o2 instanceof AbstractTreeNode
                && (o1 instanceof PsiFileNode || ((AbstractTreeNode)o1).getValue() instanceof ResourceBundle)
                && (o2 instanceof PsiFileNode || ((AbstractTreeNode)o2).getValue() instanceof ResourceBundle)) {
-        String type1 = o1 instanceof PsiFileNode ? extension(((PsiFileNode)o1).getValue()) : PropertiesFileType.FILE_TYPE.getDefaultExtension();
-        String type2 = o2 instanceof PsiFileNode ? extension(((PsiFileNode)o2).getValue()) : PropertiesFileType.FILE_TYPE.getDefaultExtension();
+        String type1 = o1 instanceof PsiFileNode ? extension(((PsiFileNode)o1).getValue()) : StdFileTypes.PROPERTIES.getDefaultExtension();
+        String type2 = o2 instanceof PsiFileNode ? extension(((PsiFileNode)o2).getValue()) : StdFileTypes.PROPERTIES.getDefaultExtension();
         if (type1 != null && type2 != null) {
           int result = type1.compareTo(type2);
           if (result != 0) return result;

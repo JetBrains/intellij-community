@@ -2,7 +2,6 @@ package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
-import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -12,6 +11,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiManager;
@@ -201,7 +201,7 @@ final class StringEditorDialog extends DialogWrapper{
             }
             PsiFile initialPropertiesFile = initialVirtualFile == null ? null : PsiManager.getInstance(project).findFile(initialVirtualFile);
             TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser("Choose Poperties File", initialPropertiesFile,
-                                                                                                         PropertiesFileType.FILE_TYPE, null);
+                                                                                                         StdFileTypes.PROPERTIES, null);
             fileChooser.showDialog();
             PropertiesFile propertiesFile = (PropertiesFile)fileChooser.getSelectedFile();
             if (propertiesFile == null) return;

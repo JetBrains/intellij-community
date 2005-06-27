@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.*;
 import gnu.trove.THashSet;
 
@@ -41,7 +42,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
   private void removeOldFile(final VirtualFileEvent event) {
     VirtualFile file = event.getFile();
     FileType fileType = myFileTypeManager.getFileTypeByFile(file);
-    if (fileType == PropertiesFileType.FILE_TYPE) {
+    if (fileType == StdFileTypes.PROPERTIES) {
       myPropertiesFiles.remove(file);
       firePropertiesFileRemoved(file);
     }
@@ -54,7 +55,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
 
   void addNewFile(final VirtualFile file) {
     FileType fileType = myFileTypeManager.getFileTypeByFile(file);
-    if (fileType == PropertiesFileType.FILE_TYPE) {
+    if (fileType == StdFileTypes.PROPERTIES) {
       myPropertiesFiles.add(file);
       firePropertiesFileAdded(file);
     }
@@ -94,7 +95,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
 
   private void fileChanged(final VirtualFile file, final VirtualFilePropertyEvent event) {
     FileType fileType = myFileTypeManager.getFileTypeByFile(file);
-    if (fileType == PropertiesFileType.FILE_TYPE) {
+    if (fileType == StdFileTypes.PROPERTIES) {
       firePropertiesFileChanged(file, event);
     }
   }
@@ -115,7 +116,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
           VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
           if (virtualFile == null) continue;
           FileType fileType = myFileTypeManager.getFileTypeByFile(virtualFile);
-          if (fileType == PropertiesFileType.FILE_TYPE) {
+          if (fileType == StdFileTypes.PROPERTIES) {
             virtualFile.getFileSystem().forceRefreshFile(virtualFile);
           }
         }

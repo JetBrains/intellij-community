@@ -133,7 +133,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     removeAllAssociations(fileType);
     myFileTypes.remove(fileType);
     if (fileType instanceof FakeFileType) {
-      mySpecialFileTypes.remove(fileType);
+      final FakeFileType fakeFileType = (FakeFileType)fileType;
+      mySpecialFileTypes.remove(fakeFileType);
     }
   }
 

@@ -1,11 +1,11 @@
 package com.intellij.lang.properties;
 
+import com.intellij.lang.properties.charset.Native2AsciiCharset;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.FileTypeSupportCapabilities;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.lang.properties.charset.Native2AsciiCharset;
 
 import javax.swing.*;
 

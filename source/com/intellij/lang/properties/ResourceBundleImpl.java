@@ -4,6 +4,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -36,7 +37,7 @@ public class ResourceBundleImpl implements ResourceBundle {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     PsiManager psiManager = PsiManager.getInstance(project);
     for (VirtualFile file : children) {
-      if (fileTypeManager.getFileTypeByFile(file) != PropertiesFileType.FILE_TYPE) continue;
+      if (fileTypeManager.getFileTypeByFile(file) != StdFileTypes.PROPERTIES) continue;
       if (Comparing.strEqual(PropertiesUtil.getBaseName(file), myBaseName)) {
         PsiFile psiFile = psiManager.findFile(file);
         if (psiFile instanceof PropertiesFile) {
@@ -75,7 +76,7 @@ public class ResourceBundleImpl implements ResourceBundle {
 
     String defaultPropertiesUrl = url.substring("resourceBundle:".length());
     VirtualFile defaultProperties = VirtualFileManager.getInstance().findFileByUrl(defaultPropertiesUrl);
-    if (defaultProperties != null && FileTypeManager.getInstance().getFileTypeByFile(defaultProperties) == PropertiesFileType.FILE_TYPE) {
+    if (defaultProperties != null && FileTypeManager.getInstance().getFileTypeByFile(defaultProperties) == StdFileTypes.PROPERTIES) {
       ResourceBundleImpl resourceBundle = new ResourceBundleImpl(defaultProperties.getParent(),
                                                                  PropertiesUtil.getBaseName(defaultProperties));
       return resourceBundle;

@@ -2,7 +2,6 @@ package com.intellij.lang.properties.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
@@ -10,6 +9,7 @@ import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -37,16 +37,16 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   private List<Property> myProperties;
 
   public PropertiesFileImpl(Project project, VirtualFile file) {
-    super(project, file, PropertiesFileType.FILE_TYPE.getLanguage());
+    super(project, file, StdFileTypes.PROPERTIES.getLanguage());
   }
 
   public PropertiesFileImpl(Project project, String name, CharSequence text) {
-    super(project, name, text, PropertiesFileType.FILE_TYPE.getLanguage());
+    super(project, name, text, StdFileTypes.PROPERTIES.getLanguage());
   }
 
   @NotNull
   public FileType getFileType() {
-    return PropertiesFileType.FILE_TYPE;
+    return StdFileTypes.PROPERTIES;
   }
 
   public String toString() {

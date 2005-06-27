@@ -4,6 +4,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,7 +30,7 @@ public class PropertiesUtil {
   @NotNull
   private static final GlobalSearchScope PROP_FILES_SCOPE = new GlobalSearchScope() {
     public boolean contains(VirtualFile file) {
-      return FileTypeManager.getInstance().getFileTypeByFile(file) == PropertiesFileType.FILE_TYPE;
+      return FileTypeManager.getInstance().getFileTypeByFile(file) == StdFileTypes.PROPERTIES;
     }
 
     public int compare(VirtualFile file1, VirtualFile file2) {

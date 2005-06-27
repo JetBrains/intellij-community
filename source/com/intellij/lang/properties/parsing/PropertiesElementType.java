@@ -1,7 +1,7 @@
 package com.intellij.lang.properties.parsing;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,7 +12,7 @@ import com.intellij.lang.properties.PropertiesFileType;
  */
 public class PropertiesElementType extends IElementType {
   public PropertiesElementType(String debugName) {
-    super(debugName, PropertiesFileType.FILE_TYPE.getLanguage());
+    super(debugName, StdFileTypes.PROPERTIES.getLanguage());
   }
 
   public String toString() {

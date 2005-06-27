@@ -1,9 +1,9 @@
 package com.intellij.lang.properties.psi;
 
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PropertiesElementFactory {
   public static @NotNull Property createProperty(@NotNull Project project, @NotNull String name, @NotNull String value) {
-    ParserDefinition def = PropertiesFileType.FILE_TYPE.getLanguage().getParserDefinition();
-    String filename = "dummy." + PropertiesFileType.FILE_TYPE.getDefaultExtension();
+    ParserDefinition def = StdFileTypes.PROPERTIES.getLanguage().getParserDefinition();
+    String filename = "dummy." + StdFileTypes.PROPERTIES.getDefaultExtension();
     String text = escape(name) + "=" + value;
     final PropertiesFile dummyFile = (PropertiesFile)def.createFile(project, filename, text);
     return dummyFile.getProperties().get(0);
