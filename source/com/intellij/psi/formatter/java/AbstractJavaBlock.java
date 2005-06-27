@@ -105,6 +105,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
     if (child.getElementType() == ElementType.DOC_TAG) return Formatter.getInstance().getNoneIndent();
     if (child.getElementType() == ElementType.DOC_COMMENT_LEADING_ASTERISKS) return Formatter.getInstance().createSpaceIndent(1);
+    if (child.getPsi() instanceof PsiFile) return Formatter.getInstance().getNoneIndent();
     if (parent != null) {
       final Indent defaultChildIndent = getChildIndent(parent);
       if (defaultChildIndent != null) return defaultChildIndent;

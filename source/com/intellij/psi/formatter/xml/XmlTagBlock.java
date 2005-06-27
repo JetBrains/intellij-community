@@ -62,7 +62,6 @@ public class XmlTagBlock extends AbstractXmlBlock{
         else if (myXmlFormattingPolicy.processJsp() && isJspxJavaContainingNode(child)) {
           localResult.add(new JspTextBlock(child,
                                            myXmlFormattingPolicy,
-                                           getFormatter().getNoneIndent(),
                                            JspTextBlock.findPsiRootAt(child)
           ));
         }

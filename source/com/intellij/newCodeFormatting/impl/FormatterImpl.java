@@ -14,6 +14,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.newCodeFormatting.impl.FormatterImpl");
 
   private int myIsActive = 0;
+  private static final IndentImpl NONE_INDENT = new IndentImpl(IndentImpl.Type.NONE, false);
 
   public Alignment createAlignment() {
     return new AlignmentImpl(AlignmentImpl.Type.NORMAL);
@@ -30,7 +31,7 @@ public class FormatterImpl extends Formatter implements ApplicationComponent {
   }
 
   public Indent getNoneIndent() {
-    return new IndentImpl(IndentImpl.Type.NONE, false);
+    return NONE_INDENT;
   }
 
   public Wrap createWrap(int type, boolean wrapFirstElement) {

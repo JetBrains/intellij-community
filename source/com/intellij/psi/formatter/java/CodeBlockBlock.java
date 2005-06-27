@@ -82,7 +82,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     processChild(localResult, child, null, null, Formatter.getInstance().getNoneIndent());
     child = child.getTreeNext();
     while (child != null) {
-      if (child.getElementType() == ElementType.SWITCH_LABEL_STATEMENT || child.getElementType() == ElementType.RBRACE) {
+      if (child.getElementType() == ElementType.SWITCH_LABEL_STATEMENT || isRBrace(child)) {
         result.add(new SynteticCodeBlock(localResult, childAlignment, getSettings(), indent, childWrap));
         return child.getTreePrev();
       }
@@ -109,7 +109,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         if (ElementType.COMMENT_BIT_SET.isInSet(child.getElementType())) {
           return BEFORE_FIRST;
         }
-        else if (child.getElementType() == ElementType.LBRACE) {
+        else if (isLBrace(child)) {
           return INSIDE_BODY;
         }
         else {
@@ -118,7 +118,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
       }
       case BEFORE_LBRACE:
       {
-        if (child.getElementType() == ElementType.LBRACE) {
+        if (isLBrace(child)) {
           return INSIDE_BODY;
         }
         else {
@@ -129,8 +129,12 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     return INSIDE_BODY;
   }
 
+  private boolean isLBrace(final ASTNode child) {
+    return child.getElementType() == ElementType.LBRACE;
+  }
+
   private Indent calcCurrentIndent(final ASTNode child, final int state) {
-    if (child.getElementType() == ElementType.RBRACE) {
+    if (isRBrace(child)) {
       return Formatter.getInstance().getNoneIndent();
     }
 
@@ -140,7 +144,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
       return getCodeBlockInternalIndent(myChildrenIndent);
     }
     if (state == BEFORE_LBRACE) {
-      if (child.getElementType() == ElementType.LBRACE) {
+      if (isLBrace(child)) {
         return Formatter.getInstance().getNoneIndent();
       }
       else {
@@ -148,13 +152,17 @@ public class CodeBlockBlock extends AbstractJavaBlock {
       }
     }
     else {
-      if (child.getElementType() == ElementType.RBRACE) {
+      if (isRBrace(child)) {
         return Formatter.getInstance().getNoneIndent();
       }
       else {
         return getCodeBlockInternalIndent(myChildrenIndent);
       }
     }
+  }
+
+  private boolean isRBrace(final ASTNode child) {
+    return child.getElementType() == ElementType.RBRACE;
   }
 
   @Override
