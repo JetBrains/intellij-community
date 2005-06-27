@@ -289,7 +289,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
 
     try {
-      constructorCall.replace(methodCall);
+      constructorCall.getArgumentList().replace(methodCall.getArgumentList());
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

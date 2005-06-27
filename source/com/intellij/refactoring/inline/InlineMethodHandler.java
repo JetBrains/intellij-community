@@ -81,8 +81,10 @@ class InlineMethodHandler {
         if (expression instanceof PsiMethodCallExpression) {
           PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expression).getMethodExpression();
           if (methodExpr != null) {
-            PsiElement resolved = methodExpr.resolve();
-            return resolved instanceof PsiMethod && ((PsiMethod)resolved).isConstructor(); //delegated either via "this" or "super" call
+            if ("this".equals(methodExpr.getReferenceName())) {
+              PsiElement resolved = methodExpr.resolve();
+              return resolved instanceof PsiMethod && ((PsiMethod)resolved).isConstructor(); //delegated via "this" call
+            }
           }
         }
       }
