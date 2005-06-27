@@ -197,7 +197,9 @@ public class FavoritesTreeStructure extends ProjectAbstractTreeStructureBase imp
         return true;
       }
     };
-    for (AbstractTreeNode node : myRoot.getChildren()) {
+    final Object[] childElements = getChildElements(myRoot);
+    for (Object obj : childElements) {
+      AbstractTreeNode node = (AbstractTreeNode)obj;
       if (node.getValue() instanceof SmartPsiElementPointer) {
         final VirtualFile virtualFile = BasePsiNode.getVirtualFile(((SmartPsiElementPointer)node.getValue()).getElement());
         if (virtualFile == null) continue;
