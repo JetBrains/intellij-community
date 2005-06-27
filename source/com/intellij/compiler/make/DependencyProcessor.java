@@ -41,7 +41,8 @@ public class DependencyProcessor {
   private final Project myProject;
   private final boolean myIsAnnotation;
   private final boolean myIsRemoteInterface;
-  private boolean myWereAnnotationTargetsRemoved;
+  private final boolean myWereAnnotationTargetsRemoved;
+  private final boolean myRetentionPolicyChanged;
 
   public DependencyProcessor(Project project, DependencyCache dependencyCache, int qName) throws CacheCorruptedException {
     myProject = project;
@@ -63,6 +64,7 @@ public class DependencyProcessor {
     myIsRemoteInterface = CacheUtils.isInterface(cache, myQName) && cache.isRemote(oldCacheClassId);
     myIsAnnotation = ClsUtil.isAnnotation(cache.getFlags(oldCacheClassId));
     myWereAnnotationTargetsRemoved = myIsAnnotation && wereAnnotationTargesRemoved(cache, newClassesCache);
+    myRetentionPolicyChanged = myIsAnnotation && hasRetentionPolicyChanged(cache, newClassesCache);
 
     int[] oldInterfaces = cache.getSuperInterfaces(oldCacheClassId);
     int[] newInterfaces = newClassesCache.getSuperInterfaces(newCacheClassId);
@@ -138,7 +140,8 @@ public class DependencyProcessor {
     if (!myMembersChanged &&
         (oldCache.getFlags(oldCache.getClassId(myQName)) == newCache.getFlags(newCache.getClassId(myQName))) &&
         !superListChanged &&
-        !myWereAnnotationTargetsRemoved) {
+        !myWereAnnotationTargetsRemoved &&
+        !myRetentionPolicyChanged) {
       return; // nothing to do
     }
 
@@ -161,6 +164,10 @@ public class DependencyProcessor {
       }
       if (myWereAnnotationTargetsRemoved) {
         markAll(myBackDependencies, "; reason: removed annotation's targets " + myDependencyCache.resolve(myQName));
+        return;
+      }
+      if (myRetentionPolicyChanged) {
+        markAll(myBackDependencies, "; reason: retention policy changed for " + myDependencyCache.resolve(myQName));
         return;
       }
     }
@@ -345,6 +352,9 @@ public class DependencyProcessor {
     final int oldPolicy = MakeUtil.getAnnotationRetentionPolicy(myQName, oldCache, myDependencyCache.getSymbolTable());
     final int newPolicy = MakeUtil.getAnnotationRetentionPolicy(myQName, newCache, myDependencyCache.getSymbolTable());
     if ((oldPolicy == RetentionPolicies.SOURCE) && (newPolicy == RetentionPolicies.CLASS || newPolicy == RetentionPolicies.RUNTIME)) {
+      return true;
+    }
+    if ((oldPolicy == RetentionPolicies.CLASS) && (newPolicy == RetentionPolicies.RUNTIME)) {
       return true;
     }
     return false;
