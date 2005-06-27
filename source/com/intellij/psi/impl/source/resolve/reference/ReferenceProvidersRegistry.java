@@ -38,10 +38,12 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
   private final List<ProviderBinding> myBindings = new ArrayList<ProviderBinding>();
   private final List<Pair<Class, ElementManipulator>> myManipulators = new ArrayList<Pair<Class, ElementManipulator>>();
   private final Map<ReferenceProviderType,PsiReferenceProvider> myReferenceTypeToProviderMap = new HashMap<ReferenceProviderType, PsiReferenceProvider>(5);
+  public static ReferenceProviderType CSS_CLASS_OR_ID_KEY_PROVIDER =
+    new ReferenceProviderType("Css Class or ID Provider");
 
   static public class ReferenceProviderType {
     private String myId;
-    private ReferenceProviderType(String id) { myId = id; }
+    public ReferenceProviderType(String id) { myId = id; }
     public String toString() { return myId; }
   }
 
@@ -53,6 +55,10 @@ public class ReferenceProvidersRegistry implements ProjectComponent {
     return project.getComponent(ReferenceProvidersRegistry.class);
   }
 
+  public void registerTypeWithProvider(ReferenceProviderType type, PsiReferenceProvider provider) {
+    myReferenceTypeToProviderMap.put(type, provider);
+  }
+  
   private ReferenceProvidersRegistry() {
     // Temp scopes declarations
     myTempScopes.add(PsiIdentifier.class);
