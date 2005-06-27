@@ -36,11 +36,13 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.structureView.impl.jsp.jspView.JspViewDeclarationNode;
 import com.intellij.ide.structureView.impl.jsp.jspView.JspViewDirectiveNode;
 import com.intellij.ide.structureView.impl.jsp.jspView.JspViewScriptletNode;
+import com.intellij.ide.structureView.impl.jsp.jspView.JspViewExpressionNode;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDeclaration;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.jsp.jspJava.JspScriptlet;
+import com.intellij.psi.impl.source.jsp.jspJava.JspExpression;
 
 import java.util.Collection;
 import java.util.ArrayList;
@@ -63,6 +65,9 @@ public class XmlTagTreeElement extends PsiTreeElementBase<XmlTag>{
       }
       else if (tag instanceof JspScriptlet) {
         element = new JspViewScriptletNode((JspScriptlet)tag);
+      }
+      else if (tag instanceof JspExpression) {
+        element = new JspViewExpressionNode((JspExpression)tag);
       }
       else {
         element = new XmlTagTreeElement(tag);
