@@ -34,7 +34,7 @@ public class XmlBlock extends AbstractXmlBlock {
 
     final ArrayList<Block> result = new ArrayList<Block>();
 
-    if (myNode.getElementType() == ElementType.XML_ATTRIBUTE_VALUE || myNode.getElementType() == ElementType.JSP_EXPRESSION) {
+    if (myNode.getElementType() == ElementType.XML_ATTRIBUTE_VALUE) {
       return result;
     }
 

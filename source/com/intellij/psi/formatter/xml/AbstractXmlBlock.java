@@ -103,11 +103,6 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     final Language myLanguage = myNode.getPsi().getLanguage();
     final Language childLanguage = child.getPsi().getLanguage();
     if (useMyFormatter(myLanguage, childLanguage)) {
-
-      if (child.getElementType() == ElementType.JSP_EXPRESSION) {
-        return new XmlBlock(child, null, null, myXmlFormattingPolicy, indent);
-      }
-
       Block jspScriptletNode = buildBlockForScriptletNode(child,indent);
       if (jspScriptletNode != null) {
         return jspScriptletNode;
@@ -139,7 +134,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     ASTNode element = child.getPsi().getContainingFile()
       .getPsiRoots()[0].getNode().findLeafElementAt(child.getTextRange().getStartOffset());
     if (element != null && (element.getElementType() == ElementType.JSP_SCRIPTLET_START
-        || element.getElementType() == ElementType.JSP_DECLARATION_START)) {
+        || element.getElementType() == ElementType.JSP_DECLARATION_START
+        || element.getElementType() == ElementType.JSP_EXPRESSION_START)) {
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
       while (element != null && element.getTextRange().getEndOffset() <=child.getTextRange().getEndOffset()) {
         if (!FormatterUtil.containsWhiteSpacesOnly(element)) {
