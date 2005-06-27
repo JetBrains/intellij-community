@@ -384,6 +384,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ShiftOutOfRangeInspection.class);
         m_inspectionClasses.add(AssignmentToStaticFieldFromInstanceMethodInspection.class);
         m_inspectionClasses.add(StaticCallOnSubclassInspection.class);
+        m_inspectionClasses.add(StaticFieldReferenceOnSubclassInspection.class);
         m_inspectionClasses.add(OctalAndDecimalIntegersMixedInspection.class);
         m_inspectionClasses.add(IncompatibleMaskInspection.class);
         m_inspectionClasses.add(ForLoopWithMissingComponentInspection.class);

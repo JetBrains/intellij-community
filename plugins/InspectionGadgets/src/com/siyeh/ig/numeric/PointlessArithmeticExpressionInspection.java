@@ -28,19 +28,6 @@ public class PointlessArithmeticExpressionInspection
                 this, "m_ignoreExpressionsContainingConstants");
     }
 
-    /**
-     * @noinspection StaticCollection
-     */
-    private static final Set<IElementType> arithmeticTokens = new HashSet<IElementType>(
-            4);
-
-    static {
-        arithmeticTokens.add(JavaTokenType.PLUS);
-        arithmeticTokens.add(JavaTokenType.MINUS);
-        arithmeticTokens.add(JavaTokenType.ASTERISK);
-        arithmeticTokens.add(JavaTokenType.DIV);
-    }
-
     private final PointlessArithmeticFix fix = new PointlessArithmeticFix();
 
     public String getDisplayName(){
@@ -116,6 +103,15 @@ public class PointlessArithmeticExpressionInspection
     }
 
     private class PointlessArithmeticVisitor extends BaseInspectionVisitor{
+        private final Set<IElementType> arithmeticTokens =
+                new HashSet<IElementType>(4);
+
+        {
+            arithmeticTokens.add(JavaTokenType.PLUS);
+            arithmeticTokens.add(JavaTokenType.MINUS);
+            arithmeticTokens.add(JavaTokenType.ASTERISK);
+            arithmeticTokens.add(JavaTokenType.DIV);
+        }
         public void visitClass(@NotNull PsiClass aClass){
             //to avoid drilldown
         }

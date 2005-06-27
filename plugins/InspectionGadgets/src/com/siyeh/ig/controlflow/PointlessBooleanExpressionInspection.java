@@ -21,18 +21,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PointlessBooleanExpressionInspection extends ExpressionInspection{
-    private static final Set<IElementType> booleanTokens = new HashSet<IElementType>(
-            10);
-
-    static {
-        booleanTokens.add(JavaTokenType.ANDAND);
-        booleanTokens.add(JavaTokenType.AND);
-        booleanTokens.add(JavaTokenType.OROR);
-        booleanTokens.add(JavaTokenType.OR);
-        booleanTokens.add(JavaTokenType.XOR);
-        booleanTokens.add(JavaTokenType.EQEQ);
-        booleanTokens.add(JavaTokenType.NE);
-    }
 
 
     public boolean m_ignoreExpressionsContainingConstants = false;
@@ -187,7 +175,17 @@ public class PointlessBooleanExpressionInspection extends ExpressionInspection{
 
     private  class PointlessBooleanExpressionVisitor
             extends BaseInspectionVisitor{
-
+        private  final Set<IElementType> booleanTokens =
+                new HashSet<IElementType>(10); 
+        {
+            booleanTokens.add(JavaTokenType.ANDAND);
+            booleanTokens.add(JavaTokenType.AND);
+            booleanTokens.add(JavaTokenType.OROR);
+            booleanTokens.add(JavaTokenType.OR);
+            booleanTokens.add(JavaTokenType.XOR);
+            booleanTokens.add(JavaTokenType.EQEQ);
+            booleanTokens.add(JavaTokenType.NE);
+        }
 
         public void visitClass(@NotNull PsiClass aClass){
             //to avoid drilldown

@@ -17,22 +17,7 @@ import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
-    /**
-     * @noinspection StaticCollection
-     */
-    private static final Set<IElementType> bitwiseTokens = new HashSet<IElementType>(
-            4);
-
-    static {
-        bitwiseTokens.add(JavaTokenType.AND);
-        bitwiseTokens.add(JavaTokenType.OR);
-        bitwiseTokens.add(JavaTokenType.XOR);
-        bitwiseTokens.add(JavaTokenType.LTLT);
-        bitwiseTokens.add(JavaTokenType.GTGT);
-        bitwiseTokens.add(JavaTokenType.GTGTGT);
-    }
-
+public class PointlessBitwiseExpressionInspection extends ExpressionInspection{
     public boolean m_ignoreExpressionsContainingConstants = false;
 
     public JComponent createOptionsPanel(){
@@ -43,23 +28,25 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
 
     private final PointlessBitwiseFix fix = new PointlessBitwiseFix();
 
-    public String getDisplayName() {
+    public String getDisplayName(){
         return "Pointless bitwise expression";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.BITWISE_GROUP_NAME;
     }
 
     public boolean isEnabledByDefault(){
         return true;
     }
-    public String buildErrorString(PsiElement location) {
+
+    public String buildErrorString(PsiElement location){
         return "#ref can be replaced with " +
-                calculateReplacementExpression((PsiExpression) location) + " #loc";
+                calculateReplacementExpression((PsiExpression) location)
+                + " #loc";
     }
 
-    private String calculateReplacementExpression(PsiExpression expression) {
+    private String calculateReplacementExpression(PsiExpression expression){
         final PsiBinaryExpression exp = (PsiBinaryExpression) expression;
         final PsiExpression lhs = exp.getLOperand();
         final PsiExpression rhs = exp.getROperand();
@@ -67,183 +54,212 @@ public class PointlessBitwiseExpressionInspection extends ExpressionInspection {
         final IElementType tokenType = sign.getTokenType();
         assert rhs != null;
         final PsiType expressionType = exp.getType();
-        if (tokenType.equals(JavaTokenType.AND)) {
-            if (isZero(lhs, expressionType) || isAllOnes(rhs, expressionType)) {
+        if(tokenType.equals(JavaTokenType.AND)){
+            if(isZero(lhs, expressionType) || isAllOnes(rhs, expressionType)){
                 return lhs.getText();
-            } else {
+            } else{
                 return rhs.getText();
             }
-        } else if (tokenType.equals(JavaTokenType.OR)) {
-            if (isZero(lhs, expressionType) || isAllOnes(rhs, expressionType)) {
+        } else if(tokenType.equals(JavaTokenType.OR)){
+            if(isZero(lhs, expressionType) || isAllOnes(rhs, expressionType)){
                 return rhs.getText();
-            } else {
+            } else{
                 return lhs.getText();
             }
-        } else if (tokenType.equals(JavaTokenType.XOR)) {
-            if (isAllOnes(lhs, expressionType)) {
+        } else if(tokenType.equals(JavaTokenType.XOR)){
+            if(isAllOnes(lhs, expressionType)){
                 return '~' + rhs.getText();
-            } else if (isAllOnes(rhs, expressionType)) {
+            } else if(isAllOnes(rhs, expressionType)){
                 return '~' + lhs.getText();
-            } else if (isZero(rhs, expressionType)) {
+            } else if(isZero(rhs, expressionType)){
                 return lhs.getText();
-            } else {
+            } else{
                 return rhs.getText();
             }
-        } else if (tokenType.equals(JavaTokenType.LTLT) ||
+        } else if(tokenType.equals(JavaTokenType.LTLT) ||
                 tokenType.equals(JavaTokenType.GTGT) ||
-                tokenType.equals(JavaTokenType.GTGTGT)) {
+                tokenType.equals(JavaTokenType.GTGTGT)){
             return lhs.getText();
-        } else {
+        } else{
             return "";
         }
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+    public BaseInspectionVisitor buildVisitor(){
         return new PointlessBitwiseVisitor();
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
 
-    private class PointlessBitwiseFix extends InspectionGadgetsFix {
-        public String getName() {
+    private class PointlessBitwiseFix extends InspectionGadgetsFix{
+        public String getName(){
             return "Simplify";
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor)
-                                                                         throws IncorrectOperationException{
-            final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
-            final String newExpression = calculateReplacementExpression(expression);
+                throws IncorrectOperationException{
+            final PsiExpression expression = (PsiExpression) descriptor
+                    .getPsiElement();
+            final String newExpression = calculateReplacementExpression(
+                    expression);
             replaceExpression(expression, newExpression);
         }
-
     }
 
-    private class PointlessBitwiseVisitor extends BaseInspectionVisitor {
+    private class PointlessBitwiseVisitor extends BaseInspectionVisitor{
+        private final Set<IElementType> bitwiseTokens =
+                new HashSet<IElementType>(4);
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        {
+            bitwiseTokens.add(JavaTokenType.AND);
+            bitwiseTokens.add(JavaTokenType.OR);
+            bitwiseTokens.add(JavaTokenType.XOR);
+            bitwiseTokens.add(JavaTokenType.LTLT);
+            bitwiseTokens.add(JavaTokenType.GTGT);
+            bitwiseTokens.add(JavaTokenType.GTGTGT);
+        }
+
+        public void visitClass(@NotNull PsiClass aClass){
             //to avoid drilldown
         }
-        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
+
+        public void visitBinaryExpression(
+                @NotNull PsiBinaryExpression expression){
             super.visitBinaryExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
-            if(!bitwiseTokens.contains(tokenType))
-            {
+            if(!bitwiseTokens.contains(tokenType)){
                 return;
             }
 
             final PsiType expressionType = expression.getType();
-            if (expressionType == null) {
+            if(expressionType == null){
                 return;
             }
 
             final PsiExpression rhs = expression.getROperand();
-            if (rhs == null) {
+            if(rhs == null){
                 return;
             }
 
             final PsiType rhsType = rhs.getType();
-            if (rhsType == null) {
+            if(rhsType == null){
                 return;
             }
-            if (rhsType.equals(PsiType.BOOLEAN) ||
-                    rhsType.equalsToText("java.lang.Boolean")) {
+            if(rhsType.equals(PsiType.BOOLEAN) ||
+                    rhsType.equalsToText("java.lang.Boolean")){
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
             final PsiType lhsType = lhs.getType();
-            if (lhsType == null) {
+            if(lhsType == null){
                 return;
             }
-            if (lhsType.equals(PsiType.BOOLEAN) ||
-                        lhsType.equalsToText("java.lang.Boolean")) {
+            if(lhsType.equals(PsiType.BOOLEAN) ||
+                    lhsType.equalsToText("java.lang.Boolean")){
                 return;
             }
             final boolean isPointless;
-            if (tokenType.equals(JavaTokenType.AND)) {
-                isPointless = andExpressionIsPointless(lhs, rhs, expressionType);
-            } else if (tokenType.equals(JavaTokenType.OR)) {
+            if(tokenType.equals(JavaTokenType.AND)){
+                isPointless = andExpressionIsPointless(lhs, rhs,
+                                                       expressionType);
+            } else if(tokenType.equals(JavaTokenType.OR)){
                 isPointless = orExpressionIsPointless(lhs, rhs, expressionType);
-            } else if (tokenType.equals(JavaTokenType.XOR)) {
-                isPointless = xorExpressionIsPointless(lhs, rhs, expressionType);
-            } else if (tokenType.equals(JavaTokenType.LTLT) ||
+            } else if(tokenType.equals(JavaTokenType.XOR)){
+                isPointless = xorExpressionIsPointless(lhs, rhs,
+                                                       expressionType);
+            } else if(tokenType.equals(JavaTokenType.LTLT) ||
                     tokenType.equals(JavaTokenType.GTGT) ||
-                    tokenType.equals(JavaTokenType.GTGTGT)) {
+                    tokenType.equals(JavaTokenType.GTGTGT)){
                 isPointless = shiftExpressionIsPointless(rhs, expressionType);
-            } else {
+            } else{
                 isPointless = false;
             }
-            if (!isPointless) {
+            if(!isPointless){
                 return;
             }
             registerError(expression);
         }
     }
 
-    private  boolean shiftExpressionIsPointless(PsiExpression rhs, PsiType expressionType) {
+    private boolean shiftExpressionIsPointless(PsiExpression rhs,
+                                               PsiType expressionType){
         return isZero(rhs, expressionType);
     }
 
-    private  boolean orExpressionIsPointless(PsiExpression lhs, PsiExpression rhs, PsiType expressionType) {
-        return isZero(lhs, expressionType) || isZero(rhs, expressionType) || isAllOnes(lhs, expressionType) || isAllOnes(rhs, expressionType);
+    private boolean orExpressionIsPointless(PsiExpression lhs,
+                                            PsiExpression rhs,
+                                            PsiType expressionType){
+        return isZero(lhs, expressionType) || isZero(rhs, expressionType)
+                || isAllOnes(lhs, expressionType) || isAllOnes(rhs,
+                                                               expressionType);
     }
 
-    private  boolean xorExpressionIsPointless(PsiExpression lhs, PsiExpression rhs, PsiType expressionType) {
-        return isZero(lhs, expressionType) || isZero(rhs, expressionType) || isAllOnes(lhs, expressionType) || isAllOnes(rhs, expressionType);
+    private boolean xorExpressionIsPointless(PsiExpression lhs,
+                                             PsiExpression rhs,
+                                             PsiType expressionType){
+        return isZero(lhs, expressionType) || isZero(rhs, expressionType)
+                || isAllOnes(lhs, expressionType) || isAllOnes(rhs,
+                                                               expressionType);
     }
 
-    private  boolean andExpressionIsPointless(PsiExpression lhs, PsiExpression rhs, PsiType expressionType) {
-        return isZero(lhs, expressionType) || isZero(rhs, expressionType) || isAllOnes(lhs, expressionType) || isAllOnes(rhs, expressionType);
+    private boolean andExpressionIsPointless(PsiExpression lhs,
+                                             PsiExpression rhs,
+                                             PsiType expressionType){
+        return isZero(lhs, expressionType) || isZero(rhs, expressionType)
+                || isAllOnes(lhs, expressionType) || isAllOnes(rhs,
+                                                               expressionType);
     }
 
-    private  boolean isZero(PsiExpression expression, PsiType expressionType) {
-        if(m_ignoreExpressionsContainingConstants && !(expression instanceof PsiLiteralExpression))
-        {
+    private boolean isZero(PsiExpression expression, PsiType expressionType){
+        if(m_ignoreExpressionsContainingConstants
+                && !(expression instanceof PsiLiteralExpression)){
             return false;
         }
-        final Object value = ConstantExpressionUtil.computeCastTo(expression, expressionType);
-        if (value == null) {
+        final Object value = ConstantExpressionUtil
+                .computeCastTo(expression, expressionType);
+        if(value == null){
             return false;
         }
-        if (value instanceof Integer && ((Integer) value) == 0) {
+        if(value instanceof Integer && ((Integer) value) == 0){
             return true;
         }
-        if (value instanceof Long && ((Long) value) == 0L) {
+        if(value instanceof Long && ((Long) value) == 0L){
             return true;
         }
-        if (value instanceof Short && ((Short) value) == 0) {
+        if(value instanceof Short && ((Short) value) == 0){
             return true;
         }
-        if (value instanceof Character && ((Character) value) == 0) {
+        if(value instanceof Character && ((Character) value) == 0){
             return true;
         }
         return value instanceof Byte && ((Byte) value) == 0;
     }
 
-    private  boolean isAllOnes(PsiExpression expression, PsiType expressionType) {
+    private boolean isAllOnes(PsiExpression expression, PsiType expressionType){
         if(m_ignoreExpressionsContainingConstants
                 && !(expression instanceof PsiLiteralExpression)){
             return false;
         }
-        final Object value = ConstantExpressionUtil.computeCastTo(expression, expressionType);
-        if (value == null) {
+        final Object value = ConstantExpressionUtil
+                .computeCastTo(expression, expressionType);
+        if(value == null){
             return false;
         }
-        if (value instanceof Integer && ((Integer) value) == 0xffffffff) {
+        if(value instanceof Integer && ((Integer) value) == 0xffffffff){
             return true;
         }
-        if (value instanceof Long && ((Long) value) == 0xffffffffffffffffL) {
+        if(value instanceof Long && ((Long) value) == 0xffffffffffffffffL){
             return true;
         }
-        if (value instanceof Short && ((Short) value) == (short) 0xffff) {
+        if(value instanceof Short && ((Short) value) == (short) 0xffff){
             return true;
         }
-        if (value instanceof Character && ((Character) value) == (char) 0xffff) {
+        if(value instanceof Character && ((Character) value) == (char) 0xffff){
             return true;
         }
         return value instanceof Byte && ((Byte) value) == (byte) 0xff;
     }
-
 }
