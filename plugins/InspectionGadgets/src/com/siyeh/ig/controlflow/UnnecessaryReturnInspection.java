@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -34,8 +35,7 @@ public class UnnecessaryReturnInspection extends StatementInspection{
 
     public String buildErrorString(PsiElement location){
         final PsiMethod method =
-                PsiTreeUtil.getParentOfType(location,
-                                                        PsiMethod.class);
+                PsiTreeUtil.getParentOfType(location, PsiMethod.class);
         assert method != null;
         if(method.isConstructor()){
             return "#ref is unnecessary as the last statement in a constructor #loc";
@@ -70,6 +70,10 @@ public class UnnecessaryReturnInspection extends StatementInspection{
 
         public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);
+
+            if(statement.getContainingFile() instanceof JspFile){
+                return;
+            }
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
             if(method == null){

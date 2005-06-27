@@ -5,6 +5,7 @@ import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiSynchronizedStatement;
+import com.intellij.psi.jsp.JspFile;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
@@ -31,6 +32,10 @@ public class EmptySynchronizedStatementInspection extends StatementInspection {
 
         public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
             super.visitSynchronizedStatement(statement);
+
+            if(statement.getContainingFile() instanceof JspFile){
+                return;
+            }
             final PsiCodeBlock body = statement.getBody();
             if (body == null) {
                 return;

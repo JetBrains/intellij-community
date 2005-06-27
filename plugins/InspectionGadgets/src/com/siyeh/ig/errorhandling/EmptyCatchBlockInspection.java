@@ -2,6 +2,7 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.StatementInspection;
 import com.siyeh.ig.StatementInspectionVisitor;
@@ -74,6 +75,10 @@ public class EmptyCatchBlockInspection extends StatementInspection {
 
         public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
+
+            if(statement.getContainingFile() instanceof JspFile){
+                return;
+            }
             if (m_ignoreTestCases) {
                 final PsiClass aClass =
                         ClassUtils.getContainingClass(statement);

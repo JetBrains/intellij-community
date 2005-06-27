@@ -2,6 +2,7 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,10 @@ public class EmptyClassInspection extends ClassInspection {
 
         public void visitClass(@NotNull PsiClass aClass) {
             //don't call super, to prevent drilldown
+
+            if(aClass.getContainingFile() instanceof JspFile){
+                return;
+            }
             if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
                 return;
             }
