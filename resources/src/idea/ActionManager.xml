@@ -424,10 +424,7 @@
         <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction" text="Analyze _Cyclic Dependencies..." description="Browse code choosen analysis item used in cycles" />
         <action id="ShowModulesDependencies" class="com.intellij.moduleDependencies.ShowModuleDependenciesAction" text="Analyze _Module Dependencies..." description="Show dependencies between modules in project" />
         <action id="DupLocate" class="com.intellij.dupLocator.DuplocateAction" text="_Locate Duplicates..." description="Locate duplicate code in project" />
-        <group text="Stacktrace" popup="true">
-          <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction" text="Analyze Stacktrace..."/>
-          <action id="UnscrambleFromClipboard" class="com.intellij.unscramble.UnscrambleFromClipboardAction" text="Analyze Stacktrace From Clipboard..."/>
-        </group>
+        <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction" text="Analyze _Stacktrace..."/>
       </group>
 
       <!-- Refactor -->
