@@ -20,11 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Document;
 
-import java.awt.*;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -83,6 +81,20 @@ public final class UpdateChecker implements ApplicationComponent, ProjectManager
     UPDATE_URL = url;
   }
 
+  public static void showUpdateInfoDialog(boolean enableLink) {
+    UpdateInfoDialog dialog = new UpdateInfoDialog(true);
+    dialog.setLinkEnabled(enableLink);
+    dialog.setResizable(false);
+    dialog.show();
+  }
+
+  public static void showNoUpdatesDialog(boolean enableLink) {
+    NoUpdatesDialog dialog = new NoUpdatesDialog(true);
+    dialog.setLinkEnabled(enableLink);
+    dialog.setResizable(false);
+    dialog.show();
+  }
+
   public static void checkForUpdates() throws ConnectionException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: checkForUpdates()");
@@ -100,7 +112,7 @@ public final class UpdateChecker implements ApplicationComponent, ProjectManager
     final String availBuild = document.getRootElement().getChild("build").getTextTrim();
     final String availVersion = document.getRootElement().getChild("version").getTextTrim();
     String ourBuild = ApplicationInfo.getInstance().getBuildNumber().trim();
-    if ("__BUILD_NUMBER__".equals(ourBuild)) ourBuild = Integer.toString(Integer.MAX_VALUE);
+    if ("__BUILD_NUMBER__".equals(ourBuild)) ourBuild = Integer.toString(Integer.MIN_VALUE);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("build available:'" + availBuild + "' ourBuild='" + ourBuild + "' ");
@@ -174,7 +186,7 @@ public final class UpdateChecker implements ApplicationComponent, ProjectManager
     myVeryFirstProjectOpening = false;
 
     if (checkNeeded()) {
-      CheckForUpdateAction.actionPerformed();
+      CheckForUpdateAction.actionPerformed(true);
     }
   }
 

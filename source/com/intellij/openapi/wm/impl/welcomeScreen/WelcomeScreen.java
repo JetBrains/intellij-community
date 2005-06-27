@@ -84,8 +84,6 @@ public class WelcomeScreen {
   private static final Icon DEFAULT_ICON = IconLoader.getIcon("/general/configurableDefault.png");
 
   private static final String KEYMAP_URL = PathManager.getHomePath() + "/help/4.5_ReferenceCard.pdf";
-  private static final String JET_BRAINS = "JetBrains";
-  private static final String INTELLIJ = "IntelliJ";
 
   private static final Font TEXT_FONT = new Font("Tahoma", Font.PLAIN, 11);
   private static final Font LINK_FONT = new Font("Tahoma", Font.BOLD, 12);
@@ -388,7 +386,7 @@ public class WelcomeScreen {
 
     MyActionButton checkForUpdate = new MyActionButton (CHECK_FOR_UPDATE_ICON, null) {
       protected void onPress(InputEvent e) {
-        CheckForUpdateAction.actionPerformed();
+        CheckForUpdateAction.actionPerformed(true);
       }
     };
 

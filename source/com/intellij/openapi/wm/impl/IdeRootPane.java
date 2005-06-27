@@ -59,6 +59,7 @@ public class IdeRootPane extends JRootPane{
         RecentProjectsManager.getInstance().getLastProjectPath() == null) {
       myWelcomePane = WelcomeScreen.createWelcomePanel();
       myContentPane.add(myWelcomePane);
+      // TODO[pti]: check for updates on startup
     }
   }
 

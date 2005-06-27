@@ -15,23 +15,23 @@ public class CheckForUpdateAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    actionPerformed();
+    actionPerformed(true);
   }
 
-  public static void actionPerformed() {
+  public static void actionPerformed(final boolean enableLink) {
     try {
       UpdateChecker.checkForUpdates();
 
       if (UpdateChecker.NEW_VERION != null) {
         UpdateSettingsConfigurable.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
-        UpdateSettingsConfigurable.getInstance().showUpdateInfoDialog();
+        UpdateChecker.showUpdateInfoDialog(enableLink);
       }
       else {
-        UpdateSettingsConfigurable.getInstance().showNoUpdatesDialog();
+        UpdateChecker.showNoUpdatesDialog(enableLink);
       }
     }
     catch (ConnectionException e) {
-      Messages.showErrorDialog("Connection failed. Check your network connection and try again.", "Connection Error");
+      Messages.showErrorDialog("Connection failed. Please check your network connection and try again.", "Connection Error");
     }
   }
 }
