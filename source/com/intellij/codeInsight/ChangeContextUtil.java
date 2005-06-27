@@ -173,14 +173,20 @@ public class ChangeContextUtil {
             boolean needQualifier = true;
             PsiElement refElement = refExpr.resolve();
             if (refMember.equals(refElement)){
-              final PsiClass currentClass = findThisClass(refExpr, refMember);
-              if (thisAccessExpr instanceof PsiThisExpression){
-                PsiJavaCodeReferenceElement thisQualifier = ((PsiThisExpression)thisAccessExpr).getQualifier();
-                PsiClass thisExprClass = thisQualifier != null
-                  ? (PsiClass)thisQualifier.resolve()
-                  : RefactoringUtil.getThisClass(refExpr);
-                if (currentClass.equals(thisExprClass) || thisExprClass.isInheritor(realParentClass, true)){ // qualifier is not necessary
-                  needQualifier = false;
+              if (thisAccessExpr instanceof PsiThisExpression && ((PsiThisExpression)thisAccessExpr).getQualifier() == null) {
+                //Trivial qualifier
+                needQualifier = false;
+              }
+              else {
+                final PsiClass currentClass = findThisClass(refExpr, refMember);
+                if (thisAccessExpr instanceof PsiThisExpression){
+                  PsiJavaCodeReferenceElement thisQualifier = ((PsiThisExpression)thisAccessExpr).getQualifier();
+                  PsiClass thisExprClass = thisQualifier != null
+                                           ? (PsiClass)thisQualifier.resolve()
+                                           : RefactoringUtil.getThisClass(refExpr);
+                  if (currentClass.equals(thisExprClass) || thisExprClass.isInheritor(realParentClass, true)){ // qualifier is not necessary
+                    needQualifier = false;
+                  }
                 }
               }
             }
