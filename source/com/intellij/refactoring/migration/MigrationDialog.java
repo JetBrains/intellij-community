@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.refactoring.HelpID;
 
 import javax.swing.*;
@@ -142,33 +141,6 @@ public class MigrationDialog extends DialogWrapper{
     }
     MigrationMap newMap = oldMap.cloneMap();
     if (editMap(newMap)){
-      if (newMap.getName() == null || newMap.getName().length() == 0 || newMap.getEntryCount() == 0){
-        String warningString;
-        if (newMap.getEntryCount() == 0){
-          warningString = "Migration map is empty.\n";
-        }
-        else{
-          warningString = "Migration map has empty name.\n";
-        }
-        int result = Messages.showYesNoDialog(
-          warningString + "Do you want to delete it?", "Empty Name",
-          Messages.getWarningIcon());
-        if (result == 0){
-          myMigrationMapSet.removeMap(oldMap);
-          MigrationMap[] maps = myMigrationMapSet.getMaps();
-          initMapCombobox();
-          if (maps.length > 0){
-            myMapComboBox.setSelectedItem(maps[0]);
-          }
-          try {
-            myMigrationMapSet.saveMaps();
-          }
-          catch (IOException e) {
-            LOG.error("Cannot save migration maps", e);
-          }
-        }
-        return;
-      }
       myMigrationMapSet.replaceMap(oldMap, newMap);
       initMapCombobox();
       myMapComboBox.setSelectedItem(newMap);
@@ -240,8 +212,8 @@ public class MigrationDialog extends DialogWrapper{
       myMapComboBox.removeAllItems();
     }
     MigrationMap[] maps = myMigrationMapSet.getMaps();
-    for(int i = 0; i < maps.length; i++){
-      myMapComboBox.addItem(maps[i]);
+    for (MigrationMap map : maps) {
+      myMapComboBox.addItem(map);
     }
     updateDescription();
   }

@@ -5,11 +5,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.DocumentEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
@@ -35,10 +37,21 @@ public class EditMigrationDialog extends DialogWrapper{
     setHorizontalStretch(1.2f);
     setTitle("Edit Migration Map");
     init();
+    validateOKButton();
   }
 
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
+  }
+
+  private void validateOKButton() {
+    boolean isEnabled = true;
+    if (myNameField.getText().trim().length() == 0) {
+      isEnabled = false;
+    } else if (myMigrationMap.getEntryCount() == 0) {
+      isEnabled = false;
+    }
+    setOKActionEnabled(isEnabled);
   }
 
   public String getName() {
@@ -65,6 +78,11 @@ public class EditMigrationDialog extends DialogWrapper{
     gbConstraints.weightx = 1;
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     myNameField = new JTextField(myMigrationMap.getName());
+    myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        validateOKButton();
+      }
+    });
     panel.add(myNameField, gbConstraints);
 
     gbConstraints.fill = GridBagConstraints.VERTICAL;
@@ -109,11 +127,23 @@ public class EditMigrationDialog extends DialogWrapper{
     gbConstraints.insets = new Insets(5,0,5,0);
 
     myAddButton = new JButton("Add...");
+    myAddButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        validateOKButton();
+      }
+    });
     tableButtonsPanel.add(myAddButton, gbConstraints);
+
     myEditButton = new JButton("Edit...");
     tableButtonsPanel.add(myEditButton, gbConstraints);
     myRemoveButton = new JButton("Remove");
+    myRemoveButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        validateOKButton();
+      }
+    });
     tableButtonsPanel.add(myRemoveButton, gbConstraints);
+
     myMoveUpButton = new JButton("Move Up");
     tableButtonsPanel.add(myMoveUpButton, gbConstraints);
     myMoveDownButton = new JButton("Move Down");
