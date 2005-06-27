@@ -41,24 +41,26 @@ class NoUpdatesDialog extends DialogWrapper {
   }
 
   public void setLinkEnabled(final boolean enableLink) {
-    myNoUpdatesPanel.myUpdatesLink.setForeground(Color.BLUE); // TODO: specify correct color
-    myNoUpdatesPanel.myUpdatesLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    myNoUpdatesPanel.myUpdatesLink.addMouseListener(new MouseListener() {
-      public void mouseClicked(MouseEvent e) {
-        UpdateSettingsConfigurable updatesSettings = UpdateSettingsConfigurable.getInstance();
-        updatesSettings.setCheckNowEnabled(false);
-        ShowSettingsUtil.getInstance().editConfigurable(myNoUpdatesPanel.myPanel, updatesSettings);
-        updatesSettings.setCheckNowEnabled(true);
-      }
-      public void mouseEntered(MouseEvent e) {
-      }
-      public void mouseExited(MouseEvent e) {
-      }
-      public void mousePressed(MouseEvent e) {
-      }
-      public void mouseReleased(MouseEvent e) {
-      }
-    });
+    if (enableLink) {
+      myNoUpdatesPanel.myUpdatesLink.setForeground(Color.BLUE); // TODO: specify correct color
+      myNoUpdatesPanel.myUpdatesLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      myNoUpdatesPanel.myUpdatesLink.addMouseListener(new MouseListener() {
+        public void mouseClicked(MouseEvent e) {
+          UpdateSettingsConfigurable updatesSettings = UpdateSettingsConfigurable.getInstance();
+          updatesSettings.setCheckNowEnabled(false);
+          ShowSettingsUtil.getInstance().editConfigurable(myNoUpdatesPanel.myPanel, updatesSettings);
+          updatesSettings.setCheckNowEnabled(true);
+        }
+        public void mouseEntered(MouseEvent e) {
+        }
+        public void mouseExited(MouseEvent e) {
+        }
+        public void mousePressed(MouseEvent e) {
+        }
+        public void mouseReleased(MouseEvent e) {
+        }
+      });
+    }
   }
 
   private static class NoUpdatesPanel {
