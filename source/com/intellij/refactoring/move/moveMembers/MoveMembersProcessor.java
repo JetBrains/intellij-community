@@ -8,6 +8,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -28,6 +29,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
 
 import java.util.*;
 
@@ -271,10 +273,50 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   protected boolean preprocessUsages(UsageInfo[][] usages) {
     final ArrayList<String> conflicts = new ArrayList<String>();
-    for (final PsiElement member : myMembersToMove) {
-      RefactoringUtil.analyzeModuleConflicts(myProject, Collections.singletonList(member), myTargetClass, conflicts);
+    try {
+      addInaccessiblleConflicts(conflicts, usages[0]);
     }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    RefactoringUtil.analyzeModuleConflicts(myProject, myMembersToMove, myTargetClass, conflicts);
     return showConflicts(conflicts, usages);
+  }
+
+  private void addInaccessiblleConflicts(final ArrayList<String> conflicts, final UsageInfo[] usages) throws IncorrectOperationException {
+    Map<PsiMember, PsiModifierList> modifierListCopies = new HashMap<PsiMember, PsiModifierList>();
+    for (PsiMember member : myMembersToMove) {
+      final PsiModifierList copy = (PsiModifierList)member.getModifierList().copy();
+      if (myNewVisibility != null) {
+        RefactoringUtil.setVisibility(copy, myNewVisibility);
+      }
+      modifierListCopies.put(member, copy);
+    }
+
+    for (UsageInfo usage : usages) {
+      if (usage instanceof MyUsageInfo) {
+        final MyUsageInfo usageInfo = (MyUsageInfo)usage;
+        PsiElement element = usage.getElement();
+        if (element != null) {
+          final PsiMember member = usageInfo.member;
+          PsiClass accessObjectClass = null;
+          if (element instanceof PsiReferenceExpression) {
+            PsiExpression qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
+            if (qualifier != null) {
+              accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
+            }
+
+            if (!ResolveUtil.isAccessible(member, myTargetClass, modifierListCopies.get(member), element, accessObjectClass)) {
+              final String newVisibility = myNewVisibility == null ? getVisiblityString(member) : myNewVisibility;
+              String message =
+                ConflictsUtil.getDescription(member, true) + " with " + newVisibility + " visibility is not accesible from " +
+                ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true);
+              conflicts.add(message);
+            }
+          }
+        }
+      }
+    }
   }
 
   public void doRun() {
@@ -466,9 +508,9 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private static class MyUsageInfo extends UsageInfo {
     public final PsiClass qualifierClass;
     public final PsiElement reference;
-    public final PsiElement member;
+    public final PsiMember member;
 
-    public MyUsageInfo(PsiElement member, PsiElement reference, PsiClass qualifierClass, PsiElement highlightElement) {
+    public MyUsageInfo(PsiMember member, PsiElement reference, PsiClass qualifierClass, PsiElement highlightElement) {
       super(highlightElement);
       this.member = member;
       this.qualifierClass = qualifierClass;

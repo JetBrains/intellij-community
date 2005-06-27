@@ -940,10 +940,6 @@ public class RefactoringUtil {
     return expression;
   }
 
-  /**
-   * @param expression
-   * @return
-   */
   public static PsiExpression outermostParenthesizedExpression(PsiExpression expression) {
     while (expression.getParent() instanceof PsiParenthesizedExpression) {
       expression = (PsiParenthesizedExpression)expression.getParent();
@@ -1381,7 +1377,7 @@ public class RefactoringUtil {
   }
 
   public static void analyzeModuleConflicts(Project project,
-                                            Collection<PsiElement> scope,
+                                            Collection<? extends PsiElement> scope,
                                             PsiElement target,
                                             final Collection<String> conflicts) {
     if (scope == null) return;
@@ -1397,7 +1393,7 @@ public class RefactoringUtil {
   }
 
   public static void analyzeModuleConflicts(Project project,
-                                            final Collection<PsiElement> scopes,
+                                            final Collection<? extends PsiElement> scopes,
                                             final VirtualFile vFile,
                                             final Collection<String> conflicts) {
     if (scopes == null) return;
@@ -1434,7 +1430,7 @@ public class RefactoringUtil {
     }
   }
 
-  private static boolean isAncestor(final PsiElement resolved, final Collection<PsiElement> scopes) {
+  private static boolean isAncestor(final PsiElement resolved, final Collection<? extends PsiElement> scopes) {
     for (final PsiElement scope : scopes) {
       if (PsiTreeUtil.isAncestor(scope, resolved, false)) return true;
     }
