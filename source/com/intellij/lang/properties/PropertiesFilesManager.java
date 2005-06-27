@@ -81,21 +81,21 @@ public class PropertiesFilesManager implements ApplicationComponent {
 
       public void propertyChanged(VirtualFilePropertyEvent event) {
         VirtualFile file = event.getFile();
-        fileChanged(file);
+        fileChanged(file, event);
       }
 
       public void contentsChanged(VirtualFileEvent event) {
         VirtualFile file = event.getFile();
-        fileChanged(file);
+        fileChanged(file, null);
       }
     };
     myVirtualFileManager.addVirtualFileListener(myVirtualFileListener);
   }
 
-  private void fileChanged(final VirtualFile file) {
+  private void fileChanged(final VirtualFile file, final VirtualFilePropertyEvent event) {
     FileType fileType = myFileTypeManager.getFileTypeByFile(file);
     if (fileType == PropertiesFileType.FILE_TYPE) {
-      firePropertiesFileChanged(file);
+      firePropertiesFileChanged(file, event);
     }
   }
 
@@ -132,24 +132,24 @@ public class PropertiesFilesManager implements ApplicationComponent {
   private void firePropertiesFileAdded(VirtualFile propertiesFile) {
     for (PropertiesFileListener listener : myPropertiesFileListeners) {
       listener.fileAdded(propertiesFile);
-      listener.fileChanged(propertiesFile);
+      listener.fileChanged(propertiesFile, null);
     }
   }
   private void firePropertiesFileRemoved(VirtualFile propertiesFile) {
     for (PropertiesFileListener listener : myPropertiesFileListeners) {
       listener.fileRemoved(propertiesFile);
-      listener.fileChanged(propertiesFile);
+      listener.fileChanged(propertiesFile, null);
     }
   }
-  private void firePropertiesFileChanged(VirtualFile propertiesFile) {
+  private void firePropertiesFileChanged(VirtualFile propertiesFile, final VirtualFilePropertyEvent event) {
     for (PropertiesFileListener listener : myPropertiesFileListeners) {
-      listener.fileChanged(propertiesFile);
+      listener.fileChanged(propertiesFile, event);
     }
   }
 
   public static interface PropertiesFileListener {
     void fileAdded(VirtualFile propertiesFile);
     void fileRemoved(VirtualFile propertiesFile);
-    void fileChanged(VirtualFile propertiesFile);
+    void fileChanged(VirtualFile propertiesFile, final VirtualFilePropertyEvent event);
   }
 }

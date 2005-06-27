@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.psi.*;
 import com.intellij.lang.properties.PropertiesFilesManager;
 
@@ -115,7 +116,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     public void fileRemoved(VirtualFile propertiesFile) {
     }
 
-    public void fileChanged(VirtualFile propertiesFile) {
+    public void fileChanged(VirtualFile propertiesFile, final VirtualFilePropertyEvent event) {
       if (!myProject.isDisposed()) {
         VirtualFile parent = propertiesFile.getParent();
         if (parent != null && parent.isValid()) {

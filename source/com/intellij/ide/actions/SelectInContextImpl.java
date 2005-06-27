@@ -53,7 +53,7 @@ abstract class SelectInContextImpl implements SelectInContext {
     }
     ComponentCenterLocation popupLocation = new ComponentCenterLocation(sourceComponent);
 
-    SelectInContext selectInContext = ((SelectInContext)dataContext.getData(SelectInContext.DATA_CONTEXT_ID));
+    SelectInContext selectInContext = (SelectInContext)dataContext.getData(SelectInContext.DATA_CONTEXT_ID);
     if (selectInContext == null) {
       selectInContext = createPsiContext(event);
     }

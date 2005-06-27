@@ -4,6 +4,8 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.ide.FileEditorProvider;
+import com.intellij.ide.SelectInContext;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
@@ -13,6 +15,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,9 +32,11 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.psi.*;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeBorderFactory;
@@ -47,8 +52,12 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class ResourceBundleEditor extends UserDataHolderBase implements FileEditor {
@@ -65,6 +74,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private Map<Editor, DocumentListener> myDocumentListeners = new THashMap<Editor, DocumentListener>();
   private final Project myProject;
   private boolean myDisposed;
+  private DataProviderPanel myDataProviderPanel;
 
   public ResourceBundleEditor(Project project, ResourceBundle resourceBundle) {
     myProject = project;
@@ -92,8 +102,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       String propName = ((ResourceBundlePropertyStructureViewElement)child).getValue();
       setState(new ResourceBundleEditorState(propName));
     }
+    myDataProviderPanel = new DataProviderPanel(myPanel);
   }
 
+  private Editor mySelectedEditor;
   private void recreateEditorsPanel() {
     myUpdateEditorAlarm.cancelAllRequests();
 
@@ -112,9 +124,13 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     releaseAllEditors();
     myTitledPanels.clear();
     for (final PropertiesFile propertiesFile : propertiesFiles) {
-      Editor editor = createEditor();
+      final Editor editor = createEditor();
       myEditors.put(propertiesFile, editor);
-
+      editor.getContentComponent().addFocusListener(new FocusAdapter() {
+        public void focusGained(FocusEvent e) {
+          mySelectedEditor = editor;
+        }
+      });
       gc.gridx = 0;
       gc.gridy = y++;
       gc.gridheight = 1;
@@ -122,7 +138,24 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       gc.weightx = 1;
       gc.weighty = 0;
       JPanel panel = new JPanel(new BorderLayout());
-      panel.setBorder(IdeBorderFactory.createTitledBorder(propertiesFile.getName()));
+
+      Locale locale = propertiesFile.getLocale();
+      ArrayList<String> names = new ArrayList<String>();
+      if (!Comparing.strEqual(locale.getDisplayLanguage(), null)) {
+        names.add(locale.getDisplayLanguage());
+      }
+      if (!Comparing.strEqual(locale.getDisplayCountry(), null)) {
+        names.add(locale.getDisplayCountry());
+      }
+      if (!Comparing.strEqual(locale.getDisplayVariant(), null)) {
+        names.add(locale.getDisplayVariant());
+      }
+
+      String title = propertiesFile.getName();
+      if (names.size() != 0) {
+        title += " ("+StringUtil.join(names, "/")+")";
+      }
+      panel.setBorder(IdeBorderFactory.createTitledBorder(title));
       panel.setMinimumSize(new Dimension(-1, 100));
       JPanel comp = new JPanel(new BorderLayout());
       comp.add(editor.getComponent(), BorderLayout.CENTER);
@@ -140,6 +173,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
     valuesPanelComponent.add(new JPanel(), gc);
     myValuesPanel.repaint();
+
   }
 
   private void installPropertiesChangeListeners() {
@@ -152,8 +186,13 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         recreateEditorsPanel();
       }
 
-      public void fileChanged(VirtualFile propertiesFile) {
-        selectionChanged();
+      public void fileChanged(VirtualFile propertiesFile, final VirtualFilePropertyEvent event) {
+        if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
+          recreateEditorsPanel();
+        }
+        else {
+          selectionChanged();
+        }
       }
     });
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
@@ -203,6 +242,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
           for (PropertiesFile propertiesFile : propertiesFiles) {
             EditorEx editor = (EditorEx)myEditors.get(propertiesFile);
+            if (editor == null) continue;
             reinitSettings(editor);
             Property property = propertiesFile.findPropertyByKey(propertyName);
             final String value = property == null ? "" : property.getValue();
@@ -239,9 +279,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     document.replaceString(0, document.getTextLength(), text);
   }
   private static void updatePropertyValueFromDocument(final String propertyName,
-                                               final Project project,
-                                               final PropertiesFile propertiesFile,
-                                               final String text) {
+                                                      final Project project,
+                                                      final PropertiesFile propertiesFile,
+                                                      final String text) {
     String value = text;
     value = StringUtil.replace(value, "\\", "\\\\");
     value = StringUtil.replace(value, "\n", "\\\n ");
@@ -265,6 +305,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
     for (final PropertiesFile propertiesFile : propertiesFiles) {
       final EditorEx editor = (EditorEx)myEditors.get(propertiesFile);
+      if (editor == null) continue;
       DocumentAdapter listener = new DocumentAdapter() {
         private String oldText;
 
@@ -342,7 +383,52 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   }
 
   public JComponent getComponent() {
-    return myPanel;
+    return myDataProviderPanel;
+  }
+
+  private Object getData(final String dataId) {
+    if (SelectInContext.DATA_CONTEXT_ID.equals(dataId)) {
+      return new SelectInContext(){
+        public Project getProject() {
+          return myProject;
+        }
+
+        public VirtualFile getVirtualFile() {
+          PropertiesFile selectedFile = getSelectedPropertiesFile();
+          if (selectedFile == null) return null;
+
+          return selectedFile.getVirtualFile();
+        }
+
+        public Object getSelectorInFile() {
+          return getSelectedPropertiesFile();
+        }
+
+        public FileEditorProvider getFileEditorProvider() {
+          final PropertiesFile selectedPropertiesFile = getSelectedPropertiesFile();
+          if (selectedPropertiesFile == null) return null;
+          return new FileEditorProvider() {
+            public FileEditor openFileEditor() {
+              return FileEditorManager.getInstance(getProject()).openFile(selectedPropertiesFile.getVirtualFile(), false)[0];
+            }
+          };
+        }
+      };
+    }
+    return null;
+  }
+
+  private PropertiesFile getSelectedPropertiesFile() {
+    if (mySelectedEditor == null) return null;
+    PropertiesFile selectedFile = null;
+    for (PropertiesFile file : myEditors.keySet()) {
+      Editor editor = myEditors.get(file);
+      if (editor == mySelectedEditor) {
+        selectedFile = file;
+        break;
+      }
+    }
+    return selectedFile;
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -449,6 +535,18 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     settings.setRightMargin(60);
 
     editor.setHighlighter(new LexerEditorHighlighter(new PropertiesValueHighlighter(), scheme));
+  }
+
+  private class DataProviderPanel extends JPanel implements DataProvider {
+    public DataProviderPanel(final JPanel panel) {
+      super(new BorderLayout());
+      add(panel, BorderLayout.CENTER);
+    }
+
+    @Nullable
+    public Object getData(String dataId) {
+      return ResourceBundleEditor.this.getData(dataId);
+    }
   }
 
 }

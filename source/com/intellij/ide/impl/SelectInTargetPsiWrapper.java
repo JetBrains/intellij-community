@@ -33,11 +33,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
       }
     }
 
-    if (!canWorkWithCustomObjects()) {
-      return false;
-    } else {
-      return true;
-    }
+    return canWorkWithCustomObjects();
   }
 
   public final void selectIn(SelectInContext context, final boolean requestFocus) {

@@ -102,6 +102,11 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return new ResourceBundleImpl(getContainingFile().getContainingDirectory().getVirtualFile(), baseName);
   }
 
+  @NotNull
+  public Locale getLocale() {
+    return PropertiesUtil.getLocale(getVirtualFile());
+  }
+
   public PsiElement add(PsiElement element) throws IncorrectOperationException {
     if (element instanceof Property) {
       throw new IncorrectOperationException("Use addProperty() instead");

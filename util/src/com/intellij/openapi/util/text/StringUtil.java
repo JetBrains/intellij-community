@@ -5,27 +5,29 @@
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.Introspector;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.StringTokenizer;
-import java.util.List;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.StringTokenizer;
 
 public class StringUtil {
   private static final String VOWELS = "aeiouy";
 
-  public static String replace(String text, String oldS, String newS) {
+  public static String replace(@NotNull String text, @NotNull String oldS, @Nullable String newS) {
     return replace(text, oldS, newS, false);
   }
 
-  public static String replaceIgnoreCase(String text, String oldS, String newS) {
+  public static String replaceIgnoreCase(@NotNull String text, @NotNull String oldS, @Nullable String newS) {
     return replace(text, oldS, newS, true);
   }
 
-  public static String replace(String text, String oldS, String newS, boolean ignoreCase) {
+  public static String replace(@NotNull String text, @NotNull String oldS, @Nullable String newS, boolean ignoreCase) {
     if (text.length() < oldS.length()) return text;
 
     String text1 = ignoreCase ? text.toLowerCase() : text;
@@ -55,15 +57,15 @@ public class StringUtil {
   /**
    * Converts line separators to <code>"\n"</code>
    */
-  public static String convertLineSeparators(String text) {
+  public static String convertLineSeparators(@NotNull String text) {
     return convertLineSeparators(text, "\n", null);
   }
 
-  public static String convertLineSeparators(String text, String newSeparator) {
+  public static String convertLineSeparators(@NotNull String text, String newSeparator) {
     return convertLineSeparators(text, newSeparator, null);
   }
 
-  public static String convertLineSeparators(String text, String newSeparator, int[] offsetsToKeep) {
+  public static String convertLineSeparators(@NotNull String text, String newSeparator, int[] offsetsToKeep) {
     StringBuffer buffer = new StringBuffer(text.length());
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
@@ -100,7 +102,7 @@ public class StringUtil {
     }
   }
 
-  public static int getLineBreakCount(CharSequence text) {
+  public static int getLineBreakCount(@NotNull CharSequence text) {
     int count = 0;
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
@@ -120,7 +122,7 @@ public class StringUtil {
     return count;
   }
 
-  public static int lineColToOffset(CharSequence text, int line, int col) {
+  public static int lineColToOffset(@NotNull CharSequence text, int line, int col) {
     int curLine = 0;
     int offset = 0;
     while (true) {
@@ -142,7 +144,7 @@ public class StringUtil {
     }
   }
 
-  public static int offsetToLineNumber(CharSequence text, int offset) {
+  public static int offsetToLineNumber(@NotNull CharSequence text, int offset) {
     int curLine = 0;
     int curOffset = 0;
     while (true) {
@@ -167,7 +169,7 @@ public class StringUtil {
   /**
    * Classic dynamic programming algorithm for string differences.
    */
-  public static int difference(String s1, String s2) {
+  public static int difference(@NotNull String s1, @NotNull String s2) {
     int[][] a = new int[s1.length()][s2.length()];
 
     for (int i = 0; i < s1.length(); i++) {
@@ -190,10 +192,10 @@ public class StringUtil {
     return a[s1.length() - 1][s2.length() - 1];
   }
 
-  public static final String wordsToBeginFromUpperCase(String s) {
+  public static final String wordsToBeginFromUpperCase(@NotNull String s) {
     StringBuffer buffer = null;
     for (int i = 0; i < s.length(); i++) {
-      char prevChar = (i == 0) ? ' ' : s.charAt(i - 1);
+      char prevChar = i == 0 ? ' ' : s.charAt(i - 1);
       char currChar = s.charAt(i);
       if (!Character.isLetterOrDigit(prevChar)) {
         if (Character.isLetterOrDigit(currChar)) {
@@ -227,9 +229,8 @@ public class StringUtil {
   };
 
 
-  public static final boolean isPreposition(String s, int firstChar, int lastChar) {
-    for (int i = 0; i < ourPrepositions.length; i++) {
-      String preposition = ourPrepositions[i];
+  public static final boolean isPreposition(@NotNull String s, int firstChar, int lastChar) {
+    for (String preposition : ourPrepositions) {
       boolean found = false;
       if (lastChar - firstChar + 1 == preposition.length()) {
         found = true;
@@ -295,14 +296,14 @@ public class StringUtil {
     }
   }
 
-  public static String escapeStringCharacters(String s) {
+  public static String escapeStringCharacters(@NotNull String s) {
     StringBuffer buffer = new StringBuffer();
     escapeStringCharacters(s.length(), s, buffer);
     return buffer.toString();
   }
 
 
-  public static String unescapeStringCharacters(String s) {
+  public static String unescapeStringCharacters(@NotNull String s) {
     StringBuffer buffer = new StringBuffer();
     unescapeStringCharacters(s.length(), s, buffer);
     return buffer.toString();
@@ -375,7 +376,7 @@ public class StringUtil {
     if (escaped) buffer.append('\\');
   }
 
-  public static String pluralize(String suggestion) {
+  public static String pluralize(@NotNull String suggestion) {
     if (StringUtil.endsWithChar(suggestion, 's') || StringUtil.endsWithChar(suggestion, 'x')) {
       suggestion += "es";
     }
@@ -391,7 +392,7 @@ public class StringUtil {
     return suggestion;
   }
 
-  public static String capitalizeWords(String text, boolean allWords) {
+  public static String capitalizeWords(@NotNull String text, boolean allWords) {
     StringTokenizer tokenizer = new StringTokenizer(text);
     String out = "";
     String delim = "";
@@ -415,7 +416,7 @@ public class StringUtil {
     return VOWELS.indexOf(c) >= 0;
   }
 
-  public static String capitalize(String s) {
+  public static String capitalize(@NotNull String s) {
     if (s.length() == 0) return s;
     if (s.length() == 1) return s.toUpperCase();
     if (s.length() > 1 && Character.isUpperCase(s.charAt(1))) return s;
@@ -449,7 +450,7 @@ public class StringUtil {
     return h;
   }
 
-  public static int stringHashCodeInsensitive(CharSequence chars) {
+  public static int stringHashCodeInsensitive(@NotNull CharSequence chars) {
     int h = 0;
     final int len = chars.length();
     for( int i = 0; i < len; i++) {
@@ -458,7 +459,7 @@ public class StringUtil {
     return h;
   }
 
-  public static String trimEnd(String s, String suffix) {
+  public static String trimEnd(@NotNull String s, @NotNull String suffix) {
     if (s.endsWith(suffix)) {
       return s.substring(0, s.lastIndexOf(suffix));
     }
@@ -472,14 +473,14 @@ public class StringUtil {
     return s != null && s.length() != 0 && s.charAt(s.length()-1) == suffix;
   }
 
-  public static String trimStart(String s, String prefix) {
+  public static String trimStart(@NotNull String s, @NotNull String prefix) {
     if (s.startsWith(prefix)) {
       return s.substring(prefix.length());
     }
     return s;
   }
 
-  public static String pluralize(String base, int n) {
+  public static String pluralize(@NotNull String base, int n) {
     if (n == 1) return base;
     return pluralize(base);
   }
@@ -526,7 +527,7 @@ public class StringUtil {
     return result;
   }
 
-  private static String extractMessage(String result, final String errorPattern) {
+  private static String extractMessage(@NotNull String result, @NotNull final String errorPattern) {
     if (result.lastIndexOf(errorPattern) >= 0 ) {
       result = result.substring(result.lastIndexOf(errorPattern) + errorPattern.length());
     }
@@ -539,7 +540,7 @@ public class StringUtil {
     return buffer.toString();
   }
 
-  public static List<String> split(String s, String separator) {
+  public static List<String> split(@NotNull String s, @NotNull String separator) {
     ArrayList<String> result = new ArrayList<String>();
     int pos = 0;
     while (true) {
@@ -554,7 +555,7 @@ public class StringUtil {
     return result;
   }
 
-  public static List<String> getWordsIn(String text) {
+  public static List<String> getWordsIn(@NotNull String text) {
     List<String> result = new SmartList<String>();
     int start = -1;
     for (int i=0;i<text.length();i++) {
@@ -574,7 +575,7 @@ public class StringUtil {
     return result;
   }
 
-  public static String join(final String[] strings, final String separator) {
+  public static String join(@NotNull final String[] strings, final String separator) {
     final StringBuffer result = new StringBuffer();
     for (int i = 0; i < strings.length; i++) {
       if (i > 0) result.append(separator);
@@ -582,8 +583,8 @@ public class StringUtil {
     }
     return result.toString();
   }
-  
-  public static String join(Collection<String> strings, final String separator) {
+
+  public static String join(@NotNull Collection<String> strings, final String separator) {
     final StringBuffer result = new StringBuffer();
     for (String string : strings) {
       if (string != null && string.length() != 0) {
@@ -594,7 +595,7 @@ public class StringUtil {
     return result.toString();
   }
 
-  public static String join(final int[] strings, final String separator) {
+  public static String join(@NotNull final int[] strings, final String separator) {
     final StringBuffer result = new StringBuffer();
     for (int i = 0; i < strings.length; i++) {
       if (i > 0) result.append(separator);

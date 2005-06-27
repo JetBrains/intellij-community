@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Locale;
 
 public interface PropertiesFile extends PsiFile {
   @NotNull List<Property> getProperties();
@@ -21,6 +22,7 @@ public interface PropertiesFile extends PsiFile {
   @NotNull List<Property> findPropertiesByKey(@NotNull String key);
 
   @NotNull ResourceBundle getResourceBundle();
+  @NotNull Locale getLocale();
 
   @NotNull PsiElement addProperty(@NotNull Property property) throws IncorrectOperationException;
 }

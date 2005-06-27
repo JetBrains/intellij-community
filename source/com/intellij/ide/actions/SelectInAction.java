@@ -37,9 +37,9 @@ public class SelectInAction extends AnAction {
     }
   }
 
-  public void invoke(DataContext dataContext, SelectInContextImpl.SelectInContextProvider contextProvider) {
+  private static void invoke(DataContext dataContext, SelectInContextImpl.SelectInContextProvider contextProvider) {
     final SelectInContext context = contextProvider.getContext();
-    final SelectInTarget[] targetVector = getTargets(context);
+    final SelectInTarget[] targetVector = getTargets(context.getProject());
 
     DefaultActionGroup group = new DefaultActionGroup();
     boolean hasEnabled = false;
@@ -61,33 +61,33 @@ public class SelectInAction extends AnAction {
     listPopup.show(p.x, p.y);
   }
 
-  protected SelectInTarget[] getTargets(SelectInContext context) {
-    ArrayList<SelectInTarget> result = new ArrayList<SelectInTarget>(Arrays.asList(getTargetsFor(context)));
+  private static SelectInTarget[] getTargets(final Project project) {
+    ArrayList<SelectInTarget> result = new ArrayList<SelectInTarget>(Arrays.asList(getTargetsFor(project)));
 
     if (result.size() > 1) {
-      rearrangeTargetList(context, result);
+      rearrangeTargetList(project, result);
     }
 
     return result.toArray(new SelectInTarget[result.size()]);
   }
 
-  private SelectInTarget[] getTargetsFor(final SelectInContext context) {
-    return getSelectInManager(context.getProject()).getTargets();
+  private static SelectInTarget[] getTargetsFor(final Project project) {
+    return getSelectInManager(project).getTargets();
   }
 
   private static SelectInManager getSelectInManager(Project project) {
     return SelectInManager.getInstance(project);
   }
 
-  private void rearrangeTargetList(final SelectInContext context, final ArrayList<SelectInTarget> result) {
-    final String activeToolWindowId = ToolWindowManager.getInstance(context.getProject()).getActiveToolWindowId();
+  private static void rearrangeTargetList(final Project project, final ArrayList<SelectInTarget> result) {
+    final String activeToolWindowId = ToolWindowManager.getInstance(project).getActiveToolWindowId();
     if (activeToolWindowId != null) {
       SelectInTarget firstTarget = result.get(0);
       if (activeToolWindowId.equals(firstTarget.getToolWindowId())) {
         boolean shouldMoveToBottom = true;
         if (ToolWindowId.PROJECT_VIEW.equals(activeToolWindowId)) {
-          final String currentMinorViewId = ProjectView.getInstance(context.getProject()).getCurrentViewId();
-          shouldMoveToBottom = (currentMinorViewId != null) && currentMinorViewId.equals(firstTarget.getMinorViewId());
+          final String currentMinorViewId = ProjectView.getInstance(project).getCurrentViewId();
+          shouldMoveToBottom = currentMinorViewId != null && currentMinorViewId.equals(firstTarget.getMinorViewId());
         }
         if (shouldMoveToBottom) {
           result.remove(0);

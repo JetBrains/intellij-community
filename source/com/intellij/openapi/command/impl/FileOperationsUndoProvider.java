@@ -107,7 +107,7 @@ class FileOperationsUndoProvider implements VirtualFileListener, LocalVcsItemsLo
   }
 
   public void propertyChanged(VirtualFilePropertyEvent event) {
-    if ("name".equals(event.getPropertyName())) {
+    if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
       undoableActionPerformed(event);
     }
   }
