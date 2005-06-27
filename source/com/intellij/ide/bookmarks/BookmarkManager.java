@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jdom.Element;
 
@@ -63,7 +64,9 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
   public void addEditorBookmark(Document document, int lineIndex, int number) {
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (psiFile == null) return;
-    String name = psiFile.getVirtualFile().getPath();
+    final VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) return;
+    String name = virtualFile.getPath();
     if (name == null) return;
     RangeHighlighter lineMarker = ((MarkupModelEx)document.getMarkupModel(myProject)).addPersistentLineHighlighter(
       lineIndex, HighlighterLayer.ADDITIONAL_SYNTAX - 1, null);
