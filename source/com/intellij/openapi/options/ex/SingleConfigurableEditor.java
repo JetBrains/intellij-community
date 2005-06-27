@@ -121,7 +121,12 @@ public class SingleConfigurableEditor extends DialogWrapper {
         }
       };
 
-      addUpdateRequest(updateRequest);
+      // invokeLater necessary to make sure dialog is already shown so we calculate modality state correctly.
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          addUpdateRequest(updateRequest);
+        }
+      });
     }
 
     private void addUpdateRequest(final Runnable updateRequest) {
