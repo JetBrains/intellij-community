@@ -144,6 +144,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public void registerVcs(AbstractVcs vcs) {
     try {
+      vcs.loadSettings();
       vcs.start();
     }
     catch (VcsException e) {
@@ -171,6 +172,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public AbstractVcs[] getAllVcss() {
     if (myCachedVCSs == null) {
+      Collections.sort(myVcss, new Comparator<AbstractVcs>() {
+        public int compare(final AbstractVcs o1, final AbstractVcs o2) {
+          return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
+        }
+      });
       myCachedVCSs = myVcss.toArray(new AbstractVcs[myVcss.size()]);
     }
     return myCachedVCSs;

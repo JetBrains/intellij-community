@@ -21,6 +21,8 @@ public class SynteticCodeBlock implements Block, JavaBlock{
 
   private final TextRange myTextRange;
 
+  private ChildAttributes myChildAttributes;
+
   public SynteticCodeBlock(final List<Block> subBlocks,
                            final Alignment alignment,
                            CodeStyleSettings settings,
@@ -72,8 +74,16 @@ public class SynteticCodeBlock implements Block, JavaBlock{
     return AbstractJavaBlock.getTreeNode(mySubBlocks.get(0));
   }
 
+  public void setChildAttributes(final ChildAttributes childAttributes) {
+    myChildAttributes = childAttributes;
+  }
+
   public ChildAttributes getChildAttributes(final int newChildIndex) {
-    return new ChildAttributes(getIndent(), null);
+    if (myChildAttributes != null) {
+      return myChildAttributes;
+    } else {
+      return new ChildAttributes(getIndent(), null);
+    }
   }
 
   public boolean isIncomplete() {

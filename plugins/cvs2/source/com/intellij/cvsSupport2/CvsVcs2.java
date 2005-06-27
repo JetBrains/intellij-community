@@ -95,7 +95,6 @@ public class CvsVcs2 extends AbstractVcs implements ProjectComponent,
   }
 
   public void projectOpened() {
-    super.projectOpened();
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myAddOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.ADD, this);
     myRemoveOptions = vcsManager.getStandardOption(VcsConfiguration.StandardOption.ADD, this);

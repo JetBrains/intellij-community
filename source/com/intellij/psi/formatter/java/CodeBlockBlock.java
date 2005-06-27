@@ -83,7 +83,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     child = child.getTreeNext();
     while (child != null) {
       if (child.getElementType() == ElementType.SWITCH_LABEL_STATEMENT || isRBrace(child)) {
-        result.add(new SynteticCodeBlock(localResult, childAlignment, getSettings(), indent, childWrap));
+        result.add(createCaseSectionBlock(localResult, childAlignment, indent, childWrap));
         return child.getTreePrev();
       }
 
@@ -98,8 +98,15 @@ public class CodeBlockBlock extends AbstractJavaBlock {
       }
       child = child.getTreeNext();
     }
-    result.add(new SynteticCodeBlock(localResult, childAlignment, getSettings(), indent, childWrap));
+    result.add(createCaseSectionBlock(localResult, childAlignment, indent, childWrap));
     return null;
+  }
+
+  private SynteticCodeBlock createCaseSectionBlock(final ArrayList<Block> localResult, final Alignment childAlignment, final Indent indent,
+                                                   final Wrap childWrap) {
+    final SynteticCodeBlock result = new SynteticCodeBlock(localResult, childAlignment, getSettings(), indent, childWrap);
+    result.setChildAttributes(new ChildAttributes(Formatter.getInstance().createNormalIndent(), null));
+    return result;
   }
 
   private int calcNewState(final ASTNode child, int state) {

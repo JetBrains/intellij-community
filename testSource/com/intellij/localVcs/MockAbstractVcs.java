@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatusProvider;
 import com.intellij.openapi.vcs.UpToDateRevisionProvider;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 
 public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
@@ -35,26 +34,10 @@ public class MockAbstractVcs extends AbstractVcs implements ProjectComponent {
     return null;
   }
 
-  public void checkinFile(String path, Object parameters) throws VcsException {
-  }
-
-  public void addFile(String folderPath, String name, Object parameters) throws VcsException {
-  }
-
-  public void removeFile(String path, Object parameters) throws VcsException {
-  }
-
-  public void addDirectory(String parentPath, String name, Object parameters) throws VcsException {
-  }
-
-  public void removeDirectory(String path, Object parameters) throws VcsException {
+  public void projectClosed() {
   }
 
   public void projectOpened() {
-    super.projectOpened();
-  }
-
-  public void projectClosed() {
   }
 
   public String getComponentName() {
