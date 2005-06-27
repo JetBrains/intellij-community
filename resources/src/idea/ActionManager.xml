@@ -301,8 +301,8 @@
         </group>
         <separator/>
         <group id="CommanderViewGroup" class="com.intellij.ide.actions.CommanderViewActionGroup">
-          <action id="CommanderSyncViews" class="com.intellij.ide.actions.SyncViewsAction" text="S_ynchronize Views" description="Synchronize both panels"/>
-          <action id="CommanderSwapPanels" class="com.intellij.ide.actions.SwapPanelsAction" text="Swap _Panels" description="Swap the panels"/>
+          <action id="CommanderSyncViews" class="com.intellij.ide.actions.SyncViewsAction" text="S_ynchronize Views" description="Synchronize both panels" icon="/actions/syncPanels.png"/>
+          <action id="CommanderSwapPanels" class="com.intellij.ide.actions.SwapPanelsAction" text="Swap _Panels" description="Swap the panels" icon="/actions/swapPanels.png"/>
           <reference ref="CompareTwoFiles"/>
           <reference ref="CompareFileWithEditor"/>
         </group>

@@ -7,10 +7,7 @@ import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -204,12 +201,51 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
 
     add(mySplitter, BorderLayout.CENTER);
 
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.COMMANDER_TOOLBAR, createToolbarActions(), true);
+    add(toolbar.getComponent(), BorderLayout.NORTH);
+
     processConfigurationElement();
     myElement = null;
 
     myFocusWatcher.install(this);
 
     setupToolWindow();
+  }
+
+  private ActionGroup createToolbarActions() {
+    final ActionManager actionManager = ActionManager.getInstance();
+    final DefaultActionGroup group = new DefaultActionGroup();
+
+    final AnAction backAction = new AnAction() {
+      public void actionPerformed(AnActionEvent e) {
+        myHistory.back();
+      }
+
+      public void update(AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setEnabled(myHistory.canGoBack());
+      }
+    };
+    backAction.copyFrom(actionManager.getAction(IdeActions.ACTION_GOTO_BACK));
+    group.add(backAction);
+
+    final AnAction forwardAction = new AnAction() {
+      public void actionPerformed(AnActionEvent e) {
+        myHistory.forward();
+      }
+
+      public void update(AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setEnabled(myHistory.canGoForward());
+      }
+    };
+    forwardAction.copyFrom(actionManager.getAction(IdeActions.ACTION_GOTO_FORWARD));
+    group.add(forwardAction);
+
+    group.add(actionManager.getAction(IdeActions.ACTION_COMMANDER_SWAP_PANELS));
+    group.add(actionManager.getAction(IdeActions.ACTION_COMMANDER_SYNC_VIEWS));
+    
+    return group;
   }
 
   protected void setupToolWindow() {

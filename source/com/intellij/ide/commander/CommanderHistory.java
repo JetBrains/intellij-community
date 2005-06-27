@@ -50,10 +50,18 @@ public class CommanderHistory {
     }
   }
 
+  public boolean canGoBack() {
+    return getHistoryState(myCurrentCommandIndex - 1) != null;
+  }
+
   public void forward() {
     if (applyState(getHistoryState(myCurrentCommandIndex + 1))) {
       myCurrentCommandIndex++;
     }
+  }
+
+  public boolean canGoForward() {
+    return getHistoryState(myCurrentCommandIndex + 1) != null;
   }
 
   private boolean applyState(HistoryState state) {

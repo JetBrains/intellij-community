@@ -1,5 +1,6 @@
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.codeInsight.CodeInsightColors;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
@@ -12,10 +13,9 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiDocCommentOwner;
-import com.intellij.codeInsight.CodeInsightColors;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -112,7 +112,7 @@ public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewN
   public boolean contains(VirtualFile file) {
     if (getValue() == null) return false;
     PsiFile containingFile = getValue().getContainingFile();
-    return containingFile.getVirtualFile().equals(file);
+    return file.equals(containingFile.getVirtualFile());
   }
 
   public void navigate(boolean requestFocus) {
@@ -130,8 +130,19 @@ public abstract class BasePsiNode <Type extends PsiElement> extends ProjectViewN
   }
 
   public static VirtualFile getVirtualFile(PsiElement element) {
-    return element instanceof PsiDirectory
-      ? ((PsiDirectory)element).getVirtualFile()
-      : element.getContainingFile().getVirtualFile();
+    if (element == null) {
+      return null;
+    }
+
+    if (element instanceof PsiDirectory) {
+      return ((PsiDirectory)element).getVirtualFile();
+    }
+
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null) {
+      return null;
+    }
+
+    return containingFile.getVirtualFile();
   }
 }

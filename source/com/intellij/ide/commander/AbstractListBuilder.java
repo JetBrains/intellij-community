@@ -272,7 +272,7 @@ public abstract class AbstractListBuilder {
   }
 
   private boolean shouldAddTopElement() {
-    return myCurrentParent != myShownRoot;
+    return !myShownRoot.equals(myCurrentParent);
   }
 
   private Object[] getChildren(final AbstractTreeNode parentElement) {
