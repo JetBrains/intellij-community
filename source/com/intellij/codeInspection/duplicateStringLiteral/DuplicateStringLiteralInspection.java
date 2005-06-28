@@ -1,6 +1,7 @@
 package com.intellij.codeInspection.duplicateStringLiteral;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.i18n.I18nInspection;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -19,10 +20,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
-import com.intellij.refactoring.util.occurences.BaseOccurenceManager;
-import com.intellij.refactoring.util.occurences.OccurenceFilter;
-import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.StringSearcher;
@@ -211,41 +208,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   private static LocalQuickFix createIntroduceConstFix(final List<PsiExpression> foundExpr, final PsiLiteralExpression originalExpression) {
     final PsiExpression[] expressions = foundExpr.toArray(new PsiExpression[foundExpr.size()+1]);
     expressions[foundExpr.size()] = originalExpression;
-    final LocalQuickFix introduceConstFix = new LocalQuickFix() {
-      public String getName() {
-        return IntroduceConstantHandler.REFACTORING_NAME;
-      }
-      public void applyFix(final Project project, ProblemDescriptor descriptor) {
-        final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
-          protected OccurenceManager createOccurenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
-            final OccurenceFilter filter = new OccurenceFilter() {
-              public boolean isOK(PsiExpression occurence) {
-                return true;
-              }
-            };
-            return new BaseOccurenceManager(filter) {
-              protected PsiExpression[] defaultOccurences() {
-                return expressions;
-              }
-
-              protected PsiExpression[] findOccurences() {
-                return expressions;
-              }
-            };
-          }
-        };
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            handler.invoke(project, expressions);
-          }
-        });
-      }
-
-      public String getFamilyName() {
-        return getName();
-      }
-    };
-    return introduceConstFix;
+    return I18nInspection.createIntroduceConstantFix(expressions);
   }
 
   private static PsiReferenceExpression createReferenceTo(final PsiField constant, final PsiLiteralExpression context) throws IncorrectOperationException {
