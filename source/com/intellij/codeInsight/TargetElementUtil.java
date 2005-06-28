@@ -15,7 +15,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.util.XmlUtil;
 
 public class TargetElementUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.TargetElementUtil");
@@ -101,13 +107,17 @@ public class TargetElementUtil {
         }
       }
       else if (parent instanceof PsiNamedElement) { // A bit hacky depends on navigation offset correctly overriden
+        if (parent instanceof XmlElementDecl) {
+          return parent;
+        }
+
         if (parent.getTextOffset() == element.getTextOffset() &&
             Comparing.equal(((PsiNamedElement)parent).getName(), element.getText()) &&
             !(parent instanceof XmlAttribute)
            ) {
           return parent;
         }
-      }
+      } 
     }
 
     if (element instanceof PsiKeyword) {
@@ -158,7 +168,18 @@ public class TargetElementUtil {
     }
 
     if ((flags & REFERENCED_ELEMENT_ACCEPTED) != 0) {
-      return getReferenceOrReferencedElement(file, editor, flags, offset);
+      final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
+      
+      if (referenceOrReferencedElement == null) {
+        final PsiElement parent = element.getParent();
+        
+        if(parent instanceof XmlAttributeValue) {
+          final XmlTag tag = PsiTreeUtil.getParentOfType(parent, XmlTag.class);
+          final PsiMetaData metaData = tag.getMetaData();
+          return (metaData != null)?metaData.getDeclaration(): parent;
+        }
+      }
+      return referenceOrReferencedElement;
     }
 
     return null;
