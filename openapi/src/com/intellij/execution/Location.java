@@ -20,7 +20,7 @@ public abstract class Location<E extends PsiElement> {
     final PsiFile psiFile = psiElement.getContainingFile();
     if (psiFile == null) return null;
     final VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null) return null;
+    if (virtualFile == null || !virtualFile.isValid()) return null;
     return new OpenFileDescriptor(getProject(), virtualFile, psiElement.getTextOffset());
   }
 

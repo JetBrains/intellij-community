@@ -356,15 +356,15 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     return psiElements.toArray(new PsiMethod[psiElements.size()]);
   }
 
-  private Object[] getSelectedElements() {
+  private PsiElement[] getSelectedElements() {
     MethodHierarchyNodeDescriptor[] descriptors = getSelectedDescriptors();
-    ArrayList<Object> elements = new ArrayList<Object>();
+    ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
     for (int i = 0; i < descriptors.length; i++) {
       MethodHierarchyNodeDescriptor descriptor = descriptors[i];
       PsiElement element = descriptor.getTargetElement();
       elements.add(element);
     }
-    return elements.toArray(new Object[elements.size()]);
+    return elements.toArray(new PsiElement[elements.size()]);
   }
 
   private DefaultMutableTreeNode getSelectedNode() {
@@ -393,12 +393,14 @@ public final class MethodHierarchyBrowser extends JPanel implements DataProvider
     else if (DataConstantsEx.PSI_ELEMENT_ARRAY.equals(dataId)) {
       return getSelectedMethods();
     } else if (DataConstants.NAVIGATABLE_ARRAY.equals(dataId)) {
-      final Object[] selectedElements = getSelectedElements();
+      final PsiElement[] selectedElements = getSelectedElements();
       if (selectedElements == null || selectedElements.length == 0) return null;
       final ArrayList<Navigatable> navigatables = new ArrayList<Navigatable>();
       for (int i = 0; i < selectedElements.length; i++) {
-        Object selectedElement = selectedElements[i];
-        if (selectedElement instanceof Navigatable) navigatables.add((Navigatable)selectedElement);
+        PsiElement selectedElement = selectedElements[i];
+        if (selectedElement instanceof Navigatable && selectedElement.isValid()) {
+          navigatables.add((Navigatable)selectedElement);
+        }
       }
       return navigatables.toArray(new Navigatable[navigatables.size()]);
     }

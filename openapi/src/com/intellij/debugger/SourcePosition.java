@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -78,7 +79,11 @@ public abstract class SourcePosition implements Navigatable{
       if (project.isDisposed()) {
         return null;
       }
-      return FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, psiFile.getVirtualFile(), getOffset()), requestFocus);
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile == null || !virtualFile.isValid()) {
+        return null;
+      }
+      return FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile, getOffset()), requestFocus);
     }
 
     private boolean checkRecalculate() {

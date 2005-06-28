@@ -59,7 +59,10 @@ public class ViewStructureAction extends AnAction implements TreeActionsOwner{
     Navigatable navigatable = (Navigatable)dataContext.getData(DataConstants.NAVIGATABLE);
     DialogWrapper dialog = createDialog(psiFile, structureViewBuilder, editor, project, navigatable, fileEditor);
     if (dialog != null) {
-      dialog.setTitle(psiFile.getVirtualFile().getPresentableUrl());
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile != null) {
+        dialog.setTitle(virtualFile.getPresentableUrl());
+      }
       dialog.show();
     }
   }

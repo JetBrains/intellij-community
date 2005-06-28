@@ -350,7 +350,6 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
 
 
   private static OpenFileDescriptor getOpenFileDescriptor(final RefElement refElement) {
-    OpenFileDescriptor descriptor = null;
     final VirtualFile[] file = new VirtualFile[1];
     final int[] offset = new int[1];
 
@@ -367,10 +366,10 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       }
     });
 
-    if (file[0] != null) {
-      descriptor = new OpenFileDescriptor(refElement.getRefManager().getProject(), file[0], offset[0]);
+    if (file[0] != null && file[0].isValid()) {
+      return new OpenFileDescriptor(refElement.getRefManager().getProject(), file[0], offset[0]);
     }
-    return descriptor;
+    return null;
   }
 
   public void syncBrowser() {
@@ -803,7 +802,10 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       }
 
       if (DataConstants.NAVIGATABLE.equals(dataId)) {
-        return new OpenFileDescriptor(myProject, psiElement.getContainingFile().getVirtualFile(), psiElement.getTextOffset());
+        final VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
+        if (virtualFile != null && virtualFile.isValid()) {
+          return new OpenFileDescriptor(myProject, virtualFile, psiElement.getTextOffset());
+        }
       }
       else if (DataConstants.PSI_ELEMENT.equals(dataId)) {
         return psiElement;

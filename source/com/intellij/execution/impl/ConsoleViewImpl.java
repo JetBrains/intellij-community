@@ -38,6 +38,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
@@ -336,7 +337,11 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, DataPr
       }
       final LogicalPosition pos = myEditor.getCaretModel().getLogicalPosition();
       final HyperlinkInfo info = getHyperlinkInfoByLineAndCol(pos.line, pos.column);
-      return info instanceof OpenFileHyperlinkInfo ? ((OpenFileHyperlinkInfo)info).getDescriptor() : null;
+      final OpenFileDescriptor openFileDescriptor = info instanceof OpenFileHyperlinkInfo ? ((OpenFileHyperlinkInfo)info).getDescriptor() : null;
+      if (openFileDescriptor == null && !openFileDescriptor.getFile().isValid()) {
+        return null;
+      }
+      return openFileDescriptor;
     }
 
     if (DataConstants.EDITOR.equals(dataId)) {

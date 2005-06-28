@@ -142,7 +142,7 @@ public class BrowserPanel extends JPanel implements DataProvider {
   public Object getData(String dataId) {
     if (DataConstants.NAVIGATABLE.equals(dataId)) {
       VirtualFile cvsVirtualFile = getCvsVirtualFile();
-      if (cvsVirtualFile == null) return null;
+      if (cvsVirtualFile == null || !cvsVirtualFile.isValid()) return null;
       return new OpenFileDescriptor(myProject, cvsVirtualFile);
     }
     else if (DataConstants.PROJECT.equals(dataId)) {

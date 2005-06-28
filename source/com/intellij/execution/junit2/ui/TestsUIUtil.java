@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.pom.Navigatable;
 
 import javax.swing.*;
@@ -42,9 +43,13 @@ public class TestsUIUtil {
     final JUnitConsoleProperties properties = model.getProperties();
     if (testProxy != null) {
       final Location location = testProxy.getInfo().getLocation(project);
-      if (JUnitConsoleProperties.OPEN_FAILURE_LINE.value(properties))
+      if (JUnitConsoleProperties.OPEN_FAILURE_LINE.value(properties)) {
         return testProxy.getState().getDescriptor(location);
-      else return location != null ? location.getOpenFileDescriptor() : null;
+      }
+      final OpenFileDescriptor openFileDescriptor = location != null ? location.getOpenFileDescriptor() : null;
+      if (openFileDescriptor != null && openFileDescriptor.getFile().isValid()) {
+        return openFileDescriptor;
+      }
     }
     return null;
   }

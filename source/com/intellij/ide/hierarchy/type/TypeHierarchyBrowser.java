@@ -363,7 +363,10 @@ public final class TypeHierarchyBrowser extends JPanel implements DataProvider {
     if (objects == null || objects.length == 0) return null;
     final ArrayList<Navigatable> result = new ArrayList<Navigatable>();
     for (int i = 0; i < objects.length; i++) {
-      result.add(objects[i]);
+      final PsiClass aClass = objects[i];
+      if (aClass.isValid()) {
+        result.add(aClass);
+      }
     }
     return result.toArray(new Navigatable[result.size()]);
 

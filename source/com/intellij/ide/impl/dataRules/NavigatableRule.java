@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement;
 public class NavigatableRule implements GetDataRule {
   public Object getData(DataProvider dataProvider) {
     final OpenFileDescriptor openFileDescriptor = (OpenFileDescriptor)dataProvider.getData(DataConstants.OPEN_FILE_DESCRIPTOR);
-    if (openFileDescriptor != null) {
+    if (openFileDescriptor != null && openFileDescriptor.getFile().isValid()) {
       return openFileDescriptor;
     }
 

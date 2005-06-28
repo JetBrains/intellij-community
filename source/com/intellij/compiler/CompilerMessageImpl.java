@@ -46,7 +46,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
 
   public Navigatable getNavigatable() {
     final VirtualFile virtualFile = getVirtualFile();
-    if (virtualFile != null) {
+    if (virtualFile != null && virtualFile.isValid()) {
       final int line = getLine() - 1; // editor lines are zero-based
       final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       if (document != null && line >= 0 && line < document.getLineCount()) {

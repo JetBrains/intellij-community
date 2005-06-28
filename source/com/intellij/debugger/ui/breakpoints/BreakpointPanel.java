@@ -419,6 +419,9 @@ public class BreakpointPanel {
       }
     }
     VirtualFile vFile = FileDocumentManager.getInstance().getFile(doc);
+    if (vFile == null || !vFile.isValid()) {
+      return null;
+    }
     return new OpenFileDescriptor(project, vFile, offset);
   }
 

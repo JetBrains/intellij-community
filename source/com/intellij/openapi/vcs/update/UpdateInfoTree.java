@@ -162,7 +162,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
   public Object getData(String dataId) {
     if (DataConstants.NAVIGATABLE.equals(dataId)) {
-      if (mySelectedFile == null) return null;
+      if (mySelectedFile == null || !mySelectedFile.isValid()) return null;
       return new OpenFileDescriptor(myProject, mySelectedFile);
     }
     else if (DataConstants.VIRTUAL_FILE_ARRAY.equals(dataId)) {
