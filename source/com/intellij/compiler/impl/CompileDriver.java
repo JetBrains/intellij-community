@@ -1022,11 +1022,16 @@ public class CompileDriver {
           if (outputPath != null && StdFileTypes.JAVA.equals(typeManager.getFileTypeByFile(sourceFile))) {
             final String outputDir = item.getOutputRootDirectory();
 
-            if (!CompilerUtil.startsWith(outputPath, outputDir)) {
-              LOG.assertTrue(false, outputPath + " does not start with " + outputDir);
+            if (outputDir != null) {
+              if (!CompilerUtil.startsWith(outputPath, outputDir)) {
+                LOG.assertTrue(false, outputPath + " does not start with " + outputDir);
+              }
+              className = MakeUtil.relativeClassPathToQName(outputPath.substring(outputDir.length(), outputPath.length()), '/');
             }
-
-            className = MakeUtil.relativeClassPathToQName(outputPath.substring(outputDir.length(), outputPath.length()), '/');
+            else {
+              // outputDir might be null for package-info.java (package annotation)
+              className = null;
+            }
           }
           else {
             className = null;
