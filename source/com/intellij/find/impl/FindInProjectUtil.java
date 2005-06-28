@@ -128,7 +128,7 @@ public class FindInProjectUtil {
   }
 
   @NotNull
-  public static UsageInfo[] findUsages(final FindModel findModel, final PsiDirectory psiDirectory, final Project project) {
+  public static List<UsageInfo> findUsages(final FindModel findModel, final PsiDirectory psiDirectory, final Project project) {
     class MyAsyncUsageConsumer implements AsyncFindUsagesProcessListener {
       final ArrayList<UsageInfo> usages = new ArrayList<UsageInfo>();
 
@@ -146,7 +146,7 @@ public class FindInProjectUtil {
 
     MyAsyncUsageConsumer consumer = new MyAsyncUsageConsumer();
     findUsages(findModel, psiDirectory, project, consumer);
-    return consumer.usages.toArray(new UsageInfo[consumer.usages.size()]);
+    return consumer.usages;
   }
 
   private static Pattern createFileMaskRegExp(FindModel findModel) {
