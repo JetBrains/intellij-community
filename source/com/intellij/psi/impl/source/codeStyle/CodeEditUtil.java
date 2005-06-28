@@ -407,6 +407,8 @@ public class CodeEditUtil {
   private static boolean whiteSpaceHasInvalidPosition(final ASTNode element) {
     final ASTNode treeParent = element.getTreeParent();
     if (isWS(element) && treeParent.getElementType() == ElementType.XML_TEXT) return false;
+    final ASTNode treePrev = element.getTreePrev();
+    if (treePrev != null && treePrev.getElementType() == JavaElementType.ERROR_ELEMENT) return false; //TODO check insertMissingTokens
     if (treeParent.getPsi().getUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY) != null) return false;
     if (hasNonEmptyPrev(element) && hasNonEmptyNext(element)) return false;
     if (treeParent.getElementType() == ElementType.XML_PROLOG) return false;
