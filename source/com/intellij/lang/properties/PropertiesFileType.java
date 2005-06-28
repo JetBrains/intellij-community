@@ -63,6 +63,7 @@ public class PropertiesFileType extends LanguageFileType {
 
   public String getCharset(VirtualFile file) {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+    if (editorSettings == null) return null;
     String defaultCharsetName = editorSettings.getDefaultPropertiesCharsetName();
     if ("System Default".equals(defaultCharsetName)) defaultCharsetName = null;
     if (editorSettings.isNative2AsciiForPropertiesFiles()) {
