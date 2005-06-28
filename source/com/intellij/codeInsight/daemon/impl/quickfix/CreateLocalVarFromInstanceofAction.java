@@ -5,8 +5,8 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EnterAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -16,15 +16,14 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.ide.DataManager;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.ArrayList;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
@@ -271,7 +270,9 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       }
     }
     if (uniqueNames.size() == 0 && suggestedNameInfo.names.length != 0) {
-      uniqueNames.add(suggestedNameInfo.names[0]);
+      String baseName = suggestedNameInfo.names[0];
+      String name = CodeStyleManager.getInstance(project).suggestUniqueVariableName(baseName, initializer, true);
+      uniqueNames.add(name);
     }
 
     LinkedHashSet<LookupItem> itemSet = new LinkedHashSet<LookupItem>();
@@ -279,7 +280,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       LookupItemUtil.addLookupItem(itemSet, name, "");
     }
     final LookupItem[] lookupItems = itemSet.toArray(new LookupItem[itemSet.size()]);
-    final Result result = suggestedNameInfo.names.length > 0 ? new TextResult(suggestedNameInfo.names[0]) : null;
+    final Result result = uniqueNames.size() == 0 ? null : new TextResult(uniqueNames.get(0));
 
     Expression expr = new Expression() {
       public LookupItem[] calculateLookupItems(ExpressionContext context) {
@@ -291,7 +292,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       }
 
       public Result calculateQuickResult(ExpressionContext context) {
-        return null;
+        return result;
       }
     };
     template.addVariable("", expr, expr, true);
