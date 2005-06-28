@@ -91,7 +91,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
               final String file = new File(sandboxHome).getCanonicalPath() + File.separator + "system" + File.separator + "log" + File.separator +
                                   "idea.log";
               if (new File(file).exists()){
-                prc.addLogFile(file, "", myShowLogs.isSelected());
+                prc.addLogFile(file, "IDEA LOG", myShowLogs.isSelected());
               }
             }
             catch (IOException e1) {
