@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.impl.source.jsp.JspImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -192,6 +193,7 @@ public class JavaDocManager implements ProjectComponent {
                                                              | TargetElementUtil.NEW_AS_CONSTRUCTOR
                                                              | TargetElementUtil.THIS_ACCEPTED
                                                              | TargetElementUtil.SUPER_ACCEPTED);
+    if (element instanceof XmlAttributeValue) element = null;
     PsiElement originalElement = (file != null)?file.findElementAt(editor.getCaretModel().getOffset()): null;
 
     if (element == null && editor != null) {
