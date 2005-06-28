@@ -151,66 +151,24 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     }
     msg += "</body></html>";
 
-    addIntroduceConstantFix(foundExpr, originalExpression, manager, msg, allProblems);
 
-    //addReplaceWithConstantFixes(foundExpr, originalExpression, manager, allProblems);
-  }
-
-  private static void addIntroduceConstantFix(final List<PsiExpression> foundExpr,
-                                              final PsiLiteralExpression originalExpression,
-                                              final InspectionManager manager,
-                                              final String msg,
-                                              final List<ProblemDescriptor> allProblems) {
-    final PsiExpression[] expressions = foundExpr.toArray(new PsiExpression[foundExpr.size()+1]);
-    expressions[foundExpr.size()] = originalExpression;
-    final LocalQuickFix introduceQuickFix = new LocalQuickFix() {
-      public String getName() {
-        return IntroduceConstantHandler.REFACTORING_NAME;
-      }
-      public void applyFix(final Project project, ProblemDescriptor descriptor) {
-        final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
-          protected OccurenceManager createOccurenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
-            final OccurenceFilter filter = new OccurenceFilter() {
-              public boolean isOK(PsiExpression occurence) {
-                return true;
-              }
-            };
-            return new BaseOccurenceManager(filter) {
-              protected PsiExpression[] defaultOccurences() {
-                return expressions;
-              }
-
-              protected PsiExpression[] findOccurences() {
-                return expressions;
-              }
-            };
-          }
-        };
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            handler.invoke(project, expressions);
-          }
-        });
-      }
-
-      public String getFamilyName() {
-        return getName();
-      }
-    };
-    ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(originalExpression, msg, introduceQuickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+    Collection<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+    final LocalQuickFix introduceConstFix = createIntroduceConstFix(foundExpr, originalExpression);
+    fixes.add(introduceConstFix);
+    createReplaceFixes(foundExpr, originalExpression, fixes);
+    LocalQuickFix[] array = fixes.toArray(new LocalQuickFix[fixes.size()]);
+    ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(originalExpression, msg, array, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     allProblems.add(problemDescriptor);
   }
 
-  private static void addReplaceWithConstantFixes(final List<PsiExpression> foundExpr,
-                                                  final PsiLiteralExpression originalExpression,
-                                                  final InspectionManager manager,
-                                                  final List<ProblemDescriptor> allProblems) {
+  private static void createReplaceFixes(final List<PsiExpression> foundExpr, final PsiLiteralExpression originalExpression,
+                                                       final Collection<LocalQuickFix> fixes) {
     Set<PsiField> constants = new THashSet<PsiField>();
     for (Iterator<PsiExpression> iterator = foundExpr.iterator(); iterator.hasNext();) {
-      PsiExpression expression = iterator.next();
-      if (expression.getParent() instanceof PsiField) {
-        final PsiField field = (PsiField)expression.getParent();
-        if (field.getInitializer() == expression && field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiExpression expression1 = iterator.next();
+      if (expression1.getParent() instanceof PsiField) {
+        final PsiField field = (PsiField)expression1.getParent();
+        if (field.getInitializer() == expression1 && field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.STATIC)) {
           constants.add(field);
           iterator.remove();
         }
@@ -246,11 +204,48 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
           return "Replace";
         }
       };
-      String msg = "Duplicate constant found";
-      ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(originalExpression, msg, replaceQuickFix,
-                                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-      allProblems.add(problemDescriptor);
+      fixes.add(replaceQuickFix);
     }
+  }
+
+  private static LocalQuickFix createIntroduceConstFix(final List<PsiExpression> foundExpr, final PsiLiteralExpression originalExpression) {
+    final PsiExpression[] expressions = foundExpr.toArray(new PsiExpression[foundExpr.size()+1]);
+    expressions[foundExpr.size()] = originalExpression;
+    final LocalQuickFix introduceConstFix = new LocalQuickFix() {
+      public String getName() {
+        return IntroduceConstantHandler.REFACTORING_NAME;
+      }
+      public void applyFix(final Project project, ProblemDescriptor descriptor) {
+        final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
+          protected OccurenceManager createOccurenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
+            final OccurenceFilter filter = new OccurenceFilter() {
+              public boolean isOK(PsiExpression occurence) {
+                return true;
+              }
+            };
+            return new BaseOccurenceManager(filter) {
+              protected PsiExpression[] defaultOccurences() {
+                return expressions;
+              }
+
+              protected PsiExpression[] findOccurences() {
+                return expressions;
+              }
+            };
+          }
+        };
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            handler.invoke(project, expressions);
+          }
+        });
+      }
+
+      public String getFamilyName() {
+        return getName();
+      }
+    };
+    return introduceConstFix;
   }
 
   private static PsiReferenceExpression createReferenceTo(final PsiField constant, final PsiLiteralExpression context) throws IncorrectOperationException {
