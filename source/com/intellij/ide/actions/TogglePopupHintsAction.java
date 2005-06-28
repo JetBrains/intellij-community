@@ -46,6 +46,6 @@ public class TogglePopupHintsAction extends AnAction{
     LOG.assertTrue(project!=null);
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     codeAnalyzer.setImportHintsEnabled(psiFile,!codeAnalyzer.isImportHintsEnabled(psiFile));
-    ((StatusBarEx) WindowManager.getInstance().getStatusBar(project)).updatePopupHintsStatus();
+    ((StatusBarEx) WindowManager.getInstance().getStatusBar(project)).updateEditorHighlightingStatus();
   }
 }

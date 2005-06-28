@@ -11,13 +11,9 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoComposite;
-import com.intellij.codeInsight.daemon.impl.actions.ToggleGotoNextErrorOffAction;
-import com.intellij.codeInsight.daemon.impl.actions.ToggleGotoNextErrorOnAction;
-import com.intellij.codeInsight.daemon.impl.actions.ForceHighlightingGroup;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.ide.ui.LafManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
@@ -33,7 +29,7 @@ import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.PopupHandler;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 
@@ -487,13 +483,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private MyErrorPanel() {
       addMouseListener(this);
       addMouseMotionListener(this);
-
-      final DefaultActionGroup group = new DefaultActionGroup();
-      group.add(new ToggleGotoNextErrorOnAction("Go to errors first"));
-      group.add(new ToggleGotoNextErrorOffAction("Go to next error/warning"));
-      group.add(new ForceHighlightingGroup());
-
-      PopupHandler.installUnknownPopupHandler(this, group, ActionManager.getInstance());
     }
 
     public Dimension getPreferredSize() {
@@ -545,6 +534,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         return;
       }
       myMarkSpots.doClick(e, getWidth());
+      Point point = new Point(0, 0);
+      point = SwingUtilities.convertPoint(this, point, myEditor.getComponent().getRootPane().getLayeredPane());
+
+      final EditorMarkupHintComponent component = new EditorMarkupHintComponent(
+        (PsiFile)myEditor.getDataContext().getData(DataConstants.PSI_FILE));
+      final Dimension dimension = component.getPreferredSize();
+      point = new Point(point.x - dimension.width, point.y);
+      component.showComponent(myEditor, point);
     }
 
     public void mouseMoved(MouseEvent e) {

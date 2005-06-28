@@ -17,13 +17,13 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.impl.ModuleUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -38,8 +38,6 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.HighlightSeverity;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
@@ -2066,9 +2064,7 @@ public class HighlightUtil {
   }
 
   public static boolean isRootHighlighted(final PsiElement psiRoot) {
-    final Module moduleForPsiElement = ModuleUtil.findModuleForPsiElement(psiRoot);
-    if(moduleForPsiElement == null) return true;
-    final HighlightingSettingsPerFile component = moduleForPsiElement.getComponent(HighlightingSettingsPerFile.class);
+    final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(psiRoot.getProject());
     if(component == null) return true;
 
     final FileHighlighingSetting settingForRoot = component.getHighlightingSettingForRoot(psiRoot);
@@ -2076,18 +2072,14 @@ public class HighlightUtil {
   }
 
   public static void forceRootHighlighting(final PsiElement root, final boolean highlightFlag) {
-    final Module moduleForPsiElement = ModuleUtil.findModuleForPsiElement(root);
-    if(moduleForPsiElement == null) return;
-    final HighlightingSettingsPerFile component = moduleForPsiElement.getComponent(HighlightingSettingsPerFile.class);
+    final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(root.getProject());
     if(component == null) return;
     component.setHighlightingSettingForRoot(root, highlightFlag ? FileHighlighingSetting.FORCE_HIGHLIGHTING: FileHighlighingSetting.SKIP_HIGHLIGHTING);
   }
 
   public static boolean isRootInspected(final PsiElement psiRoot) {
     if(!isRootHighlighted(psiRoot)) return false;
-    final Module moduleForPsiElement = ModuleUtil.findModuleForPsiElement(psiRoot);
-    if(moduleForPsiElement == null) return true;
-    final HighlightingSettingsPerFile component = moduleForPsiElement.getComponent(HighlightingSettingsPerFile.class);
+    final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(psiRoot.getProject());
     if(component == null) return true;
 
     final FileHighlighingSetting settingForRoot = component.getHighlightingSettingForRoot(psiRoot);
@@ -2095,9 +2087,7 @@ public class HighlightUtil {
   }
 
   public static void forceRootInspection(final PsiElement root, final boolean inspectionFlag) {
-    final Module moduleForPsiElement = ModuleUtil.findModuleForPsiElement(root);
-    if(moduleForPsiElement == null) return;
-    final HighlightingSettingsPerFile component = moduleForPsiElement.getComponent(HighlightingSettingsPerFile.class);
+    final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(root.getProject());
     if(component == null) return;
     component.setHighlightingSettingForRoot(root, inspectionFlag ? FileHighlighingSetting.FORCE_HIGHLIGHTING: FileHighlighingSetting.SKIP_INSPECTION);
   }

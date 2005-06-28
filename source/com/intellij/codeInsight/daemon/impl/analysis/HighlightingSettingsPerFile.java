@@ -1,20 +1,28 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.openapi.module.ModuleComponent;
-import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.lang.Language;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.lang.Language;
 import org.jdom.Element;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class HighlightingSettingsPerFile implements JDOMExternalizable, ModuleComponent{
+public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectComponent {
+  public static HighlightingSettingsPerFile getInstance(Project progect){
+    return progect.getComponent(HighlightingSettingsPerFile.class);
+  }
+
   private Map<VirtualFile, FileHighlighingSetting[]> myHighlightSettings = new HashMap<VirtualFile, FileHighlighingSetting[]>();
   private Map<Language, FileHighlighingSetting[]> myHighlightDefaults = new HashMap<Language, FileHighlighingSetting[]>();
 
@@ -53,7 +61,6 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ModuleCo
 
   public void projectOpened() {}
   public void projectClosed() {}
-  public void moduleAdded() {}
   public String getComponentName() {
     return "HighlightingSettingsPerFile";
   }
@@ -62,14 +69,14 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ModuleCo
   public void disposeComponent() {}
 
   public void readExternal(Element element) throws InvalidDataException {
-    final List children = element.getChildren("file");
+    final List children = element.getChildren("setting");
     for (final Object aChildren : children) {
       final Element child = (Element)aChildren;
-      final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl(child.getAttributeValue("uri"));
+      final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl(child.getAttributeValue("file"));
       final List<FileHighlighingSetting> settings = new ArrayList<FileHighlighingSetting>();
       int index = 0;
       while (child.getAttributeValue("root" + index) != null) {
-        final String attributeValue = child.getAttributeValue("root" + index);
+        final String attributeValue = child.getAttributeValue("root" + index++);
         settings.add(Enum.valueOf(FileHighlighingSetting.class, attributeValue));
       }
       myHighlightSettings.put(fileByUrl, settings.toArray(new FileHighlighingSetting[settings.size()]));

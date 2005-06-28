@@ -24,7 +24,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
   protected final ToggleReadOnlyAttributePanel myToggleReadOnlyAttributePanel = new ToggleReadOnlyAttributePanel();
   protected final MemoryUsagePanel myMemoryUsagePanel = new MemoryUsagePanel();
   protected final TextPanel myStatusPanel = new TextPanel(new String[]{"Insert", "Overwrite"},false);
-  protected final TogglePopupHintsPanel myPopupHintsPanel;
+  protected final TogglePopupHintsPanel myEditorHighlightingPanel;
   protected final IdeMessagePanel myMessagePanel = new IdeMessagePanel(MessagePool.getInstance());
   protected String myInfo = "";
   private final Icon myLockedIcon = IconLoader.getIcon("/nodes/lockedSingle.png");
@@ -40,7 +40,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
 
   public StatusBarImpl(ActionManager actionManager, UISettings uiSettings) {
     super(new GridBagLayout());
-    myPopupHintsPanel = new TogglePopupHintsPanel(actionManager);
+    myEditorHighlightingPanel = new TogglePopupHintsPanel();
     myUISettings = uiSettings;
     constructUI();
 
@@ -91,9 +91,9 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     myStatusPanel.setOpaque(false);
     rightPanel.add(myStatusPanel, gbConstraints);
 
-    myPopupHintsPanel.setBorder(compoundBorder);
-    myPopupHintsPanel.setOpaque(false);
-    rightPanel.add(myPopupHintsPanel, gbConstraints);
+    myEditorHighlightingPanel.setBorder(compoundBorder);
+    myEditorHighlightingPanel.setOpaque(false);
+    rightPanel.add(myEditorHighlightingPanel, gbConstraints);
 
     myMessagePanel.setOpaque(false);
     rightPanel.add(myMessagePanel, gbConstraints);
@@ -226,11 +226,11 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     setStatusEnabled(false);
     setWriteStatus(false);
     setPosition(null);
-    updatePopupHintsStatus();
+    updateEditorHighlightingStatus();
   }
 
-  public final void updatePopupHintsStatus() {
-    myPopupHintsPanel.update();
+  public final void updateEditorHighlightingStatus() {
+    myEditorHighlightingPanel.update();
   }
 
   public final Dimension getMinimumSize() {
