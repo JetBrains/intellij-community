@@ -45,6 +45,7 @@ import com.intellij.usages.impl.UsageViewImplUtil;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -126,6 +127,7 @@ public class FindInProjectUtil {
     }
   }
 
+  @NotNull
   public static UsageInfo[] findUsages(final FindModel findModel, final PsiDirectory psiDirectory, final Project project) {
     class MyAsyncUsageConsumer implements AsyncFindUsagesProcessListener {
       final ArrayList<UsageInfo> usages = new ArrayList<UsageInfo>();
@@ -223,8 +225,8 @@ public class FindInProjectUtil {
         CacheManager cacheManager = ((PsiManagerImpl)PsiManager.getInstance(project)).getCacheManager();
 
         GlobalSearchScope scope = psiDirectory == null ?
-                                        GlobalSearchScope.projectScope(project) :
-                                        GlobalSearchScope.directoryScope(psiDirectory, true);
+                                  GlobalSearchScope.projectScope(project) :
+                                  GlobalSearchScope.directoryScope(psiDirectory, true);
         List<String> words = StringUtil.getWordsIn(findModel.getStringToFind());
         // if no words specified in search box, fallback to brute force search
         if (words.size() != 0) {
@@ -290,9 +292,9 @@ public class FindInProjectUtil {
       ArrayList<PsiFile> fileList = new ArrayList<PsiFile>();
 
       addFilesUnderDirectory(psiDirectory,
-                                    fileList,
-                                    findModel.isWithSubdirectories(),
-                                    createFileMaskRegExp(findModel));
+                             fileList,
+                             findModel.isWithSubdirectories(),
+                             createFileMaskRegExp(findModel));
       return fileList;
     }
   }
@@ -396,8 +398,8 @@ public class FindInProjectUtil {
   }
 
   public static FindUsagesProcessPresentation setupProcessPresentation(final Project project,
-                                                                 final boolean showPanelIfOnlyOneUsage,
-                                                                 final UsageViewPresentation presentation) {
+                                                                       final boolean showPanelIfOnlyOneUsage,
+                                                                       final UsageViewPresentation presentation) {
     FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
     processPresentation.setShowNotFoundMessage(true);
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);

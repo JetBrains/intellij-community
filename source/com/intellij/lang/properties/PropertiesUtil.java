@@ -7,17 +7,19 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
@@ -47,18 +49,21 @@ public class PropertiesUtil {
   };
 
   @NotNull
-  public static List<Property> findPropertiesByKey(Project project, final String key) {
+  public static Collection<Property> findPropertiesByKey(Project project, final String key) {
     final PsiSearchHelper searchHelper = PsiManager.getInstance(project).getSearchHelper();
-    final List<Property> properties = new ArrayList<Property>();
-
-    searchHelper.processAllFilesWithWord(key, PROP_FILES_SCOPE, new Processor<PsiFile>() {
-      public boolean process(PsiFile file) {
-        if (file instanceof PropertiesFile) {
-          properties.addAll(((PropertiesFile) file).findPropertiesByKey(key));
+    final Collection<Property> properties = new THashSet<Property>();
+    List<String> words = StringUtil.getWordsIn(key);
+    for (String word : words) {
+      searchHelper.processAllFilesWithWord(word, PROP_FILES_SCOPE, new Processor<PsiFile>() {
+        public boolean process(PsiFile file) {
+          if (file instanceof PropertiesFile) {
+            PropertiesFile propertiesFile = (PropertiesFile)file;
+            properties.addAll(propertiesFile.findPropertiesByKey(key));
+          }
+          return true;
         }
-        return true;
-      }
-    });
+      });
+    }
 
     return properties;
   }

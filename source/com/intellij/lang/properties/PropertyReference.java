@@ -10,12 +10,11 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
@@ -44,11 +43,11 @@ public class PropertyReference implements PsiPolyVariantReference {
 
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
-    List<Property> properties = PropertiesUtil.findPropertiesByKey(getElement().getProject(), myKey);
+    Collection<Property> properties = PropertiesUtil.findPropertiesByKey(getElement().getProject(), myKey);
     final ResolveResult[] result = new ResolveResult[properties.size()];
-    for (int i = 0; i < properties.size(); i++) {
-      final Property property = properties.get(i);
-      result[i] = new PsiElementResolveResult(property);
+    int i = 0;
+    for (Property property : properties) {
+      result[i++] = new PsiElementResolveResult(property);
     }
     return result;
   }
@@ -96,10 +95,6 @@ public class PropertyReference implements PsiPolyVariantReference {
       }
     }
     return variants.toArray(new Object[variants.size()]);
-  }
-
-  public List<Property> suggestProperties() {
-    return PropertiesUtil.findPropertiesByKey(getElement().getProject(), myKey);
   }
 
   public boolean isSoft() {
