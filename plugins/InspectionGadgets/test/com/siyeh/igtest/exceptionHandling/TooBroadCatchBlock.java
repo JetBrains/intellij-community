@@ -5,7 +5,7 @@ import java.io.EOFException;
 import java.io.IOException;
 
 public class TooBroadCatchBlock {
-    public void foo()
+    public void foo ()
     {
         try {
             if (bar()) {

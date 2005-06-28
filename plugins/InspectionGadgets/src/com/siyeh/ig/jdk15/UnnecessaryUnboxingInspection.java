@@ -117,8 +117,32 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
             if (!unboxingMethod.equals(methodName)) {
                 return;
             }
+            if(getContainingExpression(expression) instanceof PsiTypeCastExpression)
+            {
+                return;
+            }
             registerError(expression);
         }
+
+        private PsiExpression getContainingExpression(PsiExpression expression){
+            final PsiElement parent = expression.getParent();
+            if(parent == null || !(parent instanceof PsiExpression))
+            {
+                return null;
+            }
+            final PsiExpression parentExpression = (PsiExpression) parent;
+            if(parent instanceof PsiParenthesizedExpression ||
+                    parent instanceof PsiConditionalExpression)
+            {
+                return getContainingExpression(parentExpression);
+            }
+            else
+            {
+                return parentExpression;
+            }
+        }
+
+
     }
 
 }

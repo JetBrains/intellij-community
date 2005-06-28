@@ -11,8 +11,8 @@
     <children>
       <scrollpane id="14807">
         <constraints>
-          <xy x="0" y="0" width="211" height="163"/>
-          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+          <xy x="0" y="0" width="211" height="162"/>
+          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="7" anchor="0" fill="3"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -20,14 +20,17 @@
           <component id="b0978" class="javax.swing.JTable" binding="table">
             <constraints/>
             <properties>
-              <autoResizeMode value="4"/>
+              <autoResizeMode value="0"/>
+              <intercellSpacing width="0" height="0"/>
+              <showHorizontalLines value="false"/>
+              <showVerticalLines value="false"/>
             </properties>
           </component>
         </children>
       </scrollpane>
       <component id="f6174" class="javax.swing.JButton" binding="deleteButton">
         <constraints>
-          <xy x="105" y="168" width="106" height="24"/>
+          <xy x="105" y="167" width="106" height="25"/>
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1"/>
         </constraints>
         <properties>
@@ -36,7 +39,7 @@
       </component>
       <component id="52926" class="javax.swing.JButton" binding="addButton">
         <constraints>
-          <xy x="0" y="168" width="95" height="24"/>
+          <xy x="0" y="167" width="95" height="25"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1"/>
         </constraints>
         <properties>
