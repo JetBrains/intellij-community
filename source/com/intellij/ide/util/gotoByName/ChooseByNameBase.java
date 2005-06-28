@@ -851,6 +851,12 @@ public abstract class ChooseByNameBase{
           try {
             ensureNamesLoaded(myCheckboxState);
             addElementsByPattern(elements, myPattern);
+            for (Object elem : elements) {
+              if (elem instanceof PsiElement) {
+                final PsiElement psiElement = (PsiElement)elem;
+                psiElement.isWritable(); // That will cache writable flag in VirtualFile. Taking the action here makes it canceled.
+              }
+            }
           }
           catch (ProcessCanceledException e) {
           }
