@@ -57,10 +57,14 @@ class StringConcatPredicate implements PsiElementPredicate{
         }
         final PsiBinaryExpression lhsBinaryExpression = (PsiBinaryExpression) lhs;
         final PsiExpression leftSide = lhsBinaryExpression.getROperand();
+        if(leftSide == null)
+        {
+            return null;
+        }
         try{
             lhs.replace(leftSide);
         } catch(IncorrectOperationException e){
-            throw new RuntimeException(e);
+            return null;
         }
         return binaryExpression;
     }
