@@ -63,6 +63,7 @@ class UpdateInfoDialog extends DialogWrapper {
     if (enableLink) {
       myUpdateInfoPanel.myUpdatesLink.setForeground(Color.BLUE); // TODO: specify correct color
       myUpdateInfoPanel.myUpdatesLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      myUpdateInfoPanel.myUpdatesLink.setToolTipText("Click to open Updates Settings dialog");
       myUpdateInfoPanel.myUpdatesLink.addMouseListener(new MouseListener() {
         public void mouseClicked(MouseEvent e) {
           UpdateSettingsConfigurable updatesSettings = UpdateSettingsConfigurable.getInstance();
@@ -100,8 +101,8 @@ class UpdateInfoDialog extends DialogWrapper {
         version = ApplicationInfo.getInstance().getVersionName();
       }
       myVersionNumber.setText(version);
-      myNewBuildNumber.setText(Integer.toString(UpdateChecker.NEW_VERION.getLatestBuild()) + ")");
-      myNewVersionNumber.setText(UpdateChecker.NEW_VERION.getLatestVersion());
+      myNewBuildNumber.setText(Integer.toString(UpdateChecker.newVersion.getLatestBuild()) + ")");
+      myNewVersionNumber.setText(UpdateChecker.newVersion.getLatestVersion());
     }
 
     public JComponent getComponent() {

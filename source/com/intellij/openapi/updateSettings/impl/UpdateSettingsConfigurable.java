@@ -21,6 +21,7 @@ import java.text.DateFormat;
  * Time: 12:39:08 PM
  * To change this template use File | Settings | File Templates.
  */
+
 public class UpdateSettingsConfigurable extends BaseConfigurable implements ApplicationComponent, JDOMExternalizable {
 
   private UpdatesSettingsPanel myUpdatesSettingsPanel;
@@ -28,30 +29,40 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
 
   public static final String ON_START_UP = "On every start";
   public static final String DAILY = "Daily";
-  public static String WEEKLY = "Weekly";
-  public static String MONTHLY = "Monthly";
+  public static final String WEEKLY = "Weekly";
+  public static final String MONTHLY = "Monthly";
 
   public boolean CHECK_NEEDED = true;
   public String CHECK_PERIOD = WEEKLY;
   public long LAST_TIME_CHECKED = 0;
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
-  }
-
-  public String getDisplayName() {
-    return "Updates";
-  }
 
   public JComponent createComponent() {
     myUpdatesSettingsPanel = new UpdatesSettingsPanel();
     return myUpdatesSettingsPanel.myPanel;
   }
 
+  public String getComponentName() {
+    return "UpdatesConfigurable";
+  }
+
+  public String getDisplayName() {
+    return "Updates";
+  }
+
+  public String getHelpTopic() {
+    return "preferences.versionUpdates"; //TODO[pti]: request Help Topic
+  }
+
   public Icon getIcon() {
     return IconLoader.getIcon("/general/confidurableUpdates.png");
+  }
+
+  public static UpdateSettingsConfigurable getInstance() {
+    return ApplicationManager.getApplication().getComponent(UpdateSettingsConfigurable.class);
+  }
+
+  public void setCheckNowEnabled (boolean enabled) {
+    myCheckNowEnabled = enabled;
   }
 
   public void apply() throws ConfigurationException {
@@ -71,18 +82,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
            !CHECK_PERIOD.equals(myUpdatesSettingsPanel.myPeriodCombo.getSelectedItem());
   }
 
-  public void disposeUIResources() {
-    myUpdatesSettingsPanel = null;
-  }
-
-  public String getHelpTopic() {
-    return "preferences.versionUpdates"; //TODO[pti]: request Help Topic
-  }
-
-  public String getComponentName() {
-    return "UpdatesConfigurable";
-  }
-
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
@@ -91,12 +90,14 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
-  public static UpdateSettingsConfigurable getInstance() {
-    return ApplicationManager.getApplication().getComponent(UpdateSettingsConfigurable.class);
+  public void initComponent() {
   }
 
-  public void setCheckNowEnabled (boolean enabled) {
-    myCheckNowEnabled = enabled;
+  public void disposeComponent() {
+  }
+
+  public void disposeUIResources() {
+    myUpdatesSettingsPanel = null;
   }
 
   private class UpdatesSettingsPanel {
@@ -140,7 +141,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
     }
 
     private void updateLastCheckedLabel() {
-      final DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM);
+      final DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.FULL);
       myLastCheckedDate.setText(LAST_TIME_CHECKED == 0 ? "Never" : dateFormat.format(LAST_TIME_CHECKED));
     }
   }

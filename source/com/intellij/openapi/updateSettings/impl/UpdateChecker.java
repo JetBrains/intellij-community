@@ -36,43 +36,15 @@ import java.net.URL;
  * </message>
  * </idea>
  */
-public final class UpdateChecker implements ApplicationComponent, ProjectManagerListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
+public final class UpdateChecker implements ApplicationComponent {
 
+  public static NewVersion newVersion = null;
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
   private static final URL UPDATE_URL;
 
-  private static long CHECK_INTERVAL = 0;
-  private static boolean alreadyChecked = false;
+  private static long checkInterval = 0;
   private static boolean myVeryFirstOpening = true;
-
-  public static NewVersion NEW_VERION = null;
-
-  public UpdateChecker (ProjectManager projectManager) {
-    projectManager.addProjectManagerListener(this);
-  }
-
-    public String getComponentName() {
-    return "UpdateChecker";
-  }
-
-  public static boolean isMyVeryFirstOpening() {
-    return myVeryFirstOpening;
-  }
-
-  public static void setMyVeryFirstOpening(final boolean myVeryFirstProjectOpening) {
-    UpdateChecker.myVeryFirstOpening = myVeryFirstProjectOpening;
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-    ProjectManager.getInstance().removeProjectManagerListener(this);
-  }
-
-  public static void setAlreadyChecked(final boolean checked) {
-    alreadyChecked = checked;
-  }
 
   static {
     URL url = null;
@@ -93,26 +65,53 @@ public final class UpdateChecker implements ApplicationComponent, ProjectManager
     UPDATE_URL = url;
   }
 
-  public static void showUpdateInfoDialog(boolean enableLink) {
-    UpdateInfoDialog dialog = new UpdateInfoDialog(true);
-    dialog.setLinkEnabled(enableLink);
-    dialog.setResizable(false);
-    dialog.show();
+  public String getComponentName() {
+    return "UpdateChecker";
   }
 
-  public static void showNoUpdatesDialog(boolean enableLink) {
-    NoUpdatesDialog dialog = new NoUpdatesDialog(true);
-    dialog.setLinkEnabled(enableLink);
-    dialog.setResizable(false);
-    dialog.show();
+  public void initComponent() {
+  }
+
+  public void disposeComponent() {
+  }
+
+  public static boolean isMyVeryFirstOpening() {
+    return myVeryFirstOpening;
+  }
+
+  public static void setMyVeryFirstOpening(final boolean myVeryFirstProjectOpening) {
+    UpdateChecker.myVeryFirstOpening = myVeryFirstProjectOpening;
+  }
+
+  public static boolean checkNeeded() {
+
+    final UpdateSettingsConfigurable settings = UpdateSettingsConfigurable.getInstance();
+    if (settings == null || UPDATE_URL == null) return false;
+
+    final String checkPeriod = settings.CHECK_PERIOD;
+    if (checkPeriod.equals(UpdateSettingsConfigurable.ON_START_UP)) {
+      checkInterval = 0;
+    }
+    if (checkPeriod.equals(UpdateSettingsConfigurable.DAILY)) {
+      checkInterval = DateFormatUtil.DAY;
+    }
+    if (settings.CHECK_PERIOD.equals(UpdateSettingsConfigurable.WEEKLY)) {
+      checkInterval = DateFormatUtil.WEEK;
+    }
+    if (settings.CHECK_PERIOD.equals(UpdateSettingsConfigurable.MONTHLY)) {
+      checkInterval = DateFormatUtil.MONTH;
+    }
+
+    final long timeDelta = System.currentTimeMillis() - settings.LAST_TIME_CHECKED;
+    if (Math.abs(timeDelta) < checkInterval) return false;
+
+    return settings.CHECK_NEEDED;
   }
 
   public static void checkForUpdates() throws ConnectionException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: checkForUpdates()");
     }
-
-    setAlreadyChecked(true);
 
     final Document document;
     try {
@@ -136,7 +135,7 @@ public final class UpdateChecker implements ApplicationComponent, ProjectManager
       final int iAvailBuild = Integer.parseInt(availBuild);
       final int iOurBuild = Integer.parseInt(ourBuild);
       if (iAvailBuild > iOurBuild) {
-        NEW_VERION = new NewVersion(iAvailBuild, availVersion);
+        newVersion = new NewVersion(iAvailBuild, availVersion);
       }
 
     }
@@ -146,33 +145,6 @@ public final class UpdateChecker implements ApplicationComponent, ProjectManager
     }
 
     UpdateSettingsConfigurable.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
-  }
-
-  public static boolean checkNeeded() {
-    if (alreadyChecked) {
-        return false;
-    }
-    final UpdateSettingsConfigurable settings = UpdateSettingsConfigurable.getInstance();
-    if (settings == null || UPDATE_URL == null) return false;
-
-    final String checkPeriod = settings.CHECK_PERIOD;
-    if (checkPeriod.equals(UpdateSettingsConfigurable.ON_START_UP)) {
-      CHECK_INTERVAL = 0;
-    }
-    if (checkPeriod.equals(UpdateSettingsConfigurable.DAILY)) {
-      CHECK_INTERVAL = DateFormatUtil.DAY;
-    }
-    if (settings.CHECK_PERIOD.equals(UpdateSettingsConfigurable.WEEKLY)) {
-      CHECK_INTERVAL = DateFormatUtil.WEEK;
-    }
-    if (settings.CHECK_PERIOD.equals(UpdateSettingsConfigurable.MONTHLY)) {
-      CHECK_INTERVAL = DateFormatUtil.MONTH;
-    }
-
-    final long timeDelta = System.currentTimeMillis() - settings.LAST_TIME_CHECKED;
-    if (Math.abs(timeDelta) < CHECK_INTERVAL) return false;
-
-    return settings.CHECK_NEEDED;
   }
 
   private static Document loadVersionInfo() throws Exception {
@@ -191,16 +163,19 @@ public final class UpdateChecker implements ApplicationComponent, ProjectManager
     return document;
   }
 
-  public void projectOpened(Project project) {
+  public static void showNoUpdatesDialog(boolean enableLink) {
+    NoUpdatesDialog dialog = new NoUpdatesDialog(true);
+    dialog.setLinkEnabled(enableLink);
+    dialog.setResizable(false);
+    dialog.show();
   }
 
-  public boolean canCloseProject(Project project) {
-    return true;
+  public static void showUpdateInfoDialog(boolean enableLink) {
+    UpdateInfoDialog dialog = new UpdateInfoDialog(true);
+    dialog.setLinkEnabled(enableLink);
+    dialog.setResizable(false);
+    dialog.show();
   }
-
-  public void projectClosed(Project project) {}
-
-  public void projectClosing(Project project) {}
 
   public static class NewVersion {
 

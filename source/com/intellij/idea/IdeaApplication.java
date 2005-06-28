@@ -139,7 +139,7 @@ public class IdeaApplication {
             try {
               UpdateChecker.setMyVeryFirstOpening(false);
               UpdateChecker.checkForUpdates();
-              if (UpdateChecker.NEW_VERION != null) {
+              if (UpdateChecker.newVersion != null) {
                 UpdateChecker.showUpdateInfoDialog(true);
               }
             }

@@ -44,6 +44,7 @@ class NoUpdatesDialog extends DialogWrapper {
     if (enableLink) {
       myNoUpdatesPanel.myUpdatesLink.setForeground(Color.BLUE); // TODO: specify correct color
       myNoUpdatesPanel.myUpdatesLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      myNoUpdatesPanel.myUpdatesLink.setToolTipText("Click to open Updates Settings dialog");
       myNoUpdatesPanel.myUpdatesLink.addMouseListener(new MouseListener() {
         public void mouseClicked(MouseEvent e) {
           UpdateSettingsConfigurable updatesSettings = UpdateSettingsConfigurable.getInstance();

@@ -22,7 +22,7 @@ public class CheckForUpdateAction extends AnAction {
     try {
       UpdateChecker.checkForUpdates();
 
-      if (UpdateChecker.NEW_VERION != null) {
+      if (UpdateChecker.newVersion != null) {
         UpdateSettingsConfigurable.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
         UpdateChecker.showUpdateInfoDialog(enableLink);
       }
