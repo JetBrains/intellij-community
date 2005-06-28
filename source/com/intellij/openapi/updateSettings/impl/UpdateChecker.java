@@ -50,7 +50,7 @@ public final class UpdateChecker implements ApplicationComponent {
     URL url = null;
     String downloadUrl;
     if (LicenseManager.getInstance().isEap()) {
-      downloadUrl = "http://www.intellij.net/eap/products/idea/redirect.jsp?filename=update.xml";
+      downloadUrl = "http://www.jetbrains.com/updates/eap-update.xml";
     }
     else {
       downloadUrl = "http://www.jetbrains.com/updates/update.xml";
