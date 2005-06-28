@@ -74,7 +74,7 @@ public class IntegerDivisionInFloatingPointContextInspection extends ExpressionI
             if (context == null) {
                 return;
             }
-            final PsiType contextType = ExpectedTypeUtils.findExpectedType(context);
+            final PsiType contextType = ExpectedTypeUtils.findExpectedType(context, true);
             if (contextType == null) {
                 return;
             }

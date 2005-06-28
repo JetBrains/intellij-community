@@ -52,7 +52,7 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
     public String buildErrorString(PsiElement location) {
         final PsiExpression expression = (PsiExpression) location;
         final PsiType type = expression.getType();
-        final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression);
+        final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
         return "Implicit numeric conversion of #ref from " + type.getPresentableText() + " to " +
                 expectedType.getPresentableText() +
                 " #loc";
@@ -72,7 +72,7 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
         private ImplicitNumericConversionFix(PsiElement field) {
             super();
             final PsiExpression expression = (PsiExpression) field;
-            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression);
+            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
             if (isConvertible(expression, expectedType)) {
                 m_name = "Convert to " + expectedType.getCanonicalText() + " literal";
             } else {
@@ -87,7 +87,7 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
         public void doFix(Project project, ProblemDescriptor descriptor)
                                                                          throws IncorrectOperationException{
             final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
-            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression);
+            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
             if (isConvertible(expression, expectedType)) {
                 final String newExpression = convertExpression(expression, expectedType);
                 replaceExpression(expression, newExpression);
@@ -254,7 +254,7 @@ public class ImplicitNumericConversionInspection extends ExpressionInspection {
             if(!ClassUtils.isPrimitiveNumericType(expressionType)){
                 return;
             }
-            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression);
+            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, true);
             if(!ClassUtils.isPrimitiveNumericType(expectedType)){
                 return;
             }

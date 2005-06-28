@@ -58,7 +58,7 @@ public class AutoBoxingInspection extends ExpressionInspection {
         public void doFix(Project project, ProblemDescriptor descriptor)
                                                                          throws IncorrectOperationException{
             final PsiExpression expression = (PsiExpression) descriptor.getPsiElement();
-            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression);
+            final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
             final String newExpression;
             if (expectedType.equals(PsiType.BOOLEAN)) {
                 newExpression = "Boolean.valueOf(" + expression.getText() + ')';
@@ -138,7 +138,7 @@ public class AutoBoxingInspection extends ExpressionInspection {
                 return;
             }
             final PsiType expectedType =
-                    ExpectedTypeUtils.findExpectedType(expression);
+                    ExpectedTypeUtils.findExpectedType(expression, false);
             if(expectedType == null){
                 return;
             }
