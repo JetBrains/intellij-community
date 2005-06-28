@@ -93,7 +93,7 @@ class ImageEditorUI {
         return zoomModel;
     }
 
-    private void repaint() {
+    void repaint() {
         if (contentPane != null && scrollPane != null) {
             contentPane.revalidate();
             scrollPane.revalidate();

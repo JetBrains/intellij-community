@@ -58,6 +58,7 @@ class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
 
     public void setTransparencyChessboardVisible(boolean visible) {
         editorUI.getImageComponent().setTransparencyChessboardVisible(visible);
+        editorUI.repaint();
     }
 
     public boolean isTransparencyChessboardVisible() {
@@ -66,6 +67,7 @@ class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
 
     public void setGridVisible(boolean visible) {
         editorUI.getImageComponent().setGridVisible(visible);
+        editorUI.repaint();
     }
 
     public boolean isGridVisible() {
