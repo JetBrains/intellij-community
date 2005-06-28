@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -61,6 +62,7 @@ public class OverridenMarkersPass extends TextEditorHighlightingPass {
   public void doCollectInformation(ProgressIndicator progress) {
     PsiElement[] psiRoots = myFile.getPsiRoots();
     for (final PsiElement psiRoot : psiRoots) {
+      if (!HighlightUtil.isRootHighlighted(psiRoot)) continue;
       PsiElement[] elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       myMarkers = collectLineMarkers(elements);
     }
