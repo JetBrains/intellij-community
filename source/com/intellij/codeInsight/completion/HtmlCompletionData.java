@@ -52,8 +52,7 @@ public class HtmlCompletionData extends XmlCompletionData {
           return false;
         }
 
-        XmlAttribute parentOfType = PsiTreeUtil.getParentOfType((PsiElement)element,XmlAttribute.class);
-        if ( parentOfType != null && equalNames(parentOfType.getName(), "style")) return false;
+        if ( isStyleAttributeContext((PsiElement)element) ) return false;
         return true;
       }
 
@@ -66,7 +65,7 @@ public class HtmlCompletionData extends XmlCompletionData {
   protected ElementFilter createAttributeCompletion() {
     return new ElementFilter() {
       public boolean isAcceptable(Object element, PsiElement context) {
-        if (equalNames(((XmlAttribute)context).getName(), "style")) return false;
+        if (isStyleAttributeContext(context)) return false;
         return true;
       }
 
@@ -79,7 +78,7 @@ public class HtmlCompletionData extends XmlCompletionData {
   protected ElementFilter createAttributeValueCompletionFilter() {
     return new ElementFilter() {
       public boolean isAcceptable(Object element, PsiElement context) {
-        if (equalNames(((XmlAttribute)context.getParent()).getName(), "style")) return false;
+        if (isStyleAttributeContext(context)) return false;
         return true;
       }
 
@@ -137,14 +136,19 @@ public class HtmlCompletionData extends XmlCompletionData {
     return variants;
   }
 
-  private boolean isStyleContext(PsiElement position) {
+  private boolean isStyleAttributeContext(PsiElement position) {
     XmlAttribute parentOfType = PsiTreeUtil.getParentOfType(position, XmlAttribute.class, false);
 
     if (parentOfType != null) {
       String name = parentOfType.getName();
       if (myCaseInsensitive) name = name.toLowerCase();
-      return name.equals("style");
+      return "style".equals(name); //name.endsWith("style");
     }
+    
+    return false;
+  }
+  private boolean isStyleContext(PsiElement position) {
+    if (isStyleAttributeContext(position)) return true;
 
     return isStyleTag(PsiTreeUtil.getParentOfType(position, XmlTag.class, false));
   }

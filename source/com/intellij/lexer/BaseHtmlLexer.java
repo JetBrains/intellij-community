@@ -42,10 +42,15 @@ abstract class BaseHtmlLexer extends LexerBase {
   class XmlNameHandler implements TokenHandler {
 
     public void handleElement(Lexer lexer) {
-      final char ch = lexer.getBuffer()[lexer.getTokenStart()];
+      final char[] buffer = lexer.getBuffer();
+      final char firstCh = buffer[lexer.getTokenStart()];
+      // support for style in any attribute that ends with style
+      //final int i = lexer.getTokenEnd() - "style".length();
+      //final char ch = i > lexer.getTokenStart() ? buffer[i]:firstCh;
 
-      if (ch!='s' && ch!='o' &&
-          (!caseInsensitive || (ch!='S' && ch!='O') )
+      if ( /*ch !='s' &&*/ 
+          firstCh !='o' && firstCh !='s' &&
+          (!caseInsensitive || (/*ch !='S' &&*/ firstCh !='S' && firstCh !='O') )
           ) {
         return; // optimization
       }
@@ -53,7 +58,7 @@ abstract class BaseHtmlLexer extends LexerBase {
       String name = ParseUtil.getTokenText(lexer);
       if (caseInsensitive) name = name.toLowerCase();
 
-      boolean style = name.equals("style");
+      boolean style = name.equals("style"); //name.endsWith("style");
       boolean script = name.equals("script") || name.startsWith("on");
 
       if (style || script) {

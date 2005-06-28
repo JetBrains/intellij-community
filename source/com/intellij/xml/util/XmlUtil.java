@@ -59,6 +59,7 @@ public class XmlUtil {
   public static final String ANY_URI = "http://www.intellij.net/ns/any";
   
   public static final String JSTL_CORE_URI = "http://java.sun.com/jsp/jstl/core";
+  public static final String JSF_HTML_URI = "http://java.sun.com/jsf/html";
   public static final String JSTL_FORMAT_URI = "http://java.sun.com/jsp/jstl/fmt";
   public static final String SPRING_URI = "http://www.springframework.org/tags";
   public static final String STRUTS_BEAN_URI = "http://struts.apache.org/tags-bean";
