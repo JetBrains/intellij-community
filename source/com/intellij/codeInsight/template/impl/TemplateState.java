@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -245,7 +246,6 @@ public class TemplateState {
 
   private void preprocessTemplate(final PsiFile file, int caretOffset) {
     if (file instanceof JspFile) {
-      /*
       try {
         caretOffset += JspUtil.escapeCharsInJspContext(((JspFile)file), caretOffset, myTemplate.getTemplateText());
         myEditor.getCaretModel().moveToOffset(caretOffset);
@@ -253,7 +253,6 @@ public class TemplateState {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-      */
     }
   }
 
