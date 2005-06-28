@@ -29,7 +29,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
   }
 
   public String getText() {
-    return getFamilyName();
+    return "Simplify '" + mySubExpression.getText() + "' to " + mySubExpressionValue;
   }
 
   public String getFamilyName() {
