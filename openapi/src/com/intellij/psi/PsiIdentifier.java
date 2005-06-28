@@ -10,5 +10,7 @@ import com.intellij.util.IncorrectOperationException;
  *
  */
 public interface PsiIdentifier extends PsiJavaToken {
+  PsiIdentifier[] EMPTY_ARRAY = new PsiIdentifier[0];
+  
   PsiElement replace(PsiElement newElement) throws IncorrectOperationException;
 }

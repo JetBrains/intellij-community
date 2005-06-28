@@ -28,7 +28,7 @@ public interface PsiSearchHelper {
   boolean processReferencesIncludingOverriding(PsiReferenceProcessor processor, PsiMethod method, SearchScope searchScope);
 
   PsiIdentifier[] findIdentifiers(String identifier, SearchScope searchScope, short searchContext);
-  boolean processIdentifiers(PsiElementProcessor processor, String identifier, SearchScope searchScope, short searchContext);
+  boolean processIdentifiers(PsiElementProcessor<PsiIdentifier> processor, String identifier, SearchScope searchScope, short searchContext);
 
   PsiElement[] findCommentsContainingIdentifier(String identifier, SearchScope searchScope);
   PsiLiteralExpression[] findStringLiteralsContainingIdentifier(String identifier, SearchScope searchScope);

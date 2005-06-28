@@ -987,10 +987,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     PsiElementProcessor.CollectElements<PsiIdentifier> processor = new PsiElementProcessor.CollectElements<PsiIdentifier>();
     processIdentifiers(processor, identifier, searchScope, searchContext);
-    return processor.toArray(new PsiIdentifier[0]);
+    return processor.toArray(PsiIdentifier.EMPTY_ARRAY);
   }
 
-  public boolean processIdentifiers(final PsiElementProcessor processor,
+  public boolean processIdentifiers(final PsiElementProcessor<PsiIdentifier> processor,
                                     final String identifier,
                                     SearchScope searchScope,
                                     short searchContext) {
@@ -998,8 +998,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     PsiElementProcessorEx processor1 = new PsiElementProcessorEx() {
       public boolean execute(PsiElement element, int offsetInElement) {
-        if (element.getText().equals(identifier)) {
-          return processor.execute(element);
+        if (element instanceof PsiIdentifier) {
+          return processor.execute((PsiIdentifier)element);
         }
         return true;
       }

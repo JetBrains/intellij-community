@@ -70,7 +70,7 @@ public class SegmentedInputStream extends InputStream implements SegmentedStream
   private char[] readMarker() throws IOException {
     int nextRead = '0';
     final StringBuffer buffer = new StringBuffer();
-    while (nextRead != ' ') {
+    while (nextRead != ' ' && nextRead != SPECIAL_SYMBOL) {
       buffer.append((char)nextRead);
       nextRead = readNext();
     }
