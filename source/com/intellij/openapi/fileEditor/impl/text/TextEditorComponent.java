@@ -258,7 +258,7 @@ final class TextEditorComponent extends JPanel implements DataProvider{
       (editor.getCaretModel().getLogicalPosition().line + 1) +
       ":" + (editor.getCaretModel().getLogicalPosition().column + 1)
     );
-    statusBar.updateEditorHighlightingStatus();
+    statusBar.updateEditorHighlightingStatus(false);
   }
 
   public Object getData(final String dataId) {

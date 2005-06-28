@@ -226,11 +226,11 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     setStatusEnabled(false);
     setWriteStatus(false);
     setPosition(null);
-    updateEditorHighlightingStatus();
+    updateEditorHighlightingStatus(true);
   }
 
-  public final void updateEditorHighlightingStatus() {
-    myEditorHighlightingPanel.update();
+  public final void updateEditorHighlightingStatus(final boolean isClear) {
+    myEditorHighlightingPanel.updateStatus(isClear);
   }
 
   public final Dimension getMinimumSize() {

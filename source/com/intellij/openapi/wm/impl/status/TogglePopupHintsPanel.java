@@ -44,7 +44,11 @@ public class TogglePopupHintsPanel extends JLabel {
     setIconTextGap(0);
   }
 
-  void update() {
+  void updateStatus(boolean clear) {
+    if (clear){
+      setIcon(EMPTY_ICON);
+      return;
+    }
     if (isStateChangeable()) {
       if (HighlightUtil.isRootInspected(getCurrentFile())) {
         setIcon(INSPECTIONS_ICON);

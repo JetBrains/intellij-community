@@ -5,6 +5,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
@@ -151,6 +153,7 @@ public class EditorMarkupHintComponent extends JPanel {
   private void onClose(){
     if (isModified()){
       forceDaemonRestart();
+      ((StatusBarEx) WindowManager.getInstance().getStatusBar(myFile.getProject())).updateEditorHighlightingStatus(false);
     }
   }
 

@@ -324,7 +324,7 @@ public class WindowManagerImpl extends WindowManagerEx implements ApplicationCom
     statusBar.setStatus(null);
     statusBar.setWriteStatus(false);
     statusBar.setPosition(null);
-    statusBar.updateEditorHighlightingStatus();
+    statusBar.updateEditorHighlightingStatus(true);
 
     myProject2Frame.remove(project);
     if (myProject2Frame.size() == 0) {
