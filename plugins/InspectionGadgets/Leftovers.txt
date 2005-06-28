@@ -13,6 +13,9 @@
     Static initializer which creates an instance before all static variables are initialized
     Read or write on non-buffered stream
     Duplicate switch branches
+    hasNext() invokes next()
+    substring(0)
+    Constant Math calls
 
     Move and restructure categories
     Static import quickfix
