@@ -11,6 +11,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 
+import java.util.Set;
+
 public interface JspFile extends PsiFile{
   WebModuleProperties getWebModuleProperties();
   WebDirectoryElement getParentWebDirectory();
@@ -29,4 +31,6 @@ public interface JspFile extends PsiFile{
   PsiFile getBaseLanguageRoot();
 
   Language getBaseLanguage();
+
+  Set<String> getKnownTaglibPrefixes();
 }
