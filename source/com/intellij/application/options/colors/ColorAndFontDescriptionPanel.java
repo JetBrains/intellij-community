@@ -319,17 +319,22 @@ public class ColorAndFontDescriptionPanel extends JPanel {
       updatingEffects = true;
       if (effectType == EffectType.BOXED) {
         myEffectsCombo.setSelectedItem(BORDERED_EFFECT);
-      } else if (effectType == EffectType.LINE_UNDERSCORE) {
+      }
+      else if (effectType == EffectType.LINE_UNDERSCORE) {
         myEffectsCombo.setSelectedItem(UNDERSCORED_EFFECT);
-      } else if (effectType == EffectType.WAVE_UNDERSCORE) {
+      }
+      else if (effectType == EffectType.WAVE_UNDERSCORE) {
         myEffectsCombo.setSelectedItem(UNDERWAVED_EFFECT);
-      } else if (effectType == EffectType.STRIKEOUT) {
+      }
+      else if (effectType == EffectType.STRIKEOUT) {
         myEffectsCombo.setSelectedItem(STRIKEOUT_EFFECT);
-      } else {
+      }
+      else {
         LOG.assertTrue(false);
       }
       updatingEffects = false;
-    } else {
+    }
+    else {
       myEffectsCombo.setEnabled(false);
     }
   }
@@ -349,22 +354,24 @@ public class ColorAndFontDescriptionPanel extends JPanel {
       description.setEffectsColorChecked(myCbEffects.isSelected());
       description.setEffectColor(myEffectsColorChooser.getSelectedColor());
 
-      Object effectType = myEffectsCombo.getModel().getSelectedItem();
+      if (myEffectsCombo.isEnabled()) {
+        Object effectType = myEffectsCombo.getModel().getSelectedItem();
 
-      if (BORDERED_EFFECT.equals(effectType)) {
-        description.setEffectType(EffectType.BOXED);
-      }
-      else if (UNDERWAVED_EFFECT.equals(effectType)) {
-        description.setEffectType(EffectType.WAVE_UNDERSCORE);
-      }
-      else if (UNDERSCORED_EFFECT.equals(effectType)) {
-        description.setEffectType(EffectType.LINE_UNDERSCORE);
-      }
-      else if (STRIKEOUT_EFFECT.equals(effectType)) {
-        description.setEffectType(EffectType.STRIKEOUT);
-      }
-      else {
-        LOG.assertTrue(false);
+        if (BORDERED_EFFECT.equals(effectType)) {
+          description.setEffectType(EffectType.BOXED);
+        }
+        else if (UNDERWAVED_EFFECT.equals(effectType)) {
+          description.setEffectType(EffectType.WAVE_UNDERSCORE);
+        }
+        else if (UNDERSCORED_EFFECT.equals(effectType)) {
+          description.setEffectType(EffectType.LINE_UNDERSCORE);
+        }
+        else if (STRIKEOUT_EFFECT.equals(effectType)) {
+          description.setEffectType(EffectType.STRIKEOUT);
+        }
+        else {
+          LOG.assertTrue(false);
+        }
       }
       description.apply(scheme);
     }
