@@ -110,12 +110,21 @@ public class TreeChangeImpl implements TreeChange {
       final Pair<ASTNode, Integer> pair = myOffsets.get(i);
       if(child == pair.getFirst()) return;
       if(nodeOffset < pair.getSecond().intValue() ||
-         (nodeOffset == pair.getSecond().intValue()) && child.getTreeNext() == pair.getFirst()){
+         (nodeOffset == pair.getSecond().intValue() && isAfter(pair.getFirst(), child))){
         myOffsets.add(i, new Pair<ASTNode, Integer>(child, new Integer(nodeOffset)));
         return;
       }
     }
     myOffsets.add(new Pair<ASTNode, Integer>(child, new Integer(nodeOffset)));
+  }
+
+  private boolean isAfter(final ASTNode operand, final ASTNode base) {
+    ASTNode current = base.getTreeNext();
+
+    while(current != null){
+      if(current == operand) return true;
+    }
+    return false;
   }
 
   private void removeChangeInternal(ASTNode child){
