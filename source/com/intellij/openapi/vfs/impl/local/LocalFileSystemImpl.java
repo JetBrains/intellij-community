@@ -712,10 +712,11 @@ public class LocalFileSystemImpl extends LocalFileSystem implements ApplicationC
         new Runnable() {
           public void run() {
             synchronized (LOCK) {
-              String[] dirPaths = new String[myRootsToWatch.size()];
-              boolean[] toWatchRecursively = new boolean[myRootsToWatch.size()];
+              final WatchRequest[] watchRequests = normalizeRootsForRefresh();
+              String[] dirPaths = new String[watchRequests.length];
+              boolean[] toWatchRecursively = new boolean[watchRequests.length];
               int cnt = 0;
-              for (WatchRequest root : myRootsToWatch) {
+              for (WatchRequest root : watchRequests) {
                 dirPaths[cnt] = root.getRoot().getPath();
                 toWatchRecursively[cnt] = root.isToWatchRecursively();
                 cnt++;
