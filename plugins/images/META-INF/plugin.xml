@@ -1,37 +1,85 @@
-<?xml version='1.0'?>
-<!DOCTYPE idea-plugin SYSTEM "http://plugins.intellij.net/plugin.dtd">
-
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
-  <vendor url="http://www.intellij.org/twiki/bin/view/Main/AlexeyEfimov"
-          email="aefimov@tengry.com">Alexey Efimov</vendor>
-  <name>Images</name>
-  <description>Enables image files viewing in IDEA editors</description>
-  <version>1.0</version>
-  <idea-version since-build="3340"/>
+    <vendor>Alexey Efimov</vendor>
+    <name>Images</name>
+    <description>Enables image files viewing in IDEA editors</description>
+    <version>1.1</version>
+    <idea-version since-build="3378"/>
 
-  <application-components>
-    <component>
-      <interface-class>org.intellij.imagesSupport.options.OptionsManager</interface-class>
-      <implementation-class>org.intellij.imagesSupport.options.impl.OptionsManagerImpl</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.intellij.imagesSupport.options.impl.OptionsConfigurabe</implementation-class>
-    </component>
-    <component>
-      <interface-class>org.intellij.imagesSupport.editor.layers.LayerManager</interface-class>
-      <implementation-class>org.intellij.imagesSupport.editor.layers.impl.LayerManagerImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>org.intellij.imagesSupport.fileTypes.ImageFileTypeManager</interface-class>
-      <implementation-class>org.intellij.imagesSupport.fileTypes.impl.ImageFileTypeManagerImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>org.intellij.imagesSupport.editor.ImageEditorManager</interface-class>
-      <implementation-class>org.intellij.imagesSupport.editor.impl.ImageEditorManagerImpl</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.intellij.imagesSupport.editor.impl.ImageFileEditorProvider</implementation-class>
-    </component>
-  </application-components>
+    <application-components>
+        <component>
+            <interface-class>org.intellij.images.options.OptionsManager</interface-class>
+            <implementation-class>org.intellij.images.options.impl.OptionsManagerImpl</implementation-class>
+        </component>
+        <component>
+            <implementation-class>org.intellij.images.options.impl.OptionsConfigurabe</implementation-class>
+        </component>
+        <component>
+            <interface-class>org.intellij.images.fileTypes.ImageFileTypeManager</interface-class>
+            <implementation-class>org.intellij.images.fileTypes.impl.ImageFileTypeManagerImpl</implementation-class>
+        </component>
+        <component>
+            <interface-class>org.intellij.images.editor.ImageEditorManager</interface-class>
+            <implementation-class>org.intellij.images.editor.impl.ImageEditorManagerImpl</implementation-class>
+        </component>
+        <component>
+            <implementation-class>org.intellij.images.editor.impl.ImageFileEditorProvider</implementation-class>
+        </component>
+        <component>
+            <interface-class>org.intellij.images.thumbnail.ThumbnailManager</interface-class>
+            <implementation-class>org.intellij.images.thumbnail.impl.ThumbnailManagerImpl</implementation-class>
+        </component>
+    </application-components>
+
+    <actions>
+        <action class="org.intellij.images.actions.EditExternalyAction" text="Jump to External Editor"
+                id="Images.EditExternaly" description="Open image in external editor">
+            <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
+        </action>
+        <action class="org.intellij.images.actions.ShowThumbnailsAction" text="Show Thumbnails"
+                id="Images.ShowThumbnails" description="Show thumnails view for current directory">
+            <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="AddAntBuildFile"/>
+        </action>
+        <group id="Images.FileViewPopupMenu">
+            <reference id="Images.EditExternaly" />
+            <reference id="Images.ShowThumbnails" />
+        </group>
+        <group id="Images.ThumbnailsPopupMenu">
+            <reference id="EditSource" />
+            <reference id="CopyPaths" />
+            <reference id="Images.EditExternaly" />
+        </group>
+        <group id="Images.EditorToolbar">
+            <action class="org.intellij.images.editor.actions.ToggleTransparencyChessboardAction" text="Toggle Transparency Chessboard"
+                    id="Images.Editor.ToggleBackground" description="Toggle transparency chessboard under image"
+                    icon="/org/intellij/images/editor/actions/icons/ToggleTransparencyChessboard.png"/>
+            <action class="org.intellij.images.editor.actions.ToggleGridAction" text="Toggle Grid"
+                    id="Images.Editor.ToggleGrid" description="Toggle grid lines over image"
+                    icon="/org/intellij/images/editor/actions/icons/ToggleGrid.png"/>
+            <separator/>
+            <action class="org.intellij.images.editor.actions.ZoomInAction" text="Zoom In"
+                    id="Images.Editor.ZoomIn" description="Increase image view"
+                    icon="/org/intellij/images/editor/actions/icons/ZoomIn.png"/>
+            <action class="org.intellij.images.editor.actions.ZoomOutAction" text="Zoom Out"
+                    id="Images.Editor.ZoomOut" description="Reduce image view"
+                    icon="/org/intellij/images/editor/actions/icons/ZoomOut.png"/>
+            <separator/>
+            <action class="org.intellij.images.editor.actions.ActualSizeAction" text="Actual Size"
+                    id="Images.Editor.ActualSize" description="Resize image to actual size"
+                    icon="/org/intellij/images/editor/actions/icons/ActualSize.png"/>
+            <separator/>
+        </group>
+        <group id="Images.ThumbnailsToolbar">
+            <action class="org.intellij.images.thumbnail.actions.UpFolderAction" text="Level Up"
+                    id="Images.UpFolder" description="Level up"
+                    icon="/nodes/upFolder.png"/>
+            <action class="org.intellij.images.thumbnail.actions.ToggleRecursiveAction" text="Recursive"
+                    id="Images.ToggleRecursive" description="Toggle recursive browsing"
+                    icon="/objectBrowser/flattenPackages.png"/>
+            <separator />
+            <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction" text="Close"
+                    id="Images.HideThumbnails" description="Hide tool window"
+                    icon="/actions/cancel.png"/>
+        </group>
+    </actions>
 </idea-plugin>
-
