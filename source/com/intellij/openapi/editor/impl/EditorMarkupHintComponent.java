@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.ui.Hint;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LightweightHint;
@@ -41,11 +42,13 @@ public class EditorMarkupHintComponent extends JPanel {
     setBorder(BorderFactory.createEtchedBorder());
     myFile = file;
     mySliders = new JSlider[file instanceof JspFile ? file.getPsiRoots().length - 1 : 1];
-    final Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
-    sliderLabels.put(new Integer(1), new JLabel("None"));
-    sliderLabels.put(new Integer(2), new JLabel("Syntax"));
-    sliderLabels.put(new Integer(3), new JLabel("Inspections"));
     for (int i = 0; i < mySliders.length; i++) {
+
+      final Hashtable<Integer, JLabel> sliderLabels = new Hashtable<Integer, JLabel>();
+      sliderLabels.put(new Integer(1), new JLabel("None"));
+      sliderLabels.put(new Integer(2), new JLabel("Syntax"));
+      sliderLabels.put(new Integer(3), new JLabel("Inspections"));
+
       final JSlider slider = new JSlider(JSlider.VERTICAL, 1, 3, 3);
       slider.setLabelTable(sliderLabels);
       slider.putClientProperty("JSlider.isFilled", Boolean.TRUE);
@@ -131,14 +134,18 @@ public class EditorMarkupHintComponent extends JPanel {
   }
 
   public void showComponent(Editor editor, Point point){
-    LightweightHint hint = new LightweightHint(this);
+    final LightweightHint hint = new LightweightHint(this);
     hint.addHintListener(new HintListener() {
       public void hintHidden(EventObject event) {
         onClose();
       }
     });
-
-    HintManager.getInstance().showEditorHint(hint, editor, point, HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_ESCAPE, 0, true);
+    final HintManager hintManager = HintManager.getInstance();
+    final Hint previousHint = hintManager.findHintByType(EditorMarkupHintComponent.class);
+    if (previousHint != null){
+      previousHint.hide();
+    }
+    hintManager.showEditorHint(hint, editor, point, HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_SCROLLING, 0, true);
   }
 
   private void onClose(){

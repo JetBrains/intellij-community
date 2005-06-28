@@ -527,6 +527,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       );
     }
 
+
     private void doMouseClicked(MouseEvent e) {
       myEditor.getContentComponent().requestFocus();
       int lineCount = getDocument().getLineCount() + myEditor.getSettings().getAdditionalLinesCount();
@@ -534,14 +535,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         return;
       }
       myMarkSpots.doClick(e, getWidth());
-      Point point = new Point(0, 0);
-      point = SwingUtilities.convertPoint(this, point, myEditor.getComponent().getRootPane().getLayeredPane());
-
-      final EditorMarkupHintComponent component = new EditorMarkupHintComponent(
-        (PsiFile)myEditor.getDataContext().getData(DataConstants.PSI_FILE));
-      final Dimension dimension = component.getPreferredSize();
-      point = new Point(point.x - dimension.width, point.y);
-      component.showComponent(myEditor, point);
     }
 
     public void mouseMoved(MouseEvent e) {
@@ -586,9 +579,24 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     public void mousePressed(MouseEvent e) {
+      showEditorMurkupHint(e);
     }
 
     public void mouseReleased(MouseEvent e) {
+      showEditorMurkupHint(e);
+    }
+
+    private void showEditorMurkupHint(final MouseEvent e) {
+      if (e.isPopupTrigger()) {
+        Point point = new Point(e.getX(), e.getY());
+        point = SwingUtilities.convertPoint(this, point, myEditor.getComponent().getRootPane().getLayeredPane());
+
+        final EditorMarkupHintComponent component = new EditorMarkupHintComponent(
+          (PsiFile)myEditor.getDataContext().getData(DataConstants.PSI_FILE));
+        final Dimension dimension = component.getPreferredSize();
+        point = new Point(point.x - dimension.width, point.y);
+        component.showComponent(myEditor, point);
+      }
     }
   }
 

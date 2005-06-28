@@ -31,6 +31,7 @@ import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListenerUtil;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -78,11 +79,11 @@ public class HintManager implements ApplicationComponent {
   }
 
   private static class HintInfo {
-    final Hint hint;
+    final LightweightHint hint;
     final int flags;
     private boolean reviveOnEditorChange;
 
-    public HintInfo(Hint hint, int flags, boolean reviveOnEditorChange) {
+    public HintInfo(LightweightHint hint, int flags, boolean reviveOnEditorChange) {
       this.hint = hint;
       this.flags = flags;
       this.reviveOnEditorChange = reviveOnEditorChange;
@@ -186,6 +187,16 @@ public class HintManager implements ApplicationComponent {
       if (hintInfo.hint.isVisible() && (hintInfo.flags & HIDE_BY_OTHER_HINT) != 0) return true;
     }
     return false;
+  }
+
+  @Nullable
+  public Hint findHintByType(Class klass){
+    for (HintInfo hintInfo : myHintsStack) {
+      if (klass.isInstance(hintInfo.hint.getComponent()) && hintInfo.hint.isVisible()){
+        return hintInfo.hint;
+      }
+    }
+    return null;
   }
 
   public void disposeComponent() {
@@ -507,8 +518,8 @@ public class HintManager implements ApplicationComponent {
     final Point p = getHintPosition(hint, editor, pos1, pos2, constraint);
     showEditorHint(hint, editor, p, flags, timeout, false);
   }
-  
-  
+
+
   public void showQuestionHint(
     Editor editor,
     String hintText,
