@@ -43,6 +43,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 
@@ -172,21 +173,28 @@ public class FormatterUtil {
   private static void addWhiteSpace(final ASTNode treePrev, final LeafElement whiteSpaceElement,
                                     ASTNode leafAfter, final CharTable charTable) {
     final ASTNode treeParent = treePrev.getTreeParent();
-    if (treePrev.getTreePrev() != null && treePrev.getTreePrev().getElementType() == ElementType.XML_TEXT) {
-      treePrev.getTreePrev().addChild(whiteSpaceElement);
-    } else {
-      if (isTag(treeParent) && leafAfter.getElementType() == ElementType.XML_START_TAG_START ||
-          leafAfter.getElementType() == ElementType.XML_END_TAG_START) {
-        CompositeElement xmlTextElement = Factory.createCompositeElement(ElementType.XML_TEXT,
-                                                                         charTable,
-                                                                         SharedImplUtil.getManagerByTree(treePrev));
-        xmlTextElement.addChild(whiteSpaceElement);
-        treeParent.addChild(xmlTextElement, treePrev);
-
-      } else {
-        treeParent.addChild(whiteSpaceElement, treePrev);
+    if(isTag(treeParent)){
+      final String text;
+      final XmlText xmlText;
+      if(treePrev.getElementType() == XmlElementType.XML_TEXT) {
+        xmlText = (XmlText)treePrev.getPsi();
+        text = whiteSpaceElement.getText() + xmlText.getValue();
       }
+      else if(treePrev.getTreePrev().getElementType() == XmlElementType.XML_TEXT){
+        xmlText = (XmlText)treePrev.getTreePrev().getPsi();
+        text = xmlText.getValue() + whiteSpaceElement.getText();
+      }
+      else{
+        xmlText = (XmlText)Factory.createCompositeElement(XmlElementType.XML_TEXT, charTable, treeParent.getPsi().getManager());
+        treeParent.addChild(xmlText.getNode(), treePrev);
+        text = whiteSpaceElement.getText();
+      }
+      try {
+        xmlText.setValue(text);
+      }
+      catch (IncorrectOperationException e) {LOG.error(e);}
     }
+    else treeParent.addChild(whiteSpaceElement, treePrev);
   }
 
   private static boolean isTag(final ASTNode treeParent) {
