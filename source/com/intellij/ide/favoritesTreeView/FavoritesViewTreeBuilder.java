@@ -175,7 +175,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
         }
       }
       if (Comparing.equal(element, currentValue)){
-        final DefaultMutableTreeNode nodeWithObject = findNodeWithObject((DefaultMutableTreeNode)getTree().getModel().getRoot(), favorite);
+        final DefaultMutableTreeNode nodeWithObject = findFirstLevelNodeWithObject((DefaultMutableTreeNode)getTree().getModel().getRoot(), favorite);
         if (nodeWithObject != null){
           TreeUtil.selectInTree(nodeWithObject, requestFocus, getTree());
           return;
@@ -186,7 +186,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   }
 
   @Nullable
-  private static DefaultMutableTreeNode findNodeWithObject(final DefaultMutableTreeNode aRoot, final Object aObject) {
+  private static DefaultMutableTreeNode findFirstLevelNodeWithObject(final DefaultMutableTreeNode aRoot, final Object aObject) {
     for (int i = 0; i < aRoot.getChildCount(); i++) {
       final DefaultMutableTreeNode child = (DefaultMutableTreeNode)aRoot.getChildAt(i);
       Object userObject = child.getUserObject();
