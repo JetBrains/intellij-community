@@ -686,7 +686,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     final PsiElement psiNode = SourceTreeToPsiMap.treeElementToPsi(myNode);
     if (psiNode instanceof PsiClass) {
       return mySettings.CLASS_BRACE_STYLE;
-    } else if (psiNode instanceof PsiCodeBlock && psiNode.getParent() instanceof PsiMethod){
+    } else if (psiNode instanceof PsiMethod){
       return mySettings.METHOD_BRACE_STYLE;
     } else {
       return mySettings.BRACE_STYLE;

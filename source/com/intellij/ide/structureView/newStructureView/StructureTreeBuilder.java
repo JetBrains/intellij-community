@@ -59,13 +59,15 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     myStructureModel.addModelListener(myModelListener);
     myDocumentsListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
-        myUpdateEditorAlarm.cancelAllRequests();
-        myUpdateAlarm.cancelAllRequests();
-        myUpdateEditorAlarm.addRequest(new Runnable() {
-          public void run() {
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          }
-        }, 300, ModalityState.stateForComponent(myTree));
+        if (PsiDocumentManager.getInstance(myProject).isUncommited(e.getDocument())) {
+          myUpdateAlarm.cancelAllRequests();
+          myUpdateEditorAlarm.cancelAllRequests();
+          myUpdateEditorAlarm.addRequest(new Runnable() {
+            public void run() {
+              PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+            }
+          }, 300, ModalityState.stateForComponent(myTree));
+        }
       }
     };
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentsListener);
