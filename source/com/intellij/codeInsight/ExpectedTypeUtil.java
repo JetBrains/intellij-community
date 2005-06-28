@@ -6,6 +6,8 @@ import com.intellij.psi.util.PsiUtil;
 
 import java.util.*;
 
+import org.jetbrains.annotations.Nullable;
+
 public class ExpectedTypeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ExpectedTypeUtil");
 
@@ -134,7 +136,7 @@ public class ExpectedTypeUtil {
     }
   }
 
-  public static PsiSubstitutor inferSubstitutor(final PsiMethod method, final PsiMethodCallExpression callExpr, final boolean forCompletion) {
+  public static @Nullable PsiSubstitutor inferSubstitutor(final PsiMethod method, final PsiMethodCallExpression callExpr, final boolean forCompletion) {
     final PsiResolveHelper helper = method.getManager().getResolveHelper();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiExpression[] args = callExpr.getArgumentList().getExpressions();
