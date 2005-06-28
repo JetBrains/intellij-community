@@ -54,7 +54,6 @@ public class EditorMarkupHintComponent extends JPanel {
       final JSlider slider = new JSlider(JSlider.VERTICAL, 1, 3, 3);
       slider.setLabelTable(sliderLabels);
       slider.putClientProperty("JSlider.isFilled", Boolean.TRUE);
-      slider.setPreferredSize(new Dimension(80, 100));
       slider.setPaintLabels(true);
       slider.setSnapToTicks(true);
       slider.addChangeListener(new ChangeListener() {
@@ -122,6 +121,7 @@ public class EditorMarkupHintComponent extends JPanel {
   private void layoutHorizontal(final JPanel panel){
     for (JSlider slider : mySliders) {
       slider.setOrientation(JSlider.HORIZONTAL);
+      slider.setPreferredSize(new Dimension(100, 40));
       panel.add(slider);
     }
   }
@@ -129,6 +129,7 @@ public class EditorMarkupHintComponent extends JPanel {
   private void layoutVertical(final JPanel panel){
     for (int i = 0; i < mySliders.length; i++) {
       JPanel borderPanel = new JPanel(new BorderLayout());
+      mySliders[i].setPreferredSize(new Dimension(80, 100));
       borderPanel.add(new JLabel(myFile.getPsiRoots()[i].getLanguage().getID()), BorderLayout.NORTH);
       borderPanel.add(mySliders[i], BorderLayout.CENTER);
       panel.add(borderPanel);
