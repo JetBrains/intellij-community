@@ -44,7 +44,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
             final PsiTypeCastExpression expression =
                     (PsiTypeCastExpression) castTypeElement.getParent();
             final PsiType expectedType =
-                    ExpectedTypeUtils.findExpectedType(expression);
+                    ExpectedTypeUtils.findExpectedType(expression, true);
             assert expression != null;
             final PsiExpression operand = expression.getOperand();
             final String newExpression =
@@ -75,7 +75,7 @@ public class OverlyStrongTypeCastInspection extends ExpressionInspection {
                 return;
             }
             final PsiType expectedType =
-                    ExpectedTypeUtils.findExpectedType(expression);
+                    ExpectedTypeUtils.findExpectedType(expression, true);
             if (expectedType == null) {
                 return;
             }
