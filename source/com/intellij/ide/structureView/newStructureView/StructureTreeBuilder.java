@@ -120,6 +120,7 @@ final class StructureTreeBuilder extends AbstractTreeBuilder {
     }
 
     public void childReplaced(PsiTreeChangeEvent event) {
+      /** Test comment */
       PsiElement oldChild = event.getOldChild();
       PsiElement newChild = event.getNewChild();
       if (oldChild instanceof PsiWhiteSpace && newChild instanceof PsiWhiteSpace) return; //optimization
