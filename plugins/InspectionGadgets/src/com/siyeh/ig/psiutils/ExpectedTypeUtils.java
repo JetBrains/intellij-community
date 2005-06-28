@@ -295,6 +295,7 @@ public class ExpectedTypeUtils{
 
       public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression ref){
+          //Dave, do we need this at all?
           if (calculateTypeForComplexReferences) {
             final PsiManager manager = ref.getManager();
             final JavaResolveResult resolveResult = ref.advancedResolve(false);
