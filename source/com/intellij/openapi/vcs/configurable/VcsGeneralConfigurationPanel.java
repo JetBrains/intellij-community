@@ -71,6 +71,16 @@ public class VcsGeneralConfigurationPanel {
       }
     }
 
+    final ButtonGroup add = new ButtonGroup();
+    for (JRadioButton aMyOnFileAddingGroup : myOnFileAddingGroup) {
+      add.add(aMyOnFileAddingGroup);
+    }
+
+    final ButtonGroup remove = new ButtonGroup();
+    for (JRadioButton aMyOnFileAddingGroup : myOnFileRemovingGroup) {
+      remove.add(aMyOnFileAddingGroup);
+    }
+
     myPromptsPanel.setSize(myPromptsPanel.getPreferredSize());
 
 

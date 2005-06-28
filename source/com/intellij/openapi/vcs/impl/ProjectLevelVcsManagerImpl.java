@@ -97,6 +97,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private boolean myIsBeforeProjectStarted = true;
   private static final String OPTIONS_SETTING = "OptionsSetting";
+  private static final String CONFIRMATIONS_SETTING = "ConfirmationsSetting";
   private static final String VALUE_ATTTIBUTE = "value";
   private static final String ID_ATTRIBUTE = "id";
 
@@ -136,10 +137,21 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
                           "Do not remove",
                           "Show options before removing from version control",
                           "Remove silently"));
+
+    restoreReadConfirm(VcsConfiguration.StandardConfirmation.ADD);
+    restoreReadConfirm(VcsConfiguration.StandardConfirmation.REMOVE);
+  }
+
+  private void restoreReadConfirm(final VcsConfiguration.StandardConfirmation confirm) {
+    if (myReadValue.containsKey(confirm.getId())) {
+      getConfirmation(confirm).setValue(myReadValue.get(confirm.getId()));
+    }
   }
 
   private void createSettingFor(final VcsConfiguration.StandardOption option) {
-    myOptions.put(option.getId(), new VcsShowOptionsSettingImpl(option));
+    if (!myOptions.containsKey(option.getId())) {
+      myOptions.put(option.getId(), new VcsShowOptionsSettingImpl(option));
+    }
   }
 
   public void registerVcs(AbstractVcs vcs) {
@@ -561,8 +573,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myOptions.get(actionName);
   }
 
+  private final Map<String, VcsShowConfirmationOption.Value> myReadValue = new com.intellij.util.containers.HashMap<String, VcsShowConfirmationOption.Value>();
+
   public void readExternal(Element element) throws InvalidDataException {
-    final List subElements = element.getChildren(OPTIONS_SETTING);
+    List subElements = element.getChildren(OPTIONS_SETTING);
     for (Object o : subElements) {
       if (o instanceof Element) {
         final Element subElement = ((Element)o);
@@ -579,6 +593,24 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         }
       }
     }
+    myReadValue.clear();
+    subElements = element.getChildren(CONFIRMATIONS_SETTING);
+    for (Object o : subElements) {
+      if (o instanceof Element) {
+        final Element subElement = ((Element)o);
+        final String id = subElement.getAttributeValue(ID_ATTRIBUTE);
+        final String value = subElement.getAttributeValue(VALUE_ATTTIBUTE);
+        if (id != null && value != null) {
+          try {
+            myReadValue.put(id, VcsShowConfirmationOption.Value.fromString(value));
+          }
+          catch (Exception e) {
+            //ignore
+          }
+        }
+      }
+    }
+
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -588,6 +620,14 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       settingElement.setAttribute(VALUE_ATTTIBUTE, Boolean.toString(setting.getValue()));
       settingElement.setAttribute(ID_ATTRIBUTE, setting.getDisplayName());
     }
+
+    for (VcsShowConfirmationOptionImpl setting : myConfirmations.values()) {
+      final Element settingElement = new Element(CONFIRMATIONS_SETTING);
+      element.addContent(settingElement);
+      settingElement.setAttribute(VALUE_ATTTIBUTE, setting.getValue().toString());
+      settingElement.setAttribute(ID_ATTRIBUTE, setting.getDisplayName());
+    }
+
   }
 
   @NotNull
