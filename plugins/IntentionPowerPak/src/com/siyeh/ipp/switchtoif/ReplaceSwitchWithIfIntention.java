@@ -177,6 +177,7 @@ public class ReplaceSwitchWithIfIntention extends Intention{
             PsiElement ifElement = switchStatement.replace(ifStatement);
             ifElement = codeStyleMgr.reformat(ifElement);
             final PsiElement parent = ifElement.getParent();
+            assert parent != null;
             final PsiElement declarationElement =
                     parent.addBefore(declarationStatement, ifElement);
             codeStyleMgr.reformat(declarationElement);

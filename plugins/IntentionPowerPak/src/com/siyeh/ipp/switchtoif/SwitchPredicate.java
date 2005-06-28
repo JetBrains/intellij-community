@@ -28,6 +28,18 @@ class SwitchPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiCodeBlock body = switchStatement.getBody();
-        return body != null;
+        if(body == null){
+            return false;
+        }
+        boolean hasLabel = false;
+        final PsiStatement[] statements = body.getStatements();
+        for(PsiStatement statement : statements){
+            if(statement instanceof PsiSwitchLabelStatement)
+            {
+                hasLabel = true;
+                break;
+            }
+        }
+        return hasLabel;
     }
 }
