@@ -253,7 +253,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     if (reference.isReferenceTo(constant)) return reference;
     reference = (PsiReferenceExpression)constant.getManager().getElementFactory().createExpressionFromText("XXX."+constant.getName(), null);
     final PsiReferenceExpression classQualifier = (PsiReferenceExpression)reference.getQualifierExpression();
-    classQualifier.replace(classQualifier.bindToElement(constant.getContainingClass()));
+    classQualifier.bindToElement(constant.getContainingClass());
 
     if (reference.isReferenceTo(constant)) return reference;
     return null;
