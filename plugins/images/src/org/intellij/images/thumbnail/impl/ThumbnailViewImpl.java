@@ -2,13 +2,15 @@
 package org.intellij.images.thumbnail.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * Thumbnail view.
@@ -16,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ThumbnailViewImpl implements ThumbnailView {
+    private static final Icon TOOL_WINDOW_ICON = IconLoader.getIcon("/org/intellij/images/thumbnail/icons/ThumbnailToolWindow.png");
 
     private final Project project;
     private final ToolWindow toolWindow;
@@ -29,8 +32,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
 
         ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
         toolWindow = windowManager.registerToolWindow(TOOLWINDOW_ID, new ThumbnailViewUI(this), ToolWindowAnchor.BOTTOM);
-        ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
-        toolWindow.setIcon(typeManager.getImageFileType().getIcon());
+        toolWindow.setIcon(TOOL_WINDOW_ICON);
     }
 
     public void setRoot(@NotNull VirtualFile root) {
