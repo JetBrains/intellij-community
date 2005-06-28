@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange;
 public class DependantSpacePropertyImpl extends SpacePropertyImpl{
   private final TextRange myDependance;
   private boolean myDependanceContainsLF;
+  private boolean myLineFeedWasUsed = false;
 
   public DependantSpacePropertyImpl(final int minSpaces,
                                     final int maxSpaces,
@@ -29,10 +30,18 @@ public class DependantSpacePropertyImpl extends SpacePropertyImpl{
   }
 
   public void refresh(FormatProcessor formatter) {
-    myDependanceContainsLF = formatter.containsLineFeeds(myDependance);
+    myDependanceContainsLF = myLineFeedWasUsed || formatter.containsLineFeeds(myDependance);
   }
 
   public TextRange getDependancy() {
     return myDependance;
+  }
+
+  public void setLFWasUsed(final boolean value) {
+    myLineFeedWasUsed = value;
+  }
+
+  public boolean wasLFUsed() {
+    return myLineFeedWasUsed;
   }
 }

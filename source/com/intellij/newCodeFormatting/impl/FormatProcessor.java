@@ -24,7 +24,7 @@ class FormatProcessor {
   private final LeafBlockWrapper myFirstTokenBlock;
 
   private Map<TextRange, Pair<AbstractBlockWrapper, Boolean>> myPreviousDependancies = new HashMap<TextRange, Pair<AbstractBlockWrapper, Boolean>>();
-  private boolean myAlignAgain = false;
+  private Collection<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
   private final WhiteSpace myLastWhiteSpace;
 
   public FormatProcessor(final FormattingDocumentModel docModel, Block rootBlock,
@@ -135,12 +135,12 @@ class FormatProcessor {
 
   public void formatWithoutRealModifications() {
     while (true) {
-      myAlignAgain = false;
+      myAlignAgain.clear();
       myCurrentBlock = myFirstTokenBlock;
       while (myCurrentBlock != null) {
         processToken();
       }
-      if (!myAlignAgain) return;
+      if (myAlignAgain.isEmpty()) return;
       reset();
     }
   }
@@ -224,8 +224,10 @@ class FormatProcessor {
       saveDependancy(spaceProperty);
     }
 
-    if (!myAlignAgain) {
-      myAlignAgain = shouldReformatBecauseOfBackwardDependance(whiteSpace.getTextRange());
+    if (shouldReformatBecauseOfBackwardDependance(whiteSpace.getTextRange())) {
+      myAlignAgain.add(whiteSpace);
+    } else {
+      myAlignAgain.remove(whiteSpace);
     }
 
     myCurrentBlock = myCurrentBlock.getNextBlock();
@@ -247,17 +249,26 @@ class FormatProcessor {
   }
 
   private void saveDependancy(final SpacePropertyImpl spaceProperty) {
-    final TextRange dependancy = ((DependantSpacePropertyImpl)spaceProperty).getDependancy();
-    myPreviousDependancies.put(dependancy,
-                               new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, new Boolean(containsLineFeeds(dependancy))));
+    final DependantSpacePropertyImpl dependantSpaceProperty = ((DependantSpacePropertyImpl)spaceProperty);
+    final TextRange dependancy = dependantSpaceProperty.getDependancy();
+    if (dependantSpaceProperty.wasLFUsed()) {
+      myPreviousDependancies.put(dependancy,
+                                 new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, Boolean.TRUE));
+    } else {
+      final boolean value = containsLineFeeds(dependancy);
+      if (value) {
+        dependantSpaceProperty.setLFWasUsed(true);
+      }
+      myPreviousDependancies.put(dependancy,
+                                 new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, new Boolean(value)));
+    }
   }
 
   private boolean shouldSaveDependancy(final SpacePropertyImpl spaceProperty, WhiteSpace whiteSpace) {
     if (!(spaceProperty instanceof DependantSpacePropertyImpl)) return false;
 
     final TextRange dependancy = ((DependantSpacePropertyImpl)spaceProperty).getDependancy();
-    if (whiteSpace.getTextRange().getStartOffset() >= dependancy.getEndOffset()) return false;
-    return true;
+    return whiteSpace.getTextRange().getStartOffset() < dependancy.getEndOffset();
   }
 
   private boolean processWrap(SpaceProperty spaceProperty) {
@@ -633,12 +644,12 @@ class FormatProcessor {
 
   private void processBlocksBefore(final int offset) {
     while (true) {
-      myAlignAgain = false;
+      myAlignAgain.clear();
       myCurrentBlock = myFirstTokenBlock;
       while (myCurrentBlock != null && myCurrentBlock.getStartOffset() < offset) {
         processToken();
       }
-      if (!myAlignAgain) return;
+      if (myAlignAgain.isEmpty()) return;
       reset();
     }
   }
