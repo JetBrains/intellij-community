@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.impl.EmptyIcon;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorMarkupHintComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -18,9 +19,11 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class TogglePopupHintsPanel extends JButton {
+public class TogglePopupHintsPanel extends JLabel {
   private static final Icon INSPECTIONS_ICON = IconLoader.getIcon("/general/toolWindowInspection.png");
-  private static final Icon HIGHLIGHTING_ICON = IconLoader.getIcon("/general/toolWindowInspection.png");
+  private static final Icon INSPECTIONS_OFF_ICON = IconLoader.getIcon("/general/inspectionsOff.png");
+  private static final Icon EMPTY_ICON = EmptyIcon.create(INSPECTIONS_ICON.getIconWidth(), INSPECTIONS_ICON.getIconHeight());
+
   public TogglePopupHintsPanel() {
     addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
@@ -36,8 +39,9 @@ public class TogglePopupHintsPanel extends JButton {
         }
       }
     });
-    setIcon(null);
-    setBorder(null);
+    setIcon(EMPTY_ICON);
+    setHorizontalAlignment(CENTER);
+    setIconTextGap(0);
   }
 
   void update() {
@@ -45,11 +49,11 @@ public class TogglePopupHintsPanel extends JButton {
       if (HighlightUtil.isRootInspected(getCurrentFile())) {
         setIcon(INSPECTIONS_ICON);
       } else {
-        setIcon(HIGHLIGHTING_ICON);
+        setIcon(INSPECTIONS_OFF_ICON);
       }
     }
     else {
-      setIcon(null);
+      setIcon(EMPTY_ICON);
     }
   }
 
@@ -57,10 +61,7 @@ public class TogglePopupHintsPanel extends JButton {
     if (getCurrentFile() == null) {
       return false;
     }
-    if (getCurrentEditor() == null) {
-      return false;
-    }
-    return true;
+    return getCurrentEditor() != null;
   }
 
   @Nullable
@@ -79,6 +80,7 @@ public class TogglePopupHintsPanel extends JButton {
     return file;
   }
 
+  @Nullable
   private Project getCurrentProject() {
     return (Project)DataManager.getInstance().getDataContext(this).getData(DataConstants.PROJECT);
   }
