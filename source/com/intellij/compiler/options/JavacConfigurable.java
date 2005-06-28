@@ -16,7 +16,6 @@ public class JavacConfigurable implements Configurable{
   private JCheckBox myCbDebuggingInfo;
   private JCheckBox myCbDeprecation;
   private JCheckBox myCbGenerateNoWarnings;
-  private JCheckBox myUseGenericsCompilerCheckbox;
   private RawCommandLineEditor myAdditionalOptionsField;
   private JTextField myJavacMaximumHeapField;
   private JavacSettings myJavacSettings;
@@ -49,7 +48,6 @@ public class JavacConfigurable implements Configurable{
     isModified |= ComparingUtils.isModified(myCbDebuggingInfo, myJavacSettings.DEBUGGING_INFO);
     isModified |= ComparingUtils.isModified(myCbGenerateNoWarnings, myJavacSettings.GENERATE_NO_WARNINGS);
     isModified |= ComparingUtils.isModified(myAdditionalOptionsField, myJavacSettings.ADDITIONAL_OPTIONS_STRING);
-    isModified |= ComparingUtils.isModified(myUseGenericsCompilerCheckbox, myJavacSettings.USE_GENERICS_COMPILER);
     return isModified;
   }
 
@@ -69,7 +67,6 @@ public class JavacConfigurable implements Configurable{
     myJavacSettings.DEBUGGING_INFO = myCbDebuggingInfo.isSelected();
     myJavacSettings.GENERATE_NO_WARNINGS = myCbGenerateNoWarnings.isSelected();
     myJavacSettings.ADDITIONAL_OPTIONS_STRING = myAdditionalOptionsField.getText();
-    myJavacSettings.USE_GENERICS_COMPILER = myUseGenericsCompilerCheckbox.isSelected();
   }
 
   public void reset() {
@@ -78,7 +75,6 @@ public class JavacConfigurable implements Configurable{
     myCbDebuggingInfo.setSelected(myJavacSettings.DEBUGGING_INFO);
     myCbGenerateNoWarnings.setSelected(myJavacSettings.GENERATE_NO_WARNINGS);
     myAdditionalOptionsField.setText(myJavacSettings.ADDITIONAL_OPTIONS_STRING);
-    myUseGenericsCompilerCheckbox.setSelected(myJavacSettings.USE_GENERICS_COMPILER);
   }
 
   public void disposeUIResources() {

@@ -18,7 +18,6 @@ public class JavacSettings implements JDOMExternalizable, ProjectComponent {
   public boolean DEPRECATION = true;
   public String ADDITIONAL_OPTIONS_STRING = "";
   public int MAXIMUM_HEAP_SIZE = 128;
-  public boolean USE_GENERICS_COMPILER = false;
 
   private boolean myTestsUseExternalCompiler = false;
 
