@@ -123,6 +123,7 @@ public class TreeChangeImpl implements TreeChange {
 
     while(current != null){
       if(current == operand) return true;
+      current = current.getTreeNext();
     }
     return false;
   }
