@@ -104,7 +104,8 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
 
         public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null))
+            final PsiExpression rhs = expression.getROperand();
+            if(rhs == null)
             {
                 return;
             }
@@ -115,7 +116,6 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
                     !tokenType.equals(JavaTokenType.DIV)) {
                 return;
             }
-            final PsiExpression rhs = expression.getROperand();
             if (!ShiftUtils.isPowerOfTwo(rhs)) {
                 return;
             }
@@ -129,6 +129,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection extends ExpressionInspection
             registerError(expression);
         }
 
+        
         public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
