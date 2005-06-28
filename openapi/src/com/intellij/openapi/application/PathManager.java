@@ -94,11 +94,11 @@ public class PathManager {
     return ourSystemPath;
   }
 
-  public static void ensureConfigFolderExists(boolean userInteractionAllowed) {
+  public static void ensureConfigFolderExists(boolean userInteractionAllowed, final boolean createIfNotExists) {
     getConfigPathWithoutDialog();
 
     File file = new File(ourConfigPath);
-    if (!file.exists()) {
+    if (createIfNotExists && !file.exists()) {
       file.mkdirs();
       if (userInteractionAllowed) {
         ConfigImportHelper.importConfigsTo(ourConfigPath);
@@ -107,9 +107,7 @@ public class PathManager {
   }
 
   public static String getConfigPath(boolean createIfNotExists) {
-    if (createIfNotExists) {
-      ensureConfigFolderExists(false);
-    }
+    ensureConfigFolderExists(false, createIfNotExists);
     return ourConfigPath;
   }
 
