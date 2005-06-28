@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.jsp.JspFile;
@@ -130,43 +131,32 @@ public class CodeInsightUtil {
 
     final ASTNode leafElementAt1 = root.getNode().findLeafElementAt(startOffset);
     if(leafElementAt1 == null) return PsiElement.EMPTY_ARRAY;
-    PsiElement element1 = leafElementAt1.getPsi();
-    if (element1 == null) element1 = root;
     ASTNode leafElementAt2 = root.getNode().findLeafElementAt(endOffset);
     if (leafElementAt2 == null && endOffset == root.getTextLength()) leafElementAt2 = root.getNode().findLeafElementAt(endOffset - 1);
     if(leafElementAt2 == null) return PsiElement.EMPTY_ARRAY;
-    PsiElement element2 = leafElementAt2.getPsi();
-    if (element2 == null) element2 = root;
-    PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
+    TreeElement commonParent = (TreeElement)TreeUtil.findCommonParent(leafElementAt1, leafElementAt2);
 
     LOG.assertTrue(commonParent != null);
     LOG.assertTrue(commonParent.getTextRange() != null);
     final int currentOffset = commonParent.getTextRange().getStartOffset();
-    final PsiElementVisitor visitor = new PsiElementVisitor() {
+    final TreeElementVisitor visitor = new TreeElementVisitor() {
       int offset = currentOffset;
-
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        visitReferenceElement(expression);
+      public void visitLeaf(LeafElement leaf) {
+        offset += leaf.getTextLength();
       }
-
-      public void visitElement(PsiElement element) {
-        PsiElement child = element.getFirstChild();
-        if (child == null) {
-          offset += element.getTextLength();
-        }
-        else {
-          for (; child != null; child = child.getNextSibling()) {
-            int start = offset;
-            if (offset > endOffset) break;
-            child.accept(this);
-            if (startOffset <= start && offset <= endOffset) {
-              list.add(child);
-            }
+      public void visitComposite(CompositeElement composite) {
+        TreeElement child = (TreeElement)composite.getFirstChildNode();
+        for (; child != null; child = child.getTreeNext()) {
+          int start = offset;
+          if (offset > endOffset) break;
+          child.acceptTree(this);
+          if (startOffset <= start && offset <= endOffset) {
+            list.add(child.getPsi());
           }
         }
       }
     };
-    commonParent.accept(visitor);
+    commonParent.acceptTree(visitor);
     return list.toArray(new PsiElement[list.size()]);
   }
 

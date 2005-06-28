@@ -91,6 +91,10 @@ public abstract class LeafElement extends TreeElement {
     }
   }
 
+  public void acceptTree(TreeElementVisitor visitor) {
+    visitor.visitLeaf(this);
+  }
+
   public synchronized void setTreeNext(TreeElement next) {
     if (next != null) {
       setLast(false);

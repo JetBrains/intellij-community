@@ -180,5 +180,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Consta
   public ASTNode getTransformedLastOrSelf() {
     return this;
   }
+
+  public abstract void acceptTree(TreeElementVisitor visitor);
 }
 

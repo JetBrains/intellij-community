@@ -90,6 +90,10 @@ public class CompositeElement extends TreeElement implements Cloneable {
     myModificationsCount++;
   }
 
+  public void acceptTree(TreeElementVisitor visitor) {
+    visitor.visitComposite(this);
+  }
+
   public IElementType getElementType() {
     return type;
   }
