@@ -244,7 +244,6 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     int depth = 0;
 
     {
-      final CharTable charTable = myFileElement.getCharTable();
       final Iterator<Map.Entry<ASTNode, TreeChange>> iterator = changedElements.entrySet().iterator();
 
       while (iterator.hasNext()) {
