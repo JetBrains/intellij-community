@@ -106,9 +106,9 @@ public abstract class CallerChooser extends DialogWrapper {
 
   private void updateEditorTexts(final MethodNode node) {
     final MethodNode parentNode = (MethodNode)node.getParent();
-    final String callerText = getText(node.getMethod());
+    final String callerText = node != myRoot ? getText(node.getMethod()) : "";
     final Document callerDocument = myCallerEditor.getDocument();
-    final String calleeText = parentNode != null ? getText(parentNode.getMethod()) : "";
+    final String calleeText = node != myRoot ? getText(parentNode.getMethod()) : "";
     final Document calleeDocument = myCalleeEditor.getDocument();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -126,8 +126,8 @@ public abstract class CallerChooser extends DialogWrapper {
       EditorColorsManager colorManager = EditorColorsManager.getInstance();
       TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
       int start = getStartOffset(caller);
-      for (int i = 0; i < refs.length; i++) {
-        final PsiElement element = refs[i].getElement();
+      for (PsiReference ref : refs) {
+        final PsiElement element = ref.getElement();
         if (element != null) {
           highlighter.addRangeHighlight(myCallerEditor, element.getTextRange().getStartOffset() - start,
                                         element.getTextRange().getEndOffset() - start, attributes, false, null);
