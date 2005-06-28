@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.jsp.JspFile;
@@ -145,6 +146,7 @@ public class CodeInsightUtil {
         offset += leaf.getTextLength();
       }
       public void visitComposite(CompositeElement composite) {
+        ChameleonTransforming.transformChildren(composite);
         TreeElement child = (TreeElement)composite.getFirstChildNode();
         for (; child != null; child = child.getTreeNext()) {
           int start = offset;
