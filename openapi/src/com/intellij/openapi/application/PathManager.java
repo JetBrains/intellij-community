@@ -106,9 +106,15 @@ public class PathManager {
     }
   }
 
-  public static String getConfigPath() {
-    ensureConfigFolderExists(false);
+  public static String getConfigPath(boolean createIfNotExists) {
+    if (createIfNotExists) {
+      ensureConfigFolderExists(false);
+    }
     return ourConfigPath;
+  }
+
+  public static String getConfigPath() {
+    return getConfigPath(true);
   }
 
   private static String  getConfigPathWithoutDialog() {
@@ -271,8 +277,13 @@ public class PathManager {
     }
   }
 
-  private static String substitueVars(String s) {
-    s = StringUtil.replace(s, "${idea.home}", PathManager.getHomePath());
+  public static String substitueVars(String s) {
+    final String ideaHomePath = PathManager.getHomePath();
+    return substituteVars(s, ideaHomePath);
+  }
+
+  public static String substituteVars(String s, final String ideaHomePath) {
+    s = StringUtil.replace(s, "${idea.home}", ideaHomePath);
     final Properties props = System.getProperties();
     final Set keys = props.keySet();
     for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
