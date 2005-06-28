@@ -21,7 +21,6 @@ import java.awt.event.MouseEvent;
 public class TogglePopupHintsPanel extends JButton {
   private static final Icon INSPECTIONS_ICON = IconLoader.getIcon("/general/toolWindowInspection.png");
   private static final Icon HIGHLIGHTING_ICON = IconLoader.getIcon("/general/toolWindowInspection.png");
-  private static final Icon DISABLED_ICON = IconLoader.getIcon("/general/toolWindowInspection.png");
   public TogglePopupHintsPanel() {
     addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
@@ -50,7 +49,7 @@ public class TogglePopupHintsPanel extends JButton {
       }
     }
     else {
-      setIcon(DISABLED_ICON);
+      setIcon(null);
     }
   }
 
