@@ -750,7 +750,6 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
     }
 
     private void registerInternationalInspections(){
-        m_inspectionClasses.add(StringLiteralInspection.class);
         m_inspectionClasses.add(CharacterComparisonInspection.class);
         m_inspectionClasses.add(MagicCharacterInspection.class);
         m_inspectionClasses.add(NumericToStringInspection.class);
