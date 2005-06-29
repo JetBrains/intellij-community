@@ -72,6 +72,9 @@ public class XmlBlock extends AbstractXmlBlock {
     if (myNode.getElementType() == ElementType.DUMMY_HOLDER) {
       return Formatter.getInstance().getNoneIndent();
     }
+    if (myNode.getElementType() == ElementType.XML_PROLOG) {
+      return Formatter.getInstance().getNoneIndent();
+    }
     else {
       return null;
     }
