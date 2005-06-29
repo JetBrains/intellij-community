@@ -84,8 +84,7 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention{
             }
         }
 
-        for(Object aArgsList : argsList){
-            final String arg = (String) aArgsList;
+        for(String arg : argsList){
             final String append = targetText + ".append" + arg + ';';
             final PsiStatement newCall =
                     factory.createStatementFromText(append, null);

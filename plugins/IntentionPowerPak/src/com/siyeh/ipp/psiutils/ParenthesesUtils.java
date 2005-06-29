@@ -119,8 +119,7 @@ public class ParenthesesUtils{
 
     private static int precedenceForBinaryOperator(PsiJavaToken sign){
         final String operator = sign.getText();
-        final Integer precedence = s_binaryOperatorPrecedence.get(operator);
-        return precedence;
+        return s_binaryOperatorPrecedence.get(operator);
     }
 
     public static String removeParentheses(PsiExpression exp){
@@ -249,7 +248,7 @@ public class ParenthesesUtils{
         final PsiExpression lhs = binaryExp.getLOperand();
         final PsiExpression rhs = binaryExp.getROperand();
         final PsiJavaToken sign = binaryExp.getOperationSign();
-        return removeParentheses(lhs) + sign.getText() + removeParentheses(rhs);
+        return removeParentheses(lhs) + ' ' + sign.getText() + ' ' +removeParentheses(rhs);
     }
 
     private static String removeParensFromPostfixExpression(
@@ -307,7 +306,7 @@ public class ParenthesesUtils{
         final PsiExpression lhs = assignment.getLExpression();
         final PsiExpression rhs = assignment.getRExpression();
         final PsiJavaToken sign = assignment.getOperationSign();
-        return removeParentheses(lhs) + sign.getText() +
+        return removeParentheses(lhs) + ' ' +  sign.getText() + ' ' +
                 removeParentheses(rhs);
     }
 

@@ -9,6 +9,8 @@ import com.siyeh.ipp.psiutils.SideEffectChecker;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 class CaseUtil{
     private CaseUtil(){
         super();
@@ -121,6 +123,7 @@ class CaseUtil{
         return visitor.isUsed();
     }
 
+    @Nullable
     public static PsiExpression getCaseExpression(PsiIfStatement statement){
         final PsiExpression condition = statement.getCondition();
         final List<PsiExpression> possibleCaseExpressions =

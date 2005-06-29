@@ -32,6 +32,7 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention{
             final PsiBinaryExpression lhsBinaryExpression = (PsiBinaryExpression)lhs;
             newExpression += getLeftSideText(lhsBinaryExpression);
             final PsiExpression rightSide = lhsBinaryExpression.getROperand();
+            assert rightSide!=null;
             lhs.replace(rightSide);
         }
         newExpression += '"' + computeConstantStringExpression(copy) + '"';

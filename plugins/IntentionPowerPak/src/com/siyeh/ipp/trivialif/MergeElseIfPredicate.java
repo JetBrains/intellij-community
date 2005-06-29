@@ -37,7 +37,7 @@ class MergeElseIfPredicate implements PsiElementPredicate{
         final PsiCodeBlock block =
                 ((PsiBlockStatement) elseBranch).getCodeBlock();
         final PsiStatement[] statements = block.getStatements();
-        if(statements == null || statements.length != 1){
+        if(statements.length != 1){
             return false;
         }
         return statements[0] != null && statements[0] instanceof PsiIfStatement;

@@ -62,6 +62,7 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention{
                 final PsiBinaryExpression lhsBinaryExpression = (PsiBinaryExpression) lhs;
                 newExpression += getLeftSideText(lhsBinaryExpression);
                 final PsiExpression rightSide = lhsBinaryExpression.getROperand();
+                assert rightSide !=null;
                 lhs.replace(rightSide);
             }
             if(ConcatenationUtils.isConcatenation(expression)){
