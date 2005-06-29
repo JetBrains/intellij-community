@@ -81,4 +81,6 @@ public abstract class XmlFormattingPolicy {
   public void setCanProcessJsp(final boolean canProcessJsp) {
     myCanProcessJsp = canProcessJsp;
   }
+
+  public abstract boolean addSpaceIntoEmptyTag();
 }

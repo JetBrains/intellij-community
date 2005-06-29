@@ -89,6 +89,10 @@ public class XmlPolicy extends XmlFormattingPolicy{
     return mySettings;
   }
 
+  public boolean addSpaceIntoEmptyTag() {
+    return mySettings.XML_SPACE_INSIDE_EMPTY_TAG;
+  }
+
   public IElementType getTagType() {
     return myXmlTag;
   }

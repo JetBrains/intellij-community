@@ -149,4 +149,8 @@ public class HtmlPolicy extends XmlFormattingPolicy{
     return mySettings;
   }
 
+  public boolean addSpaceIntoEmptyTag() {
+    return mySettings.HTML_SPACE_INSIDE_EMPTY_TAG;
+  }
+
 }

@@ -31,21 +31,21 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.Icons;
 import com.intellij.util.ValueHolder;
-import com.intellij.ide.highlighter.HighlighterFactory;
 
 import javax.swing.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -62,7 +62,6 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private JCheckBox mySpacesAroundEquality;
   private JCheckBox mySpacesAroundTagName;
   private JCheckBox myAlignText;
-  private JComboBox myTextWrapping;
   private TextFieldWithBrowseButton myInsertNewLineTagNames;
   private TextFieldWithBrowseButton myRemoveNewLineTagNames;
   private TextFieldWithBrowseButton myDoNotAlignChildrenTagNames;
@@ -70,14 +69,14 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private TextFieldWithBrowseButton myTextElementsTagNames;
   private JTextField myDoNotAlignChildrenMinSize;
   private JCheckBox myShouldKeepBlankLines;
+  private JCheckBox mySpaceInEmptyTag;
+  private JCheckBox myWrapText;
 
   public CodeStyleHtmlPanel(CodeStyleSettings settings) {
     super(settings);
     installPreviewPanel(myPreviewPanel);
 
     fillWrappingCombo(myWrapAttributes);
-    fillWrappingCombo(myTextWrapping);
-
 
     customizeField("Insert New Line Before Tags", myInsertNewLineTagNames, new ValueHolder<String, CodeStyleSettings>() {
       public String getValue(final CodeStyleSettings dataHolder) {
@@ -171,7 +170,9 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   public void apply(CodeStyleSettings settings) {
     settings.HTML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
     settings.HTML_ATTRIBUTE_WRAP = ourWrappings[myWrapAttributes.getSelectedIndex()];
-    settings.HTML_TEXT_WRAP = ourWrappings[myTextWrapping.getSelectedIndex()];
+    settings.HTML_TEXT_WRAP = myWrapText.isSelected()
+                              ? CodeStyleSettings.WRAP_AS_NEEDED : CodeStyleSettings.DO_NOT_WRAP;
+    settings.HTML_SPACE_INSIDE_EMPTY_TAG = mySpaceInEmptyTag.isSelected();
     settings.HTML_ALIGN_ATTRIBUTES = myAlignAttributes.isSelected();
     settings.HTML_ALIGN_TEXT = myAlignText.isSelected();
     settings.HTML_KEEP_WHITESPACES = myKeepWhiteSpaces.isSelected();
@@ -199,7 +200,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   protected void resetImpl(final CodeStyleSettings settings) {
     myKeepBlankLines.setText(String.valueOf(settings.HTML_KEEP_BLANK_LINES));
     myWrapAttributes.setSelectedIndex(getIndexForWrapping(settings.HTML_ATTRIBUTE_WRAP));
-    myTextWrapping.setSelectedIndex(getIndexForWrapping(settings.HTML_TEXT_WRAP));
+    myWrapText.setSelected(settings.HTML_TEXT_WRAP != CodeStyleSettings.DO_NOT_WRAP);
+    mySpaceInEmptyTag.setSelected(settings.HTML_SPACE_INSIDE_EMPTY_TAG);
     myAlignAttributes.setSelected(settings.HTML_ALIGN_ATTRIBUTES);
     myAlignText.setSelected(settings.HTML_ALIGN_TEXT);
     myKeepWhiteSpaces.setSelected(settings.HTML_KEEP_WHITESPACES);
@@ -223,7 +225,12 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    if (settings.HTML_TEXT_WRAP != ourWrappings[myTextWrapping.getSelectedIndex()]) {
+    if ((settings.HTML_TEXT_WRAP == CodeStyleSettings.WRAP_AS_NEEDED) !=
+        myWrapText.isSelected()) {
+      return true;
+    }
+
+    if (settings.HTML_SPACE_INSIDE_EMPTY_TAG != mySpaceInEmptyTag.isSelected()) {
       return true;
     }
 

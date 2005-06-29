@@ -56,6 +56,11 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block{
         return getFormatter().getReadOnlySpace();
     }
 
+    if (type1 == ElementType.XML_NAME && type2 == ElementType.XML_EMPTY_ELEMENT_END && myXmlFormattingPolicy.addSpaceIntoEmptyTag()) {
+      return getFormatter().createSpaceProperty(1, 1, 0,
+                                                myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+                                                myXmlFormattingPolicy.getKeepBlankLines());
+    }
 
     if (isXmlTagName(type1, type2)){
       final int spaces = myXmlFormattingPolicy.getShouldAddSpaceAroundTagName() ? 1 : 0;

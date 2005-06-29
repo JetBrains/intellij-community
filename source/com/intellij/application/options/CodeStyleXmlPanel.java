@@ -52,6 +52,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   private JCheckBox mySpacesAroundEquality;
   private JCheckBox mySpacesAroundTagName;
   private JCheckBox myKeepLineBreaks;
+  private JCheckBox myInEmptyTag;
 
   public CodeStyleXmlPanel(CodeStyleSettings settings) {
     super(settings);
@@ -78,6 +79,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     settings.XML_KEEP_WHITESPACES = myKeepWhiteSpaces.isSelected();
     settings.XML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE = mySpacesAroundEquality.isSelected();
     settings.XML_SPACE_AROUND_TAG_NAME = mySpacesAroundTagName.isSelected();
+    settings.XML_SPACE_INSIDE_EMPTY_TAG = myInEmptyTag.isSelected();
 
   }
 
@@ -98,6 +100,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     mySpacesAroundTagName.setSelected(settings.XML_SPACE_AROUND_TAG_NAME);
     mySpacesAroundEquality.setSelected(settings.XML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE);
     myKeepLineBreaks.setSelected(settings.XML_KEEP_LINE_BREAKS);
+    myInEmptyTag.setSelected(settings.XML_SPACE_INSIDE_EMPTY_TAG);
   }
 
   public boolean isModified(CodeStyleSettings settings) {
@@ -123,6 +126,10 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     }
 
     if (settings.XML_KEEP_LINE_BREAKS != myKeepLineBreaks.isSelected()) {
+      return true;
+    }
+
+    if (settings.XML_SPACE_INSIDE_EMPTY_TAG != myInEmptyTag.isSelected()){
       return true;
     }
 
