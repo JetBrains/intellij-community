@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsContent;
 
 import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
@@ -17,6 +18,7 @@ import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
 import org.netbeans.lib.cvsclient.file.FileObject;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -115,7 +117,20 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     }
     else {
       myState = SUCCESSFULLY_LOADED;
-      return myBinaryContent != null ? myBinaryContent : myContent.toString().getBytes();
+      if (myBinaryContent != null) {
+        return myBinaryContent;
+      } else {
+        if (CvsApplicationLevelConfiguration.getInstance().USE_UTF8) {
+          try {
+            return myContent.toString().getBytes("utf-8");
+          }
+          catch (UnsupportedEncodingException e) {
+            return myContent.toString().getBytes();
+          }
+        } else {
+          return myContent.toString().getBytes();
+        }
+      }
     }
   }
 
