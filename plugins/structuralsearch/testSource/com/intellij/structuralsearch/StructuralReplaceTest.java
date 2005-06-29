@@ -395,9 +395,11 @@ public class StructuralReplaceTest extends IdeaTestCase {
                  "                drec.getWidth());";
     String s47 = "$Instance$.$MethodCall$()";
     String s48 = "OtherClass.round($Instance$.$MethodCall$(),5)";
-    String expectedResult17 = "Rectangle2D rec = new Rectangle2D.Double(OtherClass.round(drec.getX(),5), OtherClass.round(drec.getY(),5), " +
-                              "OtherClass.round(drec.getWidth(),5), " +
-                              "OtherClass.round(drec.getWidth(),5));";
+    String expectedResult17 = "Rectangle2D rec = new Rectangle2D.Double(\n" +
+                              "        OtherClass.round(drec.getX(),5),\n" +
+                              "        OtherClass.round(drec.getY(),5),\n" +
+                              "        OtherClass.round(drec.getWidth(),5),\n" +
+                              "        OtherClass.round(drec.getWidth(),5));";
     actualResult = replacer.testReplace(s46,s47,s48,options);
 
     assertEquals(
