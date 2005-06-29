@@ -710,7 +710,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public void assertReadAccessAllowed() {
     if (!isReadAccessAllowed()) {
       LOG.error("Read access is allowed from event dispatch thread or inside read-action only (see com.intellij.openapi.application.Application.runReadAction())",
-                new String[]{"Current thread: " + Thread.currentThread()});
+                new String[]{"Current thread: " + Thread.currentThread(),
+                  "Our dispatch thread:" + ourDispatchThread,
+                  "SystemEventQueue: " + Toolkit.getDefaultToolkit().getSystemEventQueue()
+                });
     }
   }
 
