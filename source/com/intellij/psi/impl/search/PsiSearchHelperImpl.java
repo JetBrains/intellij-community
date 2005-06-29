@@ -32,6 +32,7 @@ import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.meta.PsiMetaData;
