@@ -87,14 +87,20 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         final Indent childIndent = isRBrace(child) ? Formatter.getInstance().getNoneIndent() : getCodeBlockInternalIndent(myChildrenIndent);
         processChild(localResult, child, null, null, childIndent);
         if (isRBrace(child)) {
-          result.add(new SynteticCodeBlock(localResult, null, getSettings(), indent, null));
+          result.add(createCodeBlockBlock(localResult, indent));
           return child;
         }
       }
       child = child.getTreeNext();
     }
-    result.add(new SynteticCodeBlock(localResult, null, getSettings(), indent, null));
+    result.add(createCodeBlockBlock(localResult, indent));
     return null;
+  }
+
+  private SynteticCodeBlock createCodeBlockBlock(final ArrayList<Block> localResult, final Indent indent) {
+    final SynteticCodeBlock result = new SynteticCodeBlock(localResult, null, getSettings(), indent, null);
+    result.setChildAttributes(new ChildAttributes(getCodeBlockInternalIndent(myChildrenIndent), null));
+    return result;
   }
 
   private ASTNode processCaseAndStatementAfter(final ArrayList<Block> result,
