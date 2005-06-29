@@ -56,7 +56,13 @@ public abstract class BaseRefactoringAction extends AnAction {
       PsiElement element = (PsiElement)dataContext.getData(DataConstants.PSI_ELEMENT);
       if (element == null) {
         final int offset = editor.getCaretModel().getOffset();
-        if (file != null) element = file.findElementAt(offset);
+        if (file != null) {
+          element = file.findElementAt(offset);
+          if (element == null && offset == file.getTextLength()) {
+            element = file.findElementAt(offset - 1);
+          }
+        }
+
         if (element instanceof PsiWhiteSpace) {
           element = file.findElementAt(element.getTextRange().getStartOffset() - 1);
         }
