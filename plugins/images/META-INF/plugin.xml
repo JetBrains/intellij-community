@@ -35,10 +35,12 @@
         <action class="org.intellij.images.actions.EditExternalyAction" text="Jump to External Editor"
                 id="Images.EditExternaly" description="Open image in external editor">
             <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
+            <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="EditSource"/>
         </action>
         <action class="org.intellij.images.actions.ShowThumbnailsAction" text="Show Thumbnails"
                 id="Images.ShowThumbnails" description="Show thumnails view for current directory">
-            <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="AddAntBuildFile"/>
+            <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="AddToFavorites"/>
+            <add-to-group anchor="after" group-id="CommanderPopupMenu" relative-to-action="AddToFavorites"/>
         </action>
         <group id="Images.FileViewPopupMenu">
             <reference id="Images.EditExternaly" />
