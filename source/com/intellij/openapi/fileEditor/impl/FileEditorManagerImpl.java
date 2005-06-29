@@ -46,6 +46,7 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author Anton Katilin
@@ -614,17 +615,19 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
     return newComposite;
   }
 
-  public Editor openTextEditor(final OpenFileDescriptor descriptor, final boolean focusEditor) {
+  public java.util.List<FileEditor> openEditor(final OpenFileDescriptor descriptor, final boolean focusEditor) {
     if (descriptor == null) {
       throw new IllegalArgumentException("descriptor cannot be null");
     }
     assertThread();
 
-    final Editor[] result = new Editor[1];
+    final java.util.List<FileEditor> result = new ArrayList<FileEditor>();
     CommandProcessor.getInstance().executeCommand(myProject,
                                                   new Runnable() {
                                                     public void run() {
                                                       final FileEditor[] editors = openFile(descriptor.getFile(), focusEditor);
+                                                      result.addAll(Arrays.asList(editors));
+
                                                       for (int i = 0; i < editors.length; i++) {
                                                         final FileEditor editor = editors[i];
                                                         if (!(editor instanceof TextEditor)) {
@@ -632,7 +635,6 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
                                                         }
 
                                                         final Editor _editor = ((TextEditor)editor).getEditor();
-                                                        result[0] = _editor;
 
                                                         // Move myEditor caret to the specified location.
                                                         if (descriptor.getOffset() >= 0) {
@@ -655,7 +657,19 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
                                                   "",
                                                   null);
 
-    return result[0];
+    return result;
+  }
+
+  @Nullable
+  public Editor openTextEditor(final OpenFileDescriptor descriptor, final boolean focusEditor) {
+    final java.util.List<FileEditor> fileEditors = openEditor(descriptor, focusEditor);
+    for (int i = 0; i < fileEditors.size(); i++) {
+      FileEditor editor = fileEditors.get(i);
+      if (editor instanceof TextEditor) {
+        return ((TextEditor)editor).getEditor();
+      }
+    }
+    return null;
   }
 
   public Editor getSelectedTextEditor() {
@@ -778,7 +792,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   public void projectOpened() {
     //myFocusWatcher.install(myWindows.getComponent ());
     mySplitters.startListeningFocus();
-    
+
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {
       fileStatusManager.addFileStatusListener(myFileStatusListener);
@@ -813,7 +827,7 @@ public final class FileEditorManagerImpl extends FileEditorManagerEx implements 
   public void projectClosed() {
     //myFocusWatcher.deinstall(myWindows.getComponent ());
     mySplitters.stopListeningFocus();
-    
+
     // Remove application level listeners
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {

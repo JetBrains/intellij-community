@@ -7,6 +7,10 @@ package com.intellij.openapi.fileEditor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public abstract class FileEditorManager {
   public static FileEditorManager getInstance(Project project) {
@@ -33,6 +37,7 @@ public abstract class FileEditorManager {
    *
    * @return opened text editor. The method returns <code>null</code> in case if text editor wasn't opened.
    */
+  @Nullable
   public abstract Editor openTextEditor(OpenFileDescriptor descriptor, boolean focusEditor);
 
   /**
@@ -40,7 +45,7 @@ public abstract class FileEditorManager {
    * there is no selected editor at all or selected editor is not a text one.
    */
   public abstract Editor getSelectedTextEditor();
-  
+
   /**
    * @return <code>true</code> if <code>file</code> is opened, <code>false</code> otherwise
    */
@@ -50,7 +55,7 @@ public abstract class FileEditorManager {
    * @return all opened files. Order of files in the array corresponds to the order of editor tabs.
    */
   public abstract VirtualFile[] getOpenFiles();
-  
+
   /**
    * @return files currently selected. The method returns empty array if there are no selected files. 
    * If more than one file is selected (split), the file with most recent focused editor is returned first.  
@@ -69,7 +74,7 @@ public abstract class FileEditorManager {
    * The method returns <code>null</code> if <code>file</code> is not opened.
    */
   public abstract FileEditor getSelectedEditor(VirtualFile file);
-  
+
   /**
    * @param file cannot be null
    *
@@ -95,4 +100,7 @@ public abstract class FileEditorManager {
    * @param listener listener to be removed; cannot be null
    */
   public abstract void removeFileEditorManagerListener(FileEditorManagerListener listener);
+
+  @NotNull
+  public abstract List<FileEditor> openEditor(OpenFileDescriptor descriptor, boolean focusEditor);
 }

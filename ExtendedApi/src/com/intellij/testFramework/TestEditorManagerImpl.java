@@ -22,8 +22,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class TestEditorManagerImpl extends FileEditorManagerEx implements ApplicationComponent, ProjectComponent {
@@ -282,6 +285,11 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Applic
   }
 
   public void removeFileEditorManagerListener(FileEditorManagerListener listener) {
+  }
+
+  @NotNull
+  public List<FileEditor> openEditor(OpenFileDescriptor descriptor, boolean focusEditor) {
+    return Collections.EMPTY_LIST;
   }
 
   public JComponent getPreferredFocusedComponent() {

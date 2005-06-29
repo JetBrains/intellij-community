@@ -15,6 +15,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class OpenFileDescriptor implements Navigatable {
   private final VirtualFile myFile;
@@ -83,8 +86,8 @@ public class OpenFileDescriptor implements Navigatable {
   }
 
   public void navigate(boolean requestFocus) {
-    Editor editor = openFileAskingType(myProject, requestFocus);
-    if (editor == null) {
+    FileEditor fileEditor = openFileAskingType(myProject, requestFocus);
+    if (fileEditor == null) {
       final SelectInTarget projectSelector = SelectInManager.getInstance(myProject).getTarget("Project");
       if (projectSelector != null) {
         projectSelector.selectIn(new SelectInContext() {
@@ -96,10 +99,12 @@ public class OpenFileDescriptor implements Navigatable {
             return myFile;
           }
 
+          @Nullable
           public Object getSelectorInFile() {
             return PsiManager.getInstance(myProject).findFile(myFile);
           }
 
+          @Nullable
           public FileEditorProvider getFileEditorProvider() {
             return null;
           }
@@ -109,23 +114,30 @@ public class OpenFileDescriptor implements Navigatable {
       return;
     }
 
-    Document document = editor.getDocument();
-    LogicalPosition position;
-    int offset = getOffset();
-    if (offset < 0)
-      position = new LogicalPosition(Math.min(document.getLineCount() - 1, getLine()), getColumn());
-    else
-      position = editor.offsetToLogicalPosition(Math.min(document.getTextLength(), offset));
-    editor.getCaretModel().moveToLogicalPosition(position);
-    editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-
+    if (fileEditor instanceof TextEditor) {
+      Editor editor = ((TextEditor)fileEditor).getEditor();
+      Document document = editor.getDocument();
+      LogicalPosition position;
+      int offset = getOffset();
+      if (offset < 0) {
+        position = new LogicalPosition(Math.min(document.getLineCount() - 1, getLine()), getColumn());
+      }
+      else {
+        position = editor.offsetToLogicalPosition(Math.min(document.getTextLength(), offset));
+      }
+      editor.getCaretModel().moveToLogicalPosition(position);
+      editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+    }
   }
 
-  private Editor openFileAskingType(Project project, boolean focusEditor) {
+  @Nullable
+  private FileEditor openFileAskingType(Project project, boolean focusEditor) {
     FileType type = FileTypeManager.getInstance().getKnownFileTypeOrAssociate(myFile);
     if (type == null || myFile == null || !myFile.isValid()) return null;
 
-    return FileEditorManager.getInstance(project).openTextEditor(this, focusEditor);
+    final List<FileEditor> fileEditors = FileEditorManager.getInstance(project).openEditor(this, focusEditor);
+    if (fileEditors.size() == 0) return null;
+    return fileEditors.get(0);
   }
 
   public boolean canNavigate() {
