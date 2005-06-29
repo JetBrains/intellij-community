@@ -64,7 +64,11 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
         if (child.getElementType() == ElementType.SWITCH_LABEL_STATEMENT) {
           child = processCaseAndStatementAfter(result, child, childAlignment, childWrap, indent);
-        } else {
+        }
+        else if (myNode.getElementType() == ElementType.CLASS && child.getElementType() == ElementType.LBRACE) {
+          child = composeCodeBlock(result, child, getCodeBlockExternalIndent());
+        }
+        else {
           child = processChild(result, child, childAlignment, childWrap, indent);
         }
       }
@@ -72,6 +76,25 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         child = child.getTreeNext();
       }
     }
+  }
+
+  private ASTNode composeCodeBlock(final ArrayList<Block> result, ASTNode child, final Indent indent) {
+    final ArrayList<Block> localResult = new ArrayList<Block>();
+    processChild(localResult, child, null, null, Formatter.getInstance().getNoneIndent());
+    child = child.getTreeNext();
+    while (child != null) {
+      if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
+        final Indent childIndent = isRBrace(child) ? Formatter.getInstance().getNoneIndent() : getCodeBlockInternalIndent(myChildrenIndent);
+        processChild(localResult, child, null, null, childIndent);
+        if (isRBrace(child)) {
+          result.add(new SynteticCodeBlock(localResult, null, getSettings(), indent, null));
+          return child;
+        }
+      }
+      child = child.getTreeNext();
+    }
+    result.add(new SynteticCodeBlock(localResult, null, getSettings(), indent, null));
+    return null;
   }
 
   private ASTNode processCaseAndStatementAfter(final ArrayList<Block> result,
