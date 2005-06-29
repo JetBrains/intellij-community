@@ -370,6 +370,14 @@ public class VirtualFileImpl extends VirtualFile {
 
     parent.removeChild(this);
     myFileSystem.fireFileDeleted(requestor, this, myName, isDirectory, parent);
+    
+    if (auxCommand && isDirectory && physicalFile.exists()) {
+      // Some auxHandlers refuse to delete directories actually as per version controls like CVS or SVN.
+      // So if the direcotry haven't been deleted actually we must recreate VFS structure for this.
+      VirtualFileImpl newMe = new VirtualFileImpl(myFileSystem, parent, physicalFile, true);
+      parent.addChild(newMe);
+      myFileSystem.fireFileCreated(requestor, newMe);
+    }
   }
 
   private static void delete(PhysicalFile physicalFile) throws IOException {
