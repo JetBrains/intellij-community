@@ -84,9 +84,10 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     child = child.getTreeNext();
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
-        final Indent childIndent = isRBrace(child) ? Formatter.getInstance().getNoneIndent() : getCodeBlockInternalIndent(myChildrenIndent);
-        processChild(localResult, child, null, null, childIndent);
-        if (isRBrace(child)) {
+        final boolean rBrace = isRBrace(child);
+        final Indent childIndent = rBrace ? Formatter.getInstance().getNoneIndent() : getCodeBlockInternalIndent(myChildrenIndent);
+        child = processChild(localResult, child, null, null, childIndent);
+        if (rBrace) {
           result.add(createCodeBlockBlock(localResult, indent));
           return child;
         }
