@@ -31,4 +31,6 @@ public interface CvsMessagesListener {
   void addWarning(String message, String relativeFilePath, ICvsFileSystem cvsFileSystem, String cvsRoot);
 
   void addFileMessage(String message, ICvsFileSystem cvsFileSystem);
+  
+  void addMessage(String message);
 }

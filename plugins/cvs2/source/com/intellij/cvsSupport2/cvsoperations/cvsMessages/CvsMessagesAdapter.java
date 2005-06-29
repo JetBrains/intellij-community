@@ -28,4 +28,7 @@ public class CvsMessagesAdapter implements CvsMessagesListener{
 
   public void addFileMessage(String message, ICvsFileSystem cvsFileSystem) {
   }
+
+  public void addMessage(String message) {
+  }
 }

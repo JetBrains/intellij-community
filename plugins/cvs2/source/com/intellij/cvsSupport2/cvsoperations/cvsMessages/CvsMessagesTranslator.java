@@ -1,8 +1,8 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsMessages;
 
+import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.cvshandlers.CvsMessagePattern;
 import com.intellij.cvsSupport2.cvsoperations.common.UpdatedFilesManager;
-import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.HashMap;
 import org.netbeans.lib.cvsclient.admin.Entry;
@@ -16,7 +16,6 @@ import org.netbeans.lib.cvsclient.file.FileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 
 import java.io.File;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -71,6 +70,10 @@ public class CvsMessagesTranslator implements
     PatternUtil.fromMask("cvs add: scheduling file `*' for addition")
   };
 
+  private static Pattern[] MESSAGE_PATTERNS = new Pattern[]{
+    PatternUtil.fromMask("cvs *: [*] waiting for *'s lock in *")
+  };
+
   private final CvsMessagesListener myListener;
   private final ICvsFileSystem myCvsFileSystem;
   private final UpdatedFilesManager myUpdatedFilesManager;
@@ -117,6 +120,11 @@ public class CvsMessagesTranslator implements
       return;
     }
 
+    if (isMessage(message)) {
+      myListener.addMessage(message);
+      return;
+    }
+
     CvsMessagePattern errorMessagePattern = getErrorMessagePattern(message, ERRORS_PATTERNS);
     if (errorMessagePattern != null) {
       myListener.addError(message, errorMessagePattern.getRelativeFileName(message), myCvsFileSystem, myCvsRoot);
@@ -125,14 +133,19 @@ public class CvsMessagesTranslator implements
     CvsMessagePattern warningMessagePattern = getErrorMessagePattern(message, WARNINGS_PATTERNS);
     if (warningMessagePattern != null) {
       myListener.addWarning(message, warningMessagePattern.getRelativeFileName(message), myCvsFileSystem, myCvsRoot);
-      return;
     }
 
   }
 
   private boolean isFileMessage(String message) {
-    for (int i = 0; i < FILE_MESSAGE_PATTERNS.length; i++) {
-      Pattern pattern = FILE_MESSAGE_PATTERNS[i];
+    for (Pattern pattern : FILE_MESSAGE_PATTERNS) {
+      if (pattern.matcher(message).matches()) return true;
+    }
+    return false;
+  }
+
+  private boolean isMessage(String message) {
+    for (Pattern pattern : MESSAGE_PATTERNS) {
       if (pattern.matcher(message).matches()) return true;
     }
     return false;
@@ -140,8 +153,8 @@ public class CvsMessagesTranslator implements
 
 
   private CvsMessagePattern getErrorMessagePattern(String message, CvsMessagePattern[] patterns) {
-    for (int i = 0; i < patterns.length; i++) {
-      if (patterns[i].matches(message)) return patterns[i];
+    for (CvsMessagePattern pattern : patterns) {
+      if (pattern.matches(message)) return pattern;
     }
     return null;
   }
@@ -153,8 +166,7 @@ public class CvsMessagesTranslator implements
 
   public void operationCompleted() {
     if (!CvsEntriesManager.getInstance().isActive()) return;
-    for (Iterator<File> iterator = myFileToInfoMap.keySet().iterator(); iterator.hasNext();) {
-      File file = iterator.next();
+    for (File file : myFileToInfoMap.keySet()) {
       addFileMessage(myFileToInfoMap.get(file), file);
     }
   }

@@ -84,6 +84,10 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
     incProgress();
   }
 
+  public void addMessage(String message) {
+    setText2(message);
+  }
+
   private void setText2(String message) {
     if (getProgress() != null) getProgress().setText2(message);
   }
@@ -92,11 +96,13 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
     if (getProgress() == null) return;
     myProcessedFiles++;
 
-    if (myFilesToProcess == UNKNOWN_COUNT)
+    if (myFilesToProcess == UNKNOWN_COUNT) {
       myFilesToProcess = getFilesToProcessCount();
+    }
 
-    if (myFilesToProcess != UNKNOWN_COUNT)
-      getProgress().setFraction((double) myProcessedFiles / (double) myFilesToProcess);
+    if (myFilesToProcess != UNKNOWN_COUNT) {
+      getProgress().setFraction((double)myProcessedFiles / (double)myFilesToProcess);
+    }
   }
 
   protected abstract int getFilesToProcessCount();
@@ -131,8 +137,9 @@ public abstract class CvsHandler extends CvsMessagesAdapter{
   }
 
   protected CvsListenerWithProgress getProgressListener() {
-    if (myProgressListener == null)
+    if (myProgressListener == null) {
       myProgressListener = CvsListenerWithProgress.createOnProgress();
+    }
     return myProgressListener;
   }
 
