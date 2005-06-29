@@ -20,7 +20,7 @@ public class EditorOptions implements Configurable, ApplicationComponent {
 
   public JComponent createComponent() {
     myPanel = new EditorOptionsPanel();
-    return myPanel.getPanel();
+    return myPanel.getTabbedPanel();
   }
 
   public String getDisplayName() {

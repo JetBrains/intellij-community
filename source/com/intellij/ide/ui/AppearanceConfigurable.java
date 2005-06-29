@@ -60,14 +60,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     myComponent.myLafComboBox.setModel(new DefaultComboBoxModel(LafManager.getInstance().getInstalledLookAndFeels()));
     myComponent.myLafComboBox.setRenderer(new MyLafComboBoxRenderer());
 
-    myComponent.myEditorTabPlacement.setModel(new DefaultComboBoxModel(new Object[]{
-      new Integer(SwingConstants.TOP),
-      new Integer(SwingConstants.LEFT),
-      new Integer(SwingConstants.BOTTOM),
-      new Integer(SwingConstants.RIGHT),
-      new Integer(UISettings.TABS_NONE),
-    }));
-    myComponent.myEditorTabPlacement.setRenderer(new MyTabsPlacementComboBoxRenderer());
+
 
     myComponent.myEnableAlphaModeCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -145,18 +138,10 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
       shouldUpdateUI = true;
     }
     settings.OVERRIDE_NONIDEA_LAF_FONTS = myComponent.myOverrideLAFFonts.isSelected();
-    update |= settings.SCROLL_TAB_LAYOUT_IN_EDITOR != myComponent.myScrollTabLayoutInEditorCheckBox.isSelected();
-    settings.SCROLL_TAB_LAYOUT_IN_EDITOR = myComponent.myScrollTabLayoutInEditorCheckBox.isSelected();
 
-    final int tabPlacement = ((Integer)myComponent.myEditorTabPlacement.getSelectedItem()).intValue();
-    update |= tabPlacement != settings.EDITOR_TAB_PLACEMENT;
-    settings.EDITOR_TAB_PLACEMENT = tabPlacement;
 
     settings.MOVE_MOUSE_ON_DEFAULT_BUTTON = myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected();
 
-    boolean hide = myComponent.myHideKnownExtensions.isSelected();
-    update |= hide != settings.HIDE_KNOWN_EXTENSION_IN_TABS;
-    settings.HIDE_KNOWN_EXTENSION_IN_TABS = hide;
 
     update |= settings.SHOW_ICONS_IN_QUICK_NAVIGATION != myComponent.myHideIconsInQuickNavigation.isSelected();
     settings.SHOW_ICONS_IN_QUICK_NAVIGATION = myComponent.myHideIconsInQuickNavigation.isSelected();
@@ -206,33 +191,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
       settings.fireUISettingsChanged();
     }
     myComponent.updateCombo();
-    settings.CLOSE_NON_MODIFIED_FILES_FIRST = myComponent.myCloseNonModifiedFilesFirstRadio.isSelected();
-    settings.ACTIVATE_MRU_EDITOR_ON_CLOSE = myComponent.myActivateMRUEditorOnCloseRadio.isSelected();
 
-    temp = myComponent.myEditorTabLimitField.getText();
-    boolean uiSettingsChanged = false;
-    if(temp.trim().length() > 0){
-      try {
-        int newEditorTabLimit = new Integer(temp).intValue();
-        if(newEditorTabLimit>0&&newEditorTabLimit!=settings.EDITOR_TAB_LIMIT){
-          settings.EDITOR_TAB_LIMIT=newEditorTabLimit;
-          uiSettingsChanged = true;
-        }
-      }catch (NumberFormatException ignored){}
-    }
-    temp=myComponent.myRecentFilesLimitField.getText();
-    if(temp.trim().length() > 0){
-      try {
-        int newRecentFilesLimit=new Integer(temp).intValue();
-        if(newRecentFilesLimit>0&&settings.RECENT_FILES_LIMIT!=newRecentFilesLimit){
-          settings.RECENT_FILES_LIMIT=newRecentFilesLimit;
-          uiSettingsChanged = true;
-        }
-      }catch (NumberFormatException ignored){}
-    }
-    if(uiSettingsChanged){
-      settings.fireUISettingsChanged();
-    }
   }
 
   public void reset() {
@@ -246,9 +205,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     myComponent.myAlwaysShowWindowButtonsCheckBox.setSelected(settings.ALWAYS_SHOW_WINDOW_BUTTONS);
     myComponent.myShowMemoryIndicatorCheckBox.setSelected(settings.SHOW_MEMORY_INDICATOR);
     myComponent.myCycleScrollingCheckBox.setSelected(settings.CYCLE_SCROLLING);
-    myComponent.myScrollTabLayoutInEditorCheckBox.setSelected(settings.SCROLL_TAB_LAYOUT_IN_EDITOR);
-    myComponent.myEditorTabPlacement.setSelectedItem(new Integer(settings.EDITOR_TAB_PLACEMENT));
-    myComponent.myHideKnownExtensions.setSelected(settings.HIDE_KNOWN_EXTENSION_IN_TABS);
+
     myComponent.myHideIconsInQuickNavigation.setSelected(settings.SHOW_ICONS_IN_QUICK_NAVIGATION);
     myComponent.myAntialiasingInEditorCheckBox.setSelected(settings.ANTIALIASING_IN_EDITOR);
     myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.MOVE_MOUSE_ON_DEFAULT_BUTTON);
@@ -270,22 +227,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     myComponent.myAlphaModeRatioSlider.setToolTipText(ratio + "%");
     myComponent.myAlphaModeRatioSlider.setEnabled(alphaModeEnabled && settings.ENABLE_ALPHA_MODE);
     myComponent.updateCombo();
-    // Editor Tabs
-    if (settings.CLOSE_NON_MODIFIED_FILES_FIRST) {
-      myComponent.myCloseNonModifiedFilesFirstRadio.setSelected(true);
-    }
-    else {
-      myComponent.myCloseLRUFilesRadio.setSelected(true);
-    }
-    if (settings.ACTIVATE_MRU_EDITOR_ON_CLOSE) {
-      myComponent.myActivateMRUEditorOnCloseRadio.setSelected(true);
-    }
-    else {
-      myComponent.myActivateLeftEditorOnCloseRadio.setSelected(true);
-    }
-
-    myComponent.myEditorTabLimitField.setText(Integer.toString(settings.EDITOR_TAB_LIMIT));
-    myComponent.myRecentFilesLimitField.setText(Integer.toString(settings.RECENT_FILES_LIMIT));
+    
   }
   
   public boolean isModified() {
@@ -300,12 +242,10 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     isModified |= myComponent.myAlwaysShowWindowButtonsCheckBox.isSelected() != settings.ALWAYS_SHOW_WINDOW_BUTTONS;
     isModified |= myComponent.myShowMemoryIndicatorCheckBox.isSelected() != settings.SHOW_MEMORY_INDICATOR;
     isModified |= myComponent.myCycleScrollingCheckBox.isSelected() != settings.CYCLE_SCROLLING;
-    isModified |= myComponent.myScrollTabLayoutInEditorCheckBox.isSelected() != settings.SCROLL_TAB_LAYOUT_IN_EDITOR;
+
     isModified |= myComponent.myOverrideLAFFonts.isSelected() != settings.OVERRIDE_NONIDEA_LAF_FONTS;
 
-    int tabPlacement = ((Integer)myComponent.myEditorTabPlacement.getSelectedItem()).intValue();
-    isModified |= tabPlacement != settings.EDITOR_TAB_PLACEMENT;
-    isModified |= myComponent.myHideKnownExtensions.isSelected() != settings.HIDE_KNOWN_EXTENSION_IN_TABS;
+
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.SHOW_ICONS_IN_QUICK_NAVIGATION;
 
     isModified |= myComponent.myAntialiasingInEditorCheckBox.isSelected() != settings.ANTIALIASING_IN_EDITOR;
@@ -326,11 +266,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
       float ratio = myComponent.myAlphaModeRatioSlider.getValue() / 100f;
       isModified |= ratio != settings.ALPHA_MODE_RATIO;
     }
-    isModified |= isModified(myComponent.myCloseNonModifiedFilesFirstRadio, settings.CLOSE_NON_MODIFIED_FILES_FIRST);
-    isModified |= isModified(myComponent.myActivateMRUEditorOnCloseRadio, settings.ACTIVATE_MRU_EDITOR_ON_CLOSE);
 
-    isModified |= isModified(myComponent.myEditorTabLimitField, UISettings.getInstance().EDITOR_TAB_LIMIT);
-    isModified |= isModified(myComponent.myRecentFilesLimitField, UISettings.getInstance().RECENT_FILES_LIMIT);
     return isModified;
   }
 
@@ -373,35 +309,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     }
   }
 
-  private static final class MyTabsPlacementComboBoxRenderer extends DefaultListCellRenderer {
-    public Component getListCellRendererComponent(JList list,
-                                                  Object value,
-                                                  int index,
-                                                  boolean isSelected,
-                                                  boolean cellHasFocus) {
-      int tabPlacement = ((Integer)value).intValue();
-      String text;
-      if (UISettings.TABS_NONE == tabPlacement) {
-        text = "None";
-      }
-      else if (SwingConstants.TOP == tabPlacement) {
-        text = "Top";
-      }
-      else if (SwingConstants.LEFT == tabPlacement) {
-        text = "Left";
-      }
-      else if (SwingConstants.BOTTOM == tabPlacement) {
-        text = "Bottom";
-      }
-      else if (SwingConstants.RIGHT == tabPlacement) {
-        text = "Right";
-      }
-      else {
-        throw new IllegalArgumentException("unknown tabPlacement: " + tabPlacement);
-      }
-      return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
-    }
-  }
+
 
   private static class MyComponent {
     JPanel myPanel;
@@ -414,8 +322,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     private JCheckBox myShowMemoryIndicatorCheckBox;
     private JComboBox myLafComboBox;
     private JCheckBox myCycleScrollingCheckBox;
-    private JCheckBox myScrollTabLayoutInEditorCheckBox;
-    private JComboBox myEditorTabPlacement;
+
     private JCheckBox myAntialiasingInEditorCheckBox;
     private JCheckBox myMoveMouseOnDefaultButtonCheckBox;
     private JCheckBox myEnableAlphaModeCheckBox;
@@ -426,16 +333,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
     private JPanel myTransparencyPanel;
     private JCheckBox myOverrideLAFFonts;
     private JLabel myIDEALafFont;
-    private JCheckBox myHideKnownExtensions;
+
+
     private JCheckBox myHideIconsInQuickNavigation;
 
-    private JRadioButton myCloseNonModifiedFilesFirstRadio;
-    private JRadioButton myCloseLRUFilesRadio;
-    private JRadioButton myActivateMRUEditorOnCloseRadio;
-    private JRadioButton myActivateLeftEditorOnCloseRadio;
 
-    private JTextField myEditorTabLimitField;
-    private JTextField myRecentFilesLimitField;
 
     public MyComponent() {
       ActionListener updater = new ActionListener() {
@@ -447,13 +349,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Applicat
       myOverrideLAFFonts.addActionListener(updater);
       myIDEALafFont.setPreferredSize(new Dimension(myIDEALafFont.getPreferredSize().width,
                                                    myOverrideLAFFonts.getPreferredSize().height));
-      final ButtonGroup editortabs = new ButtonGroup();
-      editortabs.add(myActivateLeftEditorOnCloseRadio);
-      editortabs.add(myActivateMRUEditorOnCloseRadio);
 
-      final ButtonGroup closePolicy = new ButtonGroup();
-      closePolicy.add(myCloseNonModifiedFilesFirstRadio);
-      closePolicy.add(myCloseLRUFilesRadio);
     }
 
     public void updateCombo() {

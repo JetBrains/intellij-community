@@ -4,7 +4,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.folding.impl.CodeFoldingSettings;
-import com.intellij.ide.GeneralSettingsConfigurable;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -13,18 +12,18 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Comparing;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class EditorOptionsPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.EditorOptionsPanel");
 
-  private JPanel myPanel;
+  private JTabbedPane myTabbedPane;
   private JCheckBox myCbModifiedTabsMarkedWithAsterisk;
   private JCheckBox myCbBlinkCaret;
   private JTextField myBlinkIntervalField;
@@ -56,8 +55,17 @@ public class EditorOptionsPanel {
   private JCheckBox myCbVirtualSpace;
   private JCheckBox myCbCaretInsideTabs;
 
+  private JRadioButton myCloseNonModifiedFilesFirstRadio;
+  private JRadioButton myCloseLRUFilesRadio;
+  private JRadioButton myActivateMRUEditorOnCloseRadio;
+  private JRadioButton myActivateLeftEditorOnCloseRadio;
 
+  private JTextField myEditorTabLimitField;
+  private JTextField myRecentFilesLimitField;
 
+  private JCheckBox myScrollTabLayoutInEditorCheckBox;
+  private JComboBox myEditorTabPlacement;
+  private JCheckBox myHideKnownExtensions;
 
   private JCheckBox myCbHighlightScope;
   private JCheckBox myCbFolding;
@@ -85,11 +93,10 @@ public class EditorOptionsPanel {
   private JCheckBox myCbEnableDnD;
   private JCheckBox myCbEnableWheelFontChange;
   private JCheckBox myCbHonorCamelHumpsWhenSelectingByClicking;
-  private JCheckBox myCbNative2Ascii;
-  private JComboBox myDefaultPropertiesFilesCharset;
 
-  public JPanel getPanel() {
-    return myPanel;
+
+  public JTabbedPane getTabbedPanel() {
+    return myTabbedPane;
   }
 
   public EditorOptionsPanel(){
@@ -120,8 +127,24 @@ public class EditorOptionsPanel {
     myStripTrailingSpacesCombo.addItem(STRIP_CHANGED);
     myStripTrailingSpacesCombo.addItem(STRIP_ALL);
     myStripTrailingSpacesCombo.addItem(STRIP_NONE);
-    
 
+
+    final ButtonGroup editortabs = new ButtonGroup();
+    editortabs.add(myActivateLeftEditorOnCloseRadio);
+    editortabs.add(myActivateMRUEditorOnCloseRadio);
+
+    final ButtonGroup closePolicy = new ButtonGroup();
+    closePolicy.add(myCloseNonModifiedFilesFirstRadio);
+    closePolicy.add(myCloseLRUFilesRadio);
+
+    myEditorTabPlacement.setModel(new DefaultComboBoxModel(new Object[]{
+      new Integer(SwingConstants.TOP),
+      new Integer(SwingConstants.LEFT),
+      new Integer(SwingConstants.BOTTOM),
+      new Integer(SwingConstants.RIGHT),
+      new Integer(UISettings.TABS_NONE),
+    }));
+    myEditorTabPlacement.setRenderer(new MyTabsPlacementComboBoxRenderer());
   }
 
 
@@ -165,9 +188,9 @@ public class EditorOptionsPanel {
 
 
     myClipboardContentLimitTextField.setText(Integer.toString(uiSettings.MAX_CLIPBOARD_CONTENTS));
-    
 
-    
+
+
     // Paste
 
     switch(codeInsightSettings.REFORMAT_ON_PASTE){
@@ -250,12 +273,26 @@ public class EditorOptionsPanel {
     myCbEnableDnD.setSelected(editorSettings.isDndEnabled());
     myCbEnableWheelFontChange.setSelected(editorSettings.isWheelFontChangeEnabled());
     myCbHonorCamelHumpsWhenSelectingByClicking.setSelected(editorSettings.isMouseClickSelectionHonorsCamelWords());
-    myCbNative2Ascii.setSelected(editorSettings.isNative2AsciiForPropertiesFiles());
-    GeneralSettingsConfigurable.setupCharsetComboModel(myDefaultPropertiesFilesCharset);
-    myDefaultPropertiesFilesCharset.setSelectedItem(editorSettings.getDefaultPropertiesCharsetName());
-    if (myDefaultPropertiesFilesCharset.getSelectedIndex() == -1) {
-      myDefaultPropertiesFilesCharset.setSelectedIndex(0);
+
+    // Editor Tabs
+    myScrollTabLayoutInEditorCheckBox.setSelected(uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR);
+    myEditorTabPlacement.setSelectedItem(new Integer(uiSettings.EDITOR_TAB_PLACEMENT));
+    myHideKnownExtensions.setSelected(uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS);
+    if (uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST) {
+      myCloseNonModifiedFilesFirstRadio.setSelected(true);
     }
+    else {
+      myCloseLRUFilesRadio.setSelected(true);
+    }
+    if (uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE) {
+      myActivateMRUEditorOnCloseRadio.setSelected(true);
+    }
+    else {
+      myActivateLeftEditorOnCloseRadio.setSelected(true);
+    }
+
+    myEditorTabLimitField.setText(Integer.toString(uiSettings.EDITOR_TAB_LIMIT));
+    myRecentFilesLimitField.setText(Integer.toString(uiSettings.RECENT_FILES_LIMIT));
   }
 
   public void apply() {
@@ -362,10 +399,6 @@ public class EditorOptionsPanel {
     editorSettings.setDndEnabled(myCbEnableDnD.isSelected());
     editorSettings.setWheelFontChangeEnabled(myCbEnableWheelFontChange.isSelected());
     editorSettings.setMouseClickSelectionHonorsCamelWords(myCbHonorCamelHumpsWhenSelectingByClicking.isSelected());
-    editorSettings.setNative2AsciiForPropertiesFiles(myCbNative2Ascii.isSelected());
-    String charsetName = (String)myDefaultPropertiesFilesCharset.getSelectedItem();
-    if (charsetName == null) charsetName = "System Default";
-    editorSettings.setDefaultPropertiesCharsetName(charsetName);
 
     Editor[] editors = EditorFactory.getInstance().getAllEditors();
     for (Editor editor : editors) {
@@ -375,6 +408,39 @@ public class EditorOptionsPanel {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       DaemonCodeAnalyzer.getInstance(project).settingsChanged();
+    }
+
+    uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR = myScrollTabLayoutInEditorCheckBox.isSelected();
+
+    final int tabPlacement = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
+    uiSettings.EDITOR_TAB_PLACEMENT = tabPlacement;
+    boolean hide = myHideKnownExtensions.isSelected();
+    uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS = hide;
+    uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST = myCloseNonModifiedFilesFirstRadio.isSelected();
+    uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE = myActivateMRUEditorOnCloseRadio.isSelected();
+
+    String temp = myEditorTabLimitField.getText();
+    if(temp.trim().length() > 0){
+      try {
+        int newEditorTabLimit = new Integer(temp).intValue();
+        if(newEditorTabLimit>0&&newEditorTabLimit!=uiSettings.EDITOR_TAB_LIMIT){
+          uiSettings.EDITOR_TAB_LIMIT=newEditorTabLimit;
+          uiSettingsChanged = true;
+        }
+      }catch (NumberFormatException ignored){}
+    }
+    temp=myRecentFilesLimitField.getText();
+    if(temp.trim().length() > 0){
+      try {
+        int newRecentFilesLimit=new Integer(temp).intValue();
+        if(newRecentFilesLimit>0&&uiSettings.RECENT_FILES_LIMIT!=newRecentFilesLimit){
+          uiSettings.RECENT_FILES_LIMIT=newRecentFilesLimit;
+          uiSettingsChanged = true;
+        }
+      }catch (NumberFormatException ignored){}
+    }
+    if(uiSettingsChanged){
+      uiSettings.fireUISettingsChanged();
     }
   }
 
@@ -469,9 +535,17 @@ public class EditorOptionsPanel {
     isModified |= isModified(myCbEnableWheelFontChange, editorSettings.isWheelFontChangeEnabled());
     isModified |= isModified(myCbHonorCamelHumpsWhenSelectingByClicking, editorSettings.isMouseClickSelectionHonorsCamelWords());
 
-    // properties
-    isModified |= isModified(myCbNative2Ascii, editorSettings.isNative2AsciiForPropertiesFiles());
-    isModified |= !Comparing.strEqual(editorSettings.getDefaultPropertiesCharsetName(), (String)myDefaultPropertiesFilesCharset.getSelectedItem());
+    isModified |= isModified(myCloseNonModifiedFilesFirstRadio, uiSettings.CLOSE_NON_MODIFIED_FILES_FIRST);
+    isModified |= isModified(myActivateMRUEditorOnCloseRadio, uiSettings.ACTIVATE_MRU_EDITOR_ON_CLOSE);
+
+    isModified |= isModified(myEditorTabLimitField, UISettings.getInstance().EDITOR_TAB_LIMIT);
+    isModified |= isModified(myRecentFilesLimitField, UISettings.getInstance().RECENT_FILES_LIMIT);
+
+    int tabPlacement = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
+    isModified |= tabPlacement != uiSettings.EDITOR_TAB_PLACEMENT;
+    isModified |= myHideKnownExtensions.isSelected() != uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS;
+
+    isModified |= myScrollTabLayoutInEditorCheckBox.isSelected() != uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR;
 
     return isModified;
   }
@@ -537,5 +611,34 @@ public class EditorOptionsPanel {
     }
   }
 
+  private static final class MyTabsPlacementComboBoxRenderer extends DefaultListCellRenderer {
+    public Component getListCellRendererComponent(JList list,
+                                                           Object value,
+                                                           int index,
+                                                           boolean isSelected,
+                                                           boolean cellHasFocus) {
+      int tabPlacement = ((Integer)value).intValue();
+      String text;
+      if (UISettings.TABS_NONE == tabPlacement) {
+        text = "None";
+      }
+      else if (SwingConstants.TOP == tabPlacement) {
+        text = "Top";
+      }
+      else if (SwingConstants.LEFT == tabPlacement) {
+        text = "Left";
+      }
+      else if (SwingConstants.BOTTOM == tabPlacement) {
+        text = "Bottom";
+      }
+      else if (SwingConstants.RIGHT == tabPlacement) {
+        text = "Right";
+      }
+      else {
+        throw new IllegalArgumentException("unknown tabPlacement: " + tabPlacement);
+      }
+      return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
+    }
+  }
 
 }

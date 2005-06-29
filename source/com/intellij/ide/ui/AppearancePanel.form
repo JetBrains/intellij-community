@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.ide.ui.AppearanceConfigurable.MyComponent">
-  <grid id="41bd3" binding="myPanel" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="41bd3" binding="myPanel" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="81" y="44" width="589" height="525"/>
+      <xy x="81" y="44" width="390" height="505"/>
       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
@@ -12,7 +12,7 @@
       <grid id="d992b" row-count="7" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="5" left="5" bottom="5" right="5"/>
         <constraints>
-          <xy x="0" y="0" width="311" height="261"/>
+          <xy x="0" y="0" width="390" height="261"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="3"/>
         </constraints>
         <properties/>
@@ -52,7 +52,7 @@
           <grid id="4c401" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="11" y="147" width="289" height="22"/>
+              <xy x="11" y="147" width="368" height="22"/>
               <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -72,7 +72,7 @@
               </component>
               <component id="2a405" class="javax.swing.JComboBox" binding="myLafComboBox">
                 <constraints>
-                  <xy x="82" y="0" width="207" height="22"/>
+                  <xy x="82" y="0" width="286" height="22"/>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1"/>
                 </constraints>
                 <properties/>
@@ -82,7 +82,7 @@
           <grid id="d9fb" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="11" y="201" width="289" height="49"/>
+              <xy x="11" y="201" width="368" height="49"/>
               <grid row="6" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -90,7 +90,7 @@
             <children>
               <component id="5ea1e" class="javax.swing.JComboBox" binding="myFontSizeCombo">
                 <constraints>
-                  <xy x="65" y="27" width="224" height="22"/>
+                  <xy x="65" y="27" width="303" height="22"/>
                   <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1">
                     <minimum-size width="140" height="-1"/>
                     <preferred-size width="140" height="-1"/>
@@ -102,7 +102,7 @@
               </component>
               <component id="76cd" class="javax.swing.JComboBox" binding="myFontCombo">
                 <constraints>
-                  <xy x="65" y="0" width="224" height="22"/>
+                  <xy x="65" y="0" width="303" height="22"/>
                   <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
                 </constraints>
                 <properties>
@@ -148,7 +148,7 @@
           <grid id="ce348" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="11" y="174" width="289" height="22"/>
+              <xy x="11" y="174" width="368" height="22"/>
               <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
@@ -186,10 +186,10 @@
           </component>
         </children>
       </grid>
-      <grid id="26e1c" binding="myTransparencyPanel" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="5">
+      <grid id="26e1c" binding="myTransparencyPanel" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="5">
         <margin top="5" left="5" bottom="5" right="5"/>
         <constraints>
-          <xy x="0" y="266" width="311" height="127"/>
+          <xy x="0" y="266" width="390" height="107"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="3"/>
         </constraints>
         <properties/>
@@ -225,7 +225,7 @@
           </component>
           <component id="afb40" class="javax.swing.JSlider" binding="myAlphaModeRatioSlider">
             <constraints>
-              <xy x="80" y="75" width="220" height="21"/>
+              <xy x="80" y="75" width="299" height="21"/>
               <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1"/>
             </constraints>
             <properties/>
@@ -243,172 +243,12 @@
               <text value="1500"/>
             </properties>
           </component>
-          <vspacer id="14336">
-            <constraints>
-              <xy x="184" y="96" width="11" height="20"/>
-              <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
-            </constraints>
-          </vspacer>
         </children>
       </grid>
-      <grid id="d1f82" row-count="13" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="5" bottom="5" right="5"/>
-        <constraints>
-          <xy x="321" y="0" width="268" height="393"/>
-          <grid row="0" column="1" row-span="2" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3"/>
-        </constraints>
-        <properties/>
-        <border type="etched" title="Editor Tabs"/>
-        <children>
-          <component id="4770e" class="javax.swing.JLabel">
-            <constraints>
-              <xy x="11" y="258" width="134" height="14"/>
-              <grid row="9" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text value="When closing active editor:"/>
-            </properties>
-          </component>
-          <component id="7c1d8" class="javax.swing.JRadioButton" binding="myActivateLeftEditorOnCloseRadio">
-            <constraints>
-              <xy x="11" y="280" width="131" height="36"/>
-              <grid row="10" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <margin top="2" left="15" bottom="2" right="2"/>
-              <text value="&lt;html&gt;Activate left&lt;br&gt;neighbouring editor&lt;/html&gt;"/>
-            </properties>
-          </component>
-          <component id="59dc6" class="javax.swing.JLabel">
-            <constraints>
-              <xy x="11" y="179" width="246" height="14"/>
-              <grid row="6" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text value="&lt;html&gt;When number of opened editors exceeds tab limit:&lt;/html&gt;"/>
-            </properties>
-          </component>
-          <component id="7bd21" class="javax.swing.JRadioButton" binding="myCloseNonModifiedFilesFirstRadio">
-            <constraints>
-              <xy x="11" y="201" width="173" height="22"/>
-              <grid row="7" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <margin top="2" left="15" bottom="2" right="2"/>
-              <text value="Close non-modified files first"/>
-            </properties>
-          </component>
-          <vspacer id="a1866">
-            <constraints>
-              <xy x="128" y="357" width="11" height="25"/>
-              <grid row="12" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
-            </constraints>
-          </vspacer>
-          <component id="c6233" class="javax.swing.JCheckBox" binding="myScrollTabLayoutInEditorCheckBox">
-            <constraints>
-              <xy x="11" y="72" width="136" height="22"/>
-              <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <margin top="2" left="0" bottom="2" right="2"/>
-              <text value="Editor tabs in single row"/>
-            </properties>
-          </component>
-          <component id="cbf0b" class="javax.swing.JLabel">
-            <constraints>
-              <xy x="11" y="129" width="85" height="14"/>
-              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text value="Recent files limit:"/>
-            </properties>
-          </component>
-          <component id="8789f" class="javax.swing.JTextField" binding="myRecentFilesLimitField">
-            <constraints>
-              <xy x="106" y="126" width="30" height="20"/>
-              <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0">
-                <preferred-size width="30" height="-1"/>
-              </grid>
-            </constraints>
-            <properties>
-              <text value="10"/>
-            </properties>
-          </component>
-          <component id="756b6" class="javax.swing.JLabel">
-            <constraints>
-              <xy x="11" y="23" width="107" height="14"/>
-              <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <iconTextGap value="4"/>
-              <text value="Editor tab placement:"/>
-            </properties>
-          </component>
-          <component id="b0eb8" class="javax.swing.JComboBox" binding="myEditorTabPlacement">
-            <constraints>
-              <xy x="11" y="45" width="246" height="22"/>
-              <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="1" anchor="8" fill="1">
-                <minimum-size width="140" height="-1"/>
-              </grid>
-            </constraints>
-            <properties/>
-          </component>
-          <component id="62288" class="javax.swing.JCheckBox" binding="myHideKnownExtensions">
-            <constraints>
-              <xy x="11" y="99" width="176" height="22"/>
-              <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <margin top="2" left="0" bottom="2" right="2"/>
-              <text value="Hide file extension in editor tabs"/>
-            </properties>
-          </component>
-          <component id="8fd3e" class="javax.swing.JLabel">
-            <constraints>
-              <xy x="11" y="154" width="47" height="14"/>
-              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text value="Tab limit:"/>
-            </properties>
-          </component>
-          <component id="ad212" class="javax.swing.JTextField" binding="myEditorTabLimitField">
-            <constraints>
-              <xy x="106" y="151" width="30" height="20"/>
-              <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="0">
-                <preferred-size width="30" height="-1"/>
-              </grid>
-            </constraints>
-            <properties>
-              <text value="15"/>
-            </properties>
-          </component>
-          <component id="de935" class="javax.swing.JRadioButton" binding="myCloseLRUFilesRadio">
-            <constraints>
-              <xy x="11" y="228" width="186" height="22"/>
-              <grid row="8" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <margin top="2" left="15" bottom="2" right="2"/>
-              <text value="Close less frequently used files"/>
-            </properties>
-          </component>
-          <component id="daef1" class="javax.swing.JRadioButton" binding="myActivateMRUEditorOnCloseRadio">
-            <constraints>
-              <xy x="11" y="321" width="147" height="36"/>
-              <grid row="11" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <margin top="2" left="15" bottom="2" right="2"/>
-              <text value="&lt;html&gt;Activate most&lt;br&gt;recently opened editor&lt;/html&gt;"/>
-            </properties>
-          </component>
-        </children>
-      </grid>
-      <grid id="937be" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="937be" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="5" left="5" bottom="0" right="5"/>
         <constraints>
-          <xy x="0" y="398" width="311" height="127"/>
+          <xy x="0" y="378" width="390" height="107"/>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="3"/>
         </constraints>
         <properties/>
@@ -425,12 +265,6 @@
               <text value="Animate windows"/>
             </properties>
           </component>
-          <vspacer id="a7652">
-            <constraints>
-              <xy x="77" y="101" width="11" height="20"/>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
-            </constraints>
-          </vspacer>
           <component id="32072" class="javax.swing.JCheckBox" binding="myWindowShortcutsCheckBox">
             <constraints>
               <xy x="11" y="52" width="144" height="22"/>
@@ -444,7 +278,7 @@
           </component>
           <component id="e4f17" class="javax.swing.JCheckBox" binding="myShowToolStripesCheckBox">
             <constraints>
-              <xy x="165" y="25" width="134" height="22"/>
+              <xy x="205" y="25" width="134" height="22"/>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -455,7 +289,7 @@
           </component>
           <component id="42895" class="javax.swing.JCheckBox" binding="myShowMemoryIndicatorCheckBox">
             <constraints>
-              <xy x="165" y="52" width="135" height="22"/>
+              <xy x="205" y="52" width="135" height="22"/>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
             </constraints>
             <properties>
@@ -466,7 +300,7 @@
           </component>
           <component id="44b00" class="javax.swing.JCheckBox" binding="myAlwaysShowWindowButtonsCheckBox">
             <constraints>
-              <xy x="48" y="79" width="214" height="22"/>
+              <xy x="11" y="79" width="214" height="22"/>
               <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="9" fill="0"/>
             </constraints>
             <properties>
@@ -477,6 +311,12 @@
           </component>
         </children>
       </grid>
+      <vspacer id="1313e">
+        <constraints>
+          <xy x="189" y="485" width="11" height="20"/>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+        </constraints>
+      </vspacer>
     </children>
   </grid>
 </form>

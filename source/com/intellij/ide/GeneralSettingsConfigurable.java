@@ -3,6 +3,7 @@ package com.intellij.ide;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diff.impl.external.DiffOptionsForm;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
@@ -77,6 +78,12 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     getDiffOptions().apply();
 
     myComponent.myHTTPProxySettingsEditor.apply();
+
+    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+    editorSettings.setNative2AsciiForPropertiesFiles(myComponent.myCbNative2Ascii.isSelected());
+    String charsetName = (String)myComponent.myDefaultPropertiesFilesCharset.getSelectedItem();
+    if (charsetName == null) charsetName = "System Default";
+    editorSettings.setDefaultPropertiesCharsetName(charsetName);
   }
 
   public boolean isModified() {
@@ -106,7 +113,15 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
 
     isModified |= myComponent.myHTTPProxySettingsEditor.isModified();
 
+    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+    isModified |= isModified(myComponent.myCbNative2Ascii, editorSettings.isNative2AsciiForPropertiesFiles());
+    isModified |= !Comparing.strEqual(editorSettings.getDefaultPropertiesCharsetName(), (String)myComponent.myDefaultPropertiesFilesCharset.getSelectedItem());
+
     return isModified || getDiffOptions().isModified();
+  }
+
+  private static boolean isModified(JToggleButton checkBox, boolean value) {
+    return checkBox.isSelected() != value;
   }
 
 //----------------------------------------------
@@ -163,6 +178,7 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
 
   public void reset() {
     GeneralSettings settings = GeneralSettings.getInstance();
+    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     myComponent.myBrowserPathField.setText(settings.getBrowserPath());
     myComponent.myChkReopenLastProject.setSelected(settings.isReopenLastProject());
     myComponent.myChkSyncOnFrameActivation.setSelected(settings.isSyncOnFrameActivation());
@@ -189,6 +205,12 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     }
     myComponent.updateBrowserField();
     myComponent.myHTTPProxySettingsEditor.reset();
+    myComponent.myCbNative2Ascii.setSelected(editorSettings.isNative2AsciiForPropertiesFiles());
+    setupCharsetComboModel(myComponent.myDefaultPropertiesFilesCharset);
+    myComponent.myDefaultPropertiesFilesCharset.setSelectedItem(editorSettings.getDefaultPropertiesCharsetName());
+    if (myComponent.myDefaultPropertiesFilesCharset.getSelectedIndex() == -1) {
+      myComponent.myDefaultPropertiesFilesCharset.setSelectedIndex(0);
+    }
   }
 
   public void disposeUIResources() {
@@ -225,6 +247,9 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements App
     private JTextField myCyclicBufferSize;
     public JCheckBox myConfirmExit;
     private JPanel myHTTPProxyPanel;
+    private JCheckBox myCbNative2Ascii;
+    private JComboBox myDefaultPropertiesFilesCharset;
+
     private final HTTPProxySettingsPanel myHTTPProxySettingsEditor;
 
     public MyComponent() {
