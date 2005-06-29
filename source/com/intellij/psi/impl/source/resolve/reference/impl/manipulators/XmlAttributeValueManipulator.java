@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.util.CharTable;
@@ -26,14 +27,19 @@ public class XmlAttributeValueManipulator implements ElementManipulator<XmlAttri
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator");
   public XmlAttributeValue handleContentChange(XmlAttributeValue element, TextRange range, String newContent) throws IncorrectOperationException{
     final CompositeElement compositeElement = (CompositeElement)element.getNode();
-    final PsiElement nextSibling = element.getFirstChild().getNextSibling();
+    PsiElement elementToReplace = element.getFirstChild().getNextSibling();
 
     CheckUtil.checkWritable(element);
     String text;
     try {
       text = element.getText();
-      String textBeforeRange = text.substring(1, range.getStartOffset());
-      String textAfterRange = text.substring(range.getEndOffset(), text.length() - 1);
+      int offset = StringUtil.startsWithChar(text,'"') || StringUtil.startsWithChar(text,'\'') ? 1:0;
+      if (offset == 0) {
+        elementToReplace = element.getFirstChild();
+      }
+      
+      String textBeforeRange = text.substring(offset, range.getStartOffset());
+      String textAfterRange = text.substring(range.getEndOffset(), text.length() - offset);
       text = textBeforeRange + newContent + textAfterRange;
     } catch(StringIndexOutOfBoundsException e) {
       LOG.error("Range: " + range + " in text: '" + element.getText() + "'", e);
@@ -47,7 +53,7 @@ public class XmlAttributeValueManipulator implements ElementManipulator<XmlAttri
       text.length(), charTableByTree, element.getManager());
 
 
-    compositeElement.replaceChildInternal(SourceTreeToPsiMap.psiElementToTree(nextSibling), newValueElement);
+    compositeElement.replaceChildInternal(SourceTreeToPsiMap.psiElementToTree(elementToReplace), newValueElement);
     return element;
     //return ((XmlAttributeValueImpl) element).replaceRangeInText(range, newContent);
   }
