@@ -717,23 +717,33 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
 
     for (final PsiReference reference : references) {
       if (reference != null) {
-        if (!reference.isSoft() && reference.resolve() == null) {
-          String message;
-          if (reference instanceof GenericReference) {
-            message = ((GenericReference)reference).getUnresolvedMessage();
+        if (!reference.isSoft()) {
+          boolean hasBadResolve;
+          
+          if (reference instanceof PsiPolyVariantReference) {
+            hasBadResolve = ((PsiPolyVariantReference)reference).multiResolve(false).length == 0;
+          } else {
+            hasBadResolve = reference.resolve() == null;
           }
-          else {
-            message = UNKNOWN_SYMBOL;
+          
+          if(hasBadResolve) {
+            String message;
+            if (reference instanceof GenericReference) {
+              message = ((GenericReference)reference).getUnresolvedMessage();
+            }
+            else {
+              message = UNKNOWN_SYMBOL;
+            }
+  
+            HighlightInfo info = HighlightInfo.createHighlightInfo(
+              getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class)),
+              reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getStartOffset(),
+              reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset(),
+              MessageFormat.format(message, new Object[]{reference.getCanonicalText()}));
+            myResult.add(info);
+            quickFixProvider.registerQuickfix(info, reference);
+            if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
           }
-
-          HighlightInfo info = HighlightInfo.createHighlightInfo(
-            getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class)),
-            reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getStartOffset(),
-            reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset(),
-            MessageFormat.format(message, new Object[]{reference.getCanonicalText()}));
-          myResult.add(info);
-          quickFixProvider.registerQuickfix(info, reference);
-          if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
         }
       }
     }
