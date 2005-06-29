@@ -612,6 +612,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public static final int WRAP_ON_EVERY_ITEM = 0x04;
 
   public int CALL_PARAMETERS_WRAP = DO_NOT_WRAP;
+  public boolean PREFER_PARAMETERS_WRAP = false;
   public boolean CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = false;
   public boolean CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
 

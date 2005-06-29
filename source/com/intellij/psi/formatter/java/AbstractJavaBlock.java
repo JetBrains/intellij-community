@@ -271,6 +271,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.EXPRESSION_LIST){
       final Wrap wrap = Formatter.getInstance().createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
+      if (mySettings.PREFER_PARAMETERS_WRAP) {
+        wrap.ignoreParentWraps();
+      }
       child = processParenBlock(result,
                                 child,
                                 WrappingStrategy.createDoNotWrapCommaStrategy(wrap),

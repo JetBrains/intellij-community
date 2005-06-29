@@ -55,6 +55,7 @@ public class WrappingPanel extends OptionTableWithPreviewPanel {
                         SINGLE_ITEM_WRAP_VALUES);
 
     initRadioGroupField("CALL_PARAMETERS_WRAP", CALL_PARAMETERS_WRAPPING, FULL_WRAP_OPTIONS, FULL_WRAP_VALUES);
+    initBooleanField("PREFER_PARAMETERS_WRAP", "Take priority over call chain wrapping", CALL_PARAMETERS_WRAPPING);
     initBooleanField("CALL_PARAMETERS_LPAREN_ON_NEXT_LINE", "New line after '('", CALL_PARAMETERS_WRAPPING);
     initBooleanField("CALL_PARAMETERS_RPAREN_ON_NEXT_LINE", "Place ')' on new line", CALL_PARAMETERS_WRAPPING);
 

@@ -45,6 +45,7 @@ public class AbstractBlockWrapper {
     while(current != null && current.getStartOffset() == getStartOffset()) {
       final WrapImpl wrap = (WrapImpl)current.getBlock().getWrap();
       if (wrap != null && !result.contains(wrap)) result.add(0, wrap);
+      if (wrap != null && wrap.getIgnoreParentWraps()) break;
       current = current.myParent;
     }
     return result.toArray(new WrapImpl[result.size()]);
