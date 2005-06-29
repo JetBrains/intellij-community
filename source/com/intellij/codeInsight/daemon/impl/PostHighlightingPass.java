@@ -188,24 +188,21 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     for (PsiElement element : elements) {
       ProgressManager.getInstance().checkCanceled();
 
-      HighlightInfo info = getHighlight(element);
-      if (info != null) {
-        array.add(info);
+      if (element instanceof PsiIdentifier) {
+        final HighlightInfo highlightInfo = processIdentifier((PsiIdentifier)element);
+        if (highlightInfo != null) array.add(highlightInfo);
       }
-    }
-  }
-
-  private HighlightInfo getHighlight(PsiElement element) {
-    if (element instanceof PsiIdentifier) {
-      return processIdentifier((PsiIdentifier)element);
-    }
-    else if (element instanceof PsiImportStatementBase) {
-      return processImport((PsiImportStatementBase)element);
-    }
-    else if (element instanceof XmlAttributeValue) {
-      return XmlHighlightVisitor.checkIdRefAttrValue((XmlAttributeValue)element,myRefCountHolder);
-    } else {
-      return null;
+      else if (element instanceof PsiImportList) {
+        final PsiImportStatementBase[] imports = ((PsiImportList)element).getAllImportStatements();
+        for (PsiImportStatementBase statement : imports) {
+          final HighlightInfo highlightInfo = processImport(statement);
+          if (highlightInfo != null) array.add(highlightInfo);
+        }
+      }
+      else if (element instanceof XmlAttributeValue) {
+        final HighlightInfo highlightInfo = XmlHighlightVisitor.checkIdRefAttrValue((XmlAttributeValue)element, myRefCountHolder);
+        if (highlightInfo != null) array.add(highlightInfo);
+      }
     }
   }
 

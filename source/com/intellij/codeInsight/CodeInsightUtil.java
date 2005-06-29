@@ -136,9 +136,14 @@ public class CodeInsightUtil {
     if (leafElementAt2 == null && endOffset == root.getTextLength()) leafElementAt2 = root.getNode().findLeafElementAt(endOffset - 1);
     if(leafElementAt2 == null) return PsiElement.EMPTY_ARRAY;
     TreeElement commonParent = (TreeElement)TreeUtil.findCommonParent(leafElementAt1, leafElementAt2);
-
     LOG.assertTrue(commonParent != null);
     LOG.assertTrue(commonParent.getTextRange() != null);
+
+    while(commonParent.getTreeParent() != null &&
+          commonParent.getTextRange().equals(commonParent.getTreeParent().getTextRange())) {
+      commonParent = commonParent.getTreeParent();
+    }
+
     final int currentOffset = commonParent.getTextRange().getStartOffset();
     final TreeElementVisitor visitor = new TreeElementVisitor() {
       int offset = currentOffset;
