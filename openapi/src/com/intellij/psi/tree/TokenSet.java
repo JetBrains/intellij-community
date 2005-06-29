@@ -49,11 +49,12 @@ public class TokenSet {
     return set;
   }
 
-  public static TokenSet orSet(TokenSet a, TokenSet b) {
-    TokenSet set = new TokenSet();
-    set.mySet.addAll(a.mySet);
-    set.mySet.addAll(b.mySet);
-    return set;
+  public static TokenSet orSet(TokenSet... sets) {
+    TokenSet newSet = new TokenSet();
+    for (TokenSet set : sets) {
+      newSet.mySet.addAll(set.mySet);
+    }
+    return newSet;
   }
 
   public static TokenSet andSet(TokenSet a, TokenSet b) {

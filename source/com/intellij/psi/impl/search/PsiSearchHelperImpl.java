@@ -31,8 +31,8 @@ import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspUtil;
 import com.intellij.psi.meta.PsiMetaData;
@@ -43,6 +43,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
@@ -62,6 +63,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private final PsiManagerImpl myManager;
   private final JoinPointSearchHelper myJoinPointSearchHelper;
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
+  private static final TokenSet XML_DATA_CHARS = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS);
 
   public SearchScope getUseScope(PsiElement element) {
     final GlobalSearchScope maximalUseScope = myManager.getFileManager().getUseScope(element);
@@ -875,7 +877,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         Lexer lexer = lang.getSyntaxHighlighter(file.getProject()).getHighlightingLexer();;
         TokenSet commentTokens = null;
         if (file instanceof PsiJavaFile) {
-          commentTokens = TokenSet.orSet(ElementType.COMMENT_BIT_SET, XML_COMMENT_BIT_SET);
+          commentTokens = TokenSet.orSet(ElementType.COMMENT_BIT_SET, XML_COMMENT_BIT_SET, JavaDocTokenType.ALL_JAVADOC_TOKENS, XML_DATA_CHARS);
         }
         else if (file instanceof JspFile) {
           final JspFile jspFile = (JspFile)file;

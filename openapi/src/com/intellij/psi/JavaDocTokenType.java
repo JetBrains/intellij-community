@@ -5,6 +5,7 @@
 package com.intellij.psi;
 
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 
 
@@ -26,4 +27,10 @@ public interface JavaDocTokenType {
   IElementType DOC_TAG_VALUE_SHARP_TOKEN = new IJavaDocElementType("DOC_TAG_VALUE_SHARP_TOKEN");
 
   IElementType DOC_COMMENT_BAD_CHARACTER = new IJavaDocElementType("DOC_COMMENT_BAD_CHARACTER");
+
+  TokenSet ALL_JAVADOC_TOKENS = TokenSet.create(
+   DOC_COMMENT_START, DOC_COMMENT_END, DOC_COMMENT_DATA, DOC_SPACE, DOC_COMMENT_LEADING_ASTERISKS, DOC_TAG_NAME,
+   DOC_INLINE_TAG_START, DOC_INLINE_TAG_END, DOC_TAG_VALUE_TOKEN, DOC_TAG_VALUE_DOT, DOC_TAG_VALUE_COMMA,
+   DOC_TAG_VALUE_LPAREN, DOC_TAG_VALUE_RPAREN, DOC_TAG_VALUE_SHARP_TOKEN
+  );
 }
