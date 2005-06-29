@@ -10,7 +10,6 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.Options;
 import org.jdom.Element;
 
 import java.util.ArrayList;
@@ -106,7 +105,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
     DefaultJDOMExternalizer.readExternal(this, element);
     final List messages = element.getChildren(MESSAGE_ELEMENT_NAME);
     for (final Object message : messages) {
-      saveCommitMessage(((Element)message).getText());
+      saveCommitMessage(((Element)message).getAttributeValue("value"));
     }
   }
 
@@ -114,7 +113,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
     DefaultJDOMExternalizer.writeExternal(this, element);
     for (String message : myLastCommitMessages) {
       final Element messageElement = new Element(MESSAGE_ELEMENT_NAME);
-      messageElement.setText(message);
+      messageElement.setAttribute("value", message);
       element.addContent(messageElement);
     }
   }
@@ -161,7 +160,7 @@ public final class VcsConfiguration implements JDOMExternalizable, ProjectCompon
   }
 
   public void saveCommitMessage(final String comment) {
-    if (comment.length() == 0) return;
+    if (comment == null || comment.length() == 0) return;
 
     myLastCommitMessages.remove(comment);
 
