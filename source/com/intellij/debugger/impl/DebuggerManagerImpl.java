@@ -140,9 +140,15 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
             // if current thread is a "debugger manager thread", stop will execute synchronously
             debugProcess.stop(willBeDestroyed);
 
+            /*
+            // [jeka] as an experiment:
+            // the problem is that debugProcess.stop() can hang if there are troubles in the debuggee
+            // if processWillTerminate() is called from AWT thread debugProcess.waitFor() will block it and while application will hang
+
             if (!DebuggerManagerThreadImpl.isManagerThread()) {
               debugProcess.waitFor();
             }
+            */
           }
         }
 
