@@ -97,10 +97,13 @@ public class EditorMarkupHintComponent extends JPanel {
 
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1,1, 0,0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0);
     add(myImportPopupCheckBox, gc);
-    add(myGoByErrorsRadioButton, gc);
-    gc.gridx = 1;
-    gc.gridy = 1;
-    add(myGoByBothRadioButton, gc);
+
+    JPanel navPanel = new JPanel(new BorderLayout());
+    navPanel.add(myGoByErrorsRadioButton, BorderLayout.WEST);
+    navPanel.add(myGoByBothRadioButton, BorderLayout.EAST);
+    navPanel.setBorder(IdeBorderFactory.createTitledBorder("Errors Navigation"));
+    add(navPanel, gc);
+
     JPanel panel = new JPanel(new GridLayout(1, mySliders.length));
     panel.setBorder(IdeBorderFactory.createTitledBorder("Highlighting Level"));
     final boolean addLabel = mySliders.length > 1;
