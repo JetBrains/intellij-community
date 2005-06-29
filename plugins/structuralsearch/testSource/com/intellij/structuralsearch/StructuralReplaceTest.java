@@ -6,6 +6,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.Replacer;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.idea.Bombed;
+
+import java.util.Calendar;
 
 /**
  * Created by IntelliJ IDEA.
@@ -53,9 +56,9 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s4 = "params.put(\"BACKGROUND\", \"#7B528D\");";
     String s5 = "params.put(\"$FieldName$\", \"#$exp$\");";
     String s6 = "String $FieldName$ = \"$FieldName$\";\n" +
-                 "params.put($FieldName$, \"$exp$\");";
+                "params.put($FieldName$, \"$exp$\");";
     String expectedResult2 = "    String BACKGROUND = \"BACKGROUND\";\n" +
-                              "    params.put(BACKGROUND, \"7B528D\");";
+                             "    params.put(BACKGROUND, \"7B528D\");";
 
     actualResult = replacer.testReplace(s4,s5,s6,options);
 
@@ -66,11 +69,11 @@ public class StructuralReplaceTest extends IdeaTestCase {
     );
 
     String s7 = "IconLoader.getIcon(\"/ant/property.png\");\n" +
-                 "IconLoader.getIcon(\"/ant/another/property.png\");\n";
+                "IconLoader.getIcon(\"/ant/another/property.png\");\n";
     String s8 = "IconLoader.getIcon(\"/'module/'name:[regex( \\w+ )].png\");";
     String s9 = "Icons.$module$.$name$;";
     String expectedResult3 = "    Icons.ant.property;\n" +
-                              "    IconLoader.getIcon(\"/ant/another/property.png\");\n";
+                             "    IconLoader.getIcon(\"/ant/another/property.png\");\n";
 
     actualResult = replacer.testReplace(s7,s8,s9,options);
 
@@ -81,15 +84,15 @@ public class StructuralReplaceTest extends IdeaTestCase {
     //);
 
     String s10 = "configureByFile(path + \"1.html\");\n" +
-             "    checkResultByFile(path + \"1_after.html\");\n" +
-             "    checkResultByFile(path + \"1_after2.html\");\n" +
-             "    checkResultByFile(path + \"1_after3.html\");";
+                 "    checkResultByFile(path + \"1_after.html\");\n" +
+                 "    checkResultByFile(path + \"1_after2.html\");\n" +
+                 "    checkResultByFile(path + \"1_after3.html\");";
     String s11 = "\"$a$.html\"";
     String s12 = "\"$a$.\"+ext";
     String expectedResult4 = "configureByFile(path + (\"1.\"+ext));\n" +
-             "    checkResultByFile(path + (\"1_after.\"+ext));\n" +
-             "    checkResultByFile(path + (\"1_after2.\"+ext));\n" +
-             "    checkResultByFile(path + (\"1_after3.\"+ext));";
+                             "    checkResultByFile(path + (\"1_after.\"+ext));\n" +
+                             "    checkResultByFile(path + (\"1_after2.\"+ext));\n" +
+                             "    checkResultByFile(path + (\"1_after3.\"+ext));";
 
     actualResult = replacer.testReplace(s10,s11,s12,options);
     assertEquals(
@@ -147,6 +150,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
     );
   }
 
+  @Bombed(year = 2005, month = Calendar.JUNE, day = 30, time = 15, user = "Maxim.Mossienko")
   public void testReplace() {
     String str = "// searching for several constructions\n" +
                  "    lastTest = \"several constructions match\";\n" +
@@ -165,20 +169,20 @@ public class StructuralReplaceTest extends IdeaTestCase {
                  "    if (matches.size()!=2) return false;";
 
     String str2="      lastTest = 'Descr;\n" +
-                 "      matches = testMatcher.findMatches('In,'Pattern, options);\n" +
-                 "      if (matches.size()!='Number) return false;";
+                "      matches = testMatcher.findMatches('In,'Pattern, options);\n" +
+                "      if (matches.size()!='Number) return false;";
     String str3 = "assertEquals($Descr$,testMatcher.findMatches($In$,$Pattern$, options).size(),$Number$);";
     String expectedResult1 = "// searching for several constructions\n" +
-                            "    lastTest = \"several constructions match\";\n" +
-                            "    matches = testMatcher.findMatches(s5,s4, options);\n" +
-                            "    if (matches==null || matches.size()!=3) return false;\n" +
-                            "\n" +
-                            "    // searching for several constructions\n" +
-                            "    assertEquals(\"several constructions 2\",testMatcher.findMatches(s5,s6, options).size(),0);\n" +
-                            "\n" +
-                            "    //options.setLooseMatching(true);\n" +
-                            "    // searching for several constructions\n" +
-                            "    assertEquals(\"several constructions 3\",testMatcher.findMatches(s7,s8, options).size(),2);";
+                             "    lastTest = \"several constructions match\";\n" +
+                             "    matches = testMatcher.findMatches(s5,s4, options);\n" +
+                             "    if (matches==null || matches.size()!=3) return false;\n" +
+                             "\n" +
+                             "    // searching for several constructions\n" +
+                             "    assertEquals(\"several constructions 2\",testMatcher.findMatches(s5,s6, options).size(),0);\n" +
+                             "\n" +
+                             "    //options.setLooseMatching(true);\n" +
+                             "    // searching for several constructions\n" +
+                             "    assertEquals(\"several constructions 3\",testMatcher.findMatches(s7,s8, options).size(),2);";
 
     String str4 = "";
     actualResult = replacer.testReplace(str,str2,str3,options);
@@ -282,15 +286,15 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String str26 = "  LaterInvocator.invokeLater('Params{1,10});";
     String str27 = "  com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater($Params$);";
     String expectedResult10 = "    com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater(new Runnable() {\n" +
-                   "            public void run() {\n" +
-                   "              LOG.info(\"refreshFilesAsync, modalityState=\" + ModalityState.current());\n" +
-                   "              myHandler.getFiles().refreshFilesAsync(new Runnable() {\n" +
-                   "                public void run() {\n" +
-                   "                  semaphore.up();\n" +
-                   "                }\n" +
-                   "              });\n" +
-                   "            }\n" +
-                   "          });";
+                              "            public void run() {\n" +
+                              "              LOG.info(\"refreshFilesAsync, modalityState=\" + ModalityState.current());\n" +
+                              "              myHandler.getFiles().refreshFilesAsync(new Runnable() {\n" +
+                              "                public void run() {\n" +
+                              "                  semaphore.up();\n" +
+                              "                }\n" +
+                              "              });\n" +
+                              "            }\n" +
+                              "          });";
 
     actualResult = replacer.testReplace(str25,str26,str27,options);
     assertEquals("Anonymous in parameter",expectedResult10,actualResult);
@@ -304,7 +308,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
                    "  $referencesWord$)";
 
     String expectedResult11 = "UTElementNode elementNode = new UTElementNode(myProject, processedElement, psiFile, processedElement.getTextOffset(), true, true,\n" +
-                   "  null);";
+                              "  null);";
     actualResult = replacer.testReplace(str28,str29,str30,options);
     assertEquals("Replace in def initializer",expectedResult11,actualResult);
 
@@ -346,7 +350,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
 
     String expectedResult14 = "    ParamChecker.isTrue(1==1, \"!!!\");\n" +
                               "// comment we want to leave\n" +
-                 "    ParamChecker.isTrue(2==2, \"!!!\");";
+                              "    ParamChecker.isTrue(2==2, \"!!!\");";
     actualResult = replacer.testReplace(s37,s38,s39,options);
     assertEquals(
       "remove try with comments inside",
@@ -373,9 +377,9 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s44 = "'Instance?.findSubTag( 'Parameter:[exprtype( *String ) ])";
     String s45 = "jetbrains.fabrique.util.XmlApiUtil.findSubTag($Instance$, $Parameter$)";
     String expectedResult16 = "class Wpd {\n" +
-                 "  static final String TAG_BEAN_VALUE = \"\";\n" +
-                 "}\n" +
-                 "XmlTag beanTag = jetbrains.fabrique.util.XmlApiUtil.findSubTag(rootTag, Wpd.TAG_BEAN_VALUE);";
+                              "  static final String TAG_BEAN_VALUE = \"\";\n" +
+                              "}\n" +
+                              "XmlTag beanTag = jetbrains.fabrique.util.XmlApiUtil.findSubTag(rootTag, Wpd.TAG_BEAN_VALUE);";
 
     actualResult = replacer.testReplace(s43,s44,s45,options);
     assertEquals(
@@ -476,8 +480,8 @@ public class StructuralReplaceTest extends IdeaTestCase {
                  "  $Statements$;\n" +
                  "}";
     String expectedResult20 = "    for(str:stringlist) {\n" +
-                 "      System.out.println( str );\n" +
-                 "    }";
+                              "      System.out.println( str );\n" +
+                              "    }";
 
     actualResult = replacer.testReplace(s55,s56,s57,options);
 
@@ -514,10 +518,10 @@ public class StructuralReplaceTest extends IdeaTestCase {
                  " */\n" +
                  "$Type$ $Variable$ = $Value$;";
     String expectedResult23 = "int x = 42;\n" +
-                                  "/**\n" +
-                                  " * Stuff\n" +
-                                  " */\n" +
-                                  "    int y = 42;";
+                              "/**\n" +
+                              " * Stuff\n" +
+                              " */\n" +
+                              "    int y = 42;";
 
     actualResult = replacer.testReplace(s64,s65,s66,options);
 
@@ -793,20 +797,20 @@ public class StructuralReplaceTest extends IdeaTestCase {
                  "      PsiLock.LOCK.release();\n" +
                  "    }";
     String s13_2 = "    PsiLock.LOCK.acquire();\n" +
-                 "    try {\n" +
-                 "      if (true) { return value; }\n" +
-                 "    }\n" +
-                 "    finally {\n" +
-                 "      PsiLock.LOCK.release();\n" +
-                 "    }";
+                   "    try {\n" +
+                   "      if (true) { return value; }\n" +
+                   "    }\n" +
+                   "    finally {\n" +
+                   "      PsiLock.LOCK.release();\n" +
+                   "    }";
     String s13_3 = "    PsiLock.LOCK.acquire();\n" +
-                 "    try {\n" +
-                 "      if (true) { return value; }\n\n" +
-                 "      if (true) { return value; }\n" +
-                 "    }\n" +
-                 "    finally {\n" +
-                 "      PsiLock.LOCK.release();\n" +
-                 "    }";
+                   "    try {\n" +
+                   "      if (true) { return value; }\n\n" +
+                   "      if (true) { return value; }\n" +
+                   "    }\n" +
+                   "    finally {\n" +
+                   "      PsiLock.LOCK.release();\n" +
+                   "    }";
     String s14 = "    PsiLock.LOCK.acquire();\n" +
                  "    try {\n" +
                  "      'T{1,1000};\n" +
@@ -849,7 +853,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
       expectedResult7,
       actualResult
     );
-    
+
     String s16 = "public class SSTest {\n" +
                  "  Object lock;\n" +
                  "  public Object getProducts (String[] productNames) {\n" +
@@ -868,11 +872,11 @@ public class StructuralReplaceTest extends IdeaTestCase {
                    "    }\n" +
                    "  }\n" +
                    "}";
-    
+
     String s17 = "synchronized(lock) {\n" +
                  "  'Statement*;\n" +
                  "}";
-    
+
     String s18 = "$Statement$;";
     String expectedResult8 = "public class SSTest {\n" +
                              "  Object lock;\n" +
@@ -888,14 +892,14 @@ public class StructuralReplaceTest extends IdeaTestCase {
                                "      boolean[] v = {true};\n" +
                                "  }\n" +
                                "}";
-    
+
     actualResult = replacer.testReplace(s16,s17,s18,options);
     assertEquals(
       "extra ;",
       expectedResult8,
       actualResult
     );
-    
+
     actualResult = replacer.testReplace(s16_2,s17,s18,options);
     assertEquals(
       "missed ;",
@@ -947,13 +951,13 @@ public class StructuralReplaceTest extends IdeaTestCase {
     String s8 = "class 'A extends B { 'Other* }";
     String s9 = "class $A$ extends B2 { $Other$ }";
     String expectedResult3 = "    class A extends B2 {\n" +
-                              "        int c;\n\n" +
-                              "        void b() {\n" +
-                              "        }\n\n" +
-                              "        {\n" +
-                              "            a = 1;\n" +
-                              "        }\n" +
-                              "    }";
+                             "        int c;\n\n" +
+                             "        void b() {\n" +
+                             "        }\n\n" +
+                             "        {\n" +
+                             "            a = 1;\n" +
+                             "        }\n" +
+                             "    }";
 
     actualResult = replacer.testReplace(s7,s8,s9,options);
     assertEquals("Unsupported pattern exception",actualResult,expectedResult3);
@@ -1006,18 +1010,18 @@ public class StructuralReplaceTest extends IdeaTestCase {
                  "}";
 
     String expectedResult5 = "    class CustomThread extends CustomThread {\n" +
-                 "    CustomThread(InputStream in,OutputStream out,boolean closeOutOnExit ) {\n" +
-                 "      super(\"CustomThread\");\n" +
-                 "    setDaemon(true);\n" +
-                 "    if (in instanceof BufferedInputStream) {\n" +
-                 "        bis = (BufferedInputStream)in;\n" +
-                 "    } else {\n" +
-                 "    bis = new BufferedInputStream(in);\n" +
-                 "    }\n" +
-                 "    this.out = out;\n" +
-                 "    this.closeOutOnExit = closeOutOnExit;\n" +
-                 "    }\n" +
-                 "    }";
+                             "    CustomThread(InputStream in,OutputStream out,boolean closeOutOnExit ) {\n" +
+                             "      super(\"CustomThread\");\n" +
+                             "    setDaemon(true);\n" +
+                             "    if (in instanceof BufferedInputStream) {\n" +
+                             "        bis = (BufferedInputStream)in;\n" +
+                             "    } else {\n" +
+                             "    bis = new BufferedInputStream(in);\n" +
+                             "    }\n" +
+                             "    this.out = out;\n" +
+                             "    this.closeOutOnExit = closeOutOnExit;\n" +
+                             "    }\n" +
+                             "    }";
     actualResult = replacer.testReplace(s13,s14,s15,options);
     assertEquals("Constructor replacement",expectedResult5,actualResult);
 
@@ -1102,15 +1106,15 @@ public class StructuralReplaceTest extends IdeaTestCase {
 
     String s32 = "'Type 'Variable = 'Value?; //'Comment";
     String s33 = "/**$Comment$*/\n" +
-             "$Type$ $Variable$ = $Value$;";
+                 "$Type$ $Variable$ = $Value$;";
 
     String expectedResult12 = "class A {\n" +
-                 "    /** comment*/\n" +
-                 "    int a  ;\n" +
-                 "    char b;\n" +
-                 "    /** comment2*/\n" +
-                 "    int c  ;\n" +
-                 "}";
+                              "    /** comment*/\n" +
+                              "    int a  ;\n" +
+                              "    char b;\n" +
+                              "    /** comment2*/\n" +
+                              "    int c  ;\n" +
+                              "}";
 
     actualResult = replacer.testReplace(s31,s32,s33,options);
 
@@ -1237,7 +1241,7 @@ public class StructuralReplaceTest extends IdeaTestCase {
 
     actualResult = replacer.testReplace(s7,s8,s9,xmlOptions);
     expectedResult = "<h5>My title</h5>\n" +
-                "<h4>My title 2</h4>";
+                     "<h4>My title 2</h4>";
 
     //assertEquals(
     //  "Replace tag saving content",
@@ -1249,36 +1253,36 @@ public class StructuralReplaceTest extends IdeaTestCase {
   /** comment */
   public void testRemove() {
     String s1 = "class A {\n" +
-                  "  /* */\n" +
-                  "  void a() {\n" +
-                  "  }\n" +
-                  "  /*\n" +
-                  "  */\n" +
-                  "  int b = 1;\n" +
-                  "  /*\n" +
-                  "   *\n" +
-                  "   */\n" +
-                  "   class C {}\n" +
-                  "  {\n" +
-                  "    /* aaa */\n" +
-                  "    int a;\n" +
-                  "    /* */\n" +
-                  "    a = 1;\n" +
-                  "  }\n" +
-                  "}";
+                "  /* */\n" +
+                "  void a() {\n" +
+                "  }\n" +
+                "  /*\n" +
+                "  */\n" +
+                "  int b = 1;\n" +
+                "  /*\n" +
+                "   *\n" +
+                "   */\n" +
+                "   class C {}\n" +
+                "  {\n" +
+                "    /* aaa */\n" +
+                "    int a;\n" +
+                "    /* */\n" +
+                "    a = 1;\n" +
+                "  }\n" +
+                "}";
     String s2 = "/* 'a:[regex( .* )] */";
     String s2_2 = "/* */";
     String s3 = "";
     String expectedResult = "class A {\n" +
-                  "  void a() {\n" +
-                  "  }\n" +
-                  "    int b = 1;\n" +
-                  "    class C {}\n" +
-                  "  {\n" +
-                  "      int a;\n" +
-                  "      a = 1;\n" +
-                  "  }\n" +
-                  "}";
+                            "  void a() {\n" +
+                            "  }\n" +
+                            "    int b = 1;\n" +
+                            "    class C {}\n" +
+                            "  {\n" +
+                            "      int a;\n" +
+                            "      a = 1;\n" +
+                            "  }\n" +
+                            "}";
     actualResult = replacer.testReplace(s1,s2,s3,options);
 
     assertEquals(
@@ -1288,21 +1292,21 @@ public class StructuralReplaceTest extends IdeaTestCase {
     );
 
     String expectedResult2 = "class A {\n" +
-                  "  void a() {\n" +
-                  "  }\n" +
-                  "  /*\n" +
-                  "  */\n" +
-                  "  int b = 1;\n" +
-                  "  /*\n" +
-                  "   *\n" +
-                  "   */\n" +
-                  "   class C {}\n" +
-                  "  {\n" +
-                  "    /* aaa */\n" +
-                  "    int a;\n" +
-                  "      a = 1;\n" +
-                  "  }\n" +
-                  "}";
+                             "  void a() {\n" +
+                             "  }\n" +
+                             "  /*\n" +
+                             "  */\n" +
+                             "  int b = 1;\n" +
+                             "  /*\n" +
+                             "   *\n" +
+                             "   */\n" +
+                             "   class C {}\n" +
+                             "  {\n" +
+                             "    /* aaa */\n" +
+                             "    int a;\n" +
+                             "      a = 1;\n" +
+                             "  }\n" +
+                             "}";
 
     actualResult = replacer.testReplace(s1,s2_2,s3,options);
 
