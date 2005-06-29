@@ -4,19 +4,19 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.FindUsagesCommand;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(
@@ -27,7 +27,6 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   private final boolean mySearchInNonJavaFiles;
   private PsiDirectory myNewParent;
   private MoveCallback myMoveCallback;
-  private UsageInfo[] myUsagesAfterRefactoring;
 
   public MoveFilesOrDirectoriesProcessor(
     Project project,
@@ -55,17 +54,20 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   }
 
   protected UsageInfo[] findUsages() {
-    return new UsageInfo[0];
+    final PsiSearchHelper searchHelper = PsiManager.getInstance(myProject).getSearchHelper();
+    List<UsageInfo> result = new ArrayList<UsageInfo>();
+    for (int i = 0; i < myElementsToMove.length; i++) {
+      PsiElement element = myElementsToMove[i];
+      final PsiReference[] refs = searchHelper.findReferences(element, GlobalSearchScope.allScope(myProject), false);
+      for (PsiReference reference : refs) {
+        result.add(new MyUsageInfo(reference.getElement(), i, reference));
+      }
+    }
+
+    return result.toArray(new UsageInfo[result.size()]);
   }
 
   protected boolean preprocessUsages(UsageInfo[][] u) {
-    final UsageInfo[] usages = u[0];
-    ArrayList<UsageInfo> filteredUsages = new ArrayList<UsageInfo>();
-    for (UsageInfo usage : usages) {
-      filteredUsages.add(usage);
-    }
-
-    u[0] = filteredUsages.toArray(new UsageInfo[filteredUsages.size()]);
     prepareSuccessful();
     return true;
   }
@@ -75,10 +77,6 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     for (int idx = 0; idx < elements.length; idx++) {
       myElementsToMove[idx] = elements[idx];
     }
-  }
-
-  protected boolean isPreviewUsages(UsageInfo[] usages) {
-    return false;
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
@@ -105,7 +103,10 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         myElementsToMove[idx] = element;
       }
 
-      myUsagesAfterRefactoring = usages;
+      for (UsageInfo usageInfo : usages) {
+        final MyUsageInfo info = (MyUsageInfo)usageInfo;
+        info.myReference.bindToElement(myElementsToMove[info.myIndex]);
+      }
 
       // Perform CVS "add", "remove" commands on moved files.
 
@@ -131,14 +132,22 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  protected void performPsiSpoilingRefactoring() {
-    if (myUsagesAfterRefactoring != null) {
-      RefactoringUtil.renameNonCodeUsages(myProject, myUsagesAfterRefactoring);
-    }
-  }
-
   protected String getCommandName() {
     return "Move"; //TODO!!
   }
 
+  protected boolean isPreviewUsages(UsageInfo[] usages) {
+    return true;
+  }
+
+  class MyUsageInfo extends UsageInfo {
+    int myIndex;
+    PsiReference myReference;
+
+    public MyUsageInfo(PsiElement element, final int index, PsiReference reference) {
+      super(element);
+      myIndex = index;
+      myReference = reference;
+    }
+  }
 }

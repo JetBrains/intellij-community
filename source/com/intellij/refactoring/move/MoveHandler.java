@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
@@ -77,10 +78,14 @@ public class MoveHandler implements RefactoringActionHandler {
       if (tryToMoveElement(element, project, dataContext)) {
         return;
       } else if (!(element.getParent() instanceof PsiAnonymousClass)) {
-        final PsiReference reference = element.getReference();
-        if (reference != null) {
-          final PsiElement refElement = reference.resolve();
-          if (refElement != null && tryToMoveElement(refElement, project, dataContext)) return;
+        final TextRange range = element.getTextRange();
+        if (range != null) {
+          int relative = offset - range.getStartOffset();
+          final PsiReference reference = element.findReferenceAt(relative);
+          if (reference != null) {
+            final PsiElement refElement = reference.resolve();
+            if (refElement != null && tryToMoveElement(refElement, project, dataContext)) return;
+          }
         }
       }
 
@@ -89,11 +94,14 @@ public class MoveHandler implements RefactoringActionHandler {
   }
 
   private boolean tryToMoveElement(final PsiElement element, final Project project, final DataContext dataContext) {
-    if (element instanceof PsiField) {
+    if (element instanceof PsiFile || element instanceof PsiDirectory) {
+      final PsiDirectory targetContainer = (PsiDirectory)myTargetContainerFinder.getTargetContainer(dataContext);
+      MoveFilesOrDirectoriesUtil.doMove(project, new PsiElement[]{element}, targetContainer, null);
+      return true;
+    } else if (element instanceof PsiField) {
       MoveMembersImpl.doMove(project, new PsiElement[]{element}, null, null);
       return true;
-    }
-    if (element instanceof PsiMethod) {
+    } else if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
       if (!method.hasModifierProperty(PsiModifier.STATIC)) {
         new MoveInstanceMethodHandler().invoke(project, new PsiElement[]{method}, dataContext);
@@ -102,8 +110,7 @@ public class MoveHandler implements RefactoringActionHandler {
         MoveMembersImpl.doMove(project, new PsiElement[]{method}, null, null);
       }
       return true;
-    }
-    if (element instanceof PsiClass) {
+    } else if (element instanceof PsiClass) {
       PsiClass aClass = (PsiClass)element;
       if (aClass.getContainingClass() != null) { // this is inner class
         FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.move.moveInner");
@@ -295,8 +302,7 @@ public class MoveHandler implements RefactoringActionHandler {
     // the case of multiple members
     // check if this is move packages
     int type = PACKAGES;
-    for (int idx = 0; idx < elements.length; idx++) {
-      PsiElement element = elements[idx];
+    for (PsiElement element : elements) {
       if (element instanceof PsiPackage) {
         continue;
       }
@@ -313,8 +319,7 @@ public class MoveHandler implements RefactoringActionHandler {
     if (type != NOT_SUPPORTED) return type;
     // check if this is move classes
     type = CLASSES;
-    for (int idx = 0; idx < elements.length; idx++) {
-      PsiElement element = elements[idx];
+    for (PsiElement element : elements) {
       if (!(element instanceof PsiClass)) {
         type = NOT_SUPPORTED;
         break;
@@ -327,8 +332,7 @@ public class MoveHandler implements RefactoringActionHandler {
     if (type != NOT_SUPPORTED) return type;
     // check if this is move members
     type = MEMBERS;
-    for (int idx = 0; idx < elements.length; idx++) {
-      PsiElement element = elements[idx];
+    for (PsiElement element : elements) {
       if (element instanceof PsiClass) {
         if (!(element.getParent() instanceof PsiClass)) { // is not inner
           type = NOT_SUPPORTED;
@@ -373,8 +377,7 @@ public class MoveHandler implements RefactoringActionHandler {
 
 
       final HashSet<String> packages = new HashSet<String>();
-      for (int i = 0; i < myDirectories.length; i++) {
-        PsiDirectory directory = myDirectories[i];
+      for (PsiDirectory directory : myDirectories) {
         packages.add(directory.getPackage().getQualifiedName());
       }
       final String moveDescription;
