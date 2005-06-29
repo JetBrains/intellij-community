@@ -775,7 +775,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     for (int i = 0; i < leadSelectionPath.length; i++) {
       final Object lastPathComponent = leadSelectionPath[i].getLastPathComponent();
       if (lastPathComponent instanceof Node) {
-        result.add((Node)lastPathComponent);
+        final Node node = (Node)lastPathComponent;
+        result.add(node);
       }
     }
     return result.isEmpty() ? null : result.toArray(new Node[result.size()]);
@@ -783,7 +784,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   public Set<Usage> getSelectedUsages() {
     TreePath[] selectionPaths = myTree.getSelectionPaths();
-    if (selectionPaths == null) return null;
+    if (selectionPaths == null) {
+      return null;
+    }
 
     Set<Usage> usages = new HashSet<Usage>();
     for (int i = 0; i < selectionPaths.length; i++) {
@@ -847,13 +850,18 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return null;
   }
 
-  private static Navigatable[] getNavigatablesForNodes(DefaultMutableTreeNode[] node) {
-    if (node == null) {
+  /** nodes with non-valid data are not included */
+  private static Navigatable[] getNavigatablesForNodes(Node[] nodes) {
+    if (nodes == null) {
       return null;
     }
     final ArrayList<Navigatable> result = new ArrayList<Navigatable>();
-    for (int i = 0; i < node.length; i++) {
-      Object userObject = node[i].getUserObject();
+    for (int i = 0; i < nodes.length; i++) {
+      final Node node = nodes[i];
+      if (!node.isDataValid()) {
+        continue;
+      }
+      Object userObject = node.getUserObject();
       if (userObject instanceof Navigatable) {
         result.add((Navigatable)userObject);
       }
@@ -927,12 +935,23 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
       if (dataId.equals(USAGES)) {
         final Set<Usage> selectedUsages = getSelectedUsages();
-        return (selectedUsages != null)? selectedUsages.toArray(new Usage[selectedUsages.size()]) : null;
+        if (selectedUsages == null) {
+          return null;
+        }
+        for (Iterator it = selectedUsages.iterator(); it.hasNext();) {
+          final Usage usage = (Usage)it.next();
+          if (!usage.isValid()) {
+            it.remove();
+          }
+        }
+        return selectedUsages.toArray(new Usage[selectedUsages.size()]);
       }
 
       if (dataId.equals(USAGE_TARGETS)) {
-        Object selectedUsageTargets = getSelectedUsageTargets();
-        if (selectedUsageTargets != null) return selectedUsageTargets;
+        final UsageTarget[] selectedUsageTargets = getSelectedUsageTargets();
+        if (selectedUsageTargets != null) {
+          return selectedUsageTargets;
+        }
       }
 
       if (node != null) {
