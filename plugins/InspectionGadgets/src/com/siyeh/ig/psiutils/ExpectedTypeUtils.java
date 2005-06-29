@@ -98,14 +98,14 @@ public class ExpectedTypeUtils{
         return substitutor.substitute(param.getType());
     }
 
-    @Nullable
+    @NotNull
     private static JavaResolveResult findCalledMethod(PsiExpressionList expList){
         final PsiElement parent = expList.getParent();
         if(parent instanceof PsiCallExpression){
             final PsiCallExpression call = (PsiCallExpression) parent;
             return call.resolveMethodGenerics();
         }
-        return null;
+        return JavaResolveResult.EMPTY;
     }
 
     private static class ExpectedTypeVisitor extends PsiElementVisitor{
@@ -284,18 +284,13 @@ public class ExpectedTypeUtils{
 
         public void visitExpressionList(PsiExpressionList expList){
             final JavaResolveResult result = findCalledMethod(expList);
-            if (result == null) {
-              expectedType = null;
-            }
-            else {
-              PsiMethod method = (PsiMethod)result.getElement();
-              if(method == null){
-                  expectedType = null;
-              } else{
-                  final int parameterPosition =
-                          ExpectedTypeUtils.getParameterPosition(expList, wrappedExp);
-                  expectedType = getTypeOfParameter(result, parameterPosition);
-              }
+            PsiMethod method = (PsiMethod)result.getElement();
+            if(method == null){
+                expectedType = null;
+            } else{
+                final int parameterPosition =
+                        ExpectedTypeUtils.getParameterPosition(expList, wrappedExp);
+                expectedType = getTypeOfParameter(result, parameterPosition);
             }
         }
 
