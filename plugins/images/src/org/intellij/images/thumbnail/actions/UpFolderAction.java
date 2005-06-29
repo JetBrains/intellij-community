@@ -24,7 +24,9 @@ public final class UpFolderAction extends AbstractThumbnailViewAction {
 
     public void update(ThumbnailView thumbnailView, AnActionEvent e) {
         super.update(thumbnailView, e);
-        VirtualFile root = thumbnailView.getRoot();
-        e.getPresentation().setEnabled(root != null ? root.getParent() != null && !thumbnailView.isRecursive() : false);
+        if (e.getPresentation().isEnabled()) {
+            VirtualFile root = thumbnailView.getRoot();
+            e.getPresentation().setEnabled(root != null ? root.getParent() != null && !thumbnailView.isRecursive() : false);
+        }
     }
 }

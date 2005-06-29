@@ -18,6 +18,8 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 /**
@@ -61,12 +63,18 @@ final class ImageEditorUI extends JPanel implements DataProvider {
         ActionToolbar actionToolbar = actionManager.createActionToolbar(
             ImageEditorActions.GROUP_TOOLBAR, actionGroup, true
         );
-        add(actionToolbar.getComponent(), BorderLayout.NORTH);
 
+        FocusRequester focusRequester = new FocusRequester();
+        JComponent component = actionToolbar.getComponent();
+        component.addMouseListener(focusRequester);
+        scrollPane.addMouseListener(focusRequester);
+
+        add(component, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
 
         // Set content
         document.setValue(image);
+
     }
 
     ImageComponent getImageComponent() {
@@ -206,6 +214,12 @@ final class ImageEditorUI extends JPanel implements DataProvider {
         public void stateChanged(ChangeEvent e) {
             revalidate();
             repaint();
+        }
+    }
+
+    private class FocusRequester extends MouseAdapter {
+        public void mouseClicked(MouseEvent e) {
+            requestFocus();
         }
     }
 }

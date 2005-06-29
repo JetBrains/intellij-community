@@ -83,19 +83,20 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 list, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
             );
 
-            JPanel toolBar = new JPanel();
-            toolBar.setLayout(new BorderLayout());
-
-            add(toolBar, BorderLayout.NORTH);
-            add(scrollPane, BorderLayout.CENTER);
-
             ActionManager actionManager = ActionManager.getInstance();
             ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ThumbnailsActions.GROUP_TOOLBAR);
             ActionToolbar actionToolbar = actionManager.createActionToolbar(
                 ThumbnailsActions.GROUP_TOOLBAR, actionGroup, true
             );
 
-            toolBar.add(actionToolbar.getComponent(), BorderLayout.WEST);
+            JComponent toolbar = actionToolbar.getComponent();
+
+            FocusRequester focusRequester = new FocusRequester();
+            toolbar.addMouseListener(focusRequester);
+            scrollPane.addMouseListener(focusRequester);
+
+            add(toolbar, BorderLayout.NORTH);
+            add(scrollPane, BorderLayout.CENTER);
 
             refresh();
         }
@@ -355,9 +356,9 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         }
     }
 
-    private class ICPropertyChangeListener implements PropertyChangeListener {
-        public void propertyChange(PropertyChangeEvent evt) {
-            repaint();
+    private class FocusRequester extends MouseAdapter {
+        public void mouseClicked(MouseEvent e) {
+            requestFocus();
         }
     }
 }
