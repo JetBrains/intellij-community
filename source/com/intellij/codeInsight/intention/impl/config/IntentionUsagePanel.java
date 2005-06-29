@@ -11,10 +11,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.pom.java.LanguageLevel;
@@ -84,36 +81,30 @@ class IntentionUsagePanel extends JPanel{
     }
     stopBlinking();
     if (markers.size() != 0) {
-      startBlinking(markers, null, true);
+      startBlinking(markers, true);
     }
   }
 
-  private void startBlinking(final List<RangeMarker> spotMarkers, List<RangeHighlighter> oldHighlighters, final boolean show) {
-    final List<RangeHighlighter> newHighlighters = new ArrayList<RangeHighlighter>();
+  private void startBlinking(final List<RangeMarker> spotMarkers, final boolean show) {
 
+    MarkupModel markupModel = myEditor.getMarkupModel();
     if (show) {
       TextAttributes attr = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES);
       for (int i = 0; i < spotMarkers.size(); i++) {
         final RangeMarker rangeMarker = spotMarkers.get(i);
-        RangeHighlighter newRangeHighlighter = myEditor.getMarkupModel().addRangeHighlighter(rangeMarker.getStartOffset(),
-                                                                                                 rangeMarker.getEndOffset(),
-                                                                                                 HighlighterLayer.ADDITIONAL_SYNTAX, attr,
-                                                                                                 HighlighterTargetArea.EXACT_RANGE);
-        newHighlighters.add(newRangeHighlighter);
+        markupModel.addRangeHighlighter(rangeMarker.getStartOffset(),
+                                        rangeMarker.getEndOffset(),
+                                        HighlighterLayer.ADDITIONAL_SYNTAX, attr,
+                                        HighlighterTargetArea.EXACT_RANGE);
       }
     }
     else {
-      for (int i = 0; i < oldHighlighters.size(); i++) {
-        final RangeHighlighter rangeHighlighter = oldHighlighters.get(i);
-        if (rangeHighlighter.isValid()) {
-          myEditor.getMarkupModel().removeHighlighter(rangeHighlighter);
-        }
-      }
+      markupModel.removeAllHighlighters();
     }
     stopBlinking();
     myBlinkingAlarm.addRequest(new Runnable() {
       public void run() {
-        startBlinking(spotMarkers, newHighlighters, !show);
+        startBlinking(spotMarkers, !show);
       }
     }, 400);
   }
