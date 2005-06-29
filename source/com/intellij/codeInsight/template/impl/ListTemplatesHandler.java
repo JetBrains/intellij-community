@@ -47,7 +47,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
 
     Lookup lookup = LookupManager.getInstance(project).showLookup(editor, items, prefix, null, new CharFilter() {
       public int accept(char c) {
-        if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
+        if (isInPrefix(c)) return CharFilter.ADD_TO_PREFIX;
         return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
     });
@@ -70,9 +70,13 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
     while(true){
       if (start == 0) break;
       char c = chars.charAt(start - 1);
-      if (!Character.isJavaIdentifierPart(c)) break;
+      if (!isInPrefix(c)) break;
       start--;
     }
     return chars.subSequence(start, offset).toString();
+  }
+
+  private boolean isInPrefix(final char c) {
+    return Character.isJavaIdentifierPart(c) || c == '.';
   }
 }
