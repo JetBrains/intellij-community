@@ -24,4 +24,8 @@ public final class IntentionActionMetaData {
     myDescription = description;
     myCategory = category;
   }
+
+  public String toString() {
+    return myFamily;
+  }
 }

@@ -4,9 +4,13 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.TreeExpander;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -15,6 +19,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.Enumeration;
 import java.util.List;
+import java.awt.*;
 
 public abstract class IntentionSettingsTree {
   private JComponent myComponent;
@@ -51,7 +56,12 @@ public abstract class IntentionSettingsTree {
       }
     });
 
-    myComponent = new JScrollPane(myTree);
+    myComponent = new JPanel(new BorderLayout());
+    JScrollPane scrollPane = new JScrollPane(myTree);
+    ActionToolbar toolbar = createTreeToolbarPanel();
+    myComponent.add(toolbar.getComponent(), BorderLayout.NORTH);
+    myComponent.add(scrollPane, BorderLayout.CENTER);
+
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         myTree.setSelectionRow(0);
@@ -59,14 +69,47 @@ public abstract class IntentionSettingsTree {
     });
   }
 
+  private ActionToolbar createTreeToolbarPanel() {
+    DefaultActionGroup actions = new DefaultActionGroup();
+    final CommonActionsManager actionManager = CommonActionsManager.getInstance();
+
+    TreeExpander treeExpander = new TreeExpander() {
+      public void expandAll() {
+        TreeUtil.expandAll(myTree);
+      }
+
+      public boolean canExpand() {
+        return true;
+      }
+
+      public void collapseAll() {
+        TreeUtil.collapseAll(myTree, 3);
+      }
+
+      public boolean canCollapse() {
+        return true;
+      }
+    };
+
+    AnAction expandAllToolbarAction = actionManager.createExpandAllAction(treeExpander);
+    expandAllToolbarAction.registerCustomShortcutSet(expandAllToolbarAction.getShortcutSet(), myTree);
+    actions.add(expandAllToolbarAction);
+
+    AnAction collapseAllToolbarAction = actionManager.createCollapseAllAction(treeExpander);
+    collapseAllToolbarAction.registerCustomShortcutSet(collapseAllToolbarAction.getShortcutSet(), myTree);
+    actions.add(collapseAllToolbarAction);
+
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, actions, true);
+  }
+
   private static void updateCheckMarkInParents(CheckedTreeNode node) {
     while (node.getParent() != null) {
       final CheckedTreeNode parent = (CheckedTreeNode)node.getParent();
-      parent.setChecked(true);
+      parent.setChecked(false);
       visitChildren(parent, new CheckedNodeVisitor() {
         public void visit(CheckedTreeNode node) {
-          if (!node.isChecked()) {
-            parent.setChecked(false);
+          if (node.isChecked()) {
+            parent.setChecked(true);
           }
         }
       });
@@ -84,8 +127,7 @@ public abstract class IntentionSettingsTree {
       final IntentionActionMetaData metaData = intentionsToShow.get(i);
       String[] category = metaData.myCategory;
       CheckedTreeNode node = root;
-      for (int j = 0; j < category.length; j++) {
-        final String name = category[j];
+      for (final String name : category) {
         CheckedTreeNode child = findChild(node, name);
         if (child == null) {
           CheckedTreeNode newChild = new CheckedTreeNode(name);
