@@ -37,4 +37,8 @@ public class PluginDescriptorMetaData implements DeploymentDescriptorMetaData {
   public ModuleType[] getSuitableTypes() {
     return new ModuleType[] {PluginModuleType.getInstance()};
   }
+
+  public boolean isDescriptorOptional() {
+    return false;
+  }
 }
