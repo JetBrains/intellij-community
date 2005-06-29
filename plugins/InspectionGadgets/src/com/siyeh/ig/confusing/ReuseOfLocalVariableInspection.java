@@ -53,15 +53,14 @@ public class ReuseOfLocalVariableInspection
             final PsiLocalVariable variable = (PsiLocalVariable) ref.resolve();
             final PsiAssignmentExpression assignment = (PsiAssignmentExpression) ref
                     .getParent();
+            assert assignment != null;
             final PsiExpressionStatement assignmentStatement =
                     (PsiExpressionStatement) assignment.getParent();
             final String originalVariableName = assignment.getLExpression().getText();
+            assert variable != null;
             final PsiManager manager = variable.getManager();
             final PsiType type = variable.getType();
             final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
-            final PsiBlockStatement assignmentBlock =
-                    PsiTreeUtil.getParentOfType(assignmentStatement,
-                                                PsiBlockStatement.class);
             final PsiCodeBlock variableBlock =
                     PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
             final SuggestedNameInfo suggestions =

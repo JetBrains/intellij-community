@@ -99,12 +99,14 @@ public abstract class BaseInspection extends LocalInspectionTool{
         }
     }
 
+    @Nullable
     protected ProblemDescriptor[] doCheckClass(PsiClass aClass,
                                                InspectionManager manager,
                                                boolean isOnTheFly){
         return super.checkClass(aClass, manager, isOnTheFly);
     }
 
+    @Nullable
     public ProblemDescriptor[] checkField(PsiField field,
                                                   InspectionManager manager,
                                                   boolean isOnTheFly){

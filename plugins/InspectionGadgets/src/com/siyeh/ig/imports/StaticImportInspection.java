@@ -43,6 +43,9 @@ public class StaticImportInspection extends ClassInspection {
                 return;
             }
             final PsiImportList importList = file.getImportList();
+            if(importList == null){
+                return;
+            }
             final PsiImportStaticStatement[] importStatements = importList.getImportStaticStatements();
             for(final PsiImportStaticStatement importStatement : importStatements){
                 final PsiJavaCodeReferenceElement reference = importStatement.getImportReference();

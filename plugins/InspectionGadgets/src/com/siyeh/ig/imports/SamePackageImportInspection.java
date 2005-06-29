@@ -9,34 +9,33 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteImportFix;
 import org.jetbrains.annotations.NotNull;
 
-public class SamePackageImportInspection extends ClassInspection {
+public class SamePackageImportInspection extends ClassInspection{
     private final DeleteImportFix fix = new DeleteImportFix();
 
-    public String getDisplayName() {
+    public String getDisplayName(){
         return "Import from same package";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.IMPORTS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "Unnecessary import from same package '#ref' #loc";
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+    public BaseInspectionVisitor buildVisitor(){
         return new SamePackageImportVisitor();
     }
 
-    private static class SamePackageImportVisitor extends BaseInspectionVisitor {
-
-        public void visitClass(@NotNull PsiClass aClass) {
+    private static class SamePackageImportVisitor extends BaseInspectionVisitor{
+        public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so it doesn't drill down
-            if (!(aClass.getParent() instanceof PsiJavaFile)) {
+            if(!(aClass.getParent() instanceof PsiJavaFile)){
                 return;
             }
             if(aClass.getContainingFile() instanceof JspFile){
@@ -46,14 +45,19 @@ public class SamePackageImportInspection extends ClassInspection {
             if(file == null){
                 return;
             }
-            if (!file.getClasses()[0].equals(aClass)) {
+            if(!file.getClasses()[0].equals(aClass)){
                 return;
             }
             final String packageName = file.getPackageName();
             final PsiImportList importList = file.getImportList();
-            final PsiImportStatement[] importStatements = importList.getImportStatements();
+            if(importList == null){
+                return;
+            }
+            final PsiImportStatement[] importStatements =
+                    importList.getImportStatements();
             for(final PsiImportStatement importStatement : importStatements){
-                final PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
+                final PsiJavaCodeReferenceElement reference = importStatement
+                        .getImportReference();
                 if(reference != null){
                     final String text = importStatement.getQualifiedName();
                     if(importStatement.isOnDemand()){
@@ -71,6 +75,5 @@ public class SamePackageImportInspection extends ClassInspection {
                 }
             }
         }
-
     }
 }

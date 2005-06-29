@@ -11,6 +11,7 @@ import com.siyeh.ig.ExpressionInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -124,6 +125,7 @@ public class UnnecessaryUnboxingInspection extends ExpressionInspection {
             registerError(expression);
         }
 
+        @Nullable
         private PsiExpression getContainingExpression(PsiExpression expression){
             final PsiElement parent = expression.getParent();
             if(parent == null || !(parent instanceof PsiExpression))

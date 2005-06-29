@@ -9,34 +9,32 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteImportFix;
 import org.jetbrains.annotations.NotNull;
 
-public class UnusedImportInspection extends ClassInspection {
+public class UnusedImportInspection extends ClassInspection{
     private final DeleteImportFix fix = new DeleteImportFix();
 
-    public String getDisplayName() {
+    public String getDisplayName(){
         return "Unused import";
     }
 
-    public String getGroupDisplayName() {
+    public String getGroupDisplayName(){
         return GroupNames.IMPORTS_GROUP_NAME;
     }
 
-    public String buildErrorString(PsiElement location) {
+    public String buildErrorString(PsiElement location){
         return "Unused import '#ref' #loc";
     }
 
-    public InspectionGadgetsFix buildFix(PsiElement location) {
+    public InspectionGadgetsFix buildFix(PsiElement location){
         return fix;
     }
 
-    public BaseInspectionVisitor buildVisitor() {
+    public BaseInspectionVisitor buildVisitor(){
         return new UnusedImportVisitor();
     }
 
-    private static class UnusedImportVisitor extends BaseInspectionVisitor {
-
-
-        public void visitClass(@NotNull PsiClass aClass) {
-            if (!(aClass.getParent() instanceof PsiJavaFile)) {
+    private static class UnusedImportVisitor extends BaseInspectionVisitor{
+        public void visitClass(@NotNull PsiClass aClass){
+            if(!(aClass.getParent() instanceof PsiJavaFile)){
                 return;
             }
             if(aClass.getContainingFile() instanceof JspFile){
@@ -46,11 +44,15 @@ public class UnusedImportInspection extends ClassInspection {
             if(file == null){
                 return;
             }
-            if (!file.getClasses()[0].equals(aClass)) {
+            if(!file.getClasses()[0].equals(aClass)){
                 return;
             }
             final PsiImportList importList = file.getImportList();
-            final PsiImportStatement[] importStatements = importList.getImportStatements();
+            if(importList == null){
+                return;
+            }
+            final PsiImportStatement[] importStatements =
+                    importList.getImportStatements();
             for(final PsiImportStatement importStatement : importStatements){
                 if(!isNecessaryImport(importStatement, file.getClasses())){
                     registerError(importStatement);
@@ -58,8 +60,10 @@ public class UnusedImportInspection extends ClassInspection {
             }
         }
 
-        private static boolean isNecessaryImport(PsiImportStatement importStatement, PsiClass[] classes) {
-            final ImportIsUsedVisitor visitor = new ImportIsUsedVisitor(importStatement);
+        private static boolean isNecessaryImport(
+                PsiImportStatement importStatement, PsiClass[] classes){
+            final ImportIsUsedVisitor visitor = new ImportIsUsedVisitor(
+                    importStatement);
             for(PsiClass aClasses : classes){
                 aClasses.accept(visitor);
                 final PsiClass[] innerClasses = aClasses.getInnerClasses();
@@ -69,6 +73,5 @@ public class UnusedImportInspection extends ClassInspection {
             }
             return visitor.isUsed();
         }
-
     }
 }

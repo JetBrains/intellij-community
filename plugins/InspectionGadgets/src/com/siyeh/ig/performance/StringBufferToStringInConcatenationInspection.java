@@ -45,6 +45,7 @@ public class StringBufferToStringInConcatenationInspection extends ExpressionIns
             assert methodCallExpression != null;
             final PsiMethodCallExpression methodCall =
                     (PsiMethodCallExpression) methodCallExpression.getParent();
+            assert methodCall != null;
             final PsiReferenceExpression expression = methodCall.getMethodExpression();
             final PsiExpression qualifier = expression.getQualifierExpression();
             final String newExpression = qualifier.getText();

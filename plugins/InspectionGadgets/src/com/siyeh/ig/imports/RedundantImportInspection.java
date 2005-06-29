@@ -55,6 +55,10 @@ public class RedundantImportInspection extends ClassInspection {
                 return;
             }
             final PsiImportList importList = file.getImportList();
+            if(importList == null)
+            {
+                return;
+            }
             final PsiImportStatement[] importStatements = importList.getImportStatements();
             final Set<String> imports = new HashSet<String>(importStatements.length);
             for(final PsiImportStatement importStatement : importStatements){

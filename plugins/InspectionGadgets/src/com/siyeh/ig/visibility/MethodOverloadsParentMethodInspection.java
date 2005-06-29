@@ -84,20 +84,19 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection{
             final PsiParameter[] parameters = parameterList.getParameters();
             final PsiMethod[] methods = ancestorClass
                     .findMethodsByName(methName, false);
-            if(methods != null){
-                for(final PsiMethod testMethod : methods){
-                    if(!testMethod.hasModifierProperty(PsiModifier.PRIVATE) &&
-                            !testMethod.hasModifierProperty(PsiModifier.STATIC) &&
-                            !isOverriddenInClass(testMethod, meth.getContainingClass())){
-                        final PsiParameterList testParameterList = testMethod
-                                .getParameterList();
-                        final PsiParameter[] testParameters = testParameterList
-                                .getParameters();
-                        if(testParameters.length == parameters.length &&
-                                !parametersAreCompatible(parameters,
-                                                         testParameters)){
-                            return true;
-                        }
+            for(final PsiMethod testMethod : methods){
+                if(!testMethod.hasModifierProperty(PsiModifier.PRIVATE) &&
+                        !testMethod.hasModifierProperty(PsiModifier.STATIC) &&
+                        !isOverriddenInClass(testMethod,
+                                             meth.getContainingClass())){
+                    final PsiParameterList testParameterList = testMethod
+                            .getParameterList();
+                    final PsiParameter[] testParameters = testParameterList
+                            .getParameters();
+                    if(testParameters.length == parameters.length &&
+                            !parametersAreCompatible(parameters,
+                                                     testParameters)){
+                        return true;
                     }
                 }
             }
@@ -108,8 +107,7 @@ public class MethodOverloadsParentMethodInspection extends MethodInspection{
                                                    PsiClass aClass){
             final PsiMethod[] methods = aClass.getMethods();
             for(PsiMethod testMethod : methods){
-                if(testMethod.getName().equals(method.getName()))
-                {
+                if(testMethod.getName().equals(method.getName())){
                     final PsiMethod[] superMethods = PsiSuperMethodUtil
                             .findSuperMethods(testMethod, true);
                     for(final PsiMethod superMethod : superMethods){

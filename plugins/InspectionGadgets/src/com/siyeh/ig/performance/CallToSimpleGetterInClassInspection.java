@@ -76,12 +76,16 @@ public class CallToSimpleGetterInClassInspection extends ExpressionInspection{
     }
 
     private boolean isSimpleGetter(PsiMethod method){
+        if(method.hasModifierProperty(PsiModifier.SYNCHRONIZED))
+        {
+            return false;
+        }
         final PsiCodeBlock body = method.getBody();
         if(body == null){
             return false;
         }
         final PsiStatement[] statements = body.getStatements();
-        if(statements == null || statements.length != 1){
+        if(statements.length != 1){
             return false;
         }
         final PsiStatement statement = statements[0];

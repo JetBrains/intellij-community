@@ -42,7 +42,7 @@ public class UnnecessaryFinalOnLocalVariableInspection extends MethodInspection 
             super.visitDeclarationStatement(statement);
             final PsiElement[] declaredElements =
                     statement.getDeclaredElements();
-            if (declaredElements == null || declaredElements.length == 0) {
+            if (declaredElements.length == 0) {
                 return;
             }
             for(final PsiElement declaredElement : declaredElements){

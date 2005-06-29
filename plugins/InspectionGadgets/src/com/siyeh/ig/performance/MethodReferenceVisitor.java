@@ -63,6 +63,9 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
     }
 
     private boolean isMethodStaticallyAccessible(PsiMethod method){
+        if(m_method.equals(method)){
+            return true;
+        }
         if(method.hasModifierProperty(PsiModifier.STATIC)){
             return true;
         }

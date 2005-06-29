@@ -95,9 +95,6 @@ public class ImplicitCallToSuperInspection extends MethodInspection{
                 return;
             }
             final PsiStatement[] statements = body.getStatements();
-            if(statements == null){
-                return;
-            }
             if(statements.length == 0){
                 registerMethodError(method);
                 return;

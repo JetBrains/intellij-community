@@ -53,9 +53,6 @@ public class DoubleCheckedLockingInspection extends ExpressionInspection {
                 return;
             }
             final PsiStatement[] statements = body.getStatements();
-            if (statements == null) {
-                return;
-            }
             if (statements.length != 1) {
                 return;
             }

@@ -71,9 +71,6 @@ public class UnnecessaryDefaultInspection extends StatementInspection {
                 return false;
             }
             final PsiStatement[] statements = body.getStatements();
-            if (statements == null) {
-                return false;
-            }
             boolean containsDefault = false;
             int numCases = 0;
             for(final PsiStatement child : statements){

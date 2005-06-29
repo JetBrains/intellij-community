@@ -83,7 +83,7 @@ public class ForLoopThatDoesntUseLoopVariableInspection
 
         final PsiElement[] declaredElements = declaration.getDeclaredElements();
 
-        if(declaredElements == null || declaredElements.length != 1){
+        if(declaredElements.length != 1){
             return true;
         }
         if(declaredElements[0] == null ||
@@ -113,7 +113,7 @@ public class ForLoopThatDoesntUseLoopVariableInspection
 
         final PsiElement[] declaredElements = declaration.getDeclaredElements();
 
-        if(declaredElements == null || declaredElements.length != 1){
+        if(declaredElements.length != 1){
             return true;
         }
         if(declaredElements[0] == null ||

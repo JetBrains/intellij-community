@@ -67,9 +67,6 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends StatementInsp
                 return false;
             }
             final PsiStatement[] statements = body.getStatements();
-            if (statements == null) {
-                return false;
-            }
             int numCases = 0;
             for(final PsiStatement child : statements){
                 if(child instanceof PsiSwitchLabelStatement){

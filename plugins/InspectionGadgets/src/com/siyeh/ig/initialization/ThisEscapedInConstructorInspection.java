@@ -201,7 +201,8 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
         }
 
         // Get rightmost expression of assignment. Used when assignments are chained. Recursive
-        private static @Nullable PsiExpression getLastRightExpression(PsiAssignmentExpression assignmentExp){
+        @Nullable
+        private static PsiExpression getLastRightExpression(PsiAssignmentExpression assignmentExp){
 
             if(assignmentExp == null){
                 return null;
@@ -247,6 +248,7 @@ public class ThisEscapedInConstructorInspection extends ClassInspection{
         }
 
         // If there are more than two of 'this' as arguments, only marks the first until it is removed. No big deal.
+        @Nullable
         private static PsiThisExpression checkArgumentsForThis(PsiCall call){
             final PsiExpressionList peList = call.getArgumentList();
             if(peList == null){   // array initializer

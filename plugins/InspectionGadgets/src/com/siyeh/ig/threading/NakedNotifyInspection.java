@@ -47,9 +47,6 @@ public class NakedNotifyInspection extends MethodInspection {
 
         private void checkBody(PsiCodeBlock body) {
             final PsiStatement[] statements = body.getStatements();
-            if (statements == null) {
-                return;
-            }
             if (statements.length == 0) {
                 return;
             }

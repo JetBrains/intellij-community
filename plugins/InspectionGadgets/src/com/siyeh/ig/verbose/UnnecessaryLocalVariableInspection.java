@@ -271,9 +271,6 @@ public class UnnecessaryLocalVariableInspection extends ExpressionInspection {
         }
         final PsiDeclarationStatement declaration = (PsiDeclarationStatement) nextStatement;
         final PsiElement[] declarations = declaration.getDeclaredElements();
-        if (declarations == null) {
-            return false;
-        }
         if (declarations.length != 1) {
             return false;
         }

@@ -117,13 +117,7 @@ public class WhileLoopSpinsOnFieldInspection extends MethodInspection {
             if (statement instanceof PsiBlockStatement) {
                 final PsiCodeBlock codeBlock =
                         ((PsiBlockStatement) statement).getCodeBlock();
-                if (codeBlock == null) {
-                    return false;
-                }
                 final PsiStatement[] statements = codeBlock.getStatements();
-                if (statements == null) {
-                    return false;
-                }
                 for(PsiStatement statement1 : statements){
                     if(!statementIsEmpty(statement1)){
                         return false;

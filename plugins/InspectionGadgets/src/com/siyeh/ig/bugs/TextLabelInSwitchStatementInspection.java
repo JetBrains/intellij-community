@@ -34,9 +34,6 @@ public class TextLabelInSwitchStatementInspection extends StatementInspection {
                 return;
             }
             final PsiStatement[] statements = body.getStatements();
-            if (statements == null) {
-                return;
-            }
             for(PsiStatement statement1 : statements){
                 checkForLabel(statement1);
             }

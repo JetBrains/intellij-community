@@ -51,7 +51,7 @@ public class CloneCallsConstructorsInspection extends ExpressionInspection {
             }
 
             final PsiExpression[] arrayDimensions = newExpression.getArrayDimensions();
-            if (arrayDimensions != null && arrayDimensions.length != 0) {
+            if (arrayDimensions.length != 0) {
                 return;
             }
             if (newExpression.getArrayInitializer() != null) {

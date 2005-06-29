@@ -67,9 +67,6 @@ public class TypeParameterExtendsObjectInspection extends ClassInspection{
             super.visitTypeParameter(parameter);
             final PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
             final PsiReferenceList extendsList = parameter.getExtendsList();
-            if(extendsList == null){
-                return;
-            }
             final PsiJavaCodeReferenceElement[] elements =
                     extendsList.getReferenceElements();
             for(final PsiJavaCodeReferenceElement element : elements){

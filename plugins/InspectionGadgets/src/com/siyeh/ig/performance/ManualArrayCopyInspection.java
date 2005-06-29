@@ -160,9 +160,6 @@ public class ManualArrayCopyInspection extends ExpressionInspection {
             } else if (body instanceof PsiBlockStatement) {
                 final PsiCodeBlock codeBlock = ((PsiBlockStatement) body).getCodeBlock();
                 final PsiStatement[] statements = codeBlock.getStatements();
-                if (statements == null) {
-                    return false;
-                }
                 if (statements.length != 1) {
                     return false;
                 }

@@ -48,14 +48,10 @@ public class ZeroLengthArrayInitializationInspection extends ExpressionInspectio
             final PsiArrayInitializerExpression arrayInitializer = expression.getArrayInitializer();
             if (arrayInitializer != null) {
                 final PsiExpression[] initializers = arrayInitializer.getInitializers();
-                if (initializers == null) {
-                    return;
-                }
                 if (initializers.length != 0) {
                     return;
                 }
-            } else if (dimensions != null) {
-
+            } else  {
                 if (dimensions.length != 1) {
                     return;
                 }
@@ -64,8 +60,6 @@ public class ZeroLengthArrayInitializationInspection extends ExpressionInspectio
                 if (!"0".equals(dimensionText)) {
                     return;
                 }
-            } else {
-                return;
             }
             if (isDeclaredConstant(expression)) {
                 return;

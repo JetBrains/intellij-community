@@ -102,9 +102,7 @@ public class UnnecessaryBlockStatementInspection extends StatementInspection{
                 PsiCodeBlock block,
                 PsiCodeBlock parentBlock){
             final PsiStatement[] statements = block.getStatements();
-            if(statements == null){
-                return false;
-            }
+
             final Set<PsiElement> declaredVars = new HashSet<PsiElement>();
             for(final PsiStatement statement : statements){
                 if(statement instanceof PsiDeclarationStatement){

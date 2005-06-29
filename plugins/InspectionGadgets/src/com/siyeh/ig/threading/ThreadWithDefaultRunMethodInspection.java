@@ -32,10 +32,10 @@ public class ThreadWithDefaultRunMethodInspection extends ExpressionInspection{
 
         public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
+            final PsiAnonymousClass anonymousClass =
+                    expression.getAnonymousClass();
 
-            if(expression.getAnonymousClass() != null){
-                final PsiAnonymousClass anonymousClass =
-                        expression.getAnonymousClass();
+            if(anonymousClass != null){
                 final PsiJavaCodeReferenceElement baseClassReference =
                         anonymousClass.getBaseClassReference();
                 final PsiElement referent = baseClassReference.resolve();

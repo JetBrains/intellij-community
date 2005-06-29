@@ -56,10 +56,6 @@ public class UnnecessaryThisInspection extends ExpressionInspection {
             super.visitReferenceExpression(expression);
             final PsiReferenceParameterList parameterList =
                     expression.getParameterList();
-            if(parameterList == null)
-            {
-                return;
-            }
             if(parameterList.getTypeArguments().length > 0){
                 return;
             }

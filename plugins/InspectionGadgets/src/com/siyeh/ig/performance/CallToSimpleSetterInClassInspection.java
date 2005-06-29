@@ -15,6 +15,7 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
     public String getDisplayName(){
         return "Call to simple setter from within class";
     }
+
     public String getGroupDisplayName(){
         return GroupNames.PERFORMANCE_GROUP_NAME;
     }
@@ -29,10 +30,10 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
 
     private class CallToSimpleSetterInClassVisitor
             extends BaseInspectionVisitor{
-
-
-        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
+        public void visitMethodCallExpression(
+                @NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
+
             final PsiReferenceExpression methodExpression =
                     call.getMethodExpression();
             if(methodExpression == null){
@@ -70,12 +71,15 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
     }
 
     private boolean isSimpleSetter(PsiMethod method){
+        if(method.hasModifierProperty(PsiModifier.SYNCHRONIZED)){
+            return false;
+        }
         final PsiCodeBlock body = method.getBody();
         if(body == null){
             return false;
         }
         final PsiStatement[] statements = body.getStatements();
-        if(statements == null || statements.length != 1){
+        if(statements.length != 1){
             return false;
         }
         final PsiStatement statement = statements[0];
@@ -89,8 +93,7 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
         if(possibleAssignment == null){
             return false;
         }
-        if(!(possibleAssignment instanceof PsiAssignmentExpression))
-        {
+        if(!(possibleAssignment instanceof PsiAssignmentExpression)){
             return false;
         }
         final PsiAssignmentExpression assignment =
@@ -100,28 +103,23 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
             return false;
         }
         final PsiExpression lhs = assignment.getLExpression();
-        if(!(lhs instanceof PsiReferenceExpression))
-        {
+        if(!(lhs instanceof PsiReferenceExpression)){
             return false;
         }
         final PsiReferenceExpression reference = (PsiReferenceExpression) lhs;
         final PsiExpression qualifier = reference.getQualifierExpression();
-        if(qualifier!=null && !"this".equals(qualifier.getText()))
-        {
+        if(qualifier != null && !"this".equals(qualifier.getText())){
             return false;
         }
         final PsiElement referent = reference.resolve();
-        if(referent == null)
-        {
+        if(referent == null){
             return false;
         }
-        if(!(referent instanceof PsiField))
-        {
+        if(!(referent instanceof PsiField)){
             return false;
         }
         final PsiField field = (PsiField) referent;
-        if(!field.getContainingClass().equals(method.getContainingClass()))
-        {
+        if(!field.getContainingClass().equals(method.getContainingClass())){
             return false;
         }
 
@@ -146,6 +144,7 @@ public class CallToSimpleSetterInClassInspection extends ExpressionInspection{
         if(fieldType == null || parameterType == null){
             return false;
         }
-        return fieldType.getCanonicalText().equals(parameterType.getCanonicalText());
+        return fieldType.getCanonicalText()
+                .equals(parameterType.getCanonicalText());
     }
 }
