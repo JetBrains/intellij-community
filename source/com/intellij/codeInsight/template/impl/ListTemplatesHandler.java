@@ -26,11 +26,10 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
 
     TemplateImpl[] templates = TemplateSettings.getInstance().getTemplates();
     ArrayList<LookupItem> array = new ArrayList<LookupItem>();
-    for(int i = 0; i < templates.length; i++){
-      TemplateImpl template = templates[i];
+    for (TemplateImpl template : templates) {
       if (template.isDeactivated() || template.isSelectionTemplate()) continue;
       String key = template.getKey();
-      if (key.startsWith(prefix) && template.getTemplateContext().isInContext(contextType)){
+      if (key.startsWith(prefix) && template.getTemplateContext().isInContext(contextType)) {
         LookupItem item = new LookupItem(template, key);
         array.add(item);
       }
