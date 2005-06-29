@@ -17,6 +17,8 @@ public interface LvcsLabel extends Comparable<LvcsLabel>{
   byte TYPE_TESTS_SUCCESSFUL = 4;
   byte TYPE_TESTS_FAILED = 5;
 
+  byte TYPE_USER = 6;
+
   int getType();
   String getName();
   String getPath();
