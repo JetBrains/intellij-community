@@ -2,6 +2,7 @@ package com.siyeh.ig.jdk15;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
+import com.intellij.pom.java.LanguageLevel;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.VariableInspection;
 import org.jetbrains.annotations.NotNull;
@@ -27,23 +28,47 @@ public class RawUseOfParameterizedTypeInspection extends VariableInspection {
     private static class RawUseOfParameterizedTypeVisitor extends BaseInspectionVisitor {
         public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
+              final PsiManager manager = variable.getManager();
+            final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
+            if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
+                    languageLevel.equals(LanguageLevel.JDK_1_4)) {
+                return;
+            }
             final PsiTypeElement typeElement = variable.getTypeElement();
             checkTypeElement(typeElement);
         }
 
         public void visitTypeCastExpression(@NotNull PsiTypeCastExpression cast) {
             super.visitTypeCastExpression(cast);
+              final PsiManager manager = cast.getManager();
+            final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
+            if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
+                    languageLevel.equals(LanguageLevel.JDK_1_4)) {
+                return;
+            }
             final PsiTypeElement typeElement = cast.getCastType();
             checkTypeElement(typeElement);
         }
 
         public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression){
+            final PsiManager manager = expression.getManager();
+            final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
+            if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
+                    languageLevel.equals(LanguageLevel.JDK_1_4)) {
+                return;
+            }
             super.visitInstanceOfExpression(expression);
             final PsiTypeElement typeElement = expression.getCheckType();
             checkTypeElement(typeElement);
         }
 
         public void visitNewExpression(@NotNull PsiNewExpression newExpression){
+              final PsiManager manager = newExpression.getManager();
+            final LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
+            if (languageLevel.equals(LanguageLevel.JDK_1_3) ||
+                    languageLevel.equals(LanguageLevel.JDK_1_4)) {
+                return;
+            }
             super.visitNewExpression(newExpression);
             final PsiJavaCodeReferenceElement classReference =
                     newExpression.getClassReference();
