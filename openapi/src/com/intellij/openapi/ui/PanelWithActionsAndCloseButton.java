@@ -35,6 +35,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,6 +51,16 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     super(new BorderLayout());
     myContentManager = contentManager;
     myHelpId = helpId;
+
+    myContentManager.addContentManagerListener(new ContentManagerAdapter(){
+      public void contentRemoved(ContentManagerEvent event) {
+        if (event.getContent().getComponent() == PanelWithActionsAndCloseButton.this) {
+          dispose();
+          myContentManager.removeContentManagerListener(this);
+        }
+      }
+    });
+
   }
 
   public String getHelpId() {
@@ -89,7 +101,6 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     }
 
     public void actionPerformed(AnActionEvent e) {
-      dispose();
       Content content = myContentManager.getContent(PanelWithActionsAndCloseButton.this);
       if (content != null) {
         myContentManager.removeContent(content);
