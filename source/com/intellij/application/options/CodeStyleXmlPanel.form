@@ -110,14 +110,20 @@
           </component>
         </children>
       </grid>
+      <vspacer id="31cde">
+        <constraints>
+          <xy x="80" y="162" width="11" height="219"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+        </constraints>
+      </vspacer>
       <grid id="6063" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="147" width="171" height="98"/>
+          <xy x="12" y="154" width="171" height="98"/>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
-        <border type="etched" title="Spaces:"/>
+        <border type="etched" title="Spaces"/>
         <children>
           <component id="f4575" class="javax.swing.JCheckBox" binding="mySpacesAroundEquality">
             <constraints>
@@ -150,12 +156,6 @@
           </component>
         </children>
       </grid>
-      <vspacer id="31cde">
-        <constraints>
-          <xy x="80" y="245" width="11" height="136"/>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
-        </constraints>
-      </vspacer>
     </children>
   </grid>
 </form>
