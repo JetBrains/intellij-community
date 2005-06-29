@@ -4,10 +4,15 @@ package org.intellij.images.thumbnail.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
+import org.intellij.images.actionSystem.ImagesDataConstants;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
+import org.intellij.images.thumbnail.actionSystem.ThumbnailsActions;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.ui.ThumbnailComponent;
 import org.intellij.images.ui.ThumbnailComponentUI;
@@ -28,15 +33,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
-    private static final String THUMBNAILS_POPUP_GROUP = "Images.ThumbnailsPopupMenu";
-    private static final String THUMBNAILS_TOOLBAR_GROUP = "Images.ThumbnailsToolbar";
-
     private final VFSListener vfsListener = new VFSListener();
-    private final ThumbnailViewImpl thumbnailView;
+    private final OptionsChangeListener optionsListener = new OptionsChangeListener();
 
+    private final ThumbnailViewImpl thumbnailView;
     private ThumbnailListCellRenderer cellRenderer;
     private JList list;
-    private final OptionsChangeListener optionsListener = new OptionsChangeListener();
 
     public ThumbnailViewUI(ThumbnailViewImpl thumbnailView) {
         super(new BorderLayout());
@@ -48,7 +50,6 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         if (cellRenderer == null || list == null) {
             cellRenderer = new ThumbnailListCellRenderer();
             ImageComponent imageComponent = cellRenderer.getImageComponent();
-            imageComponent.setTransparencyChessboardVisible(true);
 
             VirtualFileManager.getInstance().addVirtualFileListener(vfsListener);
 
@@ -56,6 +57,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             EditorOptions editorOptions = options.getEditorOptions();
             // Set options
             TransparencyChessboardOptions chessboardOptions = editorOptions.getTransparencyChessboardOptions();
+            imageComponent.setTransparencyChessboardVisible(chessboardOptions.isShowDefault());
             imageComponent.setTransparencyChessboardCellSize(chessboardOptions.getCellSize());
             imageComponent.setTransparencyChessboardWhiteColor(chessboardOptions.getWhiteColor());
             imageComponent.setTransparencyChessboardBlankColor(chessboardOptions.getBlackColor());
@@ -88,8 +90,10 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             add(scrollPane, BorderLayout.CENTER);
 
             ActionManager actionManager = ActionManager.getInstance();
-            ActionGroup actionGroup = (ActionGroup)actionManager.getAction(THUMBNAILS_TOOLBAR_GROUP);
-            ActionToolbar actionToolbar = actionManager.createActionToolbar(THUMBNAILS_TOOLBAR_GROUP, actionGroup, true);
+            ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ThumbnailsActions.GROUP_TOOLBAR);
+            ActionToolbar actionToolbar = actionManager.createActionToolbar(
+                ThumbnailsActions.GROUP_TOOLBAR, actionGroup, true
+            );
 
             toolBar.add(actionToolbar.getComponent(), BorderLayout.WEST);
 
@@ -124,6 +128,15 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 model.addElement(virtualFile);
             }
         }
+    }
+
+    public boolean isTransparencyChessboardVisible() {
+        return cellRenderer.getImageComponent().isTransparencyChessboardVisible();
+    }
+
+    public void setTransparencyChessboardVisible(boolean visible) {
+        cellRenderer.getImageComponent().setTransparencyChessboardVisible(visible);
+        list.repaint();
     }
 
     private static final class ThumbnailListCellRenderer extends ThumbnailComponent
@@ -218,8 +231,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             if (MouseEvent.BUTTON3 == e.getButton() && e.getClickCount() == 1) {
                 // Single right click
                 ActionManager actionManager = ActionManager.getInstance();
-                ActionGroup actionGroup = (ActionGroup)actionManager.getAction(THUMBNAILS_POPUP_GROUP);
-                ActionPopupMenu menu = actionManager.createActionPopupMenu(THUMBNAILS_POPUP_GROUP, actionGroup);
+                ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ThumbnailsActions.GROUP_POPUP_MENU);
+                ActionPopupMenu menu = actionManager.createActionPopupMenu(ThumbnailsActions.GROUP_POPUP_MENU, actionGroup);
                 JPopupMenu popupMenu = menu.getComponent();
                 popupMenu.pack();
                 popupMenu.show(e.getComponent(), e.getX(), e.getY());
@@ -240,6 +253,10 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             return getSelectedFiles();
         } else if (DataConstants.NAVIGATABLE.equals(dataId)) {
             return new ThumbnailNavigatable(getSelectedFiles());
+        } else if (ImagesDataConstants.IMAGE_COMPONENT.equals(dataId)) {
+            return cellRenderer.getImageComponent();
+        } else if (ImagesDataConstants.THUMBNAIL_VIEW.equals(dataId)) {
+            return thumbnailView;
         }
 
         return null;
@@ -308,7 +325,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 int index = ((DefaultListModel)list.getModel()).indexOf(file);
                 if (index != -1) {
                     Rectangle cellBounds = list.getCellBounds(index, index);
-                    repaint(cellBounds);
+                    list.repaint(cellBounds);
                 }
             }
         }
@@ -335,6 +352,12 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             imageComponent.setGridLineZoomFactor(gridOptions.getLineZoomFactor());
             imageComponent.setGridLineSpan(gridOptions.getLineSpan());
             imageComponent.setGridLineColor(gridOptions.getLineColor());
+        }
+    }
+
+    private class ICPropertyChangeListener implements PropertyChangeListener {
+        public void propertyChange(PropertyChangeEvent evt) {
+            repaint();
         }
     }
 }

@@ -18,7 +18,7 @@ import javax.swing.*;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ThumbnailViewImpl implements ThumbnailView {
-    private static final Icon TOOL_WINDOW_ICON = IconLoader.getIcon("/org/intellij/images/thumbnail/icons/ThumbnailToolWindow.png");
+    private static final Icon TOOL_WINDOW_ICON = IconLoader.getIcon("/org/intellij/images/icons/ThumbnailToolWindow.png");
 
     private final Project project;
     private final ToolWindow toolWindow;
@@ -33,6 +33,10 @@ final class ThumbnailViewImpl implements ThumbnailView {
         ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
         toolWindow = windowManager.registerToolWindow(TOOLWINDOW_ID, new ThumbnailViewUI(this), ToolWindowAnchor.BOTTOM);
         toolWindow.setIcon(TOOL_WINDOW_ICON);
+    }
+
+    private ThumbnailViewUI getUI() {
+        return ((ThumbnailViewUI)toolWindow.getComponent());
     }
 
     public void setRoot(@NotNull VirtualFile root) {
@@ -54,11 +58,11 @@ final class ThumbnailViewImpl implements ThumbnailView {
     }
 
     private void updateUI() {
-        ((ThumbnailViewUI)toolWindow.getComponent()).refresh();
+        getUI().refresh();
     }
 
     public void show() {
-        ((ThumbnailViewUI)toolWindow.getComponent()).createUI();
+        getUI().createUI();
 
         toolWindow.setAvailable(true, null);
         toolWindow.activate(null);
@@ -66,16 +70,24 @@ final class ThumbnailViewImpl implements ThumbnailView {
 
     public void hide() {
         toolWindow.setAvailable(false, null);
+
+        getUI().dispose();
     }
 
     public Project getProject() {
         return project;
     }
 
+    public void setTransparencyChessboardVisible(boolean visible) {
+        getUI().setTransparencyChessboardVisible(visible);
+    }
+
+    public boolean isTransparencyChessboardVisible() {
+        return getUI().isTransparencyChessboardVisible();
+    }
+
     public void dispose() {
         ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
         windowManager.unregisterToolWindow(TOOLWINDOW_ID);
     }
-
-
 }

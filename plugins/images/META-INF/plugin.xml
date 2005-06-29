@@ -51,34 +51,37 @@
         </group>
         <group id="Images.EditorToolbar">
             <action class="org.intellij.images.editor.actions.ToggleTransparencyChessboardAction" text="Toggle Transparency Chessboard"
-                    id="Images.Editor.ToggleBackground" description="Toggle transparency chessboard under image"
-                    icon="/org/intellij/images/editor/actions/icons/ToggleTransparencyChessboard.png"/>
+                    id="Images.Editor.ToggleTransparencyChessboard" description="Toggle transparency chessboard under image"
+                    icon="/org/intellij/images/icons/ToggleTransparencyChessboard.png"/>
             <action class="org.intellij.images.editor.actions.ToggleGridAction" text="Toggle Grid"
                     id="Images.Editor.ToggleGrid" description="Toggle grid lines over image"
-                    icon="/org/intellij/images/editor/actions/icons/ToggleGrid.png"/>
+                    icon="/org/intellij/images/icons/ToggleGrid.png"/>
             <separator/>
             <action class="org.intellij.images.editor.actions.ZoomInAction" text="Zoom In"
                     id="Images.Editor.ZoomIn" description="Increase image view"
-                    icon="/org/intellij/images/editor/actions/icons/ZoomIn.png"/>
+                    icon="/org/intellij/images/icons/ZoomIn.png"/>
             <action class="org.intellij.images.editor.actions.ZoomOutAction" text="Zoom Out"
                     id="Images.Editor.ZoomOut" description="Reduce image view"
-                    icon="/org/intellij/images/editor/actions/icons/ZoomOut.png"/>
-            <separator/>
+                    icon="/org/intellij/images/icons/ZoomOut.png"/>
             <action class="org.intellij.images.editor.actions.ActualSizeAction" text="Actual Size"
                     id="Images.Editor.ActualSize" description="Resize image to actual size"
-                    icon="/org/intellij/images/editor/actions/icons/ActualSize.png"/>
+                    icon="/org/intellij/images/icons/ActualSize.png"/>
             <separator/>
         </group>
         <group id="Images.ThumbnailsToolbar">
             <action class="org.intellij.images.thumbnail.actions.UpFolderAction" text="Level Up"
-                    id="Images.UpFolder" description="Level up"
+                    id="Images.Thumbnails.UpFolder" description="Level up"
                     icon="/nodes/upFolder.png"/>
             <action class="org.intellij.images.thumbnail.actions.ToggleRecursiveAction" text="Recursive"
-                    id="Images.ToggleRecursive" description="Toggle recursive browsing"
+                    id="Images.Thumbnails.ToggleRecursive" description="Toggle recursive browsing"
                     icon="/objectBrowser/flattenPackages.png"/>
             <separator />
+            <action class="org.intellij.images.thumbnail.actions.ToggleTransparencyChessboardAction" text="Toggle Transparency Chessboard"
+                    id="Images.Thumbnails.ToggleTransparencyChessboard" description="Toggle transparency chessboard under image"
+                    icon="/org/intellij/images/icons/ToggleTransparencyChessboard.png"/>
+            <separator />
             <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction" text="Close"
-                    id="Images.HideThumbnails" description="Hide tool window"
+                    id="Images.Thumbnails.Hide" description="Hide tool window"
                     icon="/actions/cancel.png"/>
         </group>
     </actions>

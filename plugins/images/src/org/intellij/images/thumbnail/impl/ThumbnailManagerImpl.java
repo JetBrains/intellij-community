@@ -51,7 +51,8 @@ final class ThumbnailManagerImpl extends ThumbnailManager implements Application
     }
 
     public void projectClosed(Project project) {
-        views.remove(project);
+        ThumbnailView thumbnailView = views.remove(project);
+        thumbnailView.dispose();
     }
 
     public void projectClosing(Project project) {

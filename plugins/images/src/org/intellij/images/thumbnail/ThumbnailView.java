@@ -39,4 +39,7 @@ public interface ThumbnailView extends Disposable {
     void hide();
 
     Project getProject();
+
+    void setTransparencyChessboardVisible(boolean visible);
+    boolean isTransparencyChessboardVisible(); 
 }

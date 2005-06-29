@@ -14,8 +14,6 @@ public interface ZoomOptions extends Cloneable {
     String ATTR_SMART_ZOOMING = ATTR_PREFIX + "smartZooming";
     String ATTR_PREFFERED_WIDTH = ATTR_PREFIX + "prefferedWidth";
     String ATTR_PREFFERED_HEIGHT = ATTR_PREFIX + "prefferedHeight";
-    double MAX_ZOOM_FACTOR = 32.0d; // 8x
-    double MIN_ZOOM_FACTOR = 0.0675d; // 1/8x
 
     boolean isWheelZooming();
 

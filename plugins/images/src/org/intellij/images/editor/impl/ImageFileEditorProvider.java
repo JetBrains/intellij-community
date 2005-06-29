@@ -14,7 +14,7 @@ import java.io.IOException;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-class ImageFileEditorProvider implements ApplicationComponent, FileEditorProvider {
+final class ImageFileEditorProvider implements ApplicationComponent, FileEditorProvider {
     private static final String NAME = "ImageEditorProvider";
     private static final String EDITOR_TYPE_ID = "images";
 

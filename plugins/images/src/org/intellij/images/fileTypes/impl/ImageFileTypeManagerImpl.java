@@ -48,7 +48,7 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements App
             extensions.add(format.toLowerCase());
         }
         imageFileType = new ImageFileType();
-        imageFileType.setIcon(IconLoader.getIcon("/org/intellij/images/fileTypes/icons/ImagesFileType.png"));
+        imageFileType.setIcon(IconLoader.getIcon("/org/intellij/images/icons/ImagesFileType.png"));
         imageFileType.setName(IMAGE_FILE_TYPE_NAME);
         imageFileType.setDescription(IMAGE_FILE_TYPE_DESCRIPTION);
         fileTypeManager.registerFileType(imageFileType, extensions.toArray(EMPTY_STRING_ARRAY));

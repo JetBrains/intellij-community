@@ -15,9 +15,9 @@ import java.awt.image.BufferedImage;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public class ThumbnailComponentUI extends ComponentUI {
-    private static final Icon THUMBNAIL_BLANK = IconLoader.getIcon("/org/intellij/images/thumbnail/icons/ThumbnailBlank.png");
-    private static final Icon THUMBNAIL_DIRECTORY = IconLoader.getIcon("/org/intellij/images/thumbnail/icons/ThumbnailDirectory.png");
-    private static final Icon THUMBNAIL_ERROR = IconLoader.getIcon("/org/intellij/images/thumbnail/icons/ThumbnailError.png");
+    private static final Icon THUMBNAIL_BLANK = IconLoader.getIcon("/org/intellij/images/icons/ThumbnailBlank.png");
+    private static final Icon THUMBNAIL_DIRECTORY = IconLoader.getIcon("/org/intellij/images/icons/ThumbnailDirectory.png");
+    private static final Icon THUMBNAIL_ERROR = IconLoader.getIcon("/org/intellij/images/icons/ThumbnailError.png");
     private static final int THUMBNAIL_BLANK_WIDTH = THUMBNAIL_BLANK.getIconWidth();
     private static final int THUMBNAIL_BLANK_HEIGHT = THUMBNAIL_BLANK.getIconHeight();
     private static final String DOTS = "...";
@@ -134,16 +134,14 @@ public class ThumbnailComponentUI extends ComponentUI {
             }
         }
 
-        imageComponent.setSize(imageWidth, imageHeight);
+        imageComponent.setCanvasSize(imageWidth, imageHeight);
+        Dimension size = imageComponent.getSize();
 
-        int x = 5 + (THUMBNAIL_BLANK_WIDTH - imageWidth) / 2;
-        int y = 5 + (THUMBNAIL_BLANK_HEIGHT - imageHeight) / 2;
+        int x = 5 + (THUMBNAIL_BLANK_WIDTH - size.width) / 2;
+        int y = 5 + (THUMBNAIL_BLANK_HEIGHT - size.height) / 2;
 
 
-        imageComponent.paint(g.create(x, y, imageWidth, imageHeight));
-
-        g.setColor(Color.LIGHT_GRAY);
-        g.drawRect(x - 2, y - 2, imageWidth + 3, imageHeight + 3);
+        imageComponent.paint(g.create(x, y, size.width, size.height));
     }
 
     private void paintFileName(Graphics g, ThumbnailComponent tc) {

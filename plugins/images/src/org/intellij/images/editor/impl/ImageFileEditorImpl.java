@@ -29,7 +29,7 @@ import java.io.Serializable;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileEditor {
+final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileEditor {
     private static final String NAME = "ImageFileEditor";
     private final ImageEditor imageEditor;
 
@@ -87,7 +87,7 @@ class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileEditor 
         return new ImageFileEditorState(
             imageEditor.isTransparencyChessboardVisible(),
             imageEditor.isGridVisible(),
-            zoomModel.getSize());
+            zoomModel.getZoomFactor());
     }
 
     public void setState(FileEditorState state) {
@@ -96,7 +96,7 @@ class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileEditor 
             ImageZoomModel zoomModel = imageEditor.getZoomModel();
             imageEditor.setTransparencyChessboardVisible(editorState.backgroundVisible);
             imageEditor.setGridVisible(editorState.gridVisible);
-            zoomModel.setSize(editorState.size);
+            zoomModel.setZoomFactor(editorState.zoomFactor);
         }
     }
 
@@ -147,12 +147,12 @@ class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileEditor 
 
         private boolean backgroundVisible;
         private boolean gridVisible;
-        private Dimension size;
+        private double zoomFactor;
 
-        private ImageFileEditorState(boolean backgroundVisible, boolean gridVisible, Dimension size) {
+        private ImageFileEditorState(boolean backgroundVisible, boolean gridVisible, double zoomFactor) {
             this.backgroundVisible = backgroundVisible;
             this.gridVisible = gridVisible;
-            this.size = size;
+            this.zoomFactor = zoomFactor;
         }
 
         public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {

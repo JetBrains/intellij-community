@@ -137,6 +137,23 @@ public class ImageComponent extends JComponent {
         return grid.isVisible();
     }
 
+    public void setCanvasSize(int width, int height) {
+        Dimension oldValue = getCanvasSize();
+        if (oldValue.width != width || oldValue.height != height) {
+            setSize(width + 4, height + 4);
+            firePropertyChange("canvasSize", oldValue, getCanvasSize());
+        }
+    }
+
+    public void setCanvasSize(Dimension dimension) {
+        setCanvasSize(dimension.width + 4, dimension.height + 4);
+    }
+
+    public Dimension getCanvasSize() {
+        Dimension size = getSize();
+        return new Dimension(size.width - 4, size.height - 4);
+    }
+
     public String getUIClassID() {
         return uiClassID;
     }

@@ -22,23 +22,36 @@ public class ImageComponentUI extends ComponentUI {
             ImageDocument document = ic.getDocument();
             BufferedImage image = document.getValue();
             if (image != null) {
+                paintBorder(g, ic);
+
+                Dimension size = ic.getCanvasSize();
+                Graphics igc = g.create(2, 2, size.width, size.height);
+
                 // Transparency chessboard
                 if (ic.isTransparencyChessboardVisible()) {
-                    paintChessboard(g, ic);
+                    paintChessboard(igc, ic);
                 }
 
-                paintImage(g, ic);
+                paintImage(igc, ic);
 
                 // Grid
                 if (ic.isGridVisible()) {
-                    paintGrid(g, ic);
+                    paintGrid(igc, ic);
                 }
+
+                igc.dispose();
             }
         }
     }
 
-    private void paintChessboard(Graphics g, ImageComponent ic) {
+    private void paintBorder(Graphics g, ImageComponent ic) {
         Dimension size = ic.getSize();
+        g.setColor(ic.getTransparencyChessboardBlackColor());
+        g.drawRect(0, 0, size.width - 1, size.height - 1);
+    }
+
+    private void paintChessboard(Graphics g, ImageComponent ic) {
+        Dimension size = ic.getCanvasSize();
         // Create pattern
         int cellSize = ic.getTransparencyChessboardCellSize();
         int patternSize = 2 * cellSize;
@@ -56,25 +69,25 @@ public class ImageComponentUI extends ComponentUI {
 
     private void paintImage(Graphics g, ImageComponent ic) {
         ImageDocument document = ic.getDocument();
-        Dimension size = ic.getSize();
+        Dimension size = ic.getCanvasSize();
         g.drawImage(document.getRenderer(), 0, 0, size.width, size.height, ic);
     }
 
     private void paintGrid(Graphics g, ImageComponent ic) {
-        Dimension size = ic.getSize();
+        Dimension size = ic.getCanvasSize();
         BufferedImage image = ic.getDocument().getValue();
-        int canvasWidth = image.getWidth();
-        int canvasHeight = image.getHeight();
-        double zoomX = (double)size.width / (double)canvasWidth;
-        double zoomY = (double)size.height / (double)canvasHeight;
+        int imageWidth = image.getWidth();
+        int imageHeight = image.getHeight();
+        double zoomX = (double)size.width / (double)imageWidth;
+        double zoomY = (double)size.height / (double)imageHeight;
         double zoomFactor = (zoomX + zoomY) / 2.0d;
         if (zoomFactor >= ic.getGridLineZoomFactor()) {
             g.setColor(ic.getGridLineColor());
             int ls = ic.getGridLineSpan();
-            for (int dx = ls; dx < canvasWidth; dx += ls) {
+            for (int dx = ls; dx < imageWidth; dx += ls) {
                 g.drawLine((int)((double)dx * zoomX), 0, (int)((double)dx * zoomX), size.height);
             }
-            for (int dy = ls; dy < canvasHeight; dy += ls) {
+            for (int dy = ls; dy < imageHeight; dy += ls) {
                 g.drawLine(0, (int)((double)dy * zoomY), size.width, (int)((double)dy * zoomY));
             }
         }

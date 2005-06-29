@@ -22,7 +22,7 @@ import java.io.IOException;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
+final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
     private static final Logger LOGGER = Logger.getInstance("ImageEditor");
     private final PropertyChangeListener optionsChangeListener = new OptionsChangeListener();
     private final Project project;
@@ -41,7 +41,11 @@ class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
     }
 
     public JComponent getComponent() {
-        return editorUI.getRootPane();
+        return editorUI;
+    }
+
+    public JComponent getContentComponent() {
+        return editorUI.getImageComponent();
     }
 
     public Project getProject() {
@@ -50,10 +54,6 @@ class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
 
     public ImageDocument getDocument() {
         return editorUI.getImageComponent().getDocument();
-    }
-
-    public JComponent getContentComponent() {
-        return editorUI.getImageComponent();
     }
 
     public void setTransparencyChessboardVisible(boolean visible) {

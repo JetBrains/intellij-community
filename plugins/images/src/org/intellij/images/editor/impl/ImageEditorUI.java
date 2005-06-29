@@ -3,11 +3,14 @@ package org.intellij.images.editor.impl;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DataProvider;
+import org.intellij.images.actionSystem.ImagesDataConstants;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
 import org.intellij.images.options.*;
 import org.intellij.images.ui.ImageComponent;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -22,14 +25,10 @@ import java.awt.image.BufferedImage;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-class ImageEditorUI {
-    private final JPanel rootPane;
-    private final JScrollPane scrollPane;
-    private final JLayeredPane contentPane;
+final class ImageEditorUI extends JPanel implements DataProvider {
     private final ImageZoomModel zoomModel = new ImageZoomModelImpl();
     private final ImageWheelAdapter wheelAdapter = new ImageWheelAdapter();
     private final ChangeListener changeListener = new DocumentChangeListener();
-
     private final ImageComponent imageComponent = new ImageComponent();
 
     ImageEditorUI(BufferedImage image, EditorOptions editorOptions) {
@@ -46,36 +45,28 @@ class ImageEditorUI {
         imageComponent.setGridLineSpan(gridOptions.getLineSpan());
         imageComponent.setGridLineColor(gridOptions.getLineColor());
 
-        // Border
-        imageComponent.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-
-        // Zoom by wheel listener
-        imageComponent.addMouseWheelListener(wheelAdapter);
-
         // Create layout
-        contentPane = new RendererPane();
-        contentPane.add(imageComponent);
-        scrollPane = new JScrollPane(contentPane);
+        JScrollPane scrollPane = new JScrollPane(new ImageContainerPane(imageComponent));
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
+        // Zoom by wheel listener
+        scrollPane.addMouseWheelListener(wheelAdapter);
+
         // Construct UI
-        rootPane = new JPanel(new BorderLayout());
-        rootPane.add(scrollPane, BorderLayout.CENTER);
+        setLayout(new BorderLayout());
+
         ActionManager actionManager = ActionManager.getInstance();
         ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ImageEditorActions.GROUP_TOOLBAR);
-        ActionToolbar actionToolbar = actionManager.createActionToolbar(ImageEditorActions.GROUP_TOOLBAR, actionGroup, true);
-        rootPane.add(actionToolbar.getComponent(), BorderLayout.NORTH);
+        ActionToolbar actionToolbar = actionManager.createActionToolbar(
+            ImageEditorActions.GROUP_TOOLBAR, actionGroup, true
+        );
+        add(actionToolbar.getComponent(), BorderLayout.NORTH);
 
-        // Set default size
-        zoomModel.setSize(new Dimension(image.getWidth(), image.getHeight()));
+        add(scrollPane, BorderLayout.CENTER);
 
         // Set content
         document.setValue(image);
-    }
-
-    JComponent getRootPane() {
-        return rootPane;
     }
 
     ImageComponent getImageComponent() {
@@ -83,34 +74,48 @@ class ImageEditorUI {
     }
 
     void dispose() {
-        JViewport viewport = scrollPane.getViewport();
-        viewport.setView(null);
         imageComponent.removeMouseWheelListener(wheelAdapter);
         imageComponent.getDocument().removeChangeListener(changeListener);
+
+        removeAll();
     }
 
     ImageZoomModel getZoomModel() {
         return zoomModel;
     }
 
-    void repaint() {
-        if (contentPane != null && scrollPane != null) {
-            contentPane.revalidate();
-            scrollPane.revalidate();
-            scrollPane.repaint();
+    @Nullable public Object getData(String dataId) {
+        if (ImagesDataConstants.IMAGE_COMPONENT.equals(dataId)) {
+            return imageComponent;
         }
+        return null;
     }
 
-    private final class RendererPane extends JLayeredPane {
-        protected void paintComponent(Graphics g) {
+    private static final class ImageContainerPane extends JLayeredPane {
+        private final ImageComponent imageComponent;
+
+        public ImageContainerPane(ImageComponent imageComponent) {
+            this.imageComponent = imageComponent;
+            add(imageComponent);
+        }
+
+        private void centerImage() {
             Point imageLocation = imageComponent.getLocation();
-            Rectangle bounds = contentPane.getBounds();
+            Rectangle bounds = getBounds();
             imageLocation.x = (bounds.width - imageComponent.getWidth()) / 2;
             imageLocation.y = (bounds.height - imageComponent.getHeight()) / 2;
             imageComponent.setLocation(imageLocation);
-            super.paintComponent(g);
         }
 
+        public void invalidate() {
+            centerImage();
+
+            super.invalidate();
+        }
+
+        public Dimension getPreferredSize() {
+            return imageComponent.getSize();
+        }
     }
 
     private final class ImageWheelAdapter implements MouseWheelListener {
@@ -119,51 +124,87 @@ class ImageEditorUI {
             EditorOptions editorOptions = options.getEditorOptions();
             ZoomOptions zoomOptions = editorOptions.getZoomOptions();
             if (zoomOptions.isWheelZooming() && e.isControlDown()) {
-                double zoom = zoomModel.getZoomFactor();
                 if (e.getWheelRotation() < 0) {
-                    zoom *= 0.5d;
+                    zoomModel.zoomOut();
                 } else {
-                    zoom *= 2.0d;
+                    zoomModel.zoomIn();
                 }
-                zoomModel.setZoomFactor(zoom);
+                e.consume();
             }
         }
     }
 
     private class ImageZoomModelImpl implements ImageZoomModel {
-        public Dimension getSize() {
-            return imageComponent.getSize();
-        }
-
-        public final void setSize(Dimension size) {
-            imageComponent.setSize(size);
-            contentPane.setPreferredSize(size);
-            repaint();
-        }
-
         public double getZoomFactor() {
-            Dimension size = getSize();
+            Dimension size = imageComponent.getCanvasSize();
             BufferedImage image = imageComponent.getDocument().getValue();
-            return (size.getWidth() / (double)image.getWidth() + size.getHeight() / (double)image.getHeight()) / 2.0d;
+            return size.getWidth() / (double)image.getWidth();
         }
 
         public void setZoomFactor(double zoomFactor) {
             // Change current size
-            if (zoomFactor > ZoomOptions.MAX_ZOOM_FACTOR) {
-                zoomFactor = ZoomOptions.MAX_ZOOM_FACTOR;
-            }
-            if (zoomFactor < ZoomOptions.MIN_ZOOM_FACTOR) {
-                zoomFactor = ZoomOptions.MIN_ZOOM_FACTOR;
-            }
-            Dimension size = getSize();
+            Dimension size = imageComponent.getCanvasSize();
             BufferedImage image = imageComponent.getDocument().getValue();
             size.setSize((double)image.getWidth() * zoomFactor, (double)image.getHeight() * zoomFactor);
-            setSize(size);
+            imageComponent.setCanvasSize(size);
+
+            revalidate();
+            repaint();
+        }
+
+        private double getMinimumZoomFactor() {
+            BufferedImage image = imageComponent.getDocument().getValue();
+            return 1.0d / image.getWidth();
+        }
+
+        public void zoomOut() {
+            double factor = getZoomFactor();
+            if (factor > 2.0d) {
+                // Macro
+                setZoomFactor(factor / 2.0d);
+            } else {
+                // Micro
+                double minFactor = getMinimumZoomFactor();
+                double stepSize = (1.0d - minFactor) / MICRO_ZOOM_LIMIT;
+                int step = (int)Math.ceil((1.0d - factor) / stepSize);
+
+                setZoomFactor(1.0d - stepSize * (step + 1));
+            }
+        }
+
+        public void zoomIn() {
+            double factor = getZoomFactor();
+            if (factor >= 1.0d) {
+                // Macro
+                setZoomFactor(factor * 2.0d);
+            } else {
+                // Micro
+                double minFactor = getMinimumZoomFactor();
+                double stepSize = (1.0d - minFactor) / MICRO_ZOOM_LIMIT;
+                int step = (int)Math.ceil((1.0d - factor) / stepSize);
+
+                setZoomFactor(1.0d - stepSize * (step - 1));
+            }
+        }
+
+        public boolean canZoomOut() {
+            double factor = getZoomFactor();
+            double minFactor = getMinimumZoomFactor();
+            double stepSize = (1.0 - minFactor) / MICRO_ZOOM_LIMIT;
+            double step = Math.ceil((1.0 - factor) / stepSize);
+
+            return step < MICRO_ZOOM_LIMIT;
+        }
+
+        public boolean canZoomIn() {
+            double zoomFactor = getZoomFactor();
+            return zoomFactor < MACRO_ZOOM_LIMIT;
         }
     }
 
     private class DocumentChangeListener implements ChangeListener {
         public void stateChanged(ChangeEvent e) {
+            revalidate();
             repaint();
         }
     }

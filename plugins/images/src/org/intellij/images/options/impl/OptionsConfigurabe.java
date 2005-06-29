@@ -29,7 +29,7 @@ public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport 
     }
 
     public Icon getIcon() {
-        return IconLoader.getIcon("/org/intellij/images/options/icons/ImagesConfigurable.png");
+        return IconLoader.getIcon("/org/intellij/images/icons/ImagesConfigurable.png");
     }
 
     public String getHelpTopic() {

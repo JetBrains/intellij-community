@@ -1,13 +1,15 @@
 package org.intellij.images.editor;
 
-import java.awt.*;
-
 /**
  * Location model presents bounds of image.
+ * The zoom it calculated as y = exp(x/2).
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface ImageZoomModel {
+    int MACRO_ZOOM_LIMIT = 32;
+    int MICRO_ZOOM_LIMIT = 8;
+
     /**
      * Return zoom value of current image.
      */
@@ -18,13 +20,11 @@ public interface ImageZoomModel {
      */
     void setZoomFactor(double zoomFactor);
 
-    /**
-     * Return size of curent visible image document. It not a actual size of image.
-     */
-    Dimension getSize();
+    void zoomOut();
 
-    /**
-     * Set visible size of image.
-     */
-    void setSize(Dimension size);
+    void zoomIn();
+
+    boolean canZoomOut();
+
+    boolean canZoomIn();
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
@@ -38,7 +39,7 @@ public final class EditExternalyAction extends AnAction {
                 ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
                 StringBuffer commandLine = new StringBuffer(executablePath.replace('/', File.separatorChar));
                 for (VirtualFile file : files) {
-                    if (typeManager.isImage(file)) {
+                    if ((file.getFileSystem() instanceof LocalFileSystem) && typeManager.isImage(file)) {
                         commandLine.append(" \"");
                         commandLine.append(VfsUtil.virtualToIoFile(file).getAbsolutePath());
                         commandLine.append('\"');
@@ -46,9 +47,10 @@ public final class EditExternalyAction extends AnAction {
                 }
 
                 try {
-                    Runtime.getRuntime().exec(commandLine.toString());
+                    File executableFile = new File(executablePath);
+                    Runtime.getRuntime().exec(commandLine.toString(), null, executableFile.getParentFile());
                 } catch (IOException ex) {
-                    Messages.showErrorDialog(project, ex.getLocalizedMessage(), "Error opening file");
+                    Messages.showErrorDialog(project, ex.getLocalizedMessage(), "Error opening executableFile");
                 }
             }
         }
@@ -66,7 +68,7 @@ public final class EditExternalyAction extends AnAction {
         if (files != null) {
             ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
             for (VirtualFile file : files) {
-                if (!typeManager.isImage(file)) {
+                if (!(file.getFileSystem() instanceof LocalFileSystem) || !typeManager.isImage(file)) {
                     return false;
                 }
             }

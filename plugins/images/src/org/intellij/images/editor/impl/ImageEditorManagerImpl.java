@@ -14,7 +14,7 @@ import java.io.IOException;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-class ImageEditorManagerImpl implements ImageEditorManager, ApplicationComponent {
+final class ImageEditorManagerImpl implements ImageEditorManager, ApplicationComponent {
     private static final String NAME = "ImageEditorManager";
 
     public String getComponentName() {
