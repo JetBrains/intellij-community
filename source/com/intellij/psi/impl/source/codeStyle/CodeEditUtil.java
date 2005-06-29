@@ -144,7 +144,7 @@ public class CodeEditUtil {
     ASTNode nextElement = anchorBefore;
     if (nextElement == null) {
       nextElement = findElementAfter(parent, false);
-    } else if (isWS(nextElement)) {
+    } else if (isWS(nextElement) || nextElement.getTextLength() == 0) {
       nextElement = findElementAfter(anchorBefore, false);
     }
     if (nextElement != null) {

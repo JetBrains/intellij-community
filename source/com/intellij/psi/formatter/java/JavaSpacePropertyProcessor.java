@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
@@ -130,6 +131,10 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
   }
 
   public void visitClass(PsiClass aClass) {
+    if (myChild1.getElementType() == JavaDocElementType.DOC_COMMENT) {
+      myResult = Formatter.getInstance().createSpaceProperty(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      return;
+    }
     if (myRole2 == ChildRole.LBRACE) {
       myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_CLASS_LBRACE, mySettings.CLASS_BRACE_STYLE, new TextRange(myParent.getTextRange().getStartOffset(),
                                                                                                                         myChild2.getTextRange().getStartOffset()),
@@ -505,6 +510,11 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
   }
 
   public void visitField(PsiField field) {
+    if (myChild1.getElementType() == JavaDocElementType.DOC_COMMENT) {
+      myResult = Formatter.getInstance().createSpaceProperty(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      return;
+    }
+
     if (myRole1 == ChildRole.INITIALIZER_EQ || myRole2 == ChildRole.INITIALIZER_EQ) {
       createSpaceInCode(mySettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
     } else if (myRole1 == ChildRole.TYPE || myRole2 == ChildRole.TYPE) {
@@ -529,6 +539,11 @@ public class JavaSpacePropertyProcessor extends PsiElementVisitor{
   }
 
   public void visitMethod(PsiMethod method) {
+    if (myChild1.getElementType() == JavaDocElementType.DOC_COMMENT) {
+      myResult = Formatter.getInstance().createSpaceProperty(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      return;
+    }
+    
     if (myRole2 == ChildRole.PARAMETER_LIST) {
       createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
     }
