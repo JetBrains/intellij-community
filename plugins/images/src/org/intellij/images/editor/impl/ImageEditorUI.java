@@ -3,23 +3,20 @@ package org.intellij.images.editor.impl;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DataProvider;
-import org.intellij.images.actionSystem.ImagesDataConstants;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
 import org.intellij.images.options.*;
 import org.intellij.images.ui.ImageComponent;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
 
 /**
@@ -27,7 +24,7 @@ import java.awt.image.BufferedImage;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageEditorUI extends JPanel implements DataProvider {
+final class ImageEditorUI extends JPanel {
     private final ImageZoomModel zoomModel = new ImageZoomModelImpl();
     private final ImageWheelAdapter wheelAdapter = new ImageWheelAdapter();
     private final ChangeListener changeListener = new DocumentChangeListener();
@@ -90,13 +87,6 @@ final class ImageEditorUI extends JPanel implements DataProvider {
 
     ImageZoomModel getZoomModel() {
         return zoomModel;
-    }
-
-    @Nullable public Object getData(String dataId) {
-        if (ImagesDataConstants.IMAGE_COMPONENT.equals(dataId)) {
-            return imageComponent;
-        }
-        return null;
     }
 
     private static final class ImageContainerPane extends JLayeredPane {

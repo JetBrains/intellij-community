@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
-import org.intellij.images.actionSystem.ImagesDataConstants;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailsActions;
@@ -254,10 +253,6 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             return getSelectedFiles();
         } else if (DataConstants.NAVIGATABLE.equals(dataId)) {
             return new ThumbnailNavigatable(getSelectedFiles());
-        } else if (ImagesDataConstants.IMAGE_COMPONENT.equals(dataId)) {
-            return cellRenderer.getImageComponent();
-        } else if (ImagesDataConstants.THUMBNAIL_VIEW.equals(dataId)) {
-            return thumbnailView;
         }
 
         return null;
