@@ -193,7 +193,6 @@ public class JavaDocManager implements ProjectComponent {
                                                              | TargetElementUtil.NEW_AS_CONSTRUCTOR
                                                              | TargetElementUtil.THIS_ACCEPTED
                                                              | TargetElementUtil.SUPER_ACCEPTED);
-    if (element instanceof XmlAttributeValue) element = null;
     PsiElement originalElement = (file != null)?file.findElementAt(editor.getCaretModel().getOffset()): null;
 
     if (element == null && editor != null) {

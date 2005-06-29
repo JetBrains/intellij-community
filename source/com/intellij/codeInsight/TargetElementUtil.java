@@ -171,13 +171,7 @@ public class TargetElementUtil {
       final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
       
       if (referenceOrReferencedElement == null) {
-        final PsiElement parent = element.getParent();
-        
-        if(parent instanceof XmlAttributeValue) {
-          final XmlTag tag = PsiTreeUtil.getParentOfType(parent, XmlTag.class);
-          final PsiMetaData metaData = tag.getMetaData();
-          return (metaData != null)?metaData.getDeclaration(): parent;
-        }
+        return getReferenceOrReferencedElement(file, editor, flags, offset);
       }
       return referenceOrReferencedElement;
     }
