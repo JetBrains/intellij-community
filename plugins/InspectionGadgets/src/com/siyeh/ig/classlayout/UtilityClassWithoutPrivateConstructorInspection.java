@@ -14,8 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class UtilityClassWithoutPrivateConstructorInspection
         extends ClassInspection{
-    private final UtilityClassWithoutPrivateConstructorFix fix = new UtilityClassWithoutPrivateConstructorFix();
-
     public String getDisplayName(){
         return "Utility class without private constructor";
     }
@@ -29,10 +27,15 @@ public class UtilityClassWithoutPrivateConstructorInspection
     }
 
     protected InspectionGadgetsFix buildFix(PsiElement location){
-        return fix;
+        final PsiClass aClass = (PsiClass) location.getParent();
+        if(hasNullArgConstructor(aClass)){
+            return new MakeConstructorPrivateFix();
+        } else{
+            return new CreateEmptyPrivateConstructor();
+        }
     }
 
-    private static class UtilityClassWithoutPrivateConstructorFix
+    private static class CreateEmptyPrivateConstructor
             extends InspectionGadgetsFix{
         public String getName(){
             return "Create empty private constructor";
@@ -42,18 +45,80 @@ public class UtilityClassWithoutPrivateConstructorInspection
                 throws IncorrectOperationException{
 
             final PsiElement classNameIdentifier = descriptor.getPsiElement();
-            final PsiClass psiClass = (PsiClass) classNameIdentifier
+            final PsiClass aClass = (PsiClass) classNameIdentifier
                     .getParent();
-            final PsiManager psiManager = PsiManager.getInstance(project);
-            final PsiElementFactory factory = psiManager.getElementFactory();
-            final PsiMethod constructor = factory.createConstructor();
-            final PsiModifierList modifierList = constructor.getModifierList();
-            modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
-            assert psiClass != null;
-            psiClass.add(constructor);
-            final CodeStyleManager styleManager = psiManager
-                    .getCodeStyleManager();
-            styleManager.reformat(constructor);
+            assert aClass != null;
+            if(hasNullArgConstructor(aClass)){
+
+                final PsiMethod[] methods = aClass.getMethods();
+                for(final PsiMethod method : methods){
+                    if(method.isConstructor()){
+                        final PsiParameterList params = method
+                                .getParameterList();
+                        if(params != null
+                                && params.getParameters().length == 0){
+                            final PsiModifierList modifiers = aClass
+                                    .getModifierList();
+                            modifiers
+                                    .setModifierProperty(PsiModifier.PUBLIC,
+                                                         true);
+                            modifiers
+                                    .setModifierProperty(PsiModifier.PROTECTED,
+                                                         true);
+                            modifiers
+                                    .setModifierProperty(PsiModifier.PRIVATE,
+                                                         true);
+                        }
+                    }
+                }
+            } else{
+                final PsiManager psiManager = PsiManager.getInstance(project);
+                final PsiElementFactory factory = psiManager
+                        .getElementFactory();
+                final PsiMethod constructor = factory.createConstructor();
+                final PsiModifierList modifierList = constructor
+                        .getModifierList();
+                modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+                aClass.add(constructor);
+                final CodeStyleManager styleManager = psiManager
+                        .getCodeStyleManager();
+                styleManager.reformat(constructor);
+            }
+        }
+    }
+
+    private static class MakeConstructorPrivateFix
+            extends InspectionGadgetsFix{
+        public String getName(){
+            return "Make constructor private";
+        }
+
+        public void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException{
+
+            final PsiElement classNameIdentifier = descriptor.getPsiElement();
+            final PsiClass aClass = (PsiClass) classNameIdentifier
+                    .getParent();
+            assert aClass != null;
+
+            final PsiMethod[] methods = aClass.getMethods();
+            for(final PsiMethod method : methods){
+                if(method.isConstructor()){
+                    final PsiParameterList params = method
+                            .getParameterList();
+                    if(params != null
+                            && params.getParameters().length == 0){
+                        final PsiModifierList modifiers =
+                                method.getModifierList();
+                        modifiers.setModifierProperty(PsiModifier.PUBLIC,
+                                                       true);
+                        modifiers.setModifierProperty(PsiModifier.PROTECTED,
+                                                       true);
+                        modifiers.setModifierProperty(PsiModifier.PRIVATE,
+                                                       true);
+                    }
+                }
+            }
         }
     }
 
@@ -85,6 +150,19 @@ public class UtilityClassWithoutPrivateConstructorInspection
             if(method.isConstructor() && method
                     .hasModifierProperty(PsiModifier.PRIVATE)){
                 return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasNullArgConstructor(PsiClass aClass){
+        final PsiMethod[] methods = aClass.getMethods();
+        for(final PsiMethod method : methods){
+            if(method.isConstructor()){
+                final PsiParameterList params = method.getParameterList();
+                if(params != null && params.getParameters().length == 0){
+                    return true;
+                }
             }
         }
         return false;

@@ -65,6 +65,7 @@ public class ParenthesesUtils{
             parenthesized = ((PsiParenthesizedExpression) parenthesized)
                     .getExpression();
         }
+
         return parenthesized;
     }
 
@@ -119,8 +120,7 @@ public class ParenthesesUtils{
 
     private static int precedenceForBinaryOperator(PsiJavaToken sign){
         final String operator = sign.getText();
-        final Integer precedence = s_binaryOperatorPrecedence.get(operator);
-        return precedence;
+        return s_binaryOperatorPrecedence.get(operator);
     }
 
     public static String removeParentheses(PsiExpression exp){
@@ -252,7 +252,8 @@ public class ParenthesesUtils{
         final PsiExpression lhs = binaryExp.getLOperand();
         final PsiExpression rhs = binaryExp.getROperand();
         final PsiJavaToken sign = binaryExp.getOperationSign();
-        return removeParentheses(lhs) + sign.getText() + removeParentheses(rhs);
+        return removeParentheses(lhs) + ' ' + sign.getText() + ' '
+                + removeParentheses(rhs);
     }
 
     private static String removeParensFromPostfixExpression(
@@ -310,19 +311,16 @@ public class ParenthesesUtils{
         final PsiExpression lhs = assignment.getLExpression();
         final PsiExpression rhs = assignment.getRExpression();
         final PsiJavaToken sign = assignment.getOperationSign();
-        return removeParentheses(lhs) + sign.getText() +
+        return removeParentheses(lhs) + ' ' + sign.getText() + ' ' +
                 removeParentheses(rhs);
     }
 
-    private static String removeParensFromNewExpression(PsiNewExpression newExp)
-    {
+    private static String removeParensFromNewExpression(
+            PsiNewExpression newExp){
         final PsiExpression[] dimensions = newExp.getArrayDimensions();
-        String[] strippedDimensions = null;
-        if(dimensions != null){
-            strippedDimensions = new String[dimensions.length];
-            for(int i = 0; i < dimensions.length; i++){
-                strippedDimensions[i] = removeParentheses(dimensions[i]);
-            }
+        final String[] strippedDimensions = new String[dimensions.length];
+        for(int i = 0; i < dimensions.length; i++){
+            strippedDimensions[i] = removeParentheses(dimensions[i]);
         }
 
         final PsiExpression qualifier = newExp.getQualifier();
@@ -371,18 +369,16 @@ public class ParenthesesUtils{
             out.append(')');
         }
 
-        if(strippedDimensions != null){
-            if(strippedDimensions.length > 0){
-                for(String strippedDimension : strippedDimensions){
-                    out.append('[');
-                    out.append(strippedDimension);
-                    out.append(']');
-                }
-            } else{
-                final int dimensionCount = type.getArrayDimensions();
-                for(int i = 0; i < dimensionCount; i++){
-                    out.append("[]");
-                }
+        if(strippedDimensions.length > 0){
+            for(String strippedDimension : strippedDimensions){
+                out.append('[');
+                out.append(strippedDimension);
+                out.append(']');
+            }
+        } else{
+            final int dimensionCount = type.getArrayDimensions();
+            for(int i = 0; i < dimensionCount; i++){
+                out.append("[]");
             }
         }
         if(strippedInitializer != null){

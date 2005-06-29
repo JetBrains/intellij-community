@@ -40,11 +40,11 @@ public class TooBroadCatchInspection extends StatementInspection{
                 .getCatchBlockParameters();
         final List<String> typesMasked = new ArrayList<String>();
         for(final PsiParameter parameter : parameters){
+            final PsiType typeCaught = parameter.getType();
+            if(exceptionsThrown.contains(typeCaught)){
+                exceptionsCaught.add(typeCaught);
+            }
             if(parameter.equals(location.getParent())){
-                final PsiType typeCaught = parameter.getType();
-                if(exceptionsThrown.contains(typeCaught)){
-                    continue;
-                }
                 for(PsiType typeThrown : exceptionsThrown){
                     if(exceptionsCaught.contains(typeThrown)){
                         //don't do anything
@@ -57,20 +57,21 @@ public class TooBroadCatchInspection extends StatementInspection{
                 }
             }
         }
-        Collections.sort(typesMasked);
-        String typesMaskedString = "";
-        for(int i = 0; i < typesMasked.size(); i++){
-            if(i == typesMasked.size() - 1){
-                typesMaskedString += " and ";
-            } else if(i != 0){
-                typesMaskedString += ", ";
-            }
-            typesMaskedString += typesMasked.get(i);
-        }
+
         if(typesMasked.size() == 1){
             return "Catch of #ref is too broad, masking exception " +
-                    typesMaskedString + "  #loc";
+                    typesMasked.get(0) + "  #loc";
         } else{
+            Collections.sort(typesMasked);
+            String typesMaskedString = "";
+            for(int i = 0; i < typesMasked.size(); i++){
+                if(i == typesMasked.size() - 1){
+                    typesMaskedString += " and ";
+                } else if(i != 0){
+                    typesMaskedString += ", ";
+                }
+                typesMaskedString += typesMasked.get(i);
+            }
             return "Catch of #ref is too broad, masking exceptions " +
                     typesMaskedString + "  #loc";
         }
@@ -88,8 +89,8 @@ public class TooBroadCatchInspection extends StatementInspection{
             if(tryBlock == null){
                 return;
             }
-            final Set<PsiType> exceptionsThrown = ExceptionUtils
-                    .calculateExceptionsThrown(tryBlock);
+            final Set<PsiType> exceptionsThrown =
+                    ExceptionUtils.calculateExceptionsThrown(tryBlock);
             final int numExceptionsThrown = exceptionsThrown.size();
             final Set<PsiType> exceptionsCaught = new HashSet<PsiType>(
                     numExceptionsThrown);
@@ -98,7 +99,7 @@ public class TooBroadCatchInspection extends StatementInspection{
             for(final PsiParameter parameter : parameters){
                 final PsiType typeCaught = parameter.getType();
                 if(exceptionsThrown.contains(typeCaught)){
-                    continue; 
+                    exceptionsCaught.add(typeCaught);
                 }
                 for(PsiType typeThrown : exceptionsThrown){
                     if(exceptionsCaught.contains(typeThrown)){

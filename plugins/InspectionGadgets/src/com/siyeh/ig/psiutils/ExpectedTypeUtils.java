@@ -284,7 +284,7 @@ public class ExpectedTypeUtils{
 
         public void visitExpressionList(PsiExpressionList expList){
             final JavaResolveResult result = findCalledMethod(expList);
-            PsiMethod method = (PsiMethod)result.getElement();
+            final PsiMethod method = (PsiMethod)result.getElement();
             if(method == null){
                 expectedType = null;
             } else{

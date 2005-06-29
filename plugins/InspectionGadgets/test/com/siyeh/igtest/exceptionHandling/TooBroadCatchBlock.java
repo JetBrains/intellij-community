@@ -4,21 +4,22 @@ import java.io.FileNotFoundException;
 import java.io.EOFException;
 import java.io.IOException;
 
-public class TooBroadCatchBlock {
-    public void foo ()
-    {
-        try {
-            if (bar()) {
+public class TooBroadCatchBlock{
+    public void foo(){
+        try{
+            if(bar()){
                 throw new FileNotFoundException();
-            } else {
+            } else{
                 throw new EOFException();
             }
-        } catch (IOException e) {
+        } catch(FileNotFoundException e){
+            e.printStackTrace();
+        } catch(IOException e){
             e.printStackTrace();
         }
     }
 
-    private boolean bar() {
+    private boolean bar(){
         return false;
     }
 }
