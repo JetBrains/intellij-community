@@ -55,7 +55,8 @@ public abstract class AbstractTreeBuilder {
   private static final int WAIT_CURSOR_DELAY = 100;
 
   private boolean myDisposed = false;
-  private static final AbstractTreeNodeWrapper TREE_NODE_WRAPPER = new AbstractTreeNodeWrapper(null);
+  // used for searching only
+  private final AbstractTreeNodeWrapper TREE_NODE_WRAPPER = new AbstractTreeNodeWrapper(null);
 
   public AbstractTreeBuilder(JTree tree, DefaultTreeModel treeModel,
                              AbstractTreeStructure treeStructure, Comparator<NodeDescriptor> comparator) {
@@ -86,6 +87,7 @@ public abstract class AbstractTreeBuilder {
     if (myWorker != null) {
       myWorker.dispose(true);
     }
+    myElementToNodeMap.clear();
     TREE_NODE_WRAPPER.setValue(null);
     myProgress.cancel();
   }
@@ -769,8 +771,13 @@ public abstract class AbstractTreeBuilder {
       return myElementToNodeMap.get(element);
     }
 
-    TREE_NODE_WRAPPER.setValue(element);
-    return myElementToNodeMap.get(TREE_NODE_WRAPPER);
+    try {
+      TREE_NODE_WRAPPER.setValue(element);
+      return myElementToNodeMap.get(TREE_NODE_WRAPPER);
+    }
+    finally {
+      TREE_NODE_WRAPPER.setValue(null);
+    }
   }
 
   private DefaultMutableTreeNode findNodeForChildElement(DefaultMutableTreeNode parentNode, Object element) {

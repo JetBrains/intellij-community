@@ -138,6 +138,10 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     EditSourceOnDoubleClickHandler.install(myTree);
   }
 
+  public void dispose() {
+    myBuilder.dispose();
+  }
+
   public Object getData(String dataId) {
     if (DataConstants.NAVIGATABLE.equals(dataId)) {
       final NavigatableMessageElement selectedMessageElement = getSelectedMessageElement();

@@ -45,7 +45,7 @@ import java.util.List;
  */
 public class ValidateXmlActionHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.actions.ValidateXmlAction");
-  private static final Key<NewErrorTreeViewPanel> KEY = Key.create("ErrorTreeViewPanel.KEY");
+  private static final Key<NewErrorTreeViewPanel> KEY = Key.create("ValidateXmlAction.KEY");
   private static final String SCHEMA_FULL_CHECKING_FEATURE_ID = "http://apache.org/xml/features/validation/schema-full-checking";
   private static final String GRAMMAR_FEATURE_ID = Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;
   private static final Key<XMLGrammarPoolImpl> GRAMMARS_KEY = Key.create("ErrorTreeViewPanel.KEY");
@@ -171,6 +171,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
               messageView.setSelectedContent(content);
               messageView.addContentManagerListener(new CloseListener(content, messageView));
               removeCompileContents(content);
+              messageView.addContentManagerListener(new MyContentDisposer(content, messageView));
             }
           },
           "Open message view",
@@ -414,4 +415,34 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
 
     return false;
   }
+  private static class MyContentDisposer implements ContentManagerListener {
+    private final Content myContent;
+    private final MessageView myMessageView;
+
+    public MyContentDisposer(final Content content, final MessageView messageView) {
+      myContent = content;
+      myMessageView = messageView;
+    }
+
+    public void contentRemoved(ContentManagerEvent event) {
+      final Content eventContent = event.getContent();
+      if (!eventContent.equals(myContent)) {
+        return;
+      }
+      myMessageView.removeContentManagerListener(this);
+      NewErrorTreeViewPanel errorTreeView = (NewErrorTreeViewPanel)eventContent.getUserData(KEY);
+      if (errorTreeView != null) {
+        errorTreeView.dispose();
+      }
+      eventContent.putUserData(KEY, null);
+    }
+
+    public void contentAdded(ContentManagerEvent event) {
+    }
+    public void contentRemoveQuery(ContentManagerEvent event) {
+    }
+    public void selectionChanged(ContentManagerEvent event) {
+    }
+  }
+
 }

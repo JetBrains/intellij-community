@@ -439,6 +439,7 @@ public class CompilerProgressIndicator extends ProgressIndicatorBase {
       if (event.getContent() == myContent) {
         synchronized (myMessageViewLock) {
           if (myErrorTreeView != null) {
+            myErrorTreeView.dispose();
             myErrorTreeView = null;
             if (isRunning()) {
               cancel();

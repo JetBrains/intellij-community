@@ -42,6 +42,7 @@ public class CvsTabbedWindow implements ProjectComponent {
         JComponent removedComponent = component instanceof CvsTabbedWindowComponent ?
                                       ((CvsTabbedWindowComponent)component).getComponent() : component;
         if (removedComponent == myErrorsView) {
+          myErrorsView.dispose();
           myErrorsView = null;
         }
         else if (myOutput != null && removedComponent == myOutput.getComponent()) {

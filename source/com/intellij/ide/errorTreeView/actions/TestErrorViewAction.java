@@ -64,6 +64,7 @@ public abstract class TestErrorViewAction extends AnAction{
           }
         }
         System.out.println("Expected " + (MESSAGE_COUNT + 1) + " messages;");
+        view.dispose();
       }
     }.start();
   }

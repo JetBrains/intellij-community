@@ -50,4 +50,6 @@ public interface ErrorTreeView {
   void addMessage(int type, String[] text, String groupName, Navigatable navigatable, String exportTextPrefix, String rendererTextPrefix, Object data);
 
   JComponent getComponent();
+
+  void dispose();
 }

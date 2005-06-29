@@ -49,6 +49,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.MessageView;
+import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.ErrorTreeView;
@@ -69,7 +71,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
     myProject = project;
   }
 
-  private static final Key KEY = Key.create("ErrorTreeViewPanel.KEY");
+  private static final Key KEY = Key.create("AbstractVcsHelper.KEY");
 
   public void showErrors(final List abstractVcsExceptions, final String tabDisplayName) {
     LOG.assertTrue(tabDisplayName != null, "tabDisplayName should not be null");
@@ -85,12 +87,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
         CommandProcessor commandProcessor = CommandProcessor.getInstance();
         commandProcessor.executeCommand(myProject, new Runnable() {
           public void run() {
-            MessageView messageView = myProject.getComponent(MessageView.class);
-            Content content = PeerFactory.getInstance().getContentFactory().createContent(errorTreeView.getComponent(), tabDisplayName, true);
+            final MessageView messageView = myProject.getComponent(MessageView.class);
+            final Content content = PeerFactory.getInstance().getContentFactory().createContent(errorTreeView.getComponent(), tabDisplayName, true);
             content.putUserData(KEY, errorTreeView);
             messageView.addContent(content);
             messageView.setSelectedContent(content);
             removeContents(content, tabDisplayName);
+            messageView.addContentManagerListener(new MyContentDisposer(content, messageView));
           }
         },
                                         "Open message view",
@@ -530,6 +533,36 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper implements ProjectC
 
     protected JComponent createCenterPanel() {
       return myComponent;
+    }
+  }
+
+  private static class MyContentDisposer implements ContentManagerListener {
+    private final Content myContent;
+    private final MessageView myMessageView;
+
+    public MyContentDisposer(final Content content, final MessageView messageView) {
+      myContent = content;
+      myMessageView = messageView;
+    }
+
+    public void contentRemoved(ContentManagerEvent event) {
+      final Content eventContent = event.getContent();
+      if (!eventContent.equals(myContent)) {
+        return;
+      }
+      myMessageView.removeContentManagerListener(this);
+      NewErrorTreeViewPanel errorTreeView = (NewErrorTreeViewPanel)eventContent.getUserData(KEY);
+      if (errorTreeView != null) {
+        errorTreeView.dispose();
+      }
+      eventContent.putUserData(KEY, null);
+    }
+
+    public void contentAdded(ContentManagerEvent event) {
+    }
+    public void contentRemoveQuery(ContentManagerEvent event) {
+    }
+    public void selectionChanged(ContentManagerEvent event) {
     }
   }
 }
