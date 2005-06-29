@@ -47,6 +47,8 @@ public class HtmlCompletionData extends XmlCompletionData {
     return new ElementFilter() {
       public boolean isAcceptable(Object element, PsiElement context) {
         String name = ((XmlTag)context).getName();
+        if (name == null) return true;
+        
         if (equalNames(name, "style") ||
             equalNames(name,"script")) {
           return false;
