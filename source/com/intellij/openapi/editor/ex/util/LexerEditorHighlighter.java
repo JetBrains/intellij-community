@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.parsing.jsp.JspHighlightLexer;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.codeHighlighting.CopyCreatorLexer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -263,11 +264,11 @@ public class LexerEditorHighlighter extends DocumentAdapter implements EditorHig
     }
 
     public IElementType getTokenType(){
-        IElementType token = getRawToken();
-        if (token instanceof JspHighlightLexer.ScriptletJavaElementTypeToken) {
-            token = ((JspHighlightLexer.ScriptletJavaElementTypeToken)token).getBase();
-        }
-        return token;
+      IElementType token = getRawToken();
+      if (token instanceof CopyCreatorLexer.HighlightingCopyElementType) {
+        token = ((CopyCreatorLexer.HighlightingCopyElementType)token).getBase();
+      }
+      return token;
     }
 
     private IElementType getRawToken() {

@@ -4,6 +4,7 @@ import com.intellij.ant.PsiAntElement;
 import com.intellij.aspects.psi.PsiAspect;
 import com.intellij.aspects.psi.PsiPointcut;
 import com.intellij.aspects.psi.PsiPointcutDef;
+import com.intellij.codeHighlighting.CopyCreatorLexer;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.j2ee.J2EERolesUtil;
 import com.intellij.j2ee.ejb.role.EjbClassRole;
@@ -30,8 +31,6 @@ import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.cache.RepositoryIndex;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.jsp.JspHighlightLexer;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspUtil;
@@ -899,8 +898,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
         for (lexer.start(chars); ; lexer.advance()) {
           IElementType tokenType = lexer.getTokenType();
-          if (tokenType instanceof JspHighlightLexer.ScriptletJavaElementTypeToken) {
-            tokenType = ((JspHighlightLexer.ScriptletJavaElementTypeToken)tokenType).getBase();
+          if (tokenType instanceof CopyCreatorLexer.HighlightingCopyElementType) {
+            tokenType = ((CopyCreatorLexer.HighlightingCopyElementType)tokenType).getBase();
           }
           if (tokenType == null) break;
 
