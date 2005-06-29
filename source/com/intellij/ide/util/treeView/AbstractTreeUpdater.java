@@ -28,6 +28,7 @@ public class AbstractTreeUpdater {
     final JTree tree = myTreeBuilder.getTree();
     myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 300, tree.isShowing(), tree);
     myDisposable = new UiNotifyConnector(tree, myUpdateQueue);
+    //TODO
   }
 
   /**
