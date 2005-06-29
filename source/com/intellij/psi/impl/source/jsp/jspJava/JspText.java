@@ -15,7 +15,7 @@ import java.util.Set;
 
 public class JspText extends LeafPsiElement {
   private XmlText myFollowingText;
-  private Set<XmlTag> myIncludes = null;
+  private XmlTag[] myIncludes = null;
 
   public JspText(IElementType type, char[] buffer, int start, int end, CharTable table) {
     super(type, buffer, start, end, -1, table);
@@ -44,7 +44,7 @@ public class JspText extends LeafPsiElement {
     myIncludes = null;
   }
 
-  public Set<XmlTag> getIncludeDirectivesInScope() {
+  public XmlTag[] getIncludeDirectivesInScope() {
     if(myIncludes != null) return myIncludes;
     final TextRange textRange = getTextRange();
     final JspFile jspFile = (JspFile)getContainingFile();
@@ -52,10 +52,9 @@ public class JspText extends LeafPsiElement {
     final Set<XmlTag> includeDirectives = new HashSet<XmlTag>();
     for (int i = 0; i < directiveTags.length; i++) {
       final XmlTag directiveTag = directiveTags[i];
-      if(directiveTag.getNode().getStartOffset() < textRange.getStartOffset()) continue;
       if(directiveTag.getNode().getStartOffset() >= textRange.getEndOffset()) break;
       includeDirectives.add(directiveTag);
     }
-    return myIncludes = includeDirectives;
+    return myIncludes = includeDirectives.toArray(new XmlTag[includeDirectives.size()]);
   }
 }
