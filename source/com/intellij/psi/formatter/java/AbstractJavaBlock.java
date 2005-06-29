@@ -260,8 +260,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                                  arrangeChildWrap(child, defaultWrap),
                                                  arrangeChildAlignment(child, defaultAlignment)));
     }
-    else if (child.getElementType() == ElementType.ARRAY_INITIALIZER_EXPRESSION) {
-      result.addAll(new CodeBlockBlock(child, null, null, null, mySettings).buildChildren());
+    else if (child.getElementType() == ElementType.LBRACE && myNode.getElementType() == ElementType.ARRAY_INITIALIZER_EXPRESSION){
+      final Wrap wrap = Formatter.getInstance().createWrap(getWrapType(mySettings.ARRAY_INITIALIZER_WRAP), false);
+      child = processParenBlock(ElementType.LBRACE,
+                                ElementType.RBRACE,
+                                result,
+                                child,
+                                WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
+                                mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
     }
     else if (child.getElementType() == ElementType.LPARENTH && myNode.getElementType() == ElementType.EXPRESSION_LIST){
       final Wrap wrap = Formatter.getInstance().createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
@@ -621,6 +627,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     final IElementType from = ElementType.LPARENTH;
     final IElementType to = ElementType.RPARENTH;
 
+    return processParenBlock(from, to, result, child, wrappingStrategy, doAlign);
+
+  }
+
+  private ASTNode processParenBlock(final IElementType from,
+                                    final IElementType to, final List<Block> result, ASTNode child,
+                                    final WrappingStrategy wrappingStrategy, final boolean doAlign
+  ) {
     final Indent externalIndent = Formatter.getInstance().getNoneIndent();
     final Indent internalIndent = Formatter.getInstance().createContinuationIndent();
     AlignmentStrategy alignmentStrategy = AlignmentStrategy.createDoNotAlingCommaStrategy(createAlignment(doAlign, null));
@@ -650,7 +664,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     return prev;
-
   }
 
   private ASTNode processEnumBlock(List<Block> result,
