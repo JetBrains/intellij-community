@@ -53,6 +53,9 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
 
         // Set smart zooming behaviour on open
         ZoomOptions zoomOptions = editorOptions.getZoomOptions();
+        // Open as actual size
+        zoomModel.setZoomFactor(1.0d);
+
         if (zoomOptions.isSmartZooming()) {
             Dimension prefferedSize = zoomOptions.getPrefferedSize();
             if (prefferedSize.width > image.getWidth() && prefferedSize.height > image.getHeight()) {
@@ -62,9 +65,6 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
                 double factor = (prefferedSize.getWidth() / (double)image.getWidth() + prefferedSize.getHeight() / (double)image.getHeight()) / 2.0d;
                 zoomModel.setZoomFactor(Math.ceil(factor));
             }
-        } else {
-            // Open as actual size
-            zoomModel.setZoomFactor(1.0d);
         }
     }
 
