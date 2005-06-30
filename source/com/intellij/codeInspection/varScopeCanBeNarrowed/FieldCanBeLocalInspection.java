@@ -25,10 +25,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -143,6 +140,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       for (PsiMethod method : methodSet) {
         final PsiReference[] refs = helper.findReferences(myField, new LocalSearchScope(method), true);
         LOG.assertTrue(refs.length > 0);
+        Set<PsiReference> refsSet = new HashSet<PsiReference>(Arrays.asList(refs));
         PsiCodeBlock anchorBlock = findAnchorBlock(refs);
         LOG.assertTrue(anchorBlock != null);
         final PsiElementFactory elementFactory = manager.getElementFactory();
@@ -162,12 +160,14 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
               final PsiExpression initializer = expression.getRExpression();
               final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), initializer);
               newDeclaration = anchor.replace(decl);
+              refsSet.remove(expression.getLExpression());
+              retargetReferences(elementFactory, localName, refsSet);
             }
             else {
-              newDeclaration = addDeclarationWithoutInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refs);
+              newDeclaration = addDeclarationWithoutInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refsSet);
             }
           } else {
-            newDeclaration = addDeclarationWithoutInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refs);
+            newDeclaration = addDeclarationWithoutInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refsSet);
           }
           if (newCaretPosition == null) {
             newCaretPosition = newDeclaration;
@@ -200,21 +200,26 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
     }
 
-    private PsiElement addDeclarationWithoutInitializerAndRetargetReferences(final PsiElementFactory elementFactory,
-                                                                             final String localName,
-                                                                             final PsiCodeBlock anchorBlock, final PsiElement anchor,
-                                                                             final PsiReference[] refs)
+    private void retargetReferences(final PsiElementFactory elementFactory, final String localName, final Set<PsiReference> refs)
       throws IncorrectOperationException {
-      final PsiElement newDeclaration;
-      final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), null);
-      newDeclaration = anchorBlock.addBefore(decl, anchor);
-
       final PsiReferenceExpression refExpr = (PsiReferenceExpression)elementFactory.createExpressionFromText(localName, null);
       for (PsiReference ref : refs) {
         if (ref instanceof PsiReferenceExpression) {
           ((PsiReferenceExpression)ref).replace(refExpr);
         }
       }
+    }
+
+    private PsiElement addDeclarationWithoutInitializerAndRetargetReferences(final PsiElementFactory elementFactory,
+                                                                             final String localName,
+                                                                             final PsiCodeBlock anchorBlock, final PsiElement anchor,
+                                                                             final Set<PsiReference> refs)
+      throws IncorrectOperationException {
+      final PsiElement newDeclaration;
+      final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), null);
+      newDeclaration = anchorBlock.addBefore(decl, anchor);
+
+      retargetReferences(elementFactory, localName, refs);
       return newDeclaration;
     }
 
