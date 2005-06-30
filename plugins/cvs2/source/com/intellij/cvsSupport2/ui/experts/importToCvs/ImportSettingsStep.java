@@ -30,7 +30,6 @@ public class ImportSettingsStep extends WizardStep {
 
   private JCheckBox myCheckoutAfterImport;
   private JCheckBox myMakeCheckedOutFilesReadOnly;
-  private JLabel myModuleErrorMessage;
   private JLabel myVendorErrorMessage;
   private JLabel myReleaseTagErrorMessage;
   private MyDocumentListener myDocumentListener;
@@ -55,7 +54,7 @@ public class ImportSettingsStep extends WizardStep {
 
     checkFields(null);
 
-    addListenerTo(myModuleName);
+    //addListenerTo(myModuleName);
     addListenerTo(myVendor);
     addListenerTo(myReleaseTag);
 
@@ -94,7 +93,8 @@ public class ImportSettingsStep extends WizardStep {
 
   private boolean checkFields() {
     JTextField[] fields = new JTextField[]{myReleaseTag, myVendor};
-    boolean result = CvsFieldValidator.checkField(myModuleName, new JTextField[0], false, myModuleErrorMessage, null);
+    boolean result = true;
+    //result &=  CvsFieldValidator.checkField(myModuleName, new JTextField[0], false, myModuleErrorMessage, null);
     result &= CvsFieldValidator.checkField(myVendor, fields, true, myVendorErrorMessage, null);
     result &= CvsFieldValidator.checkField(myReleaseTag, fields, true, myReleaseTagErrorMessage, null);
     return result;
