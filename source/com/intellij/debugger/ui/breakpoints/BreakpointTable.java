@@ -5,6 +5,7 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.util.ui.Table;
+import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -17,8 +18,8 @@ import java.awt.event.KeyEvent;
  *         Date: May 23, 2005
  */
 public class BreakpointTable extends Table {
-  public BreakpointTable() {
-    super(new BreakpointTableModel());
+  public BreakpointTable(final Project project) {
+    super(new BreakpointTableModel(project));
     setColumnSelectionAllowed(false);
     InputMap inputMap = getInputMap();
     ActionMap actionMap = getActionMap();

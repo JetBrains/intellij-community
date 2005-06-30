@@ -37,7 +37,7 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
   }
 
   public BreakpointPanel createBreakpointPanel(final Project project, DialogWrapper parentDialog) {
-    BreakpointPanel panel = new BreakpointPanel(new ExceptionBreakpointPropertiesPanel(project), createActions(project), getBreakpointCategory(), "Exception Breakpoints", HelpID.EXCEPTION_BREAKPOINTS) {
+    BreakpointPanel panel = new BreakpointPanel(project, new ExceptionBreakpointPropertiesPanel(project), createActions(project), getBreakpointCategory(), "Exception Breakpoints", HelpID.EXCEPTION_BREAKPOINTS) {
       public void setBreakpoints(Breakpoint[] breakpoints) {
         super.setBreakpoints(breakpoints);
         final AnyExceptionBreakpoint anyExceptionBreakpoint = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().getAnyExceptionBreakpoint();

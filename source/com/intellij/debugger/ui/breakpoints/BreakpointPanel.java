@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.ui.breakpoints.actions.BreakpointPanelAction;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -97,15 +98,20 @@ public class BreakpointPanel {
     myEventDispatcher.removeListener(listener);
   }
 
-  public BreakpointPanel(BreakpointPropertiesPanel propertiesPanel, final BreakpointPanelAction[] actions, String breakpointCategory, String displayName, String helpId) {
+  public BreakpointPanel(final Project project,
+                         BreakpointPropertiesPanel propertiesPanel,
+                         final BreakpointPanelAction[] actions,
+                         String breakpointCategory,
+                         String displayName,
+                         String helpId) {
     myPropertiesPanel = propertiesPanel;
     myActions = actions;
     myBreakpointCategory = breakpointCategory;
     myDisplayName = displayName;
     myHelpID = helpId;
 
-    myTable = new BreakpointTable();
-    myTree = new BreakpointTree();
+    myTable = new BreakpointTable(project);
+    myTree = new BreakpointTree(project);
 
     myTablePlace.setLayout(new CardLayout());
     myTablePlace.add(ScrollPaneFactory.createScrollPane(myTable), TABLE_VIEW);
@@ -218,6 +224,24 @@ public class BreakpointPanel {
     myTablePlace.add(ScrollPaneFactory.createScrollPane(myTree), TREE_VIEW);
 
     updateCurrentBreakpointPropertiesPanel();
+
+    final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
+    final BreakpointManagerListener breakpointManagerListener = new BreakpointManagerListener() {
+      public void breakpointsChanged() {
+        if (isTreeShowing()) {
+          myTree.repaint();
+        }
+        else {
+          myTable.repaint();
+        }
+      }
+    };
+    breakpointManager.addBreakpointManagerListener(breakpointManagerListener);
+    myDisposeActions.add(new Runnable() {
+      public void run() {
+        breakpointManager.removeBreakpointManagerListener(breakpointManagerListener);
+      }
+    });
   }
 
   public String getBreakpointCategory() {
@@ -379,10 +403,7 @@ public class BreakpointPanel {
     }
     myDisposeActions.clear();
 
-    final KeyStroke[] treeStrokes = myTree.getRegisteredKeyStrokes();
-    for (KeyStroke stroke : treeStrokes) {
-      myTree.unregisterKeyboardAction(stroke);
-    }
+    myTree.dispose();
 
     final KeyStroke[] tableStrokes = myTable.getRegisteredKeyStrokes();
     for (KeyStroke stroke : tableStrokes) {

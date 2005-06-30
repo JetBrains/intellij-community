@@ -3,6 +3,8 @@
  * Use is subject to license terms.
  */
 package com.intellij.debugger.ui.breakpoints;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.*;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.Convertor;
@@ -69,6 +71,8 @@ public class BreakpointTree extends CheckboxTree {
       return 50;
     }
   };
+  private BreakpointManager myBreakpointManager;
+  private BreakpointManagerListener myNodeUpdateListener;
 
   protected void installSpeedSearch() {
     new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
@@ -145,6 +149,14 @@ public class BreakpointTree extends CheckboxTree {
     return Collections.unmodifiableList(myBreakpoints);
   }
 
+  public void dispose() {
+    final KeyStroke[] treeStrokes = getRegisteredKeyStrokes();
+    for (KeyStroke stroke : treeStrokes) {
+      unregisterKeyboardAction(stroke);
+    }
+    myBreakpointManager.removeBreakpointManagerListener(myNodeUpdateListener);
+  }
+
   private abstract static class TreeDescriptor {
     protected void customizeCellRenderer(final ColoredTreeCellRenderer targetRenderer, CheckedTreeNode node, boolean selected, final boolean checked, boolean expanded, boolean leaf, boolean hasFocus) {
       targetRenderer.setIcon(getDisplayIcon());
@@ -157,7 +169,7 @@ public class BreakpointTree extends CheckboxTree {
 
   }
 
-  private static final class BreakpointDescriptor extends TreeDescriptor {
+  private final class BreakpointDescriptor extends TreeDescriptor {
     private final Breakpoint myBreakpoint;
     public BreakpointDescriptor(Breakpoint breakpoint) {
       myBreakpoint = breakpoint;
@@ -189,6 +201,11 @@ public class BreakpointTree extends CheckboxTree {
 
     public int hashCode() {
       return myBreakpoint.hashCode();
+    }
+
+    public boolean isSlave() {
+      final Breakpoint breakpoint = getBreakpoint();
+      return myBreakpointManager.findMasterBreakpoint(breakpoint) != null;
     }
   }
 
@@ -352,10 +369,17 @@ public class BreakpointTree extends CheckboxTree {
     }
   }
 
-  public BreakpointTree() {
+  public BreakpointTree(final Project project) {
     super(new BreakpointTreeCellRenderer(), new CheckedTreeNode(new RootDescriptor()));
     myRootNode = (CheckedTreeNode)getModel().getRoot();
     myDescriptorToNodeMap.put((TreeDescriptor)myRootNode.getUserObject(), myRootNode);
+    myBreakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
+    myNodeUpdateListener = new BreakpointManagerListener() {
+      public void breakpointsChanged() {
+        BreakpointTree.this.repaint();
+      }
+    };
+    myBreakpointManager.addBreakpointManagerListener(myNodeUpdateListener);
   }
 
   public boolean isGroupByMethods() {
@@ -415,12 +439,22 @@ public class BreakpointTree extends CheckboxTree {
   }
 
   private void doCheckNode(CheckedTreeNode node, boolean parentChecked) {
-    super.checkNode(node, parentChecked);
     final Object descriptor = node.getUserObject();
+    final Breakpoint breakpoint;
     if (descriptor instanceof BreakpointDescriptor) {
-      final Breakpoint breakpoint = ((BreakpointDescriptor)descriptor).getBreakpoint();
-      breakpoint.ENABLED = parentChecked;
-      breakpoint.updateUI();
+      breakpoint = ((BreakpointDescriptor)descriptor).getBreakpoint();
+      if (myBreakpointManager.findMasterBreakpoint(breakpoint) != null) {
+        return;
+      }
+    }
+    else {
+      breakpoint = null;
+    }
+
+    super.checkNode(node, parentChecked);
+
+    if (breakpoint != null) {
+      myBreakpointManager.setBreakpointEnabled(breakpoint, node.isChecked());
     }
   }
 
@@ -598,6 +632,9 @@ public class BreakpointTree extends CheckboxTree {
       final CheckedTreeNode node = (CheckedTreeNode)value;
       final TreeDescriptor descriptor = getDescriptor(node);
       descriptor.customizeCellRenderer(getTextRenderer(), node, selected, node.isChecked(), expanded, leaf, hasFocus);
+      if (descriptor instanceof BreakpointDescriptor) {
+        myCheckbox.setEnabled(node.isEnabled() && !((BreakpointDescriptor)descriptor).isSlave());
+      }
     }
   }
 
@@ -711,7 +748,6 @@ public class BreakpointTree extends CheckboxTree {
         return node;
       }
       final MethodDescriptor methodDescriptor = (MethodDescriptor)descriptor;
-      final String className = methodDescriptor.getClassName();
       final String packageName = methodDescriptor.getPackageName();
       return attachNodeToParent(new PackageDescriptor(packageName), node);
     }

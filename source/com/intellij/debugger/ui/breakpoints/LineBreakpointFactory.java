@@ -30,7 +30,7 @@ public class LineBreakpointFactory extends BreakpointFactory{
   }
 
   public BreakpointPanel createBreakpointPanel(Project project, final DialogWrapper parentDialog) {
-    final BreakpointPanel panel = new BreakpointPanel(new LineBreakpointPropertiesPanel(project), new BreakpointPanelAction[]{
+    final BreakpointPanel panel = new BreakpointPanel(project, new LineBreakpointPropertiesPanel(project), new BreakpointPanelAction[]{
       new SwitchViewAction(),
       new GotoSourceAction(project) {
         public void actionPerformed(ActionEvent e) {

@@ -6,6 +6,8 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.ui.TableUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.debugger.DebuggerManagerEx;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.*;
@@ -15,9 +17,11 @@ public class BreakpointTableModel extends AbstractTableModel implements ItemRemo
   public static final int NAME = 1;
 
   private java.util.List<Breakpoint> myBreakpoints = null;
+  private BreakpointManager myBreakpointManager;
 
-  public BreakpointTableModel() {
+  public BreakpointTableModel(final Project project) {
     myBreakpoints = new ArrayList<Breakpoint>();
+    myBreakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
   }
 
   public final void setBreakpoints(Breakpoint[] breakpoints) {
@@ -124,7 +128,10 @@ public class BreakpointTableModel extends AbstractTableModel implements ItemRemo
   }
 
   public boolean isCellEditable(int rowIndex, int columnIndex) {
-//    Breakpoint breakpoint = (Breakpoint)myBreakpoints.get(rowIndex);
-    return (columnIndex == ENABLED_STATE /*|| breakpoint.isChecked()*/);
+    if (columnIndex != ENABLED_STATE) {
+      return false;
+    }
+    final boolean isSlave = myBreakpointManager.findMasterBreakpoint(myBreakpoints.get(rowIndex)) != null;
+    return !isSlave;
   }
 }

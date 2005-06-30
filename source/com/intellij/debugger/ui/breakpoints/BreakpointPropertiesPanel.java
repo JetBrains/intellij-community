@@ -15,6 +15,7 @@ import com.intellij.debugger.ui.impl.UIUtil;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.FieldPanel;
@@ -23,9 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -122,7 +121,7 @@ public abstract class BreakpointPropertiesPanel {
     myConditionCombo = new DebuggerExpressionComboBox(project, "LineBreakpoint condition");
     myLogExpressionCombo = new DebuggerExpressionComboBox(project, "LineBreakpoint logMessage");
     
-    myBaseBreakpointCombo = new JComboBox();
+    myBaseBreakpointCombo = new ComboBox();
     myBreakpointComboboxHandler = new BreakpointComboboxHandler(myProject, myBaseBreakpointCombo);
     myBaseBreakpointCombo.setRenderer(new BreakpointComboRenderer());
     myInstanceFiltersField = new FieldPanel(new MyTextField(), "", null,
@@ -503,7 +502,9 @@ public abstract class BreakpointPropertiesPanel {
       for (int idx = 0; idx < myItems.length; idx++) {
         final ComboboxItem item = myItems[idx];
         if (breakpoint == null? item.getBreakpoint() == null : breakpoint.equals(item.getBreakpoint())) {
-          setSelectedItem(item);
+          if (!item.equals(getSelectedItem())) {
+            setSelectedItem(item);
+          }
           break;
         }
       }
@@ -557,11 +558,11 @@ public abstract class BreakpointPropertiesPanel {
       fillCombobox();
     }
     
-    public void saveTo(Breakpoint breakpoint) {
-      myBreakpointManager.removeBreakpointRule(breakpoint);
-      final Breakpoint baseBreakpoint = ((ComboboxItem)myCombo.getSelectedItem()).getBreakpoint();
-      if (baseBreakpoint != null) {
-        myBreakpointManager.addBreakpointRule(new EnableBreakpointRule(myBreakpointManager, baseBreakpoint, breakpoint));
+    public void saveTo(Breakpoint slaveBreakpoint) {
+      myBreakpointManager.removeBreakpointRule(slaveBreakpoint);
+      final Breakpoint masterBreakpoint = ((ComboboxItem)myCombo.getSelectedItem()).getBreakpoint();
+      if (masterBreakpoint != null) {
+        myBreakpointManager.addBreakpointRule(new EnableBreakpointRule(myBreakpointManager, masterBreakpoint, slaveBreakpoint));
       }
     }
     
@@ -577,6 +578,8 @@ public abstract class BreakpointPropertiesPanel {
       final List<Breakpoint> breakpoints = new ArrayList<Breakpoint>(myBreakpointManager.getBreakpoints());
       if (myCurrentBreakpoint != null) {
         // avoid depending on itself
+        breakpoints.remove(myCurrentBreakpoint);
+        /*
         for (Iterator<Breakpoint> it = breakpoints.iterator(); it.hasNext();) {
           final Breakpoint breakpoint = it.next();
           if (myCurrentBreakpoint.equals(breakpoint)) {
@@ -584,6 +587,7 @@ public abstract class BreakpointPropertiesPanel {
             break;
           }
         }
+        */
       }
       myCombo.setModel(new BreakpointComboboxModel(breakpoints.toArray(new Breakpoint[breakpoints.size()])));
       final Breakpoint baseBreakpoint = myCurrentBreakpoint != null? myBreakpointManager.findMasterBreakpoint(myCurrentBreakpoint) : null;

@@ -35,7 +35,7 @@ public class FieldBreakpointFactory extends BreakpointFactory{
   }
 
   public BreakpointPanel createBreakpointPanel(final Project project, final DialogWrapper parentDialog) {
-    BreakpointPanel panel = new BreakpointPanel(new FieldBreakpointPropertiesPanel(project), new BreakpointPanelAction[] {
+    BreakpointPanel panel = new BreakpointPanel(project, new FieldBreakpointPropertiesPanel(project), new BreakpointPanelAction[] {
       new SwitchViewAction(),
       new AddFieldBreakpointAction(project),
       new GotoSourceAction(project) {

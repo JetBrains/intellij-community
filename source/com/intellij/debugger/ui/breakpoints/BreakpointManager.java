@@ -28,10 +28,10 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
 import com.intellij.util.Alarm;
@@ -811,15 +811,17 @@ public class BreakpointManager implements JDOMExternalizable {
 
   
   private boolean myAllowMulticasting = true;
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   public void fireBreakpointChanged(Breakpoint breakpoint) {
     RequestManagerImpl.updateRequests(breakpoint);
     if (myAllowMulticasting) {
       // can be invoked from non-AWT thread
-      IJSwingUtilities.invoke(new Runnable() {
+      myAlarm.cancelAllRequests();
+      myAlarm.addRequest(new Runnable() {
         public void run() {
           myDispatcher.getMulticaster().breakpointsChanged();
         }
-      });
+      }, 100);
     }
   }
 
@@ -832,18 +834,23 @@ public class BreakpointManager implements JDOMExternalizable {
   }
   
   public void addBreakpointRule(EnableBreakpointRule rule) {
+    rule.init();
     myBreakpointRules.add(rule);
   }
   
   public boolean removeBreakpointRule(EnableBreakpointRule rule) {
-    return myBreakpointRules.remove(rule);
+    final boolean removed = myBreakpointRules.remove(rule);
+    if (removed) {
+      rule.dispose();
+    }
+    return removed;
   }
   
-  public boolean removeBreakpointRule(@NotNull Breakpoint dependentBreakpoint) {
+  public boolean removeBreakpointRule(@NotNull Breakpoint slaveBreakpoint) {
     for (Iterator<EnableBreakpointRule> it = myBreakpointRules.iterator(); it.hasNext();) {
       final EnableBreakpointRule rule = it.next();
-      if (dependentBreakpoint.equals(rule.getSlaveBreakpoint())) {
-        it.remove();
+      if (slaveBreakpoint.equals(rule.getSlaveBreakpoint())) {
+        removeBreakpointRule(rule);
         return true;
       }
     }

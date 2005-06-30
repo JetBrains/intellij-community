@@ -32,7 +32,11 @@ public class EnableBreakpointRule {
   public void init() {
     myManager.setBreakpointEnabled(getSlaveBreakpoint(), false);
   }
-  
+
+  public void dispose() {
+    myManager.setBreakpointEnabled(getSlaveBreakpoint(), true);
+  }
+
   public void processBreakpointHit(Breakpoint breakpointHit) {
     if (getMasterBreakpoint().equals(breakpointHit)) {
       myManager.setBreakpointEnabled(getSlaveBreakpoint(), true);
