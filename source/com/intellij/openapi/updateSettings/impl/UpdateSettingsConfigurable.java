@@ -54,7 +54,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Appl
   }
 
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/confidurableUpdates.png");
+    return IconLoader.getIcon("/general/configurableUpdates.png");
   }
 
   public static UpdateSettingsConfigurable getInstance() {
