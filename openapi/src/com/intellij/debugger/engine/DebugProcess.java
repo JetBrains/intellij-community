@@ -44,6 +44,8 @@ public interface DebugProcess {
 
   void waitFor();
 
+  void waitFor(long timeout);
+
   void stop(boolean forceTerminate);
 
   ExecutionResult getExecutionResult();

@@ -34,4 +34,16 @@ public class Semaphore {
     }
   }
 
+  public synchronized void waitFor(long timeout) {
+    try {
+      while (mySemaphore > 0) {
+        wait(timeout);
+      }
+    }
+    catch (InterruptedException e) {
+      LOG.debug(e);
+      throw new RuntimeException(e);
+    }
+  }
+
 }

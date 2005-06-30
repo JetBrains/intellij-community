@@ -819,6 +819,11 @@ public abstract class DebugProcessImpl implements DebugProcess {
     myWaitFor.waitFor();
   }
 
+  public void waitFor(long timeout) {
+    LOG.assertTrue(!DebuggerManagerThreadImpl.isManagerThread());
+    myWaitFor.waitFor(timeout);
+  }
+
   private abstract class InvokeCommand <E extends Value> {
     private final List myArgs;
 
