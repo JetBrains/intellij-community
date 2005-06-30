@@ -32,7 +32,7 @@ public class ModulesConfigurable implements Configurable {
   }
 
   public String getDisplayName() {
-    return "Paths";
+    return "Modules";
   }
 
   public void reset() {
