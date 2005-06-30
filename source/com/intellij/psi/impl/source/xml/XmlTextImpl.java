@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -66,6 +67,10 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText {
         || elementType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
         buffer.append(child.getText());
       }
+      else if (elementType == ElementType.ERROR_ELEMENT) {
+        buffer.append(child.getText());
+      }
+
       int end = buffer.length();
       int originalLength = child.getTextLength();
       if (end - start != originalLength) {
