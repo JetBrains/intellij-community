@@ -121,6 +121,8 @@ class JavacCompiler implements BackendCompiler {
     }
     final boolean isVersion1_0 = isOfVersion(versionString, "1.0");
     final boolean isVersion1_1 = isOfVersion(versionString, "1.1");
+    final boolean isVersion1_2 = isOfVersion(versionString, "1.2");
+    final boolean isVersion1_3 = isOfVersion(versionString, "1.3");
     final boolean isVersion1_4 = isOfVersion(versionString, "1.4");
     final boolean isVersion1_5 = isOfVersion(versionString, "1.5") || isOfVersion(versionString, "5.0");
 
@@ -146,7 +148,7 @@ class JavacCompiler implements BackendCompiler {
       commandLine.add("\"" + versionString + "\"");
     }
 
-    if (isOfVersion(versionString, "1.2") || isVersion1_1 || isVersion1_0) {
+    if (isVersion1_2 || isVersion1_1 || isVersion1_0) {
       commandLine.add("sun.tools.javac.Main");
     }
     else {
@@ -205,6 +207,11 @@ class JavacCompiler implements BackendCompiler {
       if (isVersion1_0) {
         if ("-deprecation".equals(token)) {
           continue; // not supported for this version
+        }
+      }
+      if (isVersion1_0 || isVersion1_1 || isVersion1_2 || isVersion1_3 || isVersion1_4) {
+        if ("-Xlint".equals(token)) {
+          continue; // not supported in these versions
         }
       }
       commandLine.add(token);
