@@ -416,12 +416,11 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
         if (previousEntry != null) {
           myFileToPreviousEntryMap.put(file, previousEntry);
           if (entry.isResultOfMerge()) {
-            Collection<String> revisionsForFile = new ArrayList<String>(myUpdatedFilesManager.getRevisionsForFile(file));
-            String newRevision = entry.getRevision();
-            if (!revisionsForFile.contains(newRevision)) {
-              revisionsForFile.add(newRevision);
-            }
-            CvsUtil.saveRevisionForMergedFile(virtualParent, previousEntry, revisionsForFile);
+            final UpdatedFilesManager.CurrentMergedFileInfo info = myUpdatedFilesManager.getInfo(file);
+            info.registerNewRevision(previousEntry);
+            CvsUtil.saveRevisionForMergedFile(virtualParent,
+                                              info.getOriginalEntry(),
+                                              info.getRevisions());
           }
         }
       }

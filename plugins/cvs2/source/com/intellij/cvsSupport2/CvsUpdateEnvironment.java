@@ -52,10 +52,10 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.merge.AbstractMergeAction;
 import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashMap;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 
 public class CvsUpdateEnvironment implements UpdateEnvironment {
   private final Project myProject;
@@ -105,7 +105,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
             public void run() {
               invokeManualMerging(updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID), myProject);
             }
-          }, ModalityState.defaultModalityState());          
+          }, ModalityState.defaultModalityState());
         }
       }
     };
@@ -113,13 +113,19 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
 
   private void invokeManualMerging(FileGroup mergedWithConflict, Project project) {
     Collection<String> paths = mergedWithConflict.getFiles();
-    ArrayList<VirtualFile> mergedFiles = new ArrayList<VirtualFile>();
+    Map<VirtualFile, List<String>> fileToRevisions = new LinkedHashMap<VirtualFile, List<String>>();
     for (final String path : paths) {
-      VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(new File((String)path));
-      if (virtualFile != null) mergedFiles.add(virtualFile);
+      VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(new File(path));
+      if (virtualFile != null) {
+        final List<String> allRevisionsForFile = CvsUtil.getAllRevisionsForFile(virtualFile);
+        if (!allRevisionsForFile.isEmpty()) fileToRevisions.put(virtualFile, allRevisionsForFile);
+      }
     }
 
-    new CvsMergeAction(mergedFiles.get(0), project, mergedFiles,new AbstractMergeAction.FileValueHolder()).execute(null);
+    if (!fileToRevisions.isEmpty()) {
+      final List<VirtualFile> mergedFiles = new ArrayList<VirtualFile>(fileToRevisions.keySet());
+      new CvsMergeAction(mergedFiles.get(0), project, fileToRevisions, new AbstractMergeAction.FileValueHolder()).execute(null);
+    }
 
   }
 

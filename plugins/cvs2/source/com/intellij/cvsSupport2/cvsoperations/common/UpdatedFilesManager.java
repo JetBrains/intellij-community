@@ -21,16 +21,48 @@ public class UpdatedFilesManager implements IMessageListener {
   private final static String MERGED_FILE_MESSAGE_PREFIX = "RCS file: ";
   private final static String MERGED_FILE_MESSAGE_POSTFIX = ",v";
 
-  private final Map<File, Collection<String>> myMergedFiles = new HashMap<File, Collection<String>>();
+  private final Map<File, CurrentMergedFileInfo> myMergedFiles = new HashMap<File, CurrentMergedFileInfo>();
   private final Set<File> myCreatedBySecondParty = new HashSet<File>();
 
   private ICvsFileSystem myCvsFileSystem;
   public static final String CREATED_BY_SECOND_PARTY_PREFIX = "cvs server: conflict: ";
   public static final String CREATED_BY_SECOND_PARTY_POSTFIX = " created independently by second party";
-  private File myCurrentMergedFile;
+  private CurrentMergedFileInfo myCurrentMergedFile;
   private final Collection<Entry> myNewlyCreatedEntries = new HashSet<Entry>();
   private Collection<File> myNonUpdatedFiles = new HashSet<File>();
 
+  public static class CurrentMergedFileInfo {
+    private final List<String> myRevisions = new ArrayList<String>();
+    private Entry myCurrentRevision;
+
+    public CurrentMergedFileInfo() {
+    }
+
+    public void addRevisions(final String firstRevision, final String secondRevision) {
+      addRevision(firstRevision);
+      addRevision(secondRevision);
+    }
+
+    private void addRevision(final String firstRevision) {
+      if (!myRevisions.contains(firstRevision)) {
+        myRevisions.add(firstRevision);
+      }
+    }
+
+    public List<String> getRevisions() {
+      return myRevisions;
+    }
+
+    public void registerNewRevision(Entry previousEntry) {
+      if (myCurrentRevision == null) {
+        myCurrentRevision = previousEntry;
+      }
+    }
+
+    public Entry getOriginalEntry() {
+      return myCurrentRevision;
+    }
+  }
 
   public UpdatedFilesManager() {
   }
@@ -46,8 +78,9 @@ public class UpdatedFilesManager implements IMessageListener {
                                                   -
                                                   MERGED_FILE_MESSAGE_POSTFIX.length());
       String relativeRepositoryPath = myCvsFileSystem.getRelativeRepositoryPath(pathInRepository);
-      myCurrentMergedFile = myCvsFileSystem.getLocalFileSystem().getFile(removeModuleNameFrom(relativeRepositoryPath));
-      ensureFileIsInMap(myCurrentMergedFile);
+      final File file = myCvsFileSystem.getLocalFileSystem().getFile(removeModuleNameFrom(relativeRepositoryPath));
+      ensureFileIsInMap(file);
+      myCurrentMergedFile = myMergedFiles.get(file);
     }
     else if (message.startsWith(CREATED_BY_SECOND_PARTY_PREFIX) && message.endsWith(CREATED_BY_SECOND_PARTY_POSTFIX)) {
       String pathInRepository = message.substring(CREATED_BY_SECOND_PARTY_PREFIX.length(),
@@ -73,17 +106,14 @@ public class UpdatedFilesManager implements IMessageListener {
       if (matcher.matches()) {
         String firstRevision = matcher.group(2);
         String secondRevision = matcher.group(4);
-        ensureFileIsInMap(myCurrentMergedFile);
-        Collection<String> revisions = myMergedFiles.get(myCurrentMergedFile);
-        revisions.add(firstRevision);
-        revisions.add(secondRevision);
+        myCurrentMergedFile.addRevisions(firstRevision, secondRevision);
       }
     }
   }
 
-  private void ensureFileIsInMap(File file) {
+  private void ensureFileIsInMap(final File file) {
     if (!myMergedFiles.containsKey(file)) {
-      myMergedFiles.put(file, new ArrayList<String>());
+      myMergedFiles.put(file, new CurrentMergedFileInfo());
     }
   }
 
@@ -109,12 +139,12 @@ public class UpdatedFilesManager implements IMessageListener {
     return myCreatedBySecondParty.contains(file);
   }
 
-  public Collection<String> getRevisionsForFile(File file) {
+  public CurrentMergedFileInfo getInfo(File file) {
     if (myMergedFiles.containsKey(file)) {
       return myMergedFiles.get(file);
     }
     else {
-      return new ArrayList<String>();
+      return new CurrentMergedFileInfo();
     }
   }
 

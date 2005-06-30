@@ -122,8 +122,8 @@ public class CvsUtil {
   }
 
   private static boolean allSatisfy(File[] files, FileCondition condition) {
-    for (int i = 0; i < files.length; i++) {
-      if (!condition.verify(files[i])) return false;
+    for (File file : files) {
+      if (!condition.verify(file)) return false;
     }
     return true;
   }
@@ -367,8 +367,8 @@ public class CvsUtil {
   }
 
   public static void saveRevisionForMergedFile(VirtualFile parent,
-                                               Entry previousEntry,
-                                               Collection<String> revisions) {
+                                               final Entry previousEntry,
+                                               List<String> revisions) {
     LOG.assertTrue(parent != null);
     LOG.assertTrue(previousEntry != null);
     File conflictsFile = getConflictsFile(new File(CvsVfsUtil.getFileFor(parent), previousEntry.getFileName()));
@@ -376,19 +376,9 @@ public class CvsUtil {
       Conflicts conflicts = Conflicts.readFrom(conflictsFile);
       LOG.assertTrue(conflicts != null);
       Date lastModified = previousEntry.getLastModified();
-      String originalRevision = previousEntry.getRevision();
-      ArrayList<String> sortedRevisions = new ArrayList<String>();
-      sortedRevisions.add(originalRevision);
-      if (revisions != null){
-        for (Iterator<String> iterator = revisions.iterator(); iterator.hasNext();) {
-          String s = iterator.next();
-          if (!sortedRevisions.contains(s)){
-            sortedRevisions.add(s);
-          }
-        }
-      }
       conflicts.setRevisionAndDateForFile(previousEntry.getFileName(),
-                                          sortedRevisions.toArray(new String[sortedRevisions.size()]),
+                                          previousEntry.getRevision(),
+                                          revisions,
                                           lastModified == null ? new Date().getTime() : lastModified.getTime());
       conflicts.saveTo(conflictsFile);
     }
@@ -397,13 +387,23 @@ public class CvsUtil {
     }
   }
 
-  public static String getStoredContentForFile(VirtualFile file) {
+  public static String getStoredContentForFile(VirtualFile file, final String originalRevision) {
     File ioFile = CvsVfsUtil.getFileFor(file);
-    String[] revisions = getMergedRevisionsForFile(file);
-    if (revisions.length == 0) return null;
-    String originalRevision = revisions[0];
     try {
       File storedRevisionFile = new File(ioFile.getParentFile(), ".#" + ioFile.getName() + "." + originalRevision);
+      if (!storedRevisionFile.isFile()) return null;
+      return new String(FileUtil.loadFileBytes(storedRevisionFile), file.getCharset().name());
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  public static String getStoredContentForFile(VirtualFile file) {
+    File ioFile = CvsVfsUtil.getFileFor(file);
+    try {
+      File storedRevisionFile = new File(ioFile.getParentFile(), ".#" + ioFile.getName() + "." + getAllRevisionsForFile(file).get(0));
       if (!storedRevisionFile.isFile()) return null;
       return new String(FileUtil.loadFileBytes(storedRevisionFile), file.getCharset().name());
     }
@@ -466,7 +466,7 @@ public class CvsUtil {
     return new File(getRepositoryFor(file.getParentFile()), file.getName());
   }
 
-  public static String[] getMergedRevisionsForFile(VirtualFile file) {
+  public static List<String> getAllRevisionsForFile(VirtualFile file) {
     try {
       return Conflicts.readFrom(getConflictsFile(CvsVfsUtil.getFileFor(file))).getRevisionsFor(file.getName());
     }
@@ -521,22 +521,19 @@ public class CvsUtil {
 
 
   public static String getOriginalRevisionForFile(VirtualFile file) {
-    String[] mergedRevisionsForFile = getMergedRevisionsForFile(file);
-    if (mergedRevisionsForFile.length == 0) {
-      return "";
+    try {
+      return Conflicts.readFrom(getConflictsFile(CvsVfsUtil.getFileFor(file))).getOriginalRevisionFor(file.getName());
     }
-    else {
-      return mergedRevisionsForFile[0];
+    catch (IOException e) {
+      LOG.error(e);
+      return null;
     }
   }
 
-  public static Collection<VirtualFile> collectRootsToBePruned(Collection<VirtualFile> roots) {
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (Iterator iterator = roots.iterator(); iterator.hasNext();) {
-      VirtualFile cvsFileWrapper = (VirtualFile)iterator.next();
-      result.add(cvsFileWrapper);
-    }
-    return result;
+  public static boolean storedVersionExists(final String original, final VirtualFile file) {
+    File ioFile = CvsVfsUtil.getFileFor(file);
+    File storedRevisionFile = new File(ioFile.getParentFile(), ".#" + ioFile.getName() + "." + original);
+    return storedRevisionFile.isFile();
   }
 
   private static interface FileCondition {
@@ -557,13 +554,22 @@ public class CvsUtil {
 
   private static class Conflict {
     private String myName;
-    private String[] myRevisions;
+    private List<String> myRevisions;
     private long myPreviousTime;
     private static final String DELIM = ";";
 
-    private Conflict(String name, String[] previousRevisions, long time) {
+    private Conflict(String name, String originalRevision, List<String> revisions, long time) {
       myName = name;
-      myRevisions = previousRevisions;
+      myRevisions = new ArrayList<String>();
+      myRevisions.add(originalRevision);
+      myRevisions.addAll(revisions);
+      myPreviousTime = time;
+    }
+
+    private Conflict(String name, List<String> revisions, long time) {
+      myName = name;
+      myRevisions = new ArrayList<String>();
+      myRevisions.addAll(revisions);
       myPreviousTime = time;
     }
 
@@ -573,11 +579,11 @@ public class CvsUtil {
       result.append(DELIM);
       result.append(String.valueOf(myPreviousTime));
       result.append(DELIM);
-      for (int i = 0; i < myRevisions.length; i++) {
+      for (int i = 0; i < myRevisions.size(); i++) {
         if (i > 0) {
           result.append(DELIM);
         }
-        result.append(myRevisions[i]);
+        result.append(myRevisions.get(i));
       }
       return result.toString();
     }
@@ -591,11 +597,9 @@ public class CvsUtil {
 
         int revisionsSize = strings.length > 2 ? strings.length - 2 : 0;
         String[] revisions = new String[revisionsSize];
-        for (int i = 0; i < revisions.length; i++) {
-          revisions[i] = strings[i + 2];
-        }
+        System.arraycopy(strings, 2, revisions, 0, revisions.length);
 
-        return new Conflict(name, revisions, time);
+        return new Conflict(name, Arrays.asList(revisions), time);
       }
       catch (NumberFormatException e) {
         return null;
@@ -606,16 +610,28 @@ public class CvsUtil {
       return myName;
     }
 
-    public void setRevision(String[] revisions) {
-      myRevisions = revisions;
-    }
-
     public long getPreviousEntryTime() {
       return myPreviousTime;
     }
 
-    public String[] getRevisions() {
-      return myRevisions;
+    public List<String> getRevisions() {
+      return new ArrayList<String>(myRevisions);
+    }
+
+    public void setOriginalRevision(final String originalRevision) {
+      if (!myRevisions.isEmpty()) myRevisions.remove(0);
+      myRevisions.add(0, originalRevision);
+    }
+
+    public void setRevisions(final List<String> revisions) {
+      if (myRevisions.isEmpty()) {
+
+      } else {
+        final String originalRevision = myRevisions.remove(0);
+        myRevisions.clear();
+        myRevisions.add(originalRevision);
+        myRevisions.addAll(revisions);
+      }
     }
   }
 
@@ -626,8 +642,8 @@ public class CvsUtil {
       Conflicts result = new Conflicts();
       if (!file.exists()) return result;
       List lines = CvsFileUtil.readLinesFrom(file);
-      for (Iterator each = lines.iterator(); each.hasNext();) {
-        String line = (String)each.next();
+      for (final Object line1 : lines) {
+        String line = (String)line1;
         Conflict conflict = Conflict.readFrom(line);
         if (conflict != null) {
           result.addConflict(conflict);
@@ -643,8 +659,8 @@ public class CvsUtil {
 
     private List getConflictLines() {
       ArrayList<String> result = new ArrayList<String>();
-      for (Iterator each = myNameToConflict.values().iterator(); each.hasNext();) {
-        result.add((each.next()).toString());
+      for (final Conflict conflict : myNameToConflict.values()) {
+        result.add((conflict).toString());
       }
       return result;
     }
@@ -653,16 +669,20 @@ public class CvsUtil {
       myNameToConflict.put(conflict.getFileName(), conflict);
     }
 
-    public void setRevisionAndDateForFile(String fileName, String[] revision, long time) {
+    public void setRevisionAndDateForFile(String fileName,
+                                          String originalRevision,
+                                          List<String> revisions,
+                                          long time) {
       if (!myNameToConflict.containsKey(fileName)) {
-        myNameToConflict.put(fileName, new Conflict(fileName, revision, time));
+        myNameToConflict.put(fileName, new Conflict(fileName, originalRevision, revisions, time));
       }
-      (myNameToConflict.get(fileName)).setRevision(revision == null ? new String[0] : revision);
+      myNameToConflict.get(fileName).setOriginalRevision(originalRevision);
+      myNameToConflict.get(fileName).setRevisions(revisions);
     }
 
     public void addConflictForFile(String name) {
       if (!myNameToConflict.containsKey(name)) {
-        myNameToConflict.put(name, new Conflict(name, new String[0], -1));
+        myNameToConflict.put(name, new Conflict(name, "", new ArrayList<String>(), -1));
       }
     }
 
@@ -670,14 +690,20 @@ public class CvsUtil {
       myNameToConflict.remove(name);
     }
 
-    public String[] getRevisionsFor(String name) {
-      if (!myNameToConflict.containsKey(name)) return new String[0];
+    public List<String> getRevisionsFor(String name) {
+      if (!myNameToConflict.containsKey(name)) return new ArrayList<String>();
       return (myNameToConflict.get(name)).getRevisions();
     }
 
     public long getPreviousEntryTime(String fileName) {
       if (!myNameToConflict.containsKey(fileName)) return -1;
       return (myNameToConflict.get(fileName)).getPreviousEntryTime();
+    }
+
+    public String getOriginalRevisionFor(final String name) {
+      if (!myNameToConflict.containsKey(name)) return "";
+      final List<String> revisions = (myNameToConflict.get(name)).getRevisions();
+      return revisions.isEmpty() ? "" : revisions.get(0);
     }
   }
 
