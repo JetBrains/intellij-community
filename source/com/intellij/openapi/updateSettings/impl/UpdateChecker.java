@@ -177,6 +177,7 @@ public final class UpdateChecker implements ApplicationComponent {
 
     if (downloadThread.isAlive()) {
       downloadThread.interrupt();
+      throw new ConnectionException("Connection timed out");
     }
 
     if (exception[0] != null) throw exception[0];
