@@ -225,9 +225,7 @@ public abstract class AbstractCommonCheckinAction extends AbstractVcsAction {
     int errorsSize = collectErrors(allExceptions).size();
     int warningsSize = allExceptions.size() - errorsSize;
 
-    if (errorsSize > 0) {
-      config.ERROR_OCCURED = true;
-    }
+    config.ERROR_OCCURED = errorsSize > 0;
 
     if (errorsSize > 0 && warningsSize > 0) {
       Messages.showErrorDialog("Commit failed with errors and warnings", "Commit");
