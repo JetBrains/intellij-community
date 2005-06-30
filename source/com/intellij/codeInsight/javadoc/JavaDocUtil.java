@@ -47,8 +47,7 @@ public class JavaDocUtil {
     ArrayList<String> result = new ArrayList<String>();
 
     final VirtualFile[] roots = ProjectRootManagerEx.getInstanceEx(project).getRootFiles(ProjectRootType.JAVADOC);
-    for (int i = 0; i < roots.length; i++) {
-      VirtualFile root = roots[i];
+    for (VirtualFile root : roots) {
       if (!(root.getFileSystem() instanceof HttpFileSystem)) {
         result.add(root.getUrl());
       }
@@ -134,8 +133,7 @@ public class JavaDocUtil {
       PsiClass inner = aClass.findInnerClassByName(name, true);
       if (inner != null) return inner.getNavigationElement();
       PsiMethod[] methods = aClass.getAllMethods();
-      for (int i = 0; i < methods.length; i++) {
-        PsiMethod method = methods[i];
+      for (PsiMethod method : methods) {
         if (method.getName().equals(name)) return method.getNavigationElement();
       }
       return null;
@@ -167,21 +165,20 @@ public class JavaDocUtil {
       }
       PsiMethod[] methods = aClass.getAllMethods();
       MethodsLoop:
-        for (int j = 0; j < methods.length; j++) {
-          PsiMethod method = methods[j];
-          if (!method.getName().equals(name)) continue;
-          PsiParameter[] parms = method.getParameterList().getParameters();
-          if (parms.length != types.length) continue;
-          for (int k = 0; k < parms.length; k++) {
-            PsiParameter parm = parms[k];
-            if (
-              types[k] != null && !TypeConversionUtil.erasure(parm.getType()).getCanonicalText().equals(types[k].getCanonicalText())
+      for (PsiMethod method : methods) {
+        if (!method.getName().equals(name)) continue;
+        PsiParameter[] parms = method.getParameterList().getParameters();
+        if (parms.length != types.length) continue;
+        for (int k = 0; k < parms.length; k++) {
+          PsiParameter parm = parms[k];
+          if (
+            types[k] != null && !TypeConversionUtil.erasure(parm.getType()).getCanonicalText().equals(types[k].getCanonicalText())
             ) {
-              continue MethodsLoop;
-            }
+            continue MethodsLoop;
           }
-          return method.getNavigationElement();
         }
+        return method.getNavigationElement();
+      }
       return null;
     }
   }
@@ -367,8 +364,7 @@ public class JavaDocUtil {
       }
     }
 
-    for (Iterator<String> i = secondSymbols.iterator(); i.hasNext();) {
-      String s = i.next();
+    for (String s : secondSymbols) {
       String pattern = "<" + quote(s);
 
       try {

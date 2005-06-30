@@ -103,10 +103,9 @@ public class OptimizeImportsAction extends AnAction {
       }
     }
     else if (files != null && ReformatCodeAction.areFiles(files)) {
-      for (int i = 0; i < files.length; i++) {
-        VirtualFile virtualFile = files[i];
+      for (VirtualFile virtualFile : files) {
         PsiFile file = PsiManager.getInstance(project).findFile(virtualFile);
-        if (file == null || !(file instanceof PsiJavaFile)){
+        if (file == null || !(file instanceof PsiJavaFile)) {
           presentation.setEnabled(false);
           return;
         }

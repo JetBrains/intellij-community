@@ -61,8 +61,7 @@ public class BraceMatchingUtil {
     public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
       final IElementType tokenType = getToken(iterator);
       final BracePair[] pairs = myMatcher.getPairs();
-      for (int i = 0; i < pairs.length; i++) {
-        BracePair pair = pairs[i];
+      for (BracePair pair : pairs) {
         if (tokenType == pair.getLeftBraceType()) return true;
       }
       return false;
@@ -71,8 +70,7 @@ public class BraceMatchingUtil {
     public boolean isRBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
       final IElementType tokenType = getToken(iterator);
       final BracePair[] pairs = myMatcher.getPairs();
-      for (int i = 0; i < pairs.length; i++) {
-        BracePair pair = pairs[i];
+      for (BracePair pair : pairs) {
         if (tokenType == pair.getRightBraceType()) return true;
       }
       return false;
@@ -80,10 +78,11 @@ public class BraceMatchingUtil {
 
     public boolean isPairBraces(IElementType tokenType, IElementType tokenType2) {
       final BracePair[] pairs = myMatcher.getPairs();
-      for (int i = 0; i < pairs.length; i++) {
-        BracePair pair = pairs[i];
+      for (BracePair pair : pairs) {
         if (tokenType == pair.getLeftBraceType() && tokenType2 == pair.getRightBraceType() ||
-            tokenType == pair.getRightBraceType() && tokenType2 == pair.getLeftBraceType()) return true;
+            tokenType == pair.getRightBraceType() && tokenType2 == pair.getLeftBraceType()) {
+          return true;
+        }
       }
       return false;
     }
@@ -91,8 +90,7 @@ public class BraceMatchingUtil {
     public boolean isStructuralBrace(HighlighterIterator iterator, CharSequence text, FileType fileType) {
       final IElementType tokenType = getToken(iterator);
       final BracePair[] pairs = myMatcher.getPairs();
-      for (int i = 0; i < pairs.length; i++) {
-        BracePair pair = pairs[i];
+      for (BracePair pair : pairs) {
         if (tokenType == pair.getRightBraceType() || tokenType == pair.getLeftBraceType()) return pair.isStructural();
       }
       return false;
@@ -104,9 +102,7 @@ public class BraceMatchingUtil {
       if (tokenType.getLanguage() != myLanguage) return null;
       final BracePair[] pairs = myMatcher.getPairs();
 
-      for (int i = 0; i < pairs.length; i++) {
-        final BracePair pair = pairs[i];
-
+      for (final BracePair pair : pairs) {
         if (ch == pair.getRightBraceChar()) return pair.getRightBraceType();
         if (ch == pair.getLeftBraceChar()) return pair.getLeftBraceType();
       }

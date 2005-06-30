@@ -52,9 +52,9 @@ public class TemplateImplUtil {
           isFound = true;
         }
         else{
-          for(int i = 0; i < variables.size(); i++){
-            Variable variable = (Variable)variables.get(i);
-            if (variable.getName().equals(name)){
+          for (Object variable1 : variables) {
+            Variable variable = (Variable)variable1;
+            if (variable.getName().equals(name)) {
               isFound = true;
               break;
             }

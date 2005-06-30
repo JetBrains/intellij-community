@@ -41,12 +41,11 @@ public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
       final String methodName = PropertyUtil.suggestSetterName(field.getName());
 
       final PsiMethod[] methods = aClass.getMethods();
-      for (int i = 0; i < methods.length; i++) {
-        PsiMethod method = methods[i];
+      for (PsiMethod method : methods) {
         if (method.getName().equals(methodName) &&
             method.getParameterList().getParameters().length == 1 &&
             method.getReturnType() == PsiType.VOID) {
-            return ArrayUtil.EMPTY_OBJECT_ARRAY;
+          return ArrayUtil.EMPTY_OBJECT_ARRAY;
         }
       }
 

@@ -102,22 +102,22 @@ public class CopyHandler extends EditorActionHandler {
       final int startOffset = startOffsets[j];
       final int endOffset = endOffsets[j];
       final PsiElement[] elements = CodeInsightUtil.getElementsInRange(file, startOffset, endOffset);
-      for (int i = 0; i < elements.length; i++) {
-        final PsiElement element = elements[i];
+      for (final PsiElement element : elements) {
         if (element instanceof PsiJavaCodeReferenceElement) {
-          if (!((PsiJavaCodeReferenceElement) element).isQualified()) {
-            final JavaResolveResult resolveResult = ((PsiJavaCodeReferenceElement) element).advancedResolve(false);
+          if (!((PsiJavaCodeReferenceElement)element).isQualified()) {
+            final JavaResolveResult resolveResult = ((PsiJavaCodeReferenceElement)element).advancedResolve(false);
             final PsiElement refElement = resolveResult.getElement();
             if (refElement != null && refElement.getContainingFile() != file) {
 
               if (refElement instanceof PsiClass) {
-                if (refElement.getContainingFile() != element.getContainingFile ()) {
-                  final String qName = ((PsiClass) refElement).getQualifiedName();
+                if (refElement.getContainingFile() != element.getContainingFile()) {
+                  final String qName = ((PsiClass)refElement).getQualifiedName();
                   if (qName != null) {
                     addReferenceData(element, array, startOffset, qName, null);
                   }
                 }
-              } else if (resolveResult.getCurrentFileResolveScope() instanceof PsiImportStaticStatement) {
+              }
+              else if (resolveResult.getCurrentFileResolveScope() instanceof PsiImportStaticStatement) {
                 final String classQName = ((PsiMember)refElement).getContainingClass().getQualifiedName();
                 final String name = ((PsiNamedElement)refElement).getName();
                 if (classQName != null && name != null) {
@@ -152,11 +152,10 @@ public class CopyHandler extends EditorActionHandler {
 
     final ArrayList<TextBlockTransferable.FoldingData> list = new ArrayList<TextBlockTransferable.FoldingData>();
     final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
-    for(int i = 0; i < regions.length; i++){
-      final FoldRegion region = regions[i];
+    for (final FoldRegion region : regions) {
       if (!region.isValid()) continue;
       for (int j = 0; j < startOffsets.length; j++) {
-        if (startOffsets[j] <= region.getStartOffset() && region.getEndOffset() <= endOffsets[j]){
+        if (startOffsets[j] <= region.getStartOffset() && region.getEndOffset() <= endOffsets[j]) {
           list.add(
             new TextBlockTransferable.FoldingData(
               region.getStartOffset() - startOffsets[j],

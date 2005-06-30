@@ -468,8 +468,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     for (HighlightInfo highlight : highlights) {
       if (highlight.getSeverity() == HighlightSeverity.WARNING) {
-        for (int j = 0; j < errors.size(); j++) {
-          HighlightInfo errorInfo = errors.get(j);
+        for (HighlightInfo errorInfo : errors) {
           if (isCoveredBy(highlight, errorInfo)) {
             all.remove(highlight);
             RangeHighlighter highlighter = highlight.highlighter;
@@ -574,8 +573,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     }
     Collections.sort(array);
 
-    for (int i = 0; i < array.size(); i++) {
-      String url = array.get(i);
+    for (String url : array) {
       Element fileElement = new Element("file");
       fileElement.setAttribute("url", url);
       disableHintsElement.addContent(fileElement);

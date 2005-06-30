@@ -38,8 +38,8 @@ public class GuessElementTypeMacro implements Macro {
     PsiType[] types = guessTypes(params, context);
     if (types == null || types.length < 2) return null;
     LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
-    for(int i = 0; i < types.length; i++){
-      LookupItemUtil.addLookupItem(set, types[i], "");
+    for (PsiType type : types) {
+      LookupItemUtil.addLookupItem(set, type, "");
     }
     return set.toArray(new LookupItem[set.size()]);
   }

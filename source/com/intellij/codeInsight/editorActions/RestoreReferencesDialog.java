@@ -19,8 +19,8 @@ class RestoreReferencesDialog extends DialogWrapper {
   public RestoreReferencesDialog(final Project project, final Object[] elements) {
     super(project, true);
     myNamedElements = elements;
-    for (int i = 0; i < elements.length; i++) {
-      if (!(elements[i] instanceof PsiClass)) {
+    for (Object element : elements) {
+      if (!(element instanceof PsiClass)) {
         myContainsClassesOnly = false;
         break;
       }

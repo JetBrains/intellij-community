@@ -137,8 +137,7 @@ public class TemplateImpl implements Template {
     template.myIsInline = myIsInline;
     template.myTemplateContext = (TemplateContext)myTemplateContext.clone();
     template.isDeactivated = isDeactivated;
-    for(int i = 0; i < myVariables.size(); i++){
-      Variable variable = myVariables.get(i);
+    for (Variable variable : myVariables) {
       template.addVariable(variable.getName(), variable.getExpressionString(), variable.getDefaultValueString(), variable.isAlwaysStopAt());
     }
     return template;

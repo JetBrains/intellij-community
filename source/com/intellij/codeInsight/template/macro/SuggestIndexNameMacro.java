@@ -32,19 +32,20 @@ public class SuggestIndexNameMacro implements Macro{
     PsiVariable[] vars = MacroUtil.getVariablesVisibleAt(place, "");
   ChooseLetterLoop:
     for(char letter = 'i'; letter <= 'z'; letter++){
-      for(int i = 0; i < vars.length; i++) {
-        PsiVariable var = vars[i];
+      for (PsiVariable var : vars) {
         PsiIdentifier identifier = var.getNameIdentifier();
         if (place.equals(identifier)) continue;
         if (var instanceof PsiLocalVariable) {
           PsiElement parent = var.getParent();
           if (parent instanceof PsiDeclarationStatement) {
             if (PsiTreeUtil.isAncestor(parent, place, false) &&
-                var.getTextRange().getStartOffset() > place.getTextRange().getStartOffset()) continue;
+                var.getTextRange().getStartOffset() > place.getTextRange().getStartOffset()) {
+              continue;
+            }
           }
         }
         String name = identifier.getText();
-        if (name.length() == 1 && name.charAt(0) == letter){
+        if (name.length() == 1 && name.charAt(0) == letter) {
           continue ChooseLetterLoop;
         }
       }

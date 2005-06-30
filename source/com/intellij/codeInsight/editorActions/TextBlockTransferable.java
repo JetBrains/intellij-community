@@ -79,8 +79,8 @@ class TextBlockTransferable implements Transferable {
 
   public boolean isDataFlavorSupported(DataFlavor flavor) {
     DataFlavor[] flavors = getTransferDataFlavors();
-    for(int i = 0; i < flavors.length; i++){
-      if (flavor.equals(flavors[i])){
+    for (DataFlavor flavor1 : flavors) {
+      if (flavor.equals(flavor1)) {
         return true;
       }
     }
@@ -121,15 +121,13 @@ class TextBlockTransferable implements Transferable {
       int[] offsets = new int[size];
       int index = 0;
       if (referenceData != null){
-        for(int i = 0; i < referenceData.length; i++){
-          ReferenceData data = referenceData[i];
+        for (ReferenceData data : referenceData) {
           offsets[index++] = data.startOffset;
           offsets[index++] = data.endOffset;
         }
       }
       if (foldingData != null){
-        for(int i = 0; i < foldingData.length; i++){
-          FoldingData data = foldingData[i];
+        for (FoldingData data : foldingData) {
           offsets[index++] = data.startOffset;
           offsets[index++] = data.endOffset;
         }
@@ -139,15 +137,13 @@ class TextBlockTransferable implements Transferable {
 
       index = 0;
       if (referenceData != null){
-        for(int i = 0; i < referenceData.length; i++){
-          ReferenceData data = referenceData[i];
+        for (ReferenceData data : referenceData) {
           data.startOffset = offsets[index++];
           data.endOffset = offsets[index++];
         }
       }
       if (foldingData != null){
-        for(int i = 0; i < foldingData.length; i++){
-          FoldingData data = foldingData[i];
+        for (FoldingData data : foldingData) {
           data.startOffset = offsets[index++];
           data.endOffset = offsets[index++];
         }

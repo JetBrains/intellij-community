@@ -104,8 +104,7 @@ class LookupCellRenderer implements ListCellRenderer {
     FONT_WIDTH = label.getPreferredSize().width;
 
     final LookupItem[] items = lookup.getItems();
-    for (int i = 0; i < items.length; i++) {
-      LookupItem item = items[i];
+    for (LookupItem item : items) {
       if (!(item.getObject() instanceof Template)) {
         myHasNonTemplates = true;
         break;
@@ -408,8 +407,7 @@ class LookupCellRenderer implements ListCellRenderer {
 
   public int getMaximumWidth(final LookupItem[] items){
     int maxWidth = 0;
-    for(int i = 0; i < items.length; i++) {
-      LookupItem item = items[i];
+    for (LookupItem item : items) {
       maxWidth = Math.max(maxWidth, getTextWidth(item));
     }
     maxWidth = Math.min(maxWidth, MAX_LENGTH * FONT_WIDTH);
@@ -506,12 +504,11 @@ class LookupCellRenderer implements ListCellRenderer {
   private boolean isToStrikeout(LookupItem item) {
     final PsiMethod[] allMethods = (PsiMethod[])item.getAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE);
     if (allMethods != null){
-      for(int i = 0; i < allMethods.length; i++){
-        PsiMethod method = allMethods[i];
+      for (PsiMethod method : allMethods) {
         if (!method.isValid()) { //?
           return false;
         }
-        if (!isDeprecated(method)){
+        if (!isDeprecated(method)) {
           return false;
         }
       }

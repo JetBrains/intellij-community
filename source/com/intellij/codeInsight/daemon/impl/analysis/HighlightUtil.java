@@ -2097,8 +2097,7 @@ public class HighlightUtil {
                                            annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping());
     List<Pair<IntentionAction, TextRange>> fixes = annotation.getQuickFixes();
     if (fixes != null) {
-      for (int i = 0; i < fixes.size(); i++) {
-        Pair<IntentionAction, TextRange> pair = fixes.get(i);
+      for (Pair<IntentionAction, TextRange> pair : fixes) {
         QuickFixAction.registerQuickFixAction(info, pair.getSecond(), pair.getFirst(), null);
       }
     }

@@ -320,8 +320,8 @@ public class BraceHighlightingHandler {
     java.util.List highlighters = (java.util.List)myEditor.getUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY);
     if (highlighters == null) return;
     myEditor.putUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY, null);
-    for (Iterator i = highlighters.iterator(); i.hasNext();) {
-      RangeHighlighter rangeHighlighter = (RangeHighlighter)i.next();
+    for (final Object highlighter : highlighters) {
+      RangeHighlighter rangeHighlighter = (RangeHighlighter)highlighter;
       myEditor.getMarkupModel().removeHighlighter(rangeHighlighter);
     }
   }

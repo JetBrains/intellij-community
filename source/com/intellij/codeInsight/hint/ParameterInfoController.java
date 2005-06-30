@@ -66,9 +66,9 @@ class ParameterInfoController {
 
   public static boolean isAlreadyShown(Editor editor, int lbraceOffset) {
     ArrayList allControllers = getAllControllers(editor);
-    for(int i = 0; i < allControllers.size(); i++){
-      ParameterInfoController controller = (ParameterInfoController)allControllers.get(i);
-      if (!controller.myHint.isVisible()){
+    for (Object allController : allControllers) {
+      ParameterInfoController controller = (ParameterInfoController)allController;
+      if (!controller.myHint.isVisible()) {
         controller.dispose();
         continue;
       }

@@ -149,8 +149,7 @@ public class IntentionDescriptionPanel {
   }
 
   private static void disposeUsagePanels(List<IntentionUsagePanel> usagePanels) {
-    for (int i = 0; i < usagePanels.size(); i++) {
-      final IntentionUsagePanel usagePanel = usagePanels.get(i);
+    for (final IntentionUsagePanel usagePanel : usagePanels) {
       usagePanel.dispose();
     }
     usagePanels.clear();

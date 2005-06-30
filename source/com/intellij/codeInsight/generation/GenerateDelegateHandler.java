@@ -94,8 +94,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
       final String name = field.getName();
 
       final PsiParameter[] parameters = method.getParameterList().getParameters();
-      for (int j = 0; j < parameters.length; j++) {
-        PsiParameter parameter = parameters[j];
+      for (PsiParameter parameter : parameters) {
         if (name.equals(parameter.getName())) {
           call.append("this.");
           break;
@@ -154,8 +153,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
 
   private void clearModifiers(PsiMethod method) throws IncorrectOperationException {
     final PsiElement[] children = method.getModifierList().getChildren();
-    for (int j = 0; j < children.length; j++) {
-      PsiElement child = children[j];
+    for (PsiElement child : children) {
       if (child instanceof PsiKeyword) child.delete();
     }
   }
@@ -186,8 +184,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     final Set<MethodSignature> signatures = new HashSet<MethodSignature>();
     Map<PsiClass, PsiSubstitutor> superSubstitutors = new HashMap<PsiClass, PsiSubstitutor>();
     PsiManager manager = targetClass.getManager();
-    for (int i = 0; i < allMethods.length; i++) {
-      PsiMethod method = allMethods[i];
+    for (PsiMethod method : allMethods) {
       final PsiClass superClass = method.getContainingClass();
       if (superClass.getQualifiedName().equals("java.lang.Object")) continue;
       if (method.isConstructor()) continue;
@@ -200,7 +197,10 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
       MethodSignature signature = method.getSignature(methodSubstitutor);
       if (!signatures.contains(signature)) {
         signatures.add(signature);
-        if (manager.getResolveHelper().isAccessible(method, target, aClass)) methodInstances.add(new CandidateInfo(method, methodSubstitutor));
+        if (manager.getResolveHelper().isAccessible(method, target, aClass)) {
+          methodInstances
+            .add(new CandidateInfo(method, methodSubstitutor));
+        }
       }
     }
 
@@ -262,8 +262,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
 
     final PsiField[] fields = aClass.getAllFields();
     PsiResolveHelper helper = aClass.getManager().getResolveHelper();
-    for (int i = 0; i < fields.length; i++) {
-      PsiField field = fields[i];
+    for (PsiField field : fields) {
       final PsiType type = field.getType();
       if (helper.isAccessible(field, aClass, aClass) && type instanceof PsiClassType) {
         result.add(field);
@@ -271,11 +270,11 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     }
 
     final PsiMethod[] methods = aClass.getAllMethods();
-    for (int i = 0; i < methods.length; i++) {
-      PsiMethod method = methods[i];
-      if ("java.lang.Object".equals (method.getContainingClass().getQualifiedName())) continue;
+    for (PsiMethod method : methods) {
+      if ("java.lang.Object".equals(method.getContainingClass().getQualifiedName())) continue;
       final PsiType returnType = method.getReturnType();
-      if (returnType != null && PropertyUtil.isSimplePropertyGetter(method) && helper.isAccessible(method, aClass, aClass) && returnType instanceof PsiClassType) {
+      if (returnType != null && PropertyUtil.isSimplePropertyGetter(method) && helper.isAccessible(method, aClass, aClass) &&
+          returnType instanceof PsiClassType) {
         result.add(method);
       }
     }

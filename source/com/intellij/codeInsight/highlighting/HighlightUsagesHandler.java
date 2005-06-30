@@ -195,8 +195,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     public ChooseExceptionClassAndDoHighlightRunnable(PsiClassType[] exceptions, PsiElement highlightInPlace, Project project,
                                                       PsiElement target, Editor editor, PsiFile file) {
       List<PsiClass> classes = new ArrayList<PsiClass>();
-      for (int i = 0; i < exceptions.length; i++) {
-        PsiClass exception = exceptions[i].resolve();
+      for (PsiClassType exception1 : exceptions) {
+        PsiClass exception = exception1.resolve();
         if (exception != null) classes.add(exception);
       }
       myExceptionClasses = classes.toArray(new PsiClass[classes.size()]);
@@ -331,8 +331,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
         };
 
         ArrayList<PsiClassType> filtered = new ArrayList<PsiClassType>();
-        for (int i = 0; i < allThrownExceptions.length; i++) {
-          PsiClassType type = allThrownExceptions[i];
+        for (PsiClassType type : allThrownExceptions) {
           if (filter.accept(type)) filtered.add(type);
         }
 
@@ -481,8 +480,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     if (element instanceof PsiVariable) {
       List<PsiReference> readRefs = new ArrayList<PsiReference>();
       List<PsiReference> writeRefs = new ArrayList<PsiReference>();
-      for (int i = 0; i < refs.length; i++) {
-        PsiReference ref = refs[i];
+      for (PsiReference ref : refs) {
         PsiElement refElement = ref.getElement();
         if (refElement instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)refElement)) {
           writeRefs.add(ref);

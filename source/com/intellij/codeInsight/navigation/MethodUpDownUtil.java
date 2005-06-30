@@ -24,13 +24,12 @@ public class MethodUpDownUtil {
   private static void addNavigationElements(ArrayList array, PsiElement element) {
     if (element instanceof PsiJavaFile || element instanceof PsiClass){
       PsiElement[] children = element.getChildren();
-      for(int i = 0; i < children.length; i++){
-        PsiElement child = children[i];
-        if (child instanceof PsiMethod || child instanceof PsiClass){
+      for (PsiElement child : children) {
+        if (child instanceof PsiMethod || child instanceof PsiClass) {
           array.add(child);
           addNavigationElements(array, child);
         }
-        if (element instanceof PsiClass && child instanceof PsiJavaToken && child.getText().equals("}")){
+        if (element instanceof PsiClass && child instanceof PsiJavaToken && child.getText().equals("}")) {
           array.add(child);
         }
       }
@@ -38,8 +37,7 @@ public class MethodUpDownUtil {
       PsiElement parent = element instanceof XmlFile ? element : element.getParent();
 
       PsiElement[] children = parent.getChildren();
-      for (int i = 0; i < children.length; i++) {
-        PsiElement child = children[i];
+      for (PsiElement child : children) {
         if (child instanceof XmlTag) {
           array.add(child);
         }

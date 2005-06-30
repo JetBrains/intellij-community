@@ -269,8 +269,7 @@ public class XmlCompletionData extends CompletionData {
 
       XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors();
 
-      for (int i = 0; i < attributes.length; i++) {
-        XmlAttributeDescriptor attributeDecl = attributes[i];
+      for (XmlAttributeDescriptor attributeDecl : attributes) {
         String attributeName = attributeDecl.getDefaultName();
 
         if (attributeDecl.isRequired()) {

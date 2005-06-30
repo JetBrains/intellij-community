@@ -21,9 +21,8 @@ public class ComponentTypeOfMacro implements Macro {
     if (params.length != 1) return null;
     LookupItem[] lookupItems = params[0].calculateLookupItems(context);
     if (lookupItems == null) return null;
-    
-    for (int i = 0; i < lookupItems.length; i++) {
-      LookupItem item = lookupItems[i];
+
+    for (LookupItem item : lookupItems) {
       Integer bracketsCount = (Integer)item.getAttribute(LookupItem.BRACKETS_COUNT_ATTR);
       if (bracketsCount == null) return null;
       item.setAttribute(LookupItem.BRACKETS_COUNT_ATTR, new Integer(bracketsCount.intValue() - 1));

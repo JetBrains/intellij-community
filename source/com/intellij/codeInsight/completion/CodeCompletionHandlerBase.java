@@ -87,39 +87,38 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     boolean doNotAutocomplete = false;
     boolean signatureSencetive = false;
 
-    for(int i = 0; i < items.length; i++){
-      final LookupItem item1 = items[i];
-      if (item1.getAttribute(LookupItem.DO_NOT_AUTOCOMPLETE_ATTR) != null){
+    for (final LookupItem item1 : items) {
+      if (item1.getAttribute(LookupItem.DO_NOT_AUTOCOMPLETE_ATTR) != null) {
         item = null;
         doNotAutocomplete = true;
         break;
       }
 
-      if (item1.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null){
+      if (item1.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null) {
         signatureSencetive = true;
       }
-      if (uniqueText == null){
+      if (uniqueText == null) {
         uniqueText = item1.getLookupString();
         item = item1;
       }
-      else{
-        if (!uniqueText.equals(item1.getLookupString())){
+      else {
+        if (!uniqueText.equals(item1.getLookupString())) {
           item = null;
           break;
         }
-        if (item.getObject() instanceof PsiMethod && item1.getObject() instanceof PsiMethod){
-          if(!signatureSencetive){
+        if (item.getObject() instanceof PsiMethod && item1.getObject() instanceof PsiMethod) {
+          if (!signatureSencetive) {
             final PsiParameter[] parms = ((PsiMethod)item1.getObject()).getParameterList().getParameters();
-            if (parms.length > 0){
+            if (parms.length > 0) {
               item = item1;
             }
           }
-          else{
+          else {
             item = null;
             break;
           }
         }
-        else{
+        else {
           item = null;
           break;
         }
@@ -204,8 +203,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     String commonPrefix = null;
     boolean isStrict = false;
 
-    for(int i = 0; i < items.length; i++){
-      final LookupItem item = items[i];
+    for (final LookupItem item : items) {
       final String lookupString = item.getLookupString();
       if (!lookupString.toLowerCase().startsWith(prefix.toLowerCase())) {
         // since camel humps
@@ -215,14 +213,16 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
       //final String afterPrefix = lookupString.substring(prefix.length());
 
-      if (commonPrefix != null){
+      if (commonPrefix != null) {
         int matchingRegLength = lookupString.length();
-        while(!lookupString.regionMatches(0, commonPrefix, 0, matchingRegLength--));
+        while (!lookupString.regionMatches(0, commonPrefix, 0, matchingRegLength--)) ;
         commonPrefix = lookupString.substring(0, matchingRegLength + 1);
-        if(commonPrefix.length() < lookupString.length())
+        if (commonPrefix.length() < lookupString.length()) {
           isStrict = true;
-        if(commonPrefix.length() <= prefix.length())
+        }
+        if (commonPrefix.length() <= prefix.length()) {
           return prefix;
+        }
       }
       else {
         commonPrefix = lookupString;

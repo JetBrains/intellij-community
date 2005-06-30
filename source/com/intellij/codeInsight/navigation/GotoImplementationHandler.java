@@ -127,8 +127,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     ResultsFilter filter = createFilter(project, editor, file, element);
 
     ArrayList<PsiElement> result = new ArrayList<PsiElement>();
-    for (int i = 0; i < targetElements.length; i++) {
-      PsiElement targetElement = targetElements[i];
+    for (PsiElement targetElement : targetElements) {
       if (targetElement instanceof PsiClass && filter.acceptClass((PsiClass)targetElement)) {
         result.add(targetElement);
       }

@@ -92,11 +92,9 @@ public class SmartEnterProcessor {
       collectAllElements(atCaret, queue, true);
       queue.add(atCaret);
 
-      for (int i = 0; i < queue.size(); i++) {
-        PsiElement psiElement = queue.get(i);
+      for (PsiElement psiElement : queue) {
         if (StdFileTypes.JAVA.getLanguage().equals(psiElement.getLanguage())) {
-          for (int j = 0; j < ourFixers.size(); j++) {
-            Fixer fixer = ourFixers.get(j);
+          for (Fixer fixer : ourFixers) {
             fixer.apply(myEditor, this, psiElement);
             if (myEditor.getUserData(LookupImpl.LOOKUP_IN_EDITOR_KEY) != null) return;
             if (isUncommited() || !psiElement.isValid()) {
@@ -139,8 +137,7 @@ public class SmartEnterProcessor {
 
     reformat(atCaret);
 
-    for (int i = 0; i < ourEnterProcessors.size(); i++) {
-      EnterProcessor processor = ourEnterProcessors.get(i);
+    for (EnterProcessor processor : ourEnterProcessors) {
       if (processor.doEnter(myEditor, atCaret, isModified())) return;
     }
 
@@ -178,8 +175,8 @@ public class SmartEnterProcessor {
     }
 
     final PsiElement[] children = atCaret.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      collectAllElements(children[i], res, recurse);
+    for (PsiElement aChildren : children) {
+      collectAllElements(aChildren, res, recurse);
     }
   }
 

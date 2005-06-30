@@ -61,8 +61,7 @@ public class HighlightMethodUtil {
     if (modifierList.hasModifierProperty(PsiModifier.PUBLIC)) return null;
     int accessLevel = PsiUtil.getAccessLevel(modifierList);
     String accessModifier = PsiUtil.getAccessModifier(accessLevel);
-    for (int i = 0; i < superMethodSignatures.size(); i++) {
-      MethodSignatureBackedByPsiMethod superMethodSignature = superMethodSignatures.get(i);
+    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
       int superAccessLevel = PsiUtil.getAccessLevel(superMethod.getModifierList());
       if (accessLevel < superAccessLevel) {
@@ -88,7 +87,8 @@ public class HighlightMethodUtil {
         }
 
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, message);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new ModifierFix(method, PsiUtil.getAccessModifier(superAccessLevel), true), null);
+        QuickFixAction
+          .registerQuickFixAction(highlightInfo, new ModifierFix(method, PsiUtil.getAccessModifier(superAccessLevel), true), null);
         return highlightInfo;
       }
     }
@@ -104,8 +104,7 @@ public class HighlightMethodUtil {
     PsiType returnType = methodSignature.getSubstitutor().substitute(method.getReturnType());
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return null;
-    for (int i = 0; i < superMethodSignatures.size(); i++) {
-      MethodSignatureBackedByPsiMethod superMethodSignature = superMethodSignatures.get(i);
+    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
       PsiType superReturnType = superMethodSignature.getSubstitutor().substitute(superMethod.getReturnType());
       if (returnType == null || superReturnType == null || method == superMethod) continue;
@@ -181,8 +180,7 @@ public class HighlightMethodUtil {
   static HighlightInfo checkMethodOverridesFinal(MethodSignatureBackedByPsiMethod methodSignature,
                                                  List<MethodSignatureBackedByPsiMethod> superMethodSignatures) {
     PsiMethod method = methodSignature.getMethod();
-    for (int i = 0; i < superMethodSignatures.size(); i++) {
-      MethodSignatureBackedByPsiMethod superMethodSignature = superMethodSignatures.get(i);
+    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
       // strange things happen when super method is from Object and method from interface
       if (superMethod != null
@@ -235,8 +233,7 @@ public class HighlightMethodUtil {
         }
       }
     }
-    for (int i = 0; i < superMethodSignatures.size(); i++) {
-      MethodSignatureBackedByPsiMethod superMethodSignature = superMethodSignatures.get(i);
+    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
       int index = getExtraExceptionNum(superMethod, checkedExceptions, aClass);
       if (index != -1) {
@@ -743,11 +740,10 @@ public class HighlightMethodUtil {
     List<MethodSignatureBackedByPsiMethod> overrideEquivalentMethods = allMethods.get(methodSignature);
     int methodCount = 0;
     if (overrideEquivalentMethods != null) {
-      for (int i = 0; i < overrideEquivalentMethods.size(); i++) {
-        MethodSignatureBackedByPsiMethod otherSignature = overrideEquivalentMethods.get(i);
+      for (MethodSignatureBackedByPsiMethod otherSignature : overrideEquivalentMethods) {
         PsiMethod psiMethod = otherSignature.getMethod();
         if (aClass.getManager().areElementsEquivalent(aClass, psiMethod.getContainingClass()) &&
-          otherSignature.equals(methodSignature)) {
+            otherSignature.equals(methodSignature)) {
           if (psiMethod.isConstructor() == method.isConstructor()) {
             methodCount++;
             if (methodCount > 1) break;
@@ -1137,8 +1133,7 @@ public class HighlightMethodUtil {
     if (!InspectionManagerEx.isToCheckMember(methodSignature.getMethod(), HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
     PsiMethod method = methodSignature.getMethod();
     PsiElement methodName = method.getNameIdentifier();
-    for (int i = 0; i < superMethodSignatures.size(); i++) {
-      MethodSignatureBackedByPsiMethod superMethodSignature = superMethodSignatures.get(i);
+    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
       PsiClass aClass = superMethod.getContainingClass();
       if (aClass == null) continue;
@@ -1156,7 +1151,10 @@ public class HighlightMethodUtil {
         options.add(new AddSuppressWarningsAnnotationAction(HighlightDisplayKey.DEPRECATED_SYMBOL, method));
         options.add(new AddSuppressWarningsAnnotationForClassAction(HighlightDisplayKey.DEPRECATED_SYMBOL, method));
         options.add(new AddSuppressWarningsAnnotationForAllAction(method));
-        QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.DEPRECATED_SYMBOL), options), options);
+        QuickFixAction
+          .registerQuickFixAction(highlightInfo,
+                                  new EmptyIntentionAction(HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.DEPRECATED_SYMBOL),
+                                                           options), options);
         return highlightInfo;
       }
     }

@@ -79,9 +79,8 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, col));
 
     final ArrayList templates = new ArrayList();
-    for(int i = 0; i < newMembers.length; i++){
-      Object member = newMembers[i];
-      if (member instanceof TemplateGenerationInfo){
+    for (Object member : newMembers) {
+      if (member instanceof TemplateGenerationInfo) {
         templates.add(member);
       }
     }
@@ -110,11 +109,11 @@ abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler {
 
   protected Object[] generateMemberPrototypes(PsiClass aClass, Object[] members) throws IncorrectOperationException {
     ArrayList array = new ArrayList();
-    for(int i = 0; i < members.length; i++){
-      Object[] prototypes = generateMemberPrototypes(aClass, members[i]);
-      if (prototypes != null){
-        for(int j = 0; j < prototypes.length; j++){
-          array.add(prototypes[j]);
+    for (Object member : members) {
+      Object[] prototypes = generateMemberPrototypes(aClass, member);
+      if (prototypes != null) {
+        for (Object prototype : prototypes) {
+          array.add(prototype);
         }
       }
     }

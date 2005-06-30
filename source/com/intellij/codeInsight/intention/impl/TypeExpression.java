@@ -18,8 +18,7 @@ public class TypeExpression implements Expression {
 
   public TypeExpression(final Project project, PsiType[] types) {
     final LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
-    for (int i = 0; i < types.length; i++) {
-      PsiType type = types[i];
+    for (PsiType type : types) {
       LookupItemUtil.addLookupItem(set, type, "");
     }
 

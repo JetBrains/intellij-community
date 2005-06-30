@@ -83,8 +83,7 @@ public class AddMethodFix implements IntentionAction {
     try {
       if (myClass.isInterface() && myMethod.getBody() != null) myMethod.getBody().delete();
       myMethod = (PsiMethod) myClass.add(myMethod);
-      for (int i = 0; i < myExceptions.size(); i++) {
-        String exception = myExceptions.get(i);
+      for (String exception : myExceptions) {
         PsiUtil.addException(myMethod, exception);
       }
       myMethod = (PsiMethod)myMethod.replace(reformat(project, myMethod));

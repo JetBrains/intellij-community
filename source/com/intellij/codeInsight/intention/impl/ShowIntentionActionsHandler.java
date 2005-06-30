@@ -36,16 +36,17 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     ArrayList<Pair<IntentionAction,List<IntentionAction>>> intentionsToShow = new ArrayList<Pair<IntentionAction,List<IntentionAction>>>();
     ArrayList<Pair<IntentionAction,List<IntentionAction>>> fixesToShow = new ArrayList<Pair<IntentionAction,List<IntentionAction>>>();
-    for(int i = 0; i < intentionActions.length; i++){
-      IntentionAction action = intentionActions[i];
+    for (IntentionAction action : intentionActions) {
       if (action instanceof IntentionActionComposite) {
 
         if (action instanceof QuickFixAction) {
           fixesToShow.addAll(((IntentionActionComposite)action).getAvailableActions(editor, file));
-        } else {
+        }
+        else {
           intentionsToShow.addAll(((IntentionActionComposite)action).getAvailableActions(editor, file));
         }
-      } else if (action.isAvailable(project, editor, file)){
+      }
+      else if (action.isAvailable(project, editor, file)) {
         intentionsToShow.add(new Pair<IntentionAction, List<IntentionAction>>(action, null));
       }
     }

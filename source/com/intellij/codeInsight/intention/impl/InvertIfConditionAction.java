@@ -131,8 +131,7 @@ public class InvertIfConditionAction extends BaseIntentionAction {
 
   private boolean emptyBlock (PsiCodeBlock block) {
     PsiElement[] children = block.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      PsiElement child = children[i];
+    for (PsiElement child : children) {
       if (child instanceof PsiComment) return false;
       if (!(child instanceof PsiWhiteSpace) && !(child instanceof PsiJavaToken)) return false;
     }

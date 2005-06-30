@@ -170,8 +170,8 @@ implements JDOMExternalizable{
   }
 
   public void addCompletion(String[] keywordList, int tailType){
-    for(int i = 0; i < keywordList.length; i++){
-      addCompletion(keywordList[i], tailType);
+    for (String aKeywordList : keywordList) {
+      addCompletion(aKeywordList, tailType);
     }
   }
 
@@ -183,11 +183,9 @@ implements JDOMExternalizable{
   }
 
   public void addReferenceCompletions(PsiReference reference, PsiElement position, LinkedHashSet set, String prefix){
-    final Iterator<CompletionVariantItem> iter = myCompletionsList.iterator();
 
-    while(iter.hasNext()){
-      final CompletionVariantItem ce = iter.next();
-      addReferenceCompletions(reference, position, set, prefix, ce);
+    for (final Object ce : myCompletionsList) {
+      addReferenceCompletions(reference, position, set, prefix, (CompletionVariantItem)ce);
     }
   }
 
@@ -255,15 +253,15 @@ implements JDOMExternalizable{
       }
       else if (comp instanceof ContextGetter){
         final Object[] elements = ((ContextGetter)comp).get(position, context);
-        for(int i = 0; i < elements.length; i++){
-          addLookupItem(set, ce, elements[i], context.prefix);
+        for (Object element : elements) {
+          addLookupItem(set, ce, element, context.prefix);
         }
       }
       // TODO: KeywordChooser -> ContextGetter
       else if(comp instanceof KeywordChooser){
         final String[] keywords = ((KeywordChooser)comp).getKeywords(context, position);
-        for(int i = 0; i < keywords.length; i++){
-          addKeyword(factory, set, ce, keywords[i], context);
+        for (String keyword : keywords) {
+          addKeyword(factory, set, ce, keyword, context);
         }
       }
     }
@@ -333,11 +331,10 @@ implements JDOMExternalizable{
 
     myPosition = FilterUtil.readFilterGroup(filterElement).get(0);
 
-    final Iterator keywordsIterator = completionsElement.getChildren("keyword-set", CompletionData.COMPLETION_NS).iterator();
-    while(keywordsIterator.hasNext()){
-      final Element keywordElement = (Element) keywordsIterator.next();
+    for (final Object o : completionsElement.getChildren("keyword-set", CompletionData.COMPLETION_NS)) {
+      final Element keywordElement = (Element)o;
       final StringTokenizer tok = new StringTokenizer(keywordElement.getTextTrim());
-      while(tok.hasMoreTokens()){
+      while (tok.hasMoreTokens()) {
         myCompletionsList.add(tok.nextToken().trim());
       }
     }
@@ -364,17 +361,18 @@ implements JDOMExternalizable{
         if(completions == null){
           return;
         }
-        for(int j = 0; j < completions.length; j++){
-          if(completions[j] instanceof PsiElement){
-            processor.execute((PsiElement)completions[j], PsiSubstitutor.EMPTY);
+        for (Object completion : completions) {
+          if (completion instanceof PsiElement) {
+            processor.execute((PsiElement)completion, PsiSubstitutor.EMPTY);
           }
-          else if(completions[j] instanceof CandidateInfo){
-            final CandidateInfo info = ((CandidateInfo)completions[j]);
-            if(info.isValidResult())
+          else if (completion instanceof CandidateInfo) {
+            final CandidateInfo info = ((CandidateInfo)completion);
+            if (info.isValidResult()) {
               processor.execute(info.getElement(), PsiSubstitutor.EMPTY);
+            }
           }
-          else{
-            addLookupItem(set, item, completions[j], prefix);
+          else {
+            addLookupItem(set, item, completion, prefix);
           }
         }
       }

@@ -34,8 +34,8 @@ public class EnumMacro implements Macro{
     if (params == null || params.length ==0) return null;
     LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
 
-    for(int i = 0; i < params.length; i++){
-      Result object = params[i].calculateResult(context);
+    for (Expression param : params) {
+      Result object = param.calculateResult(context);
       LookupItemUtil.addLookupItem(set, object.toString(), "");
     }
     return set.toArray(new LookupItem[set.size()]);

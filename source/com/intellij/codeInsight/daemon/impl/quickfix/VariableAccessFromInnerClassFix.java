@@ -175,8 +175,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   }
 
   private static void replaceReferences(List<PsiReferenceExpression> references, PsiElement newExpression) throws IncorrectOperationException {
-    for (int i = 0; i < references.size(); i++) {
-      PsiElement reference = references.get(i);
+    for (PsiReferenceExpression reference1 : references) {
+      PsiElement reference = reference1;
       reference.replace(newExpression);
     }
   }
@@ -197,9 +197,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     collectReferences(outerCodeBlock, variable, outerReferences);
 
     int type = MAKE_FINAL;
-    for (int i = 0; i < outerReferences.size(); i++) {
-      PsiReferenceExpression expression = outerReferences.get(i);
-
+    for (PsiReferenceExpression expression : outerReferences) {
       // if it happens that variable referenced from another inner class, make sure it can be make final from there
       PsiClass innerClass = HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, expression);
 
@@ -211,7 +209,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
           thisType = MAKE_ARRAY;
         }
         if (thisType == MAKE_FINAL
-            && !canBeFinal(variable, outerReferences))  {
+            && !canBeFinal(variable, outerReferences)) {
           thisType = COPY_TO_FINAL;
         }
         type = Math.max(type, thisType);
@@ -224,11 +222,10 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     // if there is at least one assignment to this variable, it cannot be final
     Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
     Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
-    for (int i = 0; i < references.size(); i++) {
-      PsiReferenceExpression expression = references.get(i);
-
+    for (PsiReferenceExpression expression : references) {
       if (ControlFlowUtil.isVariableAssignedInLoop(expression, variable)) return false;
-      HighlightInfo highlightInfo = HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, variable, uninitializedVarProblems);
+      HighlightInfo highlightInfo = HighlightControlFlowUtil
+        .checkVariableInitializedBeforeUsage(expression, variable, uninitializedVarProblems);
       if (highlightInfo != null) return false;
       highlightInfo = HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression, finalVarProblems);
       if (highlightInfo != null) return false;

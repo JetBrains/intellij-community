@@ -515,8 +515,8 @@ class TemplateListPanel extends JPanel {
   private void initTemplates(TemplateImpl[] templates, String lastSelectedKey) {
     myTreeRoot.removeAllChildren();
     SortedMap<String, List<TemplateImpl>> groups = new TreeMap<String, List<TemplateImpl>>();
-    for (int i = 0; i < templates.length; i++) {
-      TemplateImpl template = templates[i].copy();
+    for (TemplateImpl template1 : templates) {
+      TemplateImpl template = template1.copy();
       myTemplates.put(new TemplateKey(template), template);
       String group = template.getGroupName();
       List<TemplateImpl> ts = groups.get(group);
@@ -528,14 +528,12 @@ class TemplateListPanel extends JPanel {
     }
 
     DefaultMutableTreeNode nodeToSelect = null;
-    for (Iterator<Map.Entry<String, List<TemplateImpl>>> iterator1 = groups.entrySet().iterator();
-         iterator1.hasNext();) {
-      Map.Entry entry = iterator1.next();
+    for (Map.Entry<String, List<TemplateImpl>> entry : groups.entrySet()) {
       String group = (String)entry.getKey();
       List groupTemplates = (List)entry.getValue();
       DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode(group);
-      for (Iterator iterator2 = groupTemplates.iterator(); iterator2.hasNext();) {
-        TemplateImpl template = (TemplateImpl)iterator2.next();
+      for (final Object groupTemplate : groupTemplates) {
+        TemplateImpl template = (TemplateImpl)groupTemplate;
         DefaultMutableTreeNode node = new DefaultMutableTreeNode(template);
         groupNode.add(node);
 

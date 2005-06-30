@@ -520,8 +520,7 @@ public class EnterHandler extends EditorWriteActionHandler {
           buffer = new StringBuffer();
 
           final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-          for (int i = 0; i < parameters.length; i++) {
-            PsiParameter parameter = parameters[i];
+          for (PsiParameter parameter : parameters) {
             buffer.append(createDocCommentLine(" @param ", getProject()));
             buffer.append(parameter.getName());
             buffer.append(LINE_SEPARATOR);
@@ -533,8 +532,7 @@ public class EnterHandler extends EditorWriteActionHandler {
           }
 
           final PsiJavaCodeReferenceElement[] references = psiMethod.getThrowsList().getReferenceElements();
-          for (int i = 0; i < references.length; i++) {
-            PsiJavaCodeReferenceElement reference = references[i];
+          for (PsiJavaCodeReferenceElement reference : references) {
             buffer.append(createDocCommentLine(" @throws ", getProject()));
             buffer.append(reference.getText());
             buffer.append(LINE_SEPARATOR);

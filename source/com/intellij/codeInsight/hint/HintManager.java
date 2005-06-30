@@ -170,8 +170,7 @@ public class HintManager implements ApplicationComponent {
   public void initComponent() { }
 
   private void updateScrollableHints(VisibleAreaEvent e) {
-    for (int i = 0; i < myHintsStack.size(); i++) {
-      HintInfo info = myHintsStack.get(i);
+    for (HintInfo info : myHintsStack) {
       if (info.hint instanceof LightweightHint && (info.flags & UPDATE_BY_SCROLLING) != 0) {
         updateScrollableHintPosition(e, (LightweightHint)info.hint, (info.flags & HIDE_IF_OUT_OF_EDITOR) != 0);
       }
@@ -337,8 +336,7 @@ public class HintManager implements ApplicationComponent {
   }
 
   public void hideAllHints() {
-    for (int i = 0; i < myHintsStack.size(); i++) {
-      HintInfo info = myHintsStack.get(i);
+    for (HintInfo info : myHintsStack) {
       if (info.hint.isVisible()) {
         info.hint.hide();
       }

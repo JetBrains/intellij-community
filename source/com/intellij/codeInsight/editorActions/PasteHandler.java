@@ -567,8 +567,7 @@ public class PasteHandler extends EditorActionHandler {
         LOG.assertTrue(ref.isValid());
         Object refObject = refObjects[i];
         boolean found = false;
-        for (int j = 0; j < selectedObjects.length; j++) {
-          Object selected = selectedObjects[j];
+        for (Object selected : selectedObjects) {
           if (refObject.equals(selected)) {
             found = true;
             break;

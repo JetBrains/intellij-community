@@ -43,8 +43,8 @@ public class GenerateEqualsWizard extends AbstractWizard {
     myClass = aClass;
 
     myClassFields = MemberInfo.extractClassMembers(myClass, MEMBER_INFO_FILTER, false);
-    for (int i = 0; i < myClassFields.length; i++) {
-      myClassFields[i].setChecked(true);
+    for (MemberInfo myClassField : myClassFields) {
+      myClassField.setChecked(true);
     }
     myTestBoxedStep = 0;
     if (needEquals) {
@@ -113,8 +113,8 @@ public class GenerateEqualsWizard extends AbstractWizard {
 
   private static PsiField[] memberInfosToFields(MemberInfo[] infos) {
     ArrayList<PsiField> list = new ArrayList<PsiField>();
-    for (int i = 0; i < infos.length; i++) {
-      list.add((PsiField)infos[i].getMember());
+    for (MemberInfo info : infos) {
+      list.add((PsiField)info.getMember());
     }
     return list.toArray(new PsiField[list.size()]);
   }
@@ -154,8 +154,7 @@ public class GenerateEqualsWizard extends AbstractWizard {
   private HashMap<PsiElement, MemberInfo> createFieldToMemberInfoMap(boolean checkedByDefault) {
     MemberInfo[] memberInfos = MemberInfo.extractClassMembers(myClass, MEMBER_INFO_FILTER, false);
     final HashMap<PsiElement, MemberInfo> result = new HashMap<PsiElement, MemberInfo>();
-    for (int i = 0; i < memberInfos.length; i++) {
-      MemberInfo memberInfo = memberInfos[i];
+    for (MemberInfo memberInfo : memberInfos) {
       memberInfo.setChecked(checkedByDefault);
       result.put(memberInfo.getMember(), memberInfo);
     }
@@ -175,10 +174,9 @@ public class GenerateEqualsWizard extends AbstractWizard {
   private void updateNonNullMemberInfos(MemberInfo[] equalsMemberInfos) {
     final ArrayList<MemberInfo> list = new ArrayList<MemberInfo>();
 
-    for (int i = 0; i < equalsMemberInfos.length; i++) {
-      MemberInfo equalsMemberInfo = equalsMemberInfos[i];
-      PsiField field = (PsiField) equalsMemberInfo.getMember();
-      if(!(field.getType() instanceof PsiPrimitiveType)) {
+    for (MemberInfo equalsMemberInfo : equalsMemberInfos) {
+      PsiField field = (PsiField)equalsMemberInfo.getMember();
+      if (!(field.getType() instanceof PsiPrimitiveType)) {
         list.add(myFieldsToNonNull.get(equalsMemberInfo.getMember()));
       }
     }
@@ -194,10 +192,9 @@ public class GenerateEqualsWizard extends AbstractWizard {
 
     if (getCurrentStep() == myTestBoxedStep) {
       boolean anyNonBoxed = false;
-      for (int i = 0; i < myClassFields.length; i++) {
-        MemberInfo classField = myClassFields[i];
+      for (MemberInfo classField : myClassFields) {
         if (classField.isChecked()) {
-          PsiField field = (PsiField) classField.getMember();
+          PsiField field = (PsiField)classField.getMember();
           if (!(field.getType() instanceof PsiPrimitiveType)) {
             anyNonBoxed = true;
             break;
@@ -210,10 +207,10 @@ public class GenerateEqualsWizard extends AbstractWizard {
 
     if(getCurrentStep() == 0) {
       boolean anyChecked = false;
-      for (int i = 0; i < myClassFields.length; i++) {
-        MemberInfo classField = myClassFields[i];
-        if(classField.isChecked()) {
-          anyChecked = true; break;
+      for (MemberInfo classField : myClassFields) {
+        if (classField.isChecked()) {
+          anyChecked = true;
+          break;
         }
       }
       finishEnabled = finishEnabled && anyChecked;

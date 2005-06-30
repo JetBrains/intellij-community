@@ -222,8 +222,7 @@ public class EditorTracker {
     if (list == null) return EMPTY_EDITOR_ARRAY;
     if (window instanceof IdeFrame){
       List<Editor> filteredList = new ArrayList<Editor>();
-      for (int i = 0; i < list.size(); i++) {
-        Editor editor = list.get(i);
+      for (Editor editor : list) {
         if (isEditorInIdeFrameActive(editor)) {
           filteredList.add(editor);
         }
@@ -311,8 +310,8 @@ public class EditorTracker {
     }
 
     public void dispose() {
-      for (Iterator<Runnable> it = myExecuteOnEditorRelease.iterator(); it.hasNext();) {
-        it.next().run();
+      for (final Runnable aMyExecuteOnEditorRelease : myExecuteOnEditorRelease) {
+        aMyExecuteOnEditorRelease.run();
       }
       myExecuteOnEditorRelease.clear();
     }

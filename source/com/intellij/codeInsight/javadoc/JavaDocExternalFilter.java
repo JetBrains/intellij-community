@@ -202,8 +202,8 @@ public class JavaDocExternalFilter {
   private String correctRefs(String root, String read) {
     String result = read;
 
-    for (int i = 0; i < myReferenceConvertors.length; i++) {
-      result = myReferenceConvertors[i].refFilter(root, result);
+    for (RefConvertor myReferenceConvertor : myReferenceConvertors) {
+      result = myReferenceConvertor.refFilter(root, result);
     }
 
     return result;

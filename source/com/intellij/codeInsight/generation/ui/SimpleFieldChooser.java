@@ -27,8 +27,7 @@ public class SimpleFieldChooser extends DialogWrapper {
 
   protected JComponent createCenterPanel() {
     final DefaultListModel model = new DefaultListModel ();
-    for (int i = 0; i < myFields.length; i++) {
-      PsiNamedElement member = myFields[i];
+    for (PsiField member : myFields) {
       model.addElement(member);
     }
     myList = new JList(model);

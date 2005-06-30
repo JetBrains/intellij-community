@@ -92,9 +92,8 @@ public abstract class AbstractLayoutCodeProcessor {
 
   private static PsiFile[] filterFiles(PsiFile[] files){
     ArrayList<PsiFile> list = new ArrayList<PsiFile>();
-    for(int i = 0; i < files.length; i++){
-      PsiFile file = files[i];
-      if (isFormatable(file)){
+    for (PsiFile file : files) {
+      if (isFormatable(file)) {
         list.add(file);
       }
     }
@@ -257,16 +256,14 @@ public abstract class AbstractLayoutCodeProcessor {
 
   private void collectFilesInProject(Project project, ArrayList<PsiFile> array) {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (int i = 0; i < modules.length; i++) {
-      Module module = modules[i];
+    for (Module module : modules) {
       collectFilesInModule(module, array);
     }
   }
 
   private void collectFilesInModule(Module module, ArrayList<PsiFile> array) {
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-    for (int i = 0; i < contentRoots.length; i++) {
-      VirtualFile root = contentRoots[i];
+    for (VirtualFile root : contentRoots) {
       PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(root);
       if (dir != null) {
         collectFilesToProcess(array, dir, true);
@@ -276,16 +273,15 @@ public abstract class AbstractLayoutCodeProcessor {
 
   private void runProcessOnFiles(final String where, final ArrayList<PsiFile> array) {
     boolean checkWritable = true;
-    for(int i = 0; i < array.size(); i++){
-      PsiFile file = array.get(i);
-      if (checkWritable && !file.isWritable()){
+    for (PsiFile file : array) {
+      if (checkWritable && !file.isWritable()) {
         int res = Messages.showOkCancelDialog(
           myProject,
           where + " contains read-only file(s).\nProcess all other files?",
           "Cannot Modify Read-Only Files",
           Messages.getQuestionIcon()
         );
-        if (res != 0){
+        if (res != 0) {
           array.clear();
           break;
         }
@@ -317,16 +313,15 @@ public abstract class AbstractLayoutCodeProcessor {
 
   private void collectFilesToProcess(ArrayList<PsiFile> array, PsiDirectory dir, boolean recursive) {
     PsiFile[] files = dir.getFiles();
-    for(int i = 0; i < files.length; i++) {
-      PsiFile file = files[i];
-      if (isFormatable(file)){
+    for (PsiFile file : files) {
+      if (isFormatable(file)) {
         array.add(file);
       }
     }
     if (recursive){
       PsiDirectory[] subdirs = dir.getSubdirectories();
-      for(int i = 0; i < subdirs.length; i++) {
-        collectFilesToProcess(array, subdirs[i], recursive);
+      for (PsiDirectory subdir : subdirs) {
+        collectFilesToProcess(array, subdir, recursive);
       }
     }
   }

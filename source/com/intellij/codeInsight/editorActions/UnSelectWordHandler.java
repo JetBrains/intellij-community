@@ -105,9 +105,7 @@ public class UnSelectWordHandler extends EditorActionHandler {
                                    Editor editor) {
     TextRange maximum = null;
 
-    for (int i = 0; i < SelectWordUtil.SELECTIONERS.length; i++) {
-      SelectWordUtil.Selectioner selectioner = SelectWordUtil.SELECTIONERS[i];
-
+    for (SelectWordUtil.Selectioner selectioner : SelectWordUtil.SELECTIONERS) {
       if (selectioner.canSelect(element)) {
         List<TextRange> ranges = selectioner.select(element, text, cursorOffset, editor);
 
@@ -115,9 +113,7 @@ public class UnSelectWordHandler extends EditorActionHandler {
           continue;
         }
 
-        for (int j = 0; j < ranges.size(); j++) {
-          TextRange range = ranges.get(j);
-
+        for (TextRange range : ranges) {
           if (range == null) {
             continue;
           }

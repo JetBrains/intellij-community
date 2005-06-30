@@ -108,9 +108,9 @@ public class CompletionData
     final CompletionVariant[] variants = findVariants(position, context);
     boolean haveApplicableVariants = false;
 
-    for(int i = 0; i < variants.length; i++){
-      if(variants[i].hasReferenceFilter()){
-        variants[i].addReferenceCompletions(reference, position, set, context.prefix);
+    for (CompletionVariant variant : variants) {
+      if (variant.hasReferenceFilter()) {
+        variant.addReferenceCompletions(reference, position, set, context.prefix);
         haveApplicableVariants = true;
       }
     }
@@ -122,9 +122,10 @@ public class CompletionData
 
   public void addKeywordVariants(Set<CompletionVariant> set, CompletionContext context, PsiElement position){
     CompletionVariant[] variants = findVariants(position, context);
-    for(int i = 0; i < variants.length; i++){
-      if(!set.contains(variants[i]))
-        set.add(variants[i]);
+    for (CompletionVariant variant : variants) {
+      if (!set.contains(variant)) {
+        set.add(variant);
+      }
     }
   }
 
@@ -229,14 +230,13 @@ public class CompletionData
     while (scope != null) {
       boolean breakFlag = false;
       if (isScopeAcceptable(scope)){
-        final Iterator<CompletionVariant> iter = myCompletionVariants.iterator();
 
-        while(iter.hasNext()){
-          final CompletionVariant variant = iter.next();
-          if(variant.isVariantApplicable(position, scope) && !variants.contains(variant)){
+        for (final CompletionVariant variant : myCompletionVariants) {
+          if (variant.isVariantApplicable(position, scope) && !variants.contains(variant)) {
             variants.add(variant);
-            if(variant.isScopeFinal(scope))
+            if (variant.isScopeFinal(scope)) {
               breakFlag = true;
+            }
           }
         }
       }

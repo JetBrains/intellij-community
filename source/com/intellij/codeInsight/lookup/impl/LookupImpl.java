@@ -195,10 +195,9 @@ public class LookupImpl extends LightweightHint implements Lookup {
     DefaultListModel model = new DefaultListModel();
     ArrayList<LookupItem> array = new ArrayList<LookupItem>();
     String prefix = myPrefix.toLowerCase();
-    for(int i = 0; i < myItems.length; i++){
-      LookupItem item = myItems[i];
+    for (LookupItem item : myItems) {
       String text = item.getLookupString();
-      if (text.toLowerCase().startsWith(prefix) || matcher.matches(text, pattern)){
+      if (text.toLowerCase().startsWith(prefix) || matcher.matches(text, pattern)) {
         model.addElement(item);
         array.add(item);
       }
@@ -411,8 +410,8 @@ public class LookupImpl extends LightweightHint implements Lookup {
     if (myListeners.size() > 0){
       LookupEvent event = new LookupEvent(this, item, completionChar);
       LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
-      for(int i = 0; i < listeners.length; i++){
-        listeners[i].itemSelected(event);
+      for (LookupListener listener : listeners) {
+        listener.itemSelected(event);
       }
     }
   }
@@ -421,8 +420,8 @@ public class LookupImpl extends LightweightHint implements Lookup {
     if (myListeners.size() > 0){
       LookupEvent event = new LookupEvent(this, null);
       LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
-      for(int i = 0; i < listeners.length; i++){
-        listeners[i].lookupCanceled(event);
+      for (LookupListener listener : listeners) {
+        listener.lookupCanceled(event);
       }
     }
   }
@@ -431,8 +430,8 @@ public class LookupImpl extends LightweightHint implements Lookup {
     if (myListeners.size() > 0){
       LookupEvent event = new LookupEvent(this, item);
       LookupListener[] listeners = myListeners.toArray(new LookupListener[myListeners.size()]);
-      for(int i = 0; i < listeners.length; i++){
-        listeners[i].currentItemChanged(event);
+      for (LookupListener listener : listeners) {
+        listener.currentItemChanged(event);
       }
     }
   }

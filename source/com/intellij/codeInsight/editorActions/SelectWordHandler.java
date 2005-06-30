@@ -151,9 +151,7 @@ public class SelectWordHandler extends EditorActionHandler {
         continue;
       }
 
-      for (int j = 0; j < ranges.size(); j++) {
-        TextRange range = ranges.get(j);
-
+      for (TextRange range : ranges) {
         if (range == null) {
           continue;
         }

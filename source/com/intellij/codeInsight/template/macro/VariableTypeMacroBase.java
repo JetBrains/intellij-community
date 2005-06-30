@@ -17,8 +17,8 @@ public abstract class VariableTypeMacroBase implements Macro {
     final PsiVariable[] vars = getVariables(params, context);
     if (vars == null || vars.length < 2) return null;
     LinkedHashSet set = new LinkedHashSet();
-    for(int i = 0; i < vars.length; i++){
-      LookupItemUtil.addLookupItem(set, vars[i], "");
+    for (PsiVariable var : vars) {
+      LookupItemUtil.addLookupItem(set, var, "");
     }
     return (LookupItem[]) set.toArray(new LookupItem[set.size()]);
   }

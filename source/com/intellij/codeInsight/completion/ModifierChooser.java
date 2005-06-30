@@ -78,8 +78,8 @@ keywordSets:
               final String[] keywords = keywordSets[keywordSets.length - i - 1];
               boolean containModifierFlag = false;
               if(list != null){
-                for(int j = 0; j < keywords.length; j++){
-                  if(list.hasModifierProperty(keywords[j])){
+                for (String keyword : keywords) {
+                  if (list.hasModifierProperty(keyword)) {
                     containModifierFlag = true;
                     break;
                   }

@@ -334,13 +334,12 @@ public class JavaDocInfoComponent extends JPanel {
 
                 OrderEntry entry = null;
 
-                for (int i = 0; i < entries.length; i++) {
-                    OrderEntry order = entries[i];
-                    if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
-                        entry = order;
-                        break;
-                    }
+              for (OrderEntry order : entries) {
+                if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
+                  entry = order;
+                  break;
                 }
+              }
 
                 if (entry != null) {
                     label.setText(entry.getPresentableName());

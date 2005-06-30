@@ -224,8 +224,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
       }
 
       HighlightInfoHolder holder = new HighlightInfoHolder(myFile, filters);
-      for (int v = 0; v < visitors.size(); v++) {
-        HighlightVisitor visitor = visitors.get(v);
+      for (HighlightVisitor visitor : visitors) {
         visitor.visit(element, holder);
       }
 

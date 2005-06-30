@@ -25,8 +25,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   protected Object[] getAllOriginalMembers(PsiClass aClass) {
     PsiField[] fields = aClass.getFields();
     ArrayList<PsiElement> array = new ArrayList<PsiElement>();
-    for(int i = 0; i < fields.length; i++) {
-      PsiField field = fields[i];
+    for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
 
       if (field.hasModifierProperty(PsiModifier.FINAL) && field.getInitializer() != null) continue;
@@ -47,10 +46,9 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     if (baseClass != null){
       ArrayList<PsiMethod> array = new ArrayList<PsiMethod>();
       PsiMethod[] methods = baseClass.getMethods();
-      for(int i = 0; i < methods.length; i++) {
-        PsiMethod method = methods[i];
-        if (method.isConstructor()){
-          if (method.getManager().getResolveHelper().isAccessible(method, aClass, aClass)){
+      for (PsiMethod method : methods) {
+        if (method.isConstructor()) {
+          if (method.getManager().getResolveHelper().isAccessible(method, aClass, aClass)) {
             array.add(method);
           }
         }
@@ -100,11 +98,11 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     }
     if (baseConstructors != null){
       ArrayList<Object> array = new ArrayList<Object>();
-      for(int i = 0; i < baseConstructors.length; i++){
-        array.add(baseConstructors[i]);
+      for (PsiMethod baseConstructor : baseConstructors) {
+        array.add(baseConstructor);
       }
-      for(int i = 0; i < members.length; i++) {
-        array.add(members[i]);
+      for (Object member : members) {
+        array.add(member);
       }
       members = array.toArray(new PsiElement[array.size()]);
     }
@@ -115,12 +113,12 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   protected Object[] generateMemberPrototypes(PsiClass aClass, Object[] members) throws IncorrectOperationException {
     ArrayList<PsiMethod> baseConstructors = new ArrayList<PsiMethod>();
     ArrayList<PsiElement> fieldsVector = new ArrayList<PsiElement>();
-    for(int i = 0; i < members.length; i++){
-      PsiElement member = (PsiElement)members[i];
-      if (member instanceof PsiMethod){
+    for (Object member1 : members) {
+      PsiElement member = (PsiElement)member1;
+      if (member instanceof PsiMethod) {
         baseConstructors.add((PsiMethod)member);
       }
-      else{
+      else {
         fieldsVector.add(member);
       }
     }
@@ -156,8 +154,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
     if (baseConstructor != null){
       PsiJavaCodeReferenceElement[] throwRefs = baseConstructor.getThrowsList().getReferenceElements();
-      for(int i = 0; i < throwRefs.length; i++){
-        PsiJavaCodeReferenceElement ref = throwRefs[i];
+      for (PsiJavaCodeReferenceElement ref : throwRefs) {
         constructor.getThrowsList().add(ref);
       }
 
@@ -181,8 +178,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
           baseConstructor = (PsiMethod)dummyClass.add(baseConstructor);
         }
         PsiParameter[] parms = baseConstructor.getParameterList().getParameters();
-        for(int j = 0; j < parms.length; j++) {
-          PsiParameter parm = parms[j];
+        for (PsiParameter parm : parms) {
           constructor.getParameterList().add(parm);
         }
         if (parms.length > 0){
@@ -199,14 +195,13 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       }
     }
 
-    for(int i = 0; i < fields.length; i++) {
-      PsiField field = fields[i];
+    for (PsiField field : fields) {
       String fieldName = field.getName();
       String name = codeStyleManager.variableNameToPropertyName(fieldName, VariableKind.FIELD);
       String parmName = codeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
       PsiParameter parm = factory.createParameter(parmName, field.getType());
       constructor.getParameterList().add(parm);
-      if (fieldName.equals(parmName)){
+      if (fieldName.equals(parmName)) {
         buffer.append("this.");
       }
       buffer.append(fieldName);

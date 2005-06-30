@@ -37,9 +37,8 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     myCodeStyleManager = CodeStyleManager.getInstance(myManager.getProject());
     if(expectedInfos != null){
       final Map<PsiType, ExpectedTypeInfo> map = new java.util.HashMap<PsiType, ExpectedTypeInfo>(expectedInfos.length);
-      for (int i = 0; i < expectedInfos.length; i++) {
-        final ExpectedTypeInfo expectedInfo = expectedInfos[i];
-        if(!map.containsKey(expectedInfo.getType())){
+      for (final ExpectedTypeInfo expectedInfo : expectedInfos) {
+        if (!map.containsKey(expectedInfo.getType())) {
           map.put(expectedInfo.getType(), expectedInfo);
         }
       }
@@ -175,19 +174,19 @@ class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
 
     String[] words = NameUtil.nameToWords(name);
     int max = 0;
-    for (int j = 0; j < myExpectedInfos.length; j++) {
-      String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfos[j]).expectedName;
+    for (ExpectedTypeInfo myExpectedInfo : myExpectedInfos) {
+      String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).expectedName;
       if (expectedName == null) continue;
       expectedName = truncDigits(expectedName);
       String[] expectedWords = NameUtil.nameToWords(expectedName);
       int limit = Math.min(words.length, expectedWords.length);
-      for(int i = 0; i < limit; i++){
+      for (int i = 0; i < limit; i++) {
         String word = words[words.length - i - 1];
         String expectedWord = expectedWords[expectedWords.length - i - 1];
-        if (word.equalsIgnoreCase(expectedWord)){
+        if (word.equalsIgnoreCase(expectedWord)) {
           max = Math.max(max, i + 1);
         }
-        else{
+        else {
           break;
         }
       }

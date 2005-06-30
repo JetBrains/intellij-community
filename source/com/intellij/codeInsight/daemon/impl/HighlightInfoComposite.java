@@ -24,8 +24,7 @@ public class HighlightInfoComposite extends HighlightInfo {
     group = infos.get(0).group;
     quickFixActionMarkers = new ArrayList<Pair<Pair<IntentionAction, List<IntentionAction>>, RangeMarker>>();
     quickFixActionRanges = new ArrayList<Pair<Pair<IntentionAction, List<IntentionAction>>, TextRange>>();
-    for (int i = 0; i < infos.size(); i++) {
-      HighlightInfo info = infos.get(i);
+    for (HighlightInfo info : infos) {
       if (info.quickFixActionMarkers != null) {
         quickFixActionMarkers.addAll(info.quickFixActionMarkers);
       }
@@ -42,8 +41,7 @@ public class HighlightInfoComposite extends HighlightInfo {
   private static String createCompositeDescription(List<HighlightInfo> infos) {
     StringBuffer description = new StringBuffer();
     boolean isNull = true;
-    for (int i = 0; i < infos.size(); i++) {
-      HighlightInfo info = infos.get(i);
+    for (HighlightInfo info : infos) {
       if (description.length() != 0) description.append(". ");
       description.append(info.description);
       isNull &= info.description == null;
@@ -53,8 +51,7 @@ public class HighlightInfoComposite extends HighlightInfo {
 
   private static String createCompositeTooltip(List<HighlightInfo> infos) {
     StringBuffer result = new StringBuffer();
-    for (int i = 0; i < infos.size(); i++) {
-      HighlightInfo info = infos.get(i);
+    for (HighlightInfo info : infos) {
       String toolTip = info.toolTip;
       if (toolTip != null) {
         if (result.length() != 0) {

@@ -25,9 +25,8 @@ abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBas
 
     try{
       PsiField[] fields = aClass.getFields();
-      for(int i = 0; i < fields.length; i++) {
-        PsiField field = fields[i];
-        if (generateMemberPrototypes(aClass, field).length > 0){
+      for (PsiField field : fields) {
+        if (generateMemberPrototypes(aClass, field).length > 0) {
           array.add(field);
         }
       }

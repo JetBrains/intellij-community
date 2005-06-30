@@ -45,9 +45,8 @@ public class TemplateSegments {
   }
 
   public boolean isInvalid() {
-    for (int i = 0; i < mySegments.size(); i++) {
-      RangeMarker marker = mySegments.get(i);
-      if(!marker.isValid()) {
+    for (RangeMarker marker : mySegments) {
+      if (!marker.isValid()) {
         return true;
       }
     }

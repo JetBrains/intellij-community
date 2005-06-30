@@ -115,8 +115,7 @@ public class CodeInsightUtil {
       }
     }
 
-    for (int i = 0; i < array.size(); i++) {
-      PsiElement element = array.get(i);
+    for (PsiElement element : array) {
       if (!(element instanceof PsiStatement
             || element instanceof PsiWhiteSpace
             || element instanceof PsiComment)) {

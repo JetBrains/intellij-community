@@ -90,8 +90,7 @@ public class JavaDocCompletionData extends CompletionData {
 
       final JavadocManager manager = context.file.getManager().getJavadocManager();
       final JavadocTagInfo[] infos = manager.getTagInfos(parent);
-      for (int i = 0; i < infos.length; i++) {
-        JavadocTagInfo info = infos[i];
+      for (JavadocTagInfo info : infos) {
         if (info.getName().equals(InspectionManagerEx.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;
         if (isInline != (info.isInline())) continue;
         ret.add(info.getName());

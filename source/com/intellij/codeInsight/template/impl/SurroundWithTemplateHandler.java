@@ -39,8 +39,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
     int contextType = TemplateManager.getInstance(project).getContextType(file, offset);
     TemplateImpl[] templates = TemplateSettings.getInstance().getTemplates();
     ArrayList<TemplateImpl> array = new ArrayList<TemplateImpl>();
-    for (int i = 0; i < templates.length; i++) {
-      TemplateImpl template = templates[i];
+    for (TemplateImpl template : templates) {
       if (template.isDeactivated()) continue;
       if (template.getTemplateContext().isInContext(contextType) && template.isSelectionTemplate()) {
         array.add(template);
@@ -104,8 +103,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       myDescription.setOpaque(true);
       int width = 0;
       int height = 0;
-      for (int i = 0; i < templates.length; i++) {
-        TemplateImpl template = templates[i];
+      for (TemplateImpl template : templates) {
         myAbbreviation.setText(getAbbreviation(template));
         final Dimension preferredSize = myAbbreviation.getPreferredSize();
         width = Math.max(width, preferredSize.width);
@@ -181,8 +179,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       ListScrollingUtil.selectItem(myList, element);
       int matches = 0;
       TemplateImpl result = null;
-      for (int i = 0; i < myListData.length; i++) {
-        TemplateImpl template = myListData[i];
+      for (TemplateImpl template : myListData) {
         if (template.getKey().toLowerCase().startsWith(selectedText.toLowerCase())) matches++;
         if (template.getKey().equalsIgnoreCase(selectedText)) result = template;
       }

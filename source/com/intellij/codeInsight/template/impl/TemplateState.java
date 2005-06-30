@@ -189,8 +189,7 @@ public class TemplateState {
 
   private void releaseEditor() {
     if (myEditor != null) {
-      for (int i = 0; i < myTabStopHighlighters.size(); i++) {
-        RangeHighlighter segmentHighlighter = myTabStopHighlighters.get(i);
+      for (RangeHighlighter segmentHighlighter : myTabStopHighlighters) {
         myEditor.getMarkupModel().removeHighlighter(segmentHighlighter);
       }
 

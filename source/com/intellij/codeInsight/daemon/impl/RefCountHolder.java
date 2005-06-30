@@ -121,16 +121,16 @@ public class RefCountHolder {
     List array = myLocalRefsMap.getKeysByValue(element);
     if (array == null) return 0;
     int count = 0;
-    for(int i = 0; i < array.size(); i++){
-      PsiElement ref = (PsiElement)array.get(i);
-      if (!(ref instanceof PsiExpression)){ // possible with uncomplete code
+    for (Object aArray : array) {
+      PsiElement ref = (PsiElement)aArray;
+      if (!(ref instanceof PsiExpression)) { // possible with uncomplete code
         count++;
         continue;
       }
-      if (PsiUtil.isAccessedForReading((PsiExpression)ref)){
+      if (PsiUtil.isAccessedForReading((PsiExpression)ref)) {
         if (ref.getParent() instanceof PsiExpression &&
             ref.getParent().getParent() instanceof PsiExpressionStatement &&
-            PsiUtil.isAccessedForWriting((PsiExpression)ref)){
+            PsiUtil.isAccessedForWriting((PsiExpression)ref)) {
           continue; // "var++;"
         }
         count++;
@@ -144,13 +144,13 @@ public class RefCountHolder {
     List array = myLocalRefsMap.getKeysByValue(element);
     if (array == null) return 0;
     int count = 0;
-    for(int i = 0; i < array.size(); i++){
-      PsiElement ref = (PsiElement)array.get(i);
-      if (!(ref instanceof PsiExpression)){ // possible with uncomplete code
+    for (Object aArray : array) {
+      PsiElement ref = (PsiElement)aArray;
+      if (!(ref instanceof PsiExpression)) { // possible with uncomplete code
         count++;
         continue;
       }
-      if (PsiUtil.isAccessedForWriting((PsiExpression)ref)){
+      if (PsiUtil.isAccessedForWriting((PsiExpression)ref)) {
         count++;
       }
     }

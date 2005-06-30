@@ -112,8 +112,8 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     Element deleted = parentNode.getChild(DELETED_TEMPLATES);
     if (deleted != null) {
       List children = deleted.getChildren();
-      for (Iterator it = children.iterator(); it.hasNext();) {
-        Element child = (Element) it.next();
+      for (final Object aChildren : children) {
+        Element child = (Element)aChildren;
         myDeletedTemplates.add(child.getAttributeValue(NAME));
       }
     }
@@ -134,9 +134,9 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
 
     if (myDeletedTemplates.size() > 0) {
       Element deleted = new Element(DELETED_TEMPLATES);
-      for (Iterator it = myDeletedTemplates.iterator(); it.hasNext();) {
+      for (final String myDeletedTemplate : myDeletedTemplates) {
         Element template = new Element(TEMPLATE);
-        template.setAttribute(NAME, (String) it.next());
+        template.setAttribute(NAME, (String)myDeletedTemplate);
         deleted.addContent(template);
 
       }
@@ -175,8 +175,7 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
   public void setTemplates(TemplateImpl[] newTemplates) {
     myTemplates.clear();
     myMaxKeyLength = 0;
-    for (int i = 0; i < newTemplates.length; i++) {
-      TemplateImpl template = newTemplates[i];
+    for (TemplateImpl template : newTemplates) {
       myTemplates.put(template.getKey(), template);
       myMaxKeyLength = Math.max(myMaxKeyLength, template.getKey().length());
     }
@@ -243,14 +242,13 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     }
 
     try {
-      for (int i = 0; i < files.length; i++) {
-        String name = files[i].getName();
+      for (File file : files) {
+        String name = file.getName();
         if (!name.toLowerCase().endsWith(".xml")) continue;
-        readTemplateFile(files[i]);
+        readTemplateFile(file);
       }
 
-      for (int i = 0; i < DEFAULT_TEMPLATES.length; i++) {
-        String defTemplate = DEFAULT_TEMPLATES[i];
+      for (String defTemplate : DEFAULT_TEMPLATES) {
         String templateName = getDefaultTemplateName(defTemplate);
         readDefTemplateFile(DecodeDefaultsUtil.getDefaultsInputStream(this, defTemplate), templateName);
       }
@@ -286,8 +284,8 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     String groupName = root.getAttributeValue(GROUP);
     if (groupName == null || groupName.length() == 0) groupName = defGroupName;
 
-    for (Iterator iterator = root.getChildren(TEMPLATE).iterator(); iterator.hasNext();) {
-      Element element = (Element) iterator.next();
+    for (final Object o1 : root.getChildren(TEMPLATE)) {
+      Element element = (Element)o1;
 
       String name = element.getAttributeValue(NAME);
       String value = element.getAttributeValue(VALUE);
@@ -300,8 +298,8 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
       template.setDeactivated("true".equals(element.getAttributeValue(DEACTIVATED)));
 
 
-      for (Iterator i = element.getChildren(VARIABLE).iterator(); i.hasNext();) {
-        Element e = (Element) i.next();
+      for (final Object o : element.getChildren(VARIABLE)) {
+        Element e = (Element)o;
         String variableName = e.getAttributeValue(NAME);
         String expression = e.getAttributeValue(EXPRESSION);
         String defaultValue = e.getAttributeValue(DEFAULT_VALUE);

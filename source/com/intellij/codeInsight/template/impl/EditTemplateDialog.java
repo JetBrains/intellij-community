@@ -360,8 +360,8 @@ public class EditTemplateDialog extends DialogWrapper {
 
     boolean enable = false;
 
-    for (Iterator iterator = variables.iterator(); iterator.hasNext();) {
-      Variable variable = (Variable)iterator.next();
+    for (final Object variable1 : variables) {
+      Variable variable = (Variable)variable1;
       if (!TemplateImpl.INTERNAL_VARS_SET.contains(variable.getName())) enable = true;
     }
 
@@ -413,13 +413,12 @@ public class EditTemplateDialog extends DialogWrapper {
     UndoManager.getGlobalInstance().clearUndoRedoQueue(TextEditorProvider.getInstance().getTextEditor(myTemplateEditor));
 
     Set groups = new TreeSet();
-    for (int i = 0; i < myTemplates.length; i++) {
-      TemplateImpl template = myTemplates[i];
+    for (TemplateImpl template : myTemplates) {
       groups.add(template.getGroupName());
     }
 
-    for (Iterator i = groups.iterator(); i.hasNext();) {
-      String groupName = (String)i.next();
+    for (final Object group : groups) {
+      String groupName = (String)group;
       myGroupCombo.addItem(groupName);
     }
 
@@ -474,12 +473,12 @@ public class EditTemplateDialog extends DialogWrapper {
 
     myTemplate.removeAllParsed();
 
-    for(int i = 0; i < myVariables.size(); i++) {
-      Variable variable = (Variable)myVariables.get(i);
+    for (Object myVariable : myVariables) {
+      Variable variable = (Variable)myVariable;
       myTemplate.addVariable(variable.getName(),
-                           variable.getExpressionString(),
-                           variable.getDefaultValueString(),
-                           variable.isAlwaysStopAt());
+                             variable.getExpressionString(),
+                             variable.getDefaultValueString(),
+                             variable.isAlwaysStopAt());
     }
 
     updateTemplateContext(myTemplate.getTemplateContext());
@@ -506,8 +505,8 @@ public class EditTemplateDialog extends DialogWrapper {
     updateVariablesByTemplateText();
     ArrayList newVariables = new ArrayList();
 
-    for(int i = 0; i < myVariables.size(); i++){
-      Variable variable = (Variable)myVariables.get(i);
+    for (Object myVariable : myVariables) {
+      Variable variable = (Variable)myVariable;
       if (!TemplateImpl.INTERNAL_VARS_SET.contains(variable.getName())) {
         newVariables.add(variable.clone());
       }
@@ -525,15 +524,15 @@ public class EditTemplateDialog extends DialogWrapper {
     parseVariables(myTemplateEditor.getDocument().getCharsSequence(), parsedVariables);
 
     Hashtable oldVariableNames = new Hashtable();
-    for(int j = 0; j < myVariables.size(); j++){
-      Variable oldVariable = (Variable)myVariables.get(j);
+    for (Object myVariable : myVariables) {
+      Variable oldVariable = (Variable)myVariable;
       String name = oldVariable.getName();
       oldVariableNames.put(name, name);
     }
 
     Hashtable newVariableNames = new Hashtable();
-    for(int j = 0; j < parsedVariables.size(); j++){
-      Variable newVariable = (Variable)parsedVariables.get(j);
+    for (Object parsedVariable : parsedVariables) {
+      Variable newVariable = (Variable)parsedVariable;
       String name = newVariable.getName();
       newVariableNames.put(name, name);
     }
@@ -571,14 +570,13 @@ public class EditTemplateDialog extends DialogWrapper {
 
   protected void doOKAction() {
     String key = myKeyField.getText().trim();
-    for(int i = 0; i < myTemplates.length; i++) {
-      TemplateImpl template = myTemplates[i];
-      if(template.getKey().equals(key) && myTemplate != template) {
-        Messages.showMessageDialog (
+    for (TemplateImpl template : myTemplates) {
+      if (template.getKey().equals(key) && myTemplate != template) {
+        Messages.showMessageDialog(
           getContentPane(),
           "Cannot save the template.\nTemplate with the abbreviation \"" + key + "\"\n" +
-            "already exists in group \"" + template.getGroupName() + "\".\n" +
-            "Try another abbreviation.",
+          "already exists in group \"" + template.getGroupName() + "\".\n" +
+          "Try another abbreviation.",
           "Cannot Save",
           Messages.getErrorIcon()
         );

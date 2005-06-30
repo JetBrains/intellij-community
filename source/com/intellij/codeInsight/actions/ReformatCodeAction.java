@@ -130,8 +130,7 @@ public class ReformatCodeAction extends AnAction {
   public static PsiFile[] convertToPsiFiles(final VirtualFile[] files,Project project) {
     final PsiManager manager = PsiManager.getInstance(project);
     final ArrayList<PsiFile> result = new ArrayList<PsiFile>();
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile virtualFile = files[i];
+    for (VirtualFile virtualFile : files) {
       final PsiFile psiFile = manager.findFile(virtualFile);
       if (psiFile != null) result.add(psiFile);
     }
@@ -164,8 +163,7 @@ public class ReformatCodeAction extends AnAction {
       }
     }
     else if (files!= null && areFiles(files)) {
-      for (int i = 0; i < files.length; i++) {
-        VirtualFile virtualFile = files[i];
+      for (VirtualFile virtualFile : files) {
         if (virtualFile.isDirectory()) {
           presentation.setEnabled(false);
           return;
@@ -203,8 +201,7 @@ public class ReformatCodeAction extends AnAction {
   public static boolean areFiles(final VirtualFile[] files) {
     if (files == null) return false;
     if (files.length < 2) return false;
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile virtualFile = files[i];
+    for (VirtualFile virtualFile : files) {
       if (virtualFile.isDirectory()) return false;
     }
     return true;

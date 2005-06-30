@@ -26,11 +26,10 @@ public class MethodDownHandler implements CodeInsightActionHandler {
       if (elementAt != null) element = elementAt;
     }
     int[] offsets = MethodUpDownUtil.getNavigationOffsets(element);
-    for(int i = 0; i < offsets.length; i++){
-      int offset = offsets[i];
-      if (offset > caretOffset){
+    for (int offset : offsets) {
+      if (offset > caretOffset) {
         int line = editor.offsetToLogicalPosition(offset).line;
-        if (line > caretLine){
+        if (line > caretLine) {
           editor.getCaretModel().moveToOffset(offset);
           editor.getSelectionModel().removeSelection();
           editor.getScrollingModel().scrollToCaret(ScrollType.CENTER_DOWN);

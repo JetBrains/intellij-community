@@ -234,9 +234,7 @@ class ParameterInfoComponent extends JPanel{
       StringBuffer text2 = new StringBuffer(" ");
       StringBuffer text3 = new StringBuffer(" ");
 
-      for (int j = 0; j < attributes.length; j++) {
-        XmlAttributeDescriptor attribute = attributes[j];
-
+      for (XmlAttributeDescriptor attribute : attributes) {
         if (myCurrentXmlTag != null && myCurrentXmlTag.getAttributeValue(attribute.getName()) != null) {
           if (!(text1.toString().equals(" "))) {
             text1.append(", ");
@@ -336,8 +334,7 @@ class ParameterInfoComponent extends JPanel{
     }
 
     public void setDisabled(){
-      for (int i = 0; i < myOneLineComponents.length; i++) {
-        OneLineComponent oneLineComponent = myOneLineComponents[i];
+      for (OneLineComponent oneLineComponent : myOneLineComponents) {
         oneLineComponent.setDisabled();
       }
     }

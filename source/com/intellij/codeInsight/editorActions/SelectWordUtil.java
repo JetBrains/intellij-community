@@ -381,9 +381,7 @@ public class SelectWordUtil {
       int startOffset = e.getTextRange().getStartOffset();
       int endOffset = e.getTextRange().getEndOffset();
 
-      for (int i = 0; i < children.length; i++) {
-        PsiElement child = children[i];
-
+      for (PsiElement child : children) {
         if (child instanceof PsiDocToken) {
           PsiDocToken token = (PsiDocToken)child;
 
@@ -399,9 +397,7 @@ public class SelectWordUtil {
         startOffset = child.getTextRange().getEndOffset();
       }
 
-      for (int i = 0; i < children.length; i++) {
-        PsiElement child = children[i];
-
+      for (PsiElement child : children) {
         if (child instanceof PsiDocToken) {
           PsiDocToken token = (PsiDocToken)child;
 
@@ -436,9 +432,7 @@ public class SelectWordUtil {
       int start = 0;
       int end = 0;
 
-      for (int i = 0; i < children.length; i++) {
-        PsiElement child = children[i];
-
+      for (PsiElement child : children) {
         if (child instanceof PsiJavaToken) {
           PsiJavaToken token = (PsiJavaToken)child;
 
@@ -858,8 +852,7 @@ public class SelectWordUtil {
       PsiElement[] children = expression.getChildren();
       PsiElement lParen = null;
       PsiElement rParen = null;
-      for (int i = 0; i < children.length; i++) {
-        PsiElement child = children[i];
+      for (PsiElement child : children) {
         if (child instanceof PsiJavaToken) {
           PsiJavaToken token = (PsiJavaToken)child;
           if (token.getTokenType() == JavaTokenType.LPARENTH) lParen = token;
@@ -889,8 +882,7 @@ public class SelectWordUtil {
 
       PsiElement first = null;
       PsiElement last = null;
-      for (int i = 0; i < children.length; i++) {
-        PsiElement child = children[i];
+      for (PsiElement child : children) {
         if (child instanceof XmlToken) {
           XmlToken token = (XmlToken)child;
           if (token.getTokenType() == XmlTokenType.XML_TAG_END) {

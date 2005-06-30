@@ -160,8 +160,8 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
     for(int i = array1.size() - 1; i >= 0; i--){ // place the last before expression first
       set.add(array1.get(i));
     }
-    for(int i = 0; i < array2.size(); i++){
-      set.add(array2.get(i));
+    for (PsiType aArray2 : array2) {
+      set.add(aArray2);
     }
   }
 

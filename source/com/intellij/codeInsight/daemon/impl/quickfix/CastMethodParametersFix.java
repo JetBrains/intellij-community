@@ -121,18 +121,17 @@ public class CastMethodParametersFix extends AddTypeCastFix implements Intention
         PsiType exprType = expression.getType();
         Set<String> suggestedCasts = new THashSet<String>();
         // find to which type we can cast this param to get valid method call
-        for (int j = 0; j < methodCandidates.size(); j++) {
-          CandidateInfo candidate = methodCandidates.get(j);
-          PsiMethod method = (PsiMethod) candidate.getElement();
+        for (CandidateInfo candidate : methodCandidates) {
+          PsiMethod method = (PsiMethod)candidate.getElement();
           PsiSubstitutor substitutor = candidate.getSubstitutor();
           PsiParameter[] parameters = method.getParameterList().getParameters();
           PsiType originalParameterType = parameters[i].getType();
           PsiType parameterType = substitutor.substitute(originalParameterType);
           if (parameterType instanceof PsiWildcardType) continue;
-          if(suggestedCasts.contains(parameterType.getCanonicalText())) continue;
+          if (suggestedCasts.contains(parameterType.getCanonicalText())) continue;
           // strict compare since even widening cast may help
           if (Comparing.equal(exprType, parameterType)) continue;
-          PsiExpressionList newList = (PsiExpressionList) list.copy();
+          PsiExpressionList newList = (PsiExpressionList)list.copy();
           PsiTypeCastExpression castExpression = createCastExpression(expression, methodRef.getProject(), parameterType);
           newList.getExpressions()[i].replace(castExpression);
 

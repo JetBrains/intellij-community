@@ -123,8 +123,7 @@ public abstract class IntentionSettingsTree {
     CheckedTreeNode root = new CheckedTreeNode(null);
     final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
 
-    for (int i = 0; i < intentionsToShow.size(); i++) {
-      final IntentionActionMetaData metaData = intentionsToShow.get(i);
+    for (final IntentionActionMetaData metaData : intentionsToShow) {
       String[] category = metaData.myCategory;
       CheckedTreeNode node = root;
       for (final String name : category) {

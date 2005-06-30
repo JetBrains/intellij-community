@@ -217,8 +217,7 @@ class EditVariableDialog extends DialogWrapper {
         return m1.getDescription().compareTo(m2.getDescription());
       }
     });
-    for (int i = 0; i < macros.length; i++) {
-      Macro macro = macros[i];
+    for (Macro macro : macros) {
       comboField.addItem(macro.getDescription());
     }
     comboField.setEditable(true);

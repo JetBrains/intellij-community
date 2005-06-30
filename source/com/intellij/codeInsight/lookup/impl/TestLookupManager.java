@@ -59,8 +59,7 @@ public class TestLookupManager extends LookupManagerImpl{
   private static boolean sortItems(PsiFile containingFile, LookupItem[] items) {
     if (!(containingFile instanceof XmlFile)) return true;
 
-    for (int i = 0; i < items.length; i++) {
-      LookupItem item = items[i];
+    for (LookupItem item : items) {
       if (item.getObject() instanceof PsiElement) return true;
     }
 

@@ -39,8 +39,8 @@ public class DescendantClassesEnumMacro implements Macro{
     Result[] results = new Result[classes.size()];
     int i = 0;
 
-    for (Iterator<PsiClass> iterator = classes.iterator(); iterator.hasNext();) {
-      results[i++] = new PsiElementResult(iterator.next());
+    for (final PsiClass aClass : classes) {
+      results[i++] = new PsiElementResult(aClass);
     }
     return results;
   }
@@ -88,9 +88,8 @@ public class DescendantClassesEnumMacro implements Macro{
     LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
     boolean isFQN = params.length > 1 && params[1].calculateResult(context).toString().equals("true");
 
-    for (Iterator<PsiClass> iterator = classes.iterator(); iterator.hasNext();) {
-      PsiClass object = iterator.next();
-      LookupItemUtil.addLookupItem(set, (isFQN)?object.getQualifiedName():object.getName(), "");
+    for (PsiClass object : classes) {
+      LookupItemUtil.addLookupItem(set, (isFQN) ? object.getQualifiedName() : object.getName(), "");
     }
 
     return set.toArray(new LookupItem[set.size()]);

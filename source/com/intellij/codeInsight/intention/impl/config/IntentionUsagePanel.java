@@ -90,8 +90,7 @@ class IntentionUsagePanel extends JPanel{
     MarkupModel markupModel = myEditor.getMarkupModel();
     if (show) {
       TextAttributes attr = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES);
-      for (int i = 0; i < spotMarkers.size(); i++) {
-        final RangeMarker rangeMarker = spotMarkers.get(i);
+      for (final RangeMarker rangeMarker : spotMarkers) {
         markupModel.addRangeHighlighter(rangeMarker.getStartOffset(),
                                         rangeMarker.getEndOffset(),
                                         HighlighterLayer.ADDITIONAL_SYNTAX, attr,

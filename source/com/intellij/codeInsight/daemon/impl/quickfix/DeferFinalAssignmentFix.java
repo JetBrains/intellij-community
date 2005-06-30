@@ -148,8 +148,8 @@ public class DeferFinalAssignmentFix implements IntentionAction {
   }
 
   private static void replaceReferences(List references, PsiElement newExpression) throws IncorrectOperationException {
-    for (int i = 0; i < references.size(); i++) {
-      PsiElement reference = (PsiElement) references.get(i);
+    for (Object reference1 : references) {
+      PsiElement reference = (PsiElement)reference1;
       reference.replace(newExpression);
     }
 

@@ -250,8 +250,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
       }
     }
 
-    for (int i = 0; i < highlightersToRemove.size(); i++) {
-      RangeHighlighter highlighter = highlightersToRemove.get(i);
+    for (RangeHighlighter highlighter : highlightersToRemove) {
       removeSegmentHighlighter(editor, highlighter);
     }
 

@@ -57,9 +57,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
 
   private static void deleteReferences(PsiVariable variable, List<PsiElement> references, int mode)
     throws IncorrectOperationException {
-    for (int i = 0; i < references.size(); i++) {
-      PsiElement expression = references.get(i);
-
+    for (PsiElement expression : references) {
       processUsage(expression, variable, null, mode);
     }
   }

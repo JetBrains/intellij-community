@@ -158,15 +158,15 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
     if (psiFile == null) return;
 
     String date = null;
-    for(Iterator i = element.getChildren().iterator(); i.hasNext();){
-      Element e = (Element)i.next();
-      if ("element".equals(e.getName())){
+    for (final Object o : element.getChildren()) {
+      Element e = (Element)o;
+      if ("element".equals(e.getName())) {
         String signature = e.getAttributeValue("signature");
-        if (signature == null){
+        if (signature == null) {
           continue;
         }
         PsiElement restoredElement = FoldingPolicy.restoreBySignature(psiFile, signature);
-        if (restoredElement != null){
+        if (restoredElement != null) {
           mySmartPointersOrRangeMarkers.add(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(restoredElement));
           myExpandedStates.add(Boolean.valueOf(e.getAttributeValue("expanded")));
         }
@@ -189,7 +189,8 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
           String placeHolderText = e.getAttributeValue("placeholder");
           if (placeHolderText == null) placeHolderText = DEFAULT_PLACEHOLDER;
           myPlaceholderTexts.put(marker, placeHolderText);
-        } catch (NoSuchElementException exc) {
+        }
+        catch (NoSuchElementException exc) {
           LOG.error(exc);
           continue;
         }

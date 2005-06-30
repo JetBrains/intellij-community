@@ -120,8 +120,8 @@ public class CompletionUtil {
   }
 
   static void highlightMembersOfContainer(LinkedHashSet set) {
-    for (Iterator iter = set.iterator(); iter.hasNext();) {
-      LookupItem item = (LookupItem)iter.next();
+    for (final Object aSet : set) {
+      LookupItem item = (LookupItem)aSet;
       Object o = item.getObject();
       PsiType qualifierType = getQualifierType(item);
       if (qualifierType == null) continue;
@@ -133,8 +133,8 @@ public class CompletionUtil {
           }
         }
       }
-      else if (qualifierType instanceof PsiClassType){
-        PsiClass qualifierClass = ((PsiClassType) qualifierType).resolve();
+      else if (qualifierType instanceof PsiClassType) {
+        PsiClass qualifierClass = ((PsiClassType)qualifierType).resolve();
         if (o instanceof PsiField || o instanceof PsiMethod || o instanceof PsiClass) {
           PsiElement parent = ((PsiElement)o).getParent();
           if (parent != null && parent.equals(qualifierClass)) {
@@ -300,10 +300,8 @@ public class CompletionUtil {
     final List newSuggestions = new ArrayList();
     int longestOverlap = 0;
 
-    for (int i = 0; i < suggestedNames.length; i++) {
-      String suggestedName = suggestedNames[i];
-
-      if(suggestedName.toUpperCase().startsWith(prefix.toUpperCase())){
+    for (String suggestedName : suggestedNames) {
+      if (suggestedName.toUpperCase().startsWith(prefix.toUpperCase())) {
         newSuggestions.add(suggestedName);
         longestOverlap = prefix.length();
       }
@@ -353,8 +351,7 @@ public class CompletionUtil {
         PsiManager manager = aClass.getManager();
         PsiTypeParameter[] typeParams = aClass.getTypeParameters();
         Map<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();
-        for (int j = 0; j < typeParams.length; j++) {
-          PsiTypeParameter typeParam = typeParams[j];
+        for (PsiTypeParameter typeParam : typeParams) {
           PsiType substituted = resolveResult.getSubstitutor().substitute(typeParam);
           if (substituted instanceof PsiWildcardType) {
             substituted = ((PsiWildcardType)substituted).getBound();
@@ -389,10 +386,12 @@ public class CompletionUtil {
   public static String[] getOverides(final PsiClass parent, final PsiType typeByPsiElement) {
     final List<String> overides = new ArrayList<String>();
     final CandidateInfo[] methodsToOverrideImplement = OverrideImplementUtil.getMethodsToOverrideImplement(parent, true);
-    for (int i = 0; i < methodsToOverrideImplement.length; i++) {
-      final CandidateInfo candidateInfo = methodsToOverrideImplement[i];
+    for (final CandidateInfo candidateInfo : methodsToOverrideImplement) {
       final PsiElement element = candidateInfo.getElement();
-      if(typeByPsiElement == PsiUtil.getTypeByPsiElement(element) && element instanceof PsiNamedElement) overides.add(((PsiNamedElement)element).getName());
+      if (typeByPsiElement == PsiUtil.getTypeByPsiElement(element) && element instanceof PsiNamedElement) {
+        overides
+          .add(((PsiNamedElement)element).getName());
+      }
     }
     return overides.toArray(new String[overides.size()]);
   }
@@ -400,10 +399,12 @@ public class CompletionUtil {
   public static String[] getImplements(final PsiClass parent, final PsiType typeByPsiElement) {
     final List<String> overides = new ArrayList<String>();
     final CandidateInfo[] methodsToOverrideImplement = OverrideImplementUtil.getMethodsToOverrideImplement(parent, false);
-    for (int i = 0; i < methodsToOverrideImplement.length; i++) {
-      final CandidateInfo candidateInfo = methodsToOverrideImplement[i];
+    for (final CandidateInfo candidateInfo : methodsToOverrideImplement) {
       final PsiElement element = candidateInfo.getElement();
-      if(typeByPsiElement == PsiUtil.getTypeByPsiElement(element) && element instanceof PsiNamedElement) overides.add(((PsiNamedElement)element).getName());
+      if (typeByPsiElement == PsiUtil.getTypeByPsiElement(element) && element instanceof PsiNamedElement) {
+        overides
+          .add(((PsiNamedElement)element).getName());
+      }
     }
     return overides.toArray(new String[overides.size()]);
   }
@@ -415,18 +416,17 @@ public class CompletionUtil {
     final List<String> propertyHandlers = new ArrayList<String>();
     final PsiField[] fields = psiClass.getFields();
 
-    for (int i = 0; i < fields.length; i++) {
-      final PsiField field = fields[i];
-      if(field == element) continue;
+    for (final PsiField field : fields) {
+      if (field == element) continue;
       final PsiModifierList modifierList = field.getModifierList();
-      if(staticContext && (modifierList != null && !modifierList.hasModifierProperty("static"))) continue;
+      if (staticContext && (modifierList != null && !modifierList.hasModifierProperty("static"))) continue;
       final PsiMethod getter = PropertyUtil.generateGetterPrototype(field);
-      if(getter.getReturnType().equals(varType) && psiClass.findMethodBySignature(getter, true) == null) {
+      if (getter.getReturnType().equals(varType) && psiClass.findMethodBySignature(getter, true) == null) {
         propertyHandlers.add(getter.getName());
       }
 
       final PsiMethod setter = PropertyUtil.generateSetterPrototype(field);
-      if(setter.getReturnType().equals(varType) && psiClass.findMethodBySignature(setter, true) == null) {
+      if (setter.getReturnType().equals(varType) && psiClass.findMethodBySignature(setter, true) == null) {
         propertyHandlers.add(setter.getName());
       }
     }

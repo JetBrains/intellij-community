@@ -69,10 +69,9 @@ public class SplitDeclarationAction extends BaseIntentionAction {
     } else if (declaredElements.length > 1) {
       if (decl.getParent() instanceof PsiForStatement) return false;
 
-      for (int i = 0; i < declaredElements.length; i++) {
-        PsiElement declaredElement = declaredElements[i];
+      for (PsiElement declaredElement : declaredElements) {
         if (!(declaredElement instanceof PsiLocalVariable)) return false;
-        PsiLocalVariable var = (PsiLocalVariable) declaredElement;
+        PsiLocalVariable var = (PsiLocalVariable)declaredElement;
         PsiTypeElement type = var.getTypeElement();
         if (PsiTreeUtil.isAncestor(type, element, false) || element == var.getNameIdentifier()) {
           setText("Split into separate declarations");

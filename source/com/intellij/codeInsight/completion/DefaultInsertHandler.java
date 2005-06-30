@@ -305,8 +305,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
       if(myLookupItem.getAttribute(LookupItem.DONT_CHECK_FOR_INNERS) == null){
         PsiClass[] classes = aClass.getInnerClasses();
-        for(int i = 0; i < classes.length; i++){
-          PsiClass inner = classes[i];
+        for (PsiClass inner : classes) {
           if (!inner.hasModifierProperty(PsiModifier.STATIC)) continue;
           if (!inner.getManager().getResolveHelper().isAccessible(inner, place, null)) continue;
           needParens = false;
@@ -333,10 +332,9 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       final PsiElement place = myFile.findElementAt(myStartOffset);
 
       final PsiMethod[] constructors = aClass.getConstructors();
-      for(int i = 0; i < constructors.length; i++){
-        PsiMethod constructor = constructors[i];
+      for (PsiMethod constructor : constructors) {
         if (!aClass.getManager().getResolveHelper().isAccessible(constructor, place, null)) continue;
-        if (constructor.getParameterList().getParameters().length > 0){
+        if (constructor.getParameterList().getParameters().length > 0) {
           hasParms = true;
           break;
         }
@@ -351,12 +349,11 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   private boolean hasOverloads() {
     boolean hasParms = false;
     String name = ((PsiMethod)myLookupItem.getObject()).getName();
-    for(int i = 0; i < myLookupData.items.length; i++){
-      LookupItem item1 = myLookupData.items[i];
+    for (LookupItem item1 : myLookupData.items) {
       if (myLookupItem == item1) continue;
-      if (item1.getObject() instanceof PsiMethod){
+      if (item1.getObject() instanceof PsiMethod) {
         String name1 = ((PsiMethod)item1.getObject()).getName();
-        if (name1.equals(name)){
+        if (name1.equals(name)) {
           hasParms = true;
           break;
         }
@@ -845,9 +842,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     if(allBaseMethods.length == 0) return;
 
     List<CandidateInfo> methods = new ArrayList<CandidateInfo>();
-    for(int i = 0; i < allBaseMethods.length; i++){
-      final PsiMethod method = allBaseMethods[i];
-      if(OverrideImplementUtil.isOverridable(method)) {
+    for (final PsiMethod method : allBaseMethods) {
+      if (OverrideImplementUtil.isOverridable(method)) {
         methods.add(new CandidateInfo(method, PsiSubstitutor.UNKNOWN));
       }
     }
@@ -867,10 +863,9 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
       System.arraycopy(selectedElements, 0, selectedCandidates, 0, selectedCandidates.length);
       final PsiMethod[] prototypes = OverrideImplementUtil.overrideOrImplementMethods(aClass, selectedCandidates, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
 
-      for(int i = 0; i < prototypes.length; i++){
-        PsiMethod prototype = prototypes[i];
+      for (PsiMethod prototype : prototypes) {
         PsiStatement[] statements = prototype.getBody().getStatements();
-        if (statements.length > 0 && prototype.getReturnType() == PsiType.VOID){
+        if (statements.length > 0 && prototype.getReturnType() == PsiType.VOID) {
           statements[0].delete(); // remove "super(..)" call
         }
       }

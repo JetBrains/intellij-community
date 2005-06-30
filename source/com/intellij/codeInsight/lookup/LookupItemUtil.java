@@ -44,8 +44,8 @@ public class LookupItemUtil{
     //TODO[ik]: remove the check: it is always false?
     if (object instanceof PsiType) {
       PsiType psiType = (PsiType)object;
-      for (Iterator iterator = set.iterator(); iterator.hasNext();) {
-        LookupItem lookupItem = (LookupItem)iterator.next();
+      for (final Object aSet : set) {
+        LookupItem lookupItem = (LookupItem)aSet;
         Object o = lookupItem.getObject();
         if (o.equals(psiType)) {
           return lookupItem;
@@ -74,9 +74,9 @@ public class LookupItemUtil{
   }
 
   public static void addLookupItems(LinkedHashSet set, Object[] objects, String prefix) {
-    for (int i = 0; i < objects.length; i++) {
-      LOG.assertTrue(objects[i] != null, "Lookup item can't be null!");
-      addLookupItem(set, objects[i], prefix);
+    for (Object object : objects) {
+      LOG.assertTrue(object != null, "Lookup item can't be null!");
+      addLookupItem(set, object, prefix);
     }
   }
 

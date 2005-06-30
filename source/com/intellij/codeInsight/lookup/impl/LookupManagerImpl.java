@@ -168,8 +168,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   private static boolean sortItems(PsiFile containingFile, LookupItem[] items) {
     if (!(containingFile instanceof XmlFile)) return true;
 
-    for (int i = 0; i < items.length; i++) {
-      LookupItem item = items[i];
+    for (LookupItem item : items) {
       if (item.getObject() instanceof PsiElement) return true;
     }
 
@@ -210,14 +209,13 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
   protected LookupItem[] filterEqualSignatures(LookupItem[] items) {
     ArrayList array = new ArrayList();
     HashMap methodNameToItem = new HashMap();
-    for(int i = 0; i < items.length; i++){
-      LookupItem item = items[i];
+    for (LookupItem item : items) {
       if (item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null) {
         array.add(item);
         continue;
       }
       Object o = item.getObject();
-      if (o instanceof PsiMethod){
+      if (o instanceof PsiMethod) {
         String name = ((PsiMethod)o).getName();
         LookupItem item1 = (LookupItem)methodNameToItem.get(name);
         if (item1 != null) {
@@ -225,7 +223,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
           allMethods.add(o);
           continue;
         }
-        else{
+        else {
           methodNameToItem.put(name, item);
           ArrayList allMethods = new ArrayList();
           allMethods.add(o);
@@ -235,10 +233,9 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
       array.add(item);
     }
     items = (LookupItem[])array.toArray(new LookupItem[array.size()]);
-    for(int i = 0; i < items.length; i++){
-      LookupItem item = items[i];
+    for (LookupItem item : items) {
       ArrayList allMethods = (ArrayList)item.getAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE);
-      if (allMethods != null){
+      if (allMethods != null) {
         item.setAttribute(LookupImpl.ALL_METHODS_ATTRIBUTE, allMethods.toArray(new PsiMethod[allMethods.size()]));
       }
     }
