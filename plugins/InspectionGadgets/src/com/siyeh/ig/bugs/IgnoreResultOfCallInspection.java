@@ -12,7 +12,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.EtchedBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
@@ -191,7 +190,6 @@ public class IgnoreResultOfCallInspection extends ExpressionInspection{
 
         public Form(){
             super();
-            table.setBorder(new EtchedBorder(EtchedBorder.LOWERED));
             table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             table.setRowSelectionAllowed(true);
             table.setSelectionMode(

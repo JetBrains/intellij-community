@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.siyeh.ig.naming.NonBooleanMethodNameMayNotStartWithQuestionInspection.Form">
-  <grid id="9993d" binding="contentPanel" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="9993d" binding="contentPanel" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="2" left="2" bottom="2" right="2"/>
     <constraints>
       <xy x="92" y="33" width="211" height="192"/>
@@ -12,7 +12,7 @@
       <scrollpane id="14807">
         <constraints>
           <xy x="2" y="2" width="207" height="158"/>
-          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="7" anchor="0" fill="3"/>
+          <grid row="0" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="7" anchor="0" fill="3"/>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -27,8 +27,8 @@
       </scrollpane>
       <component id="f6174" class="javax.swing.JButton" binding="deleteButton">
         <constraints>
-          <xy x="105" y="165" width="104" height="25"/>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1"/>
+          <xy x="115" y="165" width="94" height="25"/>
+          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1"/>
         </constraints>
         <properties>
           <text value="Delete"/>
@@ -36,13 +36,19 @@
       </component>
       <component id="52926" class="javax.swing.JButton" binding="addButton">
         <constraints>
-          <xy x="2" y="165" width="93" height="25"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1"/>
+          <xy x="50" y="165" width="55" height="25"/>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1"/>
         </constraints>
         <properties>
           <text value="Add"/>
         </properties>
       </component>
+      <hspacer id="f4582">
+        <constraints>
+          <xy x="2" y="172" width="48" height="11"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+        </constraints>
+      </hspacer>
     </children>
   </grid>
 </form>

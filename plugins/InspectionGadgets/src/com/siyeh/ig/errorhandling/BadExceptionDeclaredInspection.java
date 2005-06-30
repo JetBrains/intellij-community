@@ -10,7 +10,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.EtchedBorder;
 import javax.swing.table.AbstractTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -130,7 +129,6 @@ public class BadExceptionDeclaredInspection extends MethodInspection {
 
         public Form() {
             super();
-            table.setBorder(new EtchedBorder(EtchedBorder.LOWERED));
             table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             table.setRowSelectionAllowed(true);
             table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
