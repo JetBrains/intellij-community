@@ -23,7 +23,7 @@ public class RemoveAction extends BreakpointPanelAction {
   private final Project myProject;
 
   public RemoveAction(final Project project) {
-    super("Remove...");
+    super("Remove");
     myProject = project;
   }
 
