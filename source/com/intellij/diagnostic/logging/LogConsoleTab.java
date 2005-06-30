@@ -8,6 +8,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,7 +18,7 @@ import java.io.*;
  * User: anna
  * Date: Apr 19, 2005
  */
-public class LogConsoleTab extends JPanel implements Disposable{
+public abstract class LogConsoleTab extends JPanel implements Disposable{
   private final ConsoleView myConsole;
   private final Project myProject;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
@@ -27,22 +28,22 @@ public class LogConsoleTab extends JPanel implements Disposable{
   public LogConsoleTab(Project project, File file) {
     super(new BorderLayout());
     myProject = project;
-    try {
-      myReaderThread = new ReaderThread(file);
-    }
-    catch (FileNotFoundException e) {
-      LOG.error(e);
-    }
+    myReaderThread = new ReaderThread(file);
     TextConsoleBuilder builder = TextConsoleBuidlerFactory.getInstance().createBuilder(myProject);
     myConsole = builder.getConsole();
     myConsole.attachToProcess(myProcessHandler);
-    add(myConsole.getComponent(), BorderLayout.CENTER);    
+    add(myConsole.getComponent(), BorderLayout.CENTER);
     myReaderThread.start();
   }
 
+  public abstract boolean isActive();
 
   public void dispose() {
     myConsole.dispose();
+    myReaderThread.stopRunning();
+  }
+
+  public void stopRunning(){
     myReaderThread.stopRunning();
   }
 
@@ -67,6 +68,7 @@ public class LogConsoleTab extends JPanel implements Disposable{
       return false;
     }
 
+    @Nullable
     public OutputStream getProcessInput() {
       return null;
     }
@@ -77,10 +79,16 @@ public class LogConsoleTab extends JPanel implements Disposable{
   private class ReaderThread extends Thread{
     private BufferedReader myFileStream;
     private boolean myRunning = true;
-    public ReaderThread(File file) throws FileNotFoundException {
+    public ReaderThread(File file){
       super("Reader Thread");
-      myFileStream = new BufferedReader(new FileReader(file));
       try {
+        try {
+          myFileStream = new BufferedReader(new FileReader(file));
+        }
+        catch (FileNotFoundException e) {
+          if (!file.createNewFile()) return;
+          myFileStream = new BufferedReader(new FileReader(file));
+        }
         myFileStream.skip(file.length());
       }
       catch (IOException e) {
@@ -89,13 +97,20 @@ public class LogConsoleTab extends JPanel implements Disposable{
     }
 
     public void run() {
+      if (myFileStream == null) return;
       while (myRunning){
         try {
-          if (myFileStream.ready()){
-            addMessage(myFileStream.readLine());
+          long endTime = System.currentTimeMillis() + PROCESS_IDLE_TIMEOUT;
+          while (System.currentTimeMillis() < endTime){
+            if (myFileStream.ready()){
+              addMessage(myFileStream.readLine());
+            }
           }
           synchronized (this) {
             wait(PROCESS_IDLE_TIMEOUT);
+            while (myRunning && !isActive()){
+              wait(PROCESS_IDLE_TIMEOUT/4);
+            }
           }
         }
         catch (IOException e) {

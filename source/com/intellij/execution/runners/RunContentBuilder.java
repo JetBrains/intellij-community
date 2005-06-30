@@ -100,7 +100,11 @@ public class RunContentBuilder {
                 ((JTabbedPane)myComponent).addTab("Console", console.getComponent());
                 for (Pair<String, String> pair : logFiles.keySet()) {
                   if (logFiles.get(pair).booleanValue()) {
-                    final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(pair.first));
+                    final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(pair.first)){
+                      public boolean isActive() {
+                        return ((JTabbedPane)myComponent).getSelectedComponent() == this;  
+                      }
+                    };
                     myDisposeables.add(logTab);
                     ((JTabbedPane)myComponent).addTab("Log: " + pair.second, logTab);
                   }

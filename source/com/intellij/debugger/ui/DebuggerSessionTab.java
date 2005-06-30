@@ -241,7 +241,16 @@ public class DebuggerSessionTab {
       for (Iterator<Pair<String,String>> iterator = logFiles.keySet().iterator(); iterator.hasNext();) {
         Pair<String,String>  pair = iterator.next();
         if (logFiles.get(pair).booleanValue()){
-          final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(pair.first));
+          final LogConsoleTab logTab = new LogConsoleTab(myProject, new File(pair.first)){
+            public boolean isActive() {
+              final Content selectedContent = myViewsContentManager.getSelectedContent();
+              if (selectedContent == null){
+                stopRunning();
+                return false;
+              }
+              return selectedContent.getComponent() == this;
+            }
+          };
           myLogTabs.add(logTab);
           Content logContent = PeerFactory.getInstance().getContentFactory().createContent(logTab.getComponent(), "Log: " + pair.second, false);
           //todo icons
