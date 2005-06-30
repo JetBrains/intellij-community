@@ -12,8 +12,8 @@ import java.awt.*;
  */
 public class PluginsPanel extends JPanel implements Scrollable{
 
-  private static final int VERTICAL_SCROLL_INCREMENT = 5;
-  private static final int HORIZONTAL_SCROLL_INCREMENT = 5;
+  private static final int VERTICAL_SCROLL_INCREMENT = UIManager.getFont("ToolTip.font").getSize() * 2;
+  private static final int HORIZONTAL_SCROLL_INCREMENT = VERTICAL_SCROLL_INCREMENT;
 
   public PluginsPanel(LayoutManager layout) {
     super(layout);
