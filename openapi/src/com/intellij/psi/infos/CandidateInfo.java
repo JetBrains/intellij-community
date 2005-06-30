@@ -10,14 +10,15 @@ import com.intellij.psi.*;
  * @author ik,dsl
  */
 public class CandidateInfo implements JavaResolveResult {
-  private PsiElement myPlace = null;
-  private PsiClass myAccessClass = null;
-  private PsiElement myCandidate = null;
-  private Boolean myAccessProblem = null;
-  private boolean myStaticsProblem = false;
-  protected PsiSubstitutor mySubstitutor = null;
-  private PsiElement myCurrentFileResolveContext = null;
   public static CandidateInfo[] EMPTY_ARRAY = new CandidateInfo[0];
+
+  private final PsiElement myPlace;
+  private final PsiClass myAccessClass;
+  private final PsiElement myCandidate;
+  private Boolean myAccessProblem = null;
+  private final boolean myStaticsProblem;
+  protected final PsiSubstitutor mySubstitutor;
+  private final PsiElement myCurrentFileResolveContext;
   private boolean myPackagePrefixPackageReference;
 
   public CandidateInfo(PsiElement candidate, PsiSubstitutor substitutor, boolean accessProblem, boolean staticsProblem, PsiElement currFileContext){
@@ -26,6 +27,8 @@ public class CandidateInfo implements JavaResolveResult {
     myStaticsProblem = staticsProblem;
     mySubstitutor = substitutor;
     myCurrentFileResolveContext = currFileContext;
+    myAccessClass = null;
+    myPlace = null;
   }
 
   public CandidateInfo(PsiElement candidate, PsiSubstitutor substitutor, boolean accessProblem, boolean staticsProblem){
@@ -33,10 +36,7 @@ public class CandidateInfo implements JavaResolveResult {
   }
 
   public CandidateInfo(PsiElement candidate, PsiSubstitutor substitutor, PsiElement place, boolean staticsProblem){
-    myStaticsProblem = staticsProblem;
-    myPlace = place;
-    mySubstitutor = substitutor;
-    myCandidate = candidate;
+    this(candidate, substitutor, place, null, staticsProblem, null);
   }
 
   public CandidateInfo(PsiElement candidate,
@@ -54,17 +54,12 @@ public class CandidateInfo implements JavaResolveResult {
   }
 
   public CandidateInfo(PsiElement candidate, PsiSubstitutor substitutor){
-    myCandidate = candidate;
-    mySubstitutor = substitutor;
+    this(candidate, substitutor, null, null, false, null);
   }
 
   public CandidateInfo(CandidateInfo candidate, PsiSubstitutor newSubstitutor){
-    myPlace = candidate.myPlace;
-    myCandidate = candidate.myCandidate;
+    this(candidate.myCandidate, newSubstitutor, candidate.myPlace, null, candidate.myStaticsProblem, candidate.myCurrentFileResolveContext);
     myAccessProblem = candidate.myAccessProblem;
-    myStaticsProblem = candidate.myStaticsProblem;
-    myCurrentFileResolveContext = candidate.myCurrentFileResolveContext;
-    mySubstitutor = newSubstitutor;
   }
 
   public boolean isValidResult(){
