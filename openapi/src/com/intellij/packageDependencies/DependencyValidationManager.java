@@ -14,6 +14,8 @@ public abstract class DependencyValidationManager extends NamedScopesHolder impl
     return project.getComponent(DependencyValidationManager.class);
   }
 
+  public abstract boolean hasRules();
+
   public abstract DependencyRule getViolatorDependencyRule(PsiFile from, PsiFile to);
 
   public abstract DependencyRule[] getViolatorDependencyRules(PsiFile from, PsiFile to);

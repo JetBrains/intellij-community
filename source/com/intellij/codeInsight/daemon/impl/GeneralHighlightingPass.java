@@ -100,6 +100,7 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     return myProject;
   }
 
+  
   public void doCollectInformation(ProgressIndicator progress) {
     /*
     if (myUpdateAll){
@@ -273,15 +274,18 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
   private void collectDependencyProblems(final List<HighlightInfo> list) {
     if (myUpdateAll && myFile instanceof PsiJavaFile && myFile.isPhysical() && myFile.getVirtualFile() != null &&
         mySettings.getInspectionProfile(myFile).isToolEnabled(HighlightDisplayKey.ILLEGAL_DEPENDENCY)) {
-      DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(myFile));
+
       final DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
+      if (!validationManager.hasRules()) return;
+
+      DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(myFile));
       builder.analyzeFileDependencies(myFile, new DependenciesBuilder.DependencyProcessor() {
         public void process(PsiElement place, PsiElement dependency) {
           PsiFile dependencyFile = dependency.getContainingFile();
-          if (InspectionManagerEx.inspectionResultSuppressed(place, HighlightDisplayKey.ILLEGAL_DEPENDENCY.toString())) return;
           if (dependencyFile != null && dependencyFile.isPhysical() && dependencyFile.getVirtualFile() != null) {
             DependencyRule[] rules = validationManager.getViolatorDependencyRules(myFile, dependencyFile);
             if (rules.length > 0) {
+              if (InspectionManagerEx.inspectionResultSuppressed(place, HighlightDisplayKey.ILLEGAL_DEPENDENCY.toString())) return;
               HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ILLEGAL_DEPENDENCY, place,
                                                                      "Illegal dependency. Violated rules: \"" + rules[0].getDisplayText() +
                                                                      "\"");

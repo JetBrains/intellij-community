@@ -27,6 +27,10 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     myProject = project;
   }
 
+  public boolean hasRules() {
+    return myRules.size() > 0;
+  }
+
   public DependencyRule getViolatorDependencyRule(PsiFile from, PsiFile to) {
     for (int i = 0; i < myRules.size(); i++) {
       DependencyRule dependencyRule = myRules.get(i);

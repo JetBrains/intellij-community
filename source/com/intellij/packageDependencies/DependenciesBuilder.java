@@ -1,18 +1,10 @@
 package com.intellij.packageDependencies;
 
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.codeStyle.ImportHelper;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.codeInsight.daemon.impl.RefCountHolder;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiUtil;
 
 import java.util.*;
 
@@ -119,6 +111,13 @@ public abstract class DependenciesBuilder {
           myProcessor.process(ref.getElement(), resolved);
         }
       }
+    }
+
+    @Override
+    public void visitLiteralExpression(PsiLiteralExpression expression) {
+      // empty
+      // TODO: thus we'll skip property references and references to file resources. We can't validate them anyway now since
+      // TODO: rule syntax does not allow this.
     }
 
     public void visitDocComment(PsiDocComment comment) {
