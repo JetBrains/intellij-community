@@ -1,17 +1,17 @@
 package com.intellij.psi.impl.source.xml.behavior;
 
-import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.psi.PsiManager;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 
 public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
-  public ASTNode encodeXmlTextContents(String displayText, PsiManager manager, CharTable table) {
+  public ASTNode encodeXmlTextContents(String displayText, XmlText text, CharTable table) {
     boolean wsChars = false;
-    final FileElement dummyParent = new DummyHolder(manager, null, table).getTreeElement();
+    final FileElement dummyParent = new DummyHolder(text.getManager(), null, table).getTreeElement();
     int fragmentStart = 0;
     final char[] chars = displayText.toCharArray();
     for(int i = 0; i < displayText.length(); i++){

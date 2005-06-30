@@ -1,21 +1,28 @@
 package com.intellij.psi.impl.source.xml.behavior;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.xml.util.XmlUtil;
 
 public class CDATAOnAnyEncodedPolicy extends DefaultXmlPsiPolicy{
-  public ASTNode encodeXmlTextContents(String displayText, PsiManager manager, CharTable charTableByTree) {
-    if(!XmlUtil.toCode(displayText)) return super.encodeXmlTextContents(displayText, manager, charTableByTree);
-    final FileElement dummyParent = createCDATAElement(manager, charTableByTree, displayText);
-
-    return dummyParent.getFirstChildNode();
+  public ASTNode encodeXmlTextContents(String displayText, XmlText text, CharTable charTableByTree) {
+    final ASTNode firstChild = text.getNode().getFirstChildNode();
+    boolean textAlreadyHasCDATA = firstChild != null && firstChild.getElementType() == XmlElementType.XML_CDATA;
+    if (textAlreadyHasCDATA || XmlUtil.toCode(displayText)) {
+      final FileElement dummyParent = createCDATAElement(text.getManager(), charTableByTree, displayText);
+      return dummyParent.getFirstChildNode();
+    }
+    else {
+      return super.encodeXmlTextContents(displayText, text, charTableByTree);
+    }
   }
 
   public static FileElement createCDATAElement(final PsiManager manager, final CharTable charTableByTree, final String displayText) {

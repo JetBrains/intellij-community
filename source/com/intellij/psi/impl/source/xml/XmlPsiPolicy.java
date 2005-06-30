@@ -1,9 +1,9 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.CharTable;
-import com.intellij.psi.PsiManager;
 
 public interface XmlPsiPolicy {
-  ASTNode encodeXmlTextContents(String displayText, PsiManager manager, CharTable charTableByTree);
+  ASTNode encodeXmlTextContents(String displayText, XmlText text, CharTable charTableByTree);
 }
