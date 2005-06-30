@@ -147,7 +147,7 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
       return;
     }
 
-    Language language = children.getFirst().getLanguage();
+    Language language = myIncludingFile.getLanguage();
     if (language == null) {
       String message = "Cannot determine the language for selected elements";
       RefactoringMessageUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.EXTRACT_INCLUDE, project);
@@ -191,6 +191,8 @@ public abstract class ExtractIncludeFileBase implements RefactoringActionHandler
               catch (IncorrectOperationException e) {
                 LOG.error(e);
               }
+
+              editor.getSelectionModel().removeSelection();
             }
           });
         }
