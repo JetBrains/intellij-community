@@ -8,6 +8,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.psi.PsiElement;
 
 public interface HighlightInfoType {
   HighlightInfoType WRONG_REF = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
@@ -35,7 +36,7 @@ public interface HighlightInfoType {
   HighlightInfoType JAVADOC_WRONG_REF = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.JAVADOC_ERROR, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
   HighlightInfoType JAVADOC_ERROR = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.JAVADOC_ERROR);
   HighlightInfoType UNKNOWN_JAVADOC_TAG = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.UNKNOWN_JAVADOC_TAG);
-  
+
   HighlightInfoType UNKNOWN_HTML_TAG = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.UNKNOWN_HTML_TAG);
   HighlightInfoType UNKNOWN_HTML_ATTRIBUTE = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.UNKNOWN_HTML_ATTRIBUTES);
   HighlightInfoType REQUIRED_HTML_ATTRIBUTE = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.REQUIRED_HTML_ATTRIBUTE);
@@ -70,7 +71,7 @@ public interface HighlightInfoType {
   HighlightInfoType RETURN_OUTSIDE_METHOD = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
   HighlightInfoType UNHANDLED_EXCEPTION = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
 
-  HighlightSeverity getSeverity();
+  HighlightSeverity getSeverity(PsiElement psiElement);
 
   TextAttributesKey getAttributesKey();
 
@@ -83,7 +84,7 @@ public interface HighlightInfoType {
       myAttributesKey = attributesKey;
     }
 
-    public HighlightSeverity getSeverity() {
+    public HighlightSeverity getSeverity(PsiElement psiElement) {
       return mySeverity;
     }
 
@@ -107,9 +108,9 @@ public interface HighlightInfoType {
       myAttributesKey = attributesKey;
     }
 
-    public HighlightSeverity getSeverity() {
+    public HighlightSeverity getSeverity(final PsiElement psiElement) {
       DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-      HighlightDisplayLevel level = settings.getInspectionProfile().getErrorLevel(mySeverityKey);
+      HighlightDisplayLevel level = settings.getInspectionProfile(psiElement).getErrorLevel(mySeverityKey);
       LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
       return level == HighlightDisplayLevel.ERROR ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
     }
@@ -133,15 +134,15 @@ public interface HighlightInfoType {
       mySeverityKey = severityKey;
     }
 
-    public HighlightSeverity getSeverity() {
+    public HighlightSeverity getSeverity(final PsiElement psiElement) {
       DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-      HighlightDisplayLevel level = settings.getInspectionProfile().getErrorLevel(mySeverityKey);
+      HighlightDisplayLevel level = settings.getInspectionProfile(psiElement).getErrorLevel(mySeverityKey);
       LOG.assertTrue(level != HighlightDisplayLevel.DO_NOT_SHOW);
       return level == HighlightDisplayLevel.ERROR ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
     }
 
     public TextAttributesKey getAttributesKey() {
-      return getSeverity() == HighlightSeverity.ERROR ? CodeInsightColors.ERRORS_ATTRIBUTES : CodeInsightColors.WARNINGS_ATTRIBUTES;
+      return getSeverity(null) == HighlightSeverity.ERROR ? CodeInsightColors.ERRORS_ATTRIBUTES : CodeInsightColors.WARNINGS_ATTRIBUTES;
     }
 
     public String toString() {

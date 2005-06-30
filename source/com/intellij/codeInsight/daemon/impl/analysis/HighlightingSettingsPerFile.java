@@ -1,5 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfileManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
@@ -25,6 +27,7 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
 
   private Map<VirtualFile, FileHighlighingSetting[]> myHighlightSettings = new HashMap<VirtualFile, FileHighlighingSetting[]>();
   private Map<Language, FileHighlighingSetting[]> myHighlightDefaults = new HashMap<Language, FileHighlighingSetting[]>();
+  private Map<VirtualFile, String> myProfileSettings = new HashMap<VirtualFile, String>();
 
   public FileHighlighingSetting getHighlightingSettingForRoot(PsiElement root){
     final PsiFile containingFile = root.getContainingFile();
@@ -69,7 +72,7 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
   public void disposeComponent() {}
 
   public void readExternal(Element element) throws InvalidDataException {
-    final List children = element.getChildren("setting");
+    List children = element.getChildren("setting");
     for (final Object aChildren : children) {
       final Element child = (Element)aChildren;
       final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl(child.getAttributeValue("file"));
@@ -80,6 +83,12 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
         settings.add(Enum.valueOf(FileHighlighingSetting.class, attributeValue));
       }
       myHighlightSettings.put(fileByUrl, settings.toArray(new FileHighlighingSetting[settings.size()]));
+    }
+    children = element.getChildren("profiles");
+    for (final Object aChildren : children) {
+      final Element child = (Element)aChildren;
+      final VirtualFile fileByUrl = VirtualFileManager.getInstance().findFileByUrl(child.getAttributeValue("file"));
+      myProfileSettings.put(fileByUrl, child.getAttributeValue("profile_name"));
     }
   }
 
@@ -94,5 +103,25 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
         child.setAttribute("root" + i, fileHighlighingSetting.toString());
       }
     }
+    for (Map.Entry<VirtualFile, String> entry : myProfileSettings.entrySet()) {
+      final Element child = new Element("profiles");
+      element.addContent(child);
+      child.setAttribute("file", entry.getKey().getUrl());
+      child.setAttribute("profile_name", entry.getValue());
+    }
+  }
+
+  public InspectionProfileImpl getInspectionProfile(PsiElement psiRoot) {
+    final PsiFile containingFile = psiRoot.getContainingFile();
+    final VirtualFile virtualFile = containingFile.getVirtualFile();
+    final InspectionProfileManager inspectionManager = InspectionProfileManager.getInstance();
+    return inspectionManager.getProfile(myProfileSettings.get(virtualFile));
+  }
+
+  public void setInspectionProfile(String name, PsiElement psiRoot){
+     if (psiRoot != null){
+       final PsiFile file = psiRoot.getContainingFile();
+       myProfileSettings.put(file.getVirtualFile(), name);
+     }
   }
 }

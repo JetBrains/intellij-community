@@ -3,8 +3,11 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInspection.ex.InspectionProfileManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.PsiElement;
@@ -19,6 +22,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Enumeration;
 import java.util.EventObject;
 import java.util.Hashtable;
@@ -32,12 +37,14 @@ public class EditorMarkupHintComponent extends JPanel {
   private JRadioButton myGoByErrorsRadioButton = new JRadioButton("Go to errors first");
   private JRadioButton myGoByBothRadioButton = new JRadioButton("Go to next error/warning");
 
+  private JComboBox myProfilesCombo = new JComboBox(new DefaultComboBoxModel());
+
   private JSlider[] mySliders;
   private PsiFile myFile;
 
   private boolean myImportPopupOn;
   private boolean myGoByErrors;
-
+  private String myProfile;
 
   public EditorMarkupHintComponent(PsiFile file) {
     super(new GridBagLayout());
@@ -95,7 +102,8 @@ public class EditorMarkupHintComponent extends JPanel {
     myGoByErrorsRadioButton.setSelected(myGoByErrors);
     myGoByBothRadioButton.setSelected(!myGoByErrors);
 
-    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1,1, 0,0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0);
+    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
+                                                   GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
     add(myImportPopupCheckBox, gc);
 
     JPanel navPanel = new JPanel(new BorderLayout());
@@ -104,12 +112,30 @@ public class EditorMarkupHintComponent extends JPanel {
     navPanel.setBorder(IdeBorderFactory.createTitledBorder("Errors Navigation"));
     add(navPanel, gc);
 
-    JPanel panel = new JPanel(new GridLayout(1, mySliders.length));
+    JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder("Highlighting Level"));
+
+    JPanel profilePanel = new JPanel(new GridBagLayout());
+    profilePanel.add(new JLabel("Use Inspection Profile:"), new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    InspectionProfileManager inspectionManager = InspectionProfileManager.getInstance();
+    final String[] avaliableProfileNames = inspectionManager.getAvaliableProfileNames();
+    for (String profile : avaliableProfileNames) {
+      myProfilesCombo.addItem(profile);
+    }
+    myProfilesCombo.setSelectedItem(DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getName());
+    myProfilesCombo.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myProfile = (String)myProfilesCombo.getSelectedItem();
+      }
+    });
+    profilePanel.add(myProfilesCombo, new GridBagConstraints(1, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(profilePanel, new GridBagConstraints(0,0,mySliders.length,1,1,0,GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0));
+
     final boolean addLabel = mySliders.length > 1;
-    if (addLabel){
+    if (addLabel) {
       layoutVertical(panel);
-    } else {
+    }
+    else {
       layoutHorizontal(panel);
     }
     gc.gridx = 0;
@@ -121,25 +147,25 @@ public class EditorMarkupHintComponent extends JPanel {
     add(panel, gc);
   }
 
-  private void layoutHorizontal(final JPanel panel){
+  private void layoutHorizontal(final JPanel panel) {
     for (JSlider slider : mySliders) {
       slider.setOrientation(JSlider.HORIZONTAL);
       slider.setPreferredSize(new Dimension(100, 40));
-      panel.add(slider);
+      panel.add(slider, new GridBagConstraints(0,1,1,1,1,0,GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0 ));
     }
   }
 
-  private void layoutVertical(final JPanel panel){
+  private void layoutVertical(final JPanel panel) {
     for (int i = 0; i < mySliders.length; i++) {
       JPanel borderPanel = new JPanel(new BorderLayout());
       mySliders[i].setPreferredSize(new Dimension(80, 100));
       borderPanel.add(new JLabel(myFile.getPsiRoots()[i].getLanguage().getID()), BorderLayout.NORTH);
       borderPanel.add(mySliders[i], BorderLayout.CENTER);
-      panel.add(borderPanel);
+      panel.add(borderPanel, new GridBagConstraints(i, 1, 1,1,0,1, GridBagConstraints.CENTER, GridBagConstraints.VERTICAL, new Insets(0,0,0,0), 0,0));
     }
   }
 
-  public void showComponent(Editor editor, Point point){
+  public void showComponent(Editor editor, Point point) {
     final LightweightHint hint = new LightweightHint(this);
     hint.addHintListener(new HintListener() {
       public void hintHidden(EventObject event) {
@@ -148,10 +174,13 @@ public class EditorMarkupHintComponent extends JPanel {
     });
     final HintManager hintManager = HintManager.getInstance();
     final Hint previousHint = hintManager.findHintByType(EditorMarkupHintComponent.class);
-    if (previousHint != null){
+    if (previousHint != null) {
       previousHint.hide();
+    } else {
+      hintManager
+        .showEditorHint(hint, editor, point, HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_SCROLLING, 0,
+                        true);
     }
-    hintManager.showEditorHint(hint, editor, point, HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_SCROLLING, 0, true);
   }
 
   private void onClose(){
@@ -161,7 +190,7 @@ public class EditorMarkupHintComponent extends JPanel {
     }
   }
 
-  private void forceDaemonRestart(){
+  private void forceDaemonRestart() {
     for (int i = 0; i < mySliders.length; i++) {
       PsiElement root = myFile.getPsiRoots()[i];
       int value = mySliders[i].getValue();
@@ -173,6 +202,7 @@ public class EditorMarkupHintComponent extends JPanel {
         HighlightUtil.forceRootInspection(root, true);
       }
     }
+    HighlightingSettingsPerFile.getInstance(myFile.getProject()).setInspectionProfile((String)myProfilesCombo.getSelectedItem(), myFile);
     final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myFile.getProject());
     analyzer.setImportHintsEnabled(myFile, myImportPopupOn);
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
@@ -193,7 +223,7 @@ public class EditorMarkupHintComponent extends JPanel {
         return true;
       }
     }
-    return false;
+    return !Comparing.equal(myProfile, DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile));
   }
 
   private int getValue(boolean isSyntaxHighlightingEnabled, boolean isInspectionsHighlightingEnabled){

@@ -363,7 +363,7 @@ public abstract class GenericsHighlightUtil {
    */
   public static HighlightInfo checkRawToGenericAssignment(PsiType lType, PsiType rType, PsiElement elementToHighlight) {
     if (elementToHighlight.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
+    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(elementToHighlight).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
     if (!isGenericToRaw(lType, rType)) return null;
     String description = MessageFormat.format("Unchecked assignment: ''{0}'' to ''{1}''",
                                               new Object[]{HighlightUtil.formatType(rType), HighlightUtil.formatType(lType)});
@@ -396,7 +396,7 @@ public abstract class GenericsHighlightUtil {
 
   public static HighlightInfo checkUncheckedTypeCast(PsiTypeCastExpression typeCast) {
     if (typeCast.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
+    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(typeCast).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
     final PsiTypeElement typeElement = typeCast.getCastType();
     if (typeElement == null) return null;
     final PsiType castType = typeElement.getType();
@@ -499,7 +499,7 @@ public abstract class GenericsHighlightUtil {
 
   public static HighlightInfo checkUncheckedCall(JavaResolveResult resolveResult, PsiCall call) {
     if (call.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
+    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(call).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
 
     final PsiMethod method = (PsiMethod)resolveResult.getElement();
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
@@ -884,7 +884,7 @@ public abstract class GenericsHighlightUtil {
 
   public static HighlightInfo checkUncheckedOverriding (PsiMethod overrider, final List<MethodSignatureBackedByPsiMethod> superMethodSignatures) {
     if (overrider.getManager().getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return null;
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
+    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(overrider).isToolEnabled(HighlightDisplayKey.UNCHECKED_WARNING)) return null;
     for (MethodSignatureBackedByPsiMethod signature : superMethodSignatures) {
       PsiMethod baseMethod = signature.getMethod();
       PsiSubstitutor substitutor = signature.getSubstitutor();

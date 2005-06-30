@@ -208,7 +208,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private HighlightInfo processIdentifier(PsiIdentifier identifier) {
-    InspectionProfileImpl profile = mySettings.getInspectionProfile();
+    InspectionProfileImpl profile = mySettings.getInspectionProfile(identifier);
     if (!profile.isToolEnabled(HighlightDisplayKey.UNUSED_SYMBOL)) return null;
     if (InspectionManagerEx.inspectionResultSuppressed(identifier, HighlightDisplayKey.UNUSED_SYMBOL.toString())) return null;
     HighlightInfo info;
@@ -457,7 +457,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private HighlightInfo processImport(PsiImportStatementBase importStatement) {
-    if (!mySettings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNUSED_IMPORT)) return null;
+    if (!mySettings.getInspectionProfile(importStatement).isToolEnabled(HighlightDisplayKey.UNUSED_IMPORT)) return null;
 
     // jsp include directive hack
     if (importStatement instanceof JspxImportStatement && ((JspxImportStatement)importStatement).isForeignFileImport()) return null;

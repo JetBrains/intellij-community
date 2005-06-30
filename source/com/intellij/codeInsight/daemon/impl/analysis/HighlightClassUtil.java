@@ -442,7 +442,7 @@ public class HighlightClassUtil {
 
   //@top
   public static HighlightInfo checkPackageNameConformsToDirectoryName(PsiPackageStatement statement) {
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT)) {
+    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(statement).isToolEnabled(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT)) {
       return null;
     }
 
@@ -472,7 +472,7 @@ public class HighlightClassUtil {
 
   //@top
   public static HighlightInfo checkMissingPackageStatement(PsiClass aClass) {
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT)) {
+    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(aClass).isToolEnabled(HighlightDisplayKey.WRONG_PACKAGE_STATEMENT)) {
       return null;
     }
 

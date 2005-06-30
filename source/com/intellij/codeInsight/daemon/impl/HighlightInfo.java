@@ -148,7 +148,7 @@ public class HighlightInfo {
     this.fixStartOffset = startOffset;
     this.fixEndOffset = endOffset;
     this.description = description;
-    this.severity = type.getSeverity();
+    this.severity = type.getSeverity(null);
     this.toolTip = toolTip;
     LOG.assertTrue(startOffset >= 0);
     LOG.assertTrue(startOffset <= endOffset);

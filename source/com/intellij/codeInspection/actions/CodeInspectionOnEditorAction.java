@@ -23,15 +23,16 @@ public class CodeInspectionOnEditorAction extends AnAction {
     }
     PsiFile psiFile = (PsiFile)dataContext.getData(DataConstants.PSI_FILE);
     if (psiFile != null){
-      analyze(project, new AnalysisScope(psiFile));
+      analyze(project, psiFile);
     }
   }
 
-  protected void analyze(Project project, AnalysisScope scope) {
+  protected void analyze(Project project, PsiFile psiFile) {
     FileDocumentManager.getInstance().saveAllDocuments();
     final InspectionManagerEx inspectionManagerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
+    final AnalysisScope scope = new AnalysisScope(psiFile);
     inspectionManagerEx.setCurrentScope(scope);
-    final InspectionProfileImpl inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile();
+    final InspectionProfileImpl inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(psiFile);
     inspectionManagerEx.setExternalProfile(inspectionProfile);
     inspectionManagerEx.doInspections(scope, false);
     ApplicationManager.getApplication().invokeLater(new Runnable() {

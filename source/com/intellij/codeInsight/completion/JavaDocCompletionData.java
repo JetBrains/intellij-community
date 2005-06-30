@@ -97,7 +97,7 @@ public class JavaDocCompletionData extends CompletionData {
       }
 
       final StringTokenizer tokenizer = new StringTokenizer(
-        DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getAdditionalJavadocTags(), ", ");
+        DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(position).getAdditionalJavadocTags(), ", ");
       while (tokenizer.hasMoreTokens()) {
         ret.add(tokenizer.nextToken());
       }

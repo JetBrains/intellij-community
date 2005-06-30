@@ -102,7 +102,7 @@ public class DependencyConfigurable extends BaseConfigurable {
       }
     }
 
-    DaemonCodeAnalyzer.getInstance(myProject).settingsChanged();
+    DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
   private void stopTableEditing() {

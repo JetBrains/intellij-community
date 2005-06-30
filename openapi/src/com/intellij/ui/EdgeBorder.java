@@ -51,10 +51,10 @@ public class EdgeBorder implements Border {
       g.drawLine(x, (y + height) - 1, (x + width) - 1, (y + height) - 1);
     }
     if ((b & 0xf000) != 0){
-      g.setColor(color);
-      g.drawLine((x + width) - 2, y, (x + width) - 2, (y + height) - 1);
       g.setColor(color1);
-      g.drawLine((x + width) - 1, y, (x + width) - 1, (y + height) - 1);
+      g.drawLine((x + width) + 1, y, (x + width) + 1, (y + height) - 1);
+      g.setColor(color);
+      g.drawLine((x + width), y, (x + width), (y + height) - 1);
     }
     g.setColor(color2);
   }

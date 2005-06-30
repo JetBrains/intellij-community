@@ -237,7 +237,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void visitDocComment(PsiDocComment comment) {
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkUnclosedComment(comment));
-    if (!mySettings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) return;
+    if (!mySettings.getInspectionProfile(comment).isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) return;
     if (!myHolder.hasErrorResults()) {
       comment.accept(myJavadocVisitor);
       myHolder.add(myJavadocVisitor.getResult());
@@ -246,21 +246,21 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   public void visitDocTag(PsiDocTag tag) {
-    if (!mySettings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) return;
+    if (!mySettings.getInspectionProfile(tag).isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) return;
     tag.accept(myJavadocVisitor);
     myHolder.add(myJavadocVisitor.getResult());
     myJavadocVisitor.clearResult();
   }
 
   public void visitDocToken(PsiDocToken token) {
-    if (!mySettings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) return;
+    if (!mySettings.getInspectionProfile(token).isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) return;
     token.accept(myJavadocVisitor);
     myHolder.add(myJavadocVisitor.getResult());
     myJavadocVisitor.clearResult();
   }
 
   public void visitDocTagValue(PsiDocTagValue value) {
-    if (!mySettings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) return;
+    if (!mySettings.getInspectionProfile(value).isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) return;
     value.accept(myJavadocVisitor);
     myHolder.add(myJavadocVisitor.getResult());
     myJavadocVisitor.clearResult();
@@ -270,7 +270,7 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     HighlightInfoType errorType;
     if (PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null) {
       errorType = HighlightInfoType.JAVADOC_ERROR;
-      if (!mySettings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) return;
+      if (!mySettings.getInspectionProfile(element).isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) return;
     }
     else {
       errorType = HighlightInfoType.ERROR;

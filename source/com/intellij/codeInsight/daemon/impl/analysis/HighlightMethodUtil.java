@@ -292,7 +292,7 @@ public class HighlightMethodUtil {
 
   //@top
   static HighlightInfo checkExceptionsNeverThrown(PsiJavaCodeReferenceElement referenceElement) {
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.UNUSED_THROWS_DECL)) {
+    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(referenceElement).isToolEnabled(HighlightDisplayKey.UNUSED_THROWS_DECL)) {
       return null;
     }
     if (!(referenceElement.getParent() instanceof PsiReferenceList)) return null;
@@ -1129,9 +1129,9 @@ public class HighlightMethodUtil {
   static HighlightInfo checkMethodOverridesDeprecated(MethodSignatureBackedByPsiMethod methodSignature,
                                                       List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
                                                       DaemonCodeAnalyzerSettings settings) {
-    if (!settings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.DEPRECATED_SYMBOL)) return null;
-    if (!InspectionManagerEx.isToCheckMember(methodSignature.getMethod(), HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
     PsiMethod method = methodSignature.getMethod();
+    if (!settings.getInspectionProfile(method).isToolEnabled(HighlightDisplayKey.DEPRECATED_SYMBOL)) return null;
+    if (!InspectionManagerEx.isToCheckMember(method, HighlightDisplayKey.DEPRECATED_SYMBOL.toString())) return null;
     PsiElement methodName = method.getNameIdentifier();
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();

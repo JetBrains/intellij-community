@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,6 +8,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
+import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 
 import java.io.File;
@@ -49,6 +51,11 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
       myInspectionProfile.load();
     }
     return myInspectionProfile;
+  }
+
+  public InspectionProfileImpl getInspectionProfile(PsiElement psiRoot){
+    InspectionProfileImpl inspectionProfile = psiRoot == null ? null : HighlightingSettingsPerFile.getInstance(psiRoot.getProject()).getInspectionProfile(psiRoot);
+    return inspectionProfile != null ? inspectionProfile : getInspectionProfile();
   }
 
   //set in error settings to hightlight only

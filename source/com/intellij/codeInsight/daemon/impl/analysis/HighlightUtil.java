@@ -1536,7 +1536,7 @@ public class HighlightUtil {
 
   //@top
   public static HighlightInfo checkSillyAssignment(PsiAssignmentExpression assignment) {
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.SILLY_ASSIGNMENT)) {
+    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(assignment).isToolEnabled(HighlightDisplayKey.SILLY_ASSIGNMENT)) {
       return null;
     }
     if (InspectionManagerEx.inspectionResultSuppressed(assignment, HighlightDisplayKey.SILLY_ASSIGNMENT.toString())) return null;
@@ -1759,7 +1759,7 @@ public class HighlightUtil {
 
   static HighlightInfo checkAccessStaticMemberViaInstanceReference(PsiReferenceExpression expr, JavaResolveResult result) {
     PsiElement resolved = result.getElement();
-    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE)) {
+    if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(expr).isToolEnabled(HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE)) {
       return null;
     }
     if (InspectionManagerEx.inspectionResultSuppressed(expr, HighlightDisplayKey.ACCESS_STATIC_VIA_INSTANCE.toString())) return null;
@@ -1936,7 +1936,7 @@ public class HighlightUtil {
         HighlightInfoType type = HighlightInfoType.WRONG_REF;
         List<IntentionAction> options = new ArrayList<IntentionAction>();
         if (PsiTreeUtil.getParentOfType(ref, PsiDocComment.class) != null) {
-          if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) {
+          if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(ref).isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) {
             return null;
           }
           type = HighlightInfoType.JAVADOC_WRONG_REF;
@@ -2039,7 +2039,7 @@ public class HighlightUtil {
   public static HighlightInfo checkDeprecated(PsiElement refElement,
                                               PsiElement elementToHighlight,
                                               DaemonCodeAnalyzerSettings settings) {
-    if (!settings.getInspectionProfile().isToolEnabled(HighlightDisplayKey.DEPRECATED_SYMBOL)) return null;
+    if (!settings.getInspectionProfile(elementToHighlight).isToolEnabled(HighlightDisplayKey.DEPRECATED_SYMBOL)) return null;
     if (!(refElement instanceof PsiDocCommentOwner)) return null;
     if (!((PsiDocCommentOwner)refElement).isDeprecated()) return null;
 

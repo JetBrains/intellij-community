@@ -5,8 +5,8 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
@@ -84,7 +84,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       myLevels = new ArrayList<HighlightInfoType>();
       myTools = new ArrayList<LocalInspectionTool>();
 
-      LocalInspectionTool[] tools = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getHighlightingLocalInspectionTools();
+      LocalInspectionTool[] tools = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getHighlightingLocalInspectionTools();
       for (PsiElement element : workSet) {
         ProgressManager.getInstance().checkCanceled();
         LocalInspectionTool currentTool = null;
@@ -174,7 +174,7 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
     ProgressManager.getInstance().checkCanceled();
 
     if (problemDescriptors != null) {
-      boolean isError = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getErrorLevel(
+      boolean isError = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getErrorLevel(
         HighlightDisplayKey.find(tool.getShortName())) ==
                                                        HighlightDisplayLevel.ERROR;
       for (ProblemDescriptor problemDescriptor : problemDescriptors) {
@@ -215,13 +215,13 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       final HighlightInfoType level = myLevels.get(i);
 
       HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
-      InspectionProfileImpl inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile();
+      InspectionProfileImpl inspectionProfile = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile);
       if (!inspectionProfile.isToolEnabled(key)) continue;
       final boolean isError = inspectionProfile.getErrorLevel(key) == HighlightDisplayLevel.ERROR;
 
 
       HighlightInfoType type = new HighlightInfoType() {
-        public HighlightSeverity getSeverity() {
+        public HighlightSeverity getSeverity(final PsiElement psiElement) {
           return isError ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
         }
 

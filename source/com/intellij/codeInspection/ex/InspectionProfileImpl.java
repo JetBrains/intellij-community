@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.application.options.ErrorHighlightingOptions;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -11,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -231,18 +231,21 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
 
   private void checkEditable() throws UnableToEditDefaultProfileException{
      if (getName().equals("Default")){
-      int exitCode = Messages.showYesNoDialog("Do you want to change the profile and continue?", "Unable to Edit Default Inspection Profile", Messages.getWarningIcon());
-      if (exitCode == DialogWrapper.OK_EXIT_CODE){
+      if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getName().equals("Default")){
+        Messages.showInfoMessage(CONFIGURE_LOCAL_NON_DEFAULT, UNABLE_TO_EDIT_DEFAULT);
+        throw new UnableToEditDefaultProfileException();
+      } else {
+        Messages.showInfoMessage(SELECT_NON_DEFAULT, UNABLE_TO_EDIT_DEFAULT);
         final ErrorHighlightingOptions errorPanel = ErrorHighlightingOptions.getInstance();
         ShowSettingsUtil.getInstance().editConfigurable((Project)null, "#Errors", errorPanel);
         Project[] projects = ProjectManager.getInstance().getOpenProjects();
         for (Project project : projects) {
-          if (!getName().equals(DaemonCodeAnalyzer.getInstance(project))) {
-            DaemonCodeAnalyzer.getInstance(project).settingsChanged();
+          if (!getName().equals("Default")) {
+            DaemonCodeAnalyzer.getInstance(project).restart();
           }
         }
+        throw new UnableToEditDefaultProfileException();
       }
-      throw new UnableToEditDefaultProfileException();
     }
   }
 

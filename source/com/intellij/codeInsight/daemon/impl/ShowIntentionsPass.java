@@ -226,7 +226,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       return showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
     }
     else if (info.type == HighlightInfoType.JAVADOC_WRONG_REF) {
-      if (DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getErrorLevel(HighlightDisplayKey.JAVADOC_ERROR) ==
+      if (DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getErrorLevel(HighlightDisplayKey.JAVADOC_ERROR) ==
           HighlightDisplayLevel.ERROR) {
         return showAddImportHint(myEditor, (PsiJavaCodeReferenceElement)element);
       }

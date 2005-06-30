@@ -25,6 +25,7 @@ public class TogglePopupHintsPanel extends JLabel {
   private static final Icon EMPTY_ICON = EmptyIcon.create(INSPECTIONS_ICON.getIconWidth(), INSPECTIONS_ICON.getIconHeight());
 
   public TogglePopupHintsPanel() {
+    super(EMPTY_ICON);
     addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
         Point point = new Point(0, 0);
@@ -39,14 +40,13 @@ public class TogglePopupHintsPanel extends JLabel {
         }
       }
     });
-    setIcon(EMPTY_ICON);
-    setHorizontalAlignment(CENTER);
     setIconTextGap(0);
   }
 
   void updateStatus(boolean clear) {
     if (clear){
       setIcon(EMPTY_ICON);
+      setToolTipText(null);
       return;
     }
     if (isStateChangeable()) {
@@ -55,9 +55,11 @@ public class TogglePopupHintsPanel extends JLabel {
       } else {
         setIcon(INSPECTIONS_OFF_ICON);
       }
+      setToolTipText("Click to configure highlighting for this file");
     }
     else {
       setIcon(EMPTY_ICON);
+      setToolTipText(null);
     }
   }
 
@@ -96,6 +98,10 @@ public class TogglePopupHintsPanel extends JLabel {
       return null;
     }
     return FileEditorManager.getInstance(project).getSelectedTextEditor();
+  }
+
+  public Point getToolTipLocation(MouseEvent event) {
+    return new Point(0, -20);
   }
 
 }
