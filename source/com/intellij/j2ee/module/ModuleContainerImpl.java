@@ -98,8 +98,8 @@ public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContaine
   public void readExternal(Element element) throws InvalidDataException {
     clearContainer();
     final List children = element.getChildren(CONTAINER_ELEMENT_NAME);
-    for (int i = 0; i < children.size(); i++) {
-      Element child = (Element)children.get(i);
+    for (Object aChildren : children) {
+      Element child = (Element)aChildren;
       final String type = child.getAttributeValue(TYPE_ATTRIBUTE_NAME);
       ContainerElement containerElement = null;
       if (MODULE_TYPE.equals(type)) {
@@ -181,8 +181,8 @@ public class ModuleContainerImpl implements ModuleByNameProvider, ModuleContaine
     final Element infoRoot = element.getChild("order-entry-info");
     if (infoRoot != null) {
       final List infos = infoRoot.getChildren("info");
-      for (int i = 0; i < infos.size(); i++) {
-        Element info = (Element)infos.get(i);
+      for (Object info1 : infos) {
+        Element info = (Element)info1;
         final Element keyElement = info.getChild("key");
         final ExternalizableString key = new ExternalizableString("");
         key.readExternal(keyElement);

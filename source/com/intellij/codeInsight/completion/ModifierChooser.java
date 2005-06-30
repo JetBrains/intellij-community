@@ -68,16 +68,15 @@ public class ModifierChooser
 
 scopes:
       while (scope != null) {
-        final Iterator iter = myMap.keySet().iterator();
-        while(iter.hasNext()){
-          final ElementFilter filter = (ElementFilter) iter.next();
-          if(filter.isClassAcceptable(scope.getClass()) && filter.isAcceptable(scope, scope.getParent())){
+        for (final Object o : myMap.keySet()) {
+          final ElementFilter filter = (ElementFilter)o;
+          if (filter.isClassAcceptable(scope.getClass()) && filter.isAcceptable(scope, scope.getParent())) {
             final String[][] keywordSets = (String[][])myMap.get(filter);
-keywordSets:
-            for(int i = 0; i < keywordSets.length; i++){
+            keywordSets:
+            for (int i = 0; i < keywordSets.length; i++) {
               final String[] keywords = keywordSets[keywordSets.length - i - 1];
               boolean containModifierFlag = false;
-              if(list != null){
+              if (list != null) {
                 for (String keyword : keywords) {
                   if (list.hasModifierProperty(keyword)) {
                     containModifierFlag = true;
@@ -85,7 +84,7 @@ keywordSets:
                   }
                 }
               }
-              if(!containModifierFlag){
+              if (!containModifierFlag) {
                 ret.addAll(Arrays.asList(keywords));
               }
 //              else break keywordSets;
@@ -126,17 +125,18 @@ keywordSets:
     }
 
     if(parent == null) throw new Exception();
-    final Iterator iter = myMap.keySet().iterator();
-    while(iter.hasNext()){
-      final ElementFilter filter = (ElementFilter) iter.next();
-      if(filter.isClassAcceptable(parent.getClass()) && filter.isAcceptable(parent, parent.getParent())){
-        if(parent instanceof PsiParameterList){
-          if(prev == null || Arrays.asList(new String[]{"(", ","}).contains(prev.getText())
-          || Arrays.asList(new String[]{"(", ","}).contains(element.getText()))
+    for (final Object o : myMap.keySet()) {
+      final ElementFilter filter = (ElementFilter)o;
+      if (filter.isClassAcceptable(parent.getClass()) && filter.isAcceptable(parent, parent.getParent())) {
+        if (parent instanceof PsiParameterList) {
+          if (prev == null || Arrays.asList(new String[]{"(", ","}).contains(prev.getText())
+              || Arrays.asList(new String[]{"(", ","}).contains(element.getText())) {
+            return null;
+          }
+        }
+        else if (prev == null || JavaCompletionData.END_OF_BLOCK.isAcceptable(element, prev.getParent())) {
           return null;
         }
-        else if(prev == null || JavaCompletionData.END_OF_BLOCK.isAcceptable(element, prev.getParent()))
-          return null;
       }
     }
 

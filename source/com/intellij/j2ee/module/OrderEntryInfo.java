@@ -45,8 +45,8 @@ class OrderEntryInfo implements JDOMExternalizable {
     if (attrs == null) return;
     List roots = attrs.getChildren("attribute");
     if (roots.size() == 0) return;
-    for (int i = 0; i < roots.size(); i++) {
-      Element attr = (Element)roots.get(i);
+    for (Object root : roots) {
+      Element attr = (Element)root;
       String name = attr.getAttributeValue("name");
       String value = attr.getAttributeValue("value");
       attributes.put(name, value);

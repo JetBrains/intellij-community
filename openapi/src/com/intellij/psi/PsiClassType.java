@@ -6,6 +6,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
@@ -19,7 +20,7 @@ public abstract class PsiClassType extends PsiType {
 
   public abstract String getClassName();
 
-  public abstract PsiType[] getParameters();
+  @NotNull public abstract PsiType[] getParameters();
 
   public boolean equals(Object obj) {
     if (!(obj instanceof PsiClassType)) return false;

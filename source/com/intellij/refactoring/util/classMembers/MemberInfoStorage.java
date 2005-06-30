@@ -60,7 +60,7 @@ public class MemberInfoStorage {
     MemberInfo[] result = myTargetClassToMemberInfosMap.get(baseClass);
 
     if (result == null) {
-      LinkedHashSet<MemberInfo> list = getIntermediateClassesMemberInfosList(baseClass);
+      Set<MemberInfo> list = getIntermediateClassesMemberInfosList(baseClass);
       result = list.toArray(new MemberInfo[list.size()]);
       myTargetClassToMemberInfosMap.put(baseClass, result);
     }
@@ -111,11 +111,11 @@ public class MemberInfoStorage {
   }
 
 
-  private LinkedHashSet<MemberInfo> getIntermediateClassesMemberInfosList(PsiClass targetClass) {
+  private Set<MemberInfo> getIntermediateClassesMemberInfosList(PsiClass targetClass) {
     LinkedHashSet<MemberInfo> result = myTargetClassToMemberInfosListMap.get(targetClass);
     if(result == null) {
       result = new LinkedHashSet<MemberInfo>();
-      LinkedHashSet<PsiClass> subclasses = getSubclasses(targetClass);
+      Set<PsiClass> subclasses = getSubclasses(targetClass);
       for (Iterator<PsiClass> iterator = subclasses.iterator(); iterator.hasNext();) {
         PsiClass subclass = iterator.next();
         List<MemberInfo> memberInfos = getClassMemberInfos(subclass);

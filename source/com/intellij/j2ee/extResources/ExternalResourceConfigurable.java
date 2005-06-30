@@ -108,13 +108,13 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Ap
     ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
 
     manager.clearAllResources();
-    for (int i = 0; i < myPairs.size(); i++) {
-      EditLocationDialog.Pair pair = (EditLocationDialog.Pair)myPairs.get(i);
+    for (Object myPair : myPairs) {
+      EditLocationDialog.Pair pair = (EditLocationDialog.Pair)myPair;
       manager.addResource(pair.myName, pair.myLocation.replace('\\', '/'));
     }
 
-    for (int i = 0; i < myIgnoredUrls.size(); i++) {
-      String url = (String)myIgnoredUrls.get(i);
+    for (Object myIgnoredUrl : myIgnoredUrls) {
+      String url = (String)myIgnoredUrl;
       manager.addIgnoredResource(url);
     }
   }

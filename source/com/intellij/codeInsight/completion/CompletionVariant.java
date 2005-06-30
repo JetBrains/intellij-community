@@ -5,21 +5,17 @@ import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.CompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.apache.oro.text.regex.Perl5Matcher;
-import org.jdom.Element;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -30,16 +26,15 @@ import java.util.*;
  * To change this template use Options | File Templates.
  */
 
-public class CompletionVariant
-implements JDOMExternalizable{
+public class CompletionVariant {
   protected static short DEFAULT_TAIL_TYPE = TailType.SPACE;
 
-  private final Set myScopeClasses = new HashSet();
+  private final Set<Scope> myScopeClasses = new HashSet<Scope>();
   private ElementFilter myPosition;
-  private final List myCompletionsList = new ArrayList();
-  private final Set myScopeClassExceptions = new HashSet();
+  private final List<CompletionVariantItem> myCompletionsList = new ArrayList<CompletionVariantItem>();
+  private final Set<Class> myScopeClassExceptions = new HashSet<Class>();
   private InsertHandler myInsertHandler = null;
-  private final Map myItemProperties = new com.intellij.util.containers.HashMap();
+  private final Map<Object, Serializable> myItemProperties = new com.intellij.util.containers.HashMap<Object, Serializable>();
   private boolean caseInsensitive;
 
   public CompletionVariant(){}
@@ -69,15 +64,14 @@ implements JDOMExternalizable{
     myInsertHandler = handler;
   }
 
-  public void setItemProperty(Object id, Object value){
+  public void setItemProperty(Object id, Serializable value){
     myItemProperties.put(id, value);
   }
 
   public boolean isScopeClassFinal(Class scopeClass){
-    Iterator iter = myScopeClasses.iterator();
-    while(iter.hasNext()){
-      Scope scope = (Scope) iter.next();
-      if(scope.myClass.isAssignableFrom(scopeClass) && scope.myFinalFlag){
+    for (final Object myScopeClass : myScopeClasses) {
+      Scope scope = (Scope)myScopeClass;
+      if (scope.myClass.isAssignableFrom(scopeClass) && scope.myFinalFlag) {
         return true;
       }
     }
@@ -87,20 +81,18 @@ implements JDOMExternalizable{
   public boolean isScopeClassAcceptable(Class scopeClass){
     boolean ret = false;
 
-    Iterator iter = myScopeClasses.iterator();
-    while(iter.hasNext()){
-      final Class aClass = ((Scope) iter.next()).myClass;
-      if(aClass.isAssignableFrom(scopeClass)){
+    for (final Object myScopeClass : myScopeClasses) {
+      final Class aClass = ((Scope)myScopeClass).myClass;
+      if (aClass.isAssignableFrom(scopeClass)) {
         ret = true;
         break;
       }
     }
 
     if(ret){
-      iter = myScopeClassExceptions.iterator();
-      while(iter.hasNext()){
-        final Class aClass = (Class) iter.next();
-        if(aClass.isAssignableFrom(scopeClass)){
+      for (final Object myScopeClassException : myScopeClassExceptions) {
+        final Class aClass = (Class)myScopeClassException;
+        if (aClass.isAssignableFrom(scopeClass)) {
           ret = false;
           break;
         }
@@ -182,14 +174,13 @@ implements JDOMExternalizable{
     return false;
   }
 
-  public void addReferenceCompletions(PsiReference reference, PsiElement position, LinkedHashSet set, String prefix){
-
+  public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, String prefix){
     for (final Object ce : myCompletionsList) {
       addReferenceCompletions(reference, position, set, prefix, (CompletionVariantItem)ce);
     }
   }
 
-  private LookupItem addLookupItem(LinkedHashSet set, CompletionVariantItem element, Object completion, String prefix){
+  private LookupItem addLookupItem(Set<LookupItem> set, CompletionVariantItem element, Object completion, String prefix){
     LookupItem ret = LookupItemUtil.objectToLookupItem(completion);
     if(ret == null) return null;
 
@@ -201,26 +192,27 @@ implements JDOMExternalizable{
       ret.setTailType(element.myTailType);
     }
 
-    final Iterator iter = myItemProperties.keySet().iterator();
-    while(iter.hasNext()){
-      final Object key = iter.next();
-      if(key == LookupItem.FORCE_SHOW_FQN_ATTR && ret.getObject() instanceof PsiClass){
-        String packageName = ((PsiClass)(ret.getObject())).getQualifiedName();
-        if(packageName != null && packageName.lastIndexOf('.') > 0)
+    for (final Object key : myItemProperties.keySet()) {
+      if (key == LookupItem.FORCE_SHOW_FQN_ATTR && ret.getObject() instanceof PsiClass) {
+        String packageName = ((PsiClass)ret.getObject()).getQualifiedName();
+        if (packageName != null && packageName.lastIndexOf('.') > 0) {
           packageName = packageName.substring(0, packageName.lastIndexOf('.'));
-        else packageName = "";
-        if (packageName.length() == 0){
+        }
+        else {
+          packageName = "";
+        }
+        if (packageName.length() == 0) {
           packageName = "default package";
         }
 
         ret.setAttribute(LookupItem.TAIL_TEXT_ATTR, " (" + packageName + ")");
         ret.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
       }
-      else{
-        if(completion instanceof PsiMember && key == LookupItem.FORCE_QUALIFY){
+      else {
+        if (completion instanceof PsiMember && key == LookupItem.FORCE_QUALIFY) {
           final PsiMember completionElement = (PsiMember)completion;
           final PsiClass containingClass = completionElement.getContainingClass();
-          if(containingClass != null){
+          if (containingClass != null) {
             final String className = containingClass.getName();
             ret.setLookupString(className + "." + ret.getLookupString());
             ret.setAttribute(key, myItemProperties.get(key));
@@ -239,26 +231,25 @@ implements JDOMExternalizable{
     return null;
   }
 
-  public void addKeywords(PsiElementFactory factory, LinkedHashSet set, CompletionContext context, PsiElement position){
-    final Iterator iter = myCompletionsList.iterator();
-    while(iter.hasNext()){
-      final CompletionVariantItem ce = (CompletionVariantItem)iter.next();
+  public void addKeywords(PsiElementFactory factory, Set<LookupItem> set, CompletionContext context, PsiElement position){
+    for (final Object aMyCompletionsList : myCompletionsList) {
+      final CompletionVariantItem ce = (CompletionVariantItem)aMyCompletionsList;
       final Object comp = ce.myCompletion;
-      if(comp instanceof OffsetDependant){
+      if (comp instanceof OffsetDependant) {
         ((OffsetDependant)comp).setOffset(context.startOffset);
       }
 
-      if(comp instanceof String){
+      if (comp instanceof String) {
         addKeyword(factory, set, ce, comp, context);
       }
-      else if (comp instanceof ContextGetter){
+      else if (comp instanceof ContextGetter) {
         final Object[] elements = ((ContextGetter)comp).get(position, context);
         for (Object element : elements) {
           addLookupItem(set, ce, element, context.prefix);
         }
       }
       // TODO: KeywordChooser -> ContextGetter
-      else if(comp instanceof KeywordChooser){
+      else if (comp instanceof KeywordChooser) {
         final String[] keywords = ((KeywordChooser)comp).getKeywords(context, position);
         for (String keyword : keywords) {
           addKeyword(factory, set, ce, keyword, context);
@@ -267,11 +258,10 @@ implements JDOMExternalizable{
     }
   }
 
-  private void addKeyword(PsiElementFactory factory, LinkedHashSet set, final CompletionVariantItem ce, final Object comp, CompletionContext context){
-    final Iterator iter = set.iterator();
-    while(iter.hasNext()){
-      final LookupItem item = (LookupItem)iter.next();
-      if((item).getObject().toString().equals(comp.toString())){
+  private void addKeyword(PsiElementFactory factory, Set<LookupItem> set, final CompletionVariantItem ce, final Object comp, CompletionContext context){
+    for (final Object aSet : set) {
+      final LookupItem item = (LookupItem)aSet;
+      if (item.getObject().toString().equals(comp.toString())) {
         return;
       }
     }
@@ -290,9 +280,8 @@ implements JDOMExternalizable{
   }
 
   public boolean hasReferenceFilter(){
-    final Iterator iter = myCompletionsList.iterator();
-    while(iter.hasNext()){
-      if(((CompletionVariantItem)iter.next()).myCompletion instanceof ElementFilter){
+    for (final Object aMyCompletionsList : myCompletionsList) {
+      if (((CompletionVariantItem)aMyCompletionsList).myCompletion instanceof ElementFilter) {
         return true;
       }
     }
@@ -300,55 +289,16 @@ implements JDOMExternalizable{
   }
 
   public boolean hasKeywordCompletions(){
-    final Iterator iter = myCompletionsList.iterator();
-    while(iter.hasNext()){
-      final Object completion = ((CompletionVariantItem)iter.next()).myCompletion;
-      if(!(completion instanceof ElementFilter)){
+    for (final Object aMyCompletionsList : myCompletionsList) {
+      final Object completion = ((CompletionVariantItem)aMyCompletionsList).myCompletion;
+      if (!(completion instanceof ElementFilter)) {
         return true;
       }
     }
     return false;
   }
 
-  public void readExternal(Element variantElement) throws InvalidDataException{
-    final Element filterElement = variantElement.getChild("position", CompletionData.COMPLETION_NS);
-    final String scopeString = variantElement.getAttribute("scope").getValue().trim();
-    final String excludeString = variantElement.getAttribute("exclude").getValue().trim();
-
-    for(StringTokenizer tokenizer = new StringTokenizer(scopeString, "|");
-        tokenizer.hasMoreTokens();){
-      final String s = tokenizer.nextToken();
-      myScopeClasses.add(FilterUtil.getClassByName(s));
-    }
-
-    for(StringTokenizer tokenizer = new StringTokenizer(excludeString, "|");
-        tokenizer.hasMoreTokens();){
-      final String s = tokenizer.nextToken();
-      myScopeClassExceptions.add(FilterUtil.getClassByName(s));
-    }
-
-    final Element completionsElement = variantElement.getChild("completions", CompletionData.COMPLETION_NS);
-
-    myPosition = FilterUtil.readFilterGroup(filterElement).get(0);
-
-    for (final Object o : completionsElement.getChildren("keyword-set", CompletionData.COMPLETION_NS)) {
-      final Element keywordElement = (Element)o;
-      final StringTokenizer tok = new StringTokenizer(keywordElement.getTextTrim());
-      while (tok.hasMoreTokens()) {
-        myCompletionsList.add(tok.nextToken().trim());
-      }
-    }
-    final Iterator filtersIterator = completionsElement.getChildren("filter", CompletionData.COMPLETION_NS).iterator();
-    while(filtersIterator.hasNext()){
-      myCompletionsList.addAll(FilterUtil.readFilterGroup((Element)filtersIterator.next()));
-    }
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException{
-    throw new WriteExternalException("Can't write completion data!!!");
-  }
-
-  protected void addReferenceCompletions(PsiReference reference, PsiElement position, LinkedHashSet set,
+  protected void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set,
                                          String prefix, CompletionVariantItem item){
     if(item.myCompletion instanceof ElementFilter){
       final CompletionProcessor processor = new CompletionProcessor(prefix, position, (ElementFilter)item.myCompletion);
@@ -366,7 +316,7 @@ implements JDOMExternalizable{
             processor.execute((PsiElement)completion, PsiSubstitutor.EMPTY);
           }
           else if (completion instanceof CandidateInfo) {
-            final CandidateInfo info = ((CandidateInfo)completion);
+            final CandidateInfo info = (CandidateInfo)completion;
             if (info.isValidResult()) {
               processor.execute(info.getElement(), PsiSubstitutor.EMPTY);
             }

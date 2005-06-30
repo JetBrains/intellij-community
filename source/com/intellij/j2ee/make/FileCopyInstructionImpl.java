@@ -39,8 +39,7 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
       MakeUtil.getInstance().copyFile(getFile(), to, context, writtenPaths, fileFilter);
     }
     else {
-      for (int i = 0; i < myChangedSet.size(); i++) {
-        FileCopyInstructionImpl singleFileCopyInstruction = myChangedSet.get(i);
+      for (FileCopyInstructionImpl singleFileCopyInstruction : myChangedSet) {
         singleFileCopyInstruction.addFilesToExploded(context, outputDir, writtenPaths, fileFilter);
       }
     }
@@ -96,9 +95,8 @@ public class FileCopyInstructionImpl extends BuildInstructionBase implements Fil
     }
     else {
       String s = "Copy (Incr "+myFile+")";
-      for (int i = 0; i < myChangedSet.size(); i++) {
-        FileCopyInstructionImpl fileCopyInstruction = myChangedSet.get(i);
-        s += fileCopyInstruction +", ";
+      for (FileCopyInstructionImpl fileCopyInstruction : myChangedSet) {
+        s += fileCopyInstruction + ", ";
       }
       return s;
     }

@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author ven
@@ -85,7 +86,7 @@ public class CreatePropertyFromUsageAction extends CreateFromUsageBaseAction {
 
     public FieldExpression(PsiField field, PsiClass aClass, PsiType[] expectedTypes) {
       String fieldName = field.getName();
-      LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
+      Set<LookupItem> set = new LinkedHashSet<LookupItem>();
       LookupItemUtil.addLookupItem(set, field, "");
       PsiField[] fields = aClass.getFields();
       for (PsiField otherField : fields) {

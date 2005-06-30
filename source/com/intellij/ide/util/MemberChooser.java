@@ -52,9 +52,9 @@ public class MemberChooser extends DialogWrapper {
   private final boolean myIsInsertOverrideVisible;
 
   protected Object[] myElements;
-  private HashMap myNodeToParentMap = new HashMap();
+  private HashMap<DefaultMutableTreeNode,DefaultMutableTreeNode> myNodeToParentMap = new HashMap<DefaultMutableTreeNode, DefaultMutableTreeNode>();
   private HashMap myElementToNodeMap = new HashMap();
-  private ArrayList myClassNodes = new ArrayList();
+  private ArrayList<ElementNode> myClassNodes = new ArrayList<ElementNode>();
   private WeakReference[] mySelectedElements;
 
   private final static String PROP_SORTED = "MemberChooser.sorted";
@@ -89,9 +89,9 @@ public class MemberChooser extends DialogWrapper {
   protected void resetData() {
     mySelectedNodes = new ArrayList();
 
-    myNodeToParentMap = new HashMap();
+    myNodeToParentMap = new HashMap<DefaultMutableTreeNode, DefaultMutableTreeNode>();
     myElementToNodeMap = new HashMap();
-    myClassNodes = new ArrayList();
+    myClassNodes = new ArrayList<ElementNode>();
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -192,7 +192,7 @@ public class MemberChooser extends DialogWrapper {
   }
 
   public void selectElements(Object[] elements) {
-    ArrayList selectionPaths = new ArrayList();
+    ArrayList<TreePath> selectionPaths = new ArrayList<TreePath>();
     for (int i = 0; i < elements.length; i++) {
       Object element = elements[i];
       DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)myElementToNodeMap.get(element);
@@ -434,7 +434,7 @@ public class MemberChooser extends DialogWrapper {
 
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTreeModel.getRoot();
     if (!myShowClasses || myClassNodes.size() == 0) {
-      List otherObjects = new ArrayList();
+      List<DefaultMutableTreeNode> otherObjects = new ArrayList<DefaultMutableTreeNode>();
       Enumeration children = root.children();
       ElementNode newRoot = new AllClassesNode();
       while (children.hasMoreElements()) {
@@ -455,8 +455,8 @@ public class MemberChooser extends DialogWrapper {
         }
       }
       root.removeAllChildren();
-      for (Iterator iterator = otherObjects.iterator(); iterator.hasNext();) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)iterator.next();
+      for (Iterator<DefaultMutableTreeNode> iterator = otherObjects.iterator(); iterator.hasNext();) {
+        DefaultMutableTreeNode node = iterator.next();
         root.add(node);
       }
       sortNode(newRoot, mySorted);
@@ -473,7 +473,7 @@ public class MemberChooser extends DialogWrapper {
         }
         for (int i = 0; i < arrayList.size(); i++) {
           DefaultMutableTreeNode memberNode = (DefaultMutableTreeNode)arrayList.get(i);
-          DefaultMutableTreeNode classNode = (DefaultMutableTreeNode)myNodeToParentMap.get(memberNode);
+          DefaultMutableTreeNode classNode = myNodeToParentMap.get(memberNode);
           classNode.add(memberNode);
         }
       }
@@ -508,7 +508,7 @@ public class MemberChooser extends DialogWrapper {
 
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTreeModel.getRoot();
 
-    ArrayList toSelect = new ArrayList();
+    ArrayList<TreePath> toSelect = new ArrayList<TreePath>();
     for (int i = 0; i < selectedNodes.size(); i++) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectedNodes.get(i);
       if (root.isNodeDescendant(node)) {

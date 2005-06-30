@@ -4,10 +4,12 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  *  @author dsl
  */
 public interface PsiReferenceParameterList extends PsiElement {
   PsiTypeElement[] getTypeParameterElements();
-  PsiType[] getTypeArguments();
+  @NotNull PsiType[] getTypeArguments();
 }

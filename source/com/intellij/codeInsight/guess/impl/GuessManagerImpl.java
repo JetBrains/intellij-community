@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 
 public class GuessManagerImpl extends GuessManager implements ProjectComponent {
@@ -118,9 +117,7 @@ public class GuessManagerImpl extends GuessManager implements ProjectComponent {
     helper.processInheritors(processor, refClass, GlobalSearchScope.allScope(myProject), true);
     if (processor.isOverflow()) return;
 
-    Iterator<PsiClass> iterator = processor.getCollection().iterator();
-    while(iterator.hasNext()){
-      PsiClass derivedClass = iterator.next();
+    for (PsiClass derivedClass : processor.getCollection()) {
       if (derivedClass instanceof PsiAnonymousClass) continue;
       PsiType derivedType = manager.getElementFactory().createType(derivedClass);
       set.add(derivedType);

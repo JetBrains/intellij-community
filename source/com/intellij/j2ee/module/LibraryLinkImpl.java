@@ -107,15 +107,14 @@ public class LibraryLinkImpl extends LibraryLink implements ResolvableElement{
     public void readExternal(Element element) throws InvalidDataException {
       myUrls.clear();
       final List urls = element.getChildren(URL_ELEMENT_NAME);
-      for (int i = 0; i < urls.size(); i++) {
-        Element url = (Element)urls.get(i);
+      for (Object url1 : urls) {
+        Element url = (Element)url1;
         myUrls.add(url.getText());
       }
     }
 
     public void writeExternal(Element element) throws WriteExternalException {
-      for (int i = 0; i < myUrls.size(); i++) {
-        final String url = myUrls.get(i);
+      for (final String url : myUrls) {
         final Element urlElement = new Element(URL_ELEMENT_NAME);
         urlElement.setText(url);
         element.addContent(urlElement);
@@ -161,8 +160,7 @@ public class LibraryLinkImpl extends LibraryLink implements ResolvableElement{
       String name = getName();
       if (name == null) {
         List<String> urls = getUrls();
-        for (int i = 0; i < urls.size(); i++) {
-          final String url = urls.get(i);
+        for (final String url : urls) {
           final Element urlElement = new Element(URL_ELEMENT_NAME);
           urlElement.setText(url);
           element.addContent(urlElement);
@@ -264,11 +262,10 @@ public class LibraryLinkImpl extends LibraryLink implements ResolvableElement{
   public boolean hasDirectoriesOnly() {
     List<String> urls = getUrls();
     boolean hasDirsOnly = true;
-    for (int i = 0; i < urls.size(); i++) {
-      final String url = urls.get(i);
+    for (final String url : urls) {
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       VirtualFile localFile = file == null ? null :
-                                      LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(PathUtil.getLocalPath(file)));
+                              LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(PathUtil.getLocalPath(file)));
       if (localFile != null && !localFile.isDirectory()) {
         hasDirsOnly = false;
         break;

@@ -14,6 +14,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 class JavaWithCastSurrounder extends JavaExpressionSurrounder {
   public boolean isApplicable(PsiExpression expr) {
@@ -36,7 +37,7 @@ class JavaWithCastSurrounder extends JavaExpressionSurrounder {
     final Template template = templateManager.createTemplate("", "");
     template.setToReformat(true);
 
-    LinkedHashSet itemSet = new LinkedHashSet();
+    Set<LookupItem> itemSet = new LinkedHashSet<LookupItem>();
     for (PsiType type : suggestedTypes) {
       LookupItemUtil.addLookupItem(itemSet, type, "");
     }

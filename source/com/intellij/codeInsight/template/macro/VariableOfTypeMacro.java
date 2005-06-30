@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Arrays;
+import java.util.Set;
 
 public class VariableOfTypeMacro implements Macro {
 
@@ -38,7 +39,7 @@ public class VariableOfTypeMacro implements Macro {
   public LookupItem[] calculateLookupItems(Expression[] params, final ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length < 2) return null;
-    final LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
+    final Set<LookupItem> set = new LinkedHashSet<LookupItem>();
     for (PsiElement var : vars) {
       LookupItemUtil.addLookupItem(set, var, "");
     }

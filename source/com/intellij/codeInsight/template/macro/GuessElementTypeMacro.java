@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class GuessElementTypeMacro implements Macro {
   public String getName() {
@@ -37,7 +38,7 @@ public class GuessElementTypeMacro implements Macro {
   public LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context) {
     PsiType[] types = guessTypes(params, context);
     if (types == null || types.length < 2) return null;
-    LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
+    Set<LookupItem> set = new LinkedHashSet<LookupItem>();
     for (PsiType type : types) {
       LookupItemUtil.addLookupItem(set, type, "");
     }

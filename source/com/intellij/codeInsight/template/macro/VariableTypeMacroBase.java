@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.psi.PsiVariable;
 
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author ven
@@ -16,11 +17,11 @@ public abstract class VariableTypeMacroBase implements Macro {
   public LookupItem[] calculateLookupItems(Expression[] params, final ExpressionContext context) {
     final PsiVariable[] vars = getVariables(params, context);
     if (vars == null || vars.length < 2) return null;
-    LinkedHashSet set = new LinkedHashSet();
+    Set<LookupItem> set = new LinkedHashSet<LookupItem>();
     for (PsiVariable var : vars) {
       LookupItemUtil.addLookupItem(set, var, "");
     }
-    return (LookupItem[]) set.toArray(new LookupItem[set.size()]);
+    return set.toArray(new LookupItem[set.size()]);
   }
 
   public Result calculateResult(Expression[] params, ExpressionContext context) {

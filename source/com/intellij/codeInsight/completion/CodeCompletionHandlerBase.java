@@ -31,7 +31,7 @@ import java.util.Set;
  */
 abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
-  private static final Key<Class> COMPLETION_HANDLER_CLASS_KEY = Key.create("COMPLETION_HANDLER_CLASS_KEY");
+  private static final Key<Class<? extends CodeCompletionHandlerBase>> COMPLETION_HANDLER_CLASS_KEY = Key.create("COMPLETION_HANDLER_CLASS_KEY");
 
   private LookupItemPreferencePolicy myPreferencePolicy = null;
 
@@ -46,7 +46,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
     if (activeLookup != null){
-      Class handlerClass = activeLookup.getUserData(COMPLETION_HANDLER_CLASS_KEY);
+      Class<? extends CodeCompletionHandlerBase> handlerClass = activeLookup.getUserData(COMPLETION_HANDLER_CLASS_KEY);
       if (handlerClass == null){
         handlerClass = CodeCompletionHandler.class;
       }
@@ -244,7 +244,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   protected abstract CompletionData getCompletionData(CompletionContext context, PsiElement element);
 
   final private void complete(CompletionContext context, PsiElement lastElement,
-                             CompletionData completionData, LinkedHashSet lookupSet){
+                             CompletionData completionData, Set<LookupItem> lookupSet){
     if(lastElement == null)
       return;
     final PsiReference ref = lastElement.getContainingFile().findReferenceAt(context.offset);
@@ -286,17 +286,15 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           myPreferencePolicy = completionData.completeMethodName(lookupSet, context, psiMethod);
         }
       }
-      return;
     }
-    return;
   }
 
   protected LookupData getLookupData(CompletionContext context) {
-    final LinkedHashSet<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
+    final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
     final PsiFile file = context.file;
     final PsiManager manager = file.getManager();
     final PsiElement lastElement = file.findElementAt(context.startOffset - 1);
-    final Set keywordVariants = new HashSet();
+    final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
 
     final PsiElement insertedElement = insertDummyIdentifier(context);
     CompletionData completionData = getCompletionData(context, lastElement);

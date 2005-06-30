@@ -9,10 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 public class DescendantClassesEnumMacro implements Macro{
   public String getName() {
@@ -85,11 +82,11 @@ public class DescendantClassesEnumMacro implements Macro{
     final List<PsiClass> classes = findDescendants(context, params);
     if (classes == null || classes.size() == 0) return null;
 
-    LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
+    Set<LookupItem> set = new LinkedHashSet<LookupItem>();
     boolean isFQN = params.length > 1 && params[1].calculateResult(context).toString().equals("true");
 
     for (PsiClass object : classes) {
-      LookupItemUtil.addLookupItem(set, (isFQN) ? object.getQualifiedName() : object.getName(), "");
+      LookupItemUtil.addLookupItem(set, isFQN ? object.getQualifiedName() : object.getName(), "");
     }
 
     return set.toArray(new LookupItem[set.size()]);

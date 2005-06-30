@@ -11,13 +11,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class TypeExpression implements Expression {
   private final LookupItem[] myItems;
   protected SmartTypePointer myDefaultType;
 
   public TypeExpression(final Project project, PsiType[] types) {
-    final LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
+    final Set<LookupItem> set = new LinkedHashSet<LookupItem>();
     for (PsiType type : types) {
       LookupItemUtil.addLookupItem(set, type, "");
     }

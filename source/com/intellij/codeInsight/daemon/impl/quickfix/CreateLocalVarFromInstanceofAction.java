@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author cdr
@@ -135,7 +136,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     try {
       final PsiDeclarationStatement decl = createLocalVariableDeclaration(instanceOfExpression);
       if (decl == null) return;
-      
+
       PsiLocalVariable localVariable = (PsiLocalVariable)decl.getDeclaredElements()[0];
       TemplateBuilder builder = new TemplateBuilder(localVariable);
       builder.setEndVariableAfter(localVariable.getNameIdentifier());
@@ -275,7 +276,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       uniqueNames.add(name);
     }
 
-    LinkedHashSet<LookupItem> itemSet = new LinkedHashSet<LookupItem>();
+    Set<LookupItem> itemSet = new LinkedHashSet<LookupItem>();
     for (String name : uniqueNames) {
       LookupItemUtil.addLookupItem(itemSet, name, "");
     }

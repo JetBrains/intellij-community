@@ -43,6 +43,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.Set;
 import java.io.File;
 
 public class RenameDialog extends RefactoringDialog {
@@ -130,7 +131,7 @@ public class RenameDialog extends RefactoringDialog {
     String prefix = myNameSuggestionsField.getName();
     PsiVariable var = (PsiVariable)myPsiElement;
     VariableKind kind = CodeStyleManager.getInstance(myProject).getVariableKind(var);
-    LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
+    Set<LookupItem> set = new LinkedHashSet<LookupItem>();
     CompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, var.getType(), kind);
 
     if (prefix.length() == 0) {

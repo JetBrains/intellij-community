@@ -70,8 +70,7 @@ public class SplitterProportionsData implements JDOMExternalizable{
   public void writeExternal(Element element) throws WriteExternalException {
     StringBuffer result = new StringBuffer();
     String sep = "";
-    for (int i = 0; i < proportions.size(); i++) {
-      Float proportion = proportions.get(i);
+    for (Float proportion : proportions) {
       result.append(sep);
       result.append(proportion);
       sep = ",";

@@ -25,10 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.LinkedHashSet;
+import java.util.*;
 
 public class RenameWrongRefAction implements IntentionAction {
   PsiReferenceExpression myRefExpr;
@@ -103,7 +100,7 @@ public class RenameWrongRefAction implements IntentionAction {
   }
 
   private LookupItem[] collectItems() {
-    LinkedHashSet<LookupItem> items = new LinkedHashSet<LookupItem>();
+    Set<LookupItem> items = new LinkedHashSet<LookupItem>();
     boolean qualified = myRefExpr.getQualifierExpression() != null;
 
     if (!qualified && !(myRefExpr.getParent() instanceof PsiMethodCallExpression)) {
@@ -188,14 +185,14 @@ public class RenameWrongRefAction implements IntentionAction {
       editor.getCaretModel().moveToOffset(element.getTextRange().getStartOffset());
 
       TemplateManager.getInstance(project).startTemplate(editor, template,
-              new TemplateStateListener() {
-                public void templateFinished(Template template) {
-                  TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-                  int offset = templateState.getVariableRange(INPUT_VARIABLE_NAME).getEndOffset();
-                  editor.getCaretModel().moveToOffset(offset);
-                  EditorUtil.setVerticalScrollProportion(editor, proportion);
-                }
-              });
+                                                         new TemplateStateListener() {
+                                                           public void templateFinished(Template template) {
+                                                             TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+                                                             int offset = templateState.getVariableRange(INPUT_VARIABLE_NAME).getEndOffset();
+                                                             editor.getCaretModel().moveToOffset(offset);
+                                                             EditorUtil.setVerticalScrollProportion(editor, proportion);
+                                                           }
+                                                         });
 
       EditorUtil.setVerticalScrollProportion(editor, proportion);
     }

@@ -62,8 +62,7 @@ public class BuildRecipeImpl implements BuildRecipe {
 
   public String toString() {
     String s = "Build recipe:";
-    for (int i = 0; i < myInstructions.size(); i++) {
-      BuildInstruction buildInstruction = myInstructions.get(i);
+    for (BuildInstruction buildInstruction : myInstructions) {
       s += "\n" + buildInstruction + "; ";
     }
     return s;

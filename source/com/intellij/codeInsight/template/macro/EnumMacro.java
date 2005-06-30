@@ -4,6 +4,7 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class EnumMacro implements Macro{
   public String getName() {
@@ -32,7 +33,7 @@ public class EnumMacro implements Macro{
 
   public LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context) {
     if (params == null || params.length ==0) return null;
-    LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
+    Set<LookupItem> set = new LinkedHashSet<LookupItem>();
 
     for (Expression param : params) {
       Result object = param.calculateResult(context);

@@ -119,9 +119,8 @@ public class CompletionUtil {
     }
   }
 
-  static void highlightMembersOfContainer(LinkedHashSet set) {
-    for (final Object aSet : set) {
-      LookupItem item = (LookupItem)aSet;
+  static void highlightMembersOfContainer(Set<LookupItem> set) {
+    for (final LookupItem item: set) {
       Object o = item.getObject();
       PsiType qualifierType = getQualifierType(item);
       if (qualifierType == null) continue;
@@ -267,7 +266,7 @@ public class CompletionUtil {
   }
 
 
-  public static LookupItemPreferencePolicy completeVariableNameForRefactoring(Project project, LinkedHashSet set, String prefix, PsiType varType,
+  public static LookupItemPreferencePolicy completeVariableNameForRefactoring(Project project, Set<LookupItem> set, String prefix, PsiType varType,
                                                                               VariableKind varKind) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
     CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx) CodeStyleManager.getInstance(project);

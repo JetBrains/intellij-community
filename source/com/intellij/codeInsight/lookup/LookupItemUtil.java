@@ -13,7 +13,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.Iterator;
-import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,12 +25,12 @@ import java.util.LinkedHashSet;
 public class LookupItemUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.LookupItemUtil");
 
-  public static LookupItem addLookupItem(LinkedHashSet set, Object object, String prefix) {
+  public static LookupItem addLookupItem(Set<LookupItem> set, Object object, String prefix) {
     LOG.assertTrue(object != null, "Lookup item can't be null!");
     return addLookupItem(set, object, prefix, -1);
   }
 
-  public static LookupItem addLookupItem(LinkedHashSet set, Object object, String prefix, InsertHandler handler) {
+  public static LookupItem addLookupItem(Set<LookupItem> set, Object object, String prefix, InsertHandler handler) {
     LOG.assertTrue(object != null, "Lookup item can't be null!");
     LookupItem item = addLookupItem(set, object, prefix, -1);
     if (item != null) {
@@ -39,13 +39,12 @@ public class LookupItemUtil{
     return item;
   }
 
-  public static LookupItem addLookupItem(LinkedHashSet set, Object object, String prefix, int tailType) {
+  public static LookupItem addLookupItem(Set<LookupItem> set, Object object, String prefix, int tailType) {
     LOG.assertTrue(object != null, "Lookup item can't be null!");
     //TODO[ik]: remove the check: it is always false?
     if (object instanceof PsiType) {
       PsiType psiType = (PsiType)object;
-      for (final Object aSet : set) {
-        LookupItem lookupItem = (LookupItem)aSet;
+      for (final LookupItem lookupItem : set) {
         Object o = lookupItem.getObject();
         if (o.equals(psiType)) {
           return lookupItem;
@@ -73,14 +72,14 @@ public class LookupItemUtil{
     }
   }
 
-  public static void addLookupItems(LinkedHashSet set, Object[] objects, String prefix) {
+  public static void addLookupItems(Set<LookupItem> set, Object[] objects, String prefix) {
     for (Object object : objects) {
       LOG.assertTrue(object != null, "Lookup item can't be null!");
       addLookupItem(set, object, prefix);
     }
   }
 
-  public static void removeLookupItem(LinkedHashSet set, Object object) {
+  public static void removeLookupItem(Set<LookupItem> set, Object object) {
     Iterator iter = set.iterator();
     while (iter.hasNext()) {
       LookupItem item = (LookupItem)iter.next();
@@ -91,10 +90,9 @@ public class LookupItemUtil{
     }
   }
 
-  public static boolean containsItem(LinkedHashSet set, Object object) {
-    final Iterator iter = set.iterator();
-    while (iter.hasNext()) {
-      final LookupItem item = (LookupItem)iter.next();
+  public static boolean containsItem(Set<LookupItem> set, Object object) {
+    for (final Object aSet : set) {
+      final LookupItem item = (LookupItem)aSet;
       if (object != null && object.equals(item.getObject())) {
         return true;
       }
@@ -219,7 +217,7 @@ public class LookupItemUtil{
     }
 
     if (s == null) {
-      LOG.assertTrue(false, "Null string for object: " + object + " of class " + ((object!=null)?object.getClass():null));
+      LOG.assertTrue(false, "Null string for object: " + object + " of class " + (object != null ?object.getClass():null));
     }
     item.setLookupString(s);
     item.setAttribute(CompletionUtil.TAIL_TYPE_ATTR, new Integer(tailType));

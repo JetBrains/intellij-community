@@ -461,7 +461,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         final PsiReference[] overridingReferences = searchHelper.findReferences(overridingMethod, projectScope, false);
         methodToReferences.put(overridingMethod, overridingReferences);
       }
-      final HashSet<PsiMethod> validOverriding =
+      final Set<PsiMethod> validOverriding =
               validateOverridingMethods(psiMethod, references, Arrays.asList(overridingMethods), methodToReferences, usages);
       usageInsideDeleted = new UsageInsideDeleted() {
         public boolean isInsideDeleted(PsiElement usage) {
@@ -521,7 +521,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
     while(!newConstructors.isEmpty());
 
-    final HashSet<PsiMethod> validOverriding =
+    final Set<PsiMethod> validOverriding =
             validateOverridingMethods(constructor, originalReferences, constructorsToRefs.keySet(), constructorsToRefs, usages);
 
     addNonCodeUsages(constructor, usages, new UsageInsideDeleted() {
@@ -532,9 +532,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     });
   }
 
-  private HashSet<PsiMethod> validateOverridingMethods(PsiMethod originalMethod, final PsiReference[] originalReferences,
+  private Set<PsiMethod> validateOverridingMethods(PsiMethod originalMethod, final PsiReference[] originalReferences,
                                          Collection<PsiMethod> overridingMethods, HashMap<PsiMethod,PsiReference[]> methodToReferences, ArrayList<UsageInfo> usages) {
-    LinkedHashSet<PsiMethod> validOverriding = new LinkedHashSet<PsiMethod>(overridingMethods);
+    Set<PsiMethod> validOverriding = new LinkedHashSet<PsiMethod>(overridingMethods);
     boolean anyNewBadRefs;
     do {
       anyNewBadRefs = false;

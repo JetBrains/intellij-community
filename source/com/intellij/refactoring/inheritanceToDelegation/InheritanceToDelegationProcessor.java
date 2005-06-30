@@ -43,10 +43,10 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   private final PsiClass myClass;
   private final String myInnerClassName;
   private boolean myIsDelegateOtherMembers;
-  private final LinkedHashSet<PsiClass> myDelegatedInterfaces;
-  private final LinkedHashSet<PsiMethod> myDelegatedMethods;
+  private final Set<PsiClass> myDelegatedInterfaces;
+  private final Set<PsiMethod> myDelegatedMethods;
   private final HashMap<PsiMethod,String> myDelegatedMethodsVisibility;
-  private final LinkedHashSet<PsiMethod> myOverridenMethods;
+  private final Set<PsiMethod> myOverridenMethods;
 
   private final PsiClass myBaseClass;
   private final Set<PsiMember> myBaseClassMembers;
@@ -825,7 +825,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     return visibility;
   }
 
-  private LinkedHashSet<PsiMethod> getOverriddenMethods() {
+  private Set<PsiMethod> getOverriddenMethods() {
     LinkedHashSet<PsiMethod> result = new LinkedHashSet<PsiMethod>();
 
     PsiMethod[] methods = myClass.getMethods();

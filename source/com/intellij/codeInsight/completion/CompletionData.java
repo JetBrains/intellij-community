@@ -1,32 +1,25 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerEx;
 import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import org.jdom.Document;
-import org.jdom.Element;
 import org.jdom.Namespace;
 
-import java.io.File;
 import java.util.*;
 
 /**
@@ -36,23 +29,10 @@ import java.util.*;
  * Time: 16:58:32
  * To change this template use Options | File Templates.
  */
-public class CompletionData
- implements JDOMExternalizable{
+public class CompletionData {
   public static final Namespace COMPLETION_NS = Namespace.getNamespace("http://www.intellij.net/data/completion");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionData");
   private final Set<Class> myFinalScopes = new HashSet<Class>();
   private final List<CompletionVariant> myCompletionVariants = new ArrayList<CompletionVariant>();
-
-
-  protected CompletionData(final String fileName){
-    try{
-      final Document document = JDOMUtil.loadDocument(CompletionData.class.getResourceAsStream(File.separator + fileName));
-      readExternal(document.getRootElement());
-    }
-    catch(Exception ioe){
-      LOG.error(ioe);
-    }
-  }
 
   protected CompletionData(){ }
 
@@ -64,9 +44,8 @@ public class CompletionData
     if(myFinalScopes.contains(scopeClass))
       return true;
 
-    final Iterator<Class> iter = myFinalScopes.iterator();
-    while(iter.hasNext()){
-      if(iter.next().isAssignableFrom(scopeClass)){
+    for (final Class myFinalScope : myFinalScopes) {
+      if (myFinalScope.isAssignableFrom(scopeClass)) {
         return true;
       }
     }
@@ -74,11 +53,9 @@ public class CompletionData
   }
 
   private boolean isScopeAcceptable(PsiElement scope){
-    final Iterator<CompletionVariant> iter = myCompletionVariants.iterator();
 
-    while(iter.hasNext()){
-      final CompletionVariant variant = iter.next();
-      if(variant.isScopeAcceptable(scope)){
+    for (final CompletionVariant variant : myCompletionVariants) {
+      if (variant.isScopeAcceptable(scope)) {
         return true;
       }
     }
@@ -97,14 +74,13 @@ public class CompletionData
         variant.includeScopeClass(equivClass, variant.isScopeClassFinal(scopeClass));
       }
     }
-    return;
   }
 
   protected void registerVariant(CompletionVariant variant){
     myCompletionVariants.add(variant);
   }
 
-  public void completeReference(PsiReference reference, LinkedHashSet set, CompletionContext context, PsiElement position){
+  public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, PsiElement position){
     final CompletionVariant[] variants = findVariants(position, context);
     boolean haveApplicableVariants = false;
 
@@ -129,13 +105,13 @@ public class CompletionData
     }
   }
 
-  public static void completeKeywordsBySet(LinkedHashSet set, Set<CompletionVariant> variants, CompletionContext context, PsiElement position){
-    final Iterator<CompletionVariant> iter = variants.iterator();
-    while(iter.hasNext())
-      iter.next().addKeywords(context.file.getManager().getElementFactory(), set, context, position);
+  public static void completeKeywordsBySet(Set<LookupItem> set, Set<CompletionVariant> variants, CompletionContext context, PsiElement position){
+    for (final CompletionVariant variant : variants) {
+      variant.addKeywords(context.file.getManager().getElementFactory(), set, context, position);
+    }
   }
 
-  public LookupItemPreferencePolicy completeLocalVariableName(LinkedHashSet set, CompletionContext context, PsiVariable var){
+  public LookupItemPreferencePolicy completeLocalVariableName(Set<LookupItem> set, CompletionContext context, PsiVariable var){
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
     final VariableKind variableKind = CodeStyleManager.getInstance(var.getProject()).getVariableKind(var);
     final CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx) CodeStyleManager.getInstance(context.project);
@@ -159,7 +135,7 @@ public class CompletionData
     return new NamePreferencePolicy(suggestedNameInfo);
   }
 
-  public LookupItemPreferencePolicy completeFieldName(LinkedHashSet set, CompletionContext context, PsiVariable var){
+  public LookupItemPreferencePolicy completeFieldName(Set<LookupItem> set, CompletionContext context, PsiVariable var){
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.variable.name");
     CodeStyleManagerEx codeStyleManager = (CodeStyleManagerEx) CodeStyleManager.getInstance(context.project);
     final String prefix = context.prefix;
@@ -191,7 +167,7 @@ public class CompletionData
     return new NamePreferencePolicy(suggestedNameInfo);
   }
 
-  public LookupItemPreferencePolicy completeMethodName(LinkedHashSet set, CompletionContext context, PsiElement element){
+  public LookupItemPreferencePolicy completeMethodName(Set<LookupItem> set, CompletionContext context, PsiElement element){
     if(element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
       if (method.isConstructor()) {
@@ -213,7 +189,7 @@ public class CompletionData
     return null;
   }
 
-  public LookupItemPreferencePolicy completeClassName(LinkedHashSet set, CompletionContext context, PsiClass aClass){
+  public LookupItemPreferencePolicy completeClassName(Set<LookupItem> set, CompletionContext context, PsiClass aClass){
     return null;
   }
 
@@ -248,24 +224,8 @@ public class CompletionData
     return variants.toArray(new CompletionVariant[variants.size()]);
   }
 
-  public void readExternal(Element element)
-    throws InvalidDataException{
-    final Iterator iter  = element.getChildren("variant", COMPLETION_NS).iterator();
-    while(iter.hasNext()){
-      final Element variantElement = (Element) iter.next();
-      final CompletionVariant variant = new CompletionVariant();
-      variant.readExternal(variantElement);
-      registerVariant(variant);
-    }
-  }
-
-  public void writeExternal(Element element)
-    throws WriteExternalException{
-    throw new WriteExternalException("Completion data could _not_ be written");
-  }
-
   protected static final CompletionVariant myGenericVariant = new CompletionVariant(){
-    public void addReferenceCompletions(PsiReference reference, PsiElement position, LinkedHashSet set, String prefix){
+    public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, String prefix){
       addReferenceCompletions(reference, position, set, prefix, new CompletionVariantItem(TrueFilter.INSTANCE, TailType.NONE));
     }
   };
@@ -312,7 +272,7 @@ public class CompletionData
     }
 
     if (insertedElement instanceof PsiDocToken) {
-      final PsiDocToken token = ((PsiDocToken)insertedElement);
+      final PsiDocToken token = (PsiDocToken)insertedElement;
       if (token.getTokenType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
         return text.substring(0, offsetInElement).trim();
       }

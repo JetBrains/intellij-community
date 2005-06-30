@@ -12,6 +12,7 @@ import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class ExpectedTypeMacro implements Macro{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.macro.ExpectedTypeMacro");
@@ -41,7 +42,7 @@ public class ExpectedTypeMacro implements Macro{
   public LookupItem[] calculateLookupItems(Expression[] params, ExpressionContext context) {
     PsiType[] types = getExpectedTypes(params, context);
     if (types == null || types.length < 2) return null;
-    LinkedHashSet<LookupItem> set = new LinkedHashSet<LookupItem>();
+    Set<LookupItem> set = new LinkedHashSet<LookupItem>();
     for (PsiType type : types) {
       LookupItemUtil.addLookupItem(set, type, "");
     }
