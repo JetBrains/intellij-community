@@ -268,6 +268,9 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
 
   public void visitErrorElement(PsiErrorElement element) {
     HighlightInfoType errorType;
+
+    if(filterJspErrors(element)) return;
+
     if (PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null) {
       errorType = HighlightInfoType.JAVADOC_ERROR;
       if (!mySettings.getInspectionProfile(element).isToolEnabled(HighlightDisplayKey.JAVADOC_ERROR)) return;
@@ -317,6 +320,21 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
         info.isAfterEndOfLine = true;
       }
     }
+  }
+
+  private boolean filterJspErrors(final PsiErrorElement element) {
+    if (element.getNextSibling() == null) {
+      PsiElement nextSibling = element.getParent().getNextSibling();
+      while (nextSibling instanceof PsiWhiteSpace) {
+        nextSibling = nextSibling.getNextSibling();
+      }
+
+      if (nextSibling instanceof JspText) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   public void visitEnumConstant(PsiEnumConstant enumConstant) {
