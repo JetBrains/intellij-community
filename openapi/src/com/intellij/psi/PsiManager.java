@@ -108,4 +108,6 @@ public abstract class PsiManager implements UserDataHolder {
   public abstract boolean arePackagesTheSame(@NotNull PsiElement element1, @NotNull PsiElement element2);
 
   public abstract boolean isInProject(@NotNull PsiElement element);
+
+  public abstract void performActionWithFormatterDisabled(Runnable r);
 }

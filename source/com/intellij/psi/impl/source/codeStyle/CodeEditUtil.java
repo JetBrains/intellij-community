@@ -29,10 +29,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
 
 public class CodeEditUtil {
 
@@ -44,18 +43,15 @@ public class CodeEditUtil {
   }
 
   public static TreeElement addChildren(CompositeElement parent, ASTNode first, ASTNode last, ASTNode anchorBefore) {
-
     LOG.assertTrue(first != null);
-
-    checkAllWhiteSpaces(parent);
 
     ASTNode lastChild = last != null ? last.getTreeNext() : null;
 
-
-    if (Formatter.getInstance().isActive()) {
+    if (Formatter.getInstance().isDisabled()) {
       parent.addChildren(first, lastChild, anchorBefore);
       return (TreeElement)first;
     } else {
+      checkAllWhiteSpaces(parent);
       return addChildrenAndAdjustWhiteSpaces(first, lastChild, anchorBefore, parent);
     }
   }
@@ -233,14 +229,13 @@ public class CodeEditUtil {
   }
 
   public static void removeChildren(CompositeElement parent, ASTNode first, ASTNode last) {
-    checkAllWhiteSpaces(parent);
-    if (Formatter.getInstance().isActive()) {
+    if (Formatter.getInstance().isDisabled()) {
       parent.removeRange(first, findLastChild(last));
     } else {
+      checkAllWhiteSpaces(parent);
       removeChildrenAndAdjustWhiteSpaces(first, last, parent);
+      checkAllWhiteSpaces(parent);
     }
-
-    checkAllWhiteSpaces(parent);
   }
 
   private static void removeChildrenAndAdjustWhiteSpaces(final ASTNode first, final ASTNode last, final CompositeElement parent) {
@@ -651,12 +646,11 @@ public class CodeEditUtil {
   }
 
   public static ASTNode replaceChild(CompositeElement parent, ASTNode oldChild, ASTNode newChild) {
-    checkAllWhiteSpaces(parent);
-
-    if (Formatter.getInstance().isActive()) {
+    if (Formatter.getInstance().isDisabled()) {
       parent.replaceChild(oldChild, newChild);
       return newChild;
     } else {
+      checkAllWhiteSpaces(parent);
       return replaceAndAdjustWhiteSpaces(oldChild, newChild, parent);
     }
   }

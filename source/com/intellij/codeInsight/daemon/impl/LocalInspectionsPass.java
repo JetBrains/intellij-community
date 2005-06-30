@@ -62,13 +62,13 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
-    InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
+    final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
 
     PsiElement[] psiRoots = myFile.getPsiRoots();
     for (final PsiElement psiRoot : psiRoots) {
       if(!HighlightUtil.isRootInspected(psiRoot)) continue;
       PsiElement[] elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
-      Set<PsiElement> workSet = new THashSet<PsiElement>();
+      final Set<PsiElement> workSet = new THashSet<PsiElement>();
       for (PsiElement element1 : elements) {
         ProgressManager.getInstance().checkCanceled();
 
@@ -84,58 +84,62 @@ public class LocalInspectionsPass extends TextEditorHighlightingPass {
       myLevels = new ArrayList<HighlightInfoType>();
       myTools = new ArrayList<LocalInspectionTool>();
 
-      LocalInspectionTool[] tools = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getHighlightingLocalInspectionTools();
-      for (PsiElement element : workSet) {
-        ProgressManager.getInstance().checkCanceled();
-        LocalInspectionTool currentTool = null;
-        try {
-          if (element instanceof PsiMethod) {
-            PsiMethod psiMethod = (PsiMethod)element;
-            for (LocalInspectionTool tool : tools) {
-              currentTool = tool;
-              if (InspectionManagerEx.isToCheckMember(psiMethod, currentTool.getID())) {
-                appendDescriptors(currentTool.checkMethod(psiMethod, iManager, true), currentTool);
+      final LocalInspectionTool[] tools = DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile(myFile).getHighlightingLocalInspectionTools();
+      PsiManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
+        public void run() {
+          for (PsiElement element : workSet) {
+            ProgressManager.getInstance().checkCanceled();
+            LocalInspectionTool currentTool = null;
+            try {
+              if (element instanceof PsiMethod) {
+                PsiMethod psiMethod = (PsiMethod)element;
+                for (LocalInspectionTool tool : tools) {
+                  currentTool = tool;
+                  if (InspectionManagerEx.isToCheckMember(psiMethod, currentTool.getID())) {
+                    appendDescriptors(currentTool.checkMethod(psiMethod, iManager, true), currentTool);
+                  }
+                }
+              }
+              else if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
+                PsiClass psiClass = (PsiClass)element;
+                for (LocalInspectionTool tool : tools) {
+                  currentTool = tool;
+                  if (InspectionManagerEx.isToCheckMember(psiClass, currentTool.getID())) {
+                    appendDescriptors(currentTool.checkClass(psiClass, iManager, true), currentTool);
+                  }
+                }
+              }
+              else if (element instanceof PsiField) {
+                PsiField psiField = (PsiField)element;
+                for (LocalInspectionTool tool : tools) {
+                  currentTool = tool;
+                  if (InspectionManagerEx.isToCheckMember(psiField, currentTool.getID())) {
+                    appendDescriptors(currentTool.checkField(psiField, iManager, true), currentTool);
+                  }
+                }
+              }
+              else if (element instanceof PsiFile){
+                PsiFile psiFile = (PsiFile)element;
+                for (LocalInspectionTool tool : tools) {
+                  currentTool = tool;
+                  appendDescriptors(currentTool.checkFile(psiFile, iManager, true), currentTool);
+                }
+              }
+            }
+            catch (ProcessCanceledException e) {
+              throw e;
+            }
+            catch (Exception e) {
+              if (currentTool != null) {
+                LOG.error("Exception happened in local inspection tool: " + currentTool.getDisplayName(), e);
+              }
+              else {
+                LOG.error(e);
               }
             }
           }
-          else if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
-            PsiClass psiClass = (PsiClass)element;
-            for (LocalInspectionTool tool : tools) {
-              currentTool = tool;
-              if (InspectionManagerEx.isToCheckMember(psiClass, currentTool.getID())) {
-                appendDescriptors(currentTool.checkClass(psiClass, iManager, true), currentTool);
-              }
-            }
-          }
-          else if (element instanceof PsiField) {
-            PsiField psiField = (PsiField)element;
-            for (LocalInspectionTool tool : tools) {
-              currentTool = tool;
-              if (InspectionManagerEx.isToCheckMember(psiField, currentTool.getID())) {
-                appendDescriptors(currentTool.checkField(psiField, iManager, true), currentTool);
-              }
-            }
-          }
-          else if (element instanceof PsiFile){
-            PsiFile psiFile = (PsiFile)element;
-            for (LocalInspectionTool tool : tools) {
-              currentTool = tool;
-              appendDescriptors(currentTool.checkFile(psiFile, iManager, true), currentTool);
-            }
-          }
         }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Exception e) {
-          if (currentTool != null) {
-            LOG.error("Exception happened in local inspection tool: " + currentTool.getDisplayName(), e);
-          }
-          else {
-            LOG.error(e);
-          }
-        }
-      }
+      });
     }
   }
 

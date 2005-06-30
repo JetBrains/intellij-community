@@ -181,6 +181,10 @@ public class MockPsiManager extends PsiManager {
     return false;
   }
 
+  public void performActionWithFormatterDisabled(Runnable r) {
+    r.run();
+  }
+
   public PsiConstantEvaluationHelper getConstantEvaluationHelper() {
     return null;
   }

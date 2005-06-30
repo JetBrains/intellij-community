@@ -6,6 +6,8 @@ import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
+import com.intellij.newCodeFormatting.Formatter;
+import com.intellij.newCodeFormatting.impl.FormatterImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -261,6 +263,16 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
     return module != null;
   }
 
+  public void performActionWithFormatterDisabled(Runnable r) {
+    ((FormatterImpl)Formatter.getInstance()).disableFormatting();
+    try {
+      r.run();
+    }
+    finally {
+      ((FormatterImpl)Formatter.getInstance()).enableFormatting();
+    }
+  }
+
   public boolean arePackagesTheSame(PsiElement element1, PsiElement element2) {
     PsiFile file1 = ResolveUtil.getContextFile(element1);
     PsiFile file2 = ResolveUtil.getContextFile(element2);
@@ -440,11 +452,11 @@ public class PsiManagerImpl extends PsiManager implements ProjectComponent {
       return MethodSignatureUtil.areSignaturesEqual(((PsiMethod)element1).getSignature(PsiSubstitutor.EMPTY),
                                                     ((PsiMethod)element2).getSignature(PsiSubstitutor.EMPTY));
     }
-    
+
     if (element1 instanceof XmlTag && element2 instanceof XmlTag) {
       if (!element1.isPhysical() && !element2.isPhysical()) return element1.getText().equals(element2.getText());
     }
-    
+
     return false;
   }
 

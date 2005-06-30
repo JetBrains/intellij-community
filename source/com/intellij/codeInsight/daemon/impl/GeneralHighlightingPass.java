@@ -198,46 +198,50 @@ public class GeneralHighlightingPass extends TextEditorHighlightingPass {
     return myHighlights;
   }
 
-  private Collection<HighlightInfo> collectHighlights(PsiElement[] elements) {
+  private Collection<HighlightInfo> collectHighlights(final PsiElement[] elements) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    Set<PsiElement> skipParentsSet = new THashSet<PsiElement>();
-    Set<HighlightInfo> gotHighlights = new THashSet<HighlightInfo>();
+    final Set<PsiElement> skipParentsSet = new THashSet<PsiElement>();
+    final Set<HighlightInfo> gotHighlights = new THashSet<HighlightInfo>();
     long totalTime = 0;
     if (LOG.isDebugEnabled()) {
       totalTime = System.currentTimeMillis();
     }
 
-    List<HighlightVisitor> visitors = new ArrayList<HighlightVisitor>();
+    final List<HighlightVisitor> visitors = new ArrayList<HighlightVisitor>();
     for (HighlightVisitor visitor : myHighlightVisitors) {
       if (visitor.suitableForFile(myFile)) visitors.add(visitor);
     }
 
-    HighlightInfoFilter[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
+    final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getComponents(HighlightInfoFilter.class);
 
-    for (PsiElement element : elements) {
-      ProgressManager.getInstance().checkCanceled();
+    PsiManager.getInstance(myProject).performActionWithFormatterDisabled(new Runnable() {
+      public void run() {
+        for (PsiElement element : elements) {
+          ProgressManager.getInstance().checkCanceled();
 
-      if (skipParentsSet.contains(element)) {
-        skipParentsSet.add(element.getParent());
-        continue;
-      }
+          if (skipParentsSet.contains(element)) {
+            skipParentsSet.add(element.getParent());
+            continue;
+          }
 
       HighlightInfoHolder holder = new HighlightInfoHolder(myFile, filters);
       for (HighlightVisitor visitor : visitors) {
         visitor.visit(element, holder);
       }
 
-      for (HighlightInfo info : holder) {
-        // have to filter out already obtained highlights
-        if (gotHighlights.contains(info)) continue;
+          for (HighlightInfo info : holder) {
+            // have to filter out already obtained highlights
+            if (gotHighlights.contains(info)) continue;
 
-        gotHighlights.add(info);
-        if (info.getSeverity() == HighlightSeverity.ERROR) {
-          skipParentsSet.add(element.getParent());
+            gotHighlights.add(info);
+            if (info.getSeverity() == HighlightSeverity.ERROR) {
+              skipParentsSet.add(element.getParent());
+            }
+          }
         }
       }
-    }
+    });
 
     if (LOG.isDebugEnabled()) {
       //if(maxVisitElement != null){

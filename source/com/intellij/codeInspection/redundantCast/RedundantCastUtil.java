@@ -366,19 +366,20 @@ public class RedundantCastUtil {
     }
   }
 
-  private static boolean isCastRedundantInRefExpression (PsiReferenceExpression refExpression, PsiExpression castOperand) {
+  private static boolean isCastRedundantInRefExpression (PsiReferenceExpression refExpression, final PsiExpression castOperand) {
     PsiElement resolved = refExpression.resolve();
     final PsiReferenceExpression copy = (PsiReferenceExpression)refExpression.copy();
-    try {
-      copy.getQualifierExpression().replace(castOperand);
-      if (copy.resolve() != resolved) return false;
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return false;
-    }
-
-    return true;
+    refExpression.getManager().performActionWithFormatterDisabled(new Runnable() {
+      public void run() {
+        try {
+          copy.getQualifierExpression().replace(castOperand);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
+    });
+    return copy.resolve() == resolved;
   }
 
   public static boolean isTypeCastSemantical(PsiTypeCastExpression typeCast) {
