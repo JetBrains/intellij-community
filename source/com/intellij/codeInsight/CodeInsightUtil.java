@@ -402,7 +402,7 @@ public class CodeInsightUtil {
 
       if (next == last && j > i) {
         if (child != first) {
-          result.add(new Pair<PsiElement, PsiElement>(child, children[j]));
+          result.add(new Pair<PsiElement, PsiElement>(child, children[j - 1]));
         }
         i = j + 1;
         continue;
