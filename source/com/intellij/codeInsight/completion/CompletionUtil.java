@@ -363,6 +363,10 @@ public class CompletionUtil {
         PsiSubstitutor substitutor = factory.createSubstitutor(map);
         type = factory.createType(aClass, substitutor);
       }
+    } else if (type instanceof PsiArrayType) {
+      return eliminateWildcards(((PsiArrayType)type).getComponentType()).createArrayType();
+    } else if (type instanceof PsiWildcardType) {
+      return ((PsiWildcardType)type).getExtendsBound();
     }
     return type;
   }
