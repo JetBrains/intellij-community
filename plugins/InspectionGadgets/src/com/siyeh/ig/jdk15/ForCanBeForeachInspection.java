@@ -101,7 +101,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
         final PsiClassType arrayType = (PsiClassType)arrayReference.getType();
         PsiType[] parameters = arrayType.getParameters();
         final PsiType componentType = parameters.length == 1 ? parameters[0] : PsiType.getJavaLangObject(arrayReference.getManager(), GlobalSearchScope.allScope(project));
-        final String type = componentType.getPresentableText();
+        final String type = componentType == null ? "java.lang.Object" : componentType.getPresentableText();
         final String arrayName = arrayReference.getText();
         final PsiStatement body = forStatement.getBody();
         final PsiStatement firstStatement = getFirstStatement(body);
@@ -168,8 +168,11 @@ public class ForCanBeForeachInspection extends StatementInspection{
                   final PsiWildcardType wildcardType = (PsiWildcardType) parameterType;
                   final PsiType bound = wildcardType.getExtendsBound();
                   contentTypeString = bound.getCanonicalText();
-              } else{
+              } else if (parameterType != null){
                   contentTypeString = parameterType.getCanonicalText();
+              }
+              else {
+                  contentTypeString = "java.lang.Object";
               }
           } else{
               contentTypeString = "java.lang.Object";
@@ -425,7 +428,7 @@ public class ForCanBeForeachInspection extends StatementInspection{
             final PsiLocalVariable var = (PsiLocalVariable) elements[0];
             final PsiExpression initializer = var.getInitializer();
             if (!isListGetLookup(initializer, indexName, arrayName)) return false;
-            return type.equals(var.getType());
+            return type != null && type.equals(var.getType());
         }
 
         private boolean isIteratorNextDeclaration(PsiStatement statement,

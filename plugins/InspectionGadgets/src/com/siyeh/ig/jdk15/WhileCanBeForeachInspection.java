@@ -98,11 +98,13 @@ public class WhileCanBeForeachInspection extends StatementInspection{
                     final PsiType bound = wildcardType.getBound();
                     if(bound == null){
                         contentTypeString = "java.lang.Object";
-                    } else{
+                    } else {
                         contentTypeString = bound.getCanonicalText();
                     }
-                } else{
+                } else if (parameterType != null){
                     contentTypeString = parameterType.getCanonicalText();
+                } else{
+                    contentTypeString = "java.lang.Object";
                 }
             } else{
                 contentTypeString = "java.lang.Object";
