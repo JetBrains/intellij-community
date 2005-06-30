@@ -230,8 +230,8 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
 
 
   private void checkEditable() throws UnableToEditDefaultProfileException{
-     if (getName().equals("Default")){
-      if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().getName().equals("Default")){
+     if (isDefault()){
+      if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isDefault()){
         Messages.showInfoMessage(CONFIGURE_LOCAL_NON_DEFAULT, UNABLE_TO_EDIT_DEFAULT);
         throw new UnableToEditDefaultProfileException();
       } else {
@@ -240,7 +240,7 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
         ShowSettingsUtil.getInstance().editConfigurable((Project)null, "#Errors", errorPanel);
         Project[] projects = ProjectManager.getInstance().getOpenProjects();
         for (Project project : projects) {
-          if (!getName().equals("Default")) {
+          if (!DaemonCodeAnalyzerSettings.getInstance().getInspectionProfile().isDefault()) {
             DaemonCodeAnalyzer.getInstance(project).restart();
           }
         }
@@ -353,6 +353,10 @@ public class InspectionProfileImpl implements InspectionProfile.ModifiableModel,
 
   public String getName() {
     return myName;
+  }
+
+  public boolean isDefault() {
+    return myName.equals("Default");
   }
 
   public void setName(String name) {

@@ -863,7 +863,7 @@ public class InspectionResultsView extends JPanel implements OccurenceNavigator,
       }
 
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(!myInspectionProfile.getName().equals("Default"));
+        e.getPresentation().setEnabled(!myInspectionProfile.isDefault());
       }
     });
     actions.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));

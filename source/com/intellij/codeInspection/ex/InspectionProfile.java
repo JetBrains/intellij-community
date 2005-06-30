@@ -42,6 +42,8 @@ public interface InspectionProfile {
 
   boolean isToolEnabled(HighlightDisplayKey key);
 
+  boolean isDefault();
+
   interface ModifiableModel {
 
     InspectionProfile getParentProfile();
@@ -53,6 +55,8 @@ public interface InspectionProfile {
     void removeInheritance(boolean inheritFromBaseBase);
 
     String getName();
+
+    boolean isDefault();
 
     void setName(String name);
 
