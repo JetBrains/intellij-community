@@ -10,7 +10,7 @@ public class InfiniteRecursionInspection
 {
     public void foo()
     {
-        foo();
+        new InfiniteRecursionInspection().foo();
     }
 
     public void bar()

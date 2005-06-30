@@ -92,13 +92,25 @@ public class ControlFlowUtils{
             return true;
         }
         final PsiStatement[] statements = body.getStatements();
-        if(statements == null){
-            return true;
-        }
         if(statements.length == 0){
             return true;
         }
-
+        boolean hasDefaultCase = false;
+        for(PsiStatement statement : statements){
+            if(statement instanceof PsiSwitchLabelStatement)
+            {
+                if(((PsiSwitchLabelStatement)statement).isDefaultCase())
+                {
+                    hasDefaultCase = true;
+                }
+            }
+        }
+        //TODO: this is incorrect, in the case of enums
+        if(!hasDefaultCase)
+        {
+            return false;
+        }
+        //TODO: this is incorrect, in general
         return statementMayCompleteNormally(statements[statements.length - 1]);
     }
 

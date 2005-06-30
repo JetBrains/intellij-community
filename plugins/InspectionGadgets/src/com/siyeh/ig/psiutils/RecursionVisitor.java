@@ -40,7 +40,17 @@ public class RecursionVisitor extends PsiRecursiveElementVisitor{
             return;
         }
         final PsiMethod calledMethod = call.resolveMethod();
-        if(method.equals(calledMethod)){
+        if(!method.equals(calledMethod)){
+            return;
+        }
+        if(method.hasModifierProperty(PsiModifier.STATIC) ||
+                method.hasModifierProperty(PsiModifier.PRIVATE)){
+            recursive = true;
+            return;
+        }
+        final PsiExpression qualifier = methodExpression.getQualifierExpression();
+        if(qualifier == null || qualifier instanceof PsiThisExpression)
+        {
             recursive = true;
         }
     }
