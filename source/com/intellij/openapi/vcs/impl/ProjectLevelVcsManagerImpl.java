@@ -584,7 +584,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         final String value = subElement.getAttributeValue(VALUE_ATTTIBUTE);
         if (id != null && value != null) {
           try {
-            final boolean booleanValue = Boolean.parseBoolean(value);
+            final boolean booleanValue = Boolean.valueOf(value).booleanValue();
             getOrCreateOption(id).setValue(booleanValue);
           }
           catch (Exception e) {
