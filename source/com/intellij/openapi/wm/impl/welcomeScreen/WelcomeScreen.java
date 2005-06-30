@@ -205,7 +205,7 @@ public class WelcomeScreen {
     JPanel topPanel = createCaptionPane();
 
     // Create Main Panel for Quick Start and Documentation
-    myMainPanel = new PluginsPanel(new GridBagLayout());
+    myMainPanel = new WelcomeScrollablePanel(new GridBagLayout());
     myMainPanel.setBackground(MAIN_PANEL_COLOR);
     // Create QuickStarts group of actions
     ActionGroupDescriptor quickStarts = new ActionGroupDescriptor("Quick Start", 0);
@@ -380,14 +380,14 @@ public class WelcomeScreen {
   }
 
   private JScrollPane createPluginsPanel() {
-    myPluginsPanel = new PluginsPanel(new GridBagLayout());
+    myPluginsPanel = new WelcomeScrollablePanel(new GridBagLayout());
     myPluginsPanel.setBackground(PLUGINS_PANEL_COLOR);
 
     JLabel pluginsCaption = new JLabel("Plugins");
     pluginsCaption.setFont(GROUP_CAPTION_FONT);
     pluginsCaption.setForeground(CAPTION_COLOR);
 
-    JLabel installedPluginsCaption = new JLabel("User-Installed Plugins:");
+    JLabel installedPluginsCaption = new JLabel("My Plugins:");
     installedPluginsCaption.setFont(LINK_FONT);
     installedPluginsCaption.setForeground(CAPTION_COLOR);
 

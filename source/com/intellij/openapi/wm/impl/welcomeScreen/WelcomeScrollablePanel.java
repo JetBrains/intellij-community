@@ -10,12 +10,12 @@ import java.awt.*;
  * Time: 9:23:39 PM
  * To change this template use File | Settings | File Templates.
  */
-public class PluginsPanel extends JPanel implements Scrollable{
+public class WelcomeScrollablePanel extends JPanel implements Scrollable{
 
   private static final int VERTICAL_SCROLL_INCREMENT = UIManager.getFont("ToolTip.font").getSize() * 2;
   private static final int HORIZONTAL_SCROLL_INCREMENT = VERTICAL_SCROLL_INCREMENT;
 
-  public PluginsPanel(LayoutManager layout) {
+  public WelcomeScrollablePanel(LayoutManager layout) {
     super(layout);
   }
 
