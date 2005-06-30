@@ -157,7 +157,7 @@ final class ImageEditorUI extends JPanel {
 
         public void zoomOut() {
             double factor = getZoomFactor();
-            if (factor > 2.0d) {
+            if (factor > 1.0d) {
                 // Macro
                 setZoomFactor(factor / 2.0d);
             } else {

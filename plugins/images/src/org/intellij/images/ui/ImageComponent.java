@@ -138,15 +138,11 @@ public class ImageComponent extends JComponent {
     }
 
     public void setCanvasSize(int width, int height) {
-        Dimension oldValue = getCanvasSize();
-        if (oldValue.width != width || oldValue.height != height) {
-            setSize(width + 4, height + 4);
-            firePropertyChange("canvasSize", oldValue, getCanvasSize());
-        }
+        setSize(width + 4, height + 4);
     }
 
     public void setCanvasSize(Dimension dimension) {
-        setCanvasSize(dimension.width + 4, dimension.height + 4);
+        setCanvasSize(dimension.width, dimension.height);
     }
 
     public Dimension getCanvasSize() {

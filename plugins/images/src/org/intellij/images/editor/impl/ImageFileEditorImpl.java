@@ -62,6 +62,9 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
                 double factor = (prefferedSize.getWidth() / (double)image.getWidth() + prefferedSize.getHeight() / (double)image.getHeight()) / 2.0d;
                 zoomModel.setZoomFactor(Math.ceil(factor));
             }
+        } else {
+            // Open as actual size
+            zoomModel.setZoomFactor(1.0d);
         }
     }
 
