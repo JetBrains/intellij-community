@@ -1,15 +1,15 @@
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.license.LicenseManager;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.ui.DialogWrapper;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,10 +23,12 @@ class UpdateInfoDialog extends DialogWrapper {
 
   private static final String RELEASE_URL = "http://www.jetbrains.com/idea/download/";
   private static final String EAP_URL = "http://www.intellij.net/eap/products/idea/download.jsp";
-  private static UpdateInfoPanel myUpdateInfoPanel;
+  private UpdateInfoPanel myUpdateInfoPanel;
+  private UpdateChecker.NewVersion myNewVersion;
 
-  protected UpdateInfoDialog(final boolean canBeParent) {
+  protected UpdateInfoDialog(final boolean canBeParent, UpdateChecker.NewVersion newVersion) {
     super(canBeParent);
+    myNewVersion = newVersion;
     setTitle("Update Info");
     init();
   }
@@ -83,7 +85,7 @@ class UpdateInfoDialog extends DialogWrapper {
     }
   }
 
-  private static class UpdateInfoPanel {
+  private class UpdateInfoPanel {
 
     private JPanel myPanel;
     private JLabel myBuildNumber;
@@ -101,8 +103,8 @@ class UpdateInfoDialog extends DialogWrapper {
         version = ApplicationInfo.getInstance().getVersionName();
       }
       myVersionNumber.setText(version);
-      myNewBuildNumber.setText(Integer.toString(UpdateChecker.newVersion.getLatestBuild()) + ")");
-      myNewVersionNumber.setText(UpdateChecker.newVersion.getLatestVersion());
+      myNewBuildNumber.setText(Integer.toString(myNewVersion.getLatestBuild()) + ")");
+      myNewVersionNumber.setText(myNewVersion.getLatestVersion());
     }
 
     public JComponent getComponent() {

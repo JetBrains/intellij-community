@@ -13,13 +13,13 @@ import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Document;
+import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -37,9 +37,6 @@ import java.net.URL;
  * </idea>
  */
 public final class UpdateChecker implements ApplicationComponent {
-
-  public static NewVersion newVersion = null;
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
   private static final URL UPDATE_URL;
 
@@ -108,7 +105,8 @@ public final class UpdateChecker implements ApplicationComponent {
     return settings.CHECK_NEEDED;
   }
 
-  public static void checkForUpdates() throws ConnectionException {
+  @Nullable
+  public static NewVersion checkForUpdates() throws ConnectionException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: checkForUpdates()");
     }
@@ -116,6 +114,7 @@ public final class UpdateChecker implements ApplicationComponent {
     final Document document;
     try {
       document = loadVersionInfo();
+      if (document == null) return null;
     }
     catch (Throwable t) {
       LOG.debug(t);
@@ -135,32 +134,53 @@ public final class UpdateChecker implements ApplicationComponent {
       final int iAvailBuild = Integer.parseInt(availBuild);
       final int iOurBuild = Integer.parseInt(ourBuild);
       if (iAvailBuild > iOurBuild) {
-        newVersion = new NewVersion(iAvailBuild, availVersion);
+        return new NewVersion(iAvailBuild, availVersion);
       }
-
+      return null;
     }
     catch (Throwable t) {
       LOG.debug(t);
-      return;
+      return null;
     }
-
-    UpdateSettingsConfigurable.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
+    finally {
+      UpdateSettingsConfigurable.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
+    }
   }
 
   private static Document loadVersionInfo() throws Exception {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: loadVersionInfo(UPDATE_URL='" + UPDATE_URL + "' )");
     }
-    final InputStream inputStream = UPDATE_URL.openStream();
-    final Document document;
-    try {
-      document = JDOMUtil.loadDocument(inputStream);
-    }
-    finally {
-      inputStream.close();
+    final Document[] document = new Document[] {null};
+    final Exception[] exception = new Exception[] {null};
+    Thread downloadThread = new Thread(new Runnable() {
+      public void run() {
+        try {
+          final InputStream inputStream = UPDATE_URL.openStream();
+          try {
+            document[0] = JDOMUtil.loadDocument(inputStream);
+          }
+          finally {
+            inputStream.close();
+          }
+        }
+        catch (IOException e) {
+          exception[0] = e;
+        }
+        catch (JDOMException e) {
+          // Broken xml downloaded. Don't bother telling user.
+        }
+      }
+    });
+    downloadThread.start();
+    downloadThread.join(5 * 1000); // Wait for 5 seconds.
+
+    if (downloadThread.isAlive()) {
+      downloadThread.interrupt();
     }
 
-    return document;
+    if (exception[0] != null) throw exception[0];
+    return document[0];
   }
 
   public static void showNoUpdatesDialog(boolean enableLink) {
@@ -170,15 +190,14 @@ public final class UpdateChecker implements ApplicationComponent {
     dialog.show();
   }
 
-  public static void showUpdateInfoDialog(boolean enableLink) {
-    UpdateInfoDialog dialog = new UpdateInfoDialog(true);
+  public static void showUpdateInfoDialog(boolean enableLink, final NewVersion version) {
+    UpdateInfoDialog dialog = new UpdateInfoDialog(true, version);
     dialog.setLinkEnabled(enableLink);
     dialog.setResizable(false);
     dialog.show();
   }
 
   public static class NewVersion {
-
     private static int latestBuild;
     private String latestVersion;
 

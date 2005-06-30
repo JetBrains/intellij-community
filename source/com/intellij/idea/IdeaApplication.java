@@ -4,10 +4,10 @@ import com.incors.plaf.alloy.*;
 import com.intellij.ExtensionPoints;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.ModalityState;
@@ -17,12 +17,12 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.ui.Splash;
 import org.jdom.Element;
 
@@ -138,9 +138,9 @@ public class IdeaApplication {
               UpdateChecker.checkNeeded()) {
             try {
               UpdateChecker.setMyVeryFirstOpening(false);
-              UpdateChecker.checkForUpdates();
-              if (UpdateChecker.newVersion != null) {
-                UpdateChecker.showUpdateInfoDialog(true);
+              final UpdateChecker.NewVersion newVersion = UpdateChecker.checkForUpdates();
+              if (newVersion != null) {
+                UpdateChecker.showUpdateInfoDialog(true, newVersion);
               }
             }
             catch (ConnectionException e) {
