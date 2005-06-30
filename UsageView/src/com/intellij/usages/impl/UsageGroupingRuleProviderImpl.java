@@ -39,9 +39,9 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider,
       rules.add(new PackageGroupingRule(project));
     }
     if (GROUP_BY_FILE_STRUCTURE) {
-      rules.add(new NonJavaFileGroupingRule(project));
       rules.add(new ClassGroupingRule());
       rules.add(new MethodGroupingRule());
+      rules.add(new NonJavaFileGroupingRule(project));
     }
     else {
       rules.add(new FileGroupingRule(project));

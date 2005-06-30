@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.Usage;
@@ -52,6 +53,11 @@ public class ClassGroupingRule implements UsageGroupingRule {
 
         if (containingClass != null) {
           return new ClassUsageGroup((PsiClass)containingClass);
+        }
+        
+        final VirtualFile virtualFile = containingFile.getVirtualFile();
+        if (virtualFile != null) {
+          return new FileGroupingRule.FileUsageGroup(containingFile.getProject(), virtualFile);
         }
       }
     }
