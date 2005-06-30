@@ -6,6 +6,10 @@
     <version>1.1</version>
     <idea-version since-build="3378"/>
 
+    <extensions xmlns="com.intellij">
+      <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    </extensions>
+
     <application-components>
         <component>
             <interface-class>org.intellij.images.options.OptionsManager</interface-class>
