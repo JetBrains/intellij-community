@@ -37,6 +37,8 @@ import com.intellij.xml.util.XmlUtil;
 
 import java.util.*;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Mike
  */
@@ -261,6 +263,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     if(myAttributes != null) return myAttributes;
     myAttributeValueMap = new HashMap<String, String>();
 
+    myAttributes = calculateAttributes();
+
+    return myAttributes;
+  }
+
+  @NotNull
+  protected XmlAttribute[] calculateAttributes() {
     final List<XmlAttribute> result = new ArrayList<XmlAttribute>(10);
     processElements(
       new PsiElementProcessor() {
@@ -280,13 +289,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag/*, Modification
     );
     if (result.isEmpty()) {
       myAttributeValueMap = Collections.EMPTY_MAP;
-      myAttributes = XmlAttribute.EMPTY_ARRAY;
+      return XmlAttribute.EMPTY_ARRAY;
     }
     else {
-      myAttributes = CollectionUtil.toArray(result, new XmlAttribute[result.size()]);
+      return CollectionUtil.toArray(result, new XmlAttribute[result.size()]);
     }
-
-    return myAttributes;
   }
 
   protected void cacheOneAttributeValue(String name, String value) {

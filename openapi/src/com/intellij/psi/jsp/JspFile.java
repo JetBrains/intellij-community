@@ -10,10 +10,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlFile;
 
 import java.util.Set;
 
-public interface JspFile extends PsiFile{
+public interface JspFile extends XmlFile {
   WebModuleProperties getWebModuleProperties();
   WebDirectoryElement getParentWebDirectory();
   String getWebPath();

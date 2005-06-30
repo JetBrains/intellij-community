@@ -286,7 +286,7 @@ public class CodeEditUtil {
         }
 
       } else {
-        final ASTNode fileNode = SourceTreeToPsiMap.psiElementToTree(parent.getPsi().getContainingFile());
+        final ASTNode fileNode = TreeUtil.getFileElement(parent);
         ASTNode lastLeaf = TreeUtil.findLastLeaf(fileNode);
         if (isWS(lastLeaf)) {
           delete(lastLeaf);
