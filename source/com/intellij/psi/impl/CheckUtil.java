@@ -3,6 +3,7 @@ package com.intellij.psi.impl;
 import com.intellij.psi.*;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 
 import com.intellij.util.IncorrectOperationException;
 
@@ -49,6 +50,7 @@ public class CheckUtil {
   }
 
   public static void checkDelete(VirtualFile file) throws IncorrectOperationException{
+    if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
     if (!file.isWritable()){
       throw new IncorrectOperationException("Cannot delete a read-only file " + file.getPresentableUrl() + ".");
     }
