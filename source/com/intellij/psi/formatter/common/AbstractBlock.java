@@ -4,8 +4,7 @@ import com.intellij.codeFormatting.general.FormatterUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.newCodeFormatting.*;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.LeafElement;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -58,6 +57,7 @@ public abstract class AbstractBlock implements Block {
     return new ChildAttributes(getChildIndent(), null);
   }
 
+  @Nullable
   protected Indent getChildIndent() {
     return null;
   }

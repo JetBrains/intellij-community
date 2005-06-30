@@ -16,7 +16,7 @@ public class CDATAOnAnyEncodedPolicy extends DefaultXmlPsiPolicy{
   public ASTNode encodeXmlTextContents(String displayText, XmlText text, CharTable charTableByTree) {
     final ASTNode firstChild = text.getNode().getFirstChildNode();
     boolean textAlreadyHasCDATA = firstChild != null && firstChild.getElementType() == XmlElementType.XML_CDATA;
-    if (textAlreadyHasCDATA || XmlUtil.toCode(displayText)) {
+    if ((textAlreadyHasCDATA || XmlUtil.toCode(displayText)) && displayText.length() > 0) {
       final FileElement dummyParent = createCDATAElement(text.getManager(), charTableByTree, displayText);
       return dummyParent.getFirstChildNode();
     }
