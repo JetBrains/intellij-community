@@ -5,7 +5,7 @@ import java.util.*;
 public class ReturnOfCollectionFieldInspection
 {
     private Set m_foo;
- //   private List<String> m_fooBar;
+    private List<String> m_fooBar;
     private int[] m_bar;
 
     public static void main(String[] args)
@@ -22,13 +22,16 @@ public class ReturnOfCollectionFieldInspection
     {
         return m_foo;
     }
-/*
 
     public List<String> fooBar()
     {
         return m_fooBar;
     }
-*/
+
+    public List<String> fooBarEmpty()
+    {
+        return Collections.EMPTY_LIST;
+    }
 
     public int[] bar()
     {
