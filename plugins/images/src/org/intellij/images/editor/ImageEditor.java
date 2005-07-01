@@ -4,6 +4,7 @@
  import com.intellij.openapi.Disposable;
  import com.intellij.openapi.project.Project;
  import com.intellij.openapi.vfs.VirtualFileListener;
+ import com.intellij.openapi.vfs.VirtualFile;
 
  import javax.swing.*;
 
@@ -13,6 +14,11 @@
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface ImageEditor extends Disposable, VirtualFileListener {
+    /**
+     * Get file
+     */
+    VirtualFile getFile();
+
     /**
      * Get editor project.
      */
@@ -33,6 +39,11 @@ public interface ImageEditor extends Disposable, VirtualFileListener {
      * returned by {@link #getComponent()}.
      */
     JComponent getContentComponent();
+
+    /**
+     * Return <code>true</code> if editor show valid image.
+     */
+    boolean isValid();
 
     /**
      * Return <code>true</code> if editor is already disposed.

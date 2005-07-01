@@ -7,8 +7,6 @@ import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageEditorManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 /**
  * Image viewer manager implementation.
  *
@@ -28,7 +26,7 @@ final class ImageEditorManagerImpl implements ImageEditorManager, ApplicationCom
     }
 
     @NotNull
-    public ImageEditor createImageEditor(@NotNull Project project, @NotNull VirtualFile file) throws IOException {
+    public ImageEditor createImageEditor(@NotNull Project project, @NotNull VirtualFile file) {
         return new ImageEditorImpl(project, file);
     }
 

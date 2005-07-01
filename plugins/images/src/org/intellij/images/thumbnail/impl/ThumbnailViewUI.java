@@ -25,7 +25,6 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -118,7 +117,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                         return 1;
                     }
 
-                    return o1.getPath().compareTo(o2.getPath());
+                    return o1.getPath().toLowerCase().compareTo(o2.getPath().toLowerCase());
                 }
             }
             );
@@ -141,6 +140,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
     private static final class ThumbnailListCellRenderer extends ThumbnailComponent
         implements ListCellRenderer {
+        private final ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
+
         public Component getListCellRendererComponent(
             JList list, Object value, int index, boolean isSelected, boolean cellHasFocus
         ) {
@@ -149,7 +150,19 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 setFileName(file.getName());
                 setToolTipText(file.getPath());
                 setDirectory(file.isDirectory());
-                if (!file.isDirectory()) {
+                if (file.isDirectory()) {
+                    int imagesCount = 0;
+                    VirtualFile[] children = file.getChildren();
+                    for (VirtualFile child : children) {
+                        if (typeManager.isImage(child)) {
+                            imagesCount++;
+                            if (imagesCount > 100) {
+                                break;
+                            }
+                        }
+                    }
+                    setImagesCount(imagesCount);
+                } else {
                     // File rendering
                     setFileSize(file.getLength());
                     try {
@@ -157,8 +170,10 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                         ImageComponent imageComponent = getImageComponent();
                         imageComponent.getDocument().setValue(image);
                         setFormat(IfsUtil.getFormat(file));
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         // Ignore
+                        ImageComponent imageComponent = getImageComponent();
+                        imageComponent.getDocument().setValue(null);
                     }
                 }
 
@@ -197,13 +212,24 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         if (file.isDirectory()) {
             if (thumbnailView.isRecursive()) {
                 files.addAll(findFiles(file.getChildren()));
-            } else {
+            } else if (isImagesInDirectory(file)) {
                 files.add(file);
             }
         } else if (typeManager.isImage(file)) {
             files.add(file);
         }
         return files;
+    }
+
+    private boolean isImagesInDirectory(VirtualFile dir) {
+        ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
+        VirtualFile[] files = dir.getChildren();
+        for (VirtualFile file : files) {
+            if (typeManager.isImage(file)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private final class ThumbnailsMouseAdapter extends MouseAdapter {

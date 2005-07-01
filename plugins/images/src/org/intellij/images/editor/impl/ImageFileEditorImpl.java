@@ -18,10 +18,7 @@ import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.options.*;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
 import java.io.Serializable;
 
 /**
@@ -33,11 +30,9 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     private static final String NAME = "ImageFileEditor";
     private final ImageEditor imageEditor;
 
-    ImageFileEditorImpl(Project project, VirtualFile file) throws IOException {
+    ImageFileEditorImpl(Project project, VirtualFile file) {
         ImageEditorManager imageEditorManager = getImageEditorManager();
         imageEditor = imageEditorManager.createImageEditor(project, file);
-
-        BufferedImage image = imageEditor.getDocument().getValue();
 
         // Append file listener
         VirtualFileManager.getInstance().addVirtualFileListener(imageEditor);
@@ -50,22 +45,6 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
         TransparencyChessboardOptions transparencyChessboardOptions = editorOptions.getTransparencyChessboardOptions();
         imageEditor.setGridVisible(gridOptions.isShowDefault());
         imageEditor.setTransparencyChessboardVisible(transparencyChessboardOptions.isShowDefault());
-
-        // Set smart zooming behaviour on open
-        ZoomOptions zoomOptions = editorOptions.getZoomOptions();
-        // Open as actual size
-        zoomModel.setZoomFactor(1.0d);
-
-        if (zoomOptions.isSmartZooming()) {
-            Dimension prefferedSize = zoomOptions.getPrefferedSize();
-            if (prefferedSize.width > image.getWidth() && prefferedSize.height > image.getHeight()) {
-                // Resize to preffered size
-                // Calculate zoom factor
-
-                double factor = (prefferedSize.getWidth() / (double)image.getWidth() + prefferedSize.getHeight() / (double)image.getHeight()) / 2.0d;
-                zoomModel.setZoomFactor(Math.ceil(factor));
-            }
-        }
     }
 
     private static ImageEditorManager getImageEditorManager() {

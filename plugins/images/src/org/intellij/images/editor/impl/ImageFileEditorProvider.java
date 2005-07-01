@@ -7,8 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.jdom.Element;
 
-import java.io.IOException;
-
 /**
  * Image editor provider.
  *
@@ -39,11 +37,7 @@ final class ImageFileEditorProvider implements ApplicationComponent, FileEditorP
     }
 
     public FileEditor createEditor(Project project, VirtualFile file) {
-        try {
-            return new ImageFileEditorImpl(project, file);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+        return new ImageFileEditorImpl(project, file);
     }
 
     public void disposeEditor(FileEditor editor) {

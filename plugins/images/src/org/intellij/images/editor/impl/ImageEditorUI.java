@@ -3,6 +3,7 @@ package org.intellij.images.editor.impl;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.ui.Messages;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
@@ -25,12 +26,16 @@ import java.awt.image.BufferedImage;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageEditorUI extends JPanel {
+    public static final String IMAGE_PANEL = "image";
+    public static final String ERROR_PANEL = "error";
+
     private final ImageZoomModel zoomModel = new ImageZoomModelImpl();
     private final ImageWheelAdapter wheelAdapter = new ImageWheelAdapter();
     private final ChangeListener changeListener = new DocumentChangeListener();
     private final ImageComponent imageComponent = new ImageComponent();
+    private final JPanel contentPanel;
 
-    ImageEditorUI(BufferedImage image, EditorOptions editorOptions) {
+    ImageEditorUI(EditorOptions editorOptions) {
         ImageDocument document = imageComponent.getDocument();
         document.addChangeListener(changeListener);
 
@@ -66,12 +71,25 @@ final class ImageEditorUI extends JPanel {
         component.addMouseListener(focusRequester);
         scrollPane.addMouseListener(focusRequester);
 
+        JLabel errorLabel = new JLabel(
+            "<html><b>Image not loaded</b><br>Try to open it externaly to fix format problem</html>",
+            Messages.getErrorIcon(), JLabel.CENTER
+        );
+
+        JPanel errorPanel = new JPanel(new BorderLayout());
+        errorPanel.add(errorLabel, BorderLayout.CENTER);
+
+        contentPanel = new JPanel(new CardLayout());
+        contentPanel.add(scrollPane, IMAGE_PANEL);
+        contentPanel.add(errorPanel, ERROR_PANEL);
+
+
         add(component, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
+        add(contentPanel, BorderLayout.CENTER);
+    }
 
-        // Set content
-        document.setValue(image);
-
+    JComponent getContentComponent() {
+        return contentPanel;
     }
 
     ImageComponent getImageComponent() {
@@ -97,23 +115,23 @@ final class ImageEditorUI extends JPanel {
             add(imageComponent);
         }
 
-        private void centerImage() {
-            Point imageLocation = imageComponent.getLocation();
+        private void centerComponents() {
             Rectangle bounds = getBounds();
-            imageLocation.x = (bounds.width - imageComponent.getWidth()) / 2;
-            imageLocation.y = (bounds.height - imageComponent.getHeight()) / 2;
-            imageComponent.setLocation(imageLocation);
+            Point point = imageComponent.getLocation();
+            point.x = (bounds.width - imageComponent.getWidth()) / 2;
+            point.y = (bounds.height - imageComponent.getHeight()) / 2;
+            imageComponent.setLocation(point);
         }
 
         public void invalidate() {
-            centerImage();
-
+            centerComponents();
             super.invalidate();
         }
 
         public Dimension getPreferredSize() {
             return imageComponent.getSize();
         }
+
     }
 
     private final class ImageWheelAdapter implements MouseWheelListener {
@@ -136,15 +154,17 @@ final class ImageEditorUI extends JPanel {
         public double getZoomFactor() {
             Dimension size = imageComponent.getCanvasSize();
             BufferedImage image = imageComponent.getDocument().getValue();
-            return size.getWidth() / (double)image.getWidth();
+            return image != null ? size.getWidth() / (double)image.getWidth() : 0.0d;
         }
 
         public void setZoomFactor(double zoomFactor) {
             // Change current size
             Dimension size = imageComponent.getCanvasSize();
             BufferedImage image = imageComponent.getDocument().getValue();
-            size.setSize((double)image.getWidth() * zoomFactor, (double)image.getHeight() * zoomFactor);
-            imageComponent.setCanvasSize(size);
+            if (image != null) {
+                size.setSize((double)image.getWidth() * zoomFactor, (double)image.getHeight() * zoomFactor);
+                imageComponent.setCanvasSize(size);
+            }
 
             revalidate();
             repaint();
@@ -152,7 +172,7 @@ final class ImageEditorUI extends JPanel {
 
         private double getMinimumZoomFactor() {
             BufferedImage image = imageComponent.getDocument().getValue();
-            return 1.0d / image.getWidth();
+            return image != null ? 1.0d / image.getWidth() : 0.0d;
         }
 
         public void zoomOut() {
@@ -202,6 +222,12 @@ final class ImageEditorUI extends JPanel {
 
     private class DocumentChangeListener implements ChangeListener {
         public void stateChanged(ChangeEvent e) {
+            ImageDocument document = imageComponent.getDocument();
+            BufferedImage value = document.getValue();
+
+            CardLayout layout = (CardLayout)contentPanel.getLayout();
+            layout.show(contentPanel, value != null ? IMAGE_PANEL : ERROR_PANEL);
+
             revalidate();
             repaint();
         }

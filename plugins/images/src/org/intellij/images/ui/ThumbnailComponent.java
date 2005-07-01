@@ -26,6 +26,7 @@ public class ThumbnailComponent extends JComponent {
     private long fileSize;
     private String fileName;
     private boolean directory;
+    private int imagesCount;
 
     public ThumbnailComponent() {
         updateUI();
@@ -80,6 +81,18 @@ public class ThumbnailComponent extends JComponent {
         if (oldValue != directory) {
             this.directory = directory;
             firePropertyChange("directory", oldValue, this.directory);
+        }
+    }
+
+    public int getImagesCount() {
+        return imagesCount;
+    }
+
+    public void setImagesCount(int imagesCount) {
+        int oldValue = this.imagesCount;
+        if (oldValue != imagesCount) {
+            this.imagesCount = imagesCount;
+            firePropertyChange("imagesCount", oldValue, this.imagesCount);
         }
     }
 

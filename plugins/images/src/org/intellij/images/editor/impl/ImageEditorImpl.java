@@ -1,6 +1,5 @@
 package org.intellij.images.editor.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -13,9 +12,10 @@ import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.vfs.IfsUtil;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.IOException;
 
 /**
  * Image viewer implementation.
@@ -23,21 +23,58 @@ import java.io.IOException;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
-    private static final Logger LOGGER = Logger.getInstance("ImageEditor");
     private final PropertyChangeListener optionsChangeListener = new OptionsChangeListener();
     private final Project project;
-    private final ImageEditorUI editorUI;
     private final VirtualFile file;
+    private final ImageEditorUI editorUI;
     private boolean disposed = false;
 
-    ImageEditorImpl(Project project, VirtualFile file) throws IOException {
+    ImageEditorImpl(Project project, VirtualFile file) {
         this.project = project;
         this.file = file;
 
         // Options
         Options options = OptionsManager.getInstance().getOptions();
-        editorUI = new ImageEditorUI(IfsUtil.getImage(file), options.getEditorOptions());
+        editorUI = new ImageEditorUI(options.getEditorOptions());
         options.addPropertyChangeListener(optionsChangeListener);
+
+        setValue(file);
+    }
+
+    private void setValue(VirtualFile file) {
+        ImageDocument document = editorUI.getImageComponent().getDocument();
+        try {
+            BufferedImage previousImage = document.getValue();
+            BufferedImage image = IfsUtil.getImage(file);
+            document.setValue(image);
+            if (image != null && previousImage == null) {
+                // Set smart zooming behaviour on open
+                Options options = OptionsManager.getInstance().getOptions();
+                ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
+                // Open as actual size
+                ImageZoomModel zoomModel = getZoomModel();
+                zoomModel.setZoomFactor(1.0d);
+
+                if (zoomOptions.isSmartZooming()) {
+                    Dimension prefferedSize = zoomOptions.getPrefferedSize();
+                    if (prefferedSize.width > image.getWidth() && prefferedSize.height > image.getHeight()) {
+                        // Resize to preffered size
+                        // Calculate zoom factor
+
+                        double factor = (prefferedSize.getWidth() / (double)image.getWidth() + prefferedSize.getHeight() / (double)image.getHeight()) / 2.0d;
+                        zoomModel.setZoomFactor(Math.ceil(factor));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Error loading image file
+            document.setValue(null);
+        }
+    }
+
+    public boolean isValid() {
+        ImageDocument document = editorUI.getImageComponent().getDocument();
+        return document.getValue() != null;
     }
 
     public JComponent getComponent() {
@@ -46,6 +83,10 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
 
     public JComponent getContentComponent() {
         return editorUI.getImageComponent();
+    }
+
+    public VirtualFile getFile() {
+        return file;
     }
 
     public Project getProject() {
@@ -95,11 +136,7 @@ final class ImageEditorImpl extends VirtualFileAdapter implements ImageEditor {
             // Change document
             file.refresh(true, false, new Runnable() {
                 public void run() {
-                    try {
-                        editorUI.getImageComponent().getDocument().setValue(IfsUtil.getImage(file));
-                    } catch (IOException e) {
-                        LOGGER.error(e);
-                    }
+                    setValue(file);
                 }
             });
 
