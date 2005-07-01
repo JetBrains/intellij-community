@@ -124,7 +124,7 @@ public class TreeChangeImpl implements TreeChange {
     while(current != null){
       if(current == operand) return true;
       current = current.getTreeNext();
-      if(current.getTextLength() != 0) break;
+      if(current != null && current.getTextLength() != 0) break;
     }
     return false;
   }
