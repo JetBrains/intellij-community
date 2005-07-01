@@ -81,6 +81,7 @@ public class HtmlCompletionData extends XmlCompletionData {
     return new ElementFilter() {
       public boolean isAcceptable(Object element, PsiElement context) {
         if (isStyleAttributeContext(context)) return false;
+        if ( isScriptContext((PsiElement)element) ) return false;
         return true;
       }
 

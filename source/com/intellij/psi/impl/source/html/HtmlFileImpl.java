@@ -28,11 +28,9 @@ import java.util.ArrayList;
  * To change this template use File | Settings | File Templates.
  */
 public class HtmlFileImpl extends XmlFileImpl {
-  private XmlTag[] myCachedScriptTags = null;
-
   public void subtreeChanged() {
     super.subtreeChanged();
-    myCachedScriptTags = null;
+    ScriptSupportUtil.clearCaches(this);
   }
 
   public HtmlFileImpl(Project project, VirtualFile file) {
@@ -55,26 +53,7 @@ public class HtmlFileImpl extends XmlFileImpl {
 
   public boolean processDeclarations(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
     if (!super.processDeclarations(processor, substitutor, lastParent, place)) return false;
-    if (myCachedScriptTags == null) {
-      final List<XmlTag> scriptTags = new ArrayList<XmlTag>();
-      XmlUtil.processXmlElements(getDocument(), new PsiElementProcessor() {
-        public boolean execute(final PsiElement element) {
-          if (element instanceof XmlTag && "script".equals(((XmlTag)element).getDescriptor().getName())) {
-            scriptTags.add((XmlTag)element);
-          }
-          return true;
-        }
-      }, true);
-      myCachedScriptTags = scriptTags.toArray(new XmlTag[scriptTags.size()]);
-    }
-
-    for (XmlTag tag : myCachedScriptTags) {
-      final XmlTagChild[] children = tag.getValue().getChildren();
-      for (XmlTagChild child : children) {
-        if (!child.processDeclarations(processor, substitutor, null, place)) return false;
-      }
-    }
-
-    return true;
+    
+    return ScriptSupportUtil.processDeclarations(this, processor, substitutor, lastParent, place);
   }
 }
