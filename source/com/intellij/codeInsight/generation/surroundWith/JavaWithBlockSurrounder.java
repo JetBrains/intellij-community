@@ -27,7 +27,7 @@ class JavaWithBlockSurrounder extends JavaStatementsSurrounder{
     PsiBlockStatement blockStatement = (PsiBlockStatement)factory.createStatementFromText(text, null);
     blockStatement = (PsiBlockStatement)codeStyleManager.reformat(blockStatement);
 
-    blockStatement = (PsiBlockStatement)container.addAfter(blockStatement, statements[statements.length - 1]);
+    blockStatement = (PsiBlockStatement)container.addBefore(blockStatement, statements[0]);
 
     PsiCodeBlock body = blockStatement.getCodeBlock();
     body.addRange(statements[0], statements[statements.length - 1]);
