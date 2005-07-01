@@ -190,6 +190,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
   }
 
   private String getLastLine(final String text) throws IOException {
+    if (text.endsWith("\n")) return "";
     final LineNumberReader lineNumberReader = new LineNumberReader(new StringReader(text));
     String line;
     String result = null;
