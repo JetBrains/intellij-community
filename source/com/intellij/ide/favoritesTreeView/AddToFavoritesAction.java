@@ -302,9 +302,11 @@ public class AddToFavoritesAction extends AnAction {
     if (psiElement instanceof PsiPackage){
       final PsiPackage psiPackage = (PsiPackage)psiElement;
       final PsiDirectory[] directories = psiPackage.getDirectories();
-      final VirtualFile firstDir = directories[0].getVirtualFile();
-      final boolean isLibraryRoot = PackageUtil.isLibraryRoot(firstDir, project);
-      return new PackageElement(module, psiPackage, isLibraryRoot);
+      if (directories.length > 0) {
+        final VirtualFile firstDir = directories[0].getVirtualFile();
+        final boolean isLibraryRoot = PackageUtil.isLibraryRoot(firstDir, project);
+        return new PackageElement(module, psiPackage, isLibraryRoot);
+      }
     }
     return psiElement;
   }
