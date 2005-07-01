@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.cvsSupport2.connections.ssh.ui.SshConnectionSettingsPanel">
-  <grid id="c2742" binding="myPanel" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="d38fe" binding="myPanel" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="16" y="12" width="415" height="194"/>
@@ -11,116 +11,110 @@
     <children>
       <hspacer id="eca4d">
         <constraints>
-          <xy x="228" y="58" width="187" height="11"/>
-          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+          <xy x="244" y="58" width="171" height="11"/>
+          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
         </constraints>
       </hspacer>
-      <vspacer id="a7871">
-        <constraints>
-          <xy x="108" y="127" width="11" height="67"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
-        </constraints>
-      </vspacer>
-      <grid id="72173" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="e28bd" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="228" height="127"/>
+          <xy x="0" y="0" width="91" height="127"/>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
-          <grid id="e28bd" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="e304" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="0" y="0" width="89" height="127"/>
+              <xy x="0" y="0" width="91" height="102"/>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="etched" title="SSH version"/>
+            <children>
+              <component id="19b7c" class="javax.swing.JRadioButton" binding="myAllowBoth">
+                <constraints>
+                  <xy x="6" y="20" width="77" height="22"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Allow both"/>
+                </properties>
+              </component>
+              <component id="458d4" class="javax.swing.JRadioButton" binding="myForceSSH1">
+                <constraints>
+                  <xy x="6" y="47" width="79" height="22"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Force ssh1"/>
+                </properties>
+              </component>
+              <component id="2501c" class="javax.swing.JRadioButton" binding="myForceSSH2">
+                <constraints>
+                  <xy x="6" y="74" width="79" height="22"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Force ssh2"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="b7078" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="0" y="107" width="91" height="20"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children>
-              <grid id="e304" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                <margin top="0" left="0" bottom="0" right="0"/>
+              <component id="b8a52" class="javax.swing.JLabel">
                 <constraints>
-                  <xy x="0" y="0" width="89" height="102"/>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+                  <xy x="0" y="3" width="28" height="14"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
                 </constraints>
-                <properties/>
-                <border type="etched" title="SSH version"/>
-                <children>
-                  <component id="19b7c" class="javax.swing.JRadioButton" binding="myAllowBoth">
-                    <constraints>
-                      <xy x="6" y="20" width="75" height="22"/>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                    </constraints>
-                    <properties>
-                      <text value="Allow both"/>
-                    </properties>
-                  </component>
-                  <component id="458d4" class="javax.swing.JRadioButton" binding="myForceSSH1">
-                    <constraints>
-                      <xy x="6" y="47" width="77" height="22"/>
-                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                    </constraints>
-                    <properties>
-                      <text value="Force ssh1"/>
-                    </properties>
-                  </component>
-                  <component id="2501c" class="javax.swing.JRadioButton" binding="myForceSSH2">
-                    <constraints>
-                      <xy x="6" y="74" width="77" height="22"/>
-                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-                    </constraints>
-                    <properties>
-                      <text value="Force ssh2"/>
-                    </properties>
-                  </component>
-                </children>
-              </grid>
-              <grid id="b7078" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                <margin top="0" left="0" bottom="0" right="0"/>
+                <properties>
+                  <text value="Port:"/>
+                </properties>
+              </component>
+              <component id="3a23a" class="javax.swing.JTextField" binding="myPort">
                 <constraints>
-                  <xy x="0" y="107" width="89" height="20"/>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+                  <xy x="38" y="0" width="53" height="20"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1"/>
                 </constraints>
-                <properties/>
-                <border type="none"/>
-                <children>
-                  <component id="b8a52" class="javax.swing.JLabel">
-                    <constraints>
-                      <xy x="0" y="3" width="24" height="14"/>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
-                    </constraints>
-                    <properties>
-                      <text value="Port:"/>
-                    </properties>
-                  </component>
-                  <component id="3a23a" class="javax.swing.JTextField" binding="myPort">
-                    <constraints>
-                      <xy x="34" y="0" width="55" height="20"/>
-                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1"/>
-                    </constraints>
-                    <properties>
-                      <columns value="4"/>
-                      <text value=""/>
-                    </properties>
-                  </component>
-                </children>
-              </grid>
+                <properties>
+                  <columns value="4"/>
+                  <text value=""/>
+                </properties>
+              </component>
             </children>
           </grid>
-          <grid id="c2762" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        </children>
+      </grid>
+      <grid id="f39e0" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <xy x="101" y="0" width="143" height="127"/>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="c2762" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="99" y="0" width="129" height="127"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <xy x="0" y="0" width="143" height="76"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
             </constraints>
             <properties/>
             <border type="etched" title="Private Key File"/>
             <children>
               <component id="37beb" class="javax.swing.JCheckBox" binding="myUsePrivateKeyFile">
                 <constraints>
-                  <xy x="6" y="23" width="117" height="22"/>
+                  <xy x="6" y="20" width="118" height="22"/>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
                 </constraints>
                 <properties>
@@ -129,23 +123,55 @@
               </component>
               <component id="1f45b" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myPathToPrivateKeyFile">
                 <constraints>
-                  <xy x="6" y="54" width="117" height="27"/>
+                  <xy x="6" y="47" width="118" height="20"/>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="3"/>
                 </constraints>
                 <properties>
                   <text value=""/>
                 </properties>
               </component>
-              <vspacer id="c053b">
-                <constraints>
-                  <xy x="39" y="83" width="11" height="50"/>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
-                </constraints>
-              </vspacer>
             </children>
           </grid>
+          <grid id="e1cc1" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="0" y="81" width="143" height="25"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <hspacer id="d0d41">
+                <constraints>
+                  <xy x="0" y="7" width="20" height="11"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+                </constraints>
+              </hspacer>
+              <component id="b3ab3" class="javax.swing.JButton" binding="myChangePasswordButton">
+                <constraints>
+                  <xy x="20" y="0" width="123" height="25"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+                </constraints>
+                <properties>
+                  <text value="Change Password"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <vspacer id="d7bc2">
+            <constraints>
+              <xy x="66" y="106" width="11" height="21"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+            </constraints>
+          </vspacer>
         </children>
       </grid>
+      <vspacer id="a7871">
+        <constraints>
+          <xy x="167" y="127" width="11" height="67"/>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2"/>
+        </constraints>
+      </vspacer>
     </children>
   </grid>
 </form>

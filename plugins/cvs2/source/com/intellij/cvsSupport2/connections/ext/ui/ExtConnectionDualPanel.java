@@ -1,6 +1,7 @@
 package com.intellij.cvsSupport2.connections.ext.ui;
 
 import com.intellij.cvsSupport2.config.ExtConfiguration;
+import com.intellij.cvsSupport2.config.CvsRootProvider;
 import com.intellij.cvsSupport2.connections.ssh.ui.SshConnectionSettingsPanel;
 import com.intellij.cvsSupport2.connections.ssh.ui.SshSettings;
 
@@ -20,9 +21,9 @@ public class ExtConnectionDualPanel {
   private static final String EXT = "EXT";
   private static final String SSH = "SSH";
 
-  public ExtConnectionDualPanel() {
+  public ExtConnectionDualPanel(final CvsRootProvider rootProvider) {
     myExtSettingsPanel = new ExtConnectionSettingsPanel();
-    mySshSettingsPanel = new SshConnectionSettingsPanel();
+    mySshSettingsPanel = new SshConnectionSettingsPanel(rootProvider);
 
     myDualPanel.add(myExtSettingsPanel.getPanel(), EXT);
     myDualPanel.add(mySshSettingsPanel.getPanel(), SSH);
