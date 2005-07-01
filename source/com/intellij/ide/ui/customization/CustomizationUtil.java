@@ -130,8 +130,7 @@ public class CustomizationUtil {
     schema.fillActionGroups(root);
     final JTree defaultTree = new JTree(new DefaultTreeModel(root));
 
-    final ArrayList<ActionUrl> addActions = new ArrayList<ActionUrl>();
-    final ArrayList<ActionUrl> deleteActions = new ArrayList<ActionUrl>();
+    final ArrayList<ActionUrl> actions = new ArrayList<ActionUrl>();
 
     TreeUtil.traverseDepth((TreeNode)tree.getModel().getRoot(), new TreeUtil.Traverse() {
       public boolean accept(Object node) {
@@ -146,32 +145,43 @@ public class CustomizationUtil {
           final DefaultMutableTreeNode visited = (DefaultMutableTreeNode)treePath.getLastPathComponent();
           final ActionUrl[] defaultUserObjects = getChildUserObjects(visited, url);
           final ActionUrl[] currentUserObjects = getChildUserObjects(treeNode, url);
-          Diff.Change change = Diff.buildChanges(defaultUserObjects, currentUserObjects);
-          int deletedLines = 0;
-          while (change != null) {
-            for (int i = 0; i < change.deleted; i++) {
-              final int idx = change.line0 + i;
-              ActionUrl currentUserObject = defaultUserObjects[idx];
-              currentUserObject.setActionType(ActionUrl.DELETED);
-              currentUserObject.setAbsolutePosition(idx - deletedLines);
-              deleteActions.add(currentUserObject);
-              deletedLines++;
-            }
-            for (int i = 0; i < change.inserted; i++) {
-              final int idx = change.line1 + i;
-              ActionUrl currentUserObject = currentUserObjects[idx];
-              currentUserObject.setActionType(ActionUrl.ADDED);
-              currentUserObject.setAbsolutePosition(idx);
-              addActions.add(currentUserObject);
-            }
-            change = change.link;
+          computeDiff(defaultUserObjects, currentUserObjects, actions);
+        } else {
+          url.getGroupPath().remove(url.getParentGroup());
+          if (actions.contains(url)){
+            url.getGroupPath().add(((Group)treeNode.getUserObject()).getName());
+            actions.addAll(schema.getChildActions(url));
           }
         }
         return true;
       }
     });
-    deleteActions.addAll(addActions);
-    schema.setActions(deleteActions);
+    schema.setActions(actions);
+  }
+
+  private static void computeDiff(final ActionUrl[] defaultUserObjects,
+                                  final ActionUrl[] currentUserObjects,
+                                  final ArrayList<ActionUrl> actions) {
+    Diff.Change change = Diff.buildChanges(defaultUserObjects, currentUserObjects);
+    int deletedLines = 0;
+    while (change != null) {
+      for (int i = 0; i < change.deleted; i++) {
+        final int idx = change.line0 + i;
+        ActionUrl currentUserObject = defaultUserObjects[idx];
+        currentUserObject.setActionType(ActionUrl.DELETED);
+        currentUserObject.setAbsolutePosition(idx - deletedLines);
+        actions.add(currentUserObject);
+        deletedLines++;
+      }
+      for (int i = 0; i < change.inserted; i++) {
+        final int idx = change.line1 + i;
+        ActionUrl currentUserObject = currentUserObjects[idx];
+        currentUserObject.setActionType(ActionUrl.ADDED);
+        currentUserObject.setAbsolutePosition(idx);
+        actions.add(currentUserObject);
+      }
+      change = change.link;
+    }
   }
 
   public static TreePath getPathByUserObjects(JTree tree, TreePath treePath){

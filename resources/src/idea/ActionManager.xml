@@ -212,7 +212,7 @@
     <group id="MainMenu">
 
       <!-- File  -->
-      <group text="_File" id="FileMenu">
+      <group text="_File" id="FileMenu" popup="true">
         <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction" text="_New Project..." description="Create a new project"/>
         <action id="NewModule" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction" text="New _Module..." description="Add new module to the project"/>
         <action id="OpenProject" class="com.intellij.ide.actions.OpenProjectAction" text="_Open Project..." description="Open an existing project"/>
@@ -239,7 +239,7 @@
       </group>
 
       <!-- Edit -->
-      <group text="_Edit" id="EditMenu">
+      <group text="_Edit" id="EditMenu" popup="true">
         <action id="$Undo" class="com.intellij.ide.actions.UndoAction" text="_Undo" icon="/actions/undo.png" description="Undo last operation"/>
         <action id="$Redo" class="com.intellij.ide.actions.RedoAction" text="_Redo" icon="/actions/redo.png" description="Redo last undone operation"/>
         <separator/>
@@ -264,7 +264,7 @@
       </group>
 
       <!-- Search -->
-      <group text="_Search" id="SearchMenu">
+      <group text="_Search" id="SearchMenu" popup="true">
         <action id="Find" class="com.intellij.openapi.editor.actions.FindAction" text="_Find..." icon="/actions/menu-find.png" description="Find a string in active editor"/>
         <action id="Replace" class="com.intellij.openapi.editor.actions.ReplaceAction" text="_Replace..." icon="/actions/menu-replace.png" description="Replace a string in active editor with another string"/>
         <action id="FindNext" class="com.intellij.ide.actions.SearchAgainAction" text="Find _Next" description="Repeat the last Find/Replace operation"/>
@@ -282,7 +282,7 @@
       </group>
 
       <!-- View -->
-      <group text="_View" id="ViewMenu">
+      <group text="_View" id="ViewMenu" popup="true">
         <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction" text="_Toolbar" description="Show/hide the main toolbar"/>
         <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction" text="_Status Bar" description="Show/hide the status bar"/>
         <reference ref="EditorToggleShowWhitespaces"/>
@@ -348,7 +348,7 @@
       </group>
 
       <!-- Go to -->
-      <group text="_Go To" id="GoToMenu">
+      <group text="_Go To" id="GoToMenu" popup="true">
         <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction" text="_Class..." description="Quickly navigate to a class by name"/>
         <action id="GotoFile" class="com.intellij.ide.actions.GotoFileAction" text="_File..." description="Quickly navigate to a file by name"/>
         <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction" text="_Symbol..." description="Quickly navigate to any symbol by name"/>
@@ -386,7 +386,7 @@
       </group>
 
       <!--  Code  -->
-      <group id="CodeMenu" class="com.intellij.codeInsight.actions.CodeGroup" text="Co_de">
+      <group id="CodeMenu" class="com.intellij.codeInsight.actions.CodeGroup" text="Co_de" popup="true">
         <reference ref="OverrideMethods"/>
         <reference ref="ImplementMethods"/>
         <reference ref="DelegateMethods"/>
@@ -469,7 +469,7 @@
       </group>
 
       <!-- Build -->
-      <group text="_Build" id="BuildMenu">
+      <group text="_Build" id="BuildMenu" popup="true">
         <action id="CompileProject" class="com.intellij.compiler.actions.CompileProjectAction" text="_Rebuild Project" description="Recompile all files in the project"/>
         <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" text="Make _Project" icon="/actions/compile.png" description="Compile all modified and dependent files in the project"/>
         <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction" text="Make _Module" description="Compile all modified and dependent files in the module"/>
@@ -482,7 +482,7 @@
       </group>
 
 
-      <group text="R_un" id="RunMenu">
+      <group text="R_un" id="RunMenu" popup="true">
         <group id="RunnerActions" text="Run/Debug" />
         <action id="editRunConfigurations" text="Edit Configurations" class="com.intellij.execution.actions.EditRunConfigurationsAction" description="Open edit Run/Debug configurations dialog"/>
         <action id="Stop" text="Stop" class="com.intellij.execution.actions.StopAction" description="Stop process" icon = "/actions/suspend.png"/>
@@ -512,7 +512,7 @@
       </group>
 
       <!-- Tools -->
-      <group text="_Tools" id="ToolsMenu" configurable="true">
+      <group text="_Tools" id="ToolsMenu" configurable="true" popup="true">
         <action id="SaveAsTemplate" class="com.intellij.codeInsight.template.actions.SaveAsTemplateAction" text="Save as L_ive Template..." description="Save the selected text as live template"/>
         <action id="SaveFileAsTemplate" class="com.intellij.ide.actions.SaveFileAsTemplateAction" text="Save File as Temp_late..." description="Save current file as template"/>
         <action id="GenerateJavadoc" class="com.intellij.javadoc.actions.GenerateJavadocAction" text="Generate Java_Doc..." description="Run the JavaDoc tool"/>
@@ -568,7 +568,7 @@
       <reference ref="VcsGroups"/>
 
       <!-- Window -->
-      <group text="_Window" id="WindowMenu">
+      <group text="_Window" id="WindowMenu" popup="true">
         <group id="ToolWindowsGroup" class="com.intellij.ide.actions.ToolWindowsGroup" popup="true" text="T_ool Windows"/>
         <separator/>
         <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction" text="Store Current Layout as Defa_ult" description="Store current layout as default"/>
@@ -602,7 +602,7 @@
       </group>
 
       <!-- Help -->
-      <group text="_Help" id="HelpMenu">
+      <group text="_Help" id="HelpMenu" popup="true">
         <action id="HelpTopics" class="com.intellij.ide.actions.HelpTopicsAction" text="Help _Topics" icon="/actions/menu-help.png" description="Show help contents"/>
         <action id="ShowTips" class="com.intellij.ide.actions.ShowTipsAction" text="Tip of the _Day" description="Show Tips of the Day"/>
         <action id="ProductivityGude" class="com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction" text="_Productivity Guide" description="Show productivity features usages statistics"/>

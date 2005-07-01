@@ -10,7 +10,10 @@ import com.intellij.openapi.util.*;
 import org.jdom.Element;
 
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * User: anna
@@ -175,6 +178,26 @@ public class CustomActionsSchema implements JDOMExternalizable {
       return false;
     }
     return true;
+  }
+
+  public List<ActionUrl> getChildActions(final ActionUrl url) {
+    ArrayList<ActionUrl> result = new ArrayList<ActionUrl>();
+    final ArrayList<String> groupPath = url.getGroupPath();
+    for (ActionUrl actionUrl : myActions) {
+      int index = 0;
+      if (groupPath.size() <= actionUrl.getGroupPath().size()){
+        while (index < groupPath.size()){
+          if (!Comparing.equal(groupPath.get(index), actionUrl.getGroupPath().get(index))){
+            break;
+          }
+          index++;
+        }
+        if (index == groupPath.size()){
+          result.add(actionUrl);
+        }
+      }
+    }
+    return result;
   }
 
   private static class Pair {

@@ -185,7 +185,6 @@ public class ActionUrl implements JDOMExternalizable {
     } else {
       node.insert(new DefaultMutableTreeNode(url.getComponent()), url.getAbsolutePosition());
     }
-    ((Group)node.getUserObject()).getChildren().add(url.getComponent());
   }
 
   private static void removePathFromActionsTree(JTree tree, ActionUrl url) {
@@ -197,7 +196,6 @@ public class ActionUrl implements JDOMExternalizable {
       DefaultMutableTreeNode child = (DefaultMutableTreeNode)node.getChildAt(url.getAbsolutePosition());
       if (child.getUserObject().equals(url.getComponent())) {
         node.remove(child);
-        ((Group)node.getUserObject()).getChildren().remove(child.getUserObject());
       }
     }
   }
