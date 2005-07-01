@@ -16,4 +16,7 @@ final public class MissortedModifiersInspection
 
     }
 
+    public @Deprecated void foo3(){};
+
+
 }
