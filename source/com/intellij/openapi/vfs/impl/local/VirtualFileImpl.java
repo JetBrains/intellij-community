@@ -303,22 +303,22 @@ public class VirtualFileImpl extends VirtualFile {
     }
 
     VirtualFile existingFile = findChild(name);
-    if (existingFile != null) {
-      throw new IOException("Cannot create file " + name + " in " + getPath() + ". File already exists.");
-    }
 
     final boolean auxCommand = myFileSystem.auxCreateDirectory(this, name);
 
     PhysicalFile physicalFile = getPhysicalFile().createChild(name);
 
     if (!auxCommand) {
-      if (physicalFile.exists()) {
+      if (existingFile != null || physicalFile.exists()) {
         throw new IOException("Cannot create file " + physicalFile.getPath() + ". File already exists.");
       }
 
       if (!physicalFile.mkdir()) {
         throw new IOException("Cannot create file " + physicalFile.getPath() + ".");
       }
+    }
+    else {
+      if (existingFile != null) return existingFile;
     }
 
     VirtualFileImpl child = new VirtualFileImpl(myFileSystem, this, physicalFile, true);
