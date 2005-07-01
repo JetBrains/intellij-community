@@ -8,8 +8,10 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ClassInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.*;
 
 public class MissortedModifiersInspection extends ClassInspection {
@@ -17,6 +19,9 @@ public class MissortedModifiersInspection extends ClassInspection {
     private static final int NUM_MODIFIERS = 11;
     /** @noinspection StaticCollection*/
     private static final Map<String,Integer> s_modifierOrder = new HashMap<String, Integer>(NUM_MODIFIERS);
+
+    public boolean m_requireAnnotationsFirst = true;
+
     private final SortModifiersFix fix = new SortModifiersFix();
 
     static {
@@ -52,7 +57,10 @@ public class MissortedModifiersInspection extends ClassInspection {
     public InspectionGadgetsFix buildFix(PsiElement location) {
         return fix;
     }
-
+         public JComponent createOptionsPanel(){
+        return new SingleCheckboxOptionsPanel("Require annotations to be sorted before keywords",
+                                                              this, "m_requireAnnotationsFirst");
+    }
     private static class SortModifiersFix extends InspectionGadgetsFix {
         public String getName() {
             return "Sort modifers";
@@ -79,11 +87,7 @@ public class MissortedModifiersInspection extends ClassInspection {
         private static void addModifiersInOrder(List<String> modifiers,
                                                 PsiModifierList modifierList)
                 throws IncorrectOperationException{
-            final PsiManager psiManager = modifierList.getManager();
-            final PsiElementFactory factory = psiManager.getElementFactory();
             for(String modifier : modifiers){
-                   // final PsiKeyword keyword = factory.createKeyword(modifier);
-                  //  modifierList.getParent().addAfter(keyword, modifierList);
                     modifierList.setModifierProperty(modifier, true);
             }
         }
@@ -98,7 +102,7 @@ public class MissortedModifiersInspection extends ClassInspection {
         }
     }
 
-    private static class MissortedModifiersVisitor
+    private class MissortedModifiersVisitor
             extends BaseInspectionVisitor {
         private boolean m_isInClass = false;
 
@@ -143,7 +147,7 @@ public class MissortedModifiersInspection extends ClassInspection {
             }
         }
 
-        private static boolean isModifierListMissorted(PsiModifierList modifierList) {
+        private boolean isModifierListMissorted(PsiModifierList modifierList) {
             if (modifierList == null) {
                 return false;
             }
@@ -155,7 +159,7 @@ public class MissortedModifiersInspection extends ClassInspection {
                     simpleModifiers.add(child);
                 }
                 if(child instanceof PsiAnnotation){
-                    if(simpleModifiers.size() != 0){
+                    if(m_requireAnnotationsFirst && simpleModifiers.size() != 0){
                         return true; //things aren't in order, since annotations come first
                     }
                 }
