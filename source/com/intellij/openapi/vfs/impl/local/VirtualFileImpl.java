@@ -302,13 +302,17 @@ public class VirtualFileImpl extends VirtualFile {
       throw new IOException("Invalid file name: \"" + name + "\"");
     }
 
+    VirtualFile existingFile = findChild(name);
+    if (existingFile != null) {
+      throw new IOException("Cannot create file " + name + " in " + getPath() + ". File already exists.");
+    }
+
     final boolean auxCommand = myFileSystem.auxCreateDirectory(this, name);
 
     PhysicalFile physicalFile = getPhysicalFile().createChild(name);
 
     if (!auxCommand) {
-      VirtualFile file = findChild(name);
-      if (file != null || physicalFile.exists()) {
+      if (physicalFile.exists()) {
         throw new IOException("Cannot create file " + physicalFile.getPath() + ". File already exists.");
       }
 
