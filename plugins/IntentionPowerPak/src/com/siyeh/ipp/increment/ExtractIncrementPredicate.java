@@ -32,8 +32,15 @@ class ExtractIncrementPredicate
         if(parent instanceof PsiExpressionStatement){
             return false;
         }
+
         final PsiStatement containingStatement = PsiTreeUtil
                 .getParentOfType(element, PsiStatement.class);
+        if((containingStatement instanceof PsiReturnStatement ||
+                containingStatement instanceof PsiThrowStatement) &&
+                element instanceof PsiPostfixExpression)
+        {
+            return false;
+        }
         return containingStatement != null;
     }
 }
