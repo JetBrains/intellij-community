@@ -543,27 +543,37 @@ public class StructuralSearchTest extends IdeaTestCase {
       findMatchesCount(s7,s8,true)
     );
 
-    //String s9 = "int a[] = new int[] { 1,2,3,4};\n" +
-    //            "int b[] = { 2,3,4,5 };\n" +
-    //            "Object[] c = new Object[] { \"\", null};";
-    //String s10 = "new '_ []{ '_* }";
-    //
+    String s13 = "try { } catch(Exception e) { e.printStackTrace(); }";
+    String s14 = "'_Instance.'_MethodCall('_Parameter*)";
+    
+    assertEquals(
+      "Find statement in catch",
+      1,
+      findMatchesCount(s13,s14)
+    );
+    
+    String s9 = "int a[] = new int[] { 1,2,3,4};\n" +
+                "int b[] = { 2,3,4,5 };\n" +
+                "Object[] c = new Object[] { \"\", null};";
+    String s10 = "new '_ []{ '_* }";
+    
     //assertEquals(
     //  "Find array instatiation",
     //  2,
     //  findMatchesCount(s9,s10)
     //);
-    //
-    //String s11 = "class A {\n" +
-    //             "  void main(String[] argv);" +
-    //             "}";
-    //String s12 = "'t:[regex( *Object\\[\\] ) ] 't2";
-    //
+    
+    String s11 = "class A {\n" +
+                 "  void main(String[] argv);" +
+                 "}";
+    String s12 = "'t:[regex( *Object\\[\\] ) ] 't2";
+    
     //assertEquals(
     //  "Find array covariant types",
     //  1,
     //  findMatchesCount(s11,s12)
     //);
+    
   }
 
   private int findMatchesCount(String in, String pattern, boolean filePattern, FileType fileType) {

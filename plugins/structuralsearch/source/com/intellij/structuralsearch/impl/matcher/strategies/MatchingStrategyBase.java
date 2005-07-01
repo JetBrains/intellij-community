@@ -14,6 +14,10 @@ public class MatchingStrategyBase extends NodeFilter implements MatchingStrategy
   public void visitCodeBlock(final PsiCodeBlock block) {
     result = true;
   }
+  
+  public void visitCatchSection(final PsiCatchSection section) {
+    result = true;
+  }
 
   public void visitStatement(final PsiStatement statement) {
     result = true;
