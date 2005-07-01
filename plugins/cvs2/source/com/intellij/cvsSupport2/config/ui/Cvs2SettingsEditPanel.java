@@ -2,7 +2,7 @@ package com.intellij.cvsSupport2.config.ui;
 
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
-import com.intellij.cvsSupport2.config.CvsRootProvider;
+import com.intellij.cvsSupport2.config.CvsRootEditor;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsMethod;
 import com.intellij.cvsSupport2.connections.CvsRootData;
@@ -28,7 +28,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 
-public class Cvs2SettingsEditPanel implements CvsRootProvider {
+public class Cvs2SettingsEditPanel implements CvsRootEditor {
 
   private JPanel myPanel;
   private final BooleanValueHolder myIsInUpdating = new BooleanValueHolder(false);

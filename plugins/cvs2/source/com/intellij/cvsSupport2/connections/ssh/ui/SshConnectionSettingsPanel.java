@@ -2,7 +2,7 @@ package com.intellij.cvsSupport2.connections.ssh.ui;
 
 import com.intellij.cvsSupport2.connections.sshViaMaverick.SshTypesToUse;
 import com.intellij.cvsSupport2.connections.ssh.SSHPasswordProvider;
-import com.intellij.cvsSupport2.config.CvsRootProvider;
+import com.intellij.cvsSupport2.config.CvsRootEditor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -24,9 +24,9 @@ public class SshConnectionSettingsPanel {
   private JRadioButton myAllowBoth;
   private JButton myChangePasswordButton;
 
-  private final CvsRootProvider myRootProvider;
+  private final CvsRootEditor myRootProvider;
 
-  public SshConnectionSettingsPanel(final CvsRootProvider rootProvider) {
+  public SshConnectionSettingsPanel(final CvsRootEditor rootProvider) {
     myRootProvider = rootProvider;
     myPathToPrivateKeyFile.addBrowseFolderListener("Path to Private Key File", "Path to private key file",
                                                    null, new FileChooserDescriptor(true, false, false, false, false, false));

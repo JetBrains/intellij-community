@@ -1,5 +1,5 @@
 package com.intellij.cvsSupport2.config;
 
-public interface CvsRootProvider {
+public interface CvsRootEditor {
   String getCurrentRoot();
 }
