@@ -9,12 +9,12 @@ import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
 
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -226,6 +226,31 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider{
         final PsiElement finalElement = getManipulator(getElement()).handleContentChange(getElement(), range, newName);
         reparse();
         return finalElement;
+      }
+
+      public PsiElement resolveInner() {
+        if (!myElement.isValid()) return null;
+        String qName = getElement().getText().substring(getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
+        if (myIndex == myReferences.length - 1) {
+          final PsiClass aClass = myElement.getManager().findClass(qName, GlobalSearchScope.allScope(myElement.getProject()));
+          if (aClass != null) return aClass;
+        }
+        return myElement.getManager().findPackage(qName);
+      }
+
+      public Object[] getVariants() {
+        final PsiElement context = getContext();
+        if (context == null) {
+          PsiPackage aPackage = (PsiPackage)context;
+          final PsiPackage[] subPackages = aPackage.getSubPackages();
+          final PsiClass[] classes = aPackage.getClasses();
+          Object[] result = new Object[subPackages.length + classes.length];
+          System.arraycopy(subPackages, 0, result, 0, subPackages.length);
+          System.arraycopy(classes, 0, result, subPackages.length, classes.length);
+          return result;
+        } else {
+          return new Object[]{myElement.getManager().findPackage("")};
+        }
       }
     }
 
