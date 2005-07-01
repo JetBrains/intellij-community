@@ -4,6 +4,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.RegExFormatter;
 import com.siyeh.ig.RegExInputVerifier;
+import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -89,11 +90,13 @@ public abstract class ConventionInspection extends BaseInspection {
         minLengthField.setFont(panelFont);
         minLengthField.setValue(m_minLength);
         minLengthField.setColumns(2);
+        FormattedTextFieldMacFix.apply(minLengthField);
 
         final JFormattedTextField maxLengthField = new JFormattedTextField(formatter);
         maxLengthField.setFont(panelFont);
         maxLengthField.setValue(m_maxLength);
         maxLengthField.setColumns(2);
+        FormattedTextFieldMacFix.apply(maxLengthField);
 
         final JFormattedTextField regexField = new JFormattedTextField(new RegExFormatter());
         regexField.setFont(panelFont);
@@ -101,7 +104,7 @@ public abstract class ConventionInspection extends BaseInspection {
         regexField.setColumns(REGEX_COLUMN_COUNT);
         regexField.setInputVerifier(new RegExInputVerifier());
         regexField.setFocusLostBehavior(JFormattedTextField.COMMIT);
-
+        FormattedTextFieldMacFix.apply(regexField);
         final DocumentListener listener = new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {
                 textChanged();
