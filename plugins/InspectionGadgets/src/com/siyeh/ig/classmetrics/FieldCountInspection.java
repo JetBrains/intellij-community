@@ -3,6 +3,7 @@ package com.siyeh.ig.classmetrics;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ui.FormattedTextFieldMacFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,6 +50,7 @@ public class FieldCountInspection
         final JFormattedTextField valueField = new JFormattedTextField(formatter);
         valueField.setValue(m_limit);
         valueField.setColumns(4);
+        FormattedTextFieldMacFix.apply(valueField);
         final Document document = valueField.getDocument();
         document.addDocumentListener(new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {
