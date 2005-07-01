@@ -131,8 +131,17 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection{
             modifierList.setModifierProperty(PsiModifier.STATIC, false);
             modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
             modifierList.setModifierProperty(PsiModifier.FINAL, false);
-            if(!(modifierList.getParent() instanceof PsiClass)){
+            final PsiElement parent = modifierList.getParent();
+            assert parent !=null;
+            if(!(parent instanceof PsiClass)){
                 modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
+            }
+            else
+            {
+                if(ClassUtils.isInnerClass((PsiClass) parent))
+                {        // do the inner classes
+                    modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
+                }
             }
         }
     }
