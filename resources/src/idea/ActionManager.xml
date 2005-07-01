@@ -419,11 +419,13 @@
         <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction" text="_Inspect Code..." description="Inspect code"/>
         <action id="InspectCodeWithEditorProfile" class="com.intellij.codeInspection.actions.CodeInspectionOnEditorAction" text="Inspect Code With _Editor Settings" description="Inspect code with editor settings"/>
         <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction" text="View _Offline Inspection Results..." description="Load offline inspection results"/>
+        <separator/>
         <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction" text="Analyze _Dependencies..." description="Browse code choosen analysis item depends on" />
         <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction" text="Analyze _Backward Dependencies..." description="Browse code choosen analysis item used in" />
         <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction" text="Analyze _Cyclic Dependencies..." description="Browse code choosen analysis item used in cycles" />
         <action id="ShowModulesDependencies" class="com.intellij.moduleDependencies.ShowModuleDependenciesAction" text="Analyze _Module Dependencies..." description="Show dependencies between modules in project" />
         <action id="DupLocate" class="com.intellij.dupLocator.DuplocateAction" text="_Locate Duplicates..." description="Locate duplicate code in project" />
+        <separator/>
         <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction" text="Analyze _Stacktrace..."/>
       </group>
 
