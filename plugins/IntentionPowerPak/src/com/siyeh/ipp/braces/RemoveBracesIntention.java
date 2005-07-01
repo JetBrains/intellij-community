@@ -52,7 +52,32 @@ public class RemoveBracesIntention extends MutablyNamedIntention
 		final PsiBlockStatement blockStatement = (PsiBlockStatement)element;
 		final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
 		final PsiStatement[] statements = codeBlock.getStatements();
-		final String text = statements[0].getText();
+		final PsiStatement statement = statements[0];
+
+		// handle comments
+		final PsiElement parent = blockStatement.getParent();
+		assert parent != null;
+		final PsiElement grandParent = parent.getParent();
+		assert grandParent != null;
+		PsiElement sibling = codeBlock.getFirstChild();
+		assert sibling != null;
+		sibling = sibling.getNextSibling();
+		while (sibling != null && !sibling.equals(statement))
+		{
+			if (sibling instanceof PsiComment)
+			{
+				grandParent.addBefore(sibling, parent);
+			}
+			sibling = sibling.getNextSibling();
+		}
+		final PsiElement lastChild = blockStatement.getLastChild();
+		if (lastChild instanceof PsiComment)
+		{
+			final PsiElement nextSibling = parent.getNextSibling();
+			grandParent.addAfter(lastChild, nextSibling);
+		}
+
+		final String text = statement.getText();
 		replaceStatement(text, blockStatement);
 	}
 }
