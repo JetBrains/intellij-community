@@ -121,7 +121,7 @@ public class TreeChangeImpl implements TreeChange {
   private boolean isAfter(final ASTNode operand, final ASTNode base) {
     ASTNode current = base.getTreeNext();
 
-    while(current != null){
+    while(current != null && current.getTextLength() == 0){
       if(current == operand) return true;
       current = current.getTreeNext();
     }
