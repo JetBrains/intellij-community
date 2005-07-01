@@ -13,10 +13,8 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -24,7 +22,10 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.HashMap;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class HighlightManagerImpl extends HighlightManager implements ProjectComponent {
 
@@ -65,27 +66,18 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
 
     myDocumentListener = new DocumentAdapter() {
       public void documentChanged(DocumentEvent event) {
-        ArrayList<RangeHighlighter> highlightersToRemove = new ArrayList<RangeHighlighter>();
-
         Document document = event.getDocument();
         Editor[] editors = EditorFactory.getInstance().getEditors(document);
-        for (int i = 0; i < editors.length; i++) {
-          Editor editor = editors[i];
+        for (Editor editor : editors) {
           Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, false);
           if (map == null) return;
 
-          for (Iterator<RangeHighlighter> iterator = map.keySet().iterator(); iterator.hasNext();) {
-            RangeHighlighter highlighter = iterator.next();
+          for (RangeHighlighter highlighter : map.keySet()) {
             HighlightInfo info = map.get(highlighter);
             if (!info.editor.getDocument().equals(document)) continue;
             if ((info.flags & HIDE_BY_TEXT_CHANGE) != 0) {
-              highlightersToRemove.add(highlighter);
+              removeSegmentHighlighter(editor, highlighter);
             }
-          }
-
-          for (int j = 0; j < highlightersToRemove.size(); j++) {
-            RangeHighlighter highlighter = highlightersToRemove.get(j);
-            removeSegmentHighlighter(editor, highlighter);
           }
         }
       }
@@ -138,7 +130,10 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     if (map == null) return false;
     HighlightInfo info = map.get(highlighter);
     if (info == null) return false;
-    info.editor.getMarkupModel().removeHighlighter(highlighter);
+    MarkupModel markupModel = info.editor.getMarkupModel();
+    if (((MarkupModelEx)markupModel).containsHighlighter(highlighter)) {
+      markupModel.removeHighlighter(highlighter);
+    }
     map.remove(highlighter);
     return true;
   }

@@ -9,4 +9,5 @@ import com.intellij.openapi.editor.markup.TextAttributes;
  */ 
 public interface MarkupModelEx extends MarkupModel {
   RangeHighlighter addPersistentLineHighlighter(int lineNumber, int layer, TextAttributes textAttributes);
+  boolean containsHighlighter(RangeHighlighter highlighter);
 }

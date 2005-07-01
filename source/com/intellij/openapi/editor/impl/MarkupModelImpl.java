@@ -18,15 +18,17 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.UserDataHolderBase;
+import gnu.trove.THashSet;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.MarkupModelImpl");
   private DocumentImpl myDocument;
 
   private final HighlighterList myHighlighterList;
-  private ArrayList<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
+  private Collection<RangeHighlighter> myHighlighters = new THashSet<RangeHighlighter>();
   private RangeHighlighter[] myCachedHighlighters;
   private ArrayList<MarkupModelListener> myListeners = new ArrayList<MarkupModelListener>();
   private MarkupModelListener[] myCachedListeners;
@@ -99,11 +101,11 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   private RangeHighlighter addRangeHighlighter(int startOffset,
-                                              int endOffset,
-                                              int layer,
-                                              TextAttributes textAttributes,
-                                              HighlighterTargetArea targetArea,
-                                              boolean isPersistent) {
+                                               int endOffset,
+                                               int layer,
+                                               TextAttributes textAttributes,
+                                               HighlighterTargetArea targetArea,
+                                               boolean isPersistent) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     RangeHighlighterImpl segmentHighlighter = new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea,
@@ -135,8 +137,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   public void removeAllHighlighters() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    for (int i = 0; i < myHighlighters.size(); i++) {
-      RangeHighlighter highlighter = myHighlighters.get(i);
+    for (RangeHighlighter highlighter : myHighlighters) {
       fireSegmentHighlighterChanged(highlighter);
       myHighlighterList.removeSegmentHighlighter(highlighter);
     }
@@ -170,8 +171,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   protected void fireSegmentHighlighterChanged(RangeHighlighter segmentHighlighter) {
     MarkupModelEvent event = new MarkupModelEvent(this, segmentHighlighter);
     MarkupModelListener[] listeners = getCachedListeners();
-    for (int i = 0; i < listeners.length; i++) {
-      MarkupModelListener listener = listeners[i];
+    for (MarkupModelListener listener : listeners) {
       listener.rangeHighlighterChanged(event);
     }
   }
@@ -179,5 +179,9 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   public HighlighterList getHighlighterList() {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     return myHighlighterList;
+  }
+
+  public boolean containsHighlighter(RangeHighlighter highlighter) {
+    return myHighlighters.contains(highlighter);
   }
 }
