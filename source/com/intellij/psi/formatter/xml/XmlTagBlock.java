@@ -62,8 +62,8 @@ public class XmlTagBlock extends AbstractXmlBlock{
         else if (myXmlFormattingPolicy.processJsp() && isJspxJavaContainingNode(child)) {
           localResult.add(new JspTextBlock(child,
                                            myXmlFormattingPolicy,
-                                           JspTextBlock.findPsiRootAt(child)
-          ));
+                                           JspTextBlock.findPsiRootAt(child),
+                                           getChildIndent()));
         }
         else if (child.getElementType() == ElementType.XML_TEXT) {
           createXmlTextBlocks(localResult, child, wrap, alignment);

@@ -110,7 +110,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       if (myXmlFormattingPolicy.processJsp() && (child.getElementType() == ElementType.JSP_XML_TEXT || child.getPsi() instanceof JspText)) {
         final Pair<PsiElement,Language> root = JspTextBlock.findPsiRootAt(child);
         if (root != null) {
-          return new JspTextBlock(child, myXmlFormattingPolicy, root);
+          return new JspTextBlock(child, myXmlFormattingPolicy, root, indent);
         }
       }
       if (child.getElementType() == getTagType() || child.getElementType() == ElementType.XML_TAG) {

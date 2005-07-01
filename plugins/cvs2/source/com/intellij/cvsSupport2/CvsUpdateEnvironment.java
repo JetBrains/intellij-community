@@ -52,7 +52,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.merge.AbstractMergeAction;
 import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
 
 import java.io.File;
 import java.util.*;
@@ -93,13 +92,8 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
       }
     });
     final CvsResult result = cvsOperationExecutor.getResult();
-    return new UpdateSessionAdapter(result.getErrorsAndWarnings(), result.isCanceled()) {
+    return new UpdateSessionAdapter(result.getErrorsAndWarnings(), result.isCanceled() || !result.isLoggedIn()) {
       public void onRefreshFilesCompleted() {
-        /*
-        if (updateSettings.getPruneEmptyDirectories()) {
-          new DirectoryPruner(handler.getRoots()).execute();
-        }
-        */
         if (!updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty()) {
           ApplicationManager.getApplication().invokeAndWait(new Runnable() {
             public void run() {
