@@ -28,12 +28,12 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider, P
     if (parent.getValue() instanceof Form) return children;
 
     // Optimization. Check if there are any forms at all.
-    boolean formsFound = true;
+    boolean formsFound = false;
     for (AbstractTreeNode node : children) {
       if (node.getValue() instanceof PsiFile) {
         PsiFile file = (PsiFile)node.getValue();
         if (file.getFileType() == StdFileTypes.GUI_DESIGNER_FORM) {
-          formsFound = false;
+          formsFound = true;
           break;
         }
       }
