@@ -11,14 +11,16 @@ import com.intellij.codeFormatting.general.FormatterUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.NotNull;
+
 public class BlockContainingJavaBlock extends AbstractJavaBlock{
-  
+
   private final static int BEFORE_FIRST = 0;
   private final static int BEFORE_BLOCK = 1;
   private final static int AFTER_ELSE = 2;
 
   private final List<Indent> myIndentsBefore = new ArrayList<Indent>();
-  
+
   public BlockContainingJavaBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CodeStyleSettings settings) {
     super(node, wrap, alignment, indent, settings);
   }
@@ -57,7 +59,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
     if (state == BEFORE_FIRST) {
       if (child.getElementType() == ElementType.ELSE_KEYWORD) {
         return AFTER_ELSE;
-      }      
+      }
       if (ElementType.COMMENT_BIT_SET.isInSet(child.getElementType())) {
         return BEFORE_FIRST;
       }
@@ -88,18 +90,18 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
       }
     }
     if (isSimpleStatement(child)){
-      return getCodeBlockInternalIndent(1);        
-    } 
-    if (child.getElementType() == ElementType.ELSE_KEYWORD) 
-      return getCodeBlockExternalIndent(); 
-    if (state == BEFORE_FIRST) 
+      return getCodeBlockInternalIndent(1);
+    }
+    if (child.getElementType() == ElementType.ELSE_KEYWORD)
+      return getCodeBlockExternalIndent();
+    if (state == BEFORE_FIRST)
       return Formatter.getInstance().getNoneIndent();
     else {
       if (isPartOfCodeBlock(child)) {
         return getCodeBlockExternalIndent();
       }
       else if (isSimpleStatement(child)){
-        return getCodeBlockInternalIndent(1);        
+        return getCodeBlockInternalIndent(1);
       }
       else if (ElementType.COMMENT_BIT_SET.isInSet(child.getElementType())) {
         return getCodeBlockInternalIndent(1);
@@ -118,26 +120,29 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
         return getCodeBlockExternalIndent();
       }
     }
-    if (state == BEFORE_FIRST) {
-      return getCodeBlockExternalIndent(); 
+    if (state == BEFORE_BLOCK && (isSimpleStatement(child) || child.getElementType() == ElementType.BLOCK_STATEMENT)){
+      return getCodeBlockInternalIndent(0);
     }
-    if (child.getElementType() == ElementType.ELSE_KEYWORD) 
+    if (state == BEFORE_FIRST) {
       return getCodeBlockExternalIndent();
-  
-    return Formatter.getInstance().createContinuationIndent();  
+    }
+    if (child.getElementType() == ElementType.ELSE_KEYWORD)
+      return getCodeBlockExternalIndent();
+
+    return Formatter.getInstance().createContinuationIndent();
   }
-  
+
   private boolean isSimpleStatement(final ASTNode child) {
     if (child.getElementType() == ElementType.BLOCK_STATEMENT) return false;
-    if (!ElementType.STATEMENT_BIT_SET.isInSet(child.getElementType())) return false;    
+    if (!ElementType.STATEMENT_BIT_SET.isInSet(child.getElementType())) return false;
     return isStatement(child, child.getTreeParent());
   }
 
-  private boolean isPartOfCodeBlock(final ASTNode child) {    
+  private boolean isPartOfCodeBlock(final ASTNode child) {
     if (child == null) return false;
     if (child.getElementType() == ElementType.BLOCK_STATEMENT) return true;
     if (child.getElementType() == ElementType.CODE_BLOCK) return true;
-    
+
     if (FormatterUtil.containsWhiteSpacesOnly(child)) return isPartOfCodeBlock(child.getTreeNext());
     if (child.getElementType() == ElementType.END_OF_LINE_COMMENT) return isPartOfCodeBlock(child.getTreeNext());
     if (child.getElementType() == JavaDocElementType.DOC_COMMENT) return true;
@@ -151,6 +156,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
   protected void setReservedWrap(final Wrap reservedWrap) {
   }
 
+  @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     if (isAfterJavaDoc(newChildIndex)) {
       return new ChildAttributes(Formatter.getInstance().getNoneIndent(), null);
