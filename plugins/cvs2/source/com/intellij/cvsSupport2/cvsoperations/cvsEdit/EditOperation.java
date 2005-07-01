@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.CommandAbortedException;
 import org.netbeans.lib.cvsclient.command.CommandException;
+import org.netbeans.lib.cvsclient.command.Watch;
 import org.netbeans.lib.cvsclient.command.reservedcheckout.EditCommand;
 
 import java.io.File;
@@ -81,6 +82,7 @@ public class EditOperation extends CvsOperationOnFiles {
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     EditCommand result = new EditCommand();
+    result.setTemporaryWatch(Watch.TALL);
     result.setCheckThatUnedited(myIsReservedEdit);
     result.setForceEvenIfEdited(false);
     addFilesToCommand(root, result);

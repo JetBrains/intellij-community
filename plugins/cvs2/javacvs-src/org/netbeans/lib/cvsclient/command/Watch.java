@@ -32,7 +32,10 @@ public final class Watch {
 	public static final Watch ALL = new Watch("All", "EUC", // NOI18N
 	                                          new String[]{"edit", "unedit", "commit"}); // NOI18N
 
-	public static final Watch NONE = new Watch("None", "", // NOI18N
+        public static final Watch TALL = new Watch("All", "EUC", // NOI18N
+                                                  new String[]{"tedit", "tunedit", "tcommit"}); // NOI18N
+
+        public static final Watch NONE = new Watch("None", "", // NOI18N
 	                                           new String[0]);
 
 	// Static =================================================================

@@ -6,6 +6,7 @@ import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.GlobalOptions;
+import org.netbeans.lib.cvsclient.command.Watch;
 import org.netbeans.lib.cvsclient.command.reservedcheckout.UneditCommand;
 
 /**
@@ -20,6 +21,7 @@ public class UneditOperation extends CvsOperationOnFiles{
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     UneditCommand result = new UneditCommand();
+    result.setTemporaryWatch(Watch.TALL);
     addFilesToCommand(root, result);
     return result;
   }
