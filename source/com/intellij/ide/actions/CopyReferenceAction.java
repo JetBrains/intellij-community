@@ -161,10 +161,7 @@ public class CopyReferenceAction extends AnAction {
     }
     else {
       toInsert = element.getName();
-      if (element instanceof PsiClass) {
-        suffix = " ";
-      }
-      else if (element instanceof PsiMethod) {
+      if (element instanceof PsiMethod) {
         suffix = "()";
       }
       final PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
