@@ -29,7 +29,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   private final DocumentImpl myDocument;
 
   private final HighlighterList myHighlighterList;
-  private final Collection<RangeHighlighter> myHighlighters = new THashSet<RangeHighlighter>();
+  private final Collection<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
   private RangeHighlighter[] myCachedHighlighters;
   private final List<MarkupModelListener> myListeners = new ArrayList<MarkupModelListener>();
   private MarkupModelListener[] myCachedListeners;
