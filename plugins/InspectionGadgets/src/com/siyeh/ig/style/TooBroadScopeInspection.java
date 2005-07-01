@@ -91,9 +91,8 @@ public class TooBroadScopeInspection extends StatementInspection
                     return;
                 }
             }
-            final PsiElement firstReferenceScope;
-            firstReferenceScope = ScopeUtils.getParentOfTypes(referenceElement,
-                                                              ScopeUtils.TYPES);
+            final PsiElement firstReferenceScope= ScopeUtils.getParentOfTypes(referenceElement,
+                                                                              ScopeUtils.TYPES);
             assert firstReferenceScope != null;
             final PsiElement location;
             PsiDeclarationStatement newDeclaration;
@@ -219,10 +218,8 @@ public class TooBroadScopeInspection extends StatementInspection
                     final PsiExpression lExpression = assignmentExpression.getLExpression();
                     if (location.equals(lExpression))
                     {
-                        PsiDeclarationStatement newDeclaration;
-                        newDeclaration =
-                        createNewDeclaration(variable,
-                                             assignmentExpression.getRExpression());
+                        PsiDeclarationStatement newDeclaration= createNewDeclaration(variable,
+                                                                                     assignmentExpression.getRExpression());
                         newDeclaration = (PsiDeclarationStatement)statementParent
                                 .addBefore(newDeclaration,
                                            statement);
