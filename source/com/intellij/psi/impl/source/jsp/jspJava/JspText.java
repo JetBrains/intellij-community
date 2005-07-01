@@ -52,9 +52,10 @@ public class JspText extends LeafPsiElement {
     final Set<XmlTag> includeDirectives = new HashSet<XmlTag>();
     for (int i = 0; i < directiveTags.length; i++) {
       final XmlTag directiveTag = directiveTags[i];
+      if(directiveTag.getNode().getStartOffset() < textRange.getStartOffset()) continue;
       if(directiveTag.getNode().getStartOffset() >= textRange.getEndOffset()) break;
       includeDirectives.add(directiveTag);
     }
-    return myIncludes = includeDirectives.toArray(new XmlTag[includeDirectives.size()]);
+    return myIncludes = includeDirectives.toArray(XmlTag.EMPTY);
   }
 }
