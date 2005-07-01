@@ -65,11 +65,9 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
         break;
       }
 
-      if (parent instanceof PsiMethod
-        || parent instanceof PsiField
-        || parent instanceof PsiClass
-        || parent instanceof PsiFile
-        || parent instanceof PsiDirectory) break;
+      if (parent instanceof PsiMember ||
+          parent instanceof PsiFile ||
+          parent instanceof PsiDirectory) break;
       parent = parent.getParent();
     }
   }
